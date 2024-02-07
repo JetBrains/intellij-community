@@ -529,10 +529,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     return !storageSpec.deprecated && stateSpec.reportStatistic && storageSpec.value != StoragePathMacros.CACHE_FILE
   }
 
-  private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
-    return changedStorages.contains(storage) ||
-           (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
-  }
+  private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean =
+    changedStorages.contains(storage) || (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
 
   protected open fun doCreateStateGetter(reloadData: Boolean,
                                          storage: StateStorage,
@@ -707,8 +705,14 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun toString(): String = storageManager.componentManager.toString()
 }
 
+@ApiStatus.Internal
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
+}
+
+@ApiStatus.Internal
+interface ExternalStorageWithInternalPart {
+  val internalStorage: StateStorage
 }
 
 /**

@@ -4,7 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
@@ -22,24 +21,24 @@ import java.io.FileNotFoundException
 import java.io.Writer
 import kotlin.math.min
 
-abstract class XmlElementStorage protected constructor(val fileSpec: String,
-                                                       protected val rootElementName: String?,
-                                                       private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
-                                                       storageRoamingType: RoamingType,
-                                                       private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
+abstract class XmlElementStorage protected constructor(
+  val fileSpec: String,
+  protected val rootElementName: String?,
+  private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
+  storageRoamingType: RoamingType,
+  private val provider: StreamProvider? = null
+) : StorageBaseEx<StateMap>() {
   override val saveStorageDataOnReload: Boolean
-    get() {
-      return provider == null || provider.saveStorageDataOnReload
-    }
+    get() = provider == null || provider.saveStorageDataOnReload
 
   internal val rawRoamingType: RoamingType = storageRoamingType
+
   private val effectiveRoamingType = getEffectiveRoamingType(storageRoamingType, fileSpec)
 
   protected abstract fun loadLocalData(): Element?
 
-  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
-    return storageData.getState(componentName, archive)
-  }
+  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? =
+    storageData.getState(componentName, archive)
 
   final override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)
@@ -85,24 +84,22 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     return element
   }
 
-  protected open fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) {
-  }
+  protected open fun providerDataStateChanged(writer: DataWriter?, type: DataStateChanged) { }
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
     return StateMap.fromMap(ComponentStorageUtil.load(element, pathMacroSubstitutor))
   }
 
-  final override fun createSaveSessionProducer(): SaveSessionProducer? {
-    return if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
-  }
+  final override fun createSaveSessionProducer(): SaveSessionProducer? =
+    if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
 
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     LOG.debug("Running analyzeExternalChangesAndUpdateIfNeeded")
     val oldData = storageDataRef.get()
-    val newData = getStorageData(true)
+    val newData = getStorageData(reload = true)
     if (oldData == null) {
       LOG.debug { "analyzeExternalChangesAndUpdateIfNeeded: old data null, load new for ${toString()}" }
       componentNames.addAll(newData.keys())
@@ -153,6 +150,50 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       return XmlSaveSession(elements, writer, stateMap)
     }
 
+    private fun save(states: StateMap, newLiveStates: Map<String, Element>): MutableList<Element>? {
+      if (states.isEmpty()) {
+        return null
+      }
+
+      var result: MutableList<Element>? = null
+
+      for (componentName in states.keys()) {
+        val element: Element
+        try {
+          element = states.getElement(componentName, newLiveStates)?.clone() ?: continue
+        }
+        catch (e: Exception) {
+          LOG.error("Cannot save \"$componentName\" data", e)
+          continue
+        }
+
+        // name attribute should be first
+        val elementAttributes = element.attributes
+        var nameAttribute = element.getAttribute(ComponentStorageUtil.NAME)
+        if (nameAttribute != null && nameAttribute === elementAttributes[0] && componentName == nameAttribute.value) {
+          // all is OK
+        }
+        else {
+          if (nameAttribute == null) {
+            nameAttribute = Attribute(ComponentStorageUtil.NAME, componentName)
+            elementAttributes.add(0, nameAttribute)
+          }
+          else {
+            nameAttribute.value = componentName
+            if (elementAttributes[0] != nameAttribute) {
+              elementAttributes.remove(nameAttribute)
+              elementAttributes.add(0, nameAttribute)
+            }
+          }
+        }
+
+        result = result ?: SmartList()
+        result.add(element)
+      }
+
+      return result
+    }
+
     private inner class XmlSaveSession(
       private val elements: MutableList<Element>?,
       private val writer: DataWriter?,
@@ -199,11 +240,9 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     protected abstract fun saveLocally(dataWriter: DataWriter?)
   }
 
-  protected open fun beforeElementLoaded(element: Element) {
-  }
+  protected open fun beforeElementLoaded(element: Element) { }
 
-  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
-  }
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     val newElement = if (deleted) null else loadElement()
@@ -220,6 +259,32 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       changedComponentNames.addAll(getChangedComponentNames(states, newStates))
       setStates(oldStorageData = states, newStorageData = newStates)
     }
+  }
+
+  // newStorageData - myStates contains only live (unarchived) states
+  private fun getChangedComponentNames(oldStateMap: StateMap, newStateMap: StateMap): Set<String> {
+    val newKeys = newStateMap.keys()
+    val existingKeys = oldStateMap.keys()
+
+    val bothStates = ArrayList<String>(min(newKeys.size, existingKeys.size))
+    @Suppress("SSBasedInspection")
+    val existingKeysSet = if (existingKeys.size < 3) existingKeys.asList() else ObjectOpenHashSet(existingKeys)
+    for (newKey in newKeys) {
+      if (existingKeysSet.contains(newKey)) {
+        bothStates.add(newKey)
+      }
+    }
+
+    val diffs = CollectionFactory.createSmallMemoryFootprintSet<String>(newKeys.size + existingKeys.size)
+    diffs.addAll(newKeys)
+    diffs.addAll(existingKeys)
+    for (state in bothStates) {
+      diffs.remove(state)
+    }
+    for (componentName in bothStates) {
+      oldStateMap.compare(componentName, newStateMap, diffs)
+    }
+    return diffs
   }
 }
 
@@ -264,16 +329,17 @@ internal class XmlDataWriter(
       writer.append('>')
     }
 
-    val xmlOutputter = JbXmlOutputter(lineSeparator = lineSeparatorWithIndent,
-                                      elementFilter = filter?.toElementFilter(),
-                                      macroMap = replacePathMap,
-                                      macroFilter = macroFilter,
-                                      storageFilePathForDebugPurposes = storageFilePathForDebugPurposes)
+    val xmlOutputter = JbXmlOutputter(
+      lineSeparator = lineSeparatorWithIndent,
+      elementFilter = filter?.toElementFilter(),
+      macroMap = replacePathMap,
+      macroFilter = macroFilter,
+      storageFilePathForDebugPurposes = storageFilePathForDebugPurposes
+    )
     for (element in elements) {
       if (hasRootElement) {
         writer.append(lineSeparatorWithIndent)
       }
-
       xmlOutputter.printElement(writer, element, 0)
     }
 
@@ -282,52 +348,6 @@ internal class XmlDataWriter(
       writer.append("</").append(rootElementName).append('>')
     }
   }
-}
-
-private fun save(states: StateMap, newLiveStates: Map<String, Element>): MutableList<Element>? {
-  if (states.isEmpty()) {
-    return null
-  }
-
-  var result: MutableList<Element>? = null
-
-  for (componentName in states.keys()) {
-    val element: Element
-    try {
-      element = states.getElement(componentName, newLiveStates)?.clone() ?: continue
-    }
-    catch (e: Exception) {
-      LOG.error("Cannot save \"$componentName\" data", e)
-      continue
-    }
-
-    // name attribute should be first
-    val elementAttributes = element.attributes
-    var nameAttribute = element.getAttribute(ComponentStorageUtil.NAME)
-    if (nameAttribute != null && nameAttribute === elementAttributes[0] && componentName == nameAttribute.value) {
-      // all is OK
-    }
-    else {
-      if (nameAttribute == null) {
-        nameAttribute = Attribute(ComponentStorageUtil.NAME, componentName)
-        elementAttributes.add(0, nameAttribute)
-      }
-      else {
-        nameAttribute.value = componentName
-        if (elementAttributes[0] != nameAttribute) {
-          elementAttributes.remove(nameAttribute)
-          elementAttributes.add(0, nameAttribute)
-        }
-      }
-    }
-
-    if (result == null) {
-      result = SmartList()
-    }
-
-    result.add(element)
-  }
-  return result
 }
 
 internal fun Element.normalizeRootName(): Element {
@@ -351,39 +371,7 @@ internal fun Element.normalizeRootName(): Element {
   }
 }
 
-// newStorageData - myStates contains only live (unarchived) states
-private fun getChangedComponentNames(oldStateMap: StateMap, newStateMap: StateMap): Set<String> {
-  val newKeys = newStateMap.keys()
-  val existingKeys = oldStateMap.keys()
-
-  val bothStates = ArrayList<String>(min(newKeys.size, existingKeys.size))
-  @Suppress("SSBasedInspection")
-  val existingKeysSet = if (existingKeys.size < 3) existingKeys.asList() else ObjectOpenHashSet(existingKeys)
-  for (newKey in newKeys) {
-    if (existingKeysSet.contains(newKey)) {
-      bothStates.add(newKey)
-    }
-  }
-
-  val diffs = CollectionFactory.createSmallMemoryFootprintSet<String>(newKeys.size + existingKeys.size)
-  diffs.addAll(newKeys)
-  diffs.addAll(existingKeys)
-  for (state in bothStates) {
-    diffs.remove(state)
-  }
-
-  for (componentName in bothStates) {
-    oldStateMap.compare(componentName, newStateMap, diffs)
-  }
-  return diffs
-}
-
 @Internal
 enum class DataStateChanged {
   LOADED, SAVED
-}
-
-@Internal
-interface ExternalStorageWithInternalPart {
-  val internalStorage: StateStorage
 }
