@@ -68,9 +68,9 @@ internal fun NavBarItem.psiDirectories(): List<PsiDirectory> {
       if (psi is PsiDirectoryContainer) {
         return listOf(*psi.directories)
       }
-      val file = psi.containingFile
-      if (file != null) {
-        return listOf(file.containingDirectory)
+      val dir = psi.containingFile?.containingDirectory
+      if (dir != null) {
+        return listOf(dir)
       }
       return emptyList()
     }
