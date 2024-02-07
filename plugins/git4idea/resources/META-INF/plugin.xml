@@ -748,6 +748,7 @@
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
+    <lookup.charFilter implementation="git4idea.commit.GitCommitCompletionCharFilter"/>
 
     <customVcsLogUiFactoryProvider implementation="git4idea.ui.branch.dashboard.BranchesInGitLogUiFactoryProvider"/>
     <virtualFileSystem key="git-compare-branches" implementationClass="git4idea.branch.GitCompareBranchesVirtualFileSystem"/>
