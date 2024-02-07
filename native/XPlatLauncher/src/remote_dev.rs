@@ -621,7 +621,7 @@ fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
 }
 
 #[cfg(not(target_os = "macos"))]
-fn get_os_specific_env_vars() -> Option<Vec<(String, String)>> {
+fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
     None
 }
 
