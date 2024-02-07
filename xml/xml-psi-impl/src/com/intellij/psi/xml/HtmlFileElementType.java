@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.xml;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.tree.IElementType;
@@ -11,8 +12,10 @@ import java.util.Arrays;
 public class HtmlFileElementType extends IStubFileElementType<PsiFileStub<?>> {
 
   private static volatile int stubVersion = -1;
-  
-  public HtmlFileElementType() {super("html", HTMLLanguage.INSTANCE);}
+
+  public HtmlFileElementType() {this("html", HTMLLanguage.INSTANCE);}
+
+  public HtmlFileElementType(String debugName, Language language) {super(debugName, language);}
 
   @Override
   public int getStubVersion() {
