@@ -68,9 +68,9 @@ class DirtyFiles {
   }
 
   fun getProjects(fileId: Int): List<Project> {
-    if (myDirtyFilesWithoutProject.getFile(fileId)) return emptyList()
+    if (myDirtyFilesWithoutProject.containsFile(fileId)) return emptyList()
     return myDirtyFiles.mapNotNullTo(SmartList()) { p ->
-      if (p.second.getFile(fileId)) p.first
+      if (p.second.containsFile(fileId)) p.first
       else null
     }
   }
@@ -85,7 +85,7 @@ class ProjectDirtyFiles {
   private val filesSet: ConcurrentBitSet = ConcurrentBitSet.create()
 
   fun addFile(fileId: Int) = filesSet.set(fileId)
-  fun getFile(fileId: Int) = filesSet.get(fileId)
+  fun containsFile(fileId: Int) = filesSet.get(fileId)
   fun removeFile(fileId: Int) = filesSet.clear(fileId)
   fun clear() = filesSet.clear()
 

@@ -29,7 +29,6 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -70,11 +69,9 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.*;
-import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.dependencies.ScanningRequestToken;
-import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.IndexedFilesListener;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.MapIndexStorage;
@@ -1521,38 +1518,21 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNull(fileBasedIndex.getIndexableFilesFilterHolder().findProjectForFile(fileId));
   }
 
-  public void test_dirty_file_stays_dirty_when_indexing_finishes_after_new_event_appears() throws IOException {
-    // consider the following scenario:
-    // file is added (file update event is added to ChangedFilesCollector and file is written to dirty files queue)
-    // file is scheduled for update via IndexUpdateRunner
-    // file is modified (new file update event is added to ChangedFilesCollector)
-    // indexing finishes and file is removed from dirty files queue in FileIndexesValuesApplier.doPostModificationJob
-    // file is no longer marked dirty even though there is a file event for the file in ChangedFilesCollector
+  public void test_dirty_file_transfers_between_collectors_in_fbi() throws IOException {
     final VirtualFile file = myFixture.addFileToProject("A.java", "class A {}").getVirtualFile();
 
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     int fileId = ((VirtualFileWithId)file).getId();
 
-    assertTrue(fileBasedIndex.getAllDirtyFiles(getProject()).contains(fileId));
+    assertTrue(fileBasedIndex.getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
+    assertFalse(fileBasedIndex.getFilesToUpdateCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
     fileBasedIndex.getChangedFilesCollector().ensureUpToDate(); // schedule file for update
-    assertTrue(fileBasedIndex.getAllDirtyFiles(getProject()).contains(fileId));
+    assertFalse(fileBasedIndex.getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
+    assertTrue(fileBasedIndex.getFilesToUpdateCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
 
     WriteAction.run(() -> VfsUtil.saveText(file, "class B {}")); // add new file event
-    assertTrue(fileBasedIndex.getAllDirtyFiles(getProject()).contains(fileId));
-
-    ProgressManager.getInstance().runProcess(() -> {
-      try {
-        IndexingRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
-        new IndexUpdateRunner(fileBasedIndex, indexingRequest)
-          .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", Arrays.asList(file))),
-                      new ProjectDumbIndexingHistoryImpl(getProject()));
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }, new EmptyProgressIndicator());
-
-    assertTrue(fileBasedIndex.getAllDirtyFiles(getProject()).contains(fileId));
+    assertTrue(fileBasedIndex.getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
+    assertTrue(fileBasedIndex.getFilesToUpdateCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
   }
 
   public void test_stub_index_updated_after_language_level_change() {
