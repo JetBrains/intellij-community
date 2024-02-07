@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.execution.filters.HyperlinkInfoFactory.HyperlinkHandler
 import com.intellij.execution.filters.impl.MultipleFilesHyperlinkInfoBase
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
@@ -51,12 +52,14 @@ class OnFlyMultipleFilesHyperlinkInfo internal constructor(private val myInfoCac
 
   override fun showNotFound(project: Project, hyperlinkLocationPoint: RelativePoint?) {
     if (hyperlinkLocationPoint == null) return
-    val message = if (DumbService.isDumb(project)) {
-      CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing")
+    if (DumbService.isDumb(project)) {
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
+        DumbModeBlockedFunctionality.GotoClass
+      )
+      return
     }
-    else {
-      JvmAnalysisBundle.message("action.find.similar.stack.call.methods.not.found")
-    }
+    val message = JvmAnalysisBundle.message("action.find.similar.stack.call.methods.not.found")
     val label = HintUtil.createWarningLabel(message)
     JBPopupFactory.getInstance().createBalloonBuilder(label)
       .setFadeoutTime(4000)

@@ -12,7 +12,8 @@ import com.intellij.psi.search.GlobalSearchScope
 
 const val SLF4J_MAVEN = "org.slf4j:slf4j-api"
 private const val LOG4J_MAVEN = "org.apache.logging.log4j:log4j-api"
-private val LOG_MAVEN = setOf(SLF4J_MAVEN, LOG4J_MAVEN)
+private const val COMMON_LOGGING_MAVEN = "commons-logging:commons-logging"
+private val LOG_MAVEN = setOf(SLF4J_MAVEN, LOG4J_MAVEN, COMMON_LOGGING_MAVEN)
 
 class ClassLoggingConsoleFilterProvider : ConsoleFilterProvider {
   override fun getDefaultFilters(project: Project): Array<Filter> {
