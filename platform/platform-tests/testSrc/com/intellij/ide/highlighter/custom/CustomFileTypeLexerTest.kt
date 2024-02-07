@@ -508,11 +508,11 @@ NUMBER ('0yabc0')
       }
     }
 
-    PlatformTestUtil.startPerformanceTest(name) {
+    PlatformTestUtil.newPerformanceTest(name) {
       val charAts = IntRef()
       LexerTestCase.printTokens(countingCharSequence(text, charAts), 0, CustomFileTypeLexer(table))
       assertTrue(charAts.get() < text.length * 4)
-    }.assertTiming()
+    }.start()
   }
 
   private fun countingCharSequence(text: CharSequence, charAts: IntRef): CharSequence {

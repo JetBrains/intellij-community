@@ -42,13 +42,13 @@ public class XmlParsingAdditionalTest extends BasePlatformTestCase {
     assertNotNull(doc);
 
     WriteCommandAction.writeCommandAction(project, file).run(
-      () -> PlatformTestUtil.startPerformanceTest("XML reparse using PsiBuilder", () -> {
+      () -> PlatformTestUtil.newPerformanceTest("XML reparse using PsiBuilder", () -> {
         for (int i = 0; i < 10; i++) {
           final long start = System.nanoTime();
           doc.insertString(0, "<additional root=\"tag\"/>");
           PsiDocumentManager.getInstance(project).commitDocument(doc);
           LOG.debug("Reparsed for: " + (System.nanoTime() - start));
         }
-      }).assertTiming());
+      }).start());
   }
 }

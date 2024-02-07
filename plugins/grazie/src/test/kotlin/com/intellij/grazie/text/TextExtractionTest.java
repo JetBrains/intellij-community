@@ -229,7 +229,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.xml", text);
 
     PlatformTestUtil
-      .startPerformanceTest("text extraction", () -> {
+      .newPerformanceTest("text extraction", () -> {
         assertEquals("content", TextExtractor.findTextAt(file, offset1, TextContent.TextDomain.ALL).toString());
         assertNull(TextExtractor.findTextAt(file, offset2, TextContent.TextDomain.ALL));
       })
@@ -237,7 +237,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
         myFixture.type(' ');
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // drop file caches
       })
-      .assertTiming();
+      .start();
   }
 
   public void testLargeXmlWithUnclosedDoctypePerformance() {
@@ -247,7 +247,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.xml", text);
 
     PlatformTestUtil
-      .startPerformanceTest("text extraction", () -> {
+      .newPerformanceTest("text extraction", () -> {
         for (PsiElement element : SyntaxTraverser.psiTraverser(file)) {
           TextExtractor.findTextsAt(element, TextContent.TextDomain.ALL);
         }
@@ -256,7 +256,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
         myFixture.type(' ');
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // drop file caches
       })
-      .assertTiming();
+      .start();
   }
 
   private void checkHtmlXml(boolean inlineTagsSupported) {
@@ -305,9 +305,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     String expected = "b".repeat(10_000);
     PsiFile file = myFixture.configureByText("a.xml", text);
     TextContentBuilder builder = TextContentBuilder.FromPsi.excluding(e -> e instanceof XmlTag);
-    PlatformTestUtil.startPerformanceTest("TextContent building with concatenation", () -> {
+    PlatformTestUtil.newPerformanceTest("TextContent building with concatenation", () -> {
       assertEquals(expected, builder.build(file, TextContent.TextDomain.PLAIN_TEXT).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_removingIndents() {
@@ -316,9 +316,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", "/*\n" + text + "*/");
     PsiComment comment = assertInstanceOf(file.findElementAt(10), PsiComment.class);
     TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" ");
-    PlatformTestUtil.startPerformanceTest("TextContent building with indent removing", () -> {
+    PlatformTestUtil.newPerformanceTest("TextContent building with indent removing", () -> {
       assertEquals(expected, builder.build(comment, TextContent.TextDomain.COMMENTS).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_removingHtml() {
@@ -327,9 +327,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", "/**\n" + text + "*/");
     PsiDocComment comment = PsiTreeUtil.findElementOfClassAtOffset(file, 10, PsiDocComment.class, false);
     TextExtractor extractor = new JavaTextExtractor();
-    PlatformTestUtil.startPerformanceTest("TextContent building with HTML removal", () -> {
+    PlatformTestUtil.newPerformanceTest("TextContent building with HTML removal", () -> {
       assertEquals(expected, extractor.buildTextContent(comment, TextContent.TextDomain.ALL).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_removingNbsp() {
@@ -338,9 +338,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.md", text);
     var psi = PsiTreeUtil.findElementOfClassAtOffset(file, 10, MarkdownParagraph.class, false);
     TextExtractor extractor = new MarkdownTextExtractor();
-    PlatformTestUtil.startPerformanceTest("TextContent building with nbsp removal", () -> {
+    PlatformTestUtil.newPerformanceTest("TextContent building with nbsp removal", () -> {
       assertEquals(expected, extractor.buildTextContent(psi, TextContent.TextDomain.ALL).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_longTextFragment() {
@@ -350,9 +350,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", "class C { String s = \"\"\"\n" + text + "\"\"\"; }");
     var literal = PsiTreeUtil.findElementOfClassAtOffset(file, 100, PsiLiteralExpression.class, false);
     var extractor = new JavaTextExtractor();
-    PlatformTestUtil.startPerformanceTest("TextContent building from a long text fragment", () -> {
+    PlatformTestUtil.newPerformanceTest("TextContent building from a long text fragment", () -> {
       assertEquals(expected, extractor.buildTextContent(literal, TextContent.TextDomain.ALL).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_complexPsi() {
@@ -361,12 +361,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", text);
     TextExtractor extractor = new JavaTextExtractor();
     PsiElement tag = PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("something"), PsiDocTag.class, false);
-    PlatformTestUtil.startPerformanceTest("TextContent building from complex PSI", () -> {
+    PlatformTestUtil.newPerformanceTest("TextContent building from complex PSI", () -> {
       for (int i = 0; i < 10; i++) {
         TextContent content = extractor.buildTextContent(tag, TextContent.TextDomain.ALL);
         assertEquals("something if  is not too expensive", content.toString());
       }
-    }).assertTiming();
+    }).start();
   }
 
 

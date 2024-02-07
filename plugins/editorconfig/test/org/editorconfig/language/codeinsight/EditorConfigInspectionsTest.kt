@@ -115,9 +115,9 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   private fun doTestPerf(inspection: KClass<out LocalInspectionTool>) {
     myFixture.enableInspections(inspection.java)
     myFixture.configureByFile("${getTestName(true)}/.editorconfig")
-    PlatformTestUtil.startPerformanceTest("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
+    PlatformTestUtil.newPerformanceTest("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
       myFixture.doHighlighting()
-    }).attempts(1).assertTiming()
+    }).attempts(1).start()
   }
 
   // Utils

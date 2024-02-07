@@ -45,7 +45,7 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
     EditorImpl editor = (EditorImpl)getEditor();
     int editorHeight = editor.getPreferredHeight();
     int[] result = {0};
-    PlatformTestUtil.startPerformanceTest(message, () -> {
+    PlatformTestUtil.newPerformanceTest(message, () -> {
       for (int y = 0; y < editorHeight; y += 1000) {
         Rectangle clip = new Rectangle(0, y, EDITOR_WIDTH_PX, 1000);
         NullGraphics2D g = new NullGraphics2D(clip);
@@ -54,7 +54,7 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
       }
     }).warmupIterations(50)
       .attempts(100)
-      .assertTiming();
+      .start();
     LOG.debug(String.valueOf(result[0]));
   }
 }

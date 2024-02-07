@@ -96,13 +96,13 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     myFixture.type 'foo {}\n'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), {
       story.toCharArray().each {
         myFixture.type it
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
 
-    } as ThrowableRunnable).assertTiming()
+    } as ThrowableRunnable).start()
   }
 
   void testManyAnnotatedFields() {
@@ -116,7 +116,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void measureHighlighting(String text) {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), configureAndHighlight(text)).assertTiming()
+    PlatformTestUtil.newPerformanceTest(getTestName(false), configureAndHighlight(text)).start()
   }
 
   void testDeeplyNestedClosures() {
@@ -253,9 +253,9 @@ class Cl {
     }
 }
 """
-    PlatformTestUtil.startPerformanceTest(getTestName(false), configureAndHighlight(text))
+    PlatformTestUtil.newPerformanceTest(getTestName(false), configureAndHighlight(text))
       .attempts(20)
-      .assertTiming()
+      .start()
   }
 
   void "test infer only the variable types that are needed"() {
@@ -274,7 +274,7 @@ while (true) {
   f.canoPath<caret>
 }
 '''
-    PlatformTestUtil.startPerformanceTest(getTestName(false), configureAndComplete(text)).attempts(1).assertTiming()
+    PlatformTestUtil.newPerformanceTest(getTestName(false), configureAndComplete(text)).attempts(1).start()
   }
 
   void testClosureRecursion() {
@@ -477,7 +477,7 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
                   "}"
     myFixture.configureByText('a.groovy', '')
     assert myFixture.file instanceof GroovyFile
-    PlatformTestUtil.startPerformanceTest('many siblings', {
+    PlatformTestUtil.newPerformanceTest('many siblings', {
       // clear caches
       WriteCommandAction.runWriteCommandAction(project) {
         myFixture.editor.document.text = ""
@@ -491,7 +491,7 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
       for (ref in refs) {
         assert ref.resolve(): ref.text
       }
-    }).attempts(2).assertTiming()
+    }).attempts(2).start()
   }
 
   @CompileStatic
@@ -521,14 +521,14 @@ public class Yoo$i implements Serializable, Cloneable, Hoo$i<String> {}
 public class Doo$i {}
 """
     }
-    PlatformTestUtil.startPerformanceTest("testing dfa", {
+    PlatformTestUtil.newPerformanceTest("testing dfa", {
       myFixture.checkHighlighting true, false, false
     }).setup({
       myFixture.enableInspections GroovyAssignabilityCheckInspection, UnusedDefInspection, GrUnusedIncDecInspection
       configure 1
       myFixture.checkHighlighting true, false, false
       configure 2
-    }).attempts(1).assertTiming()
+    }).attempts(1).start()
   }
 
   void 'test resolve long chain of references'() {
@@ -601,17 +601,17 @@ foo${n}(a) {
     foo${n - 1}(1)
 }""")
     def file = fixture.configureByText('_.groovy', builder.toString()) as GroovyFile
-    PlatformTestUtil.startPerformanceTest(getTestName(false), {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), {
       myFixture.psiManager.dropPsiCaches()
       (file.methods.last().block.statements.last() as GrExpression).type
-    }).attempts(5).assertTiming()
+    }).attempts(5).start()
   }
 
   void 'test complex DFA with a lot of closures'() {
     fixture.configureByFile("stress/dfa.groovy")
-    PlatformTestUtil.startPerformanceTest(getTestName(false), {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), {
       myFixture.psiManager.dropPsiCaches()
       myFixture.doHighlighting()
-    }).attempts(10).assertTiming()
+    }).attempts(10).start()
   }
 }

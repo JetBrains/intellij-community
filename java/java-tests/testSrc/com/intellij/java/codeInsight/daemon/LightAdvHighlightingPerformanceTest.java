@@ -67,9 +67,9 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), this::doHighlighting)
+    PlatformTestUtil.newPerformanceTest(getTestName(false), this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .assertTiming();
+      .start();
   }
 
   public void testAThinlet() {
@@ -120,7 +120,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
-    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", () -> {
+    PlatformTestUtil.newPerformanceTest("getProject() for nested elements", () -> {
       for (int k=0; k<5; k++) {
         getFile().accept(new PsiRecursiveElementVisitor() {
           int c;
@@ -136,6 +136,6 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
           }
         });
       }
-    }).assertTiming();
+    }).start();
   }
 }

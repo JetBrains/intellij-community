@@ -20,7 +20,6 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema;
 
@@ -74,14 +73,14 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         myFixture.doHighlighting();
       }
     });
-    PlatformTestUtil.startPerformanceTest(getTestName(false), test).assertTiming();
+    PlatformTestUtil.newPerformanceTest(getTestName(false), test).start();
   }
 
 
   public void testEslintHighlightingPerformance() {
     myFixture.configureByFile(getTestName(true) + "/.eslintrc.json");
     PsiFile psiFile = myFixture.getFile();
-    PlatformTestUtil.startPerformanceTest(getTestName(true), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(true), () -> {
       for (int i = 0; i < 10; i++) {
         myFixture.doHighlighting();
 
@@ -101,6 +100,6 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         WriteCommandAction.runWriteCommandAction(getProject(), (Runnable)() -> camelcase.getValue().replace(a.getValue()));
         myFixture.doHighlighting();
       }
-    }).assertTiming();
+    }).start();
   }
 }

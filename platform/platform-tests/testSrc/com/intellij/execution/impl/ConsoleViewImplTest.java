@@ -268,7 +268,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testPerformance() {
     withCycleConsoleNoFolding(100, console ->
-      PlatformTestUtil.startPerformanceTest("console print", () -> {
+      PlatformTestUtil.newPerformanceTest("console print", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -277,24 +277,24 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
         console.waitAllRequests();
-      }).assertTiming());
+      }).start());
   }
 
   public void testLargeConsolePerformance() {
     withCycleConsoleNoFolding(UISettings.getInstance().getConsoleCycleBufferSizeKb(), console ->
-      PlatformTestUtil.startPerformanceTest("console print", () -> {
+      PlatformTestUtil.newPerformanceTest("console print", () -> {
         console.clear();
         for (int i=0; i<20_000_000; i++) {
           console.print("hello\n", ConsoleViewContentType.NORMAL_OUTPUT);
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
         console.waitAllRequests();
-      }).assertTiming());
+      }).start());
   }
 
   public void testPerformanceOfMergeableTokens() {
     withCycleConsoleNoFolding(1000, console ->
-      PlatformTestUtil.startPerformanceTest("console print with mergeable tokens", () -> {
+      PlatformTestUtil.newPerformanceTest("console print with mergeable tokens", () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -304,7 +304,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
         RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
         assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), highlighter.getTextRange());
-      }).assertTiming());
+      }).start());
   }
 
   private void withCycleConsoleNoFolding(int capacityKB, Consumer<? super ConsoleViewImpl> runnable) {
@@ -696,7 +696,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testBackspacePerformance() {
     int nCopies = 10000;
     String in = StringUtil.repeat("\na\nb\bc", nCopies);
-    PlatformTestUtil.startPerformanceTest("print newlines with backspace", () -> {
+    PlatformTestUtil.newPerformanceTest("print newlines with backspace", () -> {
       for (int i = 0; i < 2; i++) {
         myConsole.clear();
         int printCount = ConsoleBuffer.getCycleBufferSize() / in.length();
@@ -707,7 +707,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         myConsole.waitAllRequests();
         assertEquals((long) printCount * nCopies * "\na\nc".length(), myConsole.getContentSize());
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testBackspaceChangesHighlightingRanges1() {

@@ -21,7 +21,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
     final PsiElement expression =
       JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text.toString(), null);
     final int[] n = {0};
-    PlatformTestUtil.startPerformanceTest(getTestName(false), new ThrowableRunnable() {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override
       public void run() {
         n[0] = 0;
@@ -36,7 +36,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
         });
         assertEquals(N+2, n[0]);
       }
-    }).assertTiming();
+    }).start();
   }
   public void testHugeMethodChainingVisitingPerformance() throws IncorrectOperationException {
     StringBuilder text = new StringBuilder("Object s = new StringBuilder()");
@@ -48,7 +48,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
     final PsiElement expression =
       JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(text.toString(), null);
     final int[] n = {0};
-    PlatformTestUtil.startPerformanceTest(getTestName(false), new ThrowableRunnable() {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), new ThrowableRunnable() {
       @Override
       public void run() {
         n[0] = 0;
@@ -61,7 +61,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase {
         });
         assertEquals(N, n[0]);
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testStopWalking() {

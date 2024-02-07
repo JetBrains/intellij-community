@@ -76,11 +76,11 @@ class BlockTerminalTest(private val shellPath: Path) {
                        SimpleTextRepeater.Item("Done", false, true, 1))
     setTerminalBufferMaxLines(items.sumOf { it.count })
     val session = startBlockTerminalSession(TermSize(200, 100))
-    PlatformTestUtil.startPerformanceTest("large output is read") {
+    PlatformTestUtil.newPerformanceTest("large output is read") {
       val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
       session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommand(items))
       assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
-    }.attempts(1).assertTiming()
+    }.attempts(1).start()
   }
 
   @Test

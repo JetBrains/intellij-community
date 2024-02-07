@@ -135,7 +135,7 @@ class ProjectFileIndexPerformanceTest {
     }
     val filesWithoutId = arrayOf(noId1, noId2, noId3)
     val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
-    PlatformTestUtil.startPerformanceTest("Checking status of source files in ProjectFileIndex") {
+    PlatformTestUtil.newPerformanceTest("Checking status of source files in ProjectFileIndex") {
       runReadAction {
         repeat(100) {
           assertFalse(fileIndex.isInContent(fsRoot))
@@ -152,12 +152,12 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test
   fun `access to excluded files`() {
-    PlatformTestUtil.startPerformanceTest("Checking status of excluded files in ProjectFileIndex") {
+    PlatformTestUtil.newPerformanceTest("Checking status of excluded files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourExcludedFilesToTest) {
@@ -167,12 +167,12 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
   
   @Test
   fun `access to library files`() {
-    PlatformTestUtil.startPerformanceTest("Checking status of library files in ProjectFileIndex") {
+    PlatformTestUtil.newPerformanceTest("Checking status of library files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibraryFilesToTest) {
@@ -188,12 +188,12 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
   
   @Test
   fun `access to library source files`() {
-    PlatformTestUtil.startPerformanceTest("Checking status of library source files in ProjectFileIndex") {
+    PlatformTestUtil.newPerformanceTest("Checking status of library source files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibrarySourceFilesToTest) {
@@ -209,14 +209,14 @@ class ProjectFileIndexPerformanceTest {
           }
         }
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test
   fun `access to index after change`() {
     val newRoot = runWriteActionAndWait { ourProjectRoot.subdir("newContentRoot") }
     val module = ourProjectModel.moduleManager.findModuleByName("big")!!
-    PlatformTestUtil.startPerformanceTest("Checking status of file after adding and removing content root") {
+    PlatformTestUtil.newPerformanceTest("Checking status of file after adding and removing content root") {
       runReadAction {
         repeat(50) {
           assertFalse(fileIndex.isInContent(newRoot))
@@ -225,6 +225,6 @@ class ProjectFileIndexPerformanceTest {
     }.setup {
       PsiTestUtil.addContentRoot(module, newRoot)
       PsiTestUtil.removeContentEntry(module, newRoot)
-    }.assertTiming()
+    }.start()
   }
 }

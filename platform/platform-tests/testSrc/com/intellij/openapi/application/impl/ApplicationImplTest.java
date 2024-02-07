@@ -75,7 +75,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ThreadingAssertions.assertEventDispatchThread();
 
     try {
-      PlatformTestUtil.startPerformanceTest("lock/unlock "+getTestName(false), () -> {
+      PlatformTestUtil.newPerformanceTest("lock/unlock " + getTestName(false), () -> {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Job<Void>> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -94,7 +94,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           });
         }
         waitWithTimeout(threads);
-      }).assertTiming();
+      }).start();
     }
     finally {
       Disposer.dispose(disposable);
@@ -475,12 +475,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       }
     });
 
-    PlatformTestUtil.startPerformanceTest("RWLock/unlock", ()-> {
+    PlatformTestUtil.newPerformanceTest("RWLock/unlock", ()-> {
       ThreadingAssertions.assertEventDispatchThread();
       assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
       List<Future<Void>> futures = AppExecutorUtil.getAppExecutorService().invokeAll(callables);
       ConcurrencyUtil.getAll(futures);
-    }).assertTiming();
+    }).start();
   }
 
   private static void pumpEventsFor(int timeOut, @NotNull TimeUnit unit) throws Throwable {

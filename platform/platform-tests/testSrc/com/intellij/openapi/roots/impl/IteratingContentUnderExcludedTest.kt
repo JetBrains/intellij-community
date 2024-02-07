@@ -175,7 +175,7 @@ class IteratingContentUnderExcludedTest {
     IoTestUtil.assumeSymLinkCreationIsSupported()
     val root = projectModel.baseProjectDir.virtualFileRoot
     generateSymlinkExplosion(VfsUtilCore.virtualToIoFile(root), 17)
-    PlatformTestUtil.startPerformanceTest("traversing non-project roots") { checkIterate(root) }.assertTiming()
+    PlatformTestUtil.newPerformanceTest("traversing non-project roots") { checkIterate(root) }.start()
   }
 
   companion object {

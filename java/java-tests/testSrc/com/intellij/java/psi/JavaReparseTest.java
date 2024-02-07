@@ -293,7 +293,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     Document document = pdm.getDocument(file);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      PlatformTestUtil.startPerformanceTest("deep reparse", () -> {
+      PlatformTestUtil.newPerformanceTest("deep reparse", () -> {
         document.insertString(document.getTextLength() - suffix.length(), call1);
         pdm.commitDocument(document);
 
@@ -302,7 +302,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
         document.insertString(document.getTextLength() - suffix.length(), "\n");
         pdm.commitDocument(document);
-      }).assertTiming();
+      }).start();
 
       PsiTestUtil.checkFileStructure(file);
     });

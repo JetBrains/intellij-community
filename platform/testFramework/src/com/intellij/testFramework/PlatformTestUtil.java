@@ -636,29 +636,29 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * An example: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
+   * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).assertTiming();}
    */
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
-    return startPerformanceTestWithVariableInputSize(launchName, 1, () -> {
+  public static @NotNull PerformanceTestInfo newPerformanceTest(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
+    return newPerformanceTestWithVariableInputSize(launchName, 1, () -> {
       test.run();
       return 1;
     });
   }
 
   /**
-   * Starts a performance test which input (and therefore expected time to execute) may change,
-   * e.g. it depends on the number of files in the project.
+   * Init a performance test which input may change.
+   * E.g. it depends on the number of files in the project.
    * <p>
-   * {@code expectedInputSize} parameter specifies size of the input for which the test is expected to finish in {@code expectedMs} milliseconds,
+   * {@code expectedInputSize} parameter specifies size of the input,
    * {@code test} returns actual size of the input. It is supposed that the execution time is lineally proportionally dependent on the input size.
    * </p>
    */
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo startPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
-                                                                                       int expectedInputSize,
-                                                                                       @NotNull ThrowableComputable<Integer, ?> test) {
+  public static @NotNull PerformanceTestInfo newPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
+                                                                                     int expectedInputSize,
+                                                                                     @NotNull ThrowableComputable<Integer, ?> test) {
     return new PerformanceTestInfo(test, expectedInputSize, launchName);
   }
 

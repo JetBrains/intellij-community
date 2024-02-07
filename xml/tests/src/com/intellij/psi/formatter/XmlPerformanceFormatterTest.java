@@ -42,14 +42,14 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testReformatCodeFragment() {
-    PlatformTestUtil.startPerformanceTest("reformat code fragment",
-                                          () -> checkFormattingDoesNotProduceException("performance")).assertTiming();
+    PlatformTestUtil.newPerformanceTest("reformat code fragment",
+                                        () -> checkFormattingDoesNotProduceException("performance")).start();
   }
 
   public void testPerformance3() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", createTestRunnable()).assertTiming();
+      PlatformTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
 
       highlight();
 
@@ -86,7 +86,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance4() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", createTestRunnable()).assertTiming();
+      PlatformTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
     }
     finally {
       editorManager.closeFile(editorManager.getSelectedFiles()[0]);
@@ -107,7 +107,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance5() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", createTestRunnable()).assertTiming();
+      PlatformTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
@@ -120,7 +120,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance6() {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("xml formatter", createTestRunnable()).assertTiming();
+      PlatformTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
@@ -129,7 +129,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testPerformance7() {
-    PlatformTestUtil.startPerformanceTest("xml formatter", createTestRunnable()).assertTiming();
+    PlatformTestUtil.newPerformanceTest("xml formatter", createTestRunnable()).start();
   }
 
   public void testPerformance() throws Exception {
@@ -143,8 +143,8 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformanceIdea148943() throws Exception {
     final String textBefore = loadFile(getTestName(true) + ".xml", null);
     final PsiFile file = createFileFromText(textBefore, "before.xml", PsiFileFactory.getInstance(getProject()));
-    PlatformTestUtil.startPerformanceTest("IDEA-148943", createAdjustLineIndentInRangeRunnable(file))
-      .assertTiming();
+    PlatformTestUtil.newPerformanceTest("IDEA-148943", createAdjustLineIndentInRangeRunnable(file))
+      .start();
   }
   
   private ThrowableRunnable createAdjustLineIndentInRangeRunnable(final @NotNull PsiFile file) {

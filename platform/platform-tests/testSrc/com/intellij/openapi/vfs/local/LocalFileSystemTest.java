@@ -899,11 +899,11 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testFindFileByUrlPerformance() {
     VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    PlatformTestUtil.startPerformanceTest("findFileByUrl", () -> {
+    PlatformTestUtil.newPerformanceTest("findFileByUrl", () -> {
       for (int i=0; i<10_000_000;i++) {
         assertNull(virtualFileManager.findFileByUrl("temp://"));
       }
-    }).assertTiming();
+    }).start();
   }
 
   @Test

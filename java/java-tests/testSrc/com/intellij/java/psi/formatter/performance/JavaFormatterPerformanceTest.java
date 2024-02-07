@@ -45,23 +45,23 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     FormatterImpl formatter = (FormatterImpl)FormatterEx.getInstanceEx();
     CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
 
-    PlatformTestUtil.startPerformanceTest("Java Formatting [1]", () -> {
+    PlatformTestUtil.newPerformanceTest("Java Formatting [1]", () -> {
       FormattingModel model =
         LanguageFormatting.INSTANCE.forContext(file).createModel(FormattingContext.create(file, settings));
       formatter.formatWithoutModifications(model.getDocumentModel(), model.getRootBlock(), settings, options, file.getTextRange());
     })
       .warmupIterations(50)
       .attempts(200)
-      .assertTiming();
+      .start();
     // attempt.min.ms varies ~3% (from experiments)
   }
 
   public void testPerformance2() {
     getSettings().setDefaultRightMargin(120);
-    PlatformTestUtil.startPerformanceTest("Java Formatting [2]", () -> doTest())
+    PlatformTestUtil.newPerformanceTest("Java Formatting [2]", () -> doTest())
       .warmupIterations(5)
       .attempts(20)
-      .assertTiming();
+      .start();
     // attempt.min.ms varies ~50% (from experiments)
   }
 
@@ -76,10 +76,10 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     indentOptions.USE_TAB_CHARACTER = true;
     indentOptions.TAB_SIZE = 4;
 
-    PlatformTestUtil.startPerformanceTest("Java Formatting [3]", () -> doTest())
+    PlatformTestUtil.newPerformanceTest("Java Formatting [3]", () -> doTest())
       .warmupIterations(100)
       .attempts(300)
-      .assertTiming();
+      .start();
     // attempt.min.ms varies ~5% (from experiments)
   }
 

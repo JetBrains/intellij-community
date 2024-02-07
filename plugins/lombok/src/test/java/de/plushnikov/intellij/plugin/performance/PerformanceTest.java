@@ -14,7 +14,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
     final String testName = getTestName(true);
     loadToPsiFile("/performance/" + testName + "/lombok.config");
     final PsiFile psiFile = loadToPsiFile("/performance/" + testName + "/HugeClass.java");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       type(' ');
       PsiDocumentManager.getInstance(getProject()).commitDocument(getEditor().getDocument());
       ((PsiJavaFileImpl)psiFile).getClasses()[0].getFields()[0].hasModifierProperty(PsiModifier.FINAL);
@@ -22,7 +22,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
       backspace();
       PsiDocumentManager.getInstance(getProject()).commitDocument(getEditor().getDocument());
       ((PsiJavaFileImpl)psiFile).getClasses()[0].getFields()[0].hasModifierProperty(PsiModifier.FINAL);
-    }).assertTiming();
+    }).start();
   }
 
   private void backspace() {
@@ -34,7 +34,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
   }
 
   public void testGeneratedCode() {
-    PlatformTestUtil.startPerformanceTest("300 unrelated methods", () -> {
+    PlatformTestUtil.newPerformanceTest("300 unrelated methods", () -> {
         StringBuilder text = new StringBuilder("import lombok.Getter; import lombok.Setter; @interface Tolerate{} class Foo {");
         for (int i = 0; i < 200; i++) {
           text.append("@Getter @Setter int bar").append(i).append(";");
@@ -53,11 +53,11 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
         myFixture.configureByText("Foo.java", text.toString());
         myFixture.checkHighlighting();
       })
-      .assertTiming();
+      .start();
   }
 
   public void testGeneratedCodeThroughStubs() {
-    PlatformTestUtil.startPerformanceTest("200 unrelated methods", () -> {
+    PlatformTestUtil.newPerformanceTest("200 unrelated methods", () -> {
         StringBuilder text = new StringBuilder("import lombok.Getter; import lombok.Setter; @interface Tolerate{} class Foo {");
         for (int i = 0; i < 200; i++) {
           text.append("@Getter @Setter int bar").append(i).append(";");
@@ -74,7 +74,7 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
         myFixture.configureByText("Bar.java", barText.toString());
         myFixture.checkHighlighting();
       })
-      .assertTiming();
+      .start();
   }
 
   public void testDataPerformance() {
@@ -101,10 +101,10 @@ public class PerformanceTest extends AbstractLombokLightCodeInsightTestCase {
       classText.append("}");
     }
 
-    PlatformTestUtil.startPerformanceTest("@Data/@EqualsAndHashCode/@ToString performance", () -> {
+    PlatformTestUtil.newPerformanceTest("@Data/@EqualsAndHashCode/@ToString performance", () -> {
         myFixture.configureByText("Bar.java", classText.toString());
         myFixture.checkHighlighting();
       })
-      .assertTiming();
+      .start();
   }
 }

@@ -62,12 +62,12 @@ public class XmlLexerTest extends LexerTestCase {
     final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
                                                     new FilterLexer.SetFilter(new XMLParserDefinition().getWhitespaceTokens()));
 
-    PlatformTestUtil.startPerformanceTest("XML Lexer Performance on " + fileName, () -> {
+    PlatformTestUtil.newPerformanceTest("XML Lexer Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {
         doLex(lexer, text);
         doLex(filterLexer, text);
       }
-    }).assertTiming();
+    }).start();
   }
 
   private static void doLex(Lexer lexer, final String text) {

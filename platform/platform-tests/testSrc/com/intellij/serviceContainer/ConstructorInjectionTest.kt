@@ -16,11 +16,11 @@ class ConstructorInjectionTest {
   fun `light service getService() performance`() {
     val componentManager = TestComponentManager()
     assertThat(componentManager.getService(BarService::class.java)).isNotNull()
-    PlatformTestUtil.startPerformanceTest("getService() must be fast for cached service") {
+    PlatformTestUtil.newPerformanceTest("getService() must be fast for cached service") {
       for (i in 0..30_000_000) {
         componentManager.getService(BarService::class.java)!!
       }
-    }.assertTiming()
+    }.start()
   }
 
   @Test

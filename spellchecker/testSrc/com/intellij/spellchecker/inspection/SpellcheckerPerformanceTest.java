@@ -57,9 +57,9 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
 
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     int[] toIgnore = ignoreEverythingExceptInspections();
-    PlatformTestUtil.startPerformanceTest("many typos highlighting", () -> {
+    PlatformTestUtil.newPerformanceTest("many typos highlighting", () -> {
       assertSize(typoCount, CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false));
-    }).assertTiming();
+    }).start();
   }
 
   public void testManyWhitespaces() {
@@ -79,10 +79,10 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     assertEmpty(infos);
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", () -> {
+    PlatformTestUtil.newPerformanceTest("many whitespaces highlighting", () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertEmpty(runLocalInspections());
-    }).assertTiming();
+    }).start();
   }
 
   public void testVeryLongEmail() {
@@ -123,14 +123,14 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   private static void doSplitterPerformanceTest(String text, Splitter splitter) {
-    PlatformTestUtil.startPerformanceTest("long word for spelling", () -> {
+    PlatformTestUtil.newPerformanceTest("long word for spelling", () -> {
       try {
         splitter.split(text, TextRange.allOf(text), (textRange) -> {});
       }
       catch (ProcessCanceledException pce) {
         System.err.println("pce is thrown");
       }
-    }).attempts(1).assertTiming();
+    }).attempts(1).start();
   }
 
   @NotNull

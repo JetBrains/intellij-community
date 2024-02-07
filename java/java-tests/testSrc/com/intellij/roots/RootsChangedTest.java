@@ -407,12 +407,12 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
     VirtualFile xxx = createChildDirectory(temp, dirName);
 
-    PlatformTestUtil.startPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", ()->{
+    PlatformTestUtil.newPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", ()->{
       for (int i = 0; i < 100; i++) {
         rename(xxx, "yyy");
         rename(xxx, dirName);
       }
-    }).assertTiming();
+    }).start();
   }
 
   // create ".idea" - based project because it's 1) needed for testShelveChangesMustNotLeadToRootsChangedEvent and 2) is more common

@@ -71,13 +71,13 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
   }
 
   public void testContainerCreateDeletePerformance() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       Disposable parent = Disposer.newDisposable();
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.createContainer(parent);
       }
       Disposer.dispose(parent);
-    }).assertTiming();
+    }).start();
   }
 
   public void testMultipleCreatePointerWithTheSameUrlPerformance() throws IOException {
@@ -86,12 +86,12 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     String url = VfsUtilCore.pathToUrl(f.getPath());
     VirtualFilePointer thePointer = myVirtualFilePointerManager.create(url, disposable, listener);
     assertNotNull(TempFileSystem.getInstance());
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       for (int i = 0; i < 1_000_000; i++) {
         VirtualFilePointer pointer = myVirtualFilePointerManager.create(url, disposable, listener);
         assertSame(pointer, thePointer);
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testMultipleCreatePointerWithTheSameFilePerformance() throws IOException {
@@ -101,12 +101,12 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     VirtualFile v = refreshAndFindFile(f);
     VirtualFilePointer thePointer = myVirtualFilePointerManager.create(v, disposable, listener);
     assertNotNull(TempFileSystem.getInstance());
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       for (int i = 0; i < 10_000_000; i++) {
         VirtualFilePointer pointer = myVirtualFilePointerManager.create(v, disposable, listener);
         assertSame(pointer, thePointer);
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testManyPointersUpdatePerformance() throws IOException {
@@ -120,7 +120,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
         String name = "xxx" + (i%20);
         events.add(new VFileCreateEvent(this, temp, name, true, null, null, null));
       }
-      PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+      PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
         for (int i = 0; i < 100; i++) {
           // simulate VFS refresh events since launching the actual refresh is too slow
           AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(events);
@@ -129,7 +129,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
           myVirtualFilePointerManager.before(events);
           myVirtualFilePointerManager.after(events);
         }
-      }).assertTiming();
+      }).start();
     });
   }
 
@@ -149,7 +149,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
 
     PersistentFSImpl persistentFS = (PersistentFSImpl)ManagingFS.getInstance();
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       for (int i=0; i<500_000; i++) {
         persistentFS.incStructuralModificationCount();
         AsyncFileListener.ChangeApplier applier = myVirtualFilePointerManager.prepareChange(createEvents);
@@ -163,7 +163,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
         applier2.afterVfsChange();
         myVirtualFilePointerManager.after(deleteEvents);
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testCidrCrazyAddCreateRenames() throws IOException {

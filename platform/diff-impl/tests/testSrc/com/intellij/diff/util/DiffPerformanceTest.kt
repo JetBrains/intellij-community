@@ -220,10 +220,10 @@ class DiffPerformanceTest : TestCase() {
 
 
   private inline fun testCpu(iterations: Int, crossinline test: () -> Unit) {
-    PlatformTestUtil.startPerformanceTest(PlatformTestUtil.getTestName(name, true)) {
+    PlatformTestUtil.newPerformanceTest(PlatformTestUtil.getTestName(name, true)) {
       for (i in 0..iterations) {
         test()
       }
-    }.assertTiming()
+    }.start()
   }
 }

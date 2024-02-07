@@ -43,16 +43,16 @@ class JavaSupportTest : GrazieTestBase() {
   }
 
   fun `test long comment performance`() {
-    PlatformTestUtil.startPerformanceTest("highlighting") {
+    PlatformTestUtil.newPerformanceTest("highlighting") {
       runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
-    }.setup { psiManager.dropPsiCaches() }.assertTiming()
+    }.setup { psiManager.dropPsiCaches() }.start()
   }
 
   fun `test performance with many line comments`() {
     val text = "// this is a single line comment\n".repeat(5000)
     myFixture.configureByText("a.java", text)
-    PlatformTestUtil.startPerformanceTest("highlighting") {
+    PlatformTestUtil.newPerformanceTest("highlighting") {
       myFixture.checkHighlighting()
-    }.setup { psiManager.dropPsiCaches() }.assertTiming()
+    }.setup { psiManager.dropPsiCaches() }.start()
   }
 }

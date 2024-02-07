@@ -340,12 +340,12 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testProgressPerformance() {
-    PlatformTestUtil.startPerformanceTest("executeProcessUnderProgress", () -> {
+    PlatformTestUtil.newPerformanceTest("executeProcessUnderProgress", () -> {
       EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       for (int i=0;i<100000;i++) {
         ProgressManager.getInstance().executeProcessUnderProgress(EmptyRunnable.getInstance(), indicator);
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testWrapperIndicatorGotCanceledTooWhenInnerIndicatorHas() {

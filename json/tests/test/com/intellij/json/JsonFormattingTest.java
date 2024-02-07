@@ -99,7 +99,7 @@ public class JsonFormattingTest extends JsonTestCase {
   public void testHugeJsonFile() {
     // IDEA-195340 bad JSON kills IntelliJ
     myFixture.configureByFile(getTestName(false) + ".json");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), this::reformatAndCheck).attempts(1).assertTiming();
+    PlatformTestUtil.newPerformanceTest(getTestName(false), this::reformatAndCheck).attempts(1).start();
   }
 
   private void doTest() {

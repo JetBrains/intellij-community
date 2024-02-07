@@ -481,12 +481,12 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     myFixture.doHighlighting()
 
     val expected = "'a'${"{'a'|'b'}".repeat(updateTimes + 1)}"
-    PlatformTestUtil.startPerformanceTest("calculate value of many assignments") {
+    PlatformTestUtil.newPerformanceTest("calculate value of many assignments") {
       val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")
       )) ?: fail("Cannot evaluate string")
       TestCase.assertEquals(expected, pks.debugConcatenation)
-    }.attempts(2).assertTiming()
+    }.attempts(2).start()
   }
 }

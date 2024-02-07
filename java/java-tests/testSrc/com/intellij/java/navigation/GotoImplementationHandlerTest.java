@@ -94,10 +94,10 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     final PsiFile file = myFixture.addFileToProject("Foo.java", fileText);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-     PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+     PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
        PsiElement[] impls = getTargets(file);
        assertEquals(3, impls.length);
-     }).assertTiming();
+     }).start();
   }
 
   public void testToStringOnQualifiedPerformance() {
@@ -125,10 +125,10 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     final PsiFile file = myFixture.addFileToProject("Foo.java", fileText);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       PsiElement[] impls = getTargets(file);
       assertEquals(3, impls.length);
-    }).assertTiming();
+    }).start();
   }
 
   public void testShowSelfNonAbstract() {

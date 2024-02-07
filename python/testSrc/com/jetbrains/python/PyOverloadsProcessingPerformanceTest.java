@@ -141,12 +141,12 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   private void doPerformanceTestResettingCaches(@NotNull String text, ThrowableRunnable<Throwable> runnable) {
     PsiManager psiManager = myFixture.getPsiManager();
-    PlatformTestUtil.startPerformanceTest(text, runnable)
+    PlatformTestUtil.newPerformanceTest(text, runnable)
       .setup(() -> {
         psiManager.dropPsiCaches();
         psiManager.dropResolveCaches();
       })
-      .assertTiming();
+      .start();
   }
 
   @NotNull

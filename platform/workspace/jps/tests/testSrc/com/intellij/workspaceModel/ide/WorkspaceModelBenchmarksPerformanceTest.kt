@@ -94,7 +94,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     var storage = MutableEntityStorage.create().toSnapshot()
     val times = 20_000
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       repeat(times) {
         val builder = storage.toBuilder()
 
@@ -109,7 +109,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -119,7 +119,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val times = 2_000_000
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       repeat(times) {
         val entity = storage.entities(NamedEntity::class.java).single()
         blackhole(entity)
@@ -129,7 +129,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -139,21 +139,21 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val times = 2_000_000
     val parents = ArrayList<NamedEntity>(times)
 
-    PlatformTestUtil.startPerformanceTest("Named entities adding") {
+    PlatformTestUtil.newPerformanceTest("Named entities adding") {
       repeat(times) {
         parents += builder addEntity NamedEntity("$it", MySource)
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
 
-    PlatformTestUtil.startPerformanceTest("Soft linked entities adding") {
+    PlatformTestUtil.newPerformanceTest("Soft linked entities adding") {
       for (parent in parents) {
         builder addEntity ComposedIdSoftRefEntity("-${parent.myName}", parent.symbolicId, MySource)
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
   }
 
   @Test
@@ -168,7 +168,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val storage = builder.toSnapshot()
     val newBuilder = storage.toBuilder()
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       repeat(size) {
         val value = newBuilder.resolve(NameId("$it"))!!
         newBuilder.modifyEntity(value) {
@@ -177,7 +177,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -193,13 +193,13 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val storage = builder.toSnapshot()
     val list = mutableListOf<ComposedIdSoftRefEntity>()
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       repeat(size) {
         list.addAll(storage.referrers(NameId("$it"), ComposedIdSoftRefEntity::class.java).toList())
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -218,38 +218,38 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     val file = Files.createTempFile("tmpModel", "")
     try {
-      PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Serialization") {
+      PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - Serialization") {
         repeat(200) {
           serializer.serializeCache(file, storage)
         }
       }
         .warmupIterations(0)
-        .attempts(1).assertTimingAsSubtest()
+        .attempts(1).startAsSubtest()
 
-      PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Deserialization") {
+      PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - Deserialization") {
         repeat(200) {
           sizes += Files.size(file).toInt()
           serializer.deserializeCache(file).getOrThrow()
         }
       }
         .warmupIterations(0)
-        .attempts(1).assertTimingAsSubtest()
+        .attempts(1).startAsSubtest()
 
-      PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - SerializationFromFile") {
+      PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - SerializationFromFile") {
         repeat(200) {
           serializer.serializeCache(file, storage)
         }
       }
         .warmupIterations(0)
-        .attempts(1).assertTimingAsSubtest()
+        .attempts(1).startAsSubtest()
 
-      PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - DeserializationFromFile") {
+      PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - DeserializationFromFile") {
         repeat(200) {
           serializer.deserializeCache(file).getOrThrow()
         }
       }
         .warmupIterations(0)
-        .attempts(1).assertTimingAsSubtest()
+        .attempts(1).startAsSubtest()
     }
     finally {
       Files.deleteIfExists(file)
@@ -279,16 +279,16 @@ class WorkspaceModelBenchmarksPerformanceTest {
       })
     }
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       storageBuilder.replaceBySource({ true }, replaceStorage)
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
   fun `project model updates`(testInfo: TestInfo) {
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
           repeat(10_000) {
@@ -300,7 +300,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -308,7 +308,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
     val newFolder = tempFolder.newRandomDirectory()
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
           EntitiesOrphanage.getInstance(projectModel.project).update {
@@ -328,7 +328,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     ApplicationManager.getApplication().invokeAndWait {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -344,7 +344,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val newFolder = VfsUtilCore.pathToUrl(tempFolder.newRandomDirectory().toString())
     val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
           EntitiesOrphanage.getInstance(projectModel.project).update {
@@ -375,7 +375,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     ApplicationManager.getApplication().invokeAndWait {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -391,7 +391,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val newFolder = tempFolder.newRandomDirectory()
     val manager = WorkspaceModel.getInstance(projectModel.project).getVirtualFileUrlManager()
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
           EntitiesOrphanage.getInstance(projectModel.project).update {
@@ -421,7 +421,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     ApplicationManager.getApplication().invokeAndWait {
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -434,7 +434,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @Test
   fun `update storage via replaceProjectModel`(testInfo: TestInfo) {
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       runWriteActionAndWait {
         repeat(1000) {
           val builderSnapshot = WorkspaceModel.getInstance(projectModel.project).internal.getBuilderSnapshot()
@@ -444,7 +444,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     // TODO: second part of the tests need to be implemented later "applyStorageTime" - variable
     //  (or unit perf metrics publishing should be able to read meters from CSV (where we may store counters)
@@ -505,11 +505,11 @@ class WorkspaceModelBenchmarksPerformanceTest {
       } as MutableEntityStorageInstrumentation
     }
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       builders.forEach { it.collectChanges() }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -555,13 +555,13 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       builders.zip(newBuilders).forEach { (initial, update) ->
         initial.applyChangesFrom(update)
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -586,7 +586,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       builder.toSnapshot().toBuilder()
     }
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       builders.forEach { builder ->
         // Populate builder with changes
         repeat(1000) {
@@ -604,7 +604,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @Test
@@ -642,7 +642,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val childData = entities<ParentMultipleEntity>().flatMap { parentEntity, _ -> parentEntity.children }.map { it.childData }
 
     // Do first request
-    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - First Access") {
+    PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - First Access") {
       snapshots.forEach { snapshot ->
         snapshot.cached(namesOfNamedEntities)
         snapshot.cached(sourcesByName)
@@ -650,10 +650,10 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
 
     // Do second request without any modifications
-    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Second Access - No Changes") {
+    PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - Second Access - No Changes") {
       snapshots.forEach { snapshot ->
         snapshot.cached(namesOfNamedEntities)
         snapshot.cached(sourcesByName)
@@ -661,7 +661,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
 
     println("Modify after second read")
     // Modify snapshots
@@ -692,7 +692,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     println("Start third read...")
     // Do request after modifications
-    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Third Access - After Modification") {
+    PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - Third Access - After Modification") {
       newSnapshots.forEach { snapshot ->
         snapshot.cached(namesOfNamedEntities)
         snapshot.cached(sourcesByName)
@@ -700,7 +700,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
 
     println("Modify snapshots second time")
     val snapshotsWithLotOfUpdates = newSnapshots.map { snapshot ->
@@ -732,7 +732,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     Assertions.assertFalse(CacheResetTracker.cacheReset)
 
-    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Fourth Access - After Second Modification") {
+    PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - Fourth Access - After Second Modification") {
       snapshotsWithLotOfUpdates.forEach { snapshot ->
         snapshot.cached(namesOfNamedEntities)
         snapshot.cached(sourcesByName)
@@ -740,7 +740,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
 
     println("Modify snapshots third time")
     val snapshotsWithTonsOfUpdates = snapshotsWithLotOfUpdates.map { snapshot ->
@@ -760,7 +760,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     Assertions.assertTrue(CacheResetTracker.cacheReset)
 
     println("Read fourth time")
-    PlatformTestUtil.startPerformanceTest("${testInfo.displayName} - Fifth Access - After a Lot of Modifications") {
+    PlatformTestUtil.newPerformanceTest("${testInfo.displayName} - Fifth Access - After a Lot of Modifications") {
       snapshotsWithTonsOfUpdates.forEach { snapshot ->
         snapshot.cached(namesOfNamedEntities)
         snapshot.cached(sourcesByName)
@@ -768,7 +768,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
   }
 
   @Test
@@ -818,7 +818,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     var mySnapshot = builder.toSnapshot()
 
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName) {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       repeat(size) {
         val myBuilder = mySnapshot.toBuilder()
         val entity = myBuilder.resolve(NameId("Name$it"))!!
@@ -827,7 +827,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @ParameterizedTest
@@ -843,49 +843,49 @@ class WorkspaceModelBenchmarksPerformanceTest {
     var snapshot = builder.toSnapshot()
 
     println("Test one --- Raw recalculate")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + " raw calculate - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + " raw calculate - size: $size") {
       val time = measureTime {
         snapshot.entities<NamedEntity>().map { it.myName }.toList()
       }
       println("Raw recalculate. size: $size, time: $time.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     println()
     println("Test two --- First calculate")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- first calculate - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- first calculate - size: $size") {
       val time2 = measureTime {
         snapshot.cached(q)
       }
       println("First recalculate. size: $size, time: $time2.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     println()
     println("Test three --- Unmodified second access")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- second access - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- second access - size: $size") {
       val time3 = measureTime {
         snapshot.cached(q)
       }
       println("Unmodified second access. size: $size, time: $time3.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     snapshot = snapshot.toBuilder().also { it.addEntity(NamedEntity("XX", MySource)) }.toSnapshot()
 
     println()
     println("Test four --- Add one entity")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Add one entity - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- Add one entity - size: $size") {
       val time4 = measureTime {
         snapshot.cached(q)
       }
       println("Add one entity. size: $size, time: $time4.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     snapshot = snapshot.toBuilder().also { builder1 ->
       // Remove 10% of entities
@@ -906,14 +906,14 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     println()
     println("Test five --- Update 10% of entities")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Affect 10% of entities - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- Affect 10% of entities - size: $size") {
       val time5 = measureTime {
         snapshot.cached(q)
       }
       println("Update 10% of entities. size: $size, time: $time5.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @ParameterizedTest
@@ -936,7 +936,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     var snapshot = builder.toSnapshot()
 
     println("Test one --- Raw recalculate")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + " raw calculate - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + " raw calculate - size: $size") {
       val time = measureTime {
         snapshot.entities<NamedEntity>()
           .flatMap { it.children }
@@ -947,29 +947,29 @@ class WorkspaceModelBenchmarksPerformanceTest {
       println("Raw recalculate. size: $size, time: $time.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     println()
     println("Test two --- First calculate")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- first calculate - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- first calculate - size: $size") {
       val time2 = measureTime {
         snapshot.cached(q)
       }
       println("First recalculate. size: $size, time: $time2.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     println()
     println("Test three --- Unmodified second access")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- second access - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- second access - size: $size") {
       val time3 = measureTime {
         snapshot.cached(q)
       }
       println("Unmodified second access. size: $size, time: $time3.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     snapshot = snapshot.toBuilder().also {
       it addEntity NamedEntity("XX", MySource) {
@@ -979,14 +979,14 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     println()
     println("Test four --- Add one entity")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Add one entity - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- Add one entity - size: $size") {
       val time4 = measureTime {
         snapshot.cached(q)
       }
       println("Add one entity. size: $size, time: $time4.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
 
     snapshot = snapshot.toBuilder().also { builder1 ->
       // Remove 10% of entities
@@ -1014,7 +1014,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     println()
     println("Test five --- Update 10% of entities")
-    PlatformTestUtil.startPerformanceTest(testInfo.displayName + "- Affect 10% of entities - size: $size") {
+    PlatformTestUtil.newPerformanceTest(testInfo.displayName + "- Affect 10% of entities - size: $size") {
       val time51 = measureTime {
         snapshot.cached(q)
       }
@@ -1022,7 +1022,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       println("Update 10% of entities. size: $size, time: $time5.")
     }
       .warmupIterations(0)
-      .attempts(1).assertTiming()
+      .attempts(1).start()
   }
 
   @ParameterizedTest
@@ -1126,11 +1126,11 @@ class WorkspaceModelBenchmarksPerformanceTest {
   fun `get for kotlin persistent map`(size: Int) {
     val requestSize = 10_000_000
 
-    PlatformTestUtil.startPerformanceTest(size.toString()) {
+    PlatformTestUtil.newPerformanceTest(size.toString()) {
       testPersistentMap(size, requestSize)
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
   }
 
   @Suppress("SameParameterValue")
@@ -1154,17 +1154,17 @@ class WorkspaceModelBenchmarksPerformanceTest {
   private fun measureOperation(launchName: String, singleBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
                                perBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
                                operation: (Int, Pair<MutableEntityStorage, NamedEntity>) -> Unit): Unit {
-    PlatformTestUtil.startPerformanceTest("$launchName-singleBuilderEntities") {
+    PlatformTestUtil.newPerformanceTest("$launchName-singleBuilderEntities") {
       singleBuilderEntities.forEachIndexed(operation)
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
 
-    PlatformTestUtil.startPerformanceTest("$launchName-perBuilderEntities") {
+    PlatformTestUtil.newPerformanceTest("$launchName-perBuilderEntities") {
       perBuilderEntities.forEachIndexed(operation)
     }
       .warmupIterations(0)
-      .attempts(1).assertTimingAsSubtest()
+      .attempts(1).startAsSubtest()
   }
 
 

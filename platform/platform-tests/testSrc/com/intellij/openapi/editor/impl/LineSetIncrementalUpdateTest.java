@@ -53,14 +53,14 @@ public class LineSetIncrementalUpdateTest extends UsefulTestCase {
 
   public void testTypingInLongLinePerformance() {
     String longLine = StringUtil.repeat("a ", 200000);
-    PlatformTestUtil.startPerformanceTest("Document changes in a long line", () -> {
+    PlatformTestUtil.newPerformanceTest("Document changes in a long line", () -> {
       Document document = new DocumentImpl("a\n" + longLine + "<caret>" + longLine + "\n", true);
       for (int i = 0; i < 1000; i++) {
         int offset = i * 2 + longLine.length();
         assertEquals(1, document.getLineNumber(offset));
         document.insertString(offset, "b");
       }
-    }).assertTiming();
+    }).start();
   }
 
 }

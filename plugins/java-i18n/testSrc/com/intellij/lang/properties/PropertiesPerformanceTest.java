@@ -44,18 +44,18 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
 
   public void testTypingInBigFile() throws Exception {
     configureByFile(getTestName(true) + "/File1.properties");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       type(' ');
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
       backspace();
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-    }).assertTiming();
+    }).start();
   }
 
   public void testResolveManyLiterals() throws Exception {
     final PsiClass aClass = generateTestFiles();
     assertNotNull(aClass);
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         PsiReference[] references = expression.getReferences();
@@ -63,7 +63,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
           reference.resolve();
         }
       }
-    })).assertTiming();
+    })).start();
   }
 
   private PsiClass generateTestFiles() throws IOException {

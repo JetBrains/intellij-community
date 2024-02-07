@@ -102,9 +102,9 @@ class SpanExtractionFromUnitPerfTest {
   @Test
   fun flushingTelemetryMetricsShouldNotFailTheTest() {
     val spanName = "simple perf test"
-    PlatformTestUtil.startPerformanceTest(spanName) {
+    PlatformTestUtil.newPerformanceTest(spanName) {
       runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
-    }.assertTiming()
+    }.start()
     checkMetricsAreFlushedToTelemetryFile(spanName)
   }
 
@@ -112,10 +112,10 @@ class SpanExtractionFromUnitPerfTest {
   fun throwingExceptionWillNotAffectMetricsPublishing() {
     val spanName = "perf test throwing exception"
     try {
-      PlatformTestUtil.startPerformanceTest(spanName) {
+      PlatformTestUtil.newPerformanceTest(spanName) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
         throw RuntimeException("Exception text")
-      }.warmupIterations(0).assertTiming()
+      }.warmupIterations(0).start()
     }
     catch (t: Throwable) {
       //

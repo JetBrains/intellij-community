@@ -106,10 +106,10 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java");
     ensureIndexUpToDate();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> assertNull(ref.resolve()))
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> assertNull(ref.resolve()))
       .warmupIterations(20)
       .attempts(50)
-      .assertTiming();
+      .start();
     // attempt.min.ms varies below the measurement threshold
   }
 
@@ -131,7 +131,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
 
     List<PsiJavaCodeReferenceElement> refs = SyntaxTraverser.psiTraverser(file).filter(PsiJavaCodeReferenceElement.class).toList();
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       for (PsiJavaCodeReferenceElement ref : refs) {
         assertNotNull(ref.resolve());
       }
@@ -139,7 +139,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
       .setup(getPsiManager()::dropPsiCaches)
       .warmupIterations(100)
       .attempts(500)
-      .assertTiming();
+      .start();
     // attempt.min.ms varies ~7% (from experiments)
   }
 
@@ -173,22 +173,22 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     }
 
     ensureIndexUpToDate();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> assertNull(ref.resolve()))
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> assertNull(ref.resolve()))
       .warmupIterations(20)
       .attempts(50)
-      .assertTiming();
+      .start();
     // attempt.min.ms varies below the measurement threshold
   }
 
   public void testLongIdentifierDotChain() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), () -> {
+    PlatformTestUtil.newPerformanceTest(getTestName(false), () -> {
       PsiFile file = createDummyFile("a.java", "class C { { " + StringUtil.repeat("obj.", 100) + "foo } }");
       PsiReference ref = file.findReferenceAt(file.getText().indexOf("foo"));
       assertNull(ref.resolve());
     })
       .warmupIterations(100)
       .attempts(300)
-      .assertTiming();
+      .start();
     // attempt.min.ms varies below the measurement threshold
   }
 }

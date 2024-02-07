@@ -54,13 +54,13 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     text.append(".toString();<caret>}");
     configureByText(JavaFileType.INSTANCE, text.toString());
 
-    PlatformTestUtil.startPerformanceTest(getName(), () -> {
+    PlatformTestUtil.newPerformanceTest(getName(), () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
       type("k");
       assertNotEmpty(highlightErrors());
       backspace();
-    }).assertTiming();
+    }).start();
   }
 
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
@@ -75,14 +75,14 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     PlatformTestUtil.maskExtensions(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, getProject(), Collections.emptyList(), getTestRootDisposable());
     ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, Collections.emptyList(), getTestRootDisposable());
     ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(LanguageAnnotators.INSTANCE.getName()), Collections.emptyList(), getTestRootDisposable());
-    PlatformTestUtil.startPerformanceTest("highlighting many string literals", () -> {
+    PlatformTestUtil.newPerformanceTest("highlighting many string literals", () -> {
       assertEmpty(highlightErrors());
 
       type("k");
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).assertTiming();
+    }).start();
   }
 
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
@@ -97,14 +97,14 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
                   ".toString(); } }";
     configureByText(JavaFileType.INSTANCE, text);
 
-    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", () -> {
+    PlatformTestUtil.newPerformanceTest("highlighting deep call chain", () -> {
       assertEmpty(highlightErrors());
 
       type("k");
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).assertTiming();
+    }).start();
   }
 
   public void testReactivityPerformance() throws Throwable {

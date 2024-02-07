@@ -326,7 +326,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myFindModel.setPromptOnReplace(false);
 
-      PlatformTestUtil.startPerformanceTest("replace", ()->{
+      PlatformTestUtil.newPerformanceTest("replace", ()->{
         for (int i=0; i<25; i++) {
           myFindModel.   setStringToFind(aas);
           myFindModel.setStringToReplace(bbs);
@@ -337,7 +337,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
           FindUtil.replace(editor.getProject(), editor, 0, myFindModel);
           assertEquals(text, editor.getDocument().getText());
         }
-      }).assertTiming();
+      }).start();
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);

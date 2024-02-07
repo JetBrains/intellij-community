@@ -1040,14 +1040,14 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
     val pos = myFixture.file.text.indexOf("key$half: val$half") + "key$half: val$half".length
     myFixture.editor.caretModel.moveToOffset(pos)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-    PlatformTestUtil.startPerformanceTest("Typing in injected") {
+    PlatformTestUtil.newPerformanceTest("Typing in injected") {
       for (i in 0..size) {
         myFixture.type("newkey$i: val$i")
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
       }
       waitForYamlCoroutines()
     }.warmupIterations(0).attempts(1)
-      .assertTiming()
+      .start()
 
     myInjectionFixture.assertInjectedContent("""root:
     ${(0..half).map { i -> "|  key$i: val$i" }.joinToString("\n")}
@@ -1071,10 +1071,10 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
       |
       |""".trimMargin())
 
-    PlatformTestUtil.startPerformanceTest("Reformatting large") {
+    PlatformTestUtil.newPerformanceTest("Reformatting large") {
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
     }.attempts(1)
-      .assertTiming()
+      .start()
 
     myInjectionFixture.assertInjectedContent("""root:
     ${(0..size).map { i -> "|  key$i: val$i" }.joinToString("\n")}

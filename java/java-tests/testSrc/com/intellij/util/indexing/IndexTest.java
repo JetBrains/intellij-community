@@ -965,7 +965,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final String filename = "A.java";
     myFixture.addFileToProject("foo/bar/" + filename, "class A {}");
 
-    PlatformTestUtil.startPerformanceTest("Vfs Event Processing By Index", () -> {
+    PlatformTestUtil.newPerformanceTest("Vfs Event Processing By Index", () -> {
       PsiFile[] files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
       assertEquals(1, files.length);
 
@@ -991,7 +991,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       files = FilenameIndex.getFilesByName(getProject(), filename, GlobalSearchScope.moduleScope(getModule()));
       assertEquals(1, files.length);
-    }).assertTiming();
+    }).start();
   }
 
   public void test_class_file_in_src_content_isn_t_returned_from_index() throws IOException {

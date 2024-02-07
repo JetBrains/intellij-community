@@ -4,7 +4,6 @@ package com.intellij.testFramework;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -43,7 +42,6 @@ public class PerformanceTestInfo {
   private final ThrowableComputable<Integer, ?> test; // runnable to measure; returns actual input size
   private final int expectedInputSize;    // size of input the test is expected to process;
   private ThrowableRunnable<?> setup;      // to run before each test
-  private int usedReferenceCpuCores = 1;
   private int maxMeasurementAttempts = 3;             // number of retries
   private final String launchName;         // to print on fail
   private int warmupIterations = 1; // default warmup iterations should be positive
@@ -105,8 +103,7 @@ public class PerformanceTestInfo {
   }
 
   /**
-   * Runs the payload {@code iterations} times before starting measuring the time.
-   * By default, iterations == 0 (in which case we don't run warmup passes at all)
+   * Runs the perf test {@code iterations} times before starting the final measuring.
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo warmupIterations(int iterations) {
@@ -157,64 +154,64 @@ public class PerformanceTestInfo {
     return callingTestMethod;
   }
 
-  /** @see PerformanceTestInfo#assertTiming(String) */
-  public void assertTiming() {
-    assertTiming(getCallingTestMethod());
+  /** @see PerformanceTestInfo#start(String) */
+  public void start() {
+    start(getCallingTestMethod());
   }
 
-  public void assertTiming(@NotNull Method javaTestMethod) {
-    assertTiming(javaTestMethod, "");
+  public void start(@NotNull Method javaTestMethod) {
+    start(javaTestMethod, "");
   }
 
-  public void assertTiming(@NotNull Method javaTestMethod, String subTestName) {
+  public void start(@NotNull Method javaTestMethod, String subTestName) {
     var fullTestName = String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName());
     if (subTestName != null && !subTestName.isEmpty()) {
       fullTestName += " - " + subTestName;
     }
-    assertTiming(fullTestName);
+    start(fullTestName);
   }
 
   /**
-   * {@link PerformanceTestInfo#assertTiming(String)}
+   * {@link PerformanceTestInfo#start(String)}
    * <br/>
    * Eg: <code>assertTiming(GradleHighlightingPerformanceTest::testCompletionPerformance)</code>
    */
-  public void assertTiming(@NotNull KFunction<?> kotlinTestMethod) {
-    assertTiming(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
+  public void start(@NotNull KFunction<?> kotlinTestMethod) {
+    start(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
   }
 
   /**
    * By default passed test launch name will be used as the subtest name.
    *
-   * @see PerformanceTestInfo#assertTimingAsSubtest(String)
+   * @see PerformanceTestInfo#startAsSubtest(String)
    */
-  public void assertTimingAsSubtest() {
-    assertTimingAsSubtest(launchName);
+  public void startAsSubtest() {
+    startAsSubtest(launchName);
   }
 
   /**
    * In case if you want to run many subsequent performance measurements in your JUnit test.
    *
-   * @see PerformanceTestInfo#assertTiming(String)
+   * @see PerformanceTestInfo#start(String)
    */
-  public void assertTimingAsSubtest(@Nullable String subTestName) {
-    assertTiming(getCallingTestMethod(), subTestName);
+  public void startAsSubtest(@Nullable String subTestName) {
+    start(getCallingTestMethod(), subTestName);
   }
 
   /**
-   * Asserts expected timing.
+   * Start execution of the performance test.
    *
    * @param fullQualifiedTestMethodName String representation of full method name.
    *                                    For Java you can use {@link com.intellij.testFramework.UsefulTestCase#getQualifiedTestMethodName()}
    *                                    OR
    *                                    {@link com.intellij.testFramework.fixtures.BareTestFixtureTestCase#getQualifiedTestMethodName()}
    */
-  public void assertTiming(String fullQualifiedTestMethodName) {
-    assertTiming(IterationMode.WARMUP, fullQualifiedTestMethodName);
-    assertTiming(IterationMode.MEASURE, fullQualifiedTestMethodName);
+  public void start(String fullQualifiedTestMethodName) {
+    start(IterationMode.WARMUP, fullQualifiedTestMethodName);
+    start(IterationMode.MEASURE, fullQualifiedTestMethodName);
   }
 
-  private void assertTiming(IterationMode iterationType, String fullQualifiedTestMethodName) {
+  private void start(IterationMode iterationType, String fullQualifiedTestMethodName) {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     System.out.printf("Starting performance test in mode: %s%n", iterationType);
 

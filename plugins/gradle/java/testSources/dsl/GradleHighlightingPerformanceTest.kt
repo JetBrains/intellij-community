@@ -32,7 +32,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         fixture.editor.caretModel.moveToOffset(pos + 1)
         fixture.checkHighlighting()
 
-        PlatformTestUtil.startPerformanceTest("GradleHighlightingPerformanceTest.testPerformance") {
+        PlatformTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testPerformance") {
           fixture.psiManager.dropPsiCaches()
           repeat(4) {
             fixture.type('a')
@@ -40,7 +40,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
             fixture.doHighlighting()
             fixture.completeBasic()
           }
-        }.assertTiming(GradleHighlightingPerformanceTest::testPerformance)
+        }.start(GradleHighlightingPerformanceTest::testPerformance)
       }
     }
   }
@@ -60,7 +60,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         val document = PsiDocumentManager.getInstance(project).getDocument(fixture.file)
         disableSlowCompletionElements(fixture.testRootDisposable)
         val repeatSize = 10
-        PlatformTestUtil.startPerformanceTest("GradleHighlightingPerformanceTest.testCompletion") {
+        PlatformTestUtil.newPerformanceTest("GradleHighlightingPerformanceTest.testCompletion") {
           fixture.psiManager.dropResolveCaches()
           repeat(repeatSize) {
             val lookupElements = fixture.completeBasic()
@@ -70,7 +70,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
           val rangeMarkers = ArrayList<RangeMarker>()
           document.asSafely<DocumentEx>()?.processRangeMarkers { rangeMarkers.add(it) }
           rangeMarkers.forEach { marker -> document.asSafely<DocumentEx>()?.removeRangeMarker(marker as RangeMarkerEx) }
-        }.assertTiming(GradleHighlightingPerformanceTest::testCompletionPerformance)
+        }.start(GradleHighlightingPerformanceTest::testCompletionPerformance)
       }
     }
   }
