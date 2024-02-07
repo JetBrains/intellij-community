@@ -1,790 +1,761 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.codeInspection
+package com.intellij.java.codeInspection;
 
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiMethodImpl;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
-import com.intellij.psi.PsiAnonymousClass
-import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
+import java.util.Arrays;
+import java.util.List;
 
-@CompileStatic
-class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
-
-  void "test if null return null"() {
-    def c = inferContract("""
-  String smth(String s) {
-    if (s == null) return null;
-    return smth();
-  }
-""")
-    assert c == 'null -> null'
+public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
+  public void test_if_null_return_null() {
+    String c = inferContract("""
+       String smth(String s) {
+         if (s == null) return null;
+         return smth();
+       }""");
+    assertEquals("null -> null", c);
   }
 
-  void "test if not null return true"() {
-    def c = inferContract("""
-  boolean smth(int a, String s) {
-    if (s != null) { return true; }
-    return a == 2;
-  }
-""")
-    assert c == '_, !null -> true'
-  }
-
-  void "test if null fail"() {
-    def c = inferContract("""
-  boolean smth(int a, String s) {
-    if (null == s) { throw new RuntimeException(); }
-    return a == 2;
-  }
-""")
-    assert c == '_, null -> fail'
+  public void test_if_not_null_return_true() {
+    String c = inferContract("""
+                                 boolean smth(int a, String s) {
+                                   if (s != null) { return true; }
+                                   return a == 2;
+                                 }""");
+    assertEquals("_, !null -> true", c);
   }
 
-  void "test if true return the same"() {
-    def c = inferContract("""
-  boolean smth(boolean b, int a) {
-    if (b) return b;
-    return a == 2;
-  }
-""")
-    assert c == 'true, _ -> true'
-  }
-
-  void "test if false return negation"() {
-    def c = inferContract("""
-  boolean smth(boolean b, int a) {
-    if (!b) return !(b);
-    return a == 2;
-  }
-""")
-    assert c == 'false, _ -> true'
+  public void test_if_null_fail() {
+    String c = inferContract("""
+                                 boolean smth(int a, String s) {
+                                   if (null == s) { throw new RuntimeException(); }
+                                   return a == 2;
+                                 }""");
+    assertEquals("_, null -> fail", c);
   }
 
-  void "test nested if"() {
-    def c = inferContract("""
-  boolean smth(boolean b, Object o) {
-    if (!b) if (o != null) return true;
-    return a == 2;
-  }
-""")
-    assert c == 'false, !null -> true'
-  }
-
-  void "test conjunction"() {
-    def c = inferContract("""
-  boolean smth(boolean b, Object o) {
-    if (!b && o != null) return true;
-    return a == 2;
-  }
-""")
-    assert c == 'false, !null -> true'
+  public void test_if_true_return_the_same() {
+    String c = inferContract("""
+                                 boolean smth(boolean b, int a) {
+                                   if (b) return b;
+                                   return a == 2;
+                                 }""");
+    assertEquals("true, _ -> true", c);
   }
 
-  void "test disjunction"() {
-    def c = inferContracts("""
-  boolean smth(boolean b, Object o) {
-    if (!b || o != null) return true;
-    return a == 2;
-  }
-""")
-    assert c == ['false, _ -> true', 'true, !null -> true']
-  }
-
-  void "test ternary"() {
-    def c = inferContracts("""
-  boolean smth(boolean b, Object o, Object o1) {
-    return (!b || o != null) ? true : (o1 != null && o1.hashCode() == 3);
-  }
-""")
-    assert c == ['false, _, _ -> true', 'true, !null, _ -> true', 'true, null, null -> false']
+  public void test_if_false_return_negation() {
+    String c = inferContract("""
+                                 boolean smth(boolean b, int a) {
+                                   if (!b) return !(b);
+                                   return a == 2;
+                                 }""");
+    assertEquals("false, _ -> true", c);
   }
 
-  void "test instanceof"() {
-    def c = inferContracts("""
-  boolean smth(Object o) {
-    return o instanceof String;
-  }
-""")
-    assert c == ['null -> false']
-  }
-
-  void "test if-else"() {
-    def c = inferContracts("""
-  boolean smth(Object o) {
-    if (o instanceof String) return false;
-    else return true;
-  }
-""")
-    assert c == ['null -> true']
+  public void test_nested_if() {
+    String c = inferContract("""
+                                 boolean smth(boolean b, Object o) {
+                                   if (!b) if (o != null) return true;
+                                   return a == 2;
+                                 }""");
+    assertEquals("false, !null -> true", c);
   }
 
-  void "test if return without else"() {
-    def c = inferContracts("""
-  boolean smth(Object o) {
-    if (o instanceof String) return false;
-    return true;
-  }
-""")
-    assert c == ['null -> true']
-  }
-
-  void "test if no-return without else"() {
-    def c = inferContracts("""
-  boolean smth(Object o) {
-    if (o instanceof String) callSomething();
-    return true;
-  }
-""")
-    assert c == ['null -> true']
+  public void test_conjunction() {
+    String c = inferContract("""
+         boolean smth(boolean b, Object o) {
+           if (!b && o != null) return true;
+           return a == 2;
+         }""");
+    assertEquals("false, !null -> true", c);
   }
 
-  void "test assertion"() {
-    def c = inferContracts("""
-  boolean smth(Object o) {
-    assert o instanceof String;
-    return true;
-  }
-""")
-    assert c == ['null -> fail']
-  }
-
-  void "test no return value NotNull duplication"() {
-    def c = inferContracts("""
-  @org.jetbrains.annotations.NotNull String smth(Object o) {
-    return "abc";
-  }
-""")
-    assert c == []
+  public void test_disjunction() {
+    List<String> c = inferContracts("""
+        boolean smth(boolean b, Object o) {
+          if (!b || o != null) return true;
+          return a == 2;
+        }""");
+    assertEquals(Arrays.asList("false, _ -> true", "true, !null -> true"), c);
   }
 
-  void "test no return value NotNull duplication with branching"() {
-    def c = inferContracts("""
-  @org.jetbrains.annotations.NotNull static Object requireNotNull(Object o) {
-        if (o == null)
-            throw new NullPointerException();
-        else
-            return o;
-    }
-""")
-    assert c == ['null -> fail', '!null -> param1']
+  public void test_ternary() {
+    List<String> c = inferContracts("""
+        boolean smth(boolean b, Object o, Object o1) {
+          return (!b || o != null) ? true : (o1 != null && o1.hashCode() == 3);
+        }""");
+    assertEquals(Arrays.asList("false, _, _ -> true", "true, !null, _ -> true", "true, null, null -> false"), c);
   }
 
-  void "test plain delegation"() {
-    def c = inferContracts("""
-  boolean delegating(Object o) {
-    return smth(o);
-  }
-  boolean smth(Object o) {
-    assert o instanceof String;
-    return true;
-  }
-""")
-    assert c == ['null -> fail']
+  public void test_instanceof() {
+    List<String> c = inferContracts("""
+                                        boolean smth(Object o) {
+                                          return o instanceof String;
+                                        }""");
+    assertEquals(List.of("null -> false"), c);
   }
 
-  void "test arg swapping delegation"() {
-    def c = inferContracts("""
-  boolean delegating(Object o, Object o1) {
-    return smth(o1, o);
-  }
-  boolean smth(Object o, Object o1) {
-    return o == null && o1 != null;
-  }
-""")
-    assert c == ['_, !null -> false', 'null, null -> false', '!null, null -> true']
+  public void test_if_else() {
+    List<String> c = inferContracts("""
+                                        boolean smth(Object o) {
+                                          if (o instanceof String) return false;
+                                          else return true;
+                                        }""");
+    assertEquals(List.of("null -> true"), c);
   }
 
-  void "test negating delegation"() {
-    def c = inferContracts("""
-  boolean delegating(Object o) {
-    return !smth(o);
-  }
-  boolean smth(Object o) {
-    return o == null;
-  }
-""")
-    assert c == ['null -> false', '!null -> true']
+  public void test_if_return_without_else() {
+    List<String> c = inferContracts("""
+                                        boolean smth(Object o) {
+                                          if (o instanceof String) return false;
+                                          return true;
+                                        }""");
+    assertEquals(List.of("null -> true"), c);
   }
 
-  void "test delegation with constant"() {
-    def c = inferContracts("""
-  boolean delegating(Object o) {
-    return smth(null);
-  }
-  boolean smth(Object o) {
-    return o == null;
-  }
-""")
-    assert c == ['_ -> true']
+  public void test_if_no_return_without_else() {
+    List<String> c = inferContracts("""
+                                        boolean smth(Object o) {
+                                          if (o instanceof String) callSomething();
+                                          return true;
+                                        }""");
+    assertEquals(List.of("null -> true"), c);
   }
 
-  void "test boolean autoboxing"() {
-    def c = inferContracts("""
-    static Object test1(Object o1) {
-        return o1 == null;
-    }""")
-    assert c == []
+  public void test_assertion() {
+    List<String> c = inferContracts("""
+                                        boolean smth(Object o) {
+                                          assert o instanceof String;
+                                          return true;
+                                        }""");
+    assertEquals(List.of("null -> fail"), c);
   }
 
-  void "test return boxed integer"() {
-    def c = inferContracts("""
-    static Object test1(Object o1) {
-        return o1 == null ? 1 : smth();
-    }
-    
-    static native Object smth()
-    """)
-    assert c == ['null -> !null']
+  public void test_no_return_value_NotNull_duplication() {
+    List<String> c = inferContracts("""
+                                        @org.jetbrains.annotations.NotNull String smth(Object o) {
+                                          return "abc";
+                                        }""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test return boxed boolean"() {
-    def c = inferContracts("""
-    static Object test1(Object o1) {
-        return o1 == null ? false : smth();
-    }
-    
-    static native Object smth()
-    """)
-    assert c == ['null -> !null']
+  public void test_no_return_value_NotNull_duplication_with_branching() {
+    List<String> c = inferContracts("""
+                                        @org.jetbrains.annotations.NotNull static Object requireNotNull(Object o) {
+                                              if (o == null)
+                                                  throw new NullPointerException();
+                                              else
+                                                  return o;
+                                          }""");
+    assertEquals(List.of("null -> fail", "!null -> param1"), c);
   }
 
-  void "test boolean autoboxing in delegation"() {
-    def c = inferContracts("""
-    static Boolean test04(String s) {
-        return test03(s);
-    }
-    static boolean test03(String s) {
-        return s == null;
-    }
-    """)
-    assert c == []
+  public void test_plain_delegation() {
+    List<String> c = inferContracts("""
+                                        boolean delegating(Object o) {
+                                          return smth(o);
+                                        }
+                                        boolean smth(Object o) {
+                                          assert o instanceof String;
+                                          return true;
+                                        }""");
+    assertEquals(List.of("null -> fail"), c);
   }
 
-  void "test boolean auto-unboxing"() {
-    def c = inferContracts("""
-      static boolean test02(String s) {
-          return test01(s);
-      }
-
-      static Boolean test01(String s) {
-          if (s == null)
-              return new Boolean(false);
-          else
-             return null;
-      }
-    """)
-    assert c == []
+  public void test_arg_swapping_delegation() {
+    List<String> c = inferContracts("""
+                                        boolean delegating(Object o, Object o1) {
+                                          return smth(o1, o);
+                                        }
+                                        boolean smth(Object o, Object o1) {
+                                          return o == null && o1 != null;
+                                        }""");
+    assertEquals(List.of("_, !null -> false", "null, null -> false", "!null, null -> true"), c);
   }
 
-  void "test double constant auto-unboxing"() {
-    def c = inferContracts("""
-      static double method() {
-        return 1;
-      }
-    """)
-    assert c == []
+  public void test_negating_delegation() {
+    List<String> c = inferContracts("""
+                                        boolean delegating(Object o) {
+                                          return !smth(o);
+                                        }
+                                        boolean smth(Object o) {
+                                          return o == null;
+                                        }""");
+    assertEquals(List.of("null -> false", "!null -> true"), c);
   }
 
-  void "test non-returning delegation"() {
-    def c = inferContracts("""
-    static void test2(Object o) {
-        assertNotNull(o);
-    }
-
-    static boolean assertNotNull(Object o) {
-        if (o == null) {
-            throw new NullPointerException();
-        }
-        return true;
-    }
-    """)
-    assert c == ['null -> fail']
+  public void test_delegation_with_constant() {
+    List<String> c = inferContracts("""
+                                        boolean delegating(Object o) {
+                                          return smth(null);
+                                        }
+                                        boolean smth(Object o) {
+                                          return o == null;
+                                        }""");
+    assertEquals(List.of("_ -> true"), c);
   }
 
-  void "test instanceof notnull"() {
-    def c = inferContracts("""
-    public boolean test2(Object o) {
-        if (o != null) {
-            return o instanceof String;
-        } else {
-            return test1(o);
-        }
-    }
-    static boolean test1(Object o1) {
-        return o1 == null;
-    }
-    """)
-    assert c == []
+  public void test_boolean_autoboxing() {
+    List<String> c = inferContracts("""
+                                      static Object test1(Object o1) {
+                                          return o1 == null;
+                                      }""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test no duplicates in delegation"() {
-    def c = inferContracts("""
-    static boolean test2(Object o1, Object o2) {
-        return  test1(o1, o1);
-    }
-    static boolean test1(Object o1, Object o2) {
-        return  o1 != null && o2 != null;
-    }
-    """)
-    assert c == ['null, _ -> false', '!null, _ -> true']
+  public void test_return_boxed_integer() {
+    List<String> c = inferContracts("""
+                                       static Object test1(Object o1) {
+                                           return o1 == null ? 1 : smth();
+                                       }
+                                      \s
+                                       static native Object smth()
+                                      \s""");
+    assertEquals(List.of("null -> !null"), c);
   }
 
-  void "test take explicit parameter notnull into account"() {
-    def c = inferContracts("""
-    final Object foo(@org.jetbrains.annotations.NotNull Object bar) {
-        if (!(bar instanceof CharSequence)) return null;
-        return new String("abc");
-    }
-    """)
-    assert c == []
+  public void test_return_boxed_boolean() {
+    List<String> c = inferContracts("""
+                                       static Object test1(Object o1) {
+                                           return o1 == null ? false : smth();
+                                       }
+                                      \s
+                                       static native Object smth()
+                                      \s""");
+    assertEquals(List.of("null -> !null"), c);
   }
 
-  void "test skip empty declarations"() {
-    def c = inferContracts("""
-    final Object foo(Object bar) {
-        Object o = 2;
-        if (bar == null) return null;
-        return new String("abc");
-    }
-    """)
-    assert c == ['null -> null', '!null -> new']
+  public void test_boolean_autoboxing_in_delegation() {
+    List<String> c = inferContracts("""
+                                       static Boolean test04(String s) {
+                                           return test03(s);
+                                       }
+                                       static boolean test03(String s) {
+                                           return s == null;
+                                       }
+                                      \s""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test go inside do-while"() {
-    def c = inferContracts("""
-    final Object foo(Object bar) {
-        do {
-          if (bar == null) return null;
-          bar = smth(bar);
-        } while (smthElse());
-        return new String("abc");
-    }
-    """)
-    assert c == ['null -> null']
+  public void test_boolean_auto_unboxing() {
+    List<String> c = inferContracts("""
+                                         static boolean test02(String s) {
+                                             return test01(s);
+                                         }
+
+                                         static Boolean test01(String s) {
+                                             if (s == null)
+                                                 return new Boolean(false);
+                                             else
+                                                return null;
+                                         }
+                                      \s""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test while instanceof"() {
-    def c = inferContracts("""
-    final Object foo(Object bar) {
-        while (bar instanceof Smth) bar = ((Smth) bar).getWrapped(); 
-        return bar;
-    }
-    
-    interface Smth {
-      Object getWrapped();
-    }
-    """)
-    assert c == ['null -> null']
+  public void test_double_constant_auto_unboxing() {
+    List<String> c = inferContracts("""
+                                         static double method() {
+                                           return 1;
+                                         }
+                                      \s""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test use invoked method notnull"() {
-    def c = inferContracts("""
-    final Object foo(Object bar) {
-        if (bar == null) return null;
-        return doo();
-    }
+  public void test_non_returning_delegation() {
+    List<String> c = inferContracts("""
+                                       static void test2(Object o) {
+                                           assertNotNull(o);
+                                       }
 
-    @org.jetbrains.annotations.NotNull Object doo() {}
-    """)
-    assert c == ['null -> null', '!null -> !null']
-  }
-
-  void "test use delegated method notnull"() {
-    def c = inferContracts("""
-    final Object foo(Object bar, boolean b) {
-        return b ? doo() : null;
-    }
-
-    @org.jetbrains.annotations.NotNull Object doo() {}
-    """)
-    assert c == ['_, true -> !null', '_, false -> null']
+                                       static boolean assertNotNull(Object o) {
+                                           if (o == null) {
+                                               throw new NullPointerException();
+                                           }
+                                           return true;
+                                       }
+                                      \s""");
+    assertEquals(List.of("null -> fail"), c);
   }
 
-  void "test use delegated method notnull with contracts"() {
-    def c = inferContracts("""
-    final Object foo(Object bar, Object o2) {
-        return doo(o2);
-    }
-
-    @org.jetbrains.annotations.NotNull Object doo(Object o) {
-      if (o == null) throw new RuntimeException();
-      return smth();
-    }
-    """)
-    assert c == ['_, null -> fail']
+  public void test_instanceof_notnull() {
+    List<String> c = inferContracts("""
+                                       public boolean test2(Object o) {
+                                           if (o != null) {
+                                               return o instanceof String;
+                                           } else {
+                                               return test1(o);
+                                           }
+                                       }
+                                       static boolean test1(Object o1) {
+                                           return o1 == null;
+                                       }
+                                      \s""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test dig into type cast"() {
-    def c = inferContracts("""
-  public static String cast(Object o) {
-    return o instanceof String ? (String)o : null;
-  }
-    """)
-    assert c == ['null -> null']
-  }
-
-  void "test string concatenation"() {
-    def c = inferContracts("""
-  public static String test(String s1, String s2) {
-    return s1 != null ? s1.trim()+s2.trim() : unknown();
-  }
-    """)
-    assert c == ['!null, _ -> !null']
+  public void test_no_duplicates_in_delegation() {
+    List<String> c = inferContracts("""
+                                       static boolean test2(Object o1, Object o2) {
+                                           return  test1(o1, o1);
+                                       }
+                                       static boolean test1(Object o1, Object o2) {
+                                           return  o1 != null && o2 != null;
+                                       }
+                                      \s""");
+    assertEquals(List.of("null, _ -> false", "!null, _ -> true"), c);
   }
 
-  void "test int addition"() {
-    def c = inferContracts("""
-  public static int test(int a, int b) {
-    return a + b;
-  }
-    """)
-    assert c == []
-  }
-
-  void "test compare with string literal"() {
-    def c = inferContracts("""
-  String s(String s) {
-    return s == "a" ? "b" : null;
-  }
-    """)
-    assert c == ['null -> null']
+  public void test_take_explicit_parameter_notnull_into_account() {
+    List<String> c = inferContracts("""
+                                       final Object foo(@org.jetbrains.annotations.NotNull Object bar) {
+                                           if (!(bar instanceof CharSequence)) return null;
+                                           return new String("abc");
+                                       }
+                                      \s""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test negative compare with string literal"() {
-    def c = inferContracts("""
-  String s(String s) {
-    return s != "a" ? "b" : null;
-  }
-    """)
-    assert c == ['null -> !null']
-  }
-
-  void "test primitive return type"() {
-    def c = inferContracts("""
-  String s(String s) {
-    return s != "a" ? "b" : null;
-  }
-    """)
-    assert c == ['null -> !null']
+  public void test_skip_empty_declarations() {
+    List<String> c = inferContracts("""
+                                       final Object foo(Object bar) {
+                                           Object o = 2;
+                                           if (bar == null) return null;
+                                           return new String("abc");
+                                       }
+                                      \s""");
+    assertEquals(List.of("null -> null", "!null -> new"), c);
   }
 
-  void "test return after if without else"() {
-    def c = inferContracts("""
-public static boolean isBlank(String s) {
-        if (s != null) {
-            final int l = s.length();
-            for (int i = 0; i < l; i++) {
-                final char c = s.charAt(i);
-                if (c != ' ') {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }    """)
-    assert c == ['null -> true']
+  public void test_go_inside_do_while() {
+    List<String> c = inferContracts("""
+                                       final Object foo(Object bar) {
+                                           do {
+                                             if (bar == null) return null;
+                                             bar = smth(bar);
+                                           } while (smthElse());
+                                           return new String("abc");
+                                       }
+                                      \s""");
+    assertEquals(List.of("null -> null"), c);
   }
 
-  void "test do not generate too many contract clauses"() {
-    def c = inferContracts("""
-public static void validate(String p1, String p2, String p3, String p4, String p5, String
-            p6, Integer p7, Integer p8, Integer p9, Boolean p10, String p11, Integer p12, Integer p13) {
-        if (p1 == null && p2 == null && p3 == null && p4 == null && p5 == null && p6 == null && p7 == null && p8 ==
-                null && p9 == null && p10 == null && p11 == null && p12 == null && p13 == null)
+  public void test_while_instanceof() {
+    List<String> c = inferContracts("""
+                                       final Object foo(Object bar) {
+                                           while (bar instanceof Smth) bar = ((Smth) bar).getWrapped();\s
+                                           return bar;
+                                       }
+                                      \s
+                                       interface Smth {
+                                         Object getWrapped();
+                                       }
+                                      \s""");
+    assertEquals(List.of("null -> null"), c);
+  }
+
+  public void test_use_invoked_method_notnull() {
+    List<String> c = inferContracts("""
+                                       final Object foo(Object bar) {
+                                           if (bar == null) return null;
+                                           return doo();
+                                       }
+
+                                       @org.jetbrains.annotations.NotNull Object doo() {}
+                                      \s""");
+    assertEquals(List.of("null -> null", "!null -> !null"), c);
+  }
+
+  public void test_use_delegated_method_notnull() {
+    List<String> c = inferContracts("""
+                                       final Object foo(Object bar, boolean b) {
+                                           return b ? doo() : null;
+                                       }
+
+                                       @org.jetbrains.annotations.NotNull Object doo() {}
+                                      \s""");
+    assertEquals(List.of("_, true -> !null", "_, false -> null"), c);
+  }
+
+  public void test_use_delegated_method_notnull_with_contracts() {
+    List<String> c = inferContracts("""
+                                       final Object foo(Object bar, Object o2) {
+                                           return doo(o2);
+                                       }
+
+                                       @org.jetbrains.annotations.NotNull Object doo(Object o) {
+                                         if (o == null) throw new RuntimeException();
+                                         return smth();
+                                       }
+                                      \s""");
+    assertEquals(List.of("_, null -> fail"), c);
+  }
+
+  public void test_dig_into_type_cast() {
+    List<String> c = inferContracts("""
+                                      public static String cast(Object o) {
+                                        return o instanceof String ? (String)o : null;
+                                      }
+                                       \s""");
+    assertEquals(List.of("null -> null"), c);
+  }
+
+  public void test_string_concatenation() {
+    List<String> c = inferContracts("""
+                                      public static String test(String s1, String s2) {
+                                        return s1 != null ? s1.trim()+s2.trim() : unknown();
+                                      }
+                                       \s""");
+    assertEquals(List.of("!null, _ -> !null"), c);
+  }
+
+  public void test_int_addition() {
+    List<String> c = inferContracts("""
+                                      public static int test(int a, int b) {
+                                        return a + b;
+                                      }
+                                       \s""");
+    assertTrue(c.isEmpty());
+  }
+
+  public void test_compare_with_string_literal() {
+    List<String> c = inferContracts("""
+                                      String s(String s) {
+                                        return s == "a" ? "b" : null;
+                                      }
+                                       \s""");
+    assertEquals(List.of("null -> null"), c);
+  }
+
+  public void test_negative_compare_with_string_literal() {
+    List<String> c = inferContracts("""
+                                      String s(String s) {
+                                        return s != "a" ? "b" : null;
+                                      }
+                                       \s""");
+    assertEquals(List.of("null -> !null"), c);
+  }
+
+  public void test_primitive_return_type() {
+    List<String> c = inferContracts("""
+                                      String s(String s) {
+                                        return s != "a" ? "b" : null;
+                                      }
+                                       \s""");
+    assertEquals(List.of("null -> !null"), c);
+  }
+
+  public void test_return_after_if_without_else() {
+    List<String> c = inferContracts("""
+                                      public static boolean isBlank(String s) {
+                                              if (s != null) {
+                                                  final int l = s.length();
+                                                  for (int i = 0; i < l; i++) {
+                                                      final char c = s.charAt(i);
+                                                      if (c != ' ') {
+                                                          return false;
+                                                      }
+                                                  }
+                                              }
+                                              return true;
+                                          }   \s""");
+    assertEquals(List.of("null -> true"), c);
+  }
+
+  public void test_do_not_generate_too_many_contract_clauses() {
+    List<String> c = inferContracts("""
+                                      public static void validate(String p1, String p2, String p3, String p4, String p5, String
+                                                  p6, Integer p7, Integer p8, Integer p9, Boolean p10, String p11, Integer p12, Integer p13) {
+                                              if (p1 == null && p2 == null && p3 == null && p4 == null && p5 == null && p6 == null && p7 == null && p8 ==
+                                                      null && p9 == null && p10 == null && p11 == null && p12 == null && p13 == null)
+                                                  throw new RuntimeException();
+
+                                              if (p10 != null && (p8 == null && p7 == null && p9 == null))
+                                                  throw new RuntimeException();
+
+                                              if ((p12 != null || p13 != null) && (p12 == null || p13 == null))
+                                                  throw new RuntimeException();
+                                          }
+                                             \s""");
+    assertTrue(c.size() <= JavaSourceInference.MAX_CONTRACT_COUNT);// there could be 74 of them in total
+  }
+
+  public void test_no_inference_for_unused_anonymous_class_methods_where_annotations_won_t_be_used_anyway() {
+    @SuppressWarnings({"ClassInitializerMayBeStatic", "ResultOfObjectAllocationIgnored"}) 
+    PsiMethod method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+      class Foo {{
+        new Object() {
+          Object foo() { return null;}
+        };
+      }}"""), PsiAnonymousClass.class).getMethods()[0];
+    assertTrue(JavaSourceInference.inferContracts((PsiMethodImpl)method).isEmpty());
+  }
+
+  public void test_inference_for_used_anonymous_class_methods() {
+    @SuppressWarnings({"ClassInitializerMayBeStatic", "ResultOfObjectAllocationIgnored"})
+    PsiMethod method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+      class Foo {{
+        new Object() {
+          Object foo(boolean b) { return b ? null : this;}
+          Object bar(boolean b) { return foo(b);}
+        };
+      }}"""), PsiAnonymousClass.class).getMethods()[0];
+    assertEquals(Arrays.asList("true -> null", "false -> this"),
+                 ContainerUtil.map(JavaSourceInference.inferContracts((PsiMethodImpl)method), Object::toString));
+  }
+
+  public void test_anonymous_class_methods_potentially_used_from_outside() {
+    PsiMethod method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+      @SuppressWarnings("ALL")
+      class Foo {{
+        Runnable r = new Runnable() {
+          public void run() {
             throw new RuntimeException();
-
-        if (p10 != null && (p8 == null && p7 == null && p9 == null))
-            throw new RuntimeException();
-
-        if ((p12 != null || p13 != null) && (p12 == null || p13 == null))
-            throw new RuntimeException();
-    }
-        """)
-    assert c.size() <= JavaSourceInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
+          }
+        };
+      }}"""), PsiAnonymousClass.class).getMethods()[0];
+    assertEquals(List.of(" -> fail"), ContainerUtil.map(JavaSourceInference.inferContracts((PsiMethodImpl)method), Object::toString));
   }
 
-  void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
-    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
-class Foo {{
-  new Object() {
-    Object foo() { return null;}
-  };
-}}"""), PsiAnonymousClass).methods[0]
-    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == []
+  public void test_vararg_delegation() {
+    List<String> c = inferContracts("""
+      boolean delegating(Object o, Object o1) {
+        return smth(o, o1);
+      }
+      boolean smth(Object o, Object... o1) {
+        return o == null && o1 != null;
+      }""");
+    assertEquals(List.of("!null, _ -> false", "null, _ -> true"), c);
   }
 
-  void "test inference for used anonymous class methods"() {
-    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
-class Foo {{
-  new Object() {
-    Object foo(boolean b) { return b ? null : this;}
-    Object bar(boolean b) { return foo(b);}
-  };
-}}"""), PsiAnonymousClass).methods[0]
-    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == ['true -> null', 'false -> this']
+  public void test_no_universal_contradictory_contracts_for_nullable_method_delegating_to_notNull() {
+    List<String> c = inferContracts("""
+      @org.jetbrains.annotations.Nullable\s
+      Object delegating() {
+        return smth();
+      }
+      @org.jetbrains.annotations.NotNull\s
+      Object smth() {
+        return this;
+      }""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test anonymous class methods potentially used from outside"() {
-    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
-@SuppressWarnings("ALL")
-class Foo {{
-  Runnable r = new Runnable() {
-    public void run() {
-      throw new RuntimeException();
-    }
-  };    
-}}"""), PsiAnonymousClass).methods[0]
-    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == [' -> fail']
+  public void test_nullToEmpty() {
+    List<String> c = inferContracts("""
+                                        String nullToEmpty(String s) {
+                                          return s == null ? "" : s;
+                                        }""");
+    // NotNull annotation is also inferred, so 'null -> !null' is redundant
+    assertEquals(List.of("!null -> param1"), c);
   }
 
-  void "test vararg delegation"() {
-    def c = inferContracts("""
-  boolean delegating(Object o, Object o1) {
-    return smth(o, o1);
-  }
-  boolean smth(Object o, Object... o1) {
-    return o == null && o1 != null;
-  }
-""")
-    assert c == ['!null, _ -> false', 'null, _ -> true']
+  public void test_coalesce() {
+    List<String> c = inferContracts("""
+                                        <T> T coalesce(T t1, T t2, T t3) {
+                                          if(t1 != null) return t1;
+                                          if(t2 != null) return t2;
+                                          return t3;
+                                        }""");
+    assertEquals(List.of("!null, _, _ -> param1", "null, !null, _ -> param2", "null, null, _ -> param3"), c);
   }
 
-  void "test no universal contradictory contracts for nullable method delegating to notNull"() {
-    def c = inferContracts("""
-  @org.jetbrains.annotations.Nullable 
-  Object delegating() {
-    return smth();
-  }
-  @org.jetbrains.annotations.NotNull 
-  Object smth() {
-    return this;
-  }
-""")
-    assert c == []
+  public void test_param_check() {
+    List<String> c = inferContracts("""
+                                      public static int atLeast(int min, int actual, String varName) {
+                                          if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+                                          return actual;
+                                        }""");
+    assertEquals(List.of("_, _, _ -> param2"), c);
   }
 
-  void "test nullToEmpty"() {
-    def c = inferContracts("""
-  String nullToEmpty(String s) {
-    return s == null ? "" : s;
-  }
-""")
-    assert c == ['!null -> param1'] // NotNull annotation is also inferred, so 'null -> !null' is redundant
-  }
-
-  void "test coalesce"() {
-    def c = inferContracts("""
-  <T> T coalesce(T t1, T t2, T t3) {
-    if(t1 != null) return t1;
-    if(t2 != null) return t2;
-    return t3;
-  }
-""")
-    assert c == ['!null, _, _ -> param1', 'null, !null, _ -> param2', 'null, null, _ -> param3']
+  public void test_param_reassigned() {
+    List<String> c = inferContracts("""
+                                      public static int atLeast(int min, int actual, String varName) {
+                                          if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+                                          actual+=1;
+                                          return actual;
+                                        }""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test param check"() {
-    def c = inferContracts("""
-public static int atLeast(int min, int actual, String varName) {
-    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
-    return actual;
-  }
-""")
-    assert c == ['_, _, _ -> param2']
-  }
-
-  void "test param reassigned"() {
-    def c = inferContracts("""
-public static int atLeast(int min, int actual, String varName) {
-    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
-    actual+=1;
-    return actual;
-  }
-""")
-    assert c == []
+  public void test_param_incremented() {
+    List<String> c = inferContracts("""
+                                      public static int atLeast(int min, int actual, String varName) {
+                                          if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+                                          System.out.println(++actual);
+                                          return actual;
+                                        }""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test param incremented"() {
-    def c = inferContracts("""
-public static int atLeast(int min, int actual, String varName) {
-    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
-    System.out.println(++actual);
-    return actual;
-  }
-""")
-    assert c == []
-  }
-
-  void "test param unary minus"() {
-    def c = inferContracts("""
-public static int atLeast(int min, int actual, String varName) {
-    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
-    System.out.println(-actual);
-    return actual;
-  }
-""")
-    assert c == ['_, _, _ -> param2']
+  public void test_param_unary_minus() {
+    List<String> c = inferContracts("""
+                                      public static int atLeast(int min, int actual, String varName) {
+                                          if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+                                          System.out.println(-actual);
+                                          return actual;
+                                        }""");
+    assertEquals(List.of("_, _, _ -> param2"), c);
   }
 
-  void "test delegate to coalesce"() {
-    def c = inferContracts("""
-public static Object test(Object o1, Object o2) {
-  return choose(foo(o2, o1), "xyz");
-}
+  public void test_delegate_to_coalesce() {
+    List<String> c = inferContracts("""
+                                      public static Object test(Object o1, Object o2) {
+                                        return choose(foo(o2, o1), "xyz");
+                                      }
 
-@org.jetbrains.annotations.Contract("_, null -> null") 
-public static native Object foo(Object x, Object y);
+                                      @org.jetbrains.annotations.Contract("_, null -> null")\s
+                                      public static native Object foo(Object x, Object y);
 
-@org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
-public static native Object choose(Object o1, Object o2);
-""")
-    assert c == []
-  }
-
-  void "test delegate to coalesce 2"() {
-    def c = inferContracts("""
-public static Object test(Object o1, Object o2) {
-  return choose(o2, foo("xyz", o1));
-}
-
-@org.jetbrains.annotations.Contract("_, null -> null") 
-public static native Object foo(Object x, Object y);
-
-@org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
-public static native Object choose(Object o1, Object o2);
-""")
-    assert c == ['_, !null -> !null']
+                                      @org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
+                                      public static native Object choose(Object o1, Object o2);""");
+    assertTrue(c.isEmpty());
   }
 
-  void "test delegate to System exit"() {
-    def c = inferContracts("""
-public static void test(Object obj, int i) {
-  System.exit(0);
-}""")
-    assert c == ['_, _ -> fail']
-  }
-  
-  void "test ternary two notnull"() {
-    def c = inferContracts("""
-static String test(String v, boolean b, String s) { return b ? getFoo() : getBar(); }
+  public void test_delegate_to_coalesce_2() {
+    List<String> c = inferContracts("""
+                                      public static Object test(Object o1, Object o2) {
+                                        return choose(o2, foo("xyz", o1));
+                                      }
 
-static String getFoo() { return "foo"; }
-static String getBar() { return "bar"; }
-""")
-    assert c == ['_, _, _ -> !null']
+                                      @org.jetbrains.annotations.Contract("_, null -> null")\s
+                                      public static native Object foo(Object x, Object y);
+
+                                      @org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
+                                      public static native Object choose(Object o1, Object o2);""");
+    assertEquals(List.of("_, !null -> !null"), c);
   }
 
-  void "test not collapsed"() {
-    def c = inferContracts("""
-static String test(String a, String b) { 
-  if(b == null || a == null) return null;
-  return unknown(a+b);  
-}
-""")
-    assert c == ['_, null -> null', 'null, !null -> null']
-  }
-  
-  void "test primitive cast ignored"() {
-    def c = inferContracts("""static int test(long x) {return (int)x;}""")
-    assert c == []
-  }
-  
-  void "test return param is not propagated"() {
-    def c = inferContracts("""static String foo(Object x) {return String.class.cast(String.valueOf(x));}""")
-    assert c == []
-  }
-  
-  void "test return param propagated"() {
-    def c = inferContracts("""static Object foo(Class<?> c, Object x) {return c.cast(x);}""")
-    assert c == ['_, _ -> param2']
-  }
-  
-  void "test return param propagated to this"() {
-    def c = inferContracts("""Object foo(Class<?> c) {return c.cast(this);}""")
-    assert c == ['_ -> this']
-  }
-  
-  void "test return param propagated new"() {
-    def c = inferContracts("""static Object foo() {return java.util.Objects.requireNonNull(new Object());}""")
-    assert c == [' -> new']
-  }
-  
-  void "test this not propagated"() {
-    def c = inferContracts("""StringBuilder foo() {return new StringBuilder().append("foo");}""")
-    assert c == [' -> new']
-  }
-  
-  void "test this propagated to parameter"() {
-    def c = inferContracts("""StringBuilder foo(StringBuilder sb) {return sb.append("foo");}""")
-    assert c == ['_ -> param1']
-  }
-  
-  void "test boxed boolean equals"() {
-    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
-        return Boolean.FALSE.equals(condition);
-    }""")
-    assert c == ['false -> true', 'true -> false', 'null -> false']
+  public void test_delegate_to_System_exit() {
+    List<String> c = inferContracts("""
+                                      public static void test(Object obj, int i) {
+                                        System.exit(0);
+                                      }""");
+    assertEquals(List.of("_, _ -> fail"), c);
   }
 
-  void "test boxed boolean equals1"() {
-    def c = inferContracts("""public static boolean isFalse(boolean condition) {
-        return Boolean.TRUE.equals(condition);
-    }""")
-    assert c == ['true -> true', 'false -> false']
-  }
-  
-  void "test boxed boolean equals2"() {
-    def c = inferContracts("""public static boolean isFalse(@Nullable Boolean condition) {
-        return Boolean.TRUE.equals(condition);
-    }""")
-    assert c == ['true -> true', 'false -> false', 'null -> false']
-  }
-  
-  void "test boxed boolean equals3"() {
-    def c = inferContracts("""  
-    final boolean test(Foo x) {
-      return Boolean.TRUE.equals(x.getBoolean());
-    }
+  public void test_ternary_two_notnull() {
+    List<String> c = inferContracts("""
+                                      static String test(String v, boolean b, String s) { return b ? getFoo() : getBar(); }
 
-    private native Boolean getBoolean();
-""")
-    assert c == []
+                                      static String getFoo() { return "foo"; }
+                                      static String getBar() { return "bar"; }""");
+    assertEquals(List.of("_, _, _ -> !null"), c);
+  }
+
+  public void test_not_collapsed() {
+    List<String> c = inferContracts("""
+                                      static String test(String a, String b) {\s
+                                        if(b == null || a == null) return null;
+                                        return unknown(a+b); \s
+                                      }""");
+    assertEquals(List.of("_, null -> null", "null, !null -> null"), c);
+  }
+
+  public void test_primitive_cast_ignored() {
+    List<String> c = inferContracts("""
+                                      static int test(long x) {return (int)x;}""");
+    assertTrue(c.isEmpty());
+  }
+
+  public void test_return_param_is_not_propagated() {
+    List<String> c = inferContracts("""
+                                      static String foo(Object x) {return String.class.cast(String.valueOf(x));}""");
+    assertTrue(c.isEmpty());
+  }
+
+  public void test_return_param_propagated() {
+    List<String> c = inferContracts("""
+                                      static Object foo(Class<?> c, Object x) {return c.cast(x);}""");
+    assertEquals(List.of("_, _ -> param2"), c);
+  }
+
+  public void test_return_param_propagated_to_this() {
+    List<String> c = inferContracts("""
+                                      Object foo(Class<?> c) {return c.cast(this);}""");
+    assertEquals(List.of("_ -> this"), c);
+  }
+
+  public void test_return_param_propagated_new() {
+    List<String> c = inferContracts("""
+                                      static Object foo() {return java.util.Objects.requireNonNull(new Object());}""");
+    assertEquals(List.of(" -> new"), c);
+  }
+
+  public void test_this_not_propagated() {
+    List<String> c = inferContracts("""
+                                      StringBuilder foo() {return new StringBuilder().append("foo");}""");
+    assertEquals(List.of(" -> new"), c);
+  }
+
+  public void test_this_propagated_to_parameter() {
+    List<String> c = inferContracts("""
+                                      StringBuilder foo(StringBuilder sb) {return sb.append("foo");}""");
+    assertEquals(List.of("_ -> param1"), c);
+  }
+
+  public void test_boxed_boolean_equals() {
+    List<String> c = inferContracts("""
+                                      public static boolean isFalse(@Nullable Boolean condition) {
+                                              return Boolean.FALSE.equals(condition);
+                                          }""");
+    assertEquals(List.of("false -> true", "true -> false", "null -> false"), c);
+  }
+
+  public void test_boxed_boolean_equals1() {
+    List<String> c = inferContracts("""
+                                      public static boolean isFalse(boolean condition) {
+                                              return Boolean.TRUE.equals(condition);
+                                          }""");
+    assertEquals(List.of("true -> true", "false -> false"), c);
+  }
+
+  public void test_boxed_boolean_equals2() {
+    List<String> c = inferContracts("""
+                                      public static boolean isFalse(@Nullable Boolean condition) {
+                                              return Boolean.TRUE.equals(condition);
+                                          }""");
+    assertEquals(List.of("true -> true", "false -> false", "null -> false"), c);
+  }
+
+  public void test_boxed_boolean_equals3() {
+    List<String> c = inferContracts("""
+                                       \s
+                                          final boolean test(Foo x) {
+                                            return Boolean.TRUE.equals(x.getBoolean());
+                                          }
+
+                                          private native Boolean getBoolean();""");
+    assertTrue(c.isEmpty());
   }
 
   private String inferContract(String method) {
-    return assertOneElement(inferContracts(method))
+    return UsefulTestCase.assertOneElement(inferContracts(method));
   }
 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED
+    return JAVA_8_ANNOTATED;
   }
 
   private List<String> inferContracts(String method) {
-    def clazz = myFixture.addClass("final class Foo { $method }")
-    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
-    def contracts = JavaSourceInference.inferContracts(clazz.methods[0] as PsiMethodImpl)
-    assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
-    return contracts.collect { it as String }
+    PsiClass clazz = myFixture.addClass("final class Foo { " + method + " }");
+    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+    List<StandardMethodContract> contracts = JavaSourceInference.inferContracts((PsiMethodImpl)clazz.getMethods()[0]);
+    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+    return ContainerUtil.map(contracts, Object::toString);
   }
 }

@@ -1,509 +1,461 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.codeInspection
+package com.intellij.java.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
-import com.intellij.codeInspection.dataFlow.MutationSignature
-import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
-import com.intellij.openapi.util.RecursionManager
-import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import groovy.transform.CompileStatic
-@CompileStatic
-class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiMethodImpl;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-  void "test getter"() {
-    assertPure """
-Object getField() {
-  return field;
-}
-"""
+public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
+  public void test_getter() {
+    assertPure("""
+                 Object getField() {
+                   return field;
+                 }""");
   }
 
-  void "test setter"() {
-    assertImpure """
-void setField(String s) {
-  field = s;
-}
-"""
+  public void test_setter() {
+    assertImpure("""
+                   void setField(String s) {
+                     field = s;
+                   }""");
   }
 
-  void "test unknown"() {
-    assertImpure """
-int random() {
-  launchMissiles();
-  return 2;
-}
-"""
+  public void test_unknown() {
+    assertImpure("""
+                   int random() {
+                     launchMissiles();
+                     return 2;
+                   }""");
   }
 
-  void "test print"() {
-    assertImpure """
-int random() {
-  System.out.println("hello");
-  return 2;
-}
-"""
+  public void test_print() {
+    assertImpure("""
+                   int random() {
+                     System.out.println("hello");
+                     return 2;
+                   }""");
   }
 
-  void "test local var assignment"() {
-    assertPure """
-int random(boolean b) {
-  int i = 4;
-  if (b) {
-    i = 2;
-  } else {
-    i++;
-  }
-  return i;
-}
-"""
-  }
-
-  void "test local array var assignment"() {
-    assertPure """
-int[] randomArray() {
-  int[] i = new int[0];
-  i[0] = random();
-  return i;
-}
-int random() { return 2; }
-"""
+  public void test_local_var_assignment() {
+    assertPure("""
+                 int random(boolean b) {
+                   int i = 4;
+                   if (b) {
+                     i = 2;
+                   } else {
+                     i++;
+                   }
+                   return i;
+                 }""");
   }
 
-  void "test field array assignment"() {
-    assertImpure """
-int[] randomArray() {
-  i[0] = random();
-  return i;
-}
-int random() { return 2; }
-  int[] i = new int[0];
-"""
+  public void test_local_array_var_assignment() {
+    assertPure("""
+                 int[] randomArray() {
+                   int[] i = new int[0];
+                   i[0] = random();
+                   return i;
+                 }
+                 int random() { return 2; }""");
   }
 
-  void "test field array assignment as local var"() {
-    assertImpure """
-int[] randomArray() {
-  int[] local = i;
-  local[0] = random();
-  return local;
-}
-int random() { return 2; }
-  int[] i = new int[0];
-"""
+  public void test_field_array_assignment() {
+    assertImpure("""
+                   int[] randomArray() {
+                     i[0] = random();
+                     return i;
+                   }
+                   int random() { return 2; }
+                   int[] i = new int[0];""");
   }
 
-  void "test use explicit pure contract"() {
-    assertPure """
-int method() {
-  return smthPure();
-}
-@org.jetbrains.annotations.Contract(pure=true) native int smthPure();
-"""
+  public void test_field_array_assignment_as_local_var() {
+    assertImpure("""
+                   int[] randomArray() {
+                     int[] local = i;
+                     local[0] = random();
+                     return local;
+                   }
+                   int random() { return 2; }
+                   int[] i = new int[0];""");
   }
 
-  void "test don't analyze more than one call"() {
-    assertImpure """
-int method() {
-  return smthPure(smthPure2());
-}
-int smthPure(int i) { return i; }
-int smthPure2() { return 42; }
-"""
+  public void test_use_explicit_pure_contract() {
+    assertPure("""
+                 int method() {
+                   return smthPure();
+                 }
+                 @org.jetbrains.annotations.Contract(pure=true) native int smthPure();
+                 """);
   }
 
-  void "test empty constructor"() {
-    assertPure """
-public Foo() {
-}
-"""
+  public void test_don_t_analyze_more_than_one_call() {
+    assertImpure("""
+                   int method() {
+                     return smthPure(smthPure2());
+                   }
+                   int smthPure(int i) { return i; }
+                   int smthPure2() { return 42; }
+                   """);
   }
 
-  void "test field writes"() {
-    assertPure """
-int x;
-int y;
-
-public Foo() {
-  x = 5;
-  this.y = 10;
-}
-"""
+  public void test_empty_constructor() {
+    assertPure("""
+                 public Foo() {
+                 }""");
   }
-  
-  void "test constructor calling"() {
+
+  public void test_field_writes() {
+    assertPure("""
+                 int x;
+                 int y;
+
+                 public Foo() {
+                   x = 5;
+                   this.y = 10;
+                 }""");
+  }
+
+  public void test_constructor_calling() {
     // IDEA-192251
-    assertPure """
-    private final int i;
-    private final int j;
-    private final Foo a;
+    assertPure("""
+                 private final int i;
+                 private final int j;
+                 private final Foo a;
 
-    Foo(int i, Foo a) {
-        this.i = i;
-        this.j = getConstant();
-        this.a = a;
-    }
-    
-    private int getConstant() {return 42;}
-"""
+                 Foo(int i, Foo a) {
+                     this.i = i;
+                     this.j = getConstant();
+                     this.a = a;
+                 }
+                 private int getConstant() {return 42;}""");
   }
 
-  void "test delegating field writes"() {
-    assertPure """
-int x;
-int y;
+  public void test_delegating_field_writes() {
+    assertPure("""
+                 int x;
+                 int y;
 
-public Foo() {
-  this(5, 10);
-}
+                 public Foo() {
+                   this(5, 10);
+                 }
 
-Foo(int x, int y) {
-  this.x = x;
-  this.y = y;
-}
-"""
+                 Foo(int x, int y) {
+                   this.x = x;
+                   this.y = y;
+                 }""");
   }
 
-  void "test delegating unknown writes"() {
-    assertImpure """
-int x;
-int y;
+  public void test_delegating_unknown_writes() {
+    assertImpure("""
+                   int x;
+                   int y;
 
-public Foo() {
-  this(5, 10);
-}
+                   public Foo() {
+                     this(5, 10);
+                   }
 
-Foo(int x, int y) {
-  this.x = x;
-  this.z = y;
-}
-"""
+                   Foo(int x, int y) {
+                     this.x = x;
+                     this.z = y;
+                   }""");
   }
 
-  void "test static field writes"() {
-    assertImpure """
-int x;
-static int y;
+  public void test_static_field_writes() {
+    assertImpure("""
+                   int x;
+                   static int y;
 
-public Foo() {
-  x = 5;
-  this.y = 10;
-}
-"""
+                   public Foo() {
+                     x = 5;
+                     this.y = 10;
+                   }""");
   }
 
-  void "test calling constructor with side effects"() {
-    assertImpure """
-    Object newExample() {
-        return new Example1();
-    }
+  public void test_calling_constructor_with_side_effects() {
+    assertImpure("""
+                    Object newExample() {
+                        return new Example1();
+                    }
 
-    private static int created = 0;
+                    private static int created = 0;
 
-    Example1() {
-        created++;
-    }
-    """
+                    Example1() {
+                        created++;
+                    }""");
   }
 
-  void "test anonymous class initializer"() {
-    assertImpure """
-    Object smth() {
-        return new I(){{ created++; }};
-    }
+  public void test_anonymous_class_initializer() {
+    assertImpure("""
+                    Object smth() {
+                        return new I(){{ created++; }};
+                    }
 
-    private static int created = 0;
-    
-    interface I {}
-    """
+                    private static int created = 0;
+
+                    interface I {}""");
   }
 
-  void "test simple anonymous class creation"() {
-    assertPure """
-    Object smth() {
-        return new I(){};
-    }
-    
-    interface I {}
-    """
+  public void test_simple_anonymous_class_creation() {
+    assertPure("""
+                  Object smth() {
+                      return new I(){};
+                  }
+
+                  interface I {}""");
   }
 
-  void "test anonymous class with constructor side effect"() {
-    assertImpure """
-    Object smth() {
-        return new I(){};
-    }
-    
-    class I {
-      I() {
-        unknown();
-      }
-    }
-    """
+  public void test_anonymous_class_with_constructor_side_effect() {
+    assertImpure("""
+                    Object smth() {
+                        return new I(){};
+                    }
+
+                    class I {
+                      I() {
+                        unknown();
+                      }
+                    }""");
   }
 
-  void "test anonymous class with arguments"() {
-    assertImpure """
-    Object smth() {
-        return new I(unknown()){};
-    }
-    
-    class I {
-      I(int a) {}
-    }
-    """
+  public void test_anonymous_class_with_arguments() {
+    assertImpure("""
+                    Object smth() {
+                        return new I(unknown()){};
+                    }
+
+                    class I {
+                      I(int a) {}
+                    }""");
   }
 
-  void "test class with impure initializer creation"() {
-    assertImpure """
-    Object smth() {
-        return new I(42);
-    }
-    
-    class I {
-      I(int answer) {}
-      {
-        launchMissiles();
-      }
-    }
-    """
+  public void test_class_with_impure_initializer_creation() {
+    assertImpure("""
+                    Object smth() {
+                        return new I(42);
+                    }
+
+                    class I {
+                      I(int answer) {}
+                      {
+                        launchMissiles();
+                      }
+                    }""");
   }
 
-  void "test class with impure static initializer creation"() {
-    assertPure """
-    Object smth() {
-        return new I(42);
-    }
-    
-    class I {
-      I(int answer) {}
-      static {
-        launchMissiles();
-      }
-    }
-    """
+  public void test_class_with_impure_static_initializer_creation() {
+    assertPure("""
+                  Object smth() {
+                      return new I(42);
+                  }
+
+                  class I {
+                    I(int answer) {}
+                    static {
+                      launchMissiles();
+                    }
+                  }""");
   }
 
-  void "test class with pure field initializers"() {
-    assertPure """
-    Object smth() {
-        return new I(42);
-    }
-    
-    class I {
-      int x = 5;
-      I(int answer) {x+=answer;}
-    }
-    """
+  public void test_class_with_pure_field_initializers() {
+    assertPure("""
+                  Object smth() {
+                      return new I(42);
+                  }
+
+                  class I {
+                    int x = 5;
+                    I(int answer) {x+=answer;}
+                  }""");
   }
 
-  void "test class with impure field initializers"() {
-    assertImpure """
-    Object smth() {
-        return new I(42);
-    }
-    
-    class I {
-      int x = launchMissiles();
-      I(int answer) {x+=answer;}
-    }
-    """
+  public void test_class_with_impure_field_initializers() {
+    assertImpure("""
+                    Object smth() {
+                        return new I(42);
+                    }
+
+                    class I {
+                      int x = launchMissiles();
+                      I(int answer) {x+=answer;}
+                    }""");
   }
 
-  void "test class with superclass"() {
-    assertImpure """
-    Object smth() {
-        return new I(42);
-    }
-    
-    class I extends Foo {
-      // cannot determine purity yet as should delegate to super ctor
-      I(int answer) {}
-    }
-    """
+  public void test_class_with_superclass() {
+    assertImpure("""
+                    Object smth() {
+                        return new I(42);
+                    }
+
+                    class I extends Foo {
+                      // cannot determine purity yet as should delegate to super ctor
+                      I(int answer) {}
+                    }""");
   }
 
-  void "test delegate to a method calling local class constructor"() {
+  public void test_delegate_to_a_method_calling_local_class_constructor() {
     myFixture.addClass("""
-class Another { 
-  static Object method() {
-    class LocalClass {
-      LocalClass() { launchMissiles(); }
-    }
-    return new LocalClass();
-  } 
-}
-  """)
-    assertImpure """
-    Object smth() {
-        return Another.method();
-    }
-    """
+      class Another {
+        static Object method() {
+          class LocalClass {
+            LocalClass() { launchMissiles(); }
+          }
+          return new LocalClass();
+        }
+      }""");
+    assertImpure("""
+                Object smth() {
+                  return Another.method();
+                }""");
   }
+
+  public void test_increment_field() {
+    assertMutatesThis("""   
+       int x = 0;
+   
+       private void increment() {
+           x++;
+       }
+       """);
+  }
+
+  public void test_delegate_to_setter() {
+    assertMutatesThis("""
+       int x = 0;
+
+       private void foo() {
+           setX(2);
+       }
+
+       private void setX(int x) {
+           this.x = x;
+       }""");
+  }
+
+  public void test_setter_in_ctor() {
+    assertPure("""
+        int x = 0;
+
+        public Foo() {
+            setX(2);
+        }
   
-  void "test increment field"() {
-    assertMutatesThis """
-    int x = 0;
-
-    private void increment() {
-        x++;
-    }
-"""
-  }
-  
-  void "test delegate to setter"() {
-    assertMutatesThis """
-    int x = 0;
-
-    private void foo() {
-        setX(2);
-    }
-    
-    private void setX(int x) {
-        this.x = x;
-    }
-"""
-  }
-  
-  void "test setter in ctor"() {
-    assertPure """
-    int x = 0;
-
-    public Foo() {
-        setX(2);
-    }
-    
-    private void setX(int x) {
-        this.x = x;
-    }
-"""
+        private void setX(int x) {
+            this.x = x;
+        }""");
   }
 
-  void "test plain field read"() {
-    assertPure """
-int x;
-
-int get() {
-  return x;
-}
-"""
+  public void test_plain_field_read() {
+    assertPure("""
+      int x;
+      
+      int get() {
+        return x;
+      }""");
   }
 
-  void "test volatile field read"() {
-    assertImpure """
-volatile int x;
-
-int get() {
-  return x;
-}
-"""
+  public void test_volatile_field_read() {
+    assertImpure("""
+      volatile int x;
+      
+      int get() {
+        return x;
+      }""");
   }
 
-  void "test assertNotNull is pure"() {
-    assertPure """
-static void assertNotNull(Object val) {
-  if(val == null) throw new AssertionError();
-}"""
+  public void test_assertNotNull_is_pure() {
+    assertPure("""
+                 static void assertNotNull(Object val) {
+                   if(val == null) throw new AssertionError();
+                 }""");
   }
 
-  void "test recursive factorial"() {
-    assertPure """int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}"""
+  public void test_recursive_factorial() {
+    assertPure("int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}");
   }
 
-  void "test calling static method with the same signature in the subclass"() {
-    RecursionManager.assertOnMissedCache(testRootDisposable)
-    def clazz = myFixture.addClass """
-class Super {
-  static void foo() { Sub.foo(); }
-}
+  public void test_calling_static_method_with_the_same_signature_in_the_subclass() {
+    RecursionManager.assertOnMissedCache(getTestRootDisposable());
+    PsiClass clazz = myFixture.addClass("""
+      class Super {
+        static void foo() { Sub.foo(); }
+      }
+      
+      class Sub extends Super {
+        static void foo() {
+          unknown();
+          unknown2();
+        }
+      }
+      """);
+    assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
+  }
 
-class Sub extends Super {
-  static void foo() {
-    unknown();
-    unknown2();
+  public void test_super_static_method_does_not_affect_purity() {
+    RecursionManager.assertOnMissedCache(getTestRootDisposable());
+    PsiClass clazz = myFixture.addClass("""
+      class Sub extends Super {
+        static void foo() {
+          unknown();
+          unknown2();
+        }
+      }
+      
+      class Super {
+        static void foo() { }
+      }
+      """);
+    assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
+    assertTrue(JavaMethodContractUtil.isPure(clazz.getSuperClass().getMethods()[0]));
   }
-}
 
-"""
-    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
+  public void test_enum_method() {
+    PsiClass clazz = myFixture.addClass("""
+      enum X {
+        A;
+      
+        Iterable<?> onXyz() {
+          return java.util.Collections.emptyList();
+        }
+      }
+      """);
+    assertTrue(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
   }
 
-  void "test super static method does not affect purity"() {
-    RecursionManager.assertOnMissedCache(testRootDisposable)
-    def clazz = myFixture.addClass """
-class Sub extends Super {
-  static void foo() {
-    unknown();
-    unknown2();
-  }
-}
-
-class Super {
-  static void foo() { }
-}
-"""
-    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
-    assert JavaMethodContractUtil.isPure(clazz.superClass.methods[0])
-  }
-  
-  void "test enum method"() {
-    def clazz = myFixture.addClass """
-enum X {
-  A;
-  
-  Iterable<?> onXyz() {
-    return java.util.Collections.emptyList();
-  }
-}
-"""
-    assert JavaMethodContractUtil.isPure(clazz.methods[0])
-  }
-  
-  void "test enum method with subclass"() {
-    def clazz = myFixture.addClass """
-enum X {
-  A, B {};
-  
-  Iterable<?> onXyz() {
-    return java.util.Collections.emptyList();
-  }
-}
-"""
-    assert !JavaMethodContractUtil.isPure(clazz.methods[0])
+  public void test_enum_method_with_subclass() {
+    PsiClass clazz = myFixture.addClass("""
+      enum X {
+        A, B {};
+      
+        Iterable<?> onXyz() {
+          return java.util.Collections.emptyList();
+        }
+      }
+      """);
+    assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
   }
 
   private void assertPure(String classBody) {
-    assertMutationSignature(classBody, MutationSignature.pure())
+    assertMutationSignature(classBody, MutationSignature.pure());
   }
 
   private void assertImpure(String classBody) {
-    assertMutationSignature(classBody, MutationSignature.unknown())
+    assertMutationSignature(classBody, MutationSignature.unknown());
   }
 
   private void assertMutatesThis(String classBody) {
-    assertMutationSignature(classBody, MutationSignature.pure().alsoMutatesThis())
+    assertMutationSignature(classBody, MutationSignature.pure().alsoMutatesThis());
   }
 
   private void assertMutationSignature(String classBody, MutationSignature expected) {
-    def clazz = myFixture.addClass("final class Foo { $classBody }")
-    assert !((PsiFileImpl)clazz.containingFile).contentsLoaded
-    def signature = JavaSourceInference.inferMutationSignature((PsiMethodImpl)clazz.methods[0])
-    assert !((PsiFileImpl)clazz.containingFile).contentsLoaded
-    assert expected == signature
+    PsiClass clazz = myFixture.addClass("final class Foo { " + classBody + " }");
+    assert !((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded();
+    MutationSignature signature = JavaSourceInference.inferMutationSignature((PsiMethodImpl)clazz.getMethods()[0]);
+    assert !((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded();
+    assert expected.equals(signature);
   }
 }
