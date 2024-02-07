@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -33,7 +33,8 @@ public final class StorageLockContext {
   private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = LOCK_FREE_PAGE_CACHE_ENABLED ?
                                                                                      new FilePageCacheLockFree(
                                                                                        FILE_PAGE_CACHE_NEW_CAPACITY_BYTES,
-                                                                                       (long)(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES * HEAP_CAPACITY_FRACTION)
+                                                                                       (long)(FILE_PAGE_CACHE_NEW_CAPACITY_BYTES *
+                                                                                              HEAP_CAPACITY_FRACTION)
                                                                                      ) : null;
 
   static final StorageLockContext DEFAULT_CONTEXT = new StorageLockContext(false);
@@ -188,7 +189,7 @@ public final class StorageLockContext {
   }
 
   @NotNull
-  public PageContentLockingStrategy lockingStrategyWithGlobalLock(){
+  public PageContentLockingStrategy lockingStrategyWithGlobalLock() {
     return defaultPageContentLockingStrategy;
   }
 
@@ -211,10 +212,15 @@ public final class StorageLockContext {
   @ApiStatus.Internal
   public void checkReadLockNotHeld() {
     if (!disableAssertions) {
-      if (lock.getReadHoldCount() > 0 ) {
+      if (readLockHolds() > 0) {
         throw new IllegalStateException("StorageLock.readLock must NOT be held here (write lock is about to be taken?)");
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public int readLockHolds() {
+    return lock.getReadHoldCount();
   }
 
   void assertUnderSegmentAllocationLock() {

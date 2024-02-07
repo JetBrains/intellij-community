@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
@@ -614,8 +614,33 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         myCorrupted = true;
         if (LOG.isDebugEnabled()) LOG.debug("Marking corrupted:" + myFile, new Throwable());
         try {
-          markDirty(true);
-          force();
+          StorageLockContext lockContext = myCollisionResolutionStorage.getStorageLockContext();
+
+
+          //WARNING: POTENTIALLY TRIGGERING CONTENT
+          //    Both .markDirty() and .force() acquire storage.writeLock() -- because they (potentially) modify the
+          //    storage. But this is deadlock-prone, because markCorrupted() could be called from otherwise-read-only
+          //    methods (e.g. PersistentMapImpl.doGet()), there lockStorageRead() is acquired.
+          //    (attempt to acquire readLock under writeLock is a deadlock for regular j.u.c.ReentrantReadWriteLock)
+          //
+          //    I found no simple-and-correct way to untangle it: Locks management in PersistentHMap/Enumerator/ResizeableMappedFile
+          //    is quite complicated already, because there are no clear abstraction borders, and PHM regularly puts its
+          //    hands into the Enumerator implementation internals. Don't want to complicate it even more for a single
+          //    .markCorrupted() method.
+          //
+          //    It seems like the least-effort + least-intrusive way to avoid deadlock is to temporarily release readLock(s),
+          //    if acquired, and re-acquire them back after markDirty()+force. This creates a window where no locks are acquired
+          //    -- an opportunity to corrupt the enumerator/map state -- but we're in the .markCorrupted() method already, what
+          //    could be any more corrupted? Jokes aside: we expect .markCorrupted() to be called infrequently, and to deadlock
+          //    the whole app is definitely worse than to corrupt a bit more storage that is already corrupted.
+          //
+          //    Basically, I suggest seeing markCorrupted() method as cursed, and spoiled with dark arts -- scapegoat for all
+          //    the PHM sins.
+
+          runWithStorageReadLocksTemporaryReleased(lockContext, () -> {
+            markDirty(true);
+            force();
+          });
         }
         catch (IOException e) {
           // ignore...
@@ -669,6 +694,33 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       LOG.error(e);
       markCorrupted();
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Release all lockContext's readLocks, held by current thread,
+   * run the task given,
+   * and re-acquire back all the readLocks released
+   */
+  private static void runWithStorageReadLocksTemporaryReleased(@NotNull StorageLockContext lockContext,
+                                                               @NotNull ThrowableRunnable<IOException> task) throws IOException {
+    int readLocksActuallyReleased = 0;
+    Lock readLock = lockContext.readLock();
+    try {
+      int readLocksToRelease = lockContext.readLockHolds();
+      //readLocksActuallyReleased counts locks _actually released_ -- i.e. if the loop terminates earlier than readLocksToRelease,
+      // we'll acquire back only the number of locks we've actually released, not more.
+      while (readLocksActuallyReleased < readLocksToRelease) {
+        readLock.unlock();
+        readLocksActuallyReleased++;
+      }
+
+      task.run();
+    }
+    finally {
+      for (int i = 0; i < readLocksActuallyReleased; i++) {
+        readLock.lock();
+      }
     }
   }
 }
