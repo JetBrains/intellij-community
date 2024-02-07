@@ -432,8 +432,10 @@ class DanglingFileModuleInvalidationTest : AbstractMultiModuleTest() {
         val srcFile = srcModule.findSourceKtFile("test.kt")
         val variableDeclaration = srcFile.findDescendantOfType<KtVariableDeclaration> { it.name == "x" }!!
 
+        val anotherFile = anotherModule.findSourceKtFile("another.kt")
+
         val codeFragment = KtBlockCodeFragment(project, "fragment.kt", "foo()", "", variableDeclaration)
-        ensureFilesResolved(codeFragment, srcFile)
+        ensureFilesResolved(codeFragment, srcFile, anotherFile)
 
         val (sessionBefore, sessionAfter) = performModification(codeFragment) {
             anotherModule.addKotlinStdlib()
