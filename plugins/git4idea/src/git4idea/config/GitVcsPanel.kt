@@ -71,6 +71,8 @@ private fun cdSyncBranches(project: Project)                                  = 
 private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), { projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }, groupName = gitOptionGroupName)
 private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), { projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }, groupName = gitOptionGroupName)
 private fun cdWarnAboutDetachedHead(project: Project)                         = CheckboxDescriptor(message("settings.detached.head"), { projectSettings(project).warnAboutDetachedHead() }, { projectSettings(project).setWarnAboutDetachedHead(it) }, groupName = gitOptionGroupName)
+private fun cdWarnAboutLargeFiles(project: Project)                           = CheckboxDescriptor(message("settings.large.files"), { projectSettings(project).warnAboutLargeFiles() }, { projectSettings(project).setWarnAboutLargeFiles(it) }, groupName = gitOptionGroupName)
+private fun cdWarnAboutBadFileNames(project: Project)                         = CheckboxDescriptor(message("settings.bad.file.names"), { projectSettings(project).warnAboutBadFileNames() }, { projectSettings(project).setWarnAboutBadFileNames(it) }, groupName = gitOptionGroupName)
 private fun cdAutoUpdateOnPush(project: Project)                              = CheckboxDescriptor(message("settings.auto.update.on.push.rejected"), { projectSettings(project).autoUpdateIfPushRejected() }, { projectSettings(project).setAutoUpdateIfPushRejected(it) }, groupName = gitOptionGroupName)
 private fun cdShowCommitAndPushDialog(project: Project)                       = CheckboxDescriptor(message("settings.push.dialog"), { projectSettings(project).shouldPreviewPushOnCommitAndPush() }, { projectSettings(project).setPreviewPushOnCommitAndPush(it) }, groupName = gitOptionGroupName)
 private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = CheckboxDescriptor(message("settings.push.dialog.for.protected.branches"), { projectSettings(project).isPreviewPushProtectedOnly }, { projectSettings(project).isPreviewPushProtectedOnly = it }, groupName = gitOptionGroupName)
@@ -84,6 +86,8 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
     cdAutoUpdateOnPush(project),
     cdWarnAboutCrlf(project),
     cdWarnAboutDetachedHead(project),
+    cdWarnAboutLargeFiles(project),
+    cdWarnAboutBadFileNames(project),
     cdEnableStagingArea
   )
   val manager = GitRepositoryManager.getInstance(project)
@@ -188,6 +192,18 @@ internal class GitVcsPanel(private val project: Project) :
       }
       row {
         checkBox(cdWarnAboutDetachedHead(project))
+      }
+      row {
+        val checkBox = checkBox(cdWarnAboutLargeFiles(project))
+          .gap(RightGap.SMALL)
+        spinner(1..100000, 1)
+          .bindIntValue(projectSettings::getWarnAboutLargeFilesLimitMb, projectSettings::setWarnAboutLargeFilesLimitMb)
+          .enabledIf(checkBox.selected)
+          .gap(RightGap.SMALL)
+        label(message("settings.large.files.suffix"))
+      }
+      row {
+        checkBox(cdWarnAboutBadFileNames(project))
       }
       row {
         checkBox(cdAddCherryPickSuffix(project))

@@ -745,14 +745,6 @@
                  description="Detect HEAD relative reference while pushing up to selected commit to the current branch"
                  restartRequired="false"/>
 
-    <registryKey key="git.pre.commit.check.max.file.size.mb" defaultValue="50"
-                 description="Warn before committing files bigger than given threshold into Git repository."
-                 restartRequired="false"/>
-
-    <registryKey key="git.pre.commit.check.windows.compatible.names" defaultValue="true"
-                 description="Warn before committing files that might not be compatible with Windows OS."
-                 restartRequired="false"/>
-
     <vcs.actions.ScheduleForAdditionActionExtension implementation="git4idea.actions.GitAdd"/>
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>

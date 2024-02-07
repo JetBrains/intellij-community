@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -160,10 +159,10 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
 private class GitLargeFileCheckinHandler(project: Project) : GitCheckinHandler(project) {
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
 
-  override fun isEnabled(): Boolean = true
+  override fun isEnabled(): Boolean = GitVcsSettings.getInstance(project).warnAboutLargeFiles()
 
   override suspend fun runGitCheck(commitInfo: CommitInfo, committedChanges: List<Change>): CommitProblem? {
-    val maxFileSize = Registry.intValue("git.pre.commit.check.max.file.size.mb") * 1024 * 1024
+    val maxFileSize = GitVcsSettings.getInstance(project).warnAboutLargeFilesLimitMb * 1024 * 1024
     if (maxFileSize <= 0) return null
 
     val files = committedChanges.mapNotNull { it.virtualFile }
@@ -438,7 +437,7 @@ private class GitDetachedRootCheckinHandler(project: Project) : GitCheckinHandle
 private class GitFileNameCheckinHandler(project: Project) : GitCheckinHandler(project) {
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.EARLY
 
-  override fun isEnabled(): Boolean = !SystemInfo.isWindows && Registry.`is`("git.pre.commit.check.windows.compatible.names")
+  override fun isEnabled(): Boolean = !SystemInfo.isWindows && GitVcsSettings.getInstance(project).warnAboutBadFileNames()
 
   override suspend fun runGitCheck(commitInfo: CommitInfo, committedChanges: List<Change>): CommitProblem? {
     for (change in committedChanges) {

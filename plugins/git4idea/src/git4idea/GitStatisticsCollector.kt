@@ -56,6 +56,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     addBoolIfDiffers(set, settings, defaultSettings, { it.autoUpdateIfPushRejected() }, PUSH_AUTO_UPDATE)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutCrlf() }, WARN_CRLF)
     addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutDetachedHead() }, WARN_DETACHED)
+    addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutLargeFiles() }, WARN_LARGE_FILES)
+    addBoolIfDiffers(set, settings, defaultSettings, { it.warnAboutBadFileNames() }, WARN_BAD_FILE_NAMES)
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.filterByActionInPopup() }, FILTER_BY_ACTION_IN_POPUP)
     addBoolIfDiffers(set, settings, defaultSettings, { it.filterByRepositoryInPopup() }, FILTER_BY_REPOSITORY_IN_POPUP)
@@ -163,7 +165,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
     }
   }
 
-  private val GROUP = EventLogGroup("git.configuration", 16)
+  private val GROUP = EventLogGroup("git.configuration", 17)
 
   private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
   private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -175,8 +177,12 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val SAVE_POLICY = GROUP.registerVarargEvent("save.policy", SAVE_POLICY_VALUE)
 
   private val PUSH_AUTO_UPDATE = GROUP.registerVarargEvent("push.autoupdate", EventFields.Enabled)
+
   private val WARN_CRLF = GROUP.registerVarargEvent("warn.about.crlf", EventFields.Enabled)
   private val WARN_DETACHED = GROUP.registerVarargEvent("warn.about.detached", EventFields.Enabled)
+  private val WARN_LARGE_FILES = GROUP.registerVarargEvent("warn.about.large.files", EventFields.Enabled)
+  private val WARN_BAD_FILE_NAMES = GROUP.registerVarargEvent("warn.about.bad.file.names", EventFields.Enabled)
+
   private val STAGING_AREA = GROUP.registerVarargEvent("staging.area.enabled", EventFields.Enabled)
 
   private val TYPE = EventFields.Enum("type", GitVersion.Type::class.java) { it.name }

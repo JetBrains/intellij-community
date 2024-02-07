@@ -59,6 +59,12 @@ class GitVcsOptions : BaseState() {
   var warnAboutCrlf by property(true)
   @get:OptionTag("WARN_ABOUT_DETACHED_HEAD")
   var isWarnAboutDetachedHead by property(true)
+  @get:OptionTag("WARN_ABOUT_LARGE_FILES")
+  var isWarnAboutLargeFiles by property(true)
+  @get:OptionTag("WARN_ABOUT_LARGE_FILES_LIMIT_MB")
+  var warnAboutLargeFilesLimitMb by property(50)
+  @get:OptionTag("WARN_ABOUT_BAD_FILE_NAMES")
+  var isWarnAboutBadFileNames by property(true)
 
   @get:OptionTag("RESET_MODE")
   var resetMode by enum<GitResetMode>()
