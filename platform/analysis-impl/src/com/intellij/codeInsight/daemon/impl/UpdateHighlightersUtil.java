@@ -6,6 +6,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +26,7 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -136,9 +138,12 @@ public final class UpdateHighlightersUtil {
                                               int group,
                                               @NotNull MarkupModelEx markup) {
     TextRange range = new TextRange(startOffset, endOffset);
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile instanceof PsiCompiledFile) {
-      psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+    PsiFile psiFile;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-341181, IDEA-301732, EA-823296")) {
+      psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile instanceof PsiCompiledFile) {
+        psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
+      }
     }
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (psiFile != null) {

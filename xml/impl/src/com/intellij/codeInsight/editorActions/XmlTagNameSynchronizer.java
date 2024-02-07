@@ -13,6 +13,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
@@ -41,6 +42,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.XmlUtil;
@@ -74,7 +76,10 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     }
     Document document = editor.getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    Language language = findXmlLikeLanguage(project, file);
+    Language language;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-340634, EA-912927")) {
+      language = findXmlLikeLanguage(project, file);
+    }
     if (language != null) {
       new TagNameSynchronizer((EditorImpl)editor, project, language).listenForDocumentChanges();
     }
