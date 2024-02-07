@@ -25,13 +25,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SlowOperations
@@ -406,8 +405,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       handleException(group, operationName, event, ex)
       return emptyList()
     }
-    groupChildren[group] = children
-    return children
+    return groupChildren.getOrPut(group) { children }
   }
 
   private suspend fun expandGroupChild(child: AnAction, hideDisabledBase: Boolean): List<AnAction> {
@@ -573,8 +571,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       return null
     }
     if (success) {
-      updatedPresentations[action] = presentation
-      return presentation
+      return updatedPresentations.getOrPut(action) { presentation }
     }
     return null
   }
