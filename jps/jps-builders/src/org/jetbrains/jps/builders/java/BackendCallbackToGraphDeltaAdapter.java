@@ -12,6 +12,7 @@ import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
+import java.nio.file.Path;
 import java.util.*;
 
 final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
@@ -21,6 +22,7 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   private final Map<String, Pair<Collection<String>, Collection<String>>> myImportRefs = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Collection<Callbacks.ConstantRef>> myConstantRefs = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Set<Usage>> myAdditionalUsages = Collections.synchronizedMap(new HashMap<>());
+  private final Map<Path, Set<Usage>> myPerSourceAdditionalUsages = Collections.synchronizedMap(new HashMap<>());
   private final List<Pair<Node<?, ?>, Iterable<NodeSource>>> myNodes = new ArrayList<>();
   private final GraphConfiguration myGraphConfig;
 
@@ -46,6 +48,9 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
           builder.addUsage(usage);
         }
       }
+    }
+    for (Usage usage : Iterators.flat(Iterators.map(sources, src -> myPerSourceAdditionalUsages.remove(Path.of(src))))) {
+      builder.addUsage(usage);
     }
     var node = builder.getResult();
     if (!node.isPrivate()) {
@@ -82,6 +87,11 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   @Override
   public void registerUsage(String className, Usage usage) {
     myAdditionalUsages.computeIfAbsent(className.replace('.', '/'), k -> Collections.synchronizedSet(new HashSet<>())).add(usage);
+  }
+
+  @Override
+  public void registerUsage(Path source, Usage usage) {
+    myPerSourceAdditionalUsages.computeIfAbsent(source, k -> Collections.synchronizedSet(new HashSet<>())).add(usage);
   }
 
   private static void addImportUsages(JvmClassNodeBuilder builder, Collection<String> classImports, Collection<String> staticImports) {

@@ -6,6 +6,7 @@ import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.Future;
@@ -29,6 +30,8 @@ public final class Callbacks {
     void registerImports(String className, Collection<String> classImports, Collection<String> staticImports);
     void registerConstantReferences(String className, Collection<ConstantRef> cRefs);
     default void registerUsage(String className, Usage usage) {
+    }
+    default void registerUsage(Path source, Usage usage) {
     }
   }
 

@@ -19,4 +19,9 @@ public final class ImportPackageOnDemandUsage extends JvmElementUsage {
   public ImportPackageOnDemandUsage(GraphDataInput in) throws IOException {
     super(in);
   }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode() + 3;
+  }
 }
