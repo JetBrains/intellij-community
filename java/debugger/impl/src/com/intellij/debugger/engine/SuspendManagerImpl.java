@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectCollectedException;
@@ -36,7 +37,9 @@ public class SuspendManagerImpl implements SuspendManager {
     myDebugProcess.addDebugProcessListener(new DebugProcessAdapterImpl() {
       @Override
       public void processDetached(DebugProcessImpl process, boolean closedByUser) {
+        myEventContexts.forEach(Disposer::dispose);
         myEventContexts.clear();
+        myPausedContexts.forEach(Disposer::dispose);
         myPausedContexts.clear();
         myFrozenThreads.clear();
       }
@@ -128,7 +131,7 @@ public class SuspendManagerImpl implements SuspendManager {
     return myPausedContexts.peekFirst();
   }
 
-  public void popContext(SuspendContextImpl suspendContext) {
+  private void popContext(SuspendContextImpl suspendContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     suspends--;
     if (LOG.isDebugEnabled()) {
@@ -138,7 +141,7 @@ public class SuspendManagerImpl implements SuspendManager {
     myPausedContexts.remove(suspendContext);
   }
 
-  void pushPausedContext(SuspendContextImpl suspendContext) {
+  private void pushPausedContext(SuspendContextImpl suspendContext) {
     if (LOG.isDebugEnabled()) {
       LOG.assertTrue(myEventContexts.contains(suspendContext));
     }
