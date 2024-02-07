@@ -24,7 +24,7 @@ import javax.swing.JComponent
 internal val COMBINED_DIFF_PREVIEW_TAB_NAME = Key.create<() -> @NlsContexts.TabTitle String>("combined_diff_preview_tab_name")
 internal val COMBINED_DIFF_PREVIEW_MODEL = Key.create<CombinedDiffPreviewModel>("combined_diff_preview_model")
 
-abstract class CombinedDiffPreviewVirtualFile() : CombinedDiffVirtualFile("")
+abstract class CombinedDiffPreviewVirtualFile() : CombinedDiffVirtualFile("CombinedDiffPreviewVirtualFile")
 
 abstract class CombinedDiffPreview(project: Project,
                                    targetComponent: JComponent,
