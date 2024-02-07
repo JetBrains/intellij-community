@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.openapi.vfs.impl.http.RemoteFileState
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import java.io.InputStream
 
@@ -31,17 +31,21 @@ internal class JsonSchemaObjectStorage {
 
   private data class SchemaId(val schemaFile: VirtualFile, val modificationStamp: Long)
 
-  private val parsedSchemaById = CollectionFactory.createConcurrentWeakKeyWeakValueMap<SchemaId, JsonSchemaObject>()
+  private val parsedSchemaById = ConcurrentFactoryMap.createWeakMap<SchemaId, JsonSchemaObject> { id ->
+    createRootSchemaObject(id.schemaFile)
+  }
 
   fun getOrComputeSchemaRootObject(schemaFile: VirtualFile): JsonSchemaObject? {
     if (isNotLoadedHttpFile(schemaFile)) return null
 
-    return parsedSchemaById.getOrPut(schemaFile.asSchemaId()) {
-      createRootSchemaObject(schemaFile)
-    }.takeIf { it !is MissingJsonSchemaObject }
+    println("SIZE: ${parsedSchemaById.size}")
+    return parsedSchemaById[schemaFile.asSchemaId()]
+      .takeIf { it !is MissingJsonSchemaObject }
   }
 
   fun getComputedSchemaRootOrNull(maybeSchemaFile: VirtualFile): JsonSchemaObject? {
+    if (!parsedSchemaById.containsKey(maybeSchemaFile.asSchemaId())) return null
+
     return parsedSchemaById[maybeSchemaFile.asSchemaId()]
       .takeIf { it !is MissingJsonSchemaObject }
   }

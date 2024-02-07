@@ -11,16 +11,14 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.*;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -68,6 +66,9 @@ public final class JsonSchemaObjectReadingUtils {
     return value;
   }
 
+  private static final Map<String, JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter> complexReferenceCache
+    = FactoryMap.create((key) -> new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(key));
+
   public static @Nullable JsonSchemaObject fetchSchemaFromRefDefinition(@NotNull String ref,
                                                                         final @NotNull JsonSchemaObject schema,
                                                                         @NotNull JsonSchemaService service,
@@ -75,7 +76,12 @@ public final class JsonSchemaObjectReadingUtils {
 
     final VirtualFile schemaFile = service.resolveSchemaFile(schema);
     if (schemaFile == null) return null;
-    final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(ref);
+    final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter;
+    if (Registry.is("json.schema.object.v2")) {
+      splitter = complexReferenceCache.get(ref);
+    } else {
+      splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(ref);
+    }
     String schemaId = splitter.getSchemaId();
     if (schemaId != null) {
       var refSchema = resolveSchemaByReference(service, schemaFile, schemaId);

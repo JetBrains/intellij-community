@@ -421,18 +421,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   private @Nullable JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
     String schemaPropertyValue;
     if (Registry.is("json.schema.object.v2")) {
-      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
-      if (schemaRootOrNull == null) return null;
-      schemaPropertyValue = schemaRootOrNull.getSchema();
+      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getOrComputeSchemaRootObject(file);
+      if (schemaRootOrNull != null) {
+        schemaPropertyValue = schemaRootOrNull.getSchema();
+        return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
+      }
     }
-    else {
-      Ref<String> res = Ref.create(null);
-      //noinspection CodeBlock2Expr
-      ApplicationManager.getApplication().runReadAction(() -> {
-        res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
-      });
-      schemaPropertyValue = res.get();
-    }
+    Ref<String> res = Ref.create(null);
+    //noinspection CodeBlock2Expr
+    ApplicationManager.getApplication().runReadAction(() -> {
+      res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
+    });
+    schemaPropertyValue = res.get();
     return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
   }
 
