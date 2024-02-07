@@ -50,10 +50,12 @@ internal abstract class CombinedActivityDiffPreview(project: Project,
   }
 
   fun setDiffData(diffData: ActivityDiffData?, forceUpdate: Boolean = false) {
-    if (this.diffData != diffData) {
+    val dataChanged = this.diffData != diffData
+    if (dataChanged) {
       this.diffData = diffData
-      if (forceUpdate) updatePreviewProcessor.updateBlocks() else updatePreview()
     }
+    if (forceUpdate) updatePreviewProcessor.updateBlocks()
+    else if (dataChanged) updatePreview()
   }
 
   private inner class CombinedActivityDiffPreviewModel(project: Project, parentDisposable: Disposable) :
