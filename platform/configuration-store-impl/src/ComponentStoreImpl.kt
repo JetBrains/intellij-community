@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -199,7 +201,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal open suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    commitComponents(forceSavingAllSettings, saveSessionManager, saveResult)
+    commitComponents(isForce = forceSavingAllSettings, sessionManager = saveSessionManager, saveResult = saveResult)
     saveSessionManager.save(saveResult)
   }
 
@@ -255,7 +257,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        commitComponent(sessionManager, info, name, modificationCountChanged)
+        commitComponent(sessionManager = sessionManager,
+                        info = info,
+                        componentName = name,
+                        modificationCountChanged = modificationCountChanged)
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -306,7 +311,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val saveManager = createSaveSessionProducerManager()
 
     val componentInfo = getComponents().entries.first { it.key == stateSpec.name }.value
-    commitComponent(saveManager, componentInfo, componentName = null, modificationCountChanged = false)
+    commitComponent(sessionManager = saveManager, info = componentInfo, componentName = null, modificationCountChanged = false)
 
     val saveResult = SaveResult()
     saveManager.save(saveResult)
@@ -327,13 +332,14 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
       val effectiveComponentName = componentName ?: getComponentName(component)
       storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
-        sessionManager.getProducer(it)?.setState(component, effectiveComponentName, component)
+        sessionManager.getProducer(it)?.setState(component = component, componentName = effectiveComponentName, state = component)
       }
       return
     }
 
     var state: Any? = null
-    var stateRequested = false  // the state might be null, so we need an additional flag to keep track of whether the state was requested
+    // the state might be null, so we need an additional flag to keep track of whether the state was requested
+    var stateRequested = false
 
     val stateSpec = info.stateSpec!!
     val effectiveComponentName = componentName ?: stateSpec.name
@@ -371,7 +377,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
 
-        setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
+        setStateToSaveSessionProducer(state = state,
+                                      info = info,
+                                      effectiveComponentName = effectiveComponentName,
+                                      sessionProducer = sessionProducer)
       }
     }
   }
@@ -633,7 +642,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val isChangedStoragesEmpty = changedStorages.isEmpty()
-    initComponent(info, if (isChangedStoragesEmpty) null else changedStorages, ThreeState.UNSURE)
+    initComponent(info = info, changedStorages = if (isChangedStoragesEmpty) null else changedStorages, reloadData = ThreeState.UNSURE)
     return true
   }
 
@@ -663,7 +672,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     LOG.debug { "Reload components: $componentNames" }
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
-    reinitComponents(componentNames, changedStorages, notReloadableComponents)
+    reinitComponents(componentNames = componentNames, changedStorages = changedStorages, notReloadableComponents = notReloadableComponents)
     return notReloadableComponents.ifEmpty { null }
   }
 

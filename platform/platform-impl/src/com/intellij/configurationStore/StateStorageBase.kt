@@ -24,10 +24,12 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
   final override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
     return deserializeState(
-      stateElement = getSerializedState(storageData = getStorageData(reload),
-                                        component = component,
-                                        componentName = componentName,
-                                        archive = false),
+      stateElement = getSerializedState(
+        storageData = getStorageData(reload),
+        component = component,
+        componentName = componentName,
+        archive = false,
+      ),
       stateClass = stateClass,
       mergeInto = mergeInto,
     )

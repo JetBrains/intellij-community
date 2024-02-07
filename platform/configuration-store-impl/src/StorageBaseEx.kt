@@ -11,15 +11,19 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
-  internal fun <S : Any> createGetSession(component: PersistentStateComponent<S>,
-                                          componentName: String,
-                                          stateClass: Class<S>,
-                                          reload: Boolean = false): StateGetter<S> {
-    return StateGetterImpl(component = component,
-                           componentName = componentName,
-                           storageData = getStorageData(reload),
-                           stateClass = stateClass,
-                           storage = this)
+  internal fun <S : Any> createGetSession(
+    component: PersistentStateComponent<S>,
+    componentName: String,
+    stateClass: Class<S>,
+    reload: Boolean = false,
+  ): StateGetter<S> {
+    return StateGetterImpl(
+      component = component,
+      componentName = componentName,
+      storageData = getStorageData(reload),
+      stateClass = stateClass,
+      storage = this,
+    )
   }
 
   /**
@@ -28,23 +32,27 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   abstract fun archiveState(storageData: T, componentName: String, serializedState: Element?)
 }
 
-internal fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean,
-                                         storage: StateStorage,
-                                         component: PersistentStateComponent<S>,
-                                         componentName: String,
-                                         stateClass: Class<S>,
-                                         reloadData: Boolean): StateGetter<S> {
+internal fun <S : Any> createStateGetter(
+  isUseLoadedStateAsExisting: Boolean,
+  storage: StateStorage,
+  component: PersistentStateComponent<S>,
+  componentName: String,
+  stateClass: Class<S>,
+  reloadData: Boolean,
+): StateGetter<S> {
   if (isUseLoadedStateAsExisting && storage is StorageBaseEx<*>) {
     return storage.createGetSession(component = component, componentName = componentName, stateClass = stateClass, reload = reloadData)
   }
 
   return object : StateGetter<S> {
     override fun getState(mergeInto: S?): S? {
-      return storage.getState(component = component,
-                              componentName = componentName,
-                              stateClass = stateClass,
-                              mergeInto = mergeInto,
-                              reload = reloadData)
+      return storage.getState(
+        component = component,
+        componentName = componentName,
+        stateClass = stateClass,
+        mergeInto = mergeInto,
+        reload = reloadData,
+      )
     }
 
     override fun archiveState(): S? = null
@@ -58,11 +66,13 @@ interface StateGetter<S : Any> {
   fun archiveState(): S?
 }
 
-private class StateGetterImpl<S : Any, T : Any>(private val component: PersistentStateComponent<S>,
-                                                private val componentName: String,
-                                                private val storageData: T,
-                                                private val stateClass: Class<S>,
-                                                private val storage: StorageBaseEx<T>) : StateGetter<S> {
+private class StateGetterImpl<S : Any, T : Any>(
+  private val component: PersistentStateComponent<S>,
+  private val componentName: String,
+  private val storageData: T,
+  private val stateClass: Class<S>,
+  private val storage: StorageBaseEx<T>,
+) : StateGetter<S> {
   private var serializedState: Element? = null
 
   override fun getState(mergeInto: S?): S? {
@@ -72,7 +82,7 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     return deserializeState(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
   }
 
-  override fun archiveState() : S? {
+  override fun archiveState(): S? {
     if (serializedState == null) {
       return null
     }
@@ -98,8 +108,8 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode &&
-      serializedState != serializedStateAfterLoad &&
-      (serializedStateAfterLoad == null || !JDOMUtil.areElementsEqual(serializedState, serializedStateAfterLoad))) {
+        serializedState != serializedStateAfterLoad &&
+        (serializedStateAfterLoad == null || !JDOMUtil.areElementsEqual(serializedState, serializedStateAfterLoad))) {
       LOG.debug("$componentName (from ${component.javaClass.name}) state changed after load. " +
                 "\nOld: ${JDOMUtil.writeElement(serializedState!!)}\n" +
                 "\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n")
