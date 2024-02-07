@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.BiPredicate;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
@@ -1880,6 +1881,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                          include 'lib-1'
                          include 'lib-2'
                          """);
+    createProjectSubDirs("lib-1", "lib-2");
 
     importProject(
       """
@@ -1982,10 +1984,21 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
     assertModuleModuleDeps("project.main", ArrayUtil.EMPTY_STRING_ARRAY);
 
-    assertModuleLibDeps((actual, expected) -> {
-      return actual.contains("build" + File.separatorChar + ".transforms" + File.separatorChar) &&
-             new File(actual).getName().equals(new File(expected).getName());
-    }, "project.main", "lib-1.jar", "lib-2.jar");
+
+    BiPredicate<? super String, ? super String> predicate;
+    if (isGradleOlderThan("6.9")) {
+      predicate = (String actual, String expected) -> {
+        return actual.contains("build" + File.separatorChar + ".transforms" + File.separatorChar) &&
+               new File(actual).getName().equals(new File(expected).getName());
+      };
+    } else {
+      predicate = (String actual, String expected) -> {
+        return actual.contains(File.separatorChar + "transformed" + File.separatorChar) &&
+               new File(actual).getName().equals(new File(expected).getName());
+      };
+    }
+
+    assertModuleLibDeps(predicate, "project.main", "lib-1.jar", "lib-2.jar");
   }
 
   @Test

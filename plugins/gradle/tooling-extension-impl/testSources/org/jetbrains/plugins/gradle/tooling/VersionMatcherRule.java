@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.util.GradleVersion;
@@ -30,9 +30,9 @@ public class VersionMatcherRule extends TestWatcher {
     "5.0", /*"5.1", "5.2", "5.3.1", "5.4.1", "5.5.1",*/ "5.6.2",
     "6.0", /* "6.0.1",  "6.1", "6.2", "6.3", "6.4", "6.8.3",*/ "6.9",
     "7.0.2", /* "7.1", "7.2", "7.4", "7.5.1",*/ "7.6",
-    "8.0", /*"8.2", "8.3", "8.4",*/ "8.5"
+    "8.0", /*"8.2", "8.3", "8.4", "8.5", */ "8.6"
   };
-  public static final String BASE_GRADLE_VERSION = "8.5";
+  public static final String BASE_GRADLE_VERSION = "8.6";
 
   @Nullable
   private CustomMatcher<String> myMatcher;
