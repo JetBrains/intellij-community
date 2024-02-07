@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.stickyLines
 
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Represents scope of class or function.
@@ -15,6 +16,7 @@ import com.intellij.openapi.util.TextRange
  * }                   // <- scope line
  * ```
  */
+@Internal
 public interface StickyLine : Comparable<StickyLine> {
 
   /**

@@ -218,12 +218,6 @@ public final class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector 
     }
     while (!leafs.isEmpty()) {
       final PsiElement element = leafs.remove();
-
-      // isValid() is a performance problem IDEA-344932,
-      // the doc says there is no need to check validity of the element without a good reason,
-      // so we just ignore isValid() here
-      //if (!element.isValid()) continue;
-
       BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider, checkSettings);
       if (provider != null) {
         boolean accept = isSticky ? provider.acceptStickyElement(element) : provider.acceptElement(element);
