@@ -88,7 +88,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
     val state = project.service<ListenerState>()
     val editor = fileEditors.first()
     state.sessions.remove(editor)
-    LOG.info("daemon stopped for $editor with reason $reason; canceled = $canceled")
+    LOG.info("daemon stopped for $editor with reason $reason; canceled = $canceled", Exception())
 
     val fileEditor = fileEditors.filterIsInstance<TextEditor>().firstOrNull()!!
     val entireFileHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
