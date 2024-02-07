@@ -3,13 +3,13 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.*;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated use {@link JavaLanguageFeature} and {@link PreviewFeatureUtil}.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public enum HighlightingFeature {
   GENERICS(JavaLanguageFeature.GENERICS),
   ANNOTATIONS(JavaLanguageFeature.ANNOTATIONS),
