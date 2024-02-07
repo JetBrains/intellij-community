@@ -1,6 +1,6 @@
 package com.intellij.jvm.analysis.internal.testFramework
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
+import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureUtil
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentIterator
@@ -90,8 +90,8 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
         previews.addAll(
           PsiTreeUtil.findChildrenOfAnyType(file, PsiMember::class.java)
             .filter { member ->
-              member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_PREVIEW_FEATURE) ||
-              member.hasAnnotation(HighlightingFeature.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
+              member.hasAnnotation(PreviewFeatureUtil.JDK_INTERNAL_PREVIEW_FEATURE) ||
+              member.hasAnnotation(PreviewFeatureUtil.JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)
             }
             .filter { member -> getLanguageLevel(member) == LANGUAGE_LEVEL }
             .mapNotNull { LanguageLevelUtil.getSignature(it) }
@@ -100,8 +100,9 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
       }
 
       private fun getLanguageLevel(e: PsiMember): LanguageLevel? {
-        val annotation = HighlightingFeature.getPreviewFeatureAnnotation(e) ?: return null
-        val feature = HighlightingFeature.fromPreviewFeatureAnnotation(annotation)
+        val annotation = PreviewFeatureUtil.getPreviewFeatureAnnotation(e)
+                         ?: return null
+        val feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation)
         return feature?.level
       }
     }

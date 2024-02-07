@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
@@ -350,10 +351,10 @@ public final class HighlightClassUtil {
    * @return true if given name cannot be used as a type name at given language level
    */
   public static boolean isRestrictedIdentifier(@Nullable String typeName, @NotNull LanguageLevel level) {
-    return PsiKeyword.VAR.equals(typeName) && HighlightingFeature.LVTI.isSufficient(level) ||
-           PsiKeyword.YIELD.equals(typeName) && HighlightingFeature.SWITCH_EXPRESSION.isSufficient(level) ||
-           PsiKeyword.RECORD.equals(typeName) && HighlightingFeature.RECORDS.isSufficient(level) ||
-           (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && HighlightingFeature.SEALED_CLASSES.isSufficient(level);
+    return PsiKeyword.VAR.equals(typeName) && JavaLanguageFeature.LVTI.isSufficient(level) ||
+           PsiKeyword.YIELD.equals(typeName) && JavaLanguageFeature.SWITCH_EXPRESSION.isSufficient(level) ||
+           PsiKeyword.RECORD.equals(typeName) && JavaLanguageFeature.RECORDS.isSufficient(level) ||
+           (PsiKeyword.SEALED.equals(typeName) || PsiKeyword.PERMITS.equals(typeName)) && JavaLanguageFeature.SEALED_CLASSES.isSufficient(level);
   }
 
   static HighlightInfo.Builder checkClassAndPackageConflict(@NotNull PsiClass aClass) {
@@ -419,7 +420,7 @@ public final class HighlightClassUtil {
       return null;
     }
 
-    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, HighlightingFeature.INNER_STATICS,
+    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, JavaLanguageFeature.INNER_STATICS,
                                                       PsiUtil.getLanguageLevel(field), field.getContainingFile());
 
     IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(field, PsiModifier.STATIC, false, false);
@@ -446,7 +447,7 @@ public final class HighlightClassUtil {
     }
     PsiMethod method = (PsiMethod)keyword.getParent().getParent();
     if (PsiUtilCore.hasErrorElementChild(method)) return null;
-    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, HighlightingFeature.INNER_STATICS,
+    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, JavaLanguageFeature.INNER_STATICS,
                                                       PsiUtil.getLanguageLevel(method), method.getContainingFile());
     IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.STATIC, false, false);
     if (result != null) {
@@ -462,7 +463,7 @@ public final class HighlightClassUtil {
     }
     PsiClassInitializer initializer = (PsiClassInitializer)keyword.getParent().getParent();
     if (PsiUtilCore.hasErrorElementChild(initializer)) return null;
-    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, HighlightingFeature.INNER_STATICS,
+    HighlightInfo.Builder result = HighlightUtil.checkFeature(keyword, JavaLanguageFeature.INNER_STATICS,
                                                       PsiUtil.getLanguageLevel(initializer), initializer.getContainingFile());
     IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(initializer, PsiModifier.STATIC, false, false);
     if (result != null) {
@@ -513,7 +514,7 @@ public final class HighlightClassUtil {
     }
 
     TextRange range = context == null ? HighlightNamesUtil.getClassDeclarationTextRange(aClass) : context.getTextRange();
-    HighlightInfo.Builder info = HighlightUtil.checkFeature(range, HighlightingFeature.INNER_STATICS,
+    HighlightInfo.Builder info = HighlightUtil.checkFeature(range, JavaLanguageFeature.INNER_STATICS,
                                                     PsiUtil.getLanguageLevel(aClass), aClass.getContainingFile());
     if (context != keyword) {
       QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories
@@ -708,14 +709,14 @@ public final class HighlightClassUtil {
 
   static HighlightInfo.Builder checkMustNotBeLocal(@NotNull PsiClass aClass) {
     IElementType token;
-    HighlightingFeature feature;
+    JavaLanguageFeature feature;
     if (aClass.isEnum()) {
       token = JavaTokenType.ENUM_KEYWORD;
-      feature = HighlightingFeature.LOCAL_ENUMS;
+      feature = JavaLanguageFeature.LOCAL_ENUMS;
     }
     else if (aClass.isInterface()) {
       token = JavaTokenType.INTERFACE_KEYWORD;
-      feature = aClass.isAnnotationType() ? null : HighlightingFeature.LOCAL_INTERFACES;
+      feature = aClass.isAnnotationType() ? null : JavaLanguageFeature.LOCAL_INTERFACES;
     }
     else {
       return null;
@@ -1206,7 +1207,7 @@ public final class HighlightClassUtil {
     if (!(parent instanceof PsiClass aClass) || !list.equals(aClass.getPermitsList())) {
       return;
     }
-    HighlightInfo.Builder feature = HighlightUtil.checkFeature(list.getFirstChild(), HighlightingFeature.SEALED_CLASSES,
+    HighlightInfo.Builder feature = HighlightUtil.checkFeature(list.getFirstChild(), JavaLanguageFeature.SEALED_CLASSES,
                                                                PsiUtil.getLanguageLevel(list), list.getContainingFile());
     if (feature != null) {
       errorSink.accept(feature);
@@ -1406,10 +1407,10 @@ public final class HighlightClassUtil {
       return null;
     }
 
-    HighlightInfo.Builder builder = HighlightUtil.checkFeature(member, HighlightingFeature.IMPLICIT_CLASSES, languageLevel, psiFile);
+    HighlightInfo.Builder builder = HighlightUtil.checkFeature(member, JavaLanguageFeature.IMPLICIT_CLASSES, languageLevel, psiFile);
     if (builder == null) return null;
 
-    if (!(member instanceof PsiClass) && !HighlightingFeature.IMPLICIT_CLASSES.isAvailable(member)) {
+    if (!(member instanceof PsiClass) && !JavaLanguageFeature.IMPLICIT_CLASSES.isAvailable(member)) {
       boolean hasClassToRelocate = PsiTreeUtil.findChildOfType(implicitClass, PsiClass.class) != null;
       if (hasClassToRelocate) {
         MoveMembersIntoClassFix fix = new MoveMembersIntoClassFix(implicitClass);

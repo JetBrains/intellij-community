@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaLanguageFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -241,7 +242,7 @@ public final class HighlightUtil {
     if (castTypeElement == null || !isIntersection(castTypeElement, castTypeElement.getType())) {
       return null;
     }
-    HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.INTERSECTION_CASTS, languageLevel, file);
+    HighlightInfo.Builder info = checkFeature(expression, JavaLanguageFeature.INTERSECTION_CASTS, languageLevel, file);
     if (info != null) return info;
 
     PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
@@ -830,7 +831,7 @@ public final class HighlightUtil {
       PsiElement parent = identifier.getParent();
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) &&
           !(parent instanceof PsiVariable var && var.isUnnamed())) {
-        String text = HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isSufficient(languageLevel) ?
+        String text = JavaLanguageFeature.UNNAMED_PATTERNS_AND_VARIABLES.isSufficient(languageLevel) ?
                       JavaErrorBundle.message("underscore.identifier.error.unnamed")
                       : JavaErrorBundle.message("underscore.identifier.error");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
@@ -1014,7 +1015,7 @@ public final class HighlightUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message);
     }
 
-    if (HighlightingFeature.ENHANCED_SWITCH.isSufficient(level)) {
+    if (JavaLanguageFeature.ENHANCED_SWITCH.isSufficient(level)) {
       PsiSwitchExpression expression = PsiImplUtil.findEnclosingSwitchExpression(statement);
       if (expression != null && (target == null || PsiTreeUtil.isAncestor(target, expression, true))) {
         String message = JavaErrorBundle.message(crossingKey);
@@ -1265,10 +1266,10 @@ public final class HighlightUtil {
     if (file != null) {
       if (isFP) {
         if (text.startsWith(PsiLiteralUtil.HEX_PREFIX)) {
-          HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.HEX_FP_LITERALS, level, file);
+          HighlightInfo.Builder info = checkFeature(expression, JavaLanguageFeature.HEX_FP_LITERALS, level, file);
           if (info != null) {
             if (description != null) {
-              description.set(getUnsupportedFeatureMessage(HighlightingFeature.HEX_FP_LITERALS, level, file));
+              description.set(getUnsupportedFeatureMessage(JavaLanguageFeature.HEX_FP_LITERALS, level, file));
             }
             return info;
           }
@@ -1276,10 +1277,10 @@ public final class HighlightUtil {
       }
       if (isInt) {
         if (text.startsWith(PsiLiteralUtil.BIN_PREFIX)) {
-          HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.BIN_LITERALS, level, file);
+          HighlightInfo.Builder info = checkFeature(expression, JavaLanguageFeature.BIN_LITERALS, level, file);
           if (info != null) {
             if (description != null) {
-              description.set(getUnsupportedFeatureMessage(HighlightingFeature.BIN_LITERALS, level, file));
+              description.set(getUnsupportedFeatureMessage(JavaLanguageFeature.BIN_LITERALS, level, file));
             }
             return info;
           }
@@ -1287,10 +1288,10 @@ public final class HighlightUtil {
       }
       if (isInt || isFP) {
         if (text.contains("_")) {
-          HighlightInfo.Builder info = checkFeature(expression, HighlightingFeature.UNDERSCORES, level, file);
+          HighlightInfo.Builder info = checkFeature(expression, JavaLanguageFeature.UNDERSCORES, level, file);
           if (info != null) {
             if (description != null) {
-              description.set(getUnsupportedFeatureMessage(HighlightingFeature.UNDERSCORES, level, file));
+              description.set(getUnsupportedFeatureMessage(JavaLanguageFeature.UNDERSCORES, level, file));
             }
             return info;
           }
@@ -1573,10 +1574,10 @@ public final class HighlightUtil {
     if (file == null) return null;
     TextRange errorRange = calculateUnescapedRange(text, "\\s", expression.getTextOffset());
     if (errorRange == null) return null;
-    HighlightInfo.Builder info = checkFeature(errorRange, HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file);
+    HighlightInfo.Builder info = checkFeature(errorRange, JavaLanguageFeature.TEXT_BLOCK_ESCAPES, level, file);
     if (info == null) return null;
     if (description != null) {
-      description.set(getUnsupportedFeatureMessage(HighlightingFeature.TEXT_BLOCK_ESCAPES, level, file));
+      description.set(getUnsupportedFeatureMessage(JavaLanguageFeature.TEXT_BLOCK_ESCAPES, level, file));
     }
     return info;
   }
@@ -2294,7 +2295,7 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkTemplateExpression(@NotNull PsiTemplateExpression templateExpression) {
-    HighlightInfo.Builder builder = checkFeature(templateExpression, HighlightingFeature.STRING_TEMPLATES,
+    HighlightInfo.Builder builder = checkFeature(templateExpression, JavaLanguageFeature.STRING_TEMPLATES,
                                                  PsiUtil.getLanguageLevel(templateExpression), templateExpression.getContainingFile());
     if (builder != null) return builder;
     PsiExpression processor = templateExpression.getProcessor();
@@ -3786,26 +3787,26 @@ public final class HighlightUtil {
   }
 
   @NotNull
-  private static LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull HighlightingFeature feature) {
+  private static LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull JavaLanguageFeature feature) {
     LanguageLevel standardLevel = feature.getStandardLevel();
-    if (feature.level.isPreview()) {
+    if (feature.getLevel().isPreview()) {
       JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
       if (sdkVersion != null) {
         if (standardLevel != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
           return standardLevel;
         }
         LanguageLevel previewLevel = sdkVersion.getMaxLanguageLevel().getPreviewLevel();
-        if (previewLevel != null && previewLevel.isAtLeast(feature.level)) {
+        if (previewLevel != null && previewLevel.isAtLeast(feature.getLevel())) {
           return previewLevel;
         }
       }
     }
-    return feature.level;
+    return feature.getLevel();
   }
 
   @Nullable
   static HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
-                                           @NotNull HighlightingFeature feature,
+                                           @NotNull JavaLanguageFeature feature,
                                            @NotNull LanguageLevel level,
                                            @NotNull PsiFile file) {
     return checkFeature(element, feature, level, file, null, HighlightInfoType.ERROR);
@@ -3813,7 +3814,7 @@ public final class HighlightUtil {
 
   @Nullable
   static HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
-                                            @NotNull HighlightingFeature feature,
+                                            @NotNull JavaLanguageFeature feature,
                                             @NotNull LanguageLevel level,
                                             @NotNull PsiFile file,
                                             @Nullable @NlsContexts.DetailedDescription String message,
@@ -3833,7 +3834,7 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkFeature(@NotNull TextRange range,
-                                            @NotNull HighlightingFeature feature,
+                                            @NotNull JavaLanguageFeature feature,
                                             @NotNull LanguageLevel level,
                                             @NotNull PsiFile file) {
     if (!feature.isSufficient(level)) {
@@ -3851,7 +3852,7 @@ public final class HighlightUtil {
   }
 
   public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
-                                                        @NotNull HighlightingFeature feature,
+                                                        @NotNull JavaLanguageFeature feature,
                                                         @NotNull List<? super IntentionAction> registrar) {
     if (feature.isAvailable(element)) return;
     if (feature.isLimited()) return; //no reason for applying it because it can be outdated
@@ -3861,17 +3862,17 @@ public final class HighlightUtil {
     registrar.add(getFixFactory().createShowModulePropertiesFix(element));
   }
 
-  private static @NotNull @NlsContexts.DetailedDescription String getUnsupportedFeatureMessage(@NotNull HighlightingFeature feature,
+  private static @NotNull @NlsContexts.DetailedDescription String getUnsupportedFeatureMessage(@NotNull JavaLanguageFeature feature,
                                                                                                @NotNull LanguageLevel level,
                                                                                                @NotNull PsiFile file) {
-    String name = JavaAnalysisBundle.message(feature.key);
+    String name = feature.getFeatureName();
     String version = JavaSdkVersion.fromLanguageLevel(level).getDescription();
     String message = JavaErrorBundle.message("insufficient.language.level", name, version);
 
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
       LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (moduleLanguageLevel.isAtLeast(feature.level) && !feature.isLimited()) {
+      if (moduleLanguageLevel.isAtLeast(feature.getLevel()) && !feature.isLimited()) {
         for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
           if (pusher instanceof JavaLanguageLevelPusher) {
             String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, level, file);
