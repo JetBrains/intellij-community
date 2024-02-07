@@ -1,24 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.xml
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.configurationStore.XmlDataWriter
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.util.LineSeparator
+import com.intellij.util.io.UnsyncByteArrayOutputStream
 import org.junit.Assert.assertEquals
 import org.junit.ClassRule
 import org.junit.Test
-import java.io.StringWriter
 
 class XmlDataWriterTest {
   @Test
   fun `xml data writer escapes ampersand correctly`() {
     val manager = PathMacroManager(PathMacrosImpl())
     val dataWriter = XmlDataWriter("test", emptyList(), mapOf("path" to "/hey/R&D"), manager, "")
-    val target = StringWriter()
-
-    dataWriter.write(target, "\n", null)
-
+    val target = UnsyncByteArrayOutputStream()
+    dataWriter.writeTo(target, LineSeparator.LF)
     assertEquals("<test path=\"/hey/R&amp;D\" />", target.toString())
   }
 
@@ -27,12 +26,9 @@ class XmlDataWriterTest {
     val macros = PathMacrosImpl()
     macros.setMacro("MY_PATH", "/hey/R&D")
     val manager = PathMacroManager(macros)
-
     val dataWriter = XmlDataWriter("test", emptyList(), mapOf("path" to "/hey/R&D/README.md"), manager, "")
-    val target = StringWriter()
-
-    dataWriter.write(target, "\n", null)
-
+    val target = UnsyncByteArrayOutputStream()
+    dataWriter.writeTo(target, LineSeparator.LF)
     assertEquals("<test path=\"\$MY_PATH\$/README.md\" />", target.toString())
   }
 

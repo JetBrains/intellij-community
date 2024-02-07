@@ -83,18 +83,17 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
             else object : StringDataWriter() {
               override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
 
-              override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
-                val lineSeparatorWithIndent = "${lineSeparator}    "
-                writer.append("<application>").append(lineSeparator)
-                writer.append("""  <component name="ProjectManager">""")
-                writer.append(lineSeparatorWithIndent)
-                (dataWriter as StringDataWriter).write(writer, lineSeparatorWithIndent, filter)
-                writer.append(lineSeparator)
-                writer.append("  </component>").append(lineSeparator)
-                writer.append("</application>")
-              }
-            },
-          )
+            override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+              val lineSeparatorWithIndent = "${lineSeparator}    "
+              writer.append("<application>").append(lineSeparator)
+              writer.append("""  <component name="ProjectManager">""")
+              writer.append(lineSeparatorWithIndent)
+              (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
+              writer.append(lineSeparator)
+              writer.append("  </component>").append(lineSeparator)
+              writer.append("</application>")
+            }
+          })
         }
       }
     }

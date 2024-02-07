@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
+import kotlin.io.path.deleteIfExists
 
 const val APP_CONFIG: String = "\$APP_CONFIG\$"
 
@@ -103,7 +104,12 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
     override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
       if (storage.fileSpec == "path.macros.xml" || storage.fileSpec == "applicationLibraries.xml") {
         LOG.runAndLogException {
-          writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+          if (writer == null) {
+            storage.file.deleteIfExists()
+          }
+          else {
+            writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+          }
         }
       }
     }

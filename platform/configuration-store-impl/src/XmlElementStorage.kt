@@ -9,23 +9,17 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.io.delete
-import com.intellij.util.io.outputStream
-import com.intellij.util.io.safeOutputStream
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
-import java.io.OutputStream
 import java.io.Writer
-import java.nio.file.Path
 import kotlin.math.min
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
@@ -53,23 +47,31 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   final override fun loadData(): StateMap = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
 
-  private fun loadElement(useStreamProvider: Boolean = true): Element? {
+  private fun loadElement(): Element? {
     var element: Element? = null
     try {
       val isLoadLocalData: Boolean
-      if (useStreamProvider && provider != null) {
+      if (provider != null) {
         isLoadLocalData = !provider.read(fileSpec, effectiveRoamingType) { inputStream ->
           inputStream?.let {
             element = JDOMUtil.load(inputStream)
-            providerDataStateChanged(createDataWriterForElement(element = element!!,
-                                                                storageFilePathForDebugPurposes = toString()), DataStateChanged.LOADED)
+            val writer = object : StringDataWriter() {
+              override fun hasData(filter: DataWriterFilter) = filter.hasData(element!!)
+              override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+                JbXmlOutputter(
+                  lineSeparator = lineSeparator,
+                  elementFilter = filter?.toElementFilter(),
+                  storageFilePathForDebugPurposes = toString()
+                ).output(element!!, writer)
+              }
+            }
+            providerDataStateChanged(writer, DataStateChanged.LOADED)
           }
         }
       }
       else {
         isLoadLocalData = true
       }
-
       if (isLoadLocalData) {
         element = loadLocalData()
       }
@@ -140,15 +142,11 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       val elements = save(stateMap, newLiveStates ?: throw IllegalStateException("createSaveSession was already called"))
       newLiveStates = null
 
-      val writer: DataWriter?
-      if (elements == null) {
-        writer = null
-      }
-      else {
+      val writer = if (elements == null) null else {
         val rootAttributes = LinkedHashMap<String, String>()
         storage.beforeElementSaved(elements, rootAttributes)
         val macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
-        writer = XmlDataWriter(storage.rootElementName, elements, rootAttributes, macroManager, storage.toString())
+        XmlDataWriter(storage.rootElementName, elements, rootAttributes, macroManager, storage.toString())
       }
 
       // during beforeElementSaved() elements can be modified and so, even if our save() never returns empty list, at this point, elements can be an empty list
@@ -171,7 +169,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.effectiveRoamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray().toByteArray(), storage.effectiveRoamingType)
+          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray(), storage.effectiveRoamingType)
         }
         else {
           isSavedLocally = true
@@ -208,10 +206,10 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
-    val newElement = if (deleted) null else loadElement(useStreamProvider = true)
+    val newElement = if (deleted) null else loadElement()
     val states = storageDataRef.get()
     if (newElement == null) {
-      // if data was loaded, mark as changed all loaded components
+      // if data was loaded, mark all loaded components as changed
       if (states != null) {
         changedComponentNames.addAll(states.keys())
         setStates(oldStorageData = states, newStorageData = StateMap.EMPTY)
@@ -225,16 +223,16 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 }
 
-internal class XmlDataWriter(private val rootElementName: String?,
-                             private val elements: List<Element>,
-                             private val rootAttributes: Map<String, String>,
-                             private val macroManager: PathMacroManager?,
-                             private val storageFilePathForDebugPurposes: String) : StringDataWriter() {
-  override fun hasData(filter: DataWriterFilter): Boolean {
-    return elements.any { filter.hasData(it) }
-  }
+internal class XmlDataWriter(
+  private val rootElementName: String?,
+  private val elements: List<Element>,
+  private val rootAttributes: Map<String, String>,
+  private val macroManager: PathMacroManager?,
+  private val storageFilePathForDebugPurposes: String
+) : StringDataWriter() {
+  override fun hasData(filter: DataWriterFilter): Boolean = elements.any { filter.hasData(it) }
 
-  override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+  override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
     var lineSeparatorWithIndent = lineSeparator
     val hasRootElement = rootElementName != null
 
@@ -383,71 +381,6 @@ private fun getChangedComponentNames(oldStateMap: StateMap, newStateMap: StateMa
 @Internal
 enum class DataStateChanged {
   LOADED, SAVED
-}
-
-@Internal
-interface DataWriterFilter {
-  enum class ElementLevel {
-    ZERO, FIRST
-  }
-
-  fun toElementFilter(): JDOMUtil.ElementOutputFilter
-
-  fun hasData(element: Element): Boolean
-}
-
-interface DataWriter {
-  // LineSeparator cannot be used because custom (with an indent) line separator can be used
-  fun write(output: OutputStream, lineSeparator: LineSeparator = LineSeparator.LF, filter: DataWriterFilter? = null)
-
-  fun hasData(filter: DataWriterFilter): Boolean
-}
-
-internal fun DataWriter?.writeTo(file: Path, requestor: Any?, lineSeparator: LineSeparator, useXmlProlog: Boolean) {
-  if (this == null) {
-    file.delete()
-  }
-  else {
-    val safe = SafeWriteRequestor.shouldUseSafeWrite(requestor)
-    (if (safe) file.safeOutputStream() else file.outputStream()).use {
-      if (useXmlProlog) {
-        it.write(XML_PROLOG)
-        it.write(lineSeparator.separatorBytes)
-      }
-      write(it, lineSeparator)
-    }
-  }
-}
-
-internal abstract class StringDataWriter : DataWriter {
-  final override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
-    output.bufferedWriter().use {
-      write(writer = it, lineSeparator = lineSeparator.separatorString, filter = filter)
-    }
-  }
-
-  internal abstract fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?)
-}
-
-internal fun DataWriter.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
-  val out = BufferExposingByteArrayOutputStream(1024)
-  out.use { write(out, lineSeparator) }
-  return out
-}
-
-// use ONLY for non-ordinal usages (default project, deprecated directoryBased storage)
-internal fun createDataWriterForElement(element: Element, storageFilePathForDebugPurposes: String): DataWriter {
-  return object: DataWriter {
-    override fun hasData(filter: DataWriterFilter) = filter.hasData(element)
-
-    override fun write(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
-      output.bufferedWriter().use {
-        JbXmlOutputter(lineSeparator = lineSeparator.separatorString,
-                       elementFilter = filter?.toElementFilter(),
-                       storageFilePathForDebugPurposes = storageFilePathForDebugPurposes).output(element, it)
-      }
-    }
-  }
 }
 
 @Internal

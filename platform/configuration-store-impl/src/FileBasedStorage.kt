@@ -310,7 +310,7 @@ internal fun writeFile(
           output.write(lineSeparator.separatorBytes)
         }
         if (dataWriterOrByteArray is DataWriter) {
-          dataWriterOrByteArray.write(output, lineSeparator)
+          dataWriterOrByteArray.writeTo(output, lineSeparator)
         }
         else {
           (dataWriterOrByteArray as BufferExposingByteArrayOutputStream).writeTo(output)

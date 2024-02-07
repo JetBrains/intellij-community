@@ -4,10 +4,10 @@ package com.intellij.configurationStore.xml
 import com.intellij.configurationStore.DataWriter
 import com.intellij.configurationStore.StateMap
 import com.intellij.configurationStore.XmlElementStorage
-import com.intellij.configurationStore.toBufferExposingByteArray
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.settings.SettingsController
+import com.intellij.util.LineSeparator
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.Test
@@ -53,7 +53,7 @@ class XmlElementStorageTest {
           savedElement = null
         }
         else {
-          savedElement = JDOMUtil.load(dataWriter.toBufferExposingByteArray().toByteArray().inputStream())
+          savedElement = JDOMUtil.load(dataWriter.toBufferExposingByteArray(LineSeparator.LF).toByteArray().inputStream())
         }
       }
     }
