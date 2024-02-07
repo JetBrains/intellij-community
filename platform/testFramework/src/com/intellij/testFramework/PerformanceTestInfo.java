@@ -89,14 +89,14 @@ public class PerformanceTestInfo {
     this.tracer = TelemetryManager.getInstance().getTracer(new Scope("performanceUnitTests", null));
   }
 
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  @Contract(pure = true) // to warn about not calling .start() in the end
   public PerformanceTestInfo setup(@NotNull ThrowableRunnable<?> setup) {
     assert this.setup == null;
     this.setup = setup;
     return this;
   }
 
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  @Contract(pure = true) // to warn about not calling .start() in the end
   public PerformanceTestInfo attempts(int attempts) {
     this.maxMeasurementAttempts = attempts;
     return this;
@@ -105,7 +105,7 @@ public class PerformanceTestInfo {
   /**
    * Runs the perf test {@code iterations} times before starting the final measuring.
    */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+  @Contract(pure = true) // to warn about not calling .start() in the end
   public PerformanceTestInfo warmupIterations(int iterations) {
     warmupIterations = iterations;
     return this;
@@ -146,7 +146,7 @@ public class PerformanceTestInfo {
       callingTestMethod = tryToFindCallingTestMethodByNamePattern();
       if (callingTestMethod == null) {
         throw new AssertionError(
-          "Couldn't manage to detect the calling test method. Please use one of the overloads of com.intellij.testFramework.PerformanceTestInfo.assertTiming"
+          "Couldn't manage to detect the calling test method. Please use one of the overloads of com.intellij.testFramework.PerformanceTestInfo.start"
         );
       }
     }
@@ -154,15 +154,45 @@ public class PerformanceTestInfo {
     return callingTestMethod;
   }
 
-  /** @see PerformanceTestInfo#start(String) */
+  /**
+   * Start execution of the performance test.
+   * <br/>
+   * Default pipeline:
+   * <ul>
+   *     <li>executes warmup phase - run the perf test {@link #warmupIterations} times before final measurements</li>
+   *     <li>executes final measurements {@link #maxMeasurementAttempts} times</li>
+   *     <li>artifacts(metrics, logs) can be found in ./system/teamcity-artifacts-for-publish/</li>
+   * </ul>
+   * <br/>
+   * Considering metrics: better to have a test that produces metrics in seconds, rather milliseconds.<br/>
+   * Since degradation will be easier to detect and metric deviation from the baseline will be easier to notice.
+   * <p/>
+   * On CI all unit performance tests run as
+   * <a href="https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_Idea_Tests_PerformanceTests?branch=&buildTypeTab=overview&mode=builds">the composite build</a>
+   * <br/>
+   * And their metrics are collected
+   * and can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a>
+   *
+   * @see PerformanceTestInfo#start(String)
+   **/
   public void start() {
     start(getCallingTestMethod());
   }
 
+  /**
+   * Start the perf test where the test's artifact path will have a name inferred from test method.
+   * @see PerformanceTestInfo#start()
+   * @see PerformanceTestInfo#start(kotlin.reflect.KFunction)
+   **/
   public void start(@NotNull Method javaTestMethod) {
     start(javaTestMethod, "");
   }
 
+  /**
+   * The same as {@link PerformanceTestInfo#start(Method)} but with option to specify a subtest name.
+   * @see PerformanceTestInfo#start(Method)
+   * @see PerformanceTestInfo#startAsSubtest(String)
+   **/
   public void start(@NotNull Method javaTestMethod, String subTestName) {
     var fullTestName = String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName());
     if (subTestName != null && !subTestName.isEmpty()) {
@@ -172,16 +202,23 @@ public class PerformanceTestInfo {
   }
 
   /**
-   * {@link PerformanceTestInfo#start(String)}
+   * Start the perf test where test artifact path will have a name inferred from test method.
+   * Useful in parametrized tests.
    * <br/>
-   * Eg: <code>assertTiming(GradleHighlightingPerformanceTest::testCompletionPerformance)</code>
+   * Eg: <code>start(GradleHighlightingPerformanceTest::testCompletionPerformance)</code>
+   *
+   * @see PerformanceTestInfo#start(Method)
+   * @see PerformanceTestInfo#start(String)
    */
   public void start(@NotNull KFunction<?> kotlinTestMethod) {
     start(String.format("%s.%s", kotlinTestMethod.getClass().getName(), kotlinTestMethod.getName()));
   }
 
   /**
-   * By default passed test launch name will be used as the subtest name.
+   * Use it if you need to run many subsequent performance tests in your JUnit test.<br/>
+   * Each subtest should have unique name, otherwise published results would be overwritten.<br/>
+   * <br/>
+   * By default passed test launch name will be used as the subtest name.<br/>
    *
    * @see PerformanceTestInfo#startAsSubtest(String)
    */
@@ -190,9 +227,7 @@ public class PerformanceTestInfo {
   }
 
   /**
-   * In case if you want to run many subsequent performance measurements in your JUnit test.
-   *
-   * @see PerformanceTestInfo#start(String)
+   * The same as {@link #startAsSubtest()} but with the option to specify subtest name.
    */
   public void startAsSubtest(@Nullable String subTestName) {
     start(getCallingTestMethod(), subTestName);
@@ -205,6 +240,8 @@ public class PerformanceTestInfo {
    *                                    For Java you can use {@link com.intellij.testFramework.UsefulTestCase#getQualifiedTestMethodName()}
    *                                    OR
    *                                    {@link com.intellij.testFramework.fixtures.BareTestFixtureTestCase#getQualifiedTestMethodName()}
+   *
+   * @see PerformanceTestInfo#start()
    */
   public void start(String fullQualifiedTestMethodName) {
     start(IterationMode.WARMUP, fullQualifiedTestMethodName);

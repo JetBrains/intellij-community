@@ -636,7 +636,9 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).assertTiming();}
+   * Init a performance test.<br/>
+   * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
+   * @see PerformanceTestInfo#start()
    */
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
@@ -648,11 +650,13 @@ public final class PlatformTestUtil {
   }
 
   /**
-   * Init a performance test which input may change.
-   * E.g. it depends on the number of files in the project.
+   * Init a performance test which input may change.<br/>
+   * E.g: it depends on the number of files in the project.
    * <p>
-   * {@code expectedInputSize} parameter specifies size of the input,
-   * {@code test} returns actual size of the input. It is supposed that the execution time is lineally proportionally dependent on the input size.
+   * @param expectedInputSize specifies size of the input,
+   * @param test returns actual size of the input. It is supposed that the execution time is lineally proportionally dependent on the input size.
+   *
+   * @see PerformanceTestInfo#start()
    * </p>
    */
   @Contract(pure = true)
