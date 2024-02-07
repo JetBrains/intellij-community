@@ -3,18 +3,15 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.project.Project
 import com.intellij.platform.settings.SettingsController
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
-@Internal
+@ApiStatus.Internal
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
-  @JvmField
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
   protected open val saveStorageDataOnReload: Boolean
@@ -23,41 +20,16 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   abstract val controller: SettingsController?
 
   final override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
-    val stateElement = getSerializedState(
-      storageData = getStorageData(reload),
-      component = component,
-      componentName = componentName,
-      archive = false,
-    )
-    return deserializeStateWithController(
-      stateElement = stateElement,
-      stateClass = stateClass,
-      mergeInto = mergeInto,
-      controller = controller,
-      componentName = componentName,
-    )
+    val stateElement = getSerializedState(getStorageData(reload), component, componentName, archive = false)
+    return deserializeStateWithController(stateElement, stateClass, mergeInto, controller, componentName)
   }
 
-  @TestOnly
-  fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>): T? {
-    return getState(component = component, componentName = componentName, stateClass = stateClass, mergeInto = null, reload = false)
-  }
-
-  fun getStorageData(): T = getStorageData(false)
-
-  fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?, componentName: String): S? {
-    return deserializeStateWithController(
-      stateElement = serializedState,
-      stateClass = stateClass,
-      mergeInto = mergeInto,
-      controller = controller,
-      componentName = componentName,
-    )
-  }
+  @ApiStatus.Internal
+  fun getStorageData(): T = getStorageData(reload = false)
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?
 
-  protected fun getStorageData(reload: Boolean = false): T {
+  protected fun getStorageData(reload: Boolean): T {
     val currentStorageData = storageDataRef.get()
     if (currentStorageData != null && !reload) {
       return currentStorageData
@@ -65,7 +37,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
     val newStorageData = loadData()
     if (reload && !saveStorageDataOnReload) {
-      // it means, that you MUST invoke save all settings after reload
+      // it means that you MUST invoke "save all settings" after reload
       if (storageDataRef.compareAndSet(currentStorageData, null)) {
         return newStorageData
       }
