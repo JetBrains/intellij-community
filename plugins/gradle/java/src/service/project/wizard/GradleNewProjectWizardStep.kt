@@ -438,7 +438,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     val sdkDownloadTask = sdkDownloadTask
     if (sdkDownloadTask is JdkDownloadTask) {
       // Download the SDK on project creation
-      module.project.service<JdkDownloadService>().downloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
+      module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
     }
   }
 

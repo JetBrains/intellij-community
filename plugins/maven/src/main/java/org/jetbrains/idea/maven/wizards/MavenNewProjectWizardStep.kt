@@ -74,14 +74,6 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return null
   }
 
-  private fun startJdkDownloadIfNeeded(module: Module) {
-    val sdkDownloadTask = sdkDownloadTask
-    if (sdkDownloadTask is JdkDownloadTask) {
-      // Download the SDK on project creation
-      module.project.service<JdkDownloadService>().downloadJdk(sdkDownloadTask, module, context.isCreatingNewProject)
-    }
-  }
-
   protected fun <T : AbstractMavenModuleBuilder> linkMavenProject(project: Project, builder: T, configure: (T) -> Unit = {}): Module? {
     builder.moduleJdk = sdk
     builder.name = parentStep.name
@@ -101,9 +93,27 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
     configure(builder)
 
-    return setupProjectFromBuilder(project, builder)?.also {
-      startJdkDownloadIfNeeded(it)
+    val sdkDownloadTask = sdkDownloadTask
+    val isCreatingNewProject = context.isCreatingNewProject
+
+    if (isCreatingNewProject) {
+      if (sdkDownloadTask is JdkDownloadTask) {
+        // Download the SDK on project creation
+        project.service<JdkDownloadService>().scheduleDownloadJdkForNewProject(sdkDownloadTask)
+      }
     }
+
+    val module = setupProjectFromBuilder(project, builder)
+
+    if (null != module) {
+      if (!isCreatingNewProject) {
+        if (sdkDownloadTask is JdkDownloadTask) {
+          module.project.service<JdkDownloadService>().scheduleDownloadJdk(sdkDownloadTask, module, false)
+        }
+      }
+    }
+
+    return module
   }
 
   class MavenDataView(override val data: MavenProject) : DataView<MavenProject>() {
