@@ -435,6 +435,9 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   protected void executeAction(@NonNls String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) {
+      throw new AssertionError("'" + actionId + "' is not an found");
+    }
     DataContext dataContext = DataManager.getInstance().getDataContext(this);
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, getActionPlace(), dataContext);
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
