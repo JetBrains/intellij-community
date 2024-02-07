@@ -6,7 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -118,7 +118,7 @@ public class JavaInheritorsGetter {
 
     PsiType psiType = GenericsUtil.eliminateWildcards(type);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getOriginalPosition()) &&
-        PsiUtil.getLanguageLevel(parameters.getOriginalFile()).isAtLeast(LanguageLevel.JDK_1_7)) {
+        JavaFeature.DIAMOND_TYPES.isAvailable(parameters.getOriginalFile())) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       PsiClassType classType = (PsiClassType)type;
       if (psiClass.hasTypeParameters() && !classType.isRaw()) {

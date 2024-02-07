@@ -16,6 +16,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -1701,7 +1702,7 @@ public final class SimplifyStreamApiCallChainsInspection extends AbstractBaseJav
       PsiReferenceParameterList typeParameters = qualifierCall.getMethodExpression().getParameterList();
       String typeParametersText = typeParameters == null ? "" : ct.text(typeParameters);
       String factory;
-      if (PsiUtil.isLanguageLevel9OrHigher(call) && MethodCallUtils.isVarArgCall(qualifierCall) &&
+      if (JavaFeature.COLLECTION_FACTORIES.isAvailable(call) && MethodCallUtils.isVarArgCall(qualifierCall) &&
           ContainerUtil
             .and(qualifierArgs.getExpressions(), e -> NullabilityUtil.getExpressionNullability(e, true) == Nullability.NOT_NULL)) {
         factory = JAVA_UTIL_LIST + "." + typeParametersText + "of";

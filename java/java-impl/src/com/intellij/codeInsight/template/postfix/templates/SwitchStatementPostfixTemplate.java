@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,8 +44,7 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
       }
 
       if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && expression.getContainingFile() instanceof PsiJavaFile javaFile) {
-        LanguageLevel level = javaFile.getLanguageLevel();
-        if (level.isAtLeast(LanguageLevel.JDK_1_7)) return true;
+        if (JavaFeature.STRING_SWITCH.isAvailable(javaFile)) return true;
       }
 
       return false;

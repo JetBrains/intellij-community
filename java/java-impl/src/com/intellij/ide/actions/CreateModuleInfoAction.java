@@ -15,10 +15,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.light.LightJavaModule;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -45,7 +45,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     DataContext ctx = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(ctx);
     PsiDirectory target = view != null && e.getProject() != null ? getTargetDirectory(ctx, view) : null;
-    if (target == null || !PsiUtil.isLanguageLevel9OrHigher(target)) {
+    if (target == null || !JavaFeature.MODULES.isAvailable(target)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {

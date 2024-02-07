@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -112,7 +113,7 @@ public class IntroduceHolderFix extends PsiUpdateModCommandQuickFix {
     final PsiModifierList modifierList = newField.getModifierList();
     assert modifierList != null;
     modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    if (!PsiUtil.isLanguageLevel11OrHigher(holderClass)) {
+    if (!JavaFeature.NESTMATES.isAvailable(holderClass)) {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     }
     newField.setInitializer(rhs);

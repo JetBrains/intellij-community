@@ -4,7 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public final class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
@@ -40,7 +39,7 @@ public final class PsiDiamondTypeUtil {
                                              final PsiNewExpression context,
                                              @Nullable final PsiType expectedType,
                                              boolean skipDiamonds) {
-    if (PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7)) {
+    if (JavaFeature.DIAMOND_TYPES.isAvailable(context)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {
         final PsiReferenceParameterList parameterList = classReference.getParameterList();

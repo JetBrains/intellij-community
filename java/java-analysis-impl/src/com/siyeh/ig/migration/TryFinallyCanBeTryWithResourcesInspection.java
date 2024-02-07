@@ -2,10 +2,11 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -259,7 +260,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       IntList initializerPositions = new IntArrayList();
       for (PsiVariable resourceVariable : collectedVariables) {
         boolean variableUsedOutsideTry = isVariableUsedOutsideContext(resourceVariable, tryStatement);
-        if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
+        if (!JavaFeature.REFS_AS_RESOURCE.isAvailable(finallyBlock) && variableUsedOutsideTry) return null;
         if (!variableUsedOutsideTry && resourceVariable instanceof PsiLocalVariable) {
           PsiExpression initializer = resourceVariable.getInitializer();
           boolean hasNonNullInitializer = initializer != null && !PsiTypes.nullType().equals(initializer.getType());

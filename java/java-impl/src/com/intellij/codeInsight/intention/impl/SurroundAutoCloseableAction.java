@@ -11,7 +11,7 @@ import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -40,8 +40,8 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     boolean available = element.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
-                PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7) &&
-                (findVariable(element) != null || findExpression(element) != null);
+                        JavaFeature.TRY_WITH_RESOURCES.isAvailable(element) &&
+                        (findVariable(element) != null || findExpression(element) != null);
     return available ? Presentation.of(getFamilyName()) : null;
   }
 

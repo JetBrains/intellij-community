@@ -7,6 +7,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -255,7 +256,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
       if (
         initializer != null
         && parent.getContext() != null
-        && PsiUtil.isLanguageLevel10OrHigher(parent.getContainingFile())
+        && JavaFeature.LVTI.isAvailable(parent)
         && JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE
       ) {
         displayType = TypeUtils.getType(PsiKeyword.VAR, parent.getContext());

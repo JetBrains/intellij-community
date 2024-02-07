@@ -4,12 +4,12 @@ package com.intellij.codeInspection
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.packageDependencies.DependenciesBuilder
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.light.LightJavaModule
-import com.intellij.psi.util.PsiUtil
 
 class IllegalDependencyOnInternalPackageInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = IllegalDependencyOnInternalPackage(holder)
@@ -17,7 +17,7 @@ class IllegalDependencyOnInternalPackageInspection : LocalInspectionTool() {
 
 private class IllegalDependencyOnInternalPackage(private val holder: ProblemsHolder) : PsiElementVisitor() {
   override fun visitFile(file: PsiFile) {
-    if (!PsiUtil.isLanguageLevel9OrHigher(file) || JavaModuleGraphUtil.findDescriptorByElement(file) != null) return
+    if (!JavaFeature.MODULES.isAvailable(file) || JavaModuleGraphUtil.findDescriptorByElement(file) != null) return
     DependenciesBuilder.analyzeFileDependencies(file) { place, dependency ->
       if (dependency !is PsiClass) return@analyzeFileDependencies
       val dependencyFile = dependency.containingFile

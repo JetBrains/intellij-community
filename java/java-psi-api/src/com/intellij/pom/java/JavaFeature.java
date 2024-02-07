@@ -9,7 +9,7 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.*;
 
 /**
- * Represents Java language and standard library features and provides information 
+ * Represents Java language, JVM, or standard library features and provides information 
  * whether a particular features is available in a given context
  */
 public enum JavaFeature {
@@ -24,6 +24,7 @@ public enum JavaFeature {
   TRY_WITH_RESOURCES(LanguageLevel.JDK_1_7, "feature.try.with.resources"),
   BIN_LITERALS(LanguageLevel.JDK_1_7, "feature.binary.literals"),
   UNDERSCORES(LanguageLevel.JDK_1_7, "feature.underscores.in.literals"),
+  STRING_SWITCH(LanguageLevel.JDK_1_7, "feature.string.switch"),
   STREAMS(LanguageLevel.JDK_1_8, "feature.stream.api", true),
   /**
    * java.util.Arrays.setAll, java.util.Collection#removeIf, java.util.List.sort(Comparator),
@@ -43,18 +44,23 @@ public enum JavaFeature {
   STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
   REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
   MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
+  COLLECTION_FACTORIES(LanguageLevel.JDK_1_9, "feature.collection.factories"),
   LVTI(LanguageLevel.JDK_10, "feature.lvti"),
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
+  NESTMATES(LanguageLevel.JDK_11, "feature.nestmates"),
   ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
   SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
+  SERIAL_ANNOTATION(LanguageLevel.JDK_14, "feature.serial.annotation"),
   RECORDS(LanguageLevel.JDK_16, "feature.records"),
   PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks"),
-  SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
+  SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
+  ALWAYS_STRICTFP(LanguageLevel.JDK_17, "feature.strictfp"),
+  INNER_NOT_CAPTURE_THIS(LanguageLevel.JDK_18, "feature.no.this.capture"),
   PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.parenthesised.patterns"){
     @Override
     public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {

@@ -124,7 +124,7 @@ public final class SwitchUtils {
         return false;
       }
     }
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
+    if (JavaFeature.STRING_SWITCH.isSufficient(languageLevel)) {
       final PsiExpression stringSwitchExpression = determinePossibleJdk17SwitchExpression(expression, existingCaseValues);
       if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, stringSwitchExpression)) {
         return true;
@@ -230,7 +230,7 @@ public final class SwitchUtils {
       if (TypeConversionUtil.isEnumType(type)) {
         return true;
       }
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      if (JavaFeature.STRING_SWITCH.isSufficient(languageLevel) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return true;
       }
       return JavaFeature.PATTERNS_IN_SWITCH.isAvailable(expression);
@@ -479,7 +479,7 @@ public final class SwitchUtils {
       }
     }
     final PsiType type = expression.getType();
-    if ((!languageLevel.isAtLeast(LanguageLevel.JDK_1_7) || !TypeUtils.isJavaLangString(type)) &&
+    if ((!JavaFeature.STRING_SWITCH.isSufficient(languageLevel) || !TypeUtils.isJavaLangString(type)) &&
         !PsiTypes.intType().equals(type) && !PsiTypes.shortType().equals(type) && !PsiTypes.byteType().equals(type) && !PsiTypes.charType().equals(type)) {
       return false;
     }

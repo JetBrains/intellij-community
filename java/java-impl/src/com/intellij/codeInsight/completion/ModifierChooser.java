@@ -56,13 +56,13 @@ public final class ModifierChooser {
     {PsiKeyword.SEALED, PsiKeyword.NON_SEALED}
   };
 
-  private static final String[][] INTERFACE_9_MEMBER_MODIFIERS = {
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
     {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
   };
 
-  private static final String[][] INTERFACE_8_MEMBER_MODIFIERS = {
+  private static final String[][] INTERFACE_MEMBER_MODIFIERS_WITH_DEFAULT = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED},
     {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
     {PsiKeyword.FINAL, PsiKeyword.ABSTRACT}
@@ -140,10 +140,10 @@ public final class ModifierChooser {
       return INTERFACE_MEMBER_MODIFIERS_WITH_SEALED;
     }
     if (PsiUtil.isLanguageLevel9OrHigher(list)) {
-      return INTERFACE_9_MEMBER_MODIFIERS;
+      return INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE;
     }
-    if (PsiUtil.isLanguageLevel8OrHigher(list)) {
-      return INTERFACE_8_MEMBER_MODIFIERS;
+    if (JavaFeature.STATIC_INTERFACE_CALLS.isAvailable(list)) {
+      return INTERFACE_MEMBER_MODIFIERS_WITH_DEFAULT;
     }
     return INTERFACE_MEMBER_MODIFIERS;
   }

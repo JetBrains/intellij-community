@@ -477,7 +477,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myLabelToMergeWith);
         if (prevElement != null) moveTarget = prevElement;
       }
-      if (PsiUtil.isLanguageLevel14OrHigher(moveTarget) && moveTarget instanceof PsiSwitchLabelStatement labelStatement &&
+      if (JavaFeature.SWITCH_EXPRESSION.isAvailable(moveTarget) && moveTarget instanceof PsiSwitchLabelStatement labelStatement &&
           myBranchToDelete.canCopyCaseValues(myBranchToMergeWith) && !SwitchUtils.isCaseNull(labelStatement) &&
           !SwitchUtils.isDefaultLabel(labelStatement)) {
         for (PsiElement element : myBranchPrefixToMove) {

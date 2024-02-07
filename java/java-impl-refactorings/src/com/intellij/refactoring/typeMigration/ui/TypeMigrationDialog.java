@@ -19,11 +19,14 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
@@ -140,10 +143,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       final String text = rootType != null ? rootType.getCanonicalText(true) : "";
       int flags = 0;
       PsiElement root = roots[0];
-      if (PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_5)) {
+      if (JavaFeature.VARARGS.isAvailable(root)) {
         flags |= JavaCodeFragmentFactory.ALLOW_ELLIPSIS;
       }
-      if (PsiUtil.getLanguageLevel(root).isAtLeast(LanguageLevel.JDK_1_7)) {
+      if (JavaFeature.MULTI_CATCH.isAvailable(root)) {
         flags |= JavaCodeFragmentFactory.ALLOW_DISJUNCTION;
       }
       flags |= JavaCodeFragmentFactory.ALLOW_VOID;

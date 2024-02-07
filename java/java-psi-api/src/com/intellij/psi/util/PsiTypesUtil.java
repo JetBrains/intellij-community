@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -145,12 +146,12 @@ public final class PsiTypesUtil {
             case CommonClassNames.JAVA_LANG_DOUBLE:
               return "0.0";
             case CommonClassNames.JAVA_UTIL_SET:
-              return PsiUtil.isLanguageLevel9OrHigher(psiClass) ? "java.util.Set.of()" : "java.util.Collections.emptySet()";
+              return JavaFeature.COLLECTION_FACTORIES.isAvailable(psiClass) ? "java.util.Set.of()" : "java.util.Collections.emptySet()";
             case CommonClassNames.JAVA_UTIL_COLLECTION:
             case CommonClassNames.JAVA_UTIL_LIST:
-              return PsiUtil.isLanguageLevel9OrHigher(psiClass) ? "java.util.List.of()" : "java.util.Collections.emptyList()";
+              return JavaFeature.COLLECTION_FACTORIES.isAvailable(psiClass) ? "java.util.List.of()" : "java.util.Collections.emptyList()";
             case CommonClassNames.JAVA_UTIL_MAP:
-              return PsiUtil.isLanguageLevel9OrHigher(psiClass) ? "java.util.Map.of()" : "java.util.Collections.emptyMap()";
+              return JavaFeature.COLLECTION_FACTORIES.isAvailable(psiClass) ? "java.util.Map.of()" : "java.util.Collections.emptyMap()";
           }
         }
       }

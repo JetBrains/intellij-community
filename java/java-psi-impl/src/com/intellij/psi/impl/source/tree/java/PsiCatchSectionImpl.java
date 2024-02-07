@@ -4,7 +4,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -76,8 +76,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     PsiType declaredType = parameter.getType();
 
     // When the thrown expression is an ... exception parameter Ej (parameter) of a catch clause Cj (this) ...
-    if (PsiUtil.getLanguageLevel(parameter).isAtLeast(LanguageLevel.JDK_1_7) &&
-        isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
+    if (JavaFeature.MULTI_CATCH.isAvailable(parameter) && isCatchParameterEffectivelyFinal(parameter, getCatchBlock())) {
       PsiTryStatement statement = getTryStatement();
       // ... and the try block of the try statement which declares Cj (tryBlock) can throw T ...
       Collection<PsiClassType> thrownTypes = getThrownTypes(statement);
