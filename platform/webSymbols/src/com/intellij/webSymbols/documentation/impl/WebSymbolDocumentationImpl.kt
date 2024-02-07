@@ -18,7 +18,7 @@ internal data class WebSymbolDocumentationImpl(override val name: String,
                                                override val descriptionSections: Map<@Nls String, @Nls String>,
                                                override val footnote: @Nls String?) : WebSymbolDocumentation {
   override fun isNotEmpty(): Boolean =
-    name != definition || description != null || docUrl != null || apiStatus != null
+    name != definition || description != null || docUrl != null || (apiStatus != null && apiStatus != WebSymbolApiStatus.Stable)
     || required || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
 
   override fun withName(name: String): WebSymbolDocumentation =
