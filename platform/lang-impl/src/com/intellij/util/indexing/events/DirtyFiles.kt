@@ -18,6 +18,10 @@ class DirtyFiles {
     for (project in projects) {
       val projectDirtyFiles = myDirtyFiles.find { it.first == project }?.second
       if (projectDirtyFiles != null) {
+        // Technically, we can lose this file id if thread suspends here
+        // then the project is closed, queue is persisted, and only then thread resumes.
+        // To avoid this, we would need to add synchronized blocks when working with myDirtyFiles which will make file events processing slow
+        // So I think it's ok to risk some inconsistency
         projectDirtyFiles.addFile(fileId)
         addedToAtLeastOneProject = true
       }
