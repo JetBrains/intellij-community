@@ -219,6 +219,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       processVMDeathEvent(suspendContext, event);
                     }
                     else if (event instanceof ClassPrepareEvent) {
+                      if (eventSet.size() > 1) {
+                        // check for more than one different thread
+                        if (StreamEx.of(eventSet).select(ClassPrepareEvent.class).map(ClassPrepareEvent::thread).toSet().size() > 1) {
+                          LOG.error("Two different threads in ClassPrepareEvents: " + eventSet);
+                        }
+                      }
                       if (notifiedClassPrepareEventRequestors == null) {
                         notifiedClassPrepareEventRequestors = new HashSet<>(eventSet.size());
                       }
