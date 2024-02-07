@@ -194,6 +194,8 @@ final class SettingsHelper {
       args = ArrayUtil.mergeArrays(args, "--remote-allow-origins=*");
     }
 
+    args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required");
+
     return args;
   }
 
