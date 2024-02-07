@@ -182,6 +182,10 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="Diff.ShowStandaloneDiff"/>
       <reference id="EditSource"/>
+      <action id="GitLab.Merge.Request.Changes.MarkViewed"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesViewedAction"/>
+      <action id="GitLab.Merge.Request.Changes.MarkNotViewed"
+              class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMarkFilesNotViewedAction"/>
       <group id="GitLab.Merge.Request.Details.Commit.Tree.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
         <reference id="ChangesView.GroupBy"/>
       </group>
