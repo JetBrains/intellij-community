@@ -1,15 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.util.xmlb
 
-import com.intellij.openapi.util.JDOMExternalizable
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.PropertyCollector
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
+import com.intellij.util.xmlb.NotNullDeserializeBinding.LOG
+import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import com.intellij.util.xmlb.annotations.*
-import com.intellij.util.xmlb.annotations.AbstractCollection
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
 import org.jdom.Attribute
@@ -20,15 +21,19 @@ import java.lang.reflect.AccessibleObject
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Type
 import java.util.*
-import java.util.function.Function
+
+private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
 
 @ApiStatus.Internal
 open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
   private val tagName: String
-  var bindings: Array<NestedBinding>?
+  @JvmField
+  var bindings: Array<NestedBinding>? = null
 
+  @JvmField
   val beanClass: Class<*>
 
+  @JvmField
   var compareByFields: ThreeState = ThreeState.UNSURE
 
   init {
@@ -36,15 +41,140 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
     assert(!beanClass.isPrimitive) { "Bean is primitive type: $beanClass" }
     this.beanClass = beanClass
     tagName = getTagName(beanClass)
-    assert(!StringUtilRt.isEmptyOrSpaces(tagName)) { "Bean name is empty: $beanClass" }
+    assert(!tagName.isBlank()) { "Bean name is empty: $beanClass" }
   }
 
-  private class XmlSerializerPropertyCollector(configuration: Configuration) : PropertyCollector(configuration) {
-    private val accessorCache: ClassValue<List<MutableAccessor>> = XmlSerializerPropertyCollectorListClassValue(configuration)
+  companion object {
+    @JvmOverloads
+    fun deserializeInto(
+      result: Any,
+      element: Element,
+      accessorNameTracker: MutableSet<String>? = null,
+      bindings: Array<NestedBinding>,
+      start: Int = 0,
+      end: Int = bindings.size,
+    ) {
+      nextAttribute@ for (attribute in element.attributes) {
+        if (attribute.namespaceURI.isNullOrEmpty()) {
+          for (i in start until end) {
+            val binding = bindings[i]
+            if (binding is AttributeBinding && binding.name == attribute.name) {
+              accessorNameTracker?.add(binding.getAccessor().name)
+              binding.set(result, attribute.value)
+              continue@nextAttribute
+            }
+          }
+        }
+      }
 
-    override fun collect(aClass: Class<*>): List<MutableAccessor> {
-      return accessorCache[aClass]
+      var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
+      nextNode@ for (content in element.content) {
+        for (i in start until end) {
+          val binding = bindings[i]
+          if (content is Text) {
+            if (binding is TextBinding) {
+              binding.set(result, content.getValue())
+            }
+            continue
+          }
+
+          val child = content as Element
+          if (binding.isBoundTo(child)) {
+            if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
+              if (data == null) {
+                data = LinkedHashMap()
+              }
+              data.computeIfAbsent(binding) { ArrayList() }.add(child)
+            }
+            else {
+              accessorNameTracker?.add(binding.accessor.name)
+              binding.deserializeUnsafe(result, child)
+            }
+            continue@nextNode
+          }
+        }
+      }
+
+      for (i in start until end) {
+        val binding: Binding = bindings[i]
+        if (binding is AccessorBindingWrapper && binding.isFlat) {
+          binding.deserializeUnsafe(result, element)
+        }
+      }
+
+      if (data != null) {
+        for (binding in data.keys) {
+          accessorNameTracker?.add(binding.accessor.name)
+          (binding as MultiNodeBinding).deserializeList(result, data[binding]!!)
+        }
+      }
     }
+
+    // binding value will be not set if no data
+    @JvmOverloads
+    fun deserializeInto(
+      result: Any,
+      element: XmlElement,
+      bindings: Array<NestedBinding>,
+      start: Int = 0,
+      end: Int = bindings.size,
+    ) {
+      var attributeBindingCount = 0
+      for (i in start until end) {
+        val binding = bindings[i]
+        if (binding is AttributeBinding) {
+          attributeBindingCount++
+          val attributeBinding = binding
+          val value = element.attributes.get(attributeBinding.name)
+          if (value != null) {
+            attributeBinding.set(result, value)
+          }
+        }
+        else if (element.content != null && binding is TextBinding) {
+          binding.set(result, element.content!!)
+        }
+      }
+
+      if (attributeBindingCount == bindings.size) {
+        return
+      }
+
+      var data: LinkedHashMap<NestedBinding, MutableList<XmlElement?>>? = null
+      nextNode@ for (child in element.children) {
+        for (i in start until end) {
+          val binding = bindings[i]
+          if (binding is AttributeBinding || binding is TextBinding || !binding.isBoundTo(child)) {
+            continue
+          }
+
+          if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
+            if (data == null) {
+              data = LinkedHashMap()
+            }
+            data.computeIfAbsent(binding) { ArrayList() }.add(child)
+          }
+          else {
+            binding.deserializeUnsafe(result, child)
+          }
+          continue@nextNode
+        }
+      }
+
+      for (i in start until end) {
+        val binding = bindings[i]
+        if (binding is AccessorBindingWrapper && binding.isFlat) {
+          binding.deserializeUnsafe(result, element)
+        }
+      }
+
+      if (data != null) {
+        for (binding in data.keys) {
+          (binding as MultiNodeBinding).deserializeList2(result, data[binding]!!)
+        }
+      }
+    }
+
+    fun getAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
   }
 
   @Synchronized
@@ -80,7 +210,7 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
         continue
       }
 
-      element = serializePropertyInto(binding, o, element, filter, true)
+      element = serializePropertyInto(binding = binding, o = o, element = element, filter = filter, isFilterPropertyItself = true)
     }
     return element
   }
@@ -92,8 +222,7 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
                             isFilterPropertyItself: Boolean): Element? {
     var element = element
     val accessor: Accessor = binding.accessor
-    val property = accessor.getAnnotation(
-      Property::class.java)
+    val property = accessor.getAnnotation(Property::class.java)
     if (property == null || !property.alwaysWrite) {
       if (filter != null && isFilterPropertyItself) {
         if (filter is SkipDefaultsSerializationFilter) {
@@ -108,8 +237,7 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
 
       //todo: optimize. Cache it.
       if (property != null && property.filter != SerializationFilter::class.java &&
-          !ReflectionUtil.newInstance(property.filter).accepts(accessor, o)
-      ) {
+          !(ReflectionUtil.newInstance(property.filter::class.java) as SerializationFilter).accepts(accessor, o)) {
         return element
       }
     }
@@ -138,7 +266,7 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
 
   override fun deserialize(context: Any?, element: XmlElement): Any {
     val instance = newInstance()
-    deserializeInto(instance, element)
+    deserializeInto(result = instance, element = element, bindings = bindings!!)
     return instance
   }
 
@@ -177,8 +305,8 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
     return weights
   }
 
-  fun sortBindings(weights: Object2FloatMap<in String?>) {
-    Arrays.sort(bindings) { o1: NestedBinding, o2: NestedBinding ->
+  fun sortBindings(weights: Object2FloatMap<String>) {
+    Arrays.sort(bindings!!) { o1, o2 ->
       val n1 = o1.accessor.name
       val n2 = o2.accessor.name
       val w1 = weights.getFloat(n1)
@@ -187,303 +315,165 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
     }
   }
 
-  override fun isBoundTo(element: Element): Boolean {
-    return element.name == tagName
+  override fun isBoundTo(element: Element): Boolean = element.name == tagName
+
+  override fun isBoundTo(element: XmlElement): Boolean = element.name == tagName
+
+  override fun toString(): String = "BeanBinding[${beanClass.name}, tagName=$tagName]"
+}
+
+// must be static class and not anonymous
+private class MyPropertyCollectorConfiguration : PropertyCollector.Configuration(true, false, false) {
+  override fun isAnnotatedAsTransient(element: AnnotatedElement): Boolean {
+    return element.isAnnotationPresent(Transient::class.java)
   }
 
-  override fun isBoundTo(element: XmlElement): Boolean {
-    return element.name == tagName
+  override fun hasStoreAnnotations(element: AccessibleObject): Boolean {
+    @Suppress("DEPRECATION")
+    return element.isAnnotationPresent(OptionTag::class.java) ||
+           element.isAnnotationPresent(Tag::class.java) ||
+           element.isAnnotationPresent(com.intellij.util.xmlb.annotations.Attribute::class.java) ||
+           element.isAnnotationPresent(Property::class.java) ||
+           element.isAnnotationPresent(com.intellij.util.xmlb.annotations.Text::class.java) ||
+           element.isAnnotationPresent(CollectionBean::class.java) ||
+           element.isAnnotationPresent(MapAnnotation::class.java) ||
+           element.isAnnotationPresent(XMap::class.java) ||
+           element.isAnnotationPresent(XCollection::class.java) ||
+           element.isAnnotationPresent(com.intellij.util.xmlb.annotations.AbstractCollection::class.java)
+  }
+}
+
+private fun createBinding(accessor: MutableAccessor,
+                          serializer: Serializer,
+                          propertyStyle: Property.Style): NestedBinding {
+  val attribute = accessor.getAnnotation(
+    com.intellij.util.xmlb.annotations.Attribute::class.java)
+  if (attribute != null) {
+    return AttributeBinding(accessor, attribute)
   }
 
-  private class XmlSerializerPropertyCollectorListClassValue(private val configuration: PropertyCollector.Configuration) : ClassValue<List<MutableAccessor>>() {
-    override fun computeValue(aClass: Class<*>): List<MutableAccessor> {
-      // do not pass classToOwnFields cache - no need because we collect the whole set of accessors
-      val result = PropertyCollector.doCollect(aClass, configuration, null)
-      if (result.isEmpty() && !isAssertBindings(aClass)) {
-        if (JDOMExternalizable::class.java.isAssignableFrom(aClass)) {
-          LOG.error("Do not compute bindings for JDOMExternalizable: " + aClass.name)
-        }
-        else if (aClass.isEnum) {
-          LOG.error("Do not compute bindings for enum: " + aClass.name)
-        }
-        else if (aClass == String::class.java) {
-          LOG.error("Do not compute bindings for String")
-        }
-        LOG.warn("No accessors for " + aClass.name + ". " +
-                 "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc")
-      }
-      return result
+  val text = accessor.getAnnotation(com.intellij.util.xmlb.annotations.Text::class.java)
+  if (text != null) {
+    return TextBinding(accessor)
+  }
+
+  val optionTag = accessor.getAnnotation(
+    OptionTag::class.java)
+  if (optionTag != null && optionTag.converter != Converter::class.java) {
+    return OptionTagBinding(accessor, optionTag)
+  }
+
+  val binding = serializer.getBinding(accessor)
+  if (binding is JDOMElementBinding) {
+    return binding
+  }
+
+  val tag = accessor.getAnnotation(Tag::class.java)
+  if (tag != null) {
+    return TagBinding(accessor, tag)
+  }
+
+  if (binding is CompactCollectionBinding) {
+    return AccessorBindingWrapper(accessor, binding, false, Property.Style.OPTION_TAG)
+  }
+
+  var surroundWithTag = true
+  var inline = false
+  val property = accessor.getAnnotation(
+    Property::class.java)
+  if (property != null) {
+    surroundWithTag = property.surroundWithTag
+    inline = property.flat
+  }
+
+  if (!surroundWithTag || inline) {
+    if (inline && binding !is BeanBinding) {
+      throw XmlSerializationException("inline supported only for BeanBinding: $accessor")
+    }
+    if (binding == null || binding is TextBinding) {
+      throw XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: $accessor")
+    }
+    return AccessorBindingWrapper(accessor, binding, inline, property!!.style)
+  }
+
+  val xCollection = accessor.getAnnotation(XCollection::class.java)
+  if (xCollection != null && (!xCollection.propertyElementName.isEmpty() || xCollection.style == XCollection.Style.v2)) {
+    return TagBinding(accessor, xCollection.propertyElementName)
+  }
+
+  if (optionTag == null) {
+    accessor.getAnnotation(XMap::class.java)?.let {
+      return TagBinding(accessor, it.propertyElementName)
     }
   }
 
-  override fun toString(): String {
-    return "BeanBinding[" + beanClass.name + ", tagName=" + tagName + "]"
+  if (propertyStyle == Property.Style.ATTRIBUTE) {
+    return AttributeBinding(accessor, null)
   }
+  return OptionTagBinding(accessor, optionTag)
+}
 
-  // must be static class and not anonymous
-  private class MyPropertyCollectorConfiguration : PropertyCollector.Configuration(true, false, false) {
-    override fun isAnnotatedAsTransient(element: AnnotatedElement): Boolean {
-      return element.isAnnotationPresent(Transient::class.java)
+private class XmlSerializerPropertyCollector(configuration: Configuration) : PropertyCollector(configuration) {
+  private val accessorCache = XmlSerializerPropertyCollectorListClassValue(configuration)
+
+  override fun collect(aClass: Class<*>): List<MutableAccessor> = accessorCache.get(aClass)
+}
+
+private class XmlSerializerPropertyCollectorListClassValue(
+  private val configuration: PropertyCollector.Configuration,
+) : ClassValue<List<MutableAccessor>>() {
+  override fun computeValue(aClass: Class<*>): List<MutableAccessor> {
+    // do not pass classToOwnFields cache - no need because we collect the whole set of accessors
+    val result = PropertyCollector.doCollect(aClass, configuration, null)
+    if (result.isEmpty() && !isAssertBindings(aClass)) {
+      @Suppress("DEPRECATION")
+      when {
+        com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(aClass) -> LOG.error("Do not compute bindings for JDOMExternalizable: ${aClass.name}")
+        aClass.isEnum -> LOG.error("Do not compute bindings for enum: " + aClass.name)
+        aClass === String::class.java -> LOG.error("Do not compute bindings for String")
+      }
+      LOG.warn("No accessors for ${aClass.name}. " +
+               "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc")
     }
+    return result
+  }
+}
 
-    override fun hasStoreAnnotations(element: AccessibleObject): Boolean {
-      return element.isAnnotationPresent(OptionTag::class.java) ||
-             element.isAnnotationPresent(Tag::class.java) ||
-             element.isAnnotationPresent(com.intellij.util.xmlb.annotations.Attribute::class.java) ||
-             element.isAnnotationPresent(Property::class.java) ||
-             element.isAnnotationPresent(com.intellij.util.xmlb.annotations.Text::class.java) ||
-             element.isAnnotationPresent(CollectionBean::class.java) ||
-             element.isAnnotationPresent(MapAnnotation::class.java) ||
-             element.isAnnotationPresent(XMap::class.java) ||
-             element.isAnnotationPresent(XCollection::class.java) ||
-             element.isAnnotationPresent(AbstractCollection::class.java)
+private fun isAssertBindings(startClass: Class<*>): Boolean {
+  var aClass = startClass
+  do {
+    val property = aClass.getAnnotation(Property::class.java)
+    if (property != null && !property.assertIfNoBindings) {
+      return true
     }
   }
+  while ((aClass.superclass.also { aClass = it }) != null)
+  return false
+}
 
-  companion object {
-    private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
-
-    @JvmOverloads
-    fun deserializeInto(result: Any,
-                        element: Element,
-                        accessorNameTracker: MutableSet<in String?>? = null,
-                        bindings: Array<NestedBinding> = this.bindings,
-                        start: Int = 0,
-                        end: Int = this.bindings.length) {
-      nextAttribute@ for (attribute in element.attributes) {
-        if (StringUtilRt.isEmpty(attribute.namespaceURI)) {
-          for (i in start until end) {
-            val binding = bindings[i]
-            if (binding is AttributeBinding && binding.name == attribute.name) {
-              accessorNameTracker?.add(binding.getAccessor().name)
-              binding[result] = attribute.value
-              continue@nextAttribute
-            }
-          }
-        }
-      }
-
-      var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
-      nextNode@ for (content in element.content) {
-        for (i in start until end) {
-          val binding = bindings[i]
-          if (content is Text) {
-            if (binding is TextBinding) {
-              binding[result] = content.getValue()
-            }
-            continue
-          }
-
-          val child = content as Element
-          if (binding.isBoundTo(child)) {
-            if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
-              if (data == null) {
-                data = LinkedHashMap()
-              }
-              data.computeIfAbsent(binding, Function<NestedBinding, MutableList<Element?>> { it: NestedBinding? -> ArrayList() }).add(child)
-            }
-            else {
-              accessorNameTracker?.add(binding.accessor.name)
-              binding.deserializeUnsafe(result, child)
-            }
-            continue@nextNode
-          }
-        }
-      }
-
-      for (i in start until end) {
-        val binding: Binding = bindings[i]
-        if (binding is AccessorBindingWrapper && binding.isFlat) {
-          binding.deserializeUnsafe(result, element)
-        }
-      }
-
-      if (data != null) {
-        for (binding in data.keys) {
-          accessorNameTracker?.add(binding.accessor.name)
-          (binding as MultiNodeBinding).deserializeList(result, data[binding]!!)
-        }
-      }
-    }
-
-    // binding value will be not set if no data
-    @JvmOverloads
-    fun deserializeInto(result: Any,
-                        element: XmlElement,
-                        bindings: Array<NestedBinding> = this.bindings,
-                        start: Int = 0,
-                        end: Int = this.bindings.length) {
-      var attributeBindingCount = 0
-      for (i in start until end) {
-        val binding = bindings[i]
-        if (binding is AttributeBinding) {
-          attributeBindingCount++
-          val attributeBinding = binding
-          val value = element.attributes[attributeBinding.name]
-          if (value != null) {
-            attributeBinding[result] = value
-          }
-        }
-        else if (element.content != null && binding is TextBinding) {
-          binding[result] = element.content!!
-        }
-      }
-
-      if (attributeBindingCount == bindings.size) {
-        return
-      }
-
-      var data: LinkedHashMap<NestedBinding, MutableList<XmlElement?>>? = null
-      nextNode@ for (child in element.children) {
-        for (i in start until end) {
-          val binding = bindings[i]
-          if (binding is AttributeBinding || binding is TextBinding || !binding.isBoundTo(
-              child)
-          ) {
-            continue
-          }
-
-          if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
-            if (data == null) {
-              data = LinkedHashMap()
-            }
-            data.computeIfAbsent(binding, Function<NestedBinding, MutableList<XmlElement?>> { it: NestedBinding? -> ArrayList() }).add(
-              child)
-          }
-          else {
-            binding.deserializeUnsafe(result, child)
-          }
-          continue@nextNode
-        }
-      }
-
-      for (i in start until end) {
-        val binding: Binding = bindings[i]
-        if (binding is AccessorBindingWrapper && binding.isFlat) {
-          binding.deserializeUnsafe(result, element)
-        }
-      }
-
-      if (data != null) {
-        for (binding in data.keys) {
-          (binding as MultiNodeBinding).deserializeList2(result, data[binding]!!)
-        }
-      }
-    }
-
-    private fun getTagName(aClass: Class<*>): String {
-      var c: Class<*>? = aClass
-      while (c != null) {
-        val name = getTagNameFromAnnotation(c)
-        if (name != null) {
-          return name
-        }
-        c = c.superclass
-      }
-
-      var name = aClass.simpleName
-      if (name.isEmpty()) {
-        name = aClass.superclass.simpleName
-      }
-
-      val lastIndexOf = name.lastIndexOf('$')
-      if (lastIndexOf > 0 && name.length > (lastIndexOf + 1)) {
-        return name.substring(lastIndexOf + 1)
-      }
+private fun getTagName(aClass: Class<*>): String {
+  var c: Class<*>? = aClass
+  while (c != null) {
+    val name = getTagNameFromAnnotation(c)
+    if (name != null) {
       return name
     }
-
-    private fun getTagNameFromAnnotation(aClass: Class<*>): String? {
-      val tag = aClass.getAnnotation(Tag::class.java)
-      return if (tag != null && !tag.value.isEmpty()) tag.value else null
-    }
-
-    fun getAccessors(aClass: Class<*>): List<MutableAccessor> {
-      return PROPERTY_COLLECTOR.collect(aClass)
-    }
-
-    private fun isAssertBindings(aClass: Class<*>): Boolean {
-      var aClass = aClass
-      do {
-        val property = aClass.getAnnotation(
-          Property::class.java)
-        if (property != null && !property.assertIfNoBindings) {
-          return true
-        }
-      }
-      while ((aClass.superclass.also { aClass = it }) != null)
-      return false
-    }
-
-    private fun createBinding(accessor: MutableAccessor,
-                              serializer: Serializer,
-                              propertyStyle: Property.Style): NestedBinding {
-      val attribute = accessor.getAnnotation(
-        com.intellij.util.xmlb.annotations.Attribute::class.java)
-      if (attribute != null) {
-        return AttributeBinding(accessor, attribute)
-      }
-
-      val text = accessor.getAnnotation(com.intellij.util.xmlb.annotations.Text::class.java)
-      if (text != null) {
-        return TextBinding(accessor)
-      }
-
-      val optionTag = accessor.getAnnotation(
-        OptionTag::class.java)
-      if (optionTag != null && optionTag.converter != Converter::class.java) {
-        return OptionTagBinding(accessor, optionTag)
-      }
-
-      val binding = serializer.getBinding(accessor)
-      if (binding is JDOMElementBinding) {
-        return binding
-      }
-
-      val tag = accessor.getAnnotation(Tag::class.java)
-      if (tag != null) {
-        return TagBinding(accessor, tag)
-      }
-
-      if (binding is CompactCollectionBinding) {
-        return AccessorBindingWrapper(accessor, binding, false, Property.Style.OPTION_TAG)
-      }
-
-      var surroundWithTag = true
-      var inline = false
-      val property = accessor.getAnnotation(
-        Property::class.java)
-      if (property != null) {
-        surroundWithTag = property.surroundWithTag
-        inline = property.flat
-      }
-
-      if (!surroundWithTag || inline) {
-        if (inline && binding !is BeanBinding) {
-          throw XmlSerializationException("inline supported only for BeanBinding: $accessor")
-        }
-        if (binding == null || binding is TextBinding) {
-          throw XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: $accessor")
-        }
-        return AccessorBindingWrapper(accessor, binding, inline, property!!.style)
-      }
-
-      val xCollection = accessor.getAnnotation(XCollection::class.java)
-      if (xCollection != null && (!xCollection.propertyElementName.isEmpty() || xCollection.style == XCollection.Style.v2)) {
-        return TagBinding(accessor, xCollection.propertyElementName)
-      }
-
-      if (optionTag == null) {
-        val xMap = accessor.getAnnotation(XMap::class.java)
-        if (xMap != null) {
-          return TagBinding(accessor, xMap.propertyElementName)
-        }
-      }
-
-      if (propertyStyle == Property.Style.ATTRIBUTE) {
-        return AttributeBinding(accessor, null)
-      }
-      return OptionTagBinding(accessor, optionTag)
-    }
+    c = c.superclass
   }
+
+  var name = aClass.simpleName
+  if (name.isEmpty()) {
+    name = aClass.superclass.simpleName
+  }
+
+  val lastIndexOf = name.lastIndexOf('$')
+  if (lastIndexOf > 0 && name.length > (lastIndexOf + 1)) {
+    return name.substring(lastIndexOf + 1)
+  }
+  return name
+}
+
+private fun getTagNameFromAnnotation(aClass: Class<*>): String? {
+  val tag = aClass.getAnnotation(Tag::class.java)
+  return if (tag != null && !tag.value.isEmpty()) tag.value else null
 }
