@@ -13,15 +13,25 @@ internal class InternalDeclarationConversion(context: NewJ2kConverterContext) : 
         if (element !is JKVisibilityOwner || element !is JKModalityOwner) return recurse(element)
         if (element.visibility != INTERNAL) return recurse(element)
 
-        val containingClass = element.parentOfType<JKClass>()
-        val containingClassKind = containingClass?.classKind ?: element.psi<PsiMember>()?.containingClass?.classKind?.toJk()
+        val containingClass: JKClass? = element.parentOfType<JKClass>()
+        val psiContainingClass = element.psi<PsiMember>()?.containingClass
+        val containingClassKind = containingClass?.classKind ?: psiContainingClass?.classKind?.toJk()
 
         val containingClassVisibility = containingClass?.visibility
-            ?: element.psi<PsiMember>()
-                ?.containingClass
+            ?: psiContainingClass
                 ?.visibility(context.converter.referenceSearcher, null)
                 ?.visibility
-        val defaultVisibility = if (context.converter.settings.publicByDefault) PUBLIC else INTERNAL
+
+        val defaultVisibility = when {
+            context.converter.settings.publicByDefault -> PUBLIC
+
+            containingClass == null && psiContainingClass != null -> {
+                // indicates we are changing the context of the element in JKTree and should default to public
+                PUBLIC
+            }
+
+            else -> INTERNAL
+        }
 
         element.visibility = when {
             containingClassKind == INTERFACE || containingClassKind == ANNOTATION ->
