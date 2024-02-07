@@ -3,15 +3,11 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
-
-private val LOG = logger<StateStorageBase<*>>()
 
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
@@ -23,13 +19,14 @@ abstract class StateStorageBase<T : Any> : StateStorage {
     get() = true
 
   final override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
+    val stateElement = getSerializedState(
+      storageData = getStorageData(reload),
+      component = component,
+      componentName = componentName,
+      archive = false,
+    )
     return deserializeState(
-      stateElement = getSerializedState(
-        storageData = getStorageData(reload),
-        component = component,
-        componentName = componentName,
-        archive = false,
-      ),
+      stateElement = stateElement,
       stateClass = stateClass,
       mergeInto = mergeInto,
     )
@@ -96,7 +93,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 }
 
-inline fun <T> runBatchUpdate(project: Project, runnable: () -> T): T {
+internal inline fun <T> runBatchUpdate(project: Project, runnable: () -> T): T {
   val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
   publisher.onBatchUpdateStarted()
   try {
@@ -106,5 +103,3 @@ inline fun <T> runBatchUpdate(project: Project, runnable: () -> T): T {
     publisher.onBatchUpdateFinished()
   }
 }
-
-class UnresolvedReadOnlyFilesException(val files: List<VirtualFile>) : RuntimeException()
