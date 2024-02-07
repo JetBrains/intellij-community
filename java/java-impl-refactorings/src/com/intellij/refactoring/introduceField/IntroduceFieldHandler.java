@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -9,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -123,7 +122,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
         declareStatic = isInSuperOrThis = isInSuperOrThis(occurrences[i]);
       }
     }
-    if (isInSuperOrThis && JavaLanguageFeature.STATIC_INTERFACE_CALLS.isAvailable(expr != null ? expr : anchorElement)) {
+    if (isInSuperOrThis && JavaFeature.STATIC_INTERFACE_CALLS.isAvailable(expr != null ? expr : anchorElement)) {
       isInSuperOrThis = false;
     }
     int occurrencesNumber = occurrences.length;

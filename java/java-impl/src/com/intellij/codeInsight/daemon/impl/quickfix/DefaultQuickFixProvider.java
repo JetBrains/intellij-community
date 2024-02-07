@@ -3,14 +3,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -108,7 +107,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
       }
-      if (JavaLanguageFeature.RECORDS.isAvailable(ref)) {
+      if (JavaFeature.RECORDS.isAvailable(ref)) {
         if (isNewExpression) {
           result.add(new CreateRecordFromNewFix((PsiNewExpression)parent));
         }
@@ -119,7 +118,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
       if (isNewExpression) {
         result.add(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
-        if (JavaLanguageFeature.RECORDS.isAvailable(ref) && ((PsiNewExpression)parent).getQualifier() == null) {
+        if (JavaFeature.RECORDS.isAvailable(ref) && ((PsiNewExpression)parent).getQualifier() == null) {
           result.add(new CreateInnerRecordFromNewFix((PsiNewExpression)parent));
         }
       }

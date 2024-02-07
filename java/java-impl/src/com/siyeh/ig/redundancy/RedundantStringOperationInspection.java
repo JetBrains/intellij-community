@@ -3,7 +3,6 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
@@ -15,7 +14,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -153,7 +152,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
 
     @Override
     public void visitTemplateExpression(@NotNull PsiTemplateExpression element) {
-      if (!JavaLanguageFeature.STRING_TEMPLATES.isAvailable(element) || element.getLiteralExpression() == null) {
+      if (!JavaFeature.STRING_TEMPLATES.isAvailable(element) || element.getLiteralExpression() == null) {
         return;
       }
       PsiExpression processor = element.getProcessor();

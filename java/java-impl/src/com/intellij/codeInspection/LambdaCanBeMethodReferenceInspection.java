@@ -2,18 +2,16 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -61,7 +59,7 @@ public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJava
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaLanguageFeature.LAMBDA_EXPRESSIONS.isAvailable(holder.getFile())) {
+    if (!JavaFeature.LAMBDA_EXPRESSIONS.isAvailable(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

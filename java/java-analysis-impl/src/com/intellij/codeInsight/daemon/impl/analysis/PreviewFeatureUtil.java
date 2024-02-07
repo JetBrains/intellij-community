@@ -5,7 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -42,7 +42,7 @@ public final class PreviewFeatureUtil {
    */
   @Nullable
   @Contract(value = "null -> null", pure = true)
-  public static JavaLanguageFeature fromPreviewFeatureAnnotation(@Nullable PsiAnnotation annotation) {
+  public static JavaFeature fromPreviewFeatureAnnotation(@Nullable PsiAnnotation annotation) {
     if (annotation == null) return null;
     if (!annotation.hasQualifiedName(JDK_INTERNAL_PREVIEW_FEATURE) &&
         !annotation.hasQualifiedName(JDK_INTERNAL_JAVAC_PREVIEW_FEATURE)) {
@@ -58,7 +58,7 @@ public final class PreviewFeatureUtil {
     PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
     if (enumConstant == null) return null;
 
-    return JavaLanguageFeature.convertFromPreviewFeatureName(enumConstant.getName());
+    return JavaFeature.convertFromPreviewFeatureName(enumConstant.getName());
   }
 
   @Nullable
@@ -103,7 +103,7 @@ public final class PreviewFeatureUtil {
     }
 
     @Override
-    protected void registerProblem(PsiElement element, String description, JavaLanguageFeature feature, PsiAnnotation annotation) {
+    protected void registerProblem(PsiElement element, String description, JavaFeature feature, PsiAnnotation annotation) {
       boolean isReflective = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "reflective"));
 
       HighlightInfoType type = isReflective ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;

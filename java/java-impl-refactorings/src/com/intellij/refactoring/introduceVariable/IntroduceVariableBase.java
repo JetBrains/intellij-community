@@ -2,7 +2,6 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -27,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -564,7 +563,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {
-    if (JavaLanguageFeature.LVTI.isAvailable(expr)) {
+    if (JavaFeature.LVTI.isAvailable(expr)) {
       PsiType type = getNormalizedType(expr);
       if (type != null && !PsiTypes.nullType().equals(type) && PsiTypesUtil.isDenotableType(type, expr)) {
         PsiExpression copy =
@@ -833,7 +832,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   private boolean checkAnchorBeforeThisOrSuper(Project project, Editor editor, PsiElement tempAnchorElement) {
-    if (JavaLanguageFeature.STATEMENTS_BEFORE_SUPER.isAvailable(tempAnchorElement)) {
+    if (JavaFeature.STATEMENTS_BEFORE_SUPER.isAvailable(tempAnchorElement)) {
       return false;
     }
     if (tempAnchorElement instanceof PsiExpressionStatement) {

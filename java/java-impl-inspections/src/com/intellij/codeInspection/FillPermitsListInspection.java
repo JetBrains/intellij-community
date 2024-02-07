@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.impl.FillPermitsListFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -19,7 +18,7 @@ public final class FillPermitsListInspection extends AbstractBaseJavaLocalInspec
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaLanguageFeature.SEALED_CLASSES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!JavaFeature.SEALED_CLASSES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass psiClass) {

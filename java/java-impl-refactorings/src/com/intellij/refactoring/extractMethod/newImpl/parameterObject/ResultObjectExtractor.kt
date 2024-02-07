@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.codeInsight.hint.EditorCodePreview
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
@@ -12,7 +11,7 @@ import com.intellij.openapi.command.impl.StartMarkAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
-import com.intellij.pom.java.JavaLanguageFeature
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
@@ -44,7 +43,7 @@ object ResultObjectExtractor {
       InplaceExtractUtils.showExtractErrorHint(editor, ExtractMultipleVariablesException(variables, scope))
       return
     }
-    val shouldInsertRecord = JavaLanguageFeature.RECORDS.isAvailable(variables.first())
+    val shouldInsertRecord = JavaFeature.RECORDS.isAvailable(variables.first())
     val objectBuilder = if (shouldInsertRecord) {
       RecordResultObjectBuilder.create(variables)
     } else {

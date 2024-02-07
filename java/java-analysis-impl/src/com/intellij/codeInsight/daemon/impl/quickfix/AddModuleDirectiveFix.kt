@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
@@ -10,7 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
-import com.intellij.pom.java.JavaLanguageFeature
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiKeyword
@@ -24,7 +23,7 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModComman
   abstract fun getText(): String
 
   override fun getPresentation(context: ActionContext, module: PsiJavaModule): Presentation? {
-    return if (JavaLanguageFeature.MODULES.isAvailable(module)) Presentation.of(getText()) else null
+    return if (JavaFeature.MODULES.isAvailable(module)) Presentation.of(getText()) else null
   }
 }
 

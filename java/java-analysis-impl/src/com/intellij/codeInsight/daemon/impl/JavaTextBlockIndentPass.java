@@ -3,9 +3,11 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -17,7 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
@@ -50,7 +52,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!myEditor.getSettings().isIndentGuidesShown() || !JavaLanguageFeature.TEXT_BLOCKS.isAvailable(myFile)) {
+    if (!myEditor.getSettings().isIndentGuidesShown() || !JavaFeature.TEXT_BLOCKS.isAvailable(myFile)) {
       return;
     }
     Document document = myEditor.getDocument();

@@ -3,7 +3,6 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -15,7 +14,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -110,7 +109,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         return;
       }
       ifStatement = concatenateIfStatements(ifStatement);
-      if (JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(ifStatement)) {
+      if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(ifStatement)) {
         for (PsiIfStatement ifStatementInChain : getAllConditionalBranches(ifStatement)) {
           replaceCastsWithPatternVariable(ifStatementInChain);
         }
@@ -320,7 +319,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         branches.add(new IfStatementBranch(new PsiEmptyStatementImpl(), true));
       }
     }
-    if (JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression)){
+    if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression)){
       if (getNullability(switchExpression) != Nullability.NOT_NULL && findNullCheckedOperand(statementToReplace) == null) {
         final IfStatementBranch defaultBranch = ContainerUtil.find(branches, (branch) -> branch.isElse());
         final PsiElementFactory factory = PsiElementFactory.getInstance(ifStatement.getProject());
@@ -350,7 +349,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
     final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
     updater.moveCaretTo(replacement);
-    if (JavaLanguageFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
+    if (JavaFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
       final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {
         replacer.replace(replacement);
@@ -675,7 +674,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
           return false;
         }
         Nullability nullability = getNullability(switchExpression);
-        if (JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
+        if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(switchExpression) && !ClassUtils.isPrimitive(switchExpression.getType())) {
           if (hasDefaultElse(ifStatement) || findNullCheckedOperand(ifStatement) != null || hasUnconditionalPatternCheck(ifStatement, switchExpression)) {
             nullability = Nullability.NOT_NULL;
           }

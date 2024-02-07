@@ -16,15 +16,17 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandBatchQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -176,7 +178,7 @@ public final class InnerClassMayBeStaticInspection extends BaseInspection {
     public void visitClass(@NotNull PsiClass aClass) {
       if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC) ||
           PsiUtil.isLocalOrAnonymousClass(aClass)) {
-        if (!JavaLanguageFeature.INNER_STATICS.isAvailable(aClass)) {
+        if (!JavaFeature.INNER_STATICS.isAvailable(aClass)) {
           return;
         }
       }

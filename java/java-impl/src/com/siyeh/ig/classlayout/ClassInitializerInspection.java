@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -23,7 +22,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,7 +68,7 @@ public final class ClassInitializerInspection extends BaseInspection {
     PsiClassInitializer classInitializer = (PsiClassInitializer)infos[0];
     final PsiClass aClass = classInitializer.getContainingClass();
     assert aClass != null;
-    if (PsiUtil.isInnerClass(aClass) && !JavaLanguageFeature.INNER_STATICS.isAvailable(aClass) ||
+    if (PsiUtil.isInnerClass(aClass) && !JavaFeature.INNER_STATICS.isAvailable(aClass) ||
         ClassInitializerMayBeStaticInspection.dependsOnInstanceMembers(classInitializer)) {
       return new LocalQuickFix[] {new MoveToConstructorFix()};
     }

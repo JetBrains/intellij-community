@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -12,7 +11,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -84,7 +83,7 @@ final public class JavaServiceUtil {
                                                                                   @Nullable PsiClass implementerClass,
                                                                                   @Nullable PsiClass resultClass) {
     if (identifier == null || implementerClass == null || resultClass == null) return Collections.emptyList();
-    if (!JavaLanguageFeature.MODULES.isAvailable(identifier)) return Collections.emptyList();
+    if (!JavaFeature.MODULES.isAvailable(identifier)) return Collections.emptyList();
 
     String implementerClassName = implementerClass.getQualifiedName();
     if (implementerClassName == null) return Collections.emptyList();
@@ -128,7 +127,7 @@ final public class JavaServiceUtil {
 
   static List<LineMarkerInfo<PsiElement>> collectServiceLoaderLoadCall(@NotNull PsiIdentifier identifier,
                                                                        @NotNull PsiMethodCallExpression methodCall) {
-    if (!JavaLanguageFeature.MODULES.isAvailable(methodCall)) return Collections.emptyList();
+    if (!JavaFeature.MODULES.isAvailable(methodCall)) return Collections.emptyList();
     PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
 
     JavaReflectionReferenceUtil.ReflectiveType serviceType = findServiceTypeInArguments(arguments);

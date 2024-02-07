@@ -4,7 +4,6 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.navigation.PsiTargetNavigator;
@@ -15,7 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -123,7 +122,7 @@ public abstract class LocalToFieldHandler {
    * @return true, if adding a non-compile-time constants static field to the specified class is allowed. False otherwise.
    */
   public static boolean isStaticFieldAllowed(@NotNull PsiClass aClass) {
-    if (JavaLanguageFeature.INNER_STATICS.isAvailable(aClass)) {
+    if (JavaFeature.INNER_STATICS.isAvailable(aClass)) {
       return true;
     }
     return aClass.hasModifierProperty(PsiModifier.STATIC) || aClass.getParent() instanceof PsiJavaFile;

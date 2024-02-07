@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
@@ -29,7 +28,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -536,7 +535,7 @@ public final class JavaCompletionUtil {
           if (ReferenceListWeigher.INSTANCE.getApplicability(psiClass, myPlace) == inapplicable) {
             return new MarkProblem(MarkType.RED, null);
           }
-          if (JavaLanguageFeature.MODULES.isAvailable(myPlace)) {
+          if (JavaFeature.MODULES.isAvailable(myPlace)) {
             final PsiJavaModule currentModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
             if (currentModule != null) {
               final PsiJavaModule targetModule =  ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));

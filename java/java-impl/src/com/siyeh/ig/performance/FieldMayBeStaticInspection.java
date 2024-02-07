@@ -16,14 +16,13 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -90,7 +89,7 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
       if (containingClass != null
           && !containingClass.hasModifierProperty(PsiModifier.STATIC)
           && containingClass.getContainingClass() != null
-          && !JavaLanguageFeature.INNER_STATICS.isAvailable(containingClass)
+          && !JavaFeature.INNER_STATICS.isAvailable(containingClass)
           && !PsiUtil.isCompileTimeConstant(field)) {
         // inner class cannot have static declarations in earlier Java versions
         return;
@@ -99,7 +98,7 @@ public final class FieldMayBeStaticInspection extends BaseInspection {
         return;
       }
       if (containingClass instanceof PsiAnonymousClass &&
-          !JavaLanguageFeature.INNER_STATICS.isAvailable(containingClass) &&
+          !JavaFeature.INNER_STATICS.isAvailable(containingClass) &&
           !PsiUtil.isCompileTimeConstant(field)) {
         return;
       }

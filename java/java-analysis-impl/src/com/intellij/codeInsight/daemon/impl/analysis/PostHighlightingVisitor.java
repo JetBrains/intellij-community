@@ -33,7 +33,7 @@ import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -403,7 +403,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
       if (message != null) {
         PsiPattern pattern = variable.getPattern();
         IntentionAction action = null;
-        if (JavaLanguageFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(parameter)) {
+        if (JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(parameter)) {
           if (pattern instanceof PsiTypeTestPattern ttPattern && pattern.getParent() instanceof PsiDeconstructionList) {
             PsiRecordComponent component = JavaPsiPatternUtil.getRecordComponentForPattern(pattern);
             PsiTypeElement checkType = ttPattern.getCheckType();
@@ -426,7 +426,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
       }
     }
     else if ((myUnusedSymbolInspection.checkParameterExcludingHierarchy() ||
-              JavaLanguageFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(declarationScope))
+              JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(declarationScope))
              && declarationScope instanceof PsiLambdaExpression) {
       checkUnusedParameter(parameter, null);
       if (message != null) {
@@ -444,7 +444,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     if (!"main".equals(method.getName())) {
       return true;
     }
-    if (!JavaLanguageFeature.IMPLICIT_CLASSES.isAvailable(method)) {
+    if (!JavaFeature.IMPLICIT_CLASSES.isAvailable(method)) {
       return true;
     }
     return false;

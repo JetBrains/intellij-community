@@ -2,10 +2,9 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -24,7 +23,7 @@ public final class MeaninglessRecordAnnotationInspection extends AbstractBaseJav
   
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaLanguageFeature.RECORDS.isAvailable(holder.getFile())) {
+    if (!JavaFeature.RECORDS.isAvailable(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

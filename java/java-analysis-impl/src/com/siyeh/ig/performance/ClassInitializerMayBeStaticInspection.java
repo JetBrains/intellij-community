@@ -5,11 +5,10 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Condition;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -61,7 +60,7 @@ public final class ClassInitializerMayBeStaticInspection extends BaseInspection 
       final PsiElement scope = containingClass.getScope();
       if (!(scope instanceof PsiJavaFile) &&
           !containingClass.hasModifierProperty(PsiModifier.STATIC) &&
-          !JavaLanguageFeature.INNER_STATICS.isAvailable(containingClass)) {
+          !JavaFeature.INNER_STATICS.isAvailable(containingClass)) {
         return;
       }
 

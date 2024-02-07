@@ -22,7 +22,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -1037,7 +1037,7 @@ public final class GenericsHighlightUtil {
     PsiTypeElement checkTypeElement = InstanceOfUtils.findCheckTypeElement(expression);
     if (checkTypeElement == null) return null;
     PsiType checkType = checkTypeElement.getType();
-    if (JavaLanguageFeature.PATTERNS.isSufficient(languageLevel)) {
+    if (JavaFeature.PATTERNS.isSufficient(languageLevel)) {
       PsiPrimaryPattern pattern = expression.getPattern();
       if (pattern != null) {
         return PatternHighlightingModel.getUncheckedPatternConversionError(pattern);

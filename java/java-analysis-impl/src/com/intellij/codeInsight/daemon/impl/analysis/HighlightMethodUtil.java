@@ -27,7 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -432,7 +432,7 @@ public final class HighlightMethodUtil {
         PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           PsiElement element = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
-          builder = HighlightUtil.checkFeature(element, JavaLanguageFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
+          builder = HighlightUtil.checkFeature(element, JavaFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (builder == null) {
             builder = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, methodCall, containingClass);
           }
@@ -885,7 +885,7 @@ public final class HighlightMethodUtil {
       if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = ((PsiMethod)element).getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
-          HighlightInfo.Builder info = HighlightUtil.checkFeature(elementToHighlight, JavaLanguageFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
+          HighlightInfo.Builder info = HighlightUtil.checkFeature(elementToHighlight, JavaFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (info != null) return info;
           info = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, elementToHighlight, containingClass);
           if (info != null) return info;
@@ -1487,8 +1487,8 @@ public final class HighlightMethodUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCall).descriptionAndTooltip(message);
     }
     String message = JavaErrorBundle.message("constructor.call.must.be.first.statement", expression.getText() + "()");
-    return HighlightUtil.checkFeature(methodCall, JavaLanguageFeature.STATEMENTS_BEFORE_SUPER, PsiUtil.getLanguageLevel(methodCall),
-                                    methodCall.getContainingFile(), message, HighlightInfoType.ERROR);
+    return HighlightUtil.checkFeature(methodCall, JavaFeature.STATEMENTS_BEFORE_SUPER, PsiUtil.getLanguageLevel(methodCall),
+                                      methodCall.getContainingFile(), message, HighlightInfoType.ERROR);
   }
 
 

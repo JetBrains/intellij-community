@@ -2,13 +2,12 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.java.JavaLanguageFeature
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaModule
@@ -27,7 +26,7 @@ class KotlinAddRequiredModuleFix(module: PsiJavaModule, private val requiredName
     override fun startInWriteAction() = true
 
     override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-        return JavaLanguageFeature.MODULES.isAvailable(file) &&
+        return JavaFeature.MODULES.isAvailable(file) &&
                 startElement is PsiJavaModule &&
                 startElement.getManager().isInProject(startElement)
     }

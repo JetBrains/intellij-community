@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
@@ -10,7 +9,7 @@ import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiPrecedenceUtil;
@@ -189,7 +188,7 @@ public final class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<? super @NotNull LocalQuickFix> fixes) {
-    if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
+    if (!JavaFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
     if (parent instanceof PsiSwitchBlock block && PsiUtil.skipParenthesizedExprDown(block.getExpression()) == qualifier) {
       fixes.add(LocalQuickFix.from(new CreateNullBranchFix(block)));

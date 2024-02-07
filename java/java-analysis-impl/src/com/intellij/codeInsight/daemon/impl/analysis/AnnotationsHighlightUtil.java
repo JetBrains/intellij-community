@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -399,7 +399,7 @@ public final class AnnotationsHighlightUtil {
     }
 
     if (!(owner instanceof PsiModifierList)) {
-      HighlightInfo.Builder info = HighlightUtil.checkFeature(annotation, JavaLanguageFeature.TYPE_ANNOTATIONS, level, file);
+      HighlightInfo.Builder info = HighlightUtil.checkFeature(annotation, JavaFeature.TYPE_ANNOTATIONS, level, file);
       if (info != null) return info;
     }
 

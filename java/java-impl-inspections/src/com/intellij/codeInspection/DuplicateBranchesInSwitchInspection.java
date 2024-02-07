@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -9,7 +8,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.search.LocalSearchScope;
@@ -1080,7 +1079,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       if (labelElementList == null) return false;
       PsiCaseLabelElement[] elements = labelElementList.getElements();
       return !ContainerUtil.exists(elements,
-                                   element -> element instanceof PsiPattern && (!JavaLanguageFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
+                                   element -> element instanceof PsiPattern && (!JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(element) ||
                                                                                 JavaPsiPatternUtil.containsNamedPatternVariable(element)) ||
                                               element instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
     }

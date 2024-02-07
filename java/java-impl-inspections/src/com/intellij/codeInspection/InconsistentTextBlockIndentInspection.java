@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
@@ -10,7 +9,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -29,7 +28,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaLanguageFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!JavaFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {

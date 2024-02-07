@@ -1,8 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl.parameterObject
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
-import com.intellij.pom.java.JavaLanguageFeature
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -14,7 +13,7 @@ object ParameterObjectUtils {
     val factory = PsiElementFactory.getInstance(introducedClass.project)
     val typeParameters = introducedClass.typeParameters.map(factory::createType).toTypedArray()
     val type = factory.createType(introducedClass, *typeParameters)
-    val typeElement = if (JavaLanguageFeature.DIAMOND_TYPES.isAvailable(introducedClass) && typeParameters.isNotEmpty()) {
+    val typeElement = if (JavaFeature.DIAMOND_TYPES.isAvailable(introducedClass) && typeParameters.isNotEmpty()) {
       "${type.name}<>"
     } else {
       type.canonicalText

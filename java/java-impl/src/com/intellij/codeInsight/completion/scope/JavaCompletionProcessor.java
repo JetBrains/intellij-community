@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.com.intellij.pom.java.JavaLanguageFeature.PATTERNS_IN_SWITCH;
+import static com.intellij.pom.java.JavaFeature.PATTERNS_IN_SWITCH;
 
 public final class JavaCompletionProcessor implements PsiScopeProcessor, ElementClassHint {
   private static final Logger LOG = Logger.getInstance(JavaCompletionProcessor.class);

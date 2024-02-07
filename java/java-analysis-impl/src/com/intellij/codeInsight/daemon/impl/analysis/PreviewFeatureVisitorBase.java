@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
       if (module == null) return;
 
       PsiAnnotation annotation = getPreviewFeatureAnnotation(module);
-      @Nullable JavaLanguageFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
+      @Nullable JavaFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
       if (feature == null) return;
 
       String description = JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", module.getName());
@@ -55,7 +55,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
         PsiElement resolved = element.resolve();
         if (resolved instanceof PsiClass psiClass) {
           PsiAnnotation annotation = getPreviewFeatureAnnotation(psiClass);
-          JavaLanguageFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
+          JavaFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
           if (feature == null) continue;
           String description =
             JavaBundle.message("inspection.preview.feature.0.is.preview.api.message", psiClass.getQualifiedName());
@@ -87,7 +87,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
    */
   private void checkPreviewFeature(@NotNull PsiElement context, @NotNull PsiJavaCodeReferenceElement reference, @NotNull PsiModifierListOwner owner) {
     PsiAnnotation annotation = getPreviewFeatureAnnotation(owner);
-    JavaLanguageFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
+    JavaFeature feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation);
     if (feature == null) return;
     if (isParticipating(reference, owner)) return;
 
@@ -116,7 +116,7 @@ public abstract class PreviewFeatureVisitorBase extends JavaElementVisitor {
 
   protected abstract void registerProblem(PsiElement element,
                                           @InspectionMessage String description,
-                                          JavaLanguageFeature feature,
+                                          JavaFeature feature,
                                           PsiAnnotation annotation);
 
   /**

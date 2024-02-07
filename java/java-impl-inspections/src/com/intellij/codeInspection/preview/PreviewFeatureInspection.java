@@ -4,7 +4,7 @@ package com.intellij.codeInspection.preview;
 import com.intellij.codeInsight.daemon.impl.analysis.PreviewFeatureVisitorBase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -38,7 +38,7 @@ public final class PreviewFeatureInspection extends LocalInspectionTool {
     }
 
     @Override
-    protected void registerProblem(PsiElement element, String description, JavaLanguageFeature feature, PsiAnnotation annotation) {
+    protected void registerProblem(PsiElement element, String description, JavaFeature feature, PsiAnnotation annotation) {
       myHolder.registerProblem(element, description);
     }
   }

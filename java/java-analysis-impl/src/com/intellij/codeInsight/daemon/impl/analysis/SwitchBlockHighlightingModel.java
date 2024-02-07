@@ -10,7 +10,7 @@ import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -66,7 +66,7 @@ public class SwitchBlockHighlightingModel {
     if (selector == null) return null;
     PsiType selectorType = selector.getType();
     if (selectorType == null) return null;
-    if (JavaLanguageFeature.PATTERNS_IN_SWITCH.isSufficient(languageLevel)) {
+    if (JavaFeature.PATTERNS_IN_SWITCH.isSufficient(languageLevel)) {
       return new PatternsInSwitchBlockHighlightingModel(languageLevel, switchBlock, psiFile);
     }
     return new SwitchBlockHighlightingModel(languageLevel, switchBlock, psiFile);
@@ -106,7 +106,7 @@ public class SwitchBlockHighlightingModel {
     while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
       if (element instanceof PsiSwitchLabeledRuleStatement) {
         if (!levelChecked) {
-          HighlightInfo.Builder info = HighlightUtil.checkFeature(element, JavaLanguageFeature.ENHANCED_SWITCH, myLevel, myFile);
+          HighlightInfo.Builder info = HighlightUtil.checkFeature(element, JavaFeature.ENHANCED_SWITCH, myLevel, myFile);
           if (info != null) {
             errorSink.accept(info);
             return;
@@ -130,7 +130,7 @@ public class SwitchBlockHighlightingModel {
       if (!levelChecked && element instanceof PsiSwitchLabelStatementBase label) {
         @Nullable PsiCaseLabelElementList values = label.getCaseLabelElementList();
         if (values != null && values.getElementCount() > 1) {
-          HighlightInfo.Builder info = HighlightUtil.checkFeature(values, JavaLanguageFeature.ENHANCED_SWITCH, myLevel, myFile);
+          HighlightInfo.Builder info = HighlightUtil.checkFeature(values, JavaFeature.ENHANCED_SWITCH, myLevel, myFile);
           if (info != null) {
             errorSink.accept(info);
             return;
@@ -289,7 +289,7 @@ public class SwitchBlockHighlightingModel {
 
   @Nullable
   private static HighlightInfo.Builder createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
-    if (JavaLanguageFeature.ENUM_QUALIFIED_NAME_IN_SWITCH.isAvailable(expr)) return null;
+    if (JavaFeature.ENUM_QUALIFIED_NAME_IN_SWITCH.isAvailable(expr)) return null;
     PsiElement qualifier = expr.getQualifier();
     if (qualifier == null) return null;
     HighlightInfo.Builder result = createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
@@ -451,7 +451,7 @@ public class SwitchBlockHighlightingModel {
     PsiExpression guardingExpr = statement.getGuardExpression();
     if (guardingExpr == null) return null;
     HighlightInfo.Builder info =
-      HighlightUtil.checkFeature(guardingExpr, JavaLanguageFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, languageLevel, psiFile);
+      HighlightUtil.checkFeature(guardingExpr, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, languageLevel, psiFile);
     if (info != null) {
       return info;
     }
@@ -798,7 +798,7 @@ public class SwitchBlockHighlightingModel {
             // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
             // applicable at another reference type T if T is checkcast convertible to U (JEP 440-441)
             // There is no rule that says that a reference type applies to a primitive type
-            (mySelectorType instanceof PsiPrimitiveType && JavaLanguageFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(label))) &&
+            (mySelectorType instanceof PsiPrimitiveType && JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(label))) &&
             //null type is applicable to any class type
             !mySelectorType.equals(PsiTypes.nullType())) {
           HighlightInfo.Builder error =
@@ -1085,7 +1085,7 @@ public class SwitchBlockHighlightingModel {
         if (nonPattern != null) {
           return getPatternConstantCombinationProblem(nonPattern);
         }
-        if (JavaLanguageFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)) {
+        if (JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(firstElement)) {
           PsiCaseLabelElement patternVarElement = ContainerUtil.find(elements, JavaPsiPatternUtil::containsNamedPatternVariable);
           if (patternVarElement != null) {
             return new CaseLabelCombinationProblem(patternVarElement, "invalid.case.label.combination.several.patterns.unnamed", null);
@@ -1099,7 +1099,7 @@ public class SwitchBlockHighlightingModel {
 
     @NotNull
     private static CaseLabelCombinationProblem getPatternConstantCombinationProblem(PsiCaseLabelElement anchor) {
-      if (JavaLanguageFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(anchor)) {
+      if (JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(anchor)) {
         return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns.unnamed", null);
       } else {
         return new CaseLabelCombinationProblem(anchor, "invalid.case.label.combination.constants.and.patterns", null);

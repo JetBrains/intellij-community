@@ -15,9 +15,8 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -185,7 +184,7 @@ public final class SwitchUtils {
    */
   @Contract(pure = true)
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
-    if (!JavaLanguageFeature.ENHANCED_SWITCH.isAvailable(block)) {
+    if (!JavaFeature.ENHANCED_SWITCH.isAvailable(block)) {
       return false;
     }
 
@@ -234,7 +233,7 @@ public final class SwitchUtils {
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return true;
       }
-      return JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(expression);
+      return JavaFeature.PATTERNS_IN_SWITCH.isAvailable(expression);
     }
     return false;
   }
@@ -270,7 +269,7 @@ public final class SwitchUtils {
         return left;
       }
     }
-    if (JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
+    if (JavaFeature.PATTERNS_IN_SWITCH.isAvailable(expression)) {
       final PsiExpression patternSwitchExpression = findPatternSwitchExpression(expression);
       if (patternSwitchExpression != null) return patternSwitchExpression;
     }
@@ -432,7 +431,7 @@ public final class SwitchUtils {
         final PsiExpression instanceOf = ContainerUtil.find(operands, operand -> operand instanceof PsiInstanceOfExpression);
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
-        boolean needAppendWhen = JavaLanguageFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(expression);
+        boolean needAppendWhen = JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(expression);
         for (PsiExpression operand : operands) {
           if (operand != instanceOf) {
             builder.append(needAppendWhen ? " when " : " && ").append(operand.getText());

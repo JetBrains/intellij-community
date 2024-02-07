@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -78,7 +77,7 @@ public final class MethodOnlyUsedFromInnerClassInspection extends BaseInspection
       if (innerClass == null) {
         return;
       }
-      if (method.hasModifierProperty(PsiModifier.STATIC) && !JavaLanguageFeature.INNER_STATICS.isAvailable(method)) {
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !JavaFeature.INNER_STATICS.isAvailable(method)) {
         final PsiElement parent = innerClass.getParent();
         if (parent instanceof PsiClass && !innerClass.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLocalClass(innerClass)) {
           return;

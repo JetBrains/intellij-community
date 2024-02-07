@@ -6,7 +6,7 @@ import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.pom.java.JavaLanguageFeature
+import com.intellij.pom.java.JavaFeature
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.IntentionPowerPackBundle
 import org.jetbrains.annotations.Nls
@@ -72,7 +72,7 @@ class JavaOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId
     fun getIntentionMessage(project: Project): @Nls String {
       val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: error("Not found modules in project '${project.name}'")
       val langLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module)
-      val messageKey = if (JavaLanguageFeature.TEXT_BLOCKS.isSufficient(langLevel)) {
+      val messageKey = if (JavaFeature.TEXT_BLOCKS.isSufficient(langLevel)) {
         "replace.concatenation.with.format.string.intention.name.formatted"
       }
       else "replace.concatenation.with.format.string.intention.name"

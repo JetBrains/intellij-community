@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
@@ -23,7 +22,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -205,7 +204,7 @@ public final class ClassMayBeInterfaceInspection extends BaseInspection {
       if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      if (PsiUtil.isLocalClass(aClass) && !JavaLanguageFeature.LOCAL_INTERFACES.isAvailable(aClass)) {
+      if (PsiUtil.isLocalClass(aClass) && !JavaFeature.LOCAL_INTERFACES.isAvailable(aClass)) {
         return;
       }
       if (!mayBeInterface(aClass)) {

@@ -16,11 +16,10 @@
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -77,7 +76,7 @@ class ParameterObjectBuilder {
   }
 
   public String buildBeanClass() {
-    boolean recordsAvailable = JavaLanguageFeature.RECORDS.isAvailable(myFile) &&
+    boolean recordsAvailable = JavaFeature.RECORDS.isAvailable(myFile) &&
                                !ContainerUtil.exists(fields, ParameterSpec::isSetterRequired);
     @NonNls final StringBuilder out = new StringBuilder(1024);
     if (packageName.length() > 0) out.append("package ").append(packageName).append(';');

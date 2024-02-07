@@ -6,7 +6,6 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
@@ -39,7 +38,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -275,7 +274,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return element instanceof PsiEnumConstant;
         }
       };
-      if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
+      if (!JavaFeature.PATTERNS_IN_SWITCH.isAvailable(position)) {
         return enumClassFilter;
       }
 
@@ -322,7 +321,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
     };
 
-    if (!JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(position) ||
+    if (!JavaFeature.PATTERNS_IN_SWITCH.isAvailable(position) ||
         isPrimitive(selectorType) || TypeUtils.isJavaLangString(selectorType)) {
       ClassFilter classFilter = new ClassFilter(PsiClass.class) {
         @Override
@@ -1013,7 +1012,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (IN_SWITCH_LABEL.accepts(position)) {
-      return JavaLanguageFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
+      return JavaFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
     }
 
     if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {

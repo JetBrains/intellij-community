@@ -2,14 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,7 +51,7 @@ public final class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCom
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!JavaLanguageFeature.LVTI.isAvailable(context.file())) return null;
+    if (!JavaFeature.LVTI.isAvailable(context.file())) return null;
     PsiReferenceExpression reference = tryCast(element, PsiReferenceExpression.class);
     if (reference == null) return null;
     PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);

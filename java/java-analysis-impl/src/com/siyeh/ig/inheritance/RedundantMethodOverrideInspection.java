@@ -1,20 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -185,7 +187,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
           method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
-      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !JavaLanguageFeature.EXTENSION_METHODS.isAvailable(method)) {
+      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && !JavaFeature.EXTENSION_METHODS.isAvailable(method)) {
         return;
       }
       boolean canBeRemoved = AbstractMethodOverridesAbstractMethodInspection.haveSameParameterTypes(method, superMethod);

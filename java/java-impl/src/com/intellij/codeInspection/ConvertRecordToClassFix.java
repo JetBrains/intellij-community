@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction;
@@ -16,7 +15,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -327,7 +326,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
                   :
                   "if(obj == this) return true;\n" +
                   "if(obj == null || obj.getClass() != this.getClass()) return false;\n" +
-                  (myLanguageLevel.isAtLeast(JavaLanguageFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) +
+                  (myLanguageLevel.isAtLeast(JavaFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) +
                   " that = (" + psiClass.getName() + ")obj;\n" +
                   "return " + equalsExpression + ";\n";
     return "@" + CommonClassNames.JAVA_LANG_OVERRIDE + "\n" +

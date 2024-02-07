@@ -2,13 +2,12 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
@@ -274,7 +273,7 @@ public abstract class CodeBlockSurrounder {
         if (parentContext != ParentContext.ASSIGNMENT && parentContext != ParentContext.RETURN) return null;
         return new TernaryToIfSurrounder(expression, conditional, parentSurrounder);
       }
-      if (JavaPsiConstructorUtil.isConstructorCall(parent) && !JavaLanguageFeature.STATEMENTS_BEFORE_SUPER.isAvailable(parent)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(parent) && !JavaFeature.STATEMENTS_BEFORE_SUPER.isAvailable(parent)) {
         return null;
       }
       cur = parent;

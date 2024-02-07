@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -11,7 +10,7 @@ import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.pom.java.JavaLanguageFeature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
@@ -43,7 +42,7 @@ public final class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
   }
 
   private static boolean isAvailable(@NotNull ActionContext context, @NotNull PsiClass aClass) {
-    if (!JavaLanguageFeature.SEALED_CLASSES.isAvailable(aClass)) return false;
+    if (!JavaFeature.SEALED_CLASSES.isAvailable(aClass)) return false;
     int offset = context.offset();
     PsiElement lBrace = aClass.getLBrace();
     if (lBrace == null) return false;
