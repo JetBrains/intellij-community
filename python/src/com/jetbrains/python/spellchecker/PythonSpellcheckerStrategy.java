@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.spellchecker;
 
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
-import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
+import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,6 +18,7 @@ import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyStringElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyPlainStringElementImpl;
 import com.jetbrains.python.psi.impl.PyStringLiteralDecoder;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +26,27 @@ import java.util.Collections;
 import java.util.List;
 
 
-public final class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
+public final class PythonSpellcheckerStrategy extends SuppressibleSpellcheckingStrategy {
+  public static final Key<Boolean> PY_STRING_SPELLCHECK_IGNORE_KEY = new Key<>("PyStringSpellcheckIgnoreKey");
+
+  @Override
+  public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name) {
+    if (!(element instanceof PyPlainStringElementImpl)) {
+      return false;
+    }
+    PsiElement parent = element.getParent();
+    if (parent == null) {
+      return false;
+    }
+    Boolean ignoreSpellCheck = parent.getUserData(PY_STRING_SPELLCHECK_IGNORE_KEY);
+    return Boolean.TRUE.equals(ignoreSpellCheck);
+  }
+
+  @Override
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
+    return SuppressQuickFix.EMPTY_ARRAY;
+  }
+
   private static class StringLiteralTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
     public void tokenize(@NotNull PyStringLiteralExpression element, @NotNull TokenConsumer consumer) {
