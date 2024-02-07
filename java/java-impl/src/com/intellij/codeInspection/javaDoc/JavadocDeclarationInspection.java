@@ -14,7 +14,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -454,10 +454,10 @@ public final class JavadocDeclarationInspection extends LocalInspectionTool {
   private static void checkSnippetTag(@NotNull ProblemsHolder holder, PsiElement element, PsiInlineDocTag tag) {
     if (element instanceof PsiSnippetDocTag snippet) {
       PsiElement nameElement = tag.getNameElement();
-      if (!PsiUtil.getLanguageLevel(snippet).isAtLeast(LanguageLevel.JDK_18)) {
+      if (!PsiUtil.isAvailable(JavaFeature.JAVADOC_SNIPPETS, snippet)) {
         if (nameElement != null) {
           String message = JavaBundle.message("inspection.javadoc.problem.snippet.tag.is.not.available");
-          holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_18));
+          holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(JavaFeature.JAVADOC_SNIPPETS.getMinimumLevel()));
         }
         return;
       }

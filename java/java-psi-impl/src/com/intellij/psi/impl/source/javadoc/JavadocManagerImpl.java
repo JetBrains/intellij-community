@@ -5,6 +5,7 @@ import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.CustomJavadocTagProvider;
@@ -44,7 +45,7 @@ public final class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new SimpleDocTagInfo("index", LanguageLevel.JDK_1_9, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("summary", LanguageLevel.JDK_10, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("systemProperty", LanguageLevel.JDK_12, true, PsiElement.class));
-    myInfos.add(new SimpleDocTagInfo("snippet", LanguageLevel.JDK_18, true, PsiElement.class));
+    myInfos.add(new SimpleDocTagInfo("snippet", JavaFeature.JAVADOC_SNIPPETS.getMinimumLevel(), true, PsiElement.class));
 
     // not a standard tag, used by IDEA for suppressing inspections
     myInfos.add(new SimpleDocTagInfo(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME, LanguageLevel.JDK_1_3, false, PsiElement.class));

@@ -58,6 +58,7 @@ public enum JavaFeature {
   SEALED_CLASSES(LanguageLevel.JDK_17, "feature.sealed.classes"),
   ALWAYS_STRICTFP(LanguageLevel.JDK_17, "feature.strictfp"),
   INNER_NOT_CAPTURE_THIS(LanguageLevel.JDK_18, "feature.no.this.capture"),
+  JAVADOC_SNIPPETS(LanguageLevel.JDK_18, "feature.javadoc.snippets"),
   PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.parenthesised.patterns"){
     @Override
     public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
