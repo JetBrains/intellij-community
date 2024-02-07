@@ -432,7 +432,7 @@ final class HighlightInfoUpdater {
    * We associate each HighlightInfo with the PSI element for which the inspection builder has produced that info.
    * Unfortunately, there are some crazy inspections that produce infos in their {@link LocalInspectionTool#inspectionFinished(LocalInspectionToolSession, ProblemsHolder)} method instead.
    * Which is very slow, because that highlight info won't be displayed until the entire file is visited.
-   * For these infos the associated PSI element is assumed to be this {@link #FAKE_ELEMENT}
+   * For these infos the associated PSI element is assumed to be this {@code FAKE_ELEMENT}
    */
   static final PsiElement FAKE_ELEMENT = new PsiElement() {
       @Override

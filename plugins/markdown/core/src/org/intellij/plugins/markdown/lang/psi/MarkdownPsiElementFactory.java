@@ -127,12 +127,8 @@ public final class MarkdownPsiElementFactory {
     if (columnsCount < 1) {
       throw new IllegalArgumentException("Passed separator text should be valid and contain at least one column.\n Text passed: [" + text + "]");
     }
-    final var builder = new StringBuilder();
-    builder.append("|");
-    builder.append("    |".repeat(columnsCount));
-    builder.append('\n');
-    builder.append(text);
-    final var file = createFile(project, builder.toString());
+    String markdownFile = "|" + "    |".repeat(columnsCount) + '\n' + text;
+    final var file = createFile(project, markdownFile);
     final var table = PsiTreeUtil.getParentOfType(file.findElementAt(0), MarkdownTable.class);
     if (table == null) {
       final var psi = DebugUtil.psiToString(file, true, true);

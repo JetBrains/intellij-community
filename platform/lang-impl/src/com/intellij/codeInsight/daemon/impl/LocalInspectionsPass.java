@@ -433,9 +433,6 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
 
       if (!isTests && !toolWrapper.isApplicable(projectTypes)) continue;
 
-      if (toolWrapper instanceof LocalInspectionToolWrapper local && !isAcceptableLocalTool(local)) {
-        continue;
-      }
       HighlightDisplayKey key = toolWrapper.getDisplayKey();
       if (!profile.isToolEnabled(key, getFile())) continue;
       if (HighlightDisplayLevel.DO_NOT_SHOW.equals(profile.getErrorLevel(key, getFile()))) continue;
@@ -445,7 +442,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       }
       else {
         wrapper = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
-        if (wrapper == null || !isAcceptableLocalTool(wrapper)) continue;
+        if (wrapper == null) continue;
       }
       String language = wrapper.getLanguage();
       if (language != null && Language.findLanguageByID(language) == null) {
@@ -462,10 +459,6 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       enabled.add(wrapper);
     }
     return enabled;
-  }
-
-  protected boolean isAcceptableLocalTool(@NotNull LocalInspectionToolWrapper wrapper) {
-    return true;
   }
 
   @Override
