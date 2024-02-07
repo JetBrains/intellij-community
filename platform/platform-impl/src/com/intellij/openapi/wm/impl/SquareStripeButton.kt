@@ -92,7 +92,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
           return JBUI.CurrentTheme.ActionButton.pressedBackground()
         }
         if (isHovered()) {
-          return StripeButtonUi.BACKGROUND_COLOR
+          return JBUI.CurrentTheme.ActionButton.hoverBackground()
         }
         return this@SquareStripeButton.background
       }
