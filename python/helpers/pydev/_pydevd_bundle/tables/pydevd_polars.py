@@ -157,18 +157,18 @@ def analyze_categorical_column(column, col_name):
 
 
 def analyze_numeric_column(column, col_name):
-    column = column.drop_nulls()
+    # handle np.NaN values, because they are not dropped with drop_nulls() the way they are
+    column = column.fill_nan(None).drop_nulls()
     unique_values = column.n_unique()
     if unique_values > ColumnVisualisationUtils.NUM_BINS:
-        counts, bin_edges = np.histogram(column, bins=ColumnVisualisationUtils.NUM_BINS)
         format_function = int if column.is_integer() else lambda x: round(x, 1)
-
+        counts, bin_edges = np.histogram(column, bins=ColumnVisualisationUtils.NUM_BINS)
         # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i + 1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
         res = add_custom_key_value_separator(zip(bin_labels, counts))
     else:
-        counts = column.value_counts().sort(by=col_name).to_dict()
-        res = add_custom_key_value_separator(zip(counts[col_name], counts[COUNT_COL_NAME]))
+        raw_counts = column.value_counts().sort(by=col_name).to_dict()
+        res = add_custom_key_value_separator(zip(raw_counts[col_name], raw_counts[COUNT_COL_NAME]))
     return ColumnVisualisationType.HISTOGRAM, res
 
 

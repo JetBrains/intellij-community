@@ -190,11 +190,8 @@ def analyze_numeric_column(column):
     if unique_values <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
+        format_function = int if column.dtype.kind == 'i' else lambda x: round(x, 1)
         counts, bin_edges = np.histogram(column.dropna(), bins=ColumnVisualisationUtils.NUM_BINS)
-        if column.dtype.kind == 'i':
-            format_function = lambda x: int(x)
-        else:
-            format_function = lambda x: round(x, 1)
 
         # so the long dash will be correctly viewed both on Mac and Windows
         bin_labels = ['{} \u2014 {}'.format(format_function(bin_edges[i]), format_function(bin_edges[i+1])) for i in range(ColumnVisualisationUtils.NUM_BINS)]
