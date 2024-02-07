@@ -27,7 +27,7 @@ fun completePackageNames(project: Project, result: CompletionResultSet) {
 
 fun completeVersions(name: String, project: Project, result: CompletionResultSet, addQuotes: Boolean) {
   val repositoryManager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return).repositoryManager
-  val packageSpecification = repositoryManager.createSpecification(name, null, null) ?: return
+  val packageSpecification = repositoryManager.createSpecification(name, null) ?: return
   val versions = ApplicationUtil.runWithCheckCanceled({
                                                         runBlockingCancellable {
                                                           repositoryManager.getPackageDetails(packageSpecification).availableVersions

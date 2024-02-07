@@ -23,7 +23,6 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
@@ -141,8 +140,7 @@ fun PythonPackageManager.isInstalled(name: String): Boolean {
 }
 
 fun PythonRepositoryManager.createSpecification(name: String,
-                                                version: String? = null,
-                                                relation: PyRequirementRelation? = null): PythonPackageSpecification? {
+                                                versionSpec: String? = null): PythonPackageSpecification? {
   val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }?.first
-  return repository?.createPackageSpecification(name, version, relation)
+  return repository?.createPackageSpecification(name, versionSpec)
 }

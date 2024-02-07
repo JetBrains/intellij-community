@@ -120,7 +120,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
   suspend fun updatePackage(specification: PythonPackageSpecification) {
     val result = manager.updatePackage(specification)
-    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.version))
+    if (result.isSuccess) showPackagingNotification(message("python.packaging.notification.updated", specification.name, specification.versionSpecs))
   }
 
   internal suspend fun initForSdk(sdk: Sdk?) {

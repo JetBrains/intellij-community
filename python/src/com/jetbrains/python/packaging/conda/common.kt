@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.conda
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 
@@ -13,9 +14,9 @@ class CondaPackage(name: String, version: String, val installedWithPip: Boolean 
   }
 }
 
-class CondaPackageSpecification(override val name: String,
-                                override val version: String?,
-                                override val relation: PyRequirementRelation? = null) : PythonPackageSpecification {
+class CondaPackageSpecification(name: String,
+                                version: String?,
+                                relation: PyRequirementRelation? = null) : PythonPackageSpecificationBase(name, version, relation, CondaPackageRepository) {
   override val repository: PyPackageRepository = CondaPackageRepository
 
   override fun buildInstallationString(): List<String> {
