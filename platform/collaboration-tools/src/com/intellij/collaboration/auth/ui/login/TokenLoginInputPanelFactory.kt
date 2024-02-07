@@ -4,6 +4,8 @@ package com.intellij.collaboration.auth.ui.login
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
@@ -30,11 +32,29 @@ class TokenLoginInputPanelFactory(
   private val model: TokenLoginPanelModel
 ) {
 
+  @Deprecated(
+    "Use the 'TokenLoginInputPanelFactory.createIn' method",
+    ReplaceWith(
+      expression = "TokenLoginInputPanelFactory.createIn",
+      imports = ["com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory"]
+    )
+  )
   @JvmOverloads
   fun createIn(
     cs: CoroutineScope,
     serverFieldDisabled: Boolean,
     tokenNote: @NlsContexts.DetailedDescription String?,
+    footer: Panel.() -> Unit = { }
+  ): DialogPanel {
+    return createIn(cs, serverFieldDisabled, tokenNote, null, footer)
+  }
+
+  @JvmOverloads
+  fun createIn(
+    cs: CoroutineScope,
+    serverFieldDisabled: Boolean,
+    tokenNote: @NlsContexts.DetailedDescription String?,
+    errorPresenter: ErrorStatusPresenter<Throwable>?,
     footer: Panel.() -> Unit = { }
   ): DialogPanel {
 
@@ -94,6 +114,12 @@ class TokenLoginInputPanelFactory(
             model.generateToken(serverTextField.text)
             IdeFocusManager.findInstanceByComponent(tokenField).requestFocus(tokenField, false)
           }.enabledIf(TokenGeneratorPredicate(model, serverTextField))
+        }
+      }
+      row {
+        if (errorPresenter != null) {
+          val errorPanel = ErrorStatusPanelFactory.create(cs, model.errorFlow, errorPresenter, ErrorStatusPanelFactory.Alignment.LEFT)
+          cell(errorPanel)
         }
       }
       footer()

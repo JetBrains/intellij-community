@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.authentication.ui
 
+import com.intellij.collaboration.auth.ui.login.LoginException
 import com.intellij.collaboration.auth.ui.login.LoginPanelModelBase
 import com.intellij.collaboration.auth.ui.login.LoginTokenGenerator
 import com.intellij.collaboration.util.URIUtil
@@ -26,8 +27,12 @@ class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
     val api = service<GitLabApiManager>().getClient(server, token)
     val version = api.getMetadataOrNull()?.version
     val earliestSupportedVersion = serviceAsync<GitLabServersManager>().earliestSupportedVersion
-    require(version != null && earliestSupportedVersion <= version) {
-      GitLabBundle.message("server.version.unsupported", version.toString(), earliestSupportedVersion)
+
+    if (version == null) {
+      throw LoginException.InvalidTokenOrUnsupportedServerVersion(earliestSupportedVersion.toString())
+    }
+    if (version < earliestSupportedVersion) {
+      throw LoginException.UnsupportedServerVersion(version.toString(), earliestSupportedVersion.toString())
     }
 
     val user = withContext(Dispatchers.IO) {

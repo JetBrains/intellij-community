@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabLoginErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
 import javax.swing.JComponent
@@ -91,12 +92,13 @@ object GitLabLoginUtil {
         cs,
         serverFieldDisabled,
         tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
+        errorPresenter = GitLabLoginErrorStatusPresenter(),
         footer = {
-            addWarningForPersistentCredentials(
-              cs,
-              service<GitLabAccountManager>().canPersistCredentials,
-              ::panel
-            )
+          addWarningForPersistentCredentials(
+            cs,
+            service<GitLabAccountManager>().canPersistCredentials,
+            ::panel
+          )
         }
       )
     }.showAndGet()
