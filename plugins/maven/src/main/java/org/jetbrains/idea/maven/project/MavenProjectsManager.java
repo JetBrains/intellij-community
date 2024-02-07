@@ -181,6 +181,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void initForTests() {
     tryToLoadExistingTree();
+    initProjectsTree();
     doInit();
   }
 
@@ -193,7 +194,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
       initPreloadMavenServices();
-      initProjectsTree();
       initWorkers();
       listenForSettingsChanges();
       registerSyncConsoleListener();
@@ -234,6 +234,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!wasMavenized) return;
 
     tryToLoadExistingTree();
+    initProjectsTree();
     doInit();
     doActivate();
     var forceImport =
@@ -308,11 +309,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @NotNull
-  private MavenProjectsTree initProjectsTree() {
+  private void initProjectsTree() {
     if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
     applyStateToTree(myProjectsTree, this);
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
-    return myProjectsTree;
   }
 
   private void applyTreeToState() {
@@ -694,7 +694,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public MavenProjectsTree getProjectsTree() {
     if (myProjectsTree == null) {
       tryToLoadExistingTree();
-      return initProjectsTree();
+      initProjectsTree();
     }
     return myProjectsTree;
   }
