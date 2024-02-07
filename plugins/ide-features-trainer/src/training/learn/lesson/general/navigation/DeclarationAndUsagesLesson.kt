@@ -29,6 +29,8 @@ abstract class DeclarationAndUsagesLesson
     get() = {
       sdkConfigurationTasks()
 
+      configurationTasks()
+
       setInitialPosition()
 
       prepareRuntimeTask {
@@ -57,7 +59,7 @@ abstract class DeclarationAndUsagesLesson
           val parentExpr = getParentExpression(element) ?: return@l false
           parentExpr.text.endsWith(entityName)
         }
-        restoreIfModifiedOrMoved()
+        //restoreIfModifiedOrMoved()
         test {
           actions(actionId)
           ideFrame {
@@ -121,6 +123,8 @@ abstract class DeclarationAndUsagesLesson
                               action(it), strong(UIBundle.message("tool.window.name.find")))
       }
     }
+
+  protected open fun LessonContext.configurationTasks() {}
 
   protected abstract fun getParentExpression(element: PsiElement): PsiElement?
 
