@@ -42,12 +42,6 @@ class TerminalPromptController(
     editor.putUserData(IJShellRuntimeDataProvider.KEY, runtimeDataProvider)
 
     commandHistoryManager = CommandHistoryManager(session)
-
-    model.addListener(object : TerminalPromptModelListener {
-      override fun promptStateUpdated(renderingInfo: PromptRenderingInfo) {
-        listeners.forEach { it.promptContentUpdated(renderingInfo) }
-      }
-    }, disposable = session)
   }
 
   fun addListener(listener: PromptStateListener) {
@@ -81,7 +75,6 @@ class TerminalPromptController(
   }
 
   interface PromptStateListener {
-    fun promptContentUpdated(renderingInfo: PromptRenderingInfo) {}
     fun commandHistoryStateChanged(showing: Boolean) {}
     fun commandSearchRequested() {}
     @RequiresEdt

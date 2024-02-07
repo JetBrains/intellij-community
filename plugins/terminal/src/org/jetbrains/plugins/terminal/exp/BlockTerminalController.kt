@@ -50,7 +50,7 @@ class BlockTerminalController(
   @RequiresEdt
   fun startCommandExecution(command: String) {
     if (command.isBlank()) {
-      promptController.reset()
+      promptController.model.reset()
       outputController.insertEmptyLine()
     }
     else {
@@ -65,7 +65,7 @@ class BlockTerminalController(
 
   @RequiresEdt(generateAssertion = false)
   private fun startCommandBlock(command: String) {
-    outputController.startCommandBlock(command, promptController.model.renderingInfo)
+    outputController.startCommandBlock(command, promptController.model.promptRenderingInfo)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
     // So it will look like it was not hidden at all.
@@ -106,7 +106,7 @@ class BlockTerminalController(
     model.isCommandRunning = false
 
     invokeLater(getDisposed(), ModalityState.any()) {
-      promptController.reset()
+      promptController.model.reset()
       promptController.promptIsVisible = true
     }
   }

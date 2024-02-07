@@ -189,10 +189,10 @@ class TerminalOutputController(
     val block = outputModel.createBlock(context.command, context.prompt)
     if (block.withPrompt) {
       val highlightings = adjustHighlightings(block.prompt!!.highlightings, block.startOffset)
-      appendLineToBlock(block, block.prompt.text, highlightings, block.withCommand)
+      appendToBlock(block, block.prompt.text, highlightings)
     }
     if (block.withCommand) {
-      appendLineToBlock(block, context.command!!, listOf(createCommandHighlighting(block)), false)
+      appendToBlock(block, context.command!!, listOf(createCommandHighlighting(block)))
     }
     if (block.withPrompt || block.withCommand) {
       blocksDecorator.installDecoration(block)
@@ -257,10 +257,10 @@ class TerminalOutputController(
 
   private fun TextStyle.toTextAttributesProvider(): TextAttributesProvider = TextStyleAdapter(this, session.colorPalette)
 
-  private fun appendLineToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>, addTrailingNewLine: Boolean) {
+  private fun appendToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>) {
     val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
     outputModel.putHighlightings(block, existingHighlightings + highlightings)
-    editor.document.insertString(block.endOffset, if (addTrailingNewLine) text + "\n" else text)
+    editor.document.insertString(block.endOffset, text)
   }
 
   /** It is implied that [CommandBlock.command] is not null */

@@ -3,12 +3,20 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
@@ -16,33 +24,61 @@ import java.util.concurrent.CopyOnWriteArrayList
 class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSession) {
   private val listeners: MutableList<TerminalPromptModelListener> = CopyOnWriteArrayList()
   private val renderer: TerminalPromptRenderer = BuiltInPromptRenderer(session)
+  private val document: DocumentEx
+    get() = editor.document
 
-  var renderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
+  var promptRenderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
     @RequiresEdt
     get
     private set
 
-  val commandStartOffset: Int = 0
+  val commandStartOffset: Int
+    get() = promptRenderingInfo.text.length
 
-  val commandText: String
-    get() = editor.document.getText(TextRange(commandStartOffset, editor.document.textLength))
+  var commandText: String
+    get() = document.getText(TextRange(commandStartOffset, document.textLength))
+    set(value) {
+      DocumentUtil.writeInRunUndoTransparentAction {
+        document.replaceString(commandStartOffset, document.textLength, value)
+      }
+    }
 
   init {
     session.addCommandListener(object : ShellCommandListener {
       override fun promptStateUpdated(newState: TerminalPromptState) {
         val updatedInfo = renderer.calculateRenderingInfo(newState)
         runInEdt {
-          renderingInfo = updatedInfo
+          updatePrompt(updatedInfo)
+          promptRenderingInfo = updatedInfo
           listeners.forEach { it.promptStateUpdated(updatedInfo) }
         }
       }
+    })
+
+    editor.caretModel.addCaretListener(PreventMoveToPromptListener())
+    EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document) { /* do nothing */ }
+
+    editor.project!!.messageBus.connect(session).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      updatePrompt(promptRenderingInfo)
     })
   }
 
   @RequiresEdt
   fun reset() {
-    runWriteAction {
-      editor.document.setText("")
+    commandText = ""
+    editor.caretModel.moveToOffset(document.textLength)
+  }
+
+  private fun updatePrompt(renderingInfo: PromptRenderingInfo) {
+    DocumentUtil.writeInRunUndoTransparentAction {
+      document.guardedBlocks.clear()
+      document.replaceString(0, commandStartOffset, renderingInfo.text)
+      document.createGuardedBlock(0, renderingInfo.text.length)
+    }
+    editor.markupModel.removeAllHighlighters()
+    for (highlighting in renderingInfo.highlightings) {
+      editor.markupModel.addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
+                                             highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
     }
   }
 
@@ -52,9 +88,31 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
     if (disposable != null) {
-      editor.document.addDocumentListener(listener, disposable)
+      document.addDocumentListener(listener, disposable)
     }
-    else editor.document.addDocumentListener(listener)
+    else document.addDocumentListener(listener)
+  }
+
+  /**
+   * Listener that prevents the caret from moving to a position inside the prompt.
+   * Instead, it moves the caret to the start of the command.
+   */
+  private inner class PreventMoveToPromptListener : CaretListener {
+    private var preventRecursion = false
+
+    override fun caretPositionChanged(event: CaretEvent) {
+      if (preventRecursion) return
+      val newOffset = editor.logicalPositionToOffset(event.newPosition)
+      if (newOffset < commandStartOffset) {
+        preventRecursion = true
+        try {
+          editor.caretModel.moveToOffset(commandStartOffset)
+        }
+        finally {
+          preventRecursion = false
+        }
+      }
+    }
   }
 
   companion object {

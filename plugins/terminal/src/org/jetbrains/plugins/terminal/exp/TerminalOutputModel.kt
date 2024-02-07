@@ -323,7 +323,7 @@ data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, 
   val endOffset: Int
     get() = range.endOffset
   val commandStartOffset: Int
-    get() = range.startOffset + if (withPrompt) prompt!!.text.length + 1 else 0
+    get() = range.startOffset + if (withPrompt) prompt!!.text.length else 0
   val outputStartOffset: Int
     get() = commandStartOffset + if (withCommand) command!!.length + 1 else 0
   val textRange: TextRange

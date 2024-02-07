@@ -45,6 +45,7 @@ internal class BuiltInPromptRenderer(private val session: BlockTerminalSession) 
       addComponent("git:", yellowAttributes)
       addComponent("[${state.gitBranch}]", greenAttributes)
     }
+    addComponent("\n", defaultAttributes)
     return result
   }
 
