@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
+import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES;
 
 @ApiStatus.Internal
 public final class DocRenderer implements CustomFoldRegionRenderer {
@@ -350,10 +351,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
   private static EditorKit createEditorKit(@NotNull Editor editor, boolean useTipsKit) {
     HTMLEditorKit editorKit =
       new HTMLEditorKitBuilder()
-        .withViewFactoryExtensions(
-          useTipsKit ? new ShortcutExtension()
-                     : QuickDocHighlightingHelper.getScalingImageViewExtension()
-        )
+        .withViewFactoryExtensions(useTipsKit ? new ShortcutExtension() : FIT_TO_WIDTH_IMAGES)
         .withFontResolver(EditorCssFontResolver.getInstance(editor))
         .build();
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor, useTipsKit));

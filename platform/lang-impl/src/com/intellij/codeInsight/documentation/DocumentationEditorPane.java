@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.lang.documentation.DocumentationImageResolver;
-import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
@@ -83,7 +82,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       .replaceViewFactoryExtensions(DocumentationHtmlUtil.getIconsExtension(iconResolver),
                                     Extensions.BASE64_IMAGES,
                                     Extensions.INLINE_VIEW_EX,
-                                    QuickDocHighlightingHelper.getScalingImageViewExtension())
+                                    Extensions.FIT_TO_WIDTH_IMAGES)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
     updateDocumentationPaneDefaultCssRules(editorKit);
 

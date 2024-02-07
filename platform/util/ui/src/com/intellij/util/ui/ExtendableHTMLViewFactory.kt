@@ -8,6 +8,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.html.HiDpiScalingImageView
 import com.intellij.util.ui.html.InlineViewEx
+import com.intellij.util.ui.html.FitToWidthImageView
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -123,6 +124,15 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val HIDPI_IMAGES: Extension = HiDpiImagesExtension()
+
+    /**
+     * Renders images in a fit-to-width manner.
+     *
+     * Too large image will not cause HTML editor pane to resize,
+     * but will be scaled down to fit the editor's width.
+     */
+    @JvmField
+    val FIT_TO_WIDTH_IMAGES: Extension = FitToWidthImageViewExtension()
 
     private class IconsExtension(private val existingIconsProvider: (key: String) -> Icon?) : Extension {
 
@@ -369,6 +379,11 @@ class ExtendableHTMLViewFactory internal constructor(
       }
       return null
     }
+  }
+
+  private class FitToWidthImageViewExtension: Extension {
+    override fun invoke(element: Element, view: View): View? =
+      if (view is ImageView) FitToWidthImageView(element) else null
   }
 }
 
