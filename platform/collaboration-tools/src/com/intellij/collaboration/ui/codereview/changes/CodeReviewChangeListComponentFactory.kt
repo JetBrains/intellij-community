@@ -9,6 +9,7 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.fileStatus
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -31,6 +32,7 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 
 object CodeReviewChangeListComponentFactory {
+  val SELECTED_CHANGES = DataKey.create<List<RefComparisonChange>>("Code.Review.Change.List.Selected.RefComparisonChanges")
 
   fun createIn(cs: CoroutineScope, vm: CodeReviewChangeListViewModel,
                progressModel: CodeReviewProgressTreeModel<*>?,
@@ -95,14 +97,17 @@ object CodeReviewChangeListComponentFactory {
         return when {
           CommonDataKeys.NAVIGATABLE.`is`(dataId) -> getSelectedFiles().singleOrNull()?.let { OpenFileDescriptor(project, it) }
           CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) -> ChangesUtil.getNavigatableArray(project, getSelectedFiles())
+          SELECTED_CHANGES.`is`(dataId) -> getSelectedChanges()
           else -> return getDataOrSuper(project, this, dataId, super.getData(dataId))
         }
       }
 
-      private fun getSelectedFiles(): List<VirtualFile> =
+      private fun getSelectedChanges(): List<RefComparisonChange> =
         selected(this)
           .userObjects(RefComparisonChange::class.java)
-          .mapNotNull { changeNode -> changeNode.filePath.virtualFile }
+
+      private fun getSelectedFiles(): List<VirtualFile> =
+        getSelectedChanges().mapNotNull { it.filePath.virtualFile }
     }
 }
 
