@@ -2,6 +2,7 @@
 package com.intellij.peer.impl;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
@@ -19,6 +20,8 @@ import java.io.File;
 import java.nio.file.Path;
 
 public class VcsContextFactoryImpl implements VcsContextFactory {
+  private static final Logger LOG = Logger.getInstance(VcsContextFactoryImpl.class);
+
   @Override
   @NotNull
   public VcsContext createCachedContextOn(@NotNull AnActionEvent event) {
@@ -34,7 +37,13 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   @Override
   @NotNull
   public FilePath createFilePathOn(@NotNull VirtualFile virtualFile) {
-    return createFilePath(virtualFile.getPath(), virtualFile.isDirectory());
+    String path = virtualFile.getPath();
+    if (path.isEmpty()) {
+      LOG.error(new Throwable("Invalid empty file path in " + virtualFile +
+                              " (" + virtualFile.getClass().getName() + ")"));
+      path = "/";
+    }
+    return createFilePath(path, virtualFile.isDirectory());
   }
 
   @Override
