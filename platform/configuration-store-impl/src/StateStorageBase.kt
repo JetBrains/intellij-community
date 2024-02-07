@@ -25,11 +25,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
       componentName = componentName,
       archive = false,
     )
-    return deserializeState(
-      stateElement = stateElement,
-      stateClass = stateClass,
-      mergeInto = mergeInto,
-    )
+    return deserializeStateWithSettingsController(stateElement = stateElement, stateClass = stateClass, mergeInto = mergeInto)
   }
 
   @TestOnly
@@ -41,7 +37,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   fun getStorageData(): T = getStorageData(false)
 
   fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
-    return deserializeState(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
+    return deserializeStateWithSettingsController(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
   }
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?

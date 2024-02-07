@@ -484,7 +484,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           if (changedStorages != null && isStorageChanged(changedStorages, storage)) {
             // state will be null if file deleted
             // we must create empty (initial) state to reinit component
-            state = deserializeState(stateElement = Element("state"), stateClass = stateClass, mergeInto = null)!!
+            state = deserializeState(stateElement = Element("state"), stateClass = stateClass)!!
           }
           else {
             if (isReportStatisticAllowed(stateSpec, storageSpec)) {
@@ -564,7 +564,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     try {
       val element = JDOMUtil.load(data)
       getPathMacroManagerForDefaults()?.expandPaths(element)
-      return deserializeState(stateElement = element, stateClass = stateClass, mergeInto = null)
+      return deserializeState(stateElement = element, stateClass = stateClass)
     }
     catch (e: Throwable) {
       throw IOException("Error loading default state for $componentName", e)

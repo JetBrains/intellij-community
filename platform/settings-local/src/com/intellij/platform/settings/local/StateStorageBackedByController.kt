@@ -257,7 +257,8 @@ private class BindingProducer : XmlSerializerImpl.XmlSerializerBase() {
   }
 
   private fun createRootBinding(aClass: Class<*>): Binding {
-    @Suppress("DuplicatedCode") var binding = createClassBinding(aClass, null, aClass)
+    @Suppress("DuplicatedCode")
+    var binding = createClassBinding(aClass, null, aClass)
     if (binding == null) {
       if (aClass.isAnnotationPresent(Serializable::class.java)) {
         binding = KotlinxSerializationBinding(aClass)

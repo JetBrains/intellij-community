@@ -7,8 +7,14 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.serialization.SerializationException
+import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.NotNullDeserializeBinding
+import com.intellij.util.xmlb.XmlSerializationException
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   internal fun <S : Any> createGetSession(
@@ -66,6 +72,46 @@ interface StateGetter<S : Any> {
   fun archiveState(): S?
 }
 
+@Suppress("DEPRECATION", "UNCHECKED_CAST")
+internal fun <T> deserializeStateWithSettingsController(stateElement: Element?, stateClass: Class<T>, mergeInto: T?): T? {
+  if (stateElement == null) {
+    return mergeInto
+  }
+  else if (stateClass === Element::class.java) {
+    return stateElement as T?
+  }
+  else if (com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
+    if (mergeInto != null) {
+      LOG.error("State is ${stateClass.name}, merge into is $mergeInto, state element text is ${JDOMUtil.writeElement(stateElement)}")
+    }
+
+    val t = MethodHandles.privateLookupIn(stateClass, MethodHandles.lookup())
+      .findConstructor(stateClass, MethodType.methodType(Void.TYPE))
+      .invoke() as com.intellij.openapi.util.JDOMExternalizable
+    t.readExternal(stateElement)
+    return t as T
+  }
+
+  val serializer = __platformSerializer()
+  // KotlinxSerializationBinding here is expected, do not cast to BeanBinding
+  val rootBinding = serializer.getRootBinding(stateClass) as NotNullDeserializeBinding
+  try {
+    if (mergeInto == null) {
+      return rootBinding.deserialize(null, stateElement) as T
+    }
+    else {
+      (rootBinding as BeanBinding).deserializeInto(mergeInto, stateElement)
+      return mergeInto
+    }
+  }
+  catch (e: SerializationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    throw XmlSerializationException("Cannot deserialize class ${stateClass.name}", e)
+  }
+}
+
 private class StateGetterImpl<S : Any, T : Any>(
   private val component: PersistentStateComponent<S>,
   private val componentName: String,
@@ -79,7 +125,7 @@ private class StateGetterImpl<S : Any, T : Any>(
     LOG.assertTrue(serializedState == null)
 
     serializedState = storage.getSerializedState(storageData, component, componentName, archive = false)
-    return deserializeState(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
+    return deserializeStateWithSettingsController(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
   }
 
   override fun archiveState(): S? {
