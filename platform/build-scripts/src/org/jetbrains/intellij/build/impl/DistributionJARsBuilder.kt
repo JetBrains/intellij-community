@@ -323,34 +323,39 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
       for (item in buildKeymapPluginsTask.await()) {
         pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
       }
+
       if (prepareCustomPluginRepository) {
         val list = pluginSpecs.sortedBy { it.pluginZip }
         generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
         generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
       }
-      pluginSpecs.forEach {
-        launch {
-          validatePlugin(it.pluginZip, context)
+
+      if (!context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)) {
+        for (plugin in pluginSpecs) {
+          launch {
+            validatePlugin(plugin.pluginZip, context)
+          }
         }
       }
+
       mappings
     }
   }
 }
 
 private suspend fun validatePlugin(path: Path, context: BuildContext) {
-  context.executeStep(spanBuilder("plugin validation").setAttribute("path", "$path"), BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED) { span ->
+  spanBuilder("plugin validation").setAttribute("path", path.toString()).useWithScope { span ->
     if (Files.notExists(path)) {
       span.addEvent("path doesn't exist, skipped")
-      return@executeStep
+      return@useWithScope
     }
 
     val pluginManager = IdePluginManager.createManager()
-    val id = (pluginManager.createPlugin(path, validateDescriptor = false)
-      as? PluginCreationSuccess)
-      ?.plugin?.pluginId
+    val id = (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
     val result = pluginManager.createPlugin(path, validateDescriptor = true)
+    // todo fix AddStatisticsEventLogListenerTemporary
     val problems = context.productProperties.validatePlugin(result, context)
+      .filter { !it.message.contains("Service preloading is deprecated in the") }
     if (problems.isNotEmpty()) {
       context.messages.reportBuildProblem(problems.joinToString(
         prefix = "${id ?: path}: ",

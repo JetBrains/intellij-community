@@ -73,7 +73,7 @@ internal class FusEventCatcherService(cs: CoroutineScope) {
     } ?: emptyList()
   }
 
-  // Must run under [catchersLock]
+  // must run under [catchersLock]
   private fun initCatchers() {
     assert(catchersLock.isLocked)
 
@@ -96,18 +96,18 @@ private class Listener : StatisticsEventLogListener {
   }
 }
 
-class AddStatisticsEventLogListenerTemporary : Disposable {
-  private val myListener = Listener()
+private class AddStatisticsEventLogListenerTemporary : Disposable {
+  private val listener = Listener()
 
   init {
     ApplicationManager.getApplication().let { application ->
       if (!application.isUnitTestMode) {
-        application.service<EventLogListenersManager>().subscribe(myListener, "FUS")
+        application.service<EventLogListenersManager>().subscribe(listener, "FUS")
       }
     }
   }
 
   override fun dispose() {
-    ApplicationManager.getApplication().serviceIfCreated<EventLogListenersManager>()?.unsubscribe(myListener, "FUS")
+    ApplicationManager.getApplication().serviceIfCreated<EventLogListenersManager>()?.unsubscribe(listener, "FUS")
   }
 }
