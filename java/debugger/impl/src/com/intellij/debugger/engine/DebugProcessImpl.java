@@ -1344,7 +1344,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
-    ThreadReferenceProxy evaluationThread = evaluationContext.getSuspendContext().getThread();
+    ThreadReferenceProxy fromStackFrame =
+      ObjectUtils.doIfNotNull(evaluationContext.getFrameProxy(), stackFrameProxy -> stackFrameProxy.threadProxy());
+    ThreadReferenceProxy evaluationThread = fromStackFrame != null ? fromStackFrame : evaluationContext.getSuspendContext().getThread();
     if (evaluationThread == null) {
       throw EvaluateExceptionUtil.NULL_STACK_FRAME;
     }
