@@ -261,7 +261,7 @@ public class HighlightingMarkupGrave {
     }
     return Arrays.stream(markupModel.getAllHighlighters())
       .filter(h -> shouldSaveHighlighter(h))
-      .map(h -> getHighlighterState(h, colorsScheme))
+      .map(h -> new HighlighterState(h, getHighlighterLayer(h), colorsScheme))
       .toList();
   }
 
@@ -279,8 +279,8 @@ public class HighlightingMarkupGrave {
     return lm != null && lm.getIcon() != null; // or a line marker with a gutter icon
   }
 
-  protected HighlighterState getHighlighterState(@NotNull RangeHighlighter highlighter, @NotNull EditorColorsScheme colorsScheme) {
-    return new HighlighterState(highlighter, colorsScheme);
+  protected int getHighlighterLayer(@NotNull RangeHighlighter highlighter) {
+    return highlighter.getLayer();
   }
 
   private @NotNull FileMarkupInfo getMarkupFromModel(@NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
@@ -319,7 +319,7 @@ public class HighlightingMarkupGrave {
     }
   }
 
-  public record HighlighterState(
+  record HighlighterState(
     int start,
     int end,
     int layer,
@@ -328,11 +328,11 @@ public class HighlightingMarkupGrave {
     @Nullable TextAttributes textAttributes,
     @Nullable Icon gutterIcon
   ) {
-    private HighlighterState(@NotNull RangeHighlighter highlighter, @NotNull EditorColorsScheme colorsScheme) {
+    private HighlighterState(@NotNull RangeHighlighter highlighter, int highlighterLayer, @NotNull EditorColorsScheme colorsScheme) {
       this(
         highlighter.getStartOffset(),
         highlighter.getEndOffset(),
-        highlighter.getLayer(),
+        highlighterLayer, //because Rider needs to modify its zombie's layers
         highlighter.getTargetArea(),
         highlighter.getTextAttributesKey(),
         highlighter.getTextAttributes(colorsScheme),
