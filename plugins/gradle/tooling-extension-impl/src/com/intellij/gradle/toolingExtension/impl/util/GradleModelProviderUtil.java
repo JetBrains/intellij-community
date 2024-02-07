@@ -4,86 +4,66 @@ package com.intellij.gradle.toolingExtension.impl.util;
 import com.intellij.openapi.util.Pair;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.model.Model;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class GradleModelProviderUtil {
 
-  private static <T, M> @NotNull List<Pair<T, M>> buildModelsInParallel(
+  public static <M> void buildModels(
     @NotNull BuildController controller,
-    @NotNull Iterable<T> targets,
-    @NotNull BiFunction<? super BuildController, ? super T, ? extends M> buildAction
+    @NotNull GradleBuild buildModel,
+    @NotNull Class<M> modelClass,
+    @NotNull BuildModelConsumer consumer
   ) {
-    List<BuildAction<Pair<T, M>>> buildActions = new ArrayList<>();
-    for (T target : targets) {
-      buildActions.add((BuildAction<Pair<T, M>>)innerController -> {
-        M model = buildAction.apply(innerController, target);
+    if (Objects.equals(System.getProperty("idea.parallelModelFetch.enabled"), "true")) {
+      buildModelsInParallel(controller, buildModel, modelClass, consumer);
+    }
+    else {
+      buildModelsInSequence(controller, buildModel, modelClass, consumer);
+    }
+  }
+
+  private static <M> void buildModelsInParallel(
+    @NotNull BuildController controller,
+    @NotNull GradleBuild buildModel,
+    @NotNull Class<M> modelClass,
+    @NotNull BuildModelConsumer consumer
+  ) {
+    List<BuildAction<Pair<BasicGradleProject, M>>> buildActions = new ArrayList<>();
+    for (BasicGradleProject gradleProject : buildModel.getProjects()) {
+      buildActions.add((BuildAction<Pair<BasicGradleProject, M>>)innerController -> {
+        M model = innerController.findModel(gradleProject, modelClass);
         if (model == null) {
           return null;
         }
-        return new Pair<>(target, model);
+        return new Pair<>(gradleProject, model);
       });
     }
-
-    return controller.run(buildActions);
-  }
-
-  private static <T, M> @NotNull List<Pair<T, M>> buildModelsSequentially(
-    @NotNull BuildController controller,
-    @NotNull Iterable<T> targets,
-    @NotNull BiFunction<? super BuildController, ? super T, ? extends M> buildAction
-  ) {
-    List<Pair<T, M>> result = new ArrayList<>();
-    for (T target : targets) {
-      M model = buildAction.apply(controller, target);
+    List<Pair<BasicGradleProject, M>> models = controller.run(buildActions);
+    for (Pair<BasicGradleProject, M> model : models) {
       if (model != null) {
-        result.add(new Pair<>(target, model));
+        consumer.consumeProjectModel(model.first, model.second, modelClass);
       }
     }
-    return result;
   }
 
-  public static <T, M> @NotNull List<Pair<T, M>> buildModels(
+  private static <M> void buildModelsInSequence(
     @NotNull BuildController controller,
-    @NotNull Iterable<T> targets,
-    @NotNull BiFunction<? super BuildController, ? super T, ? extends M> buildAction
-  ) {
-    if (Objects.equals(System.getProperty("idea.parallelModelFetch.enabled"), "true")) {
-      return buildModelsInParallel(controller, targets, buildAction);
-    }
-    else {
-      return buildModelsSequentially(controller, targets, buildAction);
-    }
-  }
-
-  public static <T extends Model, M> @NotNull List<Pair<T, M>> buildModels(
-    @NotNull BuildController controller,
-    @NotNull Iterable<T> targets,
-    @NotNull Class<M> modelClass
-  ) {
-    return buildModels(controller, targets, (innerController, target) ->
-      innerController.findModel(target, modelClass)
-    );
-  }
-
-  public static <T extends Model, M> void buildModels(
-    @NotNull BuildController controller,
-    @NotNull Iterable<T> targets,
+    @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
-    @NotNull BiConsumer<T, M> modelConsumer
+    @NotNull BuildModelConsumer consumer
   ) {
-    List<Pair<T, M>> models = buildModels(controller, targets, modelClass);
-    for (Pair<T, M> model : models) {
-      modelConsumer.accept(model.first, model.second);
+    for (BasicGradleProject gradleProject : buildModel.getProjects()) {
+      M model = controller.findModel(gradleProject, modelClass);
+      if (model != null) {
+        consumer.consumeProjectModel(gradleProject, model, modelClass);
+      }
     }
   }
 
