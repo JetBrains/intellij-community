@@ -128,10 +128,10 @@ public enum JavaFeature {
   STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super"),
   ;
 
-  private final LanguageLevel myLevel;
+  private final @NotNull LanguageLevel myLevel;
   
   @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) 
-  private final String myKey;
+  private final @NotNull String myKey;
   private final boolean myCanBeCustomized;
 
   JavaFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
@@ -144,17 +144,21 @@ public enum JavaFeature {
     myKey = key;
     myCanBeCustomized = canBeCustomized;
   }
-  
-  public @Nls String getFeatureName() {
+
+  /**
+   * @return Human-readable feature name
+   */
+  public @NotNull @Nls String getFeatureName() {
     return JavaPsiBundle.message(myKey);
   }
 
-  public LanguageLevel getLevel() {
+  /**
+   * @return minimal language level where feature is available.
+   * Note that this doesn't mean that the feature is available on every language level which is higher.
+   * In most of the cases, {@link #isAvailable(PsiElement)} or {@link #isSufficient(LanguageLevel)} should be used instead.
+   */
+  public @NotNull LanguageLevel getMinimumLevel() {
     return myLevel;
-  }
-
-  public boolean isFeatureSupported(@NotNull PsiFile context) {
-    return isAvailable(context);
   }
 
   /**

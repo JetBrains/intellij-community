@@ -48,7 +48,8 @@ public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJ
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.THREAD_LOCAL_WITH_INITIAL.isFeatureSupported(holder.getFile())) {
+    @NotNull PsiFile context = holder.getFile();
+    if (!JavaFeature.THREAD_LOCAL_WITH_INITIAL.isAvailable(context)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

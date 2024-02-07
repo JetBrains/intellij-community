@@ -61,7 +61,7 @@ public enum HighlightingFeature {
   }
 
   public LanguageLevel getLevel() {
-    return myFeature.getLevel();
+    return myFeature.getMinimumLevel();
   }
 
   /**

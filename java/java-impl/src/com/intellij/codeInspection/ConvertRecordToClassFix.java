@@ -326,7 +326,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
                   :
                   "if(obj == this) return true;\n" +
                   "if(obj == null || obj.getClass() != this.getClass()) return false;\n" +
-                  (myLanguageLevel.isAtLeast(JavaFeature.LVTI.getLevel()) ? PsiKeyword.VAR : psiClass.getName()) +
+                  (JavaFeature.LVTI.isSufficient(myLanguageLevel) ? PsiKeyword.VAR : psiClass.getName()) +
                   " that = (" + psiClass.getName() + ")obj;\n" +
                   "return " + equalsExpression + ";\n";
     return "@" + CommonClassNames.JAVA_LANG_OVERRIDE + "\n" +

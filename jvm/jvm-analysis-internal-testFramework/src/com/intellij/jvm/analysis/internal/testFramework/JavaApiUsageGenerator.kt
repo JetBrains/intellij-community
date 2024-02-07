@@ -103,7 +103,7 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
         val annotation = PreviewFeatureUtil.getPreviewFeatureAnnotation(e)
                          ?: return null
         val feature = PreviewFeatureUtil.fromPreviewFeatureAnnotation(annotation)
-        return feature?.level
+        return feature?.minimumLevel
       }
     }
     if (LANGUAGE_LEVEL.isPreview) {

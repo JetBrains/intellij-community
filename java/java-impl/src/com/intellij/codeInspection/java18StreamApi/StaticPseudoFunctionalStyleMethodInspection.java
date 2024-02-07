@@ -34,7 +34,7 @@ public final class StaticPseudoFunctionalStyleMethodInspection extends AbstractB
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.STREAMS.isFeatureSupported(holder.getFile())) {
+    if (!JavaFeature.STREAMS.isAvailable(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

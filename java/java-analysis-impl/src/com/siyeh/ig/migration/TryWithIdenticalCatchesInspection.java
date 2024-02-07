@@ -62,7 +62,7 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(@NotNull PsiFile file) {
-    return JavaFeature.MULTI_CATCH.isFeatureSupported(file);
+    return JavaFeature.MULTI_CATCH.isAvailable(file);
   }
 
   @Override

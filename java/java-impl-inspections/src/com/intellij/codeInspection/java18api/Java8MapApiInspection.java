@@ -79,7 +79,7 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
+    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isAvailable(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

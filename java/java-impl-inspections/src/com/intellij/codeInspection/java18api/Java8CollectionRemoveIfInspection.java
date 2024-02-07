@@ -5,12 +5,12 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.ForEachCollectionTraversal;
 import com.intellij.codeInspection.util.IterableTraversal;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -34,7 +34,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
+    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isAvailable(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {

@@ -3789,19 +3789,20 @@ public final class HighlightUtil {
   @NotNull
   private static LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull JavaFeature feature) {
     LanguageLevel standardLevel = feature.getStandardLevel();
-    if (feature.getLevel().isPreview()) {
+    LanguageLevel featureLevel = feature.getMinimumLevel();
+    if (featureLevel.isPreview()) {
       JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
       if (sdkVersion != null) {
         if (standardLevel != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
           return standardLevel;
         }
         LanguageLevel previewLevel = sdkVersion.getMaxLanguageLevel().getPreviewLevel();
-        if (previewLevel != null && previewLevel.isAtLeast(feature.getLevel())) {
+        if (previewLevel != null && previewLevel.isAtLeast(featureLevel)) {
           return previewLevel;
         }
       }
     }
-    return feature.getLevel();
+    return featureLevel;
   }
 
   @Nullable
@@ -3872,7 +3873,7 @@ public final class HighlightUtil {
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
       LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (moduleLanguageLevel.isAtLeast(feature.getLevel()) && !feature.isLimited()) {
+      if (moduleLanguageLevel.isAtLeast(feature.getMinimumLevel()) && !feature.isLimited()) {
         for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
           if (pusher instanceof JavaLanguageLevelPusher) {
             String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, level, file);
