@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
@@ -42,6 +44,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
@@ -61,6 +64,9 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   protected MavenEnvironmentForm myEnvironmentForm;
 
   protected Map<String, String> myPropertiesToCreateByArtifact;
+
+  @ApiStatus.Internal
+  public CompletableFuture<Boolean> sdkDownloadedFuture;
 
   @Override
   public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
@@ -106,6 +112,16 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
       if (myEnvironmentForm != null) {
         myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
+      }
+
+      var future = sdkDownloadedFuture;
+      if (null != future) {
+        try {
+          future.get(); // maven sync uses project JDK
+        }
+        catch (Exception e) {
+          MavenLog.LOG.error(e);
+        }
       }
 
       new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
