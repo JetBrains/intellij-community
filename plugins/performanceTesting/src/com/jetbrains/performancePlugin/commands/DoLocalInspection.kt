@@ -51,6 +51,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     val span = PerformanceTestSpan.getTracer(isWarmupMode()).spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext())
     var spanRef: Span? = null
     var scopeRef: Scope? = null
+    val editor = FileEditorManager.getInstance(project).selectedTextEditor
     suspendCancellableCoroutine { continuation ->
       busConnection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonListener {
         override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
@@ -92,6 +93,8 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
           for (weakWarning in weakWarningsOnHighlighting) {
             finishMessage.append("\n").append("${weakWarning.text}: ${weakWarning.description}")
           }
+          spanRef!!.setAttribute("filePath", psiFile.virtualFile.path)
+          spanRef!!.setAttribute("linesCount", editor!!.getDocument().getLineCount().toLong())
           spanRef!!.end()
           scopeRef!!.close()
           busConnection.disconnect()
