@@ -19,40 +19,58 @@ import java.util.*;
 public abstract class AbstractExternalDependency implements ExternalDependency {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final DefaultExternalDependencyId myId;
+  private final @NotNull DefaultExternalDependencyId myId;
   private String myScope;
-  private final Collection<ExternalDependency> myDependencies;
+  private final @NotNull Collection<ExternalDependency> myDependencies;
   private String mySelectionReason;
   private int myClasspathOrder;
   private boolean myExported;
 
   public AbstractExternalDependency() {
-    this(new DefaultExternalDependencyId(), null, null);
+    this(new DefaultExternalDependencyId());
   }
 
-  public AbstractExternalDependency(ExternalDependencyId id,
-                                    String selectionReason,
-                                    Collection<? extends ExternalDependency> dependencies) {
+  public AbstractExternalDependency(ExternalDependencyId id) {
+    this(id, null, null);
+  }
+
+  public AbstractExternalDependency(
+    ExternalDependencyId id,
+    String selectionReason,
+    Collection<? extends ExternalDependency> dependencies
+  ) {
+    this(id, selectionReason, dependencies, null, 0, false);
+  }
+
+  public AbstractExternalDependency(
+    ExternalDependencyId id,
+    String selectionReason,
+    Collection<? extends ExternalDependency> dependencies,
+    String scope,
+    int classpathOrder,
+    boolean exported
+  ) {
     myId = new DefaultExternalDependencyId(id);
     mySelectionReason = selectionReason;
     myDependencies = dependencies == null ? new ArrayList<>(0) : ModelFactory.createCopy(dependencies);
+    myScope = scope;
+    myClasspathOrder = classpathOrder;
+    myExported = exported;
   }
 
   public AbstractExternalDependency(ExternalDependency dependency) {
     this(
       dependency.getId(),
       dependency.getSelectionReason(),
-      dependency.getDependencies()
+      dependency.getDependencies(),
+      dependency.getScope(),
+      dependency.getClasspathOrder(),
+      dependency.getExported()
     );
-    myScope = dependency.getScope();
-    myClasspathOrder = dependency.getClasspathOrder();
-    myExported = dependency.getExported();
   }
 
-  @NotNull
   @Override
-  public ExternalDependencyId getId() {
+  public @NotNull ExternalDependencyId getId() {
     return myId;
   }
 
@@ -131,9 +149,8 @@ public abstract class AbstractExternalDependency implements ExternalDependency {
     this.myScope = scope;
   }
 
-  @NotNull
   @Override
-  public Collection<ExternalDependency> getDependencies() {
+  public @NotNull Collection<ExternalDependency> getDependencies() {
     return myDependencies;
   }
 
