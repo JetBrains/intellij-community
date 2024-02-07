@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
   private final Iterable<ModuleRequires> myRequires;
   private final Iterable<ModulePackage> myExports;
 
-  public JvmModule(JVMFlags flags, String name, String outFilePath, String version, @NotNull Iterable<ModuleRequires> requires, @NotNull Iterable<ModulePackage> exports, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata> metadata) {
+  public JvmModule(JVMFlags flags, String name, String outFilePath, String version, @NotNull Iterable<ModuleRequires> requires, @NotNull Iterable<ModulePackage> exports, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
     super(flags, "", name, outFilePath, Collections.emptyList(), usages, metadata);
     myVersion = version == null? "" : version;
     myRequires = requires;

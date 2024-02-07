@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.util.SmartList;
@@ -10,19 +10,21 @@ import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {
   private final JvmNodeReferenceID myId;
   private final String outFilePath;
   private final Iterable<Usage> myUsages;
-  private final Iterable<JvmMetadata> myMetadata;
+  private final Iterable<JvmMetadata<?, ?>> myMetadata;
 
-  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<TypeRepr.ClassType> annotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata> metadata) {
+  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<TypeRepr.ClassType> annotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
     super(flags, signature, name, annotations);
     myId = new JvmNodeReferenceID(name);
     this.outFilePath = outFilePath;
@@ -87,8 +89,12 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     return myUsages;
   }
 
-  public Iterable<JvmMetadata> getMetadata() {
+  public Iterable<JvmMetadata<?, ?>> getMetadata() {
     return myMetadata;
+  }
+
+  public <MT extends JvmMetadata<MT, ?>> Iterable<MT> getMetadata(Class<MT> metaClass) {
+    return Iterators.filter(Iterators.map(myMetadata, m -> metaClass.isInstance(m)? metaClass.cast(m) : null), Objects::nonNull);
   }
 
   @Override
@@ -117,11 +123,22 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
 
     @Override
     public boolean unchanged() {
-      return super.unchanged() && usages().unchanged();
+      return super.unchanged() && usages().unchanged() && !metadataChanged();
     }
 
     public Specifier<Usage, ?> usages() {
       return Difference.diff(myPast.getUsages(), getUsages());
+    }
+
+    public boolean metadataChanged() {
+      //noinspection unchecked
+      return Iterators.find(
+        Iterators.unique(Iterators.map(Iterators.flat(myPast.getMetadata(), getMetadata()), m -> m.getClass())), metaClass -> !metadata(metaClass).unchanged()
+      ) != null;
+    }
+
+    public <MT extends JvmMetadata<MT, MD>, MD extends Difference> Specifier<MT, MD> metadata(Class<MT> metaClass) {
+      return Difference.deepDiff(myPast.getMetadata(metaClass), getMetadata(metaClass));
     }
   }
 

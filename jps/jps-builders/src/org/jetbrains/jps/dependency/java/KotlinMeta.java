@@ -8,16 +8,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
+import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * A set of data needed to create a kotlin.Metadata annotation instance parsed from bytecode.
  * The created annotation instance can be further introspected with <a href="https://github.com/JetBrains/kotlin/tree/master/libraries/kotlinx-metadata/jvm">kotlinx-metadata-jvm</a> library
  */
-public final class KotlinMeta implements JvmMetadata {
+public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff> {
 
   public static final TypeRepr.ClassType KOTLIN_NULLABLE = new TypeRepr.ClassType("org/jetbrains/annotations/depgraph/KotlinNullable");
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
@@ -104,6 +107,20 @@ public final class KotlinMeta implements JvmMetadata {
     return myExtraInt;
   }
 
+  @Override
+  public boolean isSame(DiffCapable<?, ?> other) {
+    return other instanceof KotlinMeta;
+  }
+
+  @Override
+  public int diffHashCode() {
+    return KotlinMeta.class.hashCode();
+  }
+
+  @Override
+  public Diff difference(KotlinMeta past) {
+    return new Diff(past);
+  }
 
   private KotlinClassMetadata[] myCachedMeta;
 
@@ -134,5 +151,39 @@ public final class KotlinMeta implements JvmMetadata {
       return ((KotlinClassMetadata.MultiFileClassPart)clsMeta).getKmPackage();
     }
     return null;
+  }
+
+  public final class Diff implements Difference {
+
+    private final KotlinMeta myPast;
+
+    Diff(KotlinMeta past) {
+      myPast = past;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !dataChanged() && !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged();
+    }
+
+    public boolean kindChanged() {
+      return myPast.myKind != myKind;
+    }
+
+    public boolean versionChanged() {
+      return !Arrays.equals(myPast.myVersion, myVersion);
+    }
+
+    public boolean dataChanged() {
+      return !Arrays.equals(myPast.myData1, myData1) || !Arrays.equals(myPast.myData2, myData2);
+    }
+
+    public boolean packageChanged() {
+      return !Objects.equals(myPast.myPackageName, myPackageName);
+    }
+
+    public boolean extraChanged() {
+      return myPast.myExtraInt != myExtraInt || !Objects.equals(myPast.myExtraString, myExtraString);
+    }
   }
 }

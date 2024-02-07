@@ -414,7 +414,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final Set<ModuleRequires> myModuleRequires = new HashSet<>();
   private final Set<ModulePackage> myModuleExports = new HashSet<>();
 
-  private final List<JvmMetadata> myMetadata = new SmartList<>();
+  private final List<JvmMetadata<?, ?>> myMetadata = new SmartList<>();
 
   private JvmClassNodeBuilder(final String fn, boolean isGenerated) {
     super(ASM_API_VERSION);
