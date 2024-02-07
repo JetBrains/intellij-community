@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.ExceptionUtil;
@@ -731,9 +731,9 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       result = 31 * result + flags;
       result = 31 * result + attributeRef;
       result = 31 * result + contentRef;
-      result = 31 * result + (int)(timestamp ^ (timestamp >>> 32));
+      result = 31 * result + Long.hashCode(timestamp);
       result = 31 * result + modCount;
-      result = 31 * result + (int)(length ^ (length >>> 32));
+      result = 31 * result + Long.hashCode(length);
       return result;
     }
 
