@@ -11,6 +11,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
@@ -107,12 +108,18 @@ public abstract class JBValue {
     }
   }
 
-  private static final class CachedFloat extends Float {
+  private static final class CachedFloat extends JBValue {
+    private final @NotNull Supplier<java.lang.Float> valueSupplier;
     private float cachedScaledValue;
 
-    private CachedFloat(float value) {
-      super(value);
+    private CachedFloat(@NotNull Supplier<java.lang.Float> valueSupplier) {
+      this.valueSupplier = valueSupplier;
       scaleAndCache();
+    }
+
+    @Override
+    public float getUnscaled() {
+      return valueSupplier.get();
     }
 
     @Override
@@ -145,9 +152,21 @@ public abstract class JBValue {
     private final PropertyChangeListener listener = new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        for (CachedFloat value : group) value.scaleAndCache();
+        updateCachedValues();
       }
     };
+
+    /**
+     * Update the cached values immediately.
+     * <p>
+     *   Called automatically when the user scaling factor changes.
+     *   Should be called manually if the unscaled value suppliers are expected to return different values,
+     *   e.g. after a LaF change.
+     * </p>
+     */
+    public void updateCachedValues() {
+      for (CachedFloat value : group) value.scaleAndCache();
+    }
 
     public JBValueGroup() {
       JBUIScale.addUserScaleChangeListener(listener);
@@ -157,7 +176,16 @@ public abstract class JBValue {
      * Creates {@link JBValue} and adds it to this group.
      */
     public JBValue value(float value) {
-      CachedFloat v = new CachedFloat(value);
+      CachedFloat v = new CachedFloat(() -> value);
+      group.add(v);
+      return v;
+    }
+
+    /**
+     * Creates {@link JBValue} and adds it to this group.
+     */
+    public JBValue value(@NotNull Supplier<java.lang.Float> valueSupplier) {
+      CachedFloat v = new CachedFloat(valueSupplier);
       group.add(v);
       return v;
     }
