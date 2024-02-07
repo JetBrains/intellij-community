@@ -11,7 +11,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.getBeanAccessors
 import java.util.*
 import java.util.function.IntPredicate
 
@@ -127,7 +127,7 @@ internal class SettingsModel(val components: List<ComponentDescriptor>) {
 
   private fun collectFieldInfo(state: Any): List<FieldInfo> {
     val infoList = mutableListOf<FieldInfo>()
-    val accessors = BeanBinding.getAccessors(state::class.java)
+    val accessors = getBeanAccessors(state::class.java)
     accessors.forEach{
       infoList += FieldInfo(it.name, allUpperCaseToLowerCase(it.name), convertTypeName(it), getVariants(it.valueClass))
     }

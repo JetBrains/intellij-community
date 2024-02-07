@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -13,13 +15,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.isDirectoryBased
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
 import org.jdom.Element
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.concurrent.write
-import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
@@ -122,7 +124,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     }
 
     override fun clearVirtualFileTracker(virtualFileTracker: StorageVirtualFileTracker) {
-      virtualFileTracker.remove(expandMacro(StoragePathMacros.MODULE_FILE).systemIndependentPath)
+      virtualFileTracker.remove(expandMacro(StoragePathMacros.MODULE_FILE).invariantSeparatorsPathString)
     }
 
     override fun pathRenamed(newPath: Path, event: VFileEvent?) {
@@ -180,7 +182,16 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
       rootTagName: String?
     ): StateStorage {
       val provider = if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider
-      return TrackedFileStorage(storageManager = this, file, collapsedPath, rootTagName, roamingType, macroSubstitutor, provider)
+      return TrackedFileStorage(
+        storageManager = this,
+        file,
+        collapsedPath,
+        rootTagName,
+        roamingType,
+        macroSubstitutor,
+        provider,
+        controller = null,
+      )
     }
   }
 }
@@ -190,7 +201,7 @@ private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
 
   override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
     super.setPath(path, virtualFile, isNew)
-    if (!isNew && path.exists()) {
+    if (!isNew && Files.exists(path)) {
       moduleComponentLoadPolicy = StateLoadPolicy.LOAD
     }
   }

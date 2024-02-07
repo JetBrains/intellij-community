@@ -5,6 +5,9 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
+import com.intellij.serialization.SerializationException
+import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.XmlSerializationException
 import org.jdom.Element
 
 abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
@@ -16,7 +19,7 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
 
     val element: Element?
     try {
-      element = serializeState(state)
+      element = serializeState(state = state, componentName = componentName)
     }
     catch (e: WriteExternalException) {
       LOG.debug(e)
@@ -27,21 +30,40 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
       return
     }
 
-    setSerializedState(componentName, element)
+    setSerializedState(componentName = componentName, element = element)
   }
 
   abstract fun setSerializedState(componentName: String, element: Element?)
 }
 
-internal fun serializeState(state: Any): Element? {
+internal fun serializeState(state: Any, componentName: String): Element? {
   @Suppress("DEPRECATION")
-  return when (state) {
-    is Element -> state
+  when (state) {
+    is Element -> return state
     is com.intellij.openapi.util.JDOMExternalizable -> {
       val element = Element(ComponentStorageUtil.COMPONENT)
       state.writeExternal(element)
-      element
+      return element
     }
-    else -> serialize(state)
+    else -> {
+      try {
+        val filter = jdomSerializer.getDefaultSerializationFilter()
+        val binding = __platformSerializer().getRootBinding(state.javaClass)
+        if (binding is BeanBinding) {
+          // top level expects not null (null indicates error, an empty element will be omitted)
+          return binding.serializeInto(o = state, preCreatedElement = null, filter = filter)
+        }
+        else {
+          // maybe ArrayBinding
+          return binding.serialize(state, null, filter) as Element
+        }
+      }
+      catch (e: SerializationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        throw XmlSerializationException("Can't serialize state (componentName=$componentName, class=${state.javaClass})", e)
+      }
+    }
   }
 }

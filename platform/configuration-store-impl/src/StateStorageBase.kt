@@ -4,11 +4,13 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
+import com.intellij.platform.settings.SettingsController
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
 
+@Internal
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
@@ -18,6 +20,8 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   protected open val saveStorageDataOnReload: Boolean
     get() = true
 
+  abstract val controller: SettingsController?
+
   final override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
     val stateElement = getSerializedState(
       storageData = getStorageData(reload),
@@ -25,7 +29,13 @@ abstract class StateStorageBase<T : Any> : StateStorage {
       componentName = componentName,
       archive = false,
     )
-    return deserializeStateWithSettingsController(stateElement = stateElement, stateClass = stateClass, mergeInto = mergeInto)
+    return deserializeStateWithController(
+      stateElement = stateElement,
+      stateClass = stateClass,
+      mergeInto = mergeInto,
+      controller = controller,
+      componentName = componentName,
+    )
   }
 
   @TestOnly
@@ -33,11 +43,16 @@ abstract class StateStorageBase<T : Any> : StateStorage {
     return getState(component = component, componentName = componentName, stateClass = stateClass, mergeInto = null, reload = false)
   }
 
-  @ApiStatus.Internal
   fun getStorageData(): T = getStorageData(false)
 
-  fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
-    return deserializeStateWithSettingsController(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
+  fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?, componentName: String): S? {
+    return deserializeStateWithController(
+      stateElement = serializedState,
+      stateClass = stateClass,
+      mergeInto = mergeInto,
+      controller = controller,
+      componentName = componentName,
+    )
   }
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?

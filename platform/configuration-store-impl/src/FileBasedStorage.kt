@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.settings.SettingsController
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -29,7 +30,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.deleteIfExists
-import kotlin.io.path.readBytes
 
 open class FileBasedStorage(
   file: Path,
@@ -37,8 +37,15 @@ open class FileBasedStorage(
   rootElementName: String?,
   pathMacroManager: PathMacroSubstitutor? = null,
   roamingType: RoamingType,
-  provider: StreamProvider? = null
-) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
+  provider: StreamProvider? = null,
+  override val controller: SettingsController?,
+) : XmlElementStorage(
+  fileSpec = fileSpec,
+  rootElementName = rootElementName,
+  pathMacroSubstitutor = pathMacroManager,
+  storageRoamingType = roamingType,
+  provider = provider,
+) {
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
@@ -68,18 +75,20 @@ open class FileBasedStorage(
     }
   }
 
-  override fun createSaveSession(states: StateMap): FileSaveSessionProducer = FileSaveSessionProducer(states, this)
+  override fun createSaveSession(states: StateMap): FileSaveSessionProducer = FileSaveSessionProducer(storageData = states, storage = this)
 
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorageSaveSessionProducer<FileBasedStorage>(storageData, storage) {
+    XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage = storage) {
 
-    final override fun isSaveAllowed(): Boolean = when {
-      !super.isSaveAllowed() -> false
-      storage.blockSaving != null -> {
-        LOG.warn("Save blocked for $storage")
-        false
+    final override fun isSaveAllowed(): Boolean {
+      return when {
+        !super.isSaveAllowed() -> false
+        storage.blockSaving != null -> {
+          LOG.warn("Save blocked for $storage")
+          false
+        }
+        else -> true
       }
-      else -> true
     }
 
     override fun saveLocally(dataWriter: DataWriter?) {
@@ -96,14 +105,27 @@ open class FileBasedStorage(
           if (isUseVfs && virtualFile == null) {
             LOG.warn("Cannot find virtual file")
           }
-          deleteFile(storage.file, requestor = this, virtualFile)
+          deleteFile(file = storage.file, requestor = this, virtualFile = virtualFile)
           storage.cachedVirtualFile = null
         }
         isUseVfs -> {
-          storage.cachedVirtualFile = writeFile(storage.file, requestor = this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
+          storage.cachedVirtualFile = writeFile(
+            cachedFile = storage.file,
+            requestor = this,
+            virtualFile = virtualFile,
+            dataWriter = dataWriter,
+            lineSeparator = lineSeparator,
+            prependXmlProlog = storage.isUseXmlProlog,
+          )
         }
         else -> {
-          writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
+          writeFile(
+            file = storage.file,
+            requestor = this,
+            dataWriter = dataWriter,
+            lineSeparator = lineSeparator,
+            prependXmlProlog = storage.isUseXmlProlog,
+          )
         }
       }
     }
@@ -165,14 +187,20 @@ open class FileBasedStorage(
         }
       }
       else {
-        val (element, separator) = ComponentStorageUtil.load(file.readBytes())
+        val (element, separator) = ComponentStorageUtil.load(Files.readAllBytes(file))
         lineSeparator = separator ?: if (isUseXmlProlog) LineSeparator.getSystemLineSeparator() else LineSeparator.LF
         return element
       }
     }
-    catch (e: JDOMException) { processReadException(e) }
-    catch (e: XMLStreamException) { processReadException(e) }
-    catch (e: IOException) { processReadException(e) }
+    catch (e: JDOMException) {
+      processReadException(e)
+    }
+    catch (e: XMLStreamException) {
+      processReadException(e)
+    }
+    catch (e: IOException) {
+      processReadException(e)
+    }
     return null
   }
 

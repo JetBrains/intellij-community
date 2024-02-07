@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.configurationStore.jdomSerializer
@@ -14,9 +14,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SkipReportingStatistics
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.getBeanAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -195,7 +194,8 @@ internal data class ConfigurationState(@JvmField var optionsValues: List<Mutable
 
 internal class ConfigurationStateExtractor(private val recordDefault: Boolean) {
   internal fun extract(project: Project?, componentName: String, state: Any): ConfigurationState? {
-    if (state is Element || state is JDOMExternalizable) {
+    @Suppress("DEPRECATION")
+    if (state is Element || state is com.intellij.openapi.util.JDOMExternalizable) {
       return null
     }
 
@@ -204,13 +204,15 @@ internal class ConfigurationStateExtractor(private val recordDefault: Boolean) {
       return null
     }
 
-    val accessors = BeanBinding.getAccessors(state.javaClass)
+    val accessors = getBeanAccessors(state.javaClass)
     if (accessors.isEmpty()) {
       return null
     }
 
     recordedComponents.add(componentName)
-    val optionsValues = accessors.mapNotNull { extractOptionValue(project, it, state, componentName, pluginInfo) }
+    val optionsValues = accessors.mapNotNull {
+      extractOptionValue(project = project, accessor = it, state = state, componentName = componentName, pluginInfo = pluginInfo)
+    }
     return ConfigurationState(optionsValues, pluginInfo)
   }
 

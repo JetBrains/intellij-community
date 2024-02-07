@@ -5,12 +5,20 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SafeStAXStreamBuilder
+import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.RawSettingSerializerDescriptor
+import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.SettingsController
 import com.intellij.serialization.SerializationException
+import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.util.xmlb.BeanBinding
 import com.intellij.util.xmlb.NotNullDeserializeBinding
 import com.intellij.util.xmlb.XmlSerializationException
+import com.intellij.util.xmlb.deserializeBeanInto
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
@@ -73,14 +81,21 @@ interface StateGetter<S : Any> {
 }
 
 @Suppress("DEPRECATION", "UNCHECKED_CAST")
-internal fun <T> deserializeStateWithSettingsController(stateElement: Element?, stateClass: Class<T>, mergeInto: T?): T? {
-  if (stateElement == null) {
-    return mergeInto
-  }
-  else if (stateClass === Element::class.java) {
+internal fun <T : Any> deserializeStateWithController(
+  stateElement: Element?,
+  stateClass: Class<T>,
+  mergeInto: T?,
+  controller: SettingsController?,
+  componentName: String,
+): T? {
+  if (stateClass === Element::class.java) {
     return stateElement as T?
   }
   else if (com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
+    if (stateElement == null) {
+      return mergeInto
+    }
+
     if (mergeInto != null) {
       LOG.error("State is ${stateClass.name}, merge into is $mergeInto, state element text is ${JDOMUtil.writeElement(stateElement)}")
     }
@@ -92,15 +107,46 @@ internal fun <T> deserializeStateWithSettingsController(stateElement: Element?, 
     return t as T
   }
 
+  if (stateElement == null && controller == null) {
+    return mergeInto
+  }
+
   val serializer = __platformSerializer()
-  // KotlinxSerializationBinding here is expected, do not cast to BeanBinding
+  // KotlinxSerializationBinding here is possible, do not cast to BeanBinding
   val rootBinding = serializer.getRootBinding(stateClass) as NotNullDeserializeBinding
   try {
     if (mergeInto == null) {
-      return rootBinding.deserialize(null, stateElement) as T
+      if (rootBinding !is BeanBinding || controller == null) {
+        if (stateElement == null) {
+          return null
+        }
+        return rootBinding.deserialize(null, stateElement) as T
+      }
+
+      return getXmlSerializationState<T>(
+        oldData = stateElement,
+        mergeInto = null,
+        rootBinding = rootBinding,
+        controller = controller,
+        componentName = componentName,
+      )
     }
     else {
-      (rootBinding as BeanBinding).deserializeInto(mergeInto, stateElement)
+      if (controller == null) {
+        if (stateElement == null) {
+          return mergeInto
+        }
+        (rootBinding as BeanBinding).deserializeInto(mergeInto, stateElement)
+      }
+      else {
+        return getXmlSerializationState(
+          oldData = stateElement,
+          mergeInto = mergeInto,
+          rootBinding = rootBinding as BeanBinding,
+          controller = controller,
+          componentName = componentName,
+        )
+      }
       return mergeInto
     }
   }
@@ -110,6 +156,86 @@ internal fun <T> deserializeStateWithSettingsController(stateElement: Element?, 
   catch (e: Exception) {
     throw XmlSerializationException("Cannot deserialize class ${stateClass.name}", e)
   }
+}
+
+private fun <T : Any> getXmlSerializationState(
+  oldData: Element?,
+  mergeInto: T?,
+  rootBinding: BeanBinding,
+  componentName: String,
+  controller: SettingsController,
+): T? {
+  var result = mergeInto
+  val bindings = rootBinding.bindings!!
+
+  for ((index, binding) in bindings
+    .withIndex()) {
+    val data = getXmlDataFromController(
+      key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}"),
+      controller = controller,
+    )
+    if (!data.isResolved) {
+      if (oldData != null) {
+        if (result == null) {
+          // create a result only if we have some data - do not return empty state class
+          @Suppress("UNCHECKED_CAST")
+          result = rootBinding.newInstance() as T
+        }
+        deserializeBeanInto(
+          result = result,
+          element = oldData,
+          accessorNameTracker = null,
+          bindings = bindings,
+          start = index,
+          end = index + 1,
+        )
+      }
+      continue
+    }
+
+    val element = data.get()
+    if (element != null) {
+      if (result == null) {
+        // create a result only if we have some data - do not return empty state class
+        @Suppress("UNCHECKED_CAST")
+        result = rootBinding.newInstance() as T
+      }
+
+      deserializeBeanInto(result = result, element = element, bindings = bindings, start = index, end = index + 1)
+    }
+  }
+  return result
+}
+
+private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controller: SettingsController): GetResult<Element> {
+  try {
+    val item = controller.doGetItem(key)
+    if (item.isResolved) {
+      val xmlData = item.get() ?: return GetResult.resolved(null)
+      val xmlStreamReader = createXmlStreamReader(xmlData)
+      try {
+        return GetResult.resolved(SafeStAXStreamBuilder.build(xmlStreamReader, true, false, SafeStAXStreamBuilder.FACTORY))
+      }
+      finally {
+        xmlStreamReader.close()
+      }
+    }
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot deserialize value for $key", e)
+  }
+  return GetResult.resolved(null)
+}
+
+private val shimPluginId = PluginId.getId("__controller_shim__")
+
+internal fun createSettingDescriptor(key: String): SettingDescriptor<ByteArray> {
+  return SettingDescriptor(
+    key = key,
+    pluginId = shimPluginId,
+    tags = emptyList(),
+    serializer = RawSettingSerializerDescriptor,
+  )
 }
 
 private class StateGetterImpl<S : Any, T : Any>(
@@ -125,7 +251,13 @@ private class StateGetterImpl<S : Any, T : Any>(
     LOG.assertTrue(serializedState == null)
 
     serializedState = storage.getSerializedState(storageData, component, componentName, archive = false)
-    return deserializeStateWithSettingsController(stateElement = serializedState, stateClass = stateClass, mergeInto = mergeInto)
+    return deserializeStateWithController(
+      stateElement = serializedState,
+      stateClass = stateClass,
+      mergeInto = mergeInto,
+      controller = storage.controller,
+      componentName = componentName,
+    )
   }
 
   override fun archiveState(): S? {
@@ -148,8 +280,8 @@ private class StateGetterImpl<S : Any, T : Any>(
       serializedState
     }
     else {
-      serializeState(stateAfterLoad)?.normalizeRootName().let {
-        if (JDOMUtil.isEmpty(it)) null else it
+      serializeState(state = stateAfterLoad, componentName = componentName)?.normalizeRootName()?.takeIf {
+        !it.isEmpty
       }
     }
 

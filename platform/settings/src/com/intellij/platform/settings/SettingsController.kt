@@ -27,6 +27,14 @@ interface SettingsController {
   @Internal
   @IntellijInternalApi
   fun release()
+
+  @Internal
+  @IntellijInternalApi
+  fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?>
+
+  @Internal
+  @IntellijInternalApi
+  fun isPersistenceStateComponentProxy(): Boolean
 }
 
 @Internal

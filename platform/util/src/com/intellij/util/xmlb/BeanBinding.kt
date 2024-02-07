@@ -9,7 +9,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.NotNullDeserializeBinding.LOG
-import com.intellij.util.xmlb.XmlSerializer.deserializeInto
+import com.intellij.util.xmlb.XmlSerializerUtil.getAccessors
 import com.intellij.util.xmlb.annotations.*
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
@@ -24,14 +24,13 @@ import java.util.*
 
 private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
 
+fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
+
 @ApiStatus.Internal
-open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
+open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding() {
   private val tagName: String
   @JvmField
   var bindings: Array<NestedBinding>? = null
-
-  @JvmField
-  val beanClass: Class<*>
 
   @JvmField
   var compareByFields: ThreeState = ThreeState.UNSURE
@@ -39,142 +38,8 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
   init {
     assert(!beanClass.isArray) { "Bean is an array: $beanClass" }
     assert(!beanClass.isPrimitive) { "Bean is primitive type: $beanClass" }
-    this.beanClass = beanClass
     tagName = getTagName(beanClass)
     assert(!tagName.isBlank()) { "Bean name is empty: $beanClass" }
-  }
-
-  companion object {
-    @JvmOverloads
-    fun deserializeInto(
-      result: Any,
-      element: Element,
-      accessorNameTracker: MutableSet<String>? = null,
-      bindings: Array<NestedBinding>,
-      start: Int = 0,
-      end: Int = bindings.size,
-    ) {
-      nextAttribute@ for (attribute in element.attributes) {
-        if (attribute.namespaceURI.isNullOrEmpty()) {
-          for (i in start until end) {
-            val binding = bindings[i]
-            if (binding is AttributeBinding && binding.name == attribute.name) {
-              accessorNameTracker?.add(binding.getAccessor().name)
-              binding.set(result, attribute.value)
-              continue@nextAttribute
-            }
-          }
-        }
-      }
-
-      var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
-      nextNode@ for (content in element.content) {
-        for (i in start until end) {
-          val binding = bindings[i]
-          if (content is Text) {
-            if (binding is TextBinding) {
-              binding.set(result, content.getValue())
-            }
-            continue
-          }
-
-          val child = content as Element
-          if (binding.isBoundTo(child)) {
-            if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
-              if (data == null) {
-                data = LinkedHashMap()
-              }
-              data.computeIfAbsent(binding) { ArrayList() }.add(child)
-            }
-            else {
-              accessorNameTracker?.add(binding.accessor.name)
-              binding.deserializeUnsafe(result, child)
-            }
-            continue@nextNode
-          }
-        }
-      }
-
-      for (i in start until end) {
-        val binding: Binding = bindings[i]
-        if (binding is AccessorBindingWrapper && binding.isFlat) {
-          binding.deserializeUnsafe(result, element)
-        }
-      }
-
-      if (data != null) {
-        for (binding in data.keys) {
-          accessorNameTracker?.add(binding.accessor.name)
-          (binding as MultiNodeBinding).deserializeList(result, data[binding]!!)
-        }
-      }
-    }
-
-    // binding value will be not set if no data
-    @JvmOverloads
-    fun deserializeInto(
-      result: Any,
-      element: XmlElement,
-      bindings: Array<NestedBinding>,
-      start: Int = 0,
-      end: Int = bindings.size,
-    ) {
-      var attributeBindingCount = 0
-      for (i in start until end) {
-        val binding = bindings[i]
-        if (binding is AttributeBinding) {
-          attributeBindingCount++
-          val attributeBinding = binding
-          val value = element.attributes.get(attributeBinding.name)
-          if (value != null) {
-            attributeBinding.set(result, value)
-          }
-        }
-        else if (element.content != null && binding is TextBinding) {
-          binding.set(result, element.content!!)
-        }
-      }
-
-      if (attributeBindingCount == bindings.size) {
-        return
-      }
-
-      var data: LinkedHashMap<NestedBinding, MutableList<XmlElement?>>? = null
-      nextNode@ for (child in element.children) {
-        for (i in start until end) {
-          val binding = bindings[i]
-          if (binding is AttributeBinding || binding is TextBinding || !binding.isBoundTo(child)) {
-            continue
-          }
-
-          if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
-            if (data == null) {
-              data = LinkedHashMap()
-            }
-            data.computeIfAbsent(binding) { ArrayList() }.add(child)
-          }
-          else {
-            binding.deserializeUnsafe(result, child)
-          }
-          continue@nextNode
-        }
-      }
-
-      for (i in start until end) {
-        val binding = bindings[i]
-        if (binding is AccessorBindingWrapper && binding.isFlat) {
-          binding.deserializeUnsafe(result, element)
-        }
-      }
-
-      if (data != null) {
-        for (binding in data.keys) {
-          (binding as MultiNodeBinding).deserializeList2(result, data[binding]!!)
-        }
-      }
-    }
-
-    fun getAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
   }
 
   @Synchronized
@@ -199,29 +64,31 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
     return serializeInto(o, if (context == null) null else Element(tagName), filter)
   }
 
-  fun serialize(`object`: Any, createElementIfEmpty: Boolean, filter: SerializationFilter?): Element? {
-    return serializeInto(`object`, if (createElementIfEmpty) Element(tagName) else null, filter)
+  fun serialize(bean: Any, createElementIfEmpty: Boolean, filter: SerializationFilter?): Element? {
+    return serializeInto(o = bean, preCreatedElement = if (createElementIfEmpty) Element(tagName) else null, filter = filter)
   }
 
-  open fun serializeInto(o: Any, element: Element?, filter: SerializationFilter?): Element? {
-    var element = element
+  open fun serializeInto(o: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+    var element = preCreatedElement
     for (binding in bindings!!) {
       if (o is SerializationFilter && !o.accepts(binding.accessor, o)) {
         continue
       }
 
-      element = serializePropertyInto(binding = binding, o = o, element = element, filter = filter, isFilterPropertyItself = true)
+      element = serializePropertyInto(binding = binding, o = o, preCreatedElement = element, filter = filter, isFilterPropertyItself = true)
     }
     return element
   }
 
-  fun serializePropertyInto(binding: NestedBinding,
-                            o: Any,
-                            element: Element?,
-                            filter: SerializationFilter?,
-                            isFilterPropertyItself: Boolean): Element? {
-    var element = element
-    val accessor: Accessor = binding.accessor
+  fun serializePropertyInto(
+    binding: NestedBinding,
+    o: Any,
+    preCreatedElement: Element?,
+    filter: SerializationFilter?,
+    isFilterPropertyItself: Boolean,
+  ): Element? {
+    var element = preCreatedElement
+    val accessor = binding.accessor
     val property = accessor.getAnnotation(Property::class.java)
     if (property == null || !property.alwaysWrite) {
       if (filter != null && isFilterPropertyItself) {
@@ -236,9 +103,11 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
       }
 
       //todo: optimize. Cache it.
-      if (property != null && property.filter != SerializationFilter::class.java &&
-          !(ReflectionUtil.newInstance(property.filter::class.java) as SerializationFilter).accepts(accessor, o)) {
-        return element
+      if (property != null) {
+        val propertyFilter = XmlSerializerUtil.getPropertyFilter(property)
+        if (propertyFilter != null && !propertyFilter.accepts(accessor, o)) {
+          return element
+        }
       }
     }
 
@@ -260,13 +129,34 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
 
   override fun deserialize(context: Any?, element: Element): Any {
     val instance = newInstance()
-    deserializeInto(instance, element)
+    deserializeInto(result = instance, element = element)
     return instance
+  }
+
+  fun deserializeInto(result: Any, element: Element) {
+    deserializeBeanInto(
+      result = result,
+      element = element,
+      accessorNameTracker = null,
+      bindings = bindings!!,
+      start = 0,
+      end = bindings!!.size,
+    )
+  }
+
+  fun deserializeInto(result: Any, element: XmlElement) {
+    deserializeBeanInto(
+      result = result,
+      element = element,
+      bindings = bindings!!,
+      start = 0,
+      end = bindings!!.size,
+    )
   }
 
   override fun deserialize(context: Any?, element: XmlElement): Any {
     val instance = newInstance()
-    deserializeInto(result = instance, element = element, bindings = bindings!!)
+    deserializeBeanInto(result = instance, element = element, bindings = bindings!!)
     return instance
   }
 
@@ -320,6 +210,132 @@ open class BeanBinding(beanClass: Class<*>) : NotNullDeserializeBinding() {
   override fun isBoundTo(element: XmlElement): Boolean = element.name == tagName
 
   override fun toString(): String = "BeanBinding[${beanClass.name}, tagName=$tagName]"
+}
+
+// binding value will be not set if no data
+fun deserializeBeanInto(
+  result: Any,
+  element: XmlElement,
+  bindings: Array<NestedBinding>,
+  start: Int = 0,
+  end: Int = bindings.size,
+) {
+  var attributeBindingCount = 0
+  for (i in start until end) {
+    val binding = bindings[i]
+    if (binding is AttributeBinding) {
+      attributeBindingCount++
+      val value = element.attributes.get(binding.name)
+      if (value != null) {
+        binding.set(result, value)
+      }
+    }
+    else if (element.content != null && binding is TextBinding) {
+      binding.set(result, element.content!!)
+    }
+  }
+
+  if (attributeBindingCount == bindings.size) {
+    return
+  }
+
+  var data: LinkedHashMap<NestedBinding, MutableList<XmlElement?>>? = null
+  nextNode@ for (child in element.children) {
+    for (i in start until end) {
+      val binding = bindings[i]
+      if (binding is AttributeBinding || binding is TextBinding || !binding.isBoundTo(child)) {
+        continue
+      }
+
+      if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
+        if (data == null) {
+          data = LinkedHashMap()
+        }
+        data.computeIfAbsent(binding) { ArrayList() }.add(child)
+      }
+      else {
+        binding.deserializeUnsafe(result, child)
+      }
+      continue@nextNode
+    }
+  }
+
+  for (i in start until end) {
+    val binding = bindings[i]
+    if (binding is AccessorBindingWrapper && binding.isFlat) {
+      binding.deserializeUnsafe(result, element)
+    }
+  }
+
+  if (data != null) {
+    for (binding in data.keys) {
+      (binding as MultiNodeBinding).deserializeList2(result, data[binding]!!)
+    }
+  }
+}
+
+fun deserializeBeanInto(
+  result: Any,
+  element: Element,
+  accessorNameTracker: MutableSet<String>? = null,
+  bindings: Array<NestedBinding>,
+  start: Int = 0,
+  end: Int = bindings.size,
+) {
+  nextAttribute@ for (attribute in element.attributes) {
+    if (attribute.namespaceURI.isNullOrEmpty()) {
+      for (i in start until end) {
+        val binding = bindings[i]
+        if (binding is AttributeBinding && binding.name == attribute.name) {
+          accessorNameTracker?.add(binding.getAccessor().name)
+          binding.set(result, attribute.value)
+          continue@nextAttribute
+        }
+      }
+    }
+  }
+
+  var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
+  nextNode@ for (content in element.content) {
+    for (i in start until end) {
+      val binding = bindings[i]
+      if (content is Text) {
+        if (binding is TextBinding) {
+          binding.set(result, content.getValue())
+        }
+        continue
+      }
+
+      val child = content as Element
+      if (binding.isBoundTo(child)) {
+        if (binding is MultiNodeBinding && (binding as MultiNodeBinding).isMulti) {
+          if (data == null) {
+            data = LinkedHashMap()
+          }
+          data.computeIfAbsent(binding) { ArrayList() }.add(child)
+        }
+        else {
+          accessorNameTracker?.add(binding.accessor.name)
+          binding.deserializeUnsafe(result, child)
+        }
+        continue@nextNode
+      }
+    }
+  }
+
+  for (i in start until end) {
+    val binding: Binding = bindings[i]
+    if (binding is AccessorBindingWrapper && binding.isFlat) {
+      binding.deserializeUnsafe(result, element)
+    }
+  }
+
+  if (data != null) {
+    for (binding in data.keys) {
+      accessorNameTracker?.add(binding.accessor.name)
+      (binding as MultiNodeBinding).deserializeList(result, data[binding]!!)
+    }
+  }
 }
 
 // must be static class and not anonymous

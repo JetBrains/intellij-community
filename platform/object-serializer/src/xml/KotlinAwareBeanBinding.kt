@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.xml
 
 import com.intellij.openapi.components.BaseState
@@ -20,6 +20,7 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
   // only for accessor, not field
   private fun findBindingIndex(name: String): Int {
     // accessors sorted by name
+    val bindings = bindings!!
     val index = ObjectUtils.binarySearch(0, bindings.size) { index -> bindings[index].accessor.name.compareTo(name) }
     if (index >= 0) {
       return index
@@ -35,10 +36,10 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
     return -1
   }
 
-  override fun serializeInto(o: Any, element: Element?, filter: SerializationFilter?): Element? {
+  override fun serializeInto(o: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
     return when (o) {
-      is BaseState -> serializeBaseStateInto(o, element, filter)
-      else -> super.serializeInto(o, element, filter)
+      is BaseState -> serializeBaseStateInto(o = o, _element = preCreatedElement, filter = filter)
+      else -> super.serializeInto(o = o, preCreatedElement = preCreatedElement, filter = filter)
     }
   }
 
@@ -69,6 +70,7 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
     }
 
     if (bindingIndices != null) {
+      val bindings = bindings!!
       bindingIndices.sort()
       for (i in 0 until bindingIndices.size) {
         element = serializePropertyInto(bindings[bindingIndices.getInt(i)], o, element, filter, false)

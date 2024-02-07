@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.autoDetectTests
 
 import com.intellij.execution.Executor
@@ -8,13 +8,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.getBeanAccessors
+import com.jetbrains.python.reflection.getProperties
 import com.jetbrains.python.testing.PyAbstractTestConfiguration
+import com.jetbrains.python.testing.PyAbstractTestConfigurationFragmentedEditor
 import com.jetbrains.python.testing.PyAbstractTestSettingsEditor
 import com.jetbrains.python.testing.PyTestSharedForm
-import com.jetbrains.python.reflection.getProperties
-import com.jetbrains.python.testing.PyAbstractTestConfigurationFragmentedEditor
-
 
 class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionConfigurationFactory)
   : PyAbstractTestConfiguration(project, factory) {
@@ -28,7 +27,7 @@ class PyAutoDetectTestConfiguration(project: Project, factory: PyAutoDetectionCo
     val conf = detectedConfiguration(module) ?: return null
 
     copyTo(getProperties(conf))
-    for (accessor in BeanBinding.getAccessors(PyAbstractTestConfiguration::class.java)) {
+    for (accessor in getBeanAccessors(PyAbstractTestConfiguration::class.java)) {
       accessor.set(conf, accessor.read(this))
     }
     conf.setAddContentRoots(shouldAddContentRoots())

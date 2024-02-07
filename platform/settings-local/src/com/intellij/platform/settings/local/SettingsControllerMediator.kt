@@ -8,6 +8,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
@@ -15,16 +16,18 @@ import java.nio.file.Path
 internal val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<DelegatedSettingsController> =
   ExtensionPointName("com.intellij.settingsController")
 
-private val delegateToSettingsController = System.getProperty("idea.settings.internal.delegate.to.controller", "false").toBoolean()
-
-internal class SettingsControllerMediator : SettingsController {
-  private val controllers = SETTINGS_CONTROLLER_EP_NAME.extensionList
-
+@VisibleForTesting
+@IntellijInternalApi
+@Internal
+class SettingsControllerMediator(
+  private val controllers: List<DelegatedSettingsController> = SETTINGS_CONTROLLER_EP_NAME.extensionList,
+  private val isPersistenceStateComponentProxy: Boolean = controllers.size > 1,
+) : SettingsController {
   override fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
     return doGetItem(key).get()
   }
 
-  fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?> {
+  override fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?> {
     for (controller in controllers) {
       val result = controller.getItem(key)
       if (result.isResolved) {
@@ -46,17 +49,8 @@ internal class SettingsControllerMediator : SettingsController {
   override fun createStateStorage(collapsedPath: String, file: Path): Any? {
     return when (collapsedPath) {
       StoragePathMacros.CACHE_FILE -> {
-        StateStorageBackedByController(controller = this, tags = java.util.List.of(CacheTag), oldStorage = null)
+        StateStorageBackedByController(controller = this, tags = java.util.List.of(CacheTag))
       }
-      //StoragePathMacros.NON_ROAMABLE_FILE -> {
-      //  if (delegateToSettingsController || ApplicationManager.getApplication().isUnitTestMode) {
-      //    val oldStorage = XmlFileStorage(file)
-      //    StateStorageBackedByController(controller = this, tags = java.util.List.of(NonShareableInternalTag), oldStorage = oldStorage)
-      //  }
-      //  else {
-      //    null
-      //  }
-      //}
       else -> null
     }
   }
@@ -67,4 +61,7 @@ internal class SettingsControllerMediator : SettingsController {
       controller.close()
     }
   }
+
+  @IntellijInternalApi
+  override fun isPersistenceStateComponentProxy(): Boolean = isPersistenceStateComponentProxy
 }

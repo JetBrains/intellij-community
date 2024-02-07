@@ -9,14 +9,20 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.settings.SettingsController
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.SerializationConstants
 
 internal class ExternalModuleStorage(private val module: Module, storageManager: StateStorageManager)
-  : XmlElementStorage(fileSpec = StoragePathMacros.MODULE_FILE,
-                      rootElementName = "module",
-                      pathMacroSubstitutor = storageManager.macroSubstitutor,
-                      storageRoamingType = RoamingType.DISABLED) {
+  : XmlElementStorage(
+  fileSpec = StoragePathMacros.MODULE_FILE,
+  rootElementName = "module",
+  pathMacroSubstitutor = storageManager.macroSubstitutor,
+  storageRoamingType = RoamingType.DISABLED,
+) {
+  override val controller: SettingsController?
+    get() = null
+
   private val manager: ExternalSystemStreamProviderFactory = findExternalSystemStreamProviderFactory(module.project)
 
   override fun loadLocalData(): Element? = manager.readModuleData(module.name)
@@ -31,7 +37,15 @@ internal open class ExternalProjectStorage(
   project: Project,
   storageManager: StateStorageManager,
   rootElementName: String?  // several components per file when not null
-) : XmlElementStorage(fileSpec, rootElementName, storageManager.macroSubstitutor, RoamingType.DISABLED) {
+) : XmlElementStorage(
+  fileSpec = fileSpec,
+  rootElementName = rootElementName,
+  pathMacroSubstitutor = storageManager.macroSubstitutor,
+  storageRoamingType = RoamingType.DISABLED,
+) {
+  override val controller: SettingsController?
+    get() = null
+
   internal val manager: ExternalSystemStreamProviderFactory = findExternalSystemStreamProviderFactory(project)
 
   override fun loadLocalData(): Element? = manager.fileStorage.read(fileSpec)

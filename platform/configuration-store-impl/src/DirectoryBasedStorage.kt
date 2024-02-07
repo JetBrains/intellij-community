@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
@@ -10,6 +12,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
 import org.jdom.Element
 import java.io.IOException
@@ -27,21 +30,23 @@ open class DirectoryBasedStorage(
   @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = emptyMap()
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
+  override val controller: SettingsController?
+    get() = null
+
   public override fun loadData(): StateMap {
     val (elementMap, separatorMap) = ComponentStorageUtil.load(dir, pathMacroSubstitutor)
     nameToLineSeparatorMap = separatorMap
     return StateMap.fromMap(elementMap)
   }
 
-  private fun getLineSeparator(name: String): LineSeparator =
-    nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
     val newData = loadData()
     storageDataRef.set(newData)
-    if (componentName != null) {
-      componentNames.add(componentName!!)
+    componentName?.let {
+      componentNames.add(it)
     }
   }
 
@@ -89,8 +94,9 @@ open class DirectoryBasedStorage(
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? =
-    if (checkIsSavingDisabled()) null else MySaveSessionProducer(storage = this, getStorageData())
+  override fun createSaveSessionProducer(): SaveSessionProducer? {
+    return if (checkIsSavingDisabled()) null else MySaveSessionProducer(storage = this, getStorageData())
+  }
 
   private class MySaveSessionProducer(
     private val storage: DirectoryBasedStorage,

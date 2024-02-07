@@ -40,7 +40,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }
-    super.initComponent(component, serviceDescriptor, pluginId)
+    super.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
   }
 
   override fun unloadComponent(component: Any) {

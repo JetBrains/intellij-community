@@ -6,11 +6,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.StateStorageOperation
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -33,8 +29,10 @@ const val APP_CONFIG: String = "\$APP_CONFIG\$"
 @ApiStatus.Internal
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
-  override val storageManager: ApplicationStateStorageManager =
-    ApplicationStateStorageManager(PathMacroManager.getInstance(app), app.getService(SettingsController::class.java))
+  override val storageManager: ApplicationStateStorageManager = ApplicationStateStorageManager(
+    pathMacroManager = PathMacroManager.getInstance(app),
+    controller = app.getService(SettingsController::class.java),
+  )
 
   override val serviceContainer: ComponentManagerImpl
     get() = app as ComponentManagerImpl
@@ -82,13 +80,22 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   override fun toString(): String = "app"
 
   @VisibleForTesting
-  class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, settingsController: SettingsController?)
-    : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, settingsController)
-  {
-    override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
+  class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
+    : StateStorageManagerImpl(
+    rootTagName = "application",
+    macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(),
+    componentManager = null,
+    controller = controller,
+  ) {
+    override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
       @Suppress("DEPRECATION")
-      if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}"
-      else StoragePathMacros.NON_ROAMABLE_FILE
+      if (component is com.intellij.openapi.util.NamedJDOMExternalizable) {
+        return "${component.externalFileName}${PathManager.DEFAULT_EXT}"
+      }
+      else {
+        return StoragePathMacros.NON_ROAMABLE_FILE
+      }
+    }
 
     override val isUseXmlProlog: Boolean
       get() = false
@@ -103,9 +110,15 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 
     override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-    override fun expandMacro(collapsedPath: String): Path =
-      if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
-      else macros[0].value.resolve(collapsedPath)  // APP_CONFIG is the first macro
+    override fun expandMacro(collapsedPath: String): Path {
+      if (collapsedPath[0] == '$') {
+        return super.expandMacro(collapsedPath)
+      }
+      else {
+        // APP_CONFIG is the first macro
+        return macros[0].value.resolve(collapsedPath)
+      }
+    }
   }
 }
 

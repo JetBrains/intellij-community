@@ -306,7 +306,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   @TestOnly
-  suspend fun saveNonVfsComponent(component: PersistentStateComponent<*>): Boolean {
+  suspend fun saveNonVfsComponent(component: PersistentStateComponent<*>) {
     val stateSpec = getStateSpec(component)
     val saveManager = createSaveSessionProducerManager()
 
@@ -316,7 +316,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     val saveResult = SaveResult()
     saveManager.save(saveResult)
     saveResult.rethrow()
-    return saveResult.readonlyFiles.isNotEmpty()
   }
 
   internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(false)

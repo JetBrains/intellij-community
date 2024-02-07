@@ -35,7 +35,7 @@ open class StateStorageManagerImpl(
   @NonNls private val rootTagName: String,
   final override val macroSubstitutor: PathMacroSubstitutor? = null,
   final override val componentManager: ComponentManager?,
-  private val settingsController: SettingsController? = null,
+  private val controller: SettingsController? = null,
 ) : StateStorageManager {
   private val virtualFileTracker = createDefaultVirtualTracker(componentManager)
 
@@ -141,9 +141,11 @@ open class StateStorageManagerImpl(
 
   fun getCachedFileStorages(): Set<StateStorage> = storageLock.read { storages.values.toSet() }
 
-  fun getCachedFileStorages(changed: Collection<String>,
-                            deleted: Collection<String>,
-                            pathNormalizer: ((String) -> String)? = null): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> {
+  fun getCachedFileStorages(
+    changed: Collection<String>,
+    deleted: Collection<String>,
+    pathNormalizer: ((String) -> String)? = null,
+  ): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> {
     return storageLock.read {
       Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
     }
@@ -216,11 +218,13 @@ open class StateStorageManagerImpl(
       throw IllegalArgumentException("Extension is missing for storage file: $collapsedPath")
     }
 
-    val storage = createFileBasedStorage(file = filePath,
-                                         collapsedPath = collapsedPath,
-                                         roamingType = effectiveRoamingType,
-                                         usePathMacroManager = usePathMacroManager,
-                                         rootTagName = if (exclusive) null else rootTagName)
+    val storage = createFileBasedStorage(
+      file = filePath,
+      collapsedPath = collapsedPath,
+      roamingType = effectiveRoamingType,
+      usePathMacroManager = usePathMacroManager,
+      rootTagName = if (exclusive) null else rootTagName,
+    )
     if (isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage && virtualFileTracker != null) {
       virtualFileTracker.put(filePath.invariantSeparatorsPathString, storage)
     }
@@ -229,8 +233,13 @@ open class StateStorageManagerImpl(
 
   internal open val isUseVfsForWrite: Boolean = false
 
-  protected open fun createDirectoryBasedStorage(dir: Path, collapsedPath: String, @Suppress("DEPRECATION", "removal") splitter: StateSplitter): StateStorage =
-    TrackedDirectoryStorage(storageManager = this, dir, splitter, macroSubstitutor)
+  protected open fun createDirectoryBasedStorage(
+    dir: Path,
+    collapsedPath: String,
+    @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
+  ): StateStorage {
+    return TrackedDirectoryStorage(storageManager = this, dir, splitter, macroSubstitutor)
+  }
 
   protected open fun createFileBasedStorage(
     file: Path,
@@ -240,13 +249,22 @@ open class StateStorageManagerImpl(
     rootTagName: String?
   ): StateStorage {
     compoundStreamProvider.deleteIfObsolete(collapsedPath, roamingType)
-    if (roamingType == RoamingType.DISABLED && settingsController != null) {
-      settingsController.createStateStorage(collapsedPath, file)?.let {
-        return it  as StateStorage
+    if (roamingType == RoamingType.DISABLED && controller != null) {
+      controller.createStateStorage(collapsedPath, file)?.let {
+        return it as StateStorage
       }
     }
     val pathMacroManager = if (usePathMacroManager) macroSubstitutor else null
-    return TrackedFileStorage(storageManager = this, file, collapsedPath, rootTagName, roamingType, pathMacroManager, compoundStreamProvider)
+    return TrackedFileStorage(
+      storageManager = this,
+      file = file,
+      fileSpec = collapsedPath,
+      rootElementName = rootTagName,
+      roamingType = roamingType,
+      pathMacroManager = pathMacroManager,
+      provider = compoundStreamProvider,
+      controller = controller?.takeIf { it.isPersistenceStateComponentProxy() },
+    )
   }
 
   internal class TrackedDirectoryStorage(
@@ -265,9 +283,18 @@ open class StateStorageManagerImpl(
     fileSpec: String,
     rootElementName: String?,
     roamingType: RoamingType,
-    pathMacroManager: PathMacroSubstitutor? = null,
-    provider: StreamProvider? = null,
-  ) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
+    pathMacroManager: PathMacroSubstitutor?,
+    provider: StreamProvider?,
+    controller: SettingsController?,
+  ) : FileBasedStorage(
+    file = file,
+    fileSpec = fileSpec,
+    rootElementName = rootElementName,
+    pathMacroManager = pathMacroManager,
+    roamingType = roamingType,
+    provider = provider,
+    controller = controller,
+  ), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)
 
@@ -365,7 +392,7 @@ open class StateStorageManagerImpl(
 
   internal fun disposed() {
     virtualFileTracker?.remove { it.storageManager === this }
-    settingsController?.release()
+    controller?.release()
   }
 }
 

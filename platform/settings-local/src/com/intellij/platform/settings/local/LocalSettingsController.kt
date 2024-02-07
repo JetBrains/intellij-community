@@ -96,7 +96,7 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
     for (tag in key.tags) {
       when (tag) {
         is CacheTag -> {
-          return internalOperation(cacheMap, null)
+          return internalOperation(cacheMap, componentName)
         }
         is NonShareableInternalTag -> {
           return internalOperation(internalMap, componentName)

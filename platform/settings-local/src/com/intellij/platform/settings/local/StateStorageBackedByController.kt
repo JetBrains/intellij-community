@@ -36,19 +36,16 @@ private val shimPluginId = PluginId.getId("__controller_shim__")
 internal class StateStorageBackedByController(
   @JvmField val controller: SettingsControllerMediator,
   private val tags: List<SettingTag>,
-  private val oldStorage: XmlFileStorage?,
 ) : StateStorage {
   private val bindingProducer = BindingProducer()
 
+  @OptIn(ExperimentalSerializationApi::class)
   override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     when {
       stateClass === Element::class.java -> {
-        getXmlData(createSettingDescriptor(componentName, componentName)).takeIf { it.isResolved }?.let {
+        getXmlData(createSettingDescriptor(componentName)).takeIf { it.isResolved }?.let {
           return it.get() as T?
-        }
-        oldStorage?.getJdom(componentName)?.let {
-          return it as T
         }
         return mergeInto
       }
@@ -59,14 +56,12 @@ internal class StateStorageBackedByController(
         try {
           val beanBinding = bindingProducer.getRootBinding(stateClass) as NotNullDeserializeBinding
           if (beanBinding is KotlinxSerializationBinding) {
-            val data = controller.getItem(createSettingDescriptor(componentName, componentName))
+            val data = controller.getItem(createSettingDescriptor(componentName))
             if (data != null) {
               return cborFormat.decodeFromByteArray(beanBinding.serializer, data) as T
             }
             else {
-              return oldStorage?.get(componentName)?.content?.let {
-                beanBinding.decodeFromJson(it)
-              } as T?
+              return null
             }
           }
           else {
@@ -85,7 +80,7 @@ internal class StateStorageBackedByController(
 
   private fun <T : Any> readDataForDeprecatedJdomExternalizable(componentName: String, mergeInto: T?, stateClass: Class<T>): T? {
     // we don't care about data from the old storage for deprecated JDOMExternalizable
-    val data = getXmlData(createSettingDescriptor(componentName, componentName)).get() ?: return mergeInto
+    val data = getXmlData(createSettingDescriptor(componentName)).get() ?: return mergeInto
     if (mergeInto != null) {
       thisLogger().error("State is ${stateClass.name}, merge into is $mergeInto, state element text is $data")
     }
@@ -101,20 +96,11 @@ internal class StateStorageBackedByController(
 
   private fun <T : Any> getXmlSerializationState(mergeInto: T?, beanBinding: NotNullDeserializeBinding, componentName: String): T? {
     var result = mergeInto
-    val bindings = (beanBinding as BeanBinding).bindings
-    val oldData by lazy { oldStorage?.get(componentName) }
+    val bindings = (beanBinding as BeanBinding).bindings!!
 
     for ((index, binding) in bindings.withIndex()) {
-      val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}", componentName))
+      val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}"))
       if (!data.isResolved) {
-        if (oldData != null) {
-          if (result == null) {
-            // create a result only if we have some data - do not return empty state class
-            @Suppress("UNCHECKED_CAST")
-            result = beanBinding.newInstance() as T
-          }
-          BeanBinding.deserializeInto(result, oldData!!, bindings, index, index + 1)
-        }
         continue
       }
 
@@ -126,7 +112,14 @@ internal class StateStorageBackedByController(
           result = beanBinding.newInstance() as T
         }
 
-        BeanBinding.deserializeInto(result, element, null, bindings, index, index + 1)
+        deserializeBeanInto(
+          result = result,
+          element = element,
+          accessorNameTracker = null,
+          bindings = bindings,
+          start = index,
+          end = index + 1,
+        )
       }
     }
     return result
@@ -142,7 +135,7 @@ internal class StateStorageBackedByController(
     catch (e: Throwable) {
       thisLogger().error("Cannot deserialize value for $key", e)
     }
-    return if (oldStorage == null) GetResult.resolved(null) else GetResult.inapplicable()
+    return GetResult.resolved(null)
   }
 
   override fun createSaveSessionProducer(): SaveSessionProducer {
@@ -153,10 +146,7 @@ internal class StateStorageBackedByController(
     // external change is not expected and not supported
   }
 
-  internal fun createSettingDescriptor(key: String, @Suppress("UNUSED_PARAMETER") componentName: String): SettingDescriptor<ByteArray> {
-    //val tags = ArrayList<SettingTag>(this.tags.size + 1)
-    //tags.add(PersistenceStateComponentProperty(componentName))
-    //tags.addAll(this.tags)
+  internal fun createSettingDescriptor(key: String): SettingDescriptor<ByteArray> {
     return SettingDescriptor(
       key = key,
       pluginId = shimPluginId,
@@ -175,7 +165,7 @@ private class ControllerBackedSaveSessionProducer(
   }
 
   override fun setState(component: Any?, componentName: String, state: Any?) {
-    val settingDescriptor = storageController.createSettingDescriptor(componentName, componentName)
+    val settingDescriptor = storageController.createSettingDescriptor(componentName)
     if (state == null) {
       put(settingDescriptor, null)
       return
@@ -198,7 +188,7 @@ private class ControllerBackedSaveSessionProducer(
         }
         else {
           val filter = jdomSerializer.getDefaultSerializationFilter()
-          for (binding in (beanBinding as BeanBinding).bindings) {
+          for (binding in (beanBinding as BeanBinding).bindings!!) {
             if (state is SerializationFilter && !state.accepts(binding.accessor, state)) {
               continue
             }
