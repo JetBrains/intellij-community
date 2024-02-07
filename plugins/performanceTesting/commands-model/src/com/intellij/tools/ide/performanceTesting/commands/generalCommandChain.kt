@@ -575,6 +575,10 @@ fun <T : CommandChain> T.downloadMavenArtifacts(sources: Boolean = true, docs: B
   addCommand("${CMD_PREFIX}downloadMavenArtifacts $sources $docs")
 }
 
+fun <T : CommandChain> T.addMavenModule(moduleName: String, parentModuleName: String? = null): T = apply {
+  addCommand("${CMD_PREFIX}addMavenModule $moduleName|${parentModuleName ?: ""}")
+}
+
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {
   startInlineRename()
   delayType(150, to)
