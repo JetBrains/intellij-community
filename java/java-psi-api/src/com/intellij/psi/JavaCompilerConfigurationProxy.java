@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -13,6 +13,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.psi.JavaModuleSystem.PATCH_MODULE_OPTION;
 
 /**
  * Provides additional compiler options for a given module.
@@ -63,7 +65,7 @@ public abstract class JavaCompilerConfigurationProxy {
     }
 
     String prefix = targetModuleName + "=";
-    for (String option : optionValues(options, "--patch-module")) {
+    for (String option : optionValues(options, PATCH_MODULE_OPTION)) {
       if (option.startsWith(prefix)) {
         String[] patchingPaths = option.substring(prefix.length()).split(File.pathSeparator);
         for (String patchingPath : patchingPaths) {
