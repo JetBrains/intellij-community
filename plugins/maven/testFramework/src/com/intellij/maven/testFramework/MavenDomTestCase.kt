@@ -262,6 +262,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     if (resolved is MavenPsiElementWrapper) {
       resolved = resolved.wrappee
     }
+    assertEquals(expected.text, resolved?.text)
     assertEquals(expected, resolved)
     return ref
   }

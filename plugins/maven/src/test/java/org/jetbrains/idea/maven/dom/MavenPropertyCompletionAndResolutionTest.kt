@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem
 import org.junit.Test
@@ -690,33 +691,39 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
 
   @Test
   fun testResolvingPropertiesInSettingsXml() = runBlocking {
-    val profiles = updateSettingsXml("""
-                                               <profiles>
-                                                 <profile>
-                                                   <id>one</id>
-                                                   <properties>
-                                                     <foo>value</foo>
-                                                   </properties>
-                                                 </profile>
-                                                 <profile>
-                                                   <id>two</id>
-                                                   <properties>
-                                                     <foo>value</foo>
-                                                   </properties>
-                                                 </profile>
-                                               </profiles>
-                                               """.trimIndent())
+    // we are changing settings.xml here, and we need a new maven embedder--
+    // the old one (that was created during the first sync in setUp()) doesn't know about new settings.xml,
+    // so it won't be able to find the profiles
+    MavenServerManager.getInstance().closeAllConnectorsAndWait()
 
-    createProjectPom("""
+    val profiles = updateSettingsXml("""
+                       <profiles>
+                         <profile>
+                           <id>one</id>
+                           <properties>
+                             <foo>value one</foo>
+                           </properties>
+                         </profile>
+                         <profile>
+                           <id>two</id>
+                           <properties>
+                             <foo>value two</foo>
+                           </properties>
+                         </profile>
+                       </profiles>
+                       """.trimIndent())
+
+    setPomContentAsync(projectPom, """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
-                       <name>${'$'}{<caret>foo}</name>
+                       <name>${'$'}{foo}</name>
                        """.trimIndent())
 
     readWithProfiles("two")
 
     withContext(Dispatchers.EDT) {
+      moveCaretTo(projectPom, "<name>${'$'}{<caret>foo}</name>")
       assertResolved(projectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel::class.java))
     }
   }

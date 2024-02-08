@@ -648,6 +648,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
+  protected suspend fun setPomContentAsync(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
+    setFileContentAsync(file, createPomXml(xml), true)
+  }
+
   protected suspend fun setFileContentAsync(file: VirtualFile, content: String, advanceStamps: Boolean) {
     writeAction {
       doSetFileContent(file, content, advanceStamps)
