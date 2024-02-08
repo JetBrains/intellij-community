@@ -15,6 +15,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -30,6 +31,7 @@ import javax.swing.SwingConstants
 object CodeReviewDetailsCommitsComponentFactory {
   private const val COMPONENTS_GAP = 4
   private const val COMMIT_HASH_OFFSET = 8
+  internal const val VERT_PADDING = 6
 
   fun <T> create(scope: CoroutineScope, changesVm: CodeReviewChangesViewModel<T>,
                  commitPresentation: (commit: T) -> CommitPresentation): JComponent {
@@ -61,6 +63,8 @@ object CodeReviewDetailsCommitsComponentFactory {
     }
 
     return HorizontalListPanel(COMPONENTS_GAP).apply {
+      // should be 6 top and bottom, but labels are height 17 instead of 16
+      border = JBUI.Borders.empty(VERT_PADDING, 0, VERT_PADDING - 1, 0)
       add(commitsPopupTitle)
       add(commitsPopup)
       add(nextCommitIcon)

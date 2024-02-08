@@ -73,8 +73,8 @@ object ReviewDetailsUIUtil {
   @Suppress("UseDPIAwareInsets")
   val COMMIT_POPUP_BRANCHES_GAPS: Insets
     get() = CollaborationToolsUIUtil.getInsets(
-      oldUI = Insets(0, OLD_UI_LEFT_GAP, 9, RIGHT_GAP),
-      newUI = Insets(0, NEW_UI_LEFT_GAP, 15, RIGHT_GAP),
+      oldUI = Insets(0, OLD_UI_LEFT_GAP, 0, RIGHT_GAP),
+      newUI = Insets(0, NEW_UI_LEFT_GAP, 4, RIGHT_GAP),
     )
 
   @Suppress("UseDPIAwareInsets")
