@@ -7,6 +7,7 @@ import com.intellij.facet.FacetManagerListener;
 import com.intellij.facet.FacetModificationTrackingService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ModificationTrackerListener;
 import com.intellij.openapi.util.Pair;
@@ -21,8 +22,8 @@ final class FacetModificationTrackingServiceImpl extends FacetModificationTracki
   private final ConcurrentMap<Facet<?>, Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>>> myModificationsTrackers =
     new ConcurrentHashMap<>();
 
-  FacetModificationTrackingServiceImpl(Module module) {
-    module.getProject().getMessageBus().connect(module).subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener(module));
+  FacetModificationTrackingServiceImpl(@NotNull Project project) {
+    project.getMessageBus().connect().subscribe(FacetManager.FACETS_TOPIC, new FacetModificationTrackingListener(project));
   }
 
   @Override
@@ -42,29 +43,31 @@ final class FacetModificationTrackingServiceImpl extends FacetModificationTracki
 
   @Override
   public void incFacetModificationTracker(final @NotNull Facet<?> facet) {
-    final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = getFacetInfo(facet);
-    pair.first.incModificationCount();
-    //noinspection unchecked
-    pair.second.getMulticaster().modificationCountChanged(facet);
+    final Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> pair = myModificationsTrackers.get(facet);
+    if (pair != null) {
+      pair.first.incModificationCount();
+      //noinspection unchecked
+      pair.second.getMulticaster().modificationCountChanged(facet);
+    }
   }
 
   private final class FacetModificationTrackingListener implements FacetManagerListener {
-    private final Module module;
+    private final Project myProject;
 
-    FacetModificationTrackingListener(Module module) {
-      this.module = module;
+    FacetModificationTrackingListener(@NotNull Project project) {
+      myProject = project;
     }
 
     @Override
     public void facetConfigurationChanged(@NotNull Facet facet) {
-      if (module == facet.getModule()) {
+      if (myProject == facet.getModule().getProject()) {
         incFacetModificationTracker(facet);
       }
     }
 
     @Override
     public void facetRemoved(@NotNull Facet facet) {
-      if (module == facet.getModule()) {
+      if (myProject == facet.getModule().getProject()) {
         myModificationsTrackers.remove(facet);
       }
     }

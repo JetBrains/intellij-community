@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.NonExtendable
 public abstract class FacetModificationTrackingService {
   public static FacetModificationTrackingService getInstance(@NotNull Facet<?> facet) {
-    return facet.getModule().getService(FacetModificationTrackingService.class);
+    return facet.getModule().getProject().getService(FacetModificationTrackingService.class);
   }
 
   public abstract @NotNull ModificationTracker getFacetModificationTracker(@NotNull Facet<?> facet);
@@ -18,7 +18,7 @@ public abstract class FacetModificationTrackingService {
   public abstract void incFacetModificationTracker(@NotNull Facet<?> facet);
 
   public static void incFacetModificationTrackerLazily(@NotNull Facet<?> facet) {
-    FacetModificationTrackingService service = facet.getModule().getServiceIfCreated(FacetModificationTrackingService.class);
+    FacetModificationTrackingService service = facet.getModule().getProject().getServiceIfCreated(FacetModificationTrackingService.class);
     if (service != null) {
       service.incFacetModificationTracker(facet);
     }

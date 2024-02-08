@@ -357,8 +357,8 @@
     <applicationService
       serviceImplementation="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"/>
 
-    <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
-                   serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
+    <projectService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
+                    serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.framework.detection.impl.FrameworkDetectorRegistry"
                         serviceImplementation="com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl"/>
