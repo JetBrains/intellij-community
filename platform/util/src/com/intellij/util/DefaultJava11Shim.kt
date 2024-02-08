@@ -55,4 +55,8 @@ internal class DefaultJava11Shim : Java11Shim() {
       array.asList().subList(0, size)
     }
   }
+
+  override fun getCallerClass(stackFrameIndex: Int): Class<*>? {
+    return ReflectionUtil.getCallerClass(stackFrameIndex + 1) // +1 to accommodate the current frame
+  }
 }

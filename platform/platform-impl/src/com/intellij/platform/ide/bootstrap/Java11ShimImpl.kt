@@ -9,6 +9,9 @@ import org.jetbrains.annotations.VisibleForTesting
 @VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 class Java11ShimImpl : Java11Shim() {
+
+  private val walker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 5)
+
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
 
   override fun <K : Any, V> mapOf(k: K, v: V): Map<K, V> = java.util.Map.of(k, v)
@@ -55,6 +58,12 @@ class Java11ShimImpl : Java11Shim() {
           return java.util.List.of(*newResult) as List<E>
         }
       }
+    }
+  }
+
+  override fun getCallerClass(stackFrameIndex: Int): Class<*>? {
+    return walker.walk { stream ->
+      stream.skip(stackFrameIndex.toLong()).map { it.declaringClass }.findFirst().orElse(null)
     }
   }
 }

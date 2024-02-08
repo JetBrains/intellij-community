@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.ide.plugins.PluginUtil;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -121,7 +121,7 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   public static @NotNull <K, V> ID<K, V> create(@NonNls @NotNull String name) {
-    PluginId pluginId = PluginUtil.getInstance().getCallerPlugin(3);
+    PluginId pluginId = getCallerPluginId();
     synchronized (lock) {
       ID<K, V> found = findByName(name, true, pluginId);
       return found == null ? new ID<>(name, pluginId) : found;
@@ -204,5 +204,18 @@ public class ID<K, V> extends IndexId<K,V> {
       idToPluginId = without(idToPluginId, id);
       idToRegistrationStackTrace = without(idToRegistrationStackTrace, id);
     }
+  }
+
+  @ApiStatus.Internal
+  protected static @Nullable PluginId getCallerPluginId() {
+    Class<?> aClass = Java11Shim.INSTANCE.getCallerClass(3);
+    if (aClass == null) {
+      return null;
+    }
+    ClassLoader loader = aClass.getClassLoader();
+    if (!(loader instanceof PluginAwareClassLoader)) {
+      return null;
+    }
+    return ((PluginAwareClassLoader)loader).getPluginId();
   }
 }
