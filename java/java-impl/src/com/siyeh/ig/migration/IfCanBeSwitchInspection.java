@@ -124,7 +124,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       CommentTracker commentTracker = new CommentTracker();
       PsiIfStatement currentStatement = originalIfStatement;
       int currentAdditionalIfStatementsCount = 0;
-      List<PsiIfStatement> toDeleteStatements = new ArrayList<>();
+      List<PsiElement> toDeleteElements = new ArrayList<>();
       boolean addText = true;
       while (true) {
         if (addText) {
@@ -143,22 +143,31 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
                  parentIfStatement.getElseBranch() == upperIf) {
             upperIf = parentIfStatement;
           }
+
           PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(upperIf);
           if (nextElement instanceof PsiIfStatement nextIfStatement) {
+            PsiElement nextSibling = upperIf.getNextSibling();
+            while (nextSibling != null && nextSibling != nextIfStatement) {
+              sb.append(commentTracker.text(nextSibling));
+              toDeleteElements.add(nextSibling);
+              nextSibling = nextSibling.getNextSibling();
+            }
             addText = true;
             sb.append("\n else \n");
             currentStatement = nextIfStatement;
             currentAdditionalIfStatementsCount++;
-            toDeleteStatements.add(nextIfStatement);
+            toDeleteElements.add(nextIfStatement);
             continue;
           }
         }
         break;
       }
-      PsiElement replaced = commentTracker.replace(originalIfStatement, sb.toString());
-      for (PsiIfStatement toDeleteStatement : toDeleteStatements) {
-        toDeleteStatement.delete();
+      for (PsiElement toDelete : toDeleteElements) {
+        if (!(toDelete instanceof PsiWhiteSpace)) {
+          commentTracker.delete(toDelete);
+        }
       }
+      PsiElement replaced = commentTracker.replace(originalIfStatement, sb.toString());
       return replaced instanceof PsiIfStatement ? (PsiIfStatement)replaced : originalIfStatement;
     }
   }
@@ -604,7 +613,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       PsiIfStatement branch = statement;
       int additionalIfStatementCount = 0;
 
-      //otherwise there may be problems in batch modes
+      //otherwise, there may be problems in batch modes
       PsiElement previousElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(branch);
       if (previousElement instanceof PsiIfStatement previousPsiIfStatement &&
           SwitchUtils.canBeSwitchCase(previousPsiIfStatement.getCondition(), switchExpression, languageLevel, switchCaseValues, isPatternMatch)) {

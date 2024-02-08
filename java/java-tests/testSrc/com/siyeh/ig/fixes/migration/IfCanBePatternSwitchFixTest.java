@@ -51,4 +51,5 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testNotDoubleCall() { doTest(); }
   public void testWhenCast() { doTest(); }
   public void testSeveralIfStatements() { doTest(); }
+  public void testSeveralIfStatementsWithComments() { doTest(); }
 }
