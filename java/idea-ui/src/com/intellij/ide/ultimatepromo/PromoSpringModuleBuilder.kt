@@ -10,8 +10,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
@@ -62,25 +60,7 @@ internal class PromoSpringModuleBuilder : ModuleBuilder(), PromoModuleBuilder {
         FeaturePromoBundle.message("free.trial.hint"),
         SPRING_PLUGIN_ID
       )
-      val source = FUSEventSource.NEW_PROJECT_WIZARD
-      private val panel: JComponent = PromoPages.build(
-        page,
-        openLearnMore = {
-          source.learnMoreAndLog(null, it, page.pluginId?.let(PluginId::getId))
-        },
-        openDownloadLink = { dialog ->
-          val project = ProjectManager.getInstance().openProjects.firstOrNull()
-
-          if (project != null) {
-            dialog?.close(DialogWrapper.CLOSE_EXIT_CODE)
-            val pluginId = page.pluginId?.let { PluginId.getId(it) }
-            tryUltimate(pluginId, page.suggestedIde, project, source)
-            return@build
-          }
-
-          source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
-        }
-      ).withVisualPadding()
+      private val panel: JComponent = PromoPages.buildWithTryUltimate(page, source = FUSEventSource.NEW_PROJECT_WIZARD).withVisualPadding()
 
       override fun updateDataModel(): Unit = Unit
       override fun getComponent(): JComponent = panel
