@@ -972,18 +972,6 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
     doTestWithLanguageLevel(LanguageLevel.HIGHEST);
   }
 
-  public void testParenthesizedPatternIntroduced() throws Exception {
-    doExitPointsTest(false);
-  }
-
-  public void testParenthesizedPatternIntroduced2() throws Exception {
-    doExitPointsTest(false);
-  }
-
-  public void testParenthesizedPatternIntroduced3() throws Exception {
-    doTestWithLanguageLevel(LanguageLevel.HIGHEST);
-  }
-
   public void testRecordPatternIntroduced() throws Exception {
     doExitPointsTest(false);
   }

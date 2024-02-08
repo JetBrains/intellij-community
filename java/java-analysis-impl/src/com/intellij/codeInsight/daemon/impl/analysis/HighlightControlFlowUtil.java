@@ -787,9 +787,7 @@ public final class HighlightControlFlowUtil {
     LanguageLevel level = PsiUtil.getLanguageLevel(refLabel);
     //this assignment is covered by com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard
     boolean isAssignment = context instanceof PsiReferenceExpression psiExpression && PsiUtil.isAccessedForWriting(psiExpression);
-    if (((level == LanguageLevel.JDK_20_PREVIEW && refLabel != PsiTreeUtil.getParentOfType(variable, PsiSwitchLabelStatementBase.class)) ||
-         (level != LanguageLevel.JDK_20_PREVIEW && !isAssignment &&
-          !PsiTreeUtil.isAncestor(guardExpression, variable, false))) &&
+    if (!isAssignment && !PsiTreeUtil.isAncestor(guardExpression, variable, false) &&
         !isEffectivelyFinal(variable, refLabel, context)) {
       String message = JavaErrorBundle.message("guarded.pattern.variable.must.be.final");
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);

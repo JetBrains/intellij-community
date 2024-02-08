@@ -334,7 +334,7 @@ public class BasicStatementParser {
 
   @Contract(pure = true)
   private boolean isRecordPatternInForEach(final PsiBuilder builder) {
-    PsiBuilder.Marker patternStart = myParser.getPatternParser().preParsePattern(builder, false);
+    PsiBuilder.Marker patternStart = myParser.getPatternParser().preParsePattern(builder);
     if (patternStart == null) {
       return false;
     }

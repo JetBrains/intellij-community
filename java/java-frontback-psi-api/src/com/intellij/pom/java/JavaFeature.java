@@ -59,63 +59,15 @@ public enum JavaFeature {
   ALWAYS_STRICTFP(LanguageLevel.JDK_17, "feature.strictfp"),
   INNER_NOT_CAPTURE_THIS(LanguageLevel.JDK_18, "feature.no.this.capture"),
   JAVADOC_SNIPPETS(LanguageLevel.JDK_18, "feature.javadoc.snippets"),
-  PARENTHESIZED_PATTERNS(LanguageLevel.JDK_20_PREVIEW, "feature.parenthesised.patterns"){
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      LanguageLevel until = LanguageLevel.JDK_20_PREVIEW;
-      return until == useSiteLevel;
-    }
-
-    @Override
-    public boolean isLimited() {
-      return true;
-    }
-  },
-  PATTERNS_IN_SWITCH(LanguageLevel.JDK_21, "feature.patterns.in.switch") {
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
-    }
-  },
-  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns"){
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return super.isSufficient(useSiteLevel) || LanguageLevel.JDK_20_PREVIEW == useSiteLevel;
-    }
-  },
-  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_20_PREVIEW, "feature.record.patterns.in.for.each"){
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return LanguageLevel.JDK_20_PREVIEW == useSiteLevel.getSupportedLevel();
-    }
-
-    @Override
-    public boolean isLimited() {
-      return true;
-    }
-  },
-  VIRTUAL_THREADS(LanguageLevel.JDK_20_PREVIEW, "feature.virtual.threads") {
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return LanguageLevel.JDK_20_PREVIEW == useSiteLevel.getSupportedLevel();
-    }
-
-    @Override
-    public boolean isLimited() {
-      return true;
-    }
-  },
-  FOREIGN_FUNCTIONS(LanguageLevel.JDK_20_PREVIEW, "feature.foreign.functions") {
-    @Override
-    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-      return LanguageLevel.JDK_20_PREVIEW == useSiteLevel.getSupportedLevel();
-    }
-
-    @Override
-    public boolean isLimited() {
-      return true;
-    }
-  },
+  PATTERNS_IN_SWITCH(LanguageLevel.JDK_21, "feature.patterns.in.switch"),
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns"),
+  /**
+   * Was a preview feature in Java 20 Preview. 
+   * Keep the implementation, as it could reappear in the future.
+   */
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each"),
+  VIRTUAL_THREADS(LanguageLevel.JDK_21, "feature.virtual.threads"),
+  FOREIGN_FUNCTIONS(LanguageLevel.JDK_21, "feature.foreign.functions"),
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
   STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates"),
   UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_22, "feature.unnamed.vars") {

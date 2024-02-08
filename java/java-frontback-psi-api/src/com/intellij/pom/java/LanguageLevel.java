@@ -44,7 +44,6 @@ public enum LanguageLevel {
   JDK_18(JavaPsiBundle.messagePointer("jdk.18.language.level.description"), 18),
   JDK_19(JavaPsiBundle.messagePointer("jdk.19.language.level.description"), 19),
   JDK_20(JavaPsiBundle.messagePointer("jdk.20.language.level.description"), 20),
-  JDK_20_PREVIEW(JavaPsiBundle.messagePointer("jdk.20.preview.language.level.description"), 20),
   JDK_21(JavaPsiBundle.messagePointer("jdk.21.language.level.description"), 21),
   JDK_21_PREVIEW(JavaPsiBundle.messagePointer("jdk.21.preview.language.level.description"), 21),
   JDK_22(JavaPsiBundle.messagePointer("jdk.22.language.level.description"), 22),
@@ -56,11 +55,13 @@ public enum LanguageLevel {
   // except the tests that explicitly test the obsolete levels
 
   @ApiStatus.Obsolete
-  JDK_17_PREVIEW(17, JDK_20_PREVIEW),
+  JDK_17_PREVIEW(17, JDK_21),
   @ApiStatus.Obsolete
-  JDK_18_PREVIEW(18, JDK_20_PREVIEW),
+  JDK_18_PREVIEW(18, JDK_21),
   @ApiStatus.Obsolete
-  JDK_19_PREVIEW(19, JDK_20_PREVIEW),
+  JDK_19_PREVIEW(19, JDK_21),
+  @ApiStatus.Obsolete
+  JDK_20_PREVIEW(20, JDK_21),
   ;
 
   /**

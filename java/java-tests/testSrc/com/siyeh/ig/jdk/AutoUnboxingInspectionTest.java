@@ -21,6 +21,6 @@ public class AutoUnboxingInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 }

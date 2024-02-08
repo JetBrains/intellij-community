@@ -28,7 +28,7 @@ public class MultipleReturnPointsPerMethod
     }
 
     void test(List<Box<String>> list) {
-      for(Box(var text) : list){
+      for(<error descr="Record patterns in for-each loops are not supported at language level '20'">Box(var text)</error> : list){
         int length = text.length();
       }
     }

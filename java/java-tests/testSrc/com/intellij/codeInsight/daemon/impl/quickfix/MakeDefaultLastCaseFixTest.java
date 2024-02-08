@@ -12,6 +12,6 @@ public class MakeDefaultLastCaseFixTest extends LightQuickFixParameterizedTestCa
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_20_PREVIEW;
+    return LanguageLevel.JDK_21;
   }
 }

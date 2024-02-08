@@ -10,7 +10,6 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -328,8 +327,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
     if (branches.isEmpty()) {
       return branches;
     }
-    boolean java20plus = PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
-    if (!java20plus) {
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, context)) {
       return branches;
     }
     List<SwitchBranch> result = new ArrayList<>();

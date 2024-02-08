@@ -20,6 +20,6 @@ public class TypeParameterExtendsFinalClassJava20InspectionTest extends LightJav
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_X;
   }
 }

@@ -305,10 +305,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
-    visitPattern(pattern);
-  }
-
   public void visitPattern(@NotNull PsiPattern pattern) {
     visitElement(pattern);
   }

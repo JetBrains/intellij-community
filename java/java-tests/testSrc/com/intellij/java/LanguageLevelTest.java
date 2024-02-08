@@ -13,7 +13,7 @@ public final class LanguageLevelTest {
     @SuppressWarnings("UsagesOfObsoleteApi") 
     LanguageLevel jdk17Preview = LanguageLevel.JDK_17_PREVIEW;
     assertTrue(jdk17Preview.isUnsupported());
-    assertEquals(LanguageLevel.JDK_20_PREVIEW, jdk17Preview.getSupportedLevel());
+    assertEquals(LanguageLevel.JDK_21, jdk17Preview.getSupportedLevel());
     assertEquals(LanguageLevel.JDK_17, jdk17Preview.getNonPreviewLevel());
   }
 }

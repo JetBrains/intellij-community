@@ -16,7 +16,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -365,7 +368,7 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
                                                     String expressionText,
                                                     CommentTracker commentTracker) {
     String patternCondition = null;
-    PsiPattern normalizedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
+    PsiPattern normalizedPattern = pattern;
     if (normalizedPattern instanceof PsiTypeTestPattern typeTestPattern) {
       patternCondition = createIfCondition(typeTestPattern, expressionText, commentTracker);
     }

@@ -124,7 +124,6 @@ public class JavaElementTypeFactory extends AbstractBasicJavaElementTypeFactory 
       JavaElementType.DECONSTRUCTION_PATTERN,
       JavaElementType.DECONSTRUCTION_LIST,
       JavaElementType.DECONSTRUCTION_PATTERN_VARIABLE,
-      JavaElementType.PARENTHESIZED_PATTERN,
       JavaElementType.DEFAULT_CASE_LABEL_ELEMENT,
       JavaElementType.CASE_LABEL_ELEMENT_LIST,
       JavaElementType.CODE_BLOCK,

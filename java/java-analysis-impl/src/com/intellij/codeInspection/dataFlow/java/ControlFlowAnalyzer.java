@@ -36,7 +36,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
@@ -1114,7 +1113,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPatternInInstanceof(@NotNull PsiPattern pattern, @NotNull PsiInstanceOfExpression expression,
                                           @NotNull PsiType checkType) {
     boolean potentiallyRedundantInstanceOf = pattern instanceof PsiTypeTestPattern ||
-                                             JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern ||
+                                             pattern instanceof PsiTypeTestPattern ||
                                              pattern instanceof PsiDeconstructionPattern dec && JavaPsiPatternUtil.hasUnconditionalComponents(dec);
     DfaAnchor instanceofAnchor = potentiallyRedundantInstanceOf ? new JavaExpressionAnchor(expression) : null;
     DeferredOffset endPatternOffset = new DeferredOffset();
@@ -1128,10 +1127,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPattern(@NotNull PsiPattern sourcePattern, @Nullable PsiPattern innerPattern,
                               @NotNull PsiType checkType, @Nullable DfaAnchor instanceofAnchor, @NotNull DeferredOffset endPatternOffset) {
     if (innerPattern == null) return;
-    else if (innerPattern instanceof PsiParenthesizedPattern) {
-      PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
-      processPattern(sourcePattern, unwrappedPattern, checkType, instanceofAnchor, endPatternOffset);
-    }
     else if (innerPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
       PsiPatternVariable variable = deconstructionPattern.getPatternVariable();
       PsiType patternType = deconstructionPattern.getTypeElement().getType();
@@ -1186,10 +1181,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                    @NotNull DeferredOffset endPatternOffset,
                                    @NotNull DfaVariableValue patternDfaVar,
                                    @Nullable DfaAnchor instanceofAnchor) {
-    boolean java20plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
-    if (java20plus
-        ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType))
-        : !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
+    if (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
       addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);
     }
     else {

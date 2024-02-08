@@ -1167,8 +1167,7 @@ public class SwitchBlockHighlightingModel {
       AtomicBoolean reported = new AtomicBoolean();
       dominatedLabels.forEach((overWhom, who) -> {
         HighlightInfo.Builder info = createError(overWhom, JavaErrorBundle.message("switch.dominance.of.preceding.label", who.getText()));
-        if (PsiUtil.getLanguageLevel(who).isAtLeast(LanguageLevel.JDK_20_PREVIEW) &&
-            who instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(who.getText()) ||
+        if (who instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(who.getText()) ||
             isInCaseNullDefaultLabel(who)) {
           PsiSwitchLabelStatementBase labelStatementBase = PsiTreeUtil.getParentOfType(who, PsiSwitchLabelStatementBase.class);
           if (labelStatementBase != null) {
@@ -1238,7 +1237,7 @@ public class SwitchBlockHighlightingModel {
       }
       List<PsiType> sealedTypes = getAbstractSealedTypes(selectorTypes);
       if (!sealedTypes.isEmpty()) {
-        errorSink.accept(checkSealed(elements, selectorClass));
+        errorSink.accept(checkSealedClassCompleteness(mySelectorType, elements));
         return;
       }
       //records are final; checking intersections are not needed
@@ -1253,18 +1252,6 @@ public class SwitchBlockHighlightingModel {
       else {
         errorSink.accept(createCompletenessInfoForSwitch(!elements.isEmpty()));
       }
-    }
-
-    private HighlightInfo.Builder checkSealed(@NotNull List<? extends PsiCaseLabelElement> elements,
-                                              @Nullable PsiClass selectorClass) {
-      HighlightInfo.Builder info = checkSealedClassCompleteness(mySelectorType, elements);
-      if (info != null) {
-        return info;
-      }
-      if (selectorClass != null && PsiUtil.getLanguageLevel(selectorClass) == LanguageLevel.JDK_20_PREVIEW) {
-        return checkRecordExhaustiveness(elements, mySelectorType);
-      }
-      return null;
     }
 
     @NotNull
@@ -1312,9 +1299,7 @@ public class SwitchBlockHighlightingModel {
       }
       else if (labelElement instanceof PsiExpression) {
         boolean isNullType = isNullType(labelElement);
-        if (isNullType &&
-            PsiUtil.getLanguageLevel(labelElement).isAtLeast(LanguageLevel.JDK_20_PREVIEW) &&
-            isInCaseNullDefaultLabel(labelElement)) {
+        if (isNullType && isInCaseNullDefaultLabel(labelElement)) {
           // JEP 432
           // A 'case null, default' label dominates all other switch labels.
           //
@@ -1346,26 +1331,22 @@ public class SwitchBlockHighlightingModel {
     private HighlightInfo.Builder checkSealedClassCompleteness(@NotNull PsiType selectorType,
                                                                @NotNull List<? extends PsiCaseLabelElement> elements) {
       Set<PsiClass> missedClasses;
-      if (LanguageLevel.JDK_20_PREVIEW == PsiUtil.getLanguageLevel(myBlock)) {
-        missedClasses = PatternHighlightingModelJava20Preview.findMissedClassesForSealed(selectorType, elements);
-      }else{
-        List<PatternDescription> descriptions = preparePatternDescription(elements);
-        List<PsiEnumConstant> enumConstants = StreamEx.of(elements).map(element -> getEnumConstant(element)).nonNull().toList();
-        List<PsiClass> missedSealedClasses = StreamEx.of(findMissedClasses(selectorType, descriptions, enumConstants, myBlock).missedClasses())
-          .sortedBy(t->t.getQualifiedName())
-          .toList();
-        missedClasses = new LinkedHashSet<>();
-        //if T is intersection types, it is allowed to choose any of them to cover
-        for (PsiClass missedClass : missedSealedClasses) {
-          PsiClassType missedClassType = TypeUtils.getType(missedClass);
-          if (oneOfUnconditional(missedClassType, selectorType)) {
-            missedClasses.clear();
-            missedClasses.add(missedClass);
-            break;
-          }
-          else {
-            missedClasses.add(missedClass);
-          }
+      List<PatternDescription> descriptions = preparePatternDescription(elements);
+      List<PsiEnumConstant> enumConstants = StreamEx.of(elements).map(element -> getEnumConstant(element)).nonNull().toList();
+      List<PsiClass> missedSealedClasses = StreamEx.of(findMissedClasses(selectorType, descriptions, enumConstants, myBlock).missedClasses())
+        .sortedBy(t->t.getQualifiedName())
+        .toList();
+      missedClasses = new LinkedHashSet<>();
+      //if T is intersection types, it is allowed to choose any of them to cover
+      for (PsiClass missedClass : missedSealedClasses) {
+        PsiClassType missedClassType = TypeUtils.getType(missedClass);
+        if (oneOfUnconditional(missedClassType, selectorType)) {
+          missedClasses.clear();
+          missedClasses.add(missedClass);
+          break;
+        }
+        else {
+          missedClasses.add(missedClass);
         }
       }
       if (missedClasses.isEmpty()) return null;

@@ -10,7 +10,7 @@ public class MakeVarEffectivelyFinalFixTest extends LightQuickFixParameterizedTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   @Override

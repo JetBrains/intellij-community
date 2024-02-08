@@ -8,7 +8,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class CapturingCleaner18InspectionTest extends LightJavaCodeInsightFixtureTestCase {
+public class CapturingCleaner21InspectionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testCapturingCleaner() {doTest();}
 
@@ -26,7 +26,7 @@ public class CapturingCleaner18InspectionTest extends LightJavaCodeInsightFixtur
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+    return JAVA_21;
   }
 
   @NotNull

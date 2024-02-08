@@ -12,7 +12,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.*;
@@ -53,14 +52,6 @@ final class PatternHighlightingModel {
     }
     if (resolveResult.getInferenceError() != null) {
       String message = JavaErrorBundle.message("error.cannot.infer.pattern.type", resolveResult.getInferenceError());
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
-      errorSink.accept(info);
-      return true;
-    }
-    PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
-    if (recordClass.hasTypeParameters() && ref != null && ref.getTypeParameterCount() == 0 &&
-        PsiUtil.getLanguageLevel(deconstructionPattern).isLessThan(LanguageLevel.JDK_20_PREVIEW)) {
-      String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message);
       errorSink.accept(info);
       return true;
@@ -220,9 +211,6 @@ final class PatternHighlightingModel {
   static RecordExhaustivenessResult checkRecordExhaustiveness(@NotNull List<? extends PsiCaseLabelElement> elements,
                                                               @NotNull PsiType selectorType,
                                                               @NotNull PsiElement context) {
-    if (PsiUtil.getLanguageLevel(context) == LanguageLevel.JDK_20_PREVIEW) {
-      return PatternHighlightingModelJava20Preview.checkRecordExhaustiveness(elements);
-    }
     return checkRecordPatternExhaustivenessForDescription(preparePatternDescription(elements), selectorType, context);
   }
 

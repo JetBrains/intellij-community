@@ -878,9 +878,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) HighlightUtil.checkInstanceOfApplicable(expression, myErrorSink);
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
     if (!hasErrorResults() &&
-        myLanguageLevel.isAtLeast(LanguageLevel.JDK_16) &&
+        JavaFeature.PATTERNS.isSufficient(myLanguageLevel) &&
         // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 432, 440)
-        (myLanguageLevel.isLessThan(LanguageLevel.JDK_21) && myLanguageLevel != LanguageLevel.JDK_20_PREVIEW)) {
+        !JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isSufficient(myLanguageLevel)) {
       add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
     }
   }
@@ -2004,15 +2004,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
-    super.visitParenthesizedPattern(pattern);
-    add(checkFeature(pattern, JavaFeature.PARENTHESIZED_PATTERNS));
-  }
-
-  @Override
   public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
     super.visitPatternVariable(variable);
-    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_20_PREVIEW) && variable.getPattern() instanceof PsiDeconstructionPattern) {
+    if (variable.getPattern() instanceof PsiDeconstructionPattern) {
       String message = JavaErrorBundle.message("identifier.is.not.allowed.here");
       add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(variable).descriptionAndTooltip(message));
     }

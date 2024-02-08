@@ -358,9 +358,6 @@ public final class HighlightUtil {
     if (expressionVariable == null) {
       return null;
     }
-    if (PsiUtil.getLanguageLevel(expressionVariable) == LanguageLevel.JDK_20_PREVIEW) {
-      return null;
-    }
     if (!PsiUtil.isAccessedForWriting(expressionVariable)) {
       return null;
     }
@@ -3842,6 +3839,7 @@ public final class HighlightUtil {
     if (PsiUtil.isAvailable(feature, element)) return;
     if (feature.isLimited()) return; //no reason for applying it because it can be outdated
     LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
+    if (applicableLevel == LanguageLevel.JDK_X) return; // do not suggest to use experimental level
     registrar.add(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel));
     registrar.add(getFixFactory().createUpgradeSdkFor(applicableLevel));
     registrar.add(getFixFactory().createShowModulePropertiesFix(element));

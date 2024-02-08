@@ -10,7 +10,6 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
@@ -1579,7 +1578,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiPattern pattern = expression.getPattern();
     PsiPattern otherPattern = other.getPattern();
     if (pattern instanceof PsiTypeTestPattern typeTestPattern) {
-      otherPattern = skipParenthesesDown(otherPattern);
       if (otherPattern instanceof PsiTypeTestPattern otherVariable) {
         myMatchingVisitor.setResult(
           myMatchingVisitor.matchOptionally(typeTestPattern.getPatternVariable(), otherVariable.getPatternVariable()));
@@ -1591,19 +1589,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     else {
       myMatchingVisitor.setResult(myMatchingVisitor.match(pattern, otherPattern));
     }
-  }
-
-  private PsiPattern skipParenthesesDown(PsiPattern pattern) {
-    if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
-      return pattern;
-    }
-    return JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern);
-  }
-
-  @Override
-  public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
-    final PsiParenthesizedPattern other = myMatchingVisitor.getElement(PsiParenthesizedPattern.class);
-    myMatchingVisitor.setResult(other != null && myMatchingVisitor.match(pattern.getPattern(), other.getPattern()));
   }
 
   @Override

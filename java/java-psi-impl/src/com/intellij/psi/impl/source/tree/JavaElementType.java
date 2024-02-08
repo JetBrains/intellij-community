@@ -213,9 +213,6 @@ public interface JavaElementType {
   IElementType DECONSTRUCTION_PATTERN_VARIABLE =
     new JavaCompositeElementType("DECONSTRUCTION_PATTERN_VARIABLE", () -> new PsiDeconstructionPatternVariableImpl(),
                                  BASIC_DECONSTRUCTION_PATTERN_VARIABLE);
-  IElementType PARENTHESIZED_PATTERN =
-    new JavaCompositeElementType("PARENTHESIZED_PATTERN", () -> new PsiParenthesizedPatternImpl(),
-                                 BASIC_PARENTHESIZED_PATTERN);
   IElementType DEFAULT_CASE_LABEL_ELEMENT =
     new JavaCompositeElementType("DEFAULT_CASE_LABEL_ELEMENT", () -> new PsiDefaultLabelElementImpl(),
                                  BASIC_DEFAULT_CASE_LABEL_ELEMENT);

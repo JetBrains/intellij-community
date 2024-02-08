@@ -211,8 +211,6 @@ public abstract class AbstractBasicJavaElementTypeFactory {
 
     public final IElementType DECONSTRUCTION_PATTERN_VARIABLE;
 
-    public final IElementType PARENTHESIZED_PATTERN;
-
     public final IElementType DEFAULT_CASE_LABEL_ELEMENT;
 
     public final IElementType CASE_LABEL_ELEMENT_LIST;
@@ -335,7 +333,6 @@ public abstract class AbstractBasicJavaElementTypeFactory {
                                     IElementType DECONSTRUCTION_PATTERN,
                                     IElementType DECONSTRUCTION_LIST,
                                     IElementType DECONSTRUCTION_PATTERN_VARIABLE,
-                                    IElementType PARENTHESIZED_PATTERN,
                                     IElementType DEFAULT_CASE_LABEL_ELEMENT,
                                     IElementType CASE_LABEL_ELEMENT_LIST,
                                     ILazyParseableElementType CODE_BLOCK,
@@ -448,7 +445,6 @@ public abstract class AbstractBasicJavaElementTypeFactory {
       this.DECONSTRUCTION_PATTERN = DECONSTRUCTION_PATTERN;
       this.DECONSTRUCTION_LIST = DECONSTRUCTION_LIST;
       this.DECONSTRUCTION_PATTERN_VARIABLE = DECONSTRUCTION_PATTERN_VARIABLE;
-      this.PARENTHESIZED_PATTERN = PARENTHESIZED_PATTERN;
       this.DEFAULT_CASE_LABEL_ELEMENT = DEFAULT_CASE_LABEL_ELEMENT;
       this.CASE_LABEL_ELEMENT_LIST = CASE_LABEL_ELEMENT_LIST;
       this.CODE_BLOCK = CODE_BLOCK;

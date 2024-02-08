@@ -16,7 +16,7 @@ class Foo {
   }
 
   void test3(Rect[] rects) {
-    for (Rect(Point(<warning descr="Unnecessary 'final' on parameter 'x1'">final</warning> int x1, <warning descr="Unnecessary 'final' on parameter 'y1'">final</warning> int y1), <warning descr="Unnecessary 'final' on parameter 'point2'">final</warning> Point point2) : rects) {
+    for (<error descr="Record patterns in for-each loops are not supported at language level '21'">Rect(Point(<warning descr="Unnecessary 'final' on parameter 'x1'">final</warning> int x1, <warning descr="Unnecessary 'final' on parameter 'y1'">final</warning> int y1), <warning descr="Unnecessary 'final' on parameter 'point2'">final</warning> Point point2)</error> : rects) {
 
     }
   }

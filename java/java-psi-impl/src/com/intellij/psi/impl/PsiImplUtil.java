@@ -760,9 +760,7 @@ public final class PsiImplUtil {
    */
   @Nullable
   public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiCaseLabelElement labelElement) {
-    PsiElement parent = labelElement instanceof PsiParenthesizedPattern
-                        ? JavaPsiPatternUtil.skipParenthesizedPatternUp(labelElement.getParent())
-                        : PsiUtil.skipParenthesizedExprUp(labelElement.getParent());
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(labelElement.getParent());
     if (parent instanceof PsiCaseLabelElementList) {
       PsiElement grand = parent.getParent();
       if (grand instanceof PsiSwitchLabelStatementBase) {
