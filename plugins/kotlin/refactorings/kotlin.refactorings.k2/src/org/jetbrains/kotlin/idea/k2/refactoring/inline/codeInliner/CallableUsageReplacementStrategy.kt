@@ -2,6 +2,10 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeInliner
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
@@ -16,6 +20,7 @@ class CallableUsageReplacementStrategy(
     private val replacement: CodeToInline,
     private val inlineSetter: Boolean = false
 ) : UsageReplacementStrategy {
+    @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class) //under potemkin progress
     override fun createReplacer(usage: KtReferenceExpression): (() -> KtElement?)? {
         if (!AbstractCodeInliner.canBeReplaced(usage)) return null
 
@@ -36,7 +41,12 @@ class CallableUsageReplacementStrategy(
 
             usage is KtSimpleNameExpression -> {
                 {
-                    CodeInliner(usage, usage, inlineSetter, replacement).doInline()
+                    val callElement = if (replacement.originalDeclaration is KtFunction) usage.parent as? KtExpression else null
+                    allowAnalysisOnEdt {
+                        allowAnalysisFromWriteAction {
+                            CodeInliner(usage, callElement ?: usage, inlineSetter, replacement).doInline()
+                        }
+                    }
                 }
             }
 

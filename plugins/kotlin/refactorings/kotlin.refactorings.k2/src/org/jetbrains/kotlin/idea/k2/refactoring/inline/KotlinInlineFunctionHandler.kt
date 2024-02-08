@@ -8,12 +8,15 @@ import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlineFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.findSimpleNameReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 
 class KotlinInlineFunctionHandler: AbstractKotlinInlineFunctionHandler<KtNamedFunction>() {
-    override fun canInlineKotlinFunction(function: KtFunction): Boolean = true
+    override fun canInlineKotlinFunction(function: KtFunction): Boolean = function is KtNamedFunction && function.nameIdentifier != null
 
     override fun inlineKotlinFunction(
         project: Project,
@@ -24,11 +27,9 @@ class KotlinInlineFunctionHandler: AbstractKotlinInlineFunctionHandler<KtNamedFu
             KotlinBundle.message("text.inline.function.not.supported")
         )
 
-        return showErrorHint(project, editor, message)
-        //todo
         val nameReference = editor?.findSimpleNameReference()
 
-        val recursive = true
+        val recursive = function.bodyExpression?.includesCallOf(function) == true
         val dialog = KotlinInlineNamedFunctionDialog(
             function,
             nameReference,
@@ -44,6 +45,13 @@ class KotlinInlineFunctionHandler: AbstractKotlinInlineFunctionHandler<KtNamedFu
             } finally {
                 dialog.close(DialogWrapper.OK_EXIT_CODE, true)
             }
+        }
+    }
+
+    private fun KtExpression.includesCallOf(function: KtNamedFunction): Boolean {
+        val refDescriptor = mainReference?.resolve()
+        return function == refDescriptor || anyDescendantOfType<KtExpression> {
+            it !== this && function == it.mainReference?.resolve()
         }
     }
 }

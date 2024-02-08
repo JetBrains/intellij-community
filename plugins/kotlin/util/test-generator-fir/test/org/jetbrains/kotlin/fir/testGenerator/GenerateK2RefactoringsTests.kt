@@ -51,6 +51,12 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/inline/inlineVariableOrProperty/explicateTypeArgument", pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/inlineVariableOrProperty/property", pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/inlineVariableOrProperty/stringTemplates", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/namedFunction", isRecursive = false, pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/namedFunction/expressionBody", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/namedFunction/fromIntellij", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/namedFunction/returnAtEnd", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/anonymousFunction", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/lambdaExpression", pattern = Patterns.KT_WITHOUT_DOTS)
         }
     }
 

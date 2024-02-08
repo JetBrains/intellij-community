@@ -1929,6 +1929,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/customLet.kt");
             }
 
+            @TestMetadata("defaultParameter.kt")
+            public void testDefaultParameter() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/defaultParameter.kt");
+            }
+
             @TestMetadata("delegateToFunctionWithParameter.kt")
             public void testDelegateToFunctionWithParameter() throws Exception {
                 runTest("testData/refactoring/inline/namedFunction/delegateToFunctionWithParameter.kt");

@@ -30,7 +30,7 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
 
     protected fun doTestInner(unused: String) {
         val testDataFile = dataFile()
-        val afterFile = dataFile("${fileName()}.after")
+        val afterFile = dataFile("${fileName()}.k2.after").takeIf { it.exists() } ?: dataFile("${fileName()}.after")
 
         val mainFileName = testDataFile.name
         val mainFileBaseName = FileUtil.getNameWithoutExtension(mainFileName)
@@ -66,7 +66,7 @@ abstract class AbstractKotlinFirInlineTest : KotlinLightCodeInsightFixtureTestCa
                         if (!afterFileExists && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
                             fail("K1 is unable to inline property")
                         }
-                        KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.after"), extraPsiFile.text)
+                        KotlinTestUtils.assertEqualsToFile(File("${extraFile.path}.k2.after").takeIf { it.exists() } ?: File("${extraFile.path}.after"), extraPsiFile.text)
                     }
                 } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
                     assertFalse("Refactoring not available: ${e.message}", afterFileExists)

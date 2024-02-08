@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.util.elementType
+import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -145,13 +147,16 @@ object ConvertReferenceToLambdaUtil {
     fun convertReferenceToLambdaExpression(
         element: KtCallableReferenceExpression,
         lambdaExpressionText: String
-    ) {
+    ): KtExpression? {
         val valueArgumentParent = element.parent as? KtValueArgument
         val callGrandParent = valueArgumentParent?.parent?.parent as? KtCallExpression
         val wrappedExpression = KtPsiFactory.contextual(element).createExpression(lambdaExpressionText)
-        shortenReferences(element.replaced(wrappedExpression))
-        if (callGrandParent == null) return
+        val lambdaExpression = element.replaced(wrappedExpression)
+        val pointer = lambdaExpression.createSmartPointer()
+        shortenReferences(lambdaExpression)
+        if (callGrandParent == null) return pointer.element
         val lastLambdaExpression = callGrandParent.getLastLambdaExpression()
         lastLambdaExpression?.moveFunctionLiteralOutsideParenthesesIfPossible()
+        return callGrandParent.lambdaArguments.lastOrNull()?.getArgumentExpression() ?: lastLambdaExpression ?: pointer.element
     }
 }
