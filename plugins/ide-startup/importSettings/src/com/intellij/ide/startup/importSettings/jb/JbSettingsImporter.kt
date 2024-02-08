@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.*
 import com.intellij.psi.codeStyle.CodeStyleSchemes
@@ -50,8 +51,9 @@ class JbSettingsImporter(private val configDirPath: Path,
   suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>, pluginIds: Set<String>) {
     val storageManager = componentStore.storageManager as StateStorageManagerImpl
     val (components, files) = findComponentsAndFiles()
-    withExternalStreamProvider(storageManager) {
-      val availableComponents = loadNotLoadedComponents(EmptyProgressIndicator(), components, pluginIds)
+    withExternalStreamProvider(arrayOf(storageManager)) {
+      val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+      val availableComponents = loadNotLoadedComponents(EmptyProgressIndicator(), componentManagerImpl, components, pluginIds)
       componentStore.reloadComponents(files, emptyList(), availableComponents)
       if (categories.contains(SettingsCategory.KEYMAP)) {
         // ensure component is loaded
@@ -68,11 +70,29 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
   }
 
-  private fun findComponentsAndFiles() : Pair<Set<String>, Set<String>> {
+  private fun loadProjectDefaultComponentNames() : Set<String> {
+    val projectDefaultXmlPath = configDirPath / PathManager.OPTIONS_DIRECTORY / PROJECT_DEFAULT_FILE_NAME
+    if (!projectDefaultXmlPath.isRegularFile())
+      return emptySet()
+
+    val parentElement = JDOMUtil.load(projectDefaultXmlPath)
+    val defaultProjectElement = parentElement.getChild("component")?.getChild("defaultProject") ?: return emptySet()
+
+    val retval = mutableSetOf<String>()
+    for (componentElement in defaultProjectElement.getChildren("component")) {
+      val componentName = componentElement.getAttributeValue("name")
+      retval.add(componentName)
+    }
+    return retval
+  }
+
+  private fun findComponentsAndFiles(): Pair<Set<String>, Set<String>> {
     val optionsPath = configDirPath / PathManager.OPTIONS_DIRECTORY
     val allFiles = mutableSetOf<String>()
     val components = mutableSetOf<String>()
     for (optionsEntry in optionsPath.listDirectoryEntries()) {
+      if (optionsEntry.name == PROJECT_DEFAULT_FILE_NAME)
+        continue
       if (optionsEntry.name.lowercase().endsWith(".xml")) {
         allFiles.add(optionsEntry.name)
         val element = JDOMUtil.load(optionsEntry)
@@ -121,8 +141,16 @@ class JbSettingsImporter(private val configDirPath: Path,
       LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
       LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
       progressIndicator.checkCanceled()
-      val loadNotLoadedComponents = loadNotLoadedComponents(progressIndicator, notLoadedComponents, null)
+      val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+      val loadNotLoadedComponents = loadNotLoadedComponents(progressIndicator, componentManagerImpl, notLoadedComponents, null)
       notLoadedComponents.removeAll(loadNotLoadedComponents)
+
+      val defaultProject = ProjectManager.getInstance().defaultProject
+      val projectDefaultComponentNames = loadProjectDefaultComponentNames()
+      if (projectDefaultComponentNames.isNotEmpty()) {
+        loadNotLoadedComponents(progressIndicator, defaultProject.actualComponentManager as ComponentManagerImpl,
+                                projectDefaultComponentNames, null)
+      }
 
       for (component in notLoadedComponents) {
         LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
@@ -158,9 +186,14 @@ class JbSettingsImporter(private val configDirPath: Path,
       schemeFiles.forEach {
         (configDirPath / it).copy(PathManager.getConfigDir() / it)
       }
-      withExternalStreamProvider(storageManager) {
+
+      val defaultProjectStore = (defaultProject as ComponentManager).stateStore as ComponentStoreImpl
+      val defaultProjectStorage = defaultProjectStore.storageManager.getStateStorage(FileStorageAnnotation("", false))
+
+      withExternalStreamProvider(arrayOf(storageManager, defaultProjectStore.storageManager)) {
         progressIndicator.checkCanceled()
         componentStore.reloadComponents(componentFiles + schemeFiles, emptyList(), componentAndFilesMap.keys)
+        defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
       }
       RegistryManager.getInstanceAsync().resetValueChangeListener()
 
@@ -174,18 +207,23 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
   }
 
-  private suspend fun withExternalStreamProvider(storageManager: StateStorageManagerImpl, action: suspend () -> Unit) {
+  private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: suspend () -> Unit) {
     val provider = ImportStreamProvider(configDirPath)
-    storageManager.addStreamProvider(provider)
+    for (storageManager in storageManagers) {
+      storageManager.addStreamProvider(provider)
+    }
 
     action()
 
-    storageManager.removeStreamProvider(provider::class.java)
+    for (storageManager in storageManagers) {
+      storageManager.removeStreamProvider(provider::class.java)
+    }
     saveSettings(ApplicationManager.getApplication(), true)
   }
 
   private fun loadNotLoadedComponents(
     progressIndicator: ProgressIndicator,
+    componentManagerImpl: ComponentManagerImpl,
     componentsToLoad: Collection<String>,
     pluginIds: Set<String>?
   ): Set<String> {
@@ -193,7 +231,6 @@ class JbSettingsImporter(private val configDirPath: Path,
     val notLoadedComponents = arrayListOf<String>()
     notLoadedComponents.addAll(componentsToLoad)
     val foundComponents = hashMapOf<String, Class<*>>()
-    val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
     componentManagerImpl.processAllHolders { key, clazz, pluginDescriptor ->
       progressIndicator.checkCanceled()
       if (pluginDescriptor != null && pluginIds != null && !pluginIds.contains(pluginDescriptor.pluginId.idString))
@@ -245,7 +282,8 @@ class JbSettingsImporter(private val configDirPath: Path,
         else {
           retval.add("$prefix/${entry.name}")
         }
-      } else {
+      }
+      else {
         val folderFiles = filesFromFolder(entry, "$prefix/${entry.name}")
         retval.addAll(folderFiles)
       }
@@ -355,7 +393,8 @@ class JbSettingsImporter(private val configDirPath: Path,
       val currentVMFile = PathManager.getConfigDir().resolve(VMOptions.getFileName())
       if (currentVMFile.exists()) {
         ConfigImportHelper.mergeVmOptions(externalVmOptionsFile, currentVMFile, LOG)
-      } else {
+      }
+      else {
         Files.copy(externalVmOptionsFile, currentVMFile)
       }
       ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
@@ -395,6 +434,13 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      if (fileSpec == PROJECT_DEFAULT_FILE_SPEC) {
+        val path = configDirPath / PathManager.OPTIONS_DIRECTORY / PROJECT_DEFAULT_FILE_NAME
+        if (!path.isRegularFile())
+          return false
+        consumer(FileInputStream(path.toFile()))
+        return true
+      }
       (configDirPath / PathManager.OPTIONS_DIRECTORY / fileSpec).let {
         if (it.exists()) {
           consumer(FileInputStream(it.toFile()))

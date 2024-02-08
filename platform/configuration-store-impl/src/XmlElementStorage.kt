@@ -18,6 +18,7 @@ import org.jdom.Attribute
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
+import java.io.InputStream
 import java.io.Writer
 import kotlin.math.min
 
@@ -53,7 +54,7 @@ abstract class XmlElementStorage protected constructor(
       if (provider != null) {
         isLoadLocalData = !provider.read(fileSpec, effectiveRoamingType) { inputStream ->
           inputStream?.let {
-            element = JDOMUtil.load(inputStream)
+            element = loadFromStreamProvider(inputStream)
             val writer = object : StringDataWriter() {
               override fun hasData(filter: DataWriterFilter) = filter.hasData(element!!)
               override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
@@ -89,6 +90,10 @@ abstract class XmlElementStorage protected constructor(
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
     return StateMap.fromMap(ComponentStorageUtil.load(element, pathMacroSubstitutor))
+  }
+
+  open fun loadFromStreamProvider(inputStream: InputStream): Element? {
+    return JDOMUtil.load(inputStream)
   }
 
   final override fun createSaveSessionProducer(): SaveSessionProducer? =
