@@ -69,16 +69,18 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
 
         if (Registry.`is`("debugger.filter.breakpoints.by.coroutine.id.with.evaluation") &&
             !useContinuationObjectFilter.get(suspendContext.debugProcess, false)) {
-            val coroutineId = extractContinuationId(evaluationContext)
-            if (coroutineId != null) {
-                if (coroutineId <= 0L) return null
-                return ContinuationIdFilter(coroutineId)
+            try {
+                val coroutineId = extractContinuationId(evaluationContext)
+                if (coroutineId != null) {
+                    if (coroutineId <= 0L) return null
+                    return ContinuationIdFilter(coroutineId)
+                }
             }
-            else {
-                useContinuationObjectFilter.set(suspendContext.debugProcess, true)
-                thisLogger().error("Cannot extract continuation from thread")
+            catch (e: EvaluateException) {
+                // go lower
             }
-
+            useContinuationObjectFilter.set(suspendContext.debugProcess, true)
+            thisLogger().error("Cannot extract continuation from thread")
         }
         val defaultExecutionContext = DefaultExecutionContext(evaluationContext)
         return continuationObjectFilter(suspendContext, defaultExecutionContext)

@@ -1,5 +1,5 @@
 // ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.6.4)-javaagent
-// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+
 package runToCursorSuspendSameLambda
 
 import kotlinx.coroutines.GlobalScope
@@ -34,3 +34,6 @@ fun main() {
 fun startMethod(i: Int) { }
 
 fun endMethod(k: Int) { }
+
+// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.filter.breakpoints.by.coroutine.id.with.evaluation=false
