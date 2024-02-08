@@ -30,8 +30,8 @@ public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionP
   @NotNull
   @Override
   public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull AnAction value) {
-    if (value instanceof ReopenProjectAction) {
-      return new RecentProjectElement(((ReopenProjectAction)value), getCommand(value), value.getTemplatePresentation().getIcon());
+    if (value instanceof ReopenProjectAction o) {
+      return new RecentProjectElement(o, getCommand(value), value.getTemplatePresentation().getIcon());
     }
     return super.getMainListItem(dataContext, value);
   }
@@ -63,8 +63,8 @@ public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionP
   @NotNull
   @Override
   public String getCommand(@NotNull AnAction value) {
-    return getHelpCommand() + " " + ObjectUtils
-      .notNull(value.getTemplatePresentation().getText(), IdeBundle.message("run.anything.actions.undefined"));
+    String projectName = value instanceof ReopenProjectAction o ? o.getProjectNameToDisplay() : value.getTemplatePresentation().getText();
+    return getHelpCommand() + " " + ObjectUtils.notNull(projectName, IdeBundle.message("run.anything.actions.undefined"));
   }
 
   static final class RecentProjectElement extends RunAnythingItemBase {
@@ -75,7 +75,7 @@ public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionP
       myValue = value;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public String getDescription() {
       return FileUtil.toSystemDependentName(myValue.getProjectPath());
