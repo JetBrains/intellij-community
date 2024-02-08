@@ -155,7 +155,9 @@ private fun sendFeedback(feedbackUrl: String,
           FeedbackSendActionCountCollector.logFeedbackSendFail()
           return@connect
         }
-        FeedbackSendActionCountCollector.logFeedbackSendSuccess()
+        if (feedbackData is FeedbackRequestData) {
+          FeedbackSendActionCountCollector.logFeedbackSendSuccess()
+        }
         onDone()
       }
   }

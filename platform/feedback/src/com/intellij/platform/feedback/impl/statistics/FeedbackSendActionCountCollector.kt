@@ -5,10 +5,10 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object FeedbackSendActionCountCollector : CounterUsagesCollector() {
-  internal val GROUP = EventLogGroup("feedback.in.ide.action.send", 1)
+  internal val GROUP = EventLogGroup("feedback.in.ide.action.send", 2)
 
-  private val FEEDBACK_SEND_SUCCESS = GROUP.registerEvent("success")
-  private val FEEDBACK_SEND_FAIL = GROUP.registerEvent("fail")
+  private val FEEDBACK_SEND_SUCCESS = GROUP.registerEvent("succeeded")
+  private val FEEDBACK_SEND_FAIL = GROUP.registerEvent("failed")
 
   internal fun logFeedbackSendSuccess() {
     FEEDBACK_SEND_SUCCESS.log()
