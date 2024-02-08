@@ -10,6 +10,7 @@ import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.components.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
-import org.jetbrains.kotlin.idea.completion.checkers.ExtensionApplicabilityChecker
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
@@ -130,26 +130,13 @@ internal open class FirCallableCompletionContributor(
         val scopesContext = originalKtFile.getScopeContextForPosition(nameExpression)
 
         val extensionChecker = if (positionContext is KotlinSimpleNameReferencePositionContext) {
-            object : ExtensionApplicabilityChecker {
-                /**
-                 * Cached applicability results for callable extension symbols.
-                 * The cache lifetime doesn't exceed the lifetime of a single completion session.
-                 *
-                 * If an extension is applicable but some of its type parameters are substituted to error types, then multiple calls to
-                 * [KtAnalysisSession.checkExtensionIsSuitable] produce unequal substitutors, and subsequently unequal signatures, because
-                 * error types are considered equal only if their underlying types are referentially equal, so we need to use [cache] in order
-                 * to avoid unexpected unequal signatures.
-                 *
-                 * The cache also helps to avoid recalculation of applicability for extensions which are suggested twice:
-                 * the first time while processing the scope context and the second time while processing callables from indexes.
-                 */
-                private val cache: MutableMap<KtCallableSymbol, KtExtensionApplicabilityResult> = mutableMapOf()
-
-                context(KtAnalysisSession)
-                override fun checkApplicability(symbol: KtCallableSymbol): KtExtensionApplicabilityResult = cache.getOrPut(symbol) {
-                    symbol.checkExtensionIsSuitable(originalKtFile, positionContext.nameExpression, positionContext.explicitReceiver)
-                }
-            }
+            CachingKtCompletionExtensionCandidateChecker(
+                createExtensionCandidateChecker(
+                    originalKtFile,
+                    positionContext.nameExpression,
+                    positionContext.explicitReceiver
+                )
+            )
         } else null
 
         val receiver = explicitReceiver
@@ -177,7 +164,7 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun completeWithoutReceiver(
         scopeContext: KtScopeContext,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -250,7 +237,7 @@ internal open class FirCallableCompletionContributor(
     protected open fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
@@ -312,7 +299,7 @@ internal open class FirCallableCompletionContributor(
     protected fun collectDotCompletionForCallableReceiver(
         scopeContext: KtScopeContext,
         explicitReceiver: KtExpression,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -347,7 +334,7 @@ internal open class FirCallableCompletionContributor(
         typesOfPossibleReceiver: List<KtType>,
         visibilityChecker: CompletionVisibilityChecker,
         scopeContext: KtScopeContext,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypeHint: KtType? = null
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -435,7 +422,7 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
         receiverTypes: List<KtType>,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> {
@@ -456,7 +443,7 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun collectSuitableExtensions(
         scopeContext: KtScopeContext,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
         explicitReceiverTypes: List<KtType>? = null,
@@ -473,7 +460,7 @@ internal open class FirCallableCompletionContributor(
     private fun collectSuitableExtensions(
         scope: KtScope,
         receiverTypes: List<KtType>,
-        hasSuitableExtensionReceiver: ExtensionApplicabilityChecker?,
+        hasSuitableExtensionReceiver: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> =
@@ -491,10 +478,10 @@ internal open class FirCallableCompletionContributor(
     context(KtAnalysisSession)
     private fun checkApplicabilityAndSubstitute(
         callableSymbol: KtCallableSymbol,
-        extensionChecker: ExtensionApplicabilityChecker?
+        extensionChecker: KtCompletionExtensionCandidateChecker?
     ): ApplicableExtension? {
         val (signature, applicabilityResult) = if (extensionChecker != null) {
-            val result = extensionChecker.checkApplicability(callableSymbol) as? KtExtensionApplicabilityResult.Applicable ?: return null
+            val result = extensionChecker.computeApplicability(callableSymbol) as? KtExtensionApplicabilityResult.Applicable ?: return null
             val signature = callableSymbol.substitute(result.substitutor)
 
             signature to result
@@ -682,7 +669,7 @@ internal class FirCallableReferenceCompletionContributor(
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> {
@@ -771,7 +758,7 @@ internal class FirKDocCallableCompletionContributor(
     override fun collectDotCompletion(
         scopeContext: KtScopeContext,
         explicitReceiver: KtElement,
-        extensionChecker: ExtensionApplicabilityChecker?,
+        extensionChecker: KtCompletionExtensionCandidateChecker?,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -813,6 +800,31 @@ internal class FirKDocCallableCompletionContributor(
                         )
                     )
                 }
+        }
+    }
+}
+
+private class CachingKtCompletionExtensionCandidateChecker(
+    private val delegate: KtCompletionExtensionCandidateChecker
+) : KtCompletionExtensionCandidateChecker {
+    /**
+     * Cached applicability results for callable extension symbols.
+     * The cache **must not outlive the lifetime of a single completion session**.
+     *
+     * If an extension is applicable but some of its type parameters are substituted to error types, then multiple calls to
+     * [computeApplicability] produce unequal substitutors, and subsequently unequal signatures, because
+     * error types are considered equal only if their underlying types are referentially equal, so we need to use [cache] in order
+     * to avoid unexpected unequal signatures.
+     *
+     * The cache also helps to avoid recalculation of applicability for extensions which are suggested twice:
+     * the first time while processing the scope context and the second time while processing callables from indexes.
+     */
+    private val cache: MutableMap<KtCallableSymbol, KtExtensionApplicabilityResult> = mutableMapOf()
+
+    context(KtAnalysisSession)
+    override fun computeApplicability(candidate: KtCallableSymbol): KtExtensionApplicabilityResult {
+        return cache.computeIfAbsent(candidate) {
+            delegate.computeApplicability(candidate)
         }
     }
 }
