@@ -92,17 +92,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     getLongProperty("vfs.notify-user-if-recovery-longer-sec", defaultLongRecoveryThresholdSec())
   );
 
+  private static long defaultLongRecoveryThresholdSec() {
+    Application app = ApplicationManager.getApplication();
+    return (app != null && app.isEAP()) ? 10 : Long.MAX_VALUE;
+  }
+
   /**
    * Sometimes PFS got request for the files with lost (missed) roots. We try to resolve each root against persistence,
    * and it is quite expensive, so we don't want to repeat that attempt for the same root, if it is found to be missed.
    * It shouldn't be a frequently called code, so plain synchronized collection should be enough.
    */
   private final IntSet missedRootIds = IntSets.synchronize(new IntOpenHashSet());
-
-  private static long defaultLongRecoveryThresholdSec() {
-    Application app = ApplicationManager.getApplication();
-    return (app != null && app.isEAP()) ? 10 : Long.MAX_VALUE;
-  }
 
   private final Map<String, VirtualFileSystemEntry> myRoots;
 
@@ -614,10 +614,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return children;
       }
 
-      //MAYBE RC: why do we access FS on lookup? maybe it is better to look only VFS, and issue
-      //          refresh request if children is not loaded -- and rely on automatic refresh to
-      //          update VFS if actual FS children are changed? This way here we'll have read-only scan
-      //          without concurrent modification problems
+      //MAYBE RC: why do we access FS on lookup? maybe it is better to look only VFS (i.e. snapshot), and issue
+      //          refresh request if children is not loaded -- and rely on automatic refresh to update VFS if
+      //          actual FS children are changed?
+      //          This way here we'll have read-only scan without concurrent modification problems
+      //          I.e. the whole code below is (seems to be) just a 'small local refresh' -- executed during
+      //          children lookup, under the VFS lock.
+      //          I really want to remove it entirely, and just rely on automatic/explicit refresh
       Pair<@NotNull FileAttributes, String> childData = getChildData(fs, parent, childName, null, null); // todo: use BatchingFileSystem
       if (childData == null) {
         return children;
@@ -2427,7 +2430,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public @Nullable VfsLog getVfsLog() {
-    return FSRecords.getVfsLog();
+    return vfsPeer.getVfsLog();
   }
 
   private static @Nullable VfsLogEx getVfsLogEx() {
