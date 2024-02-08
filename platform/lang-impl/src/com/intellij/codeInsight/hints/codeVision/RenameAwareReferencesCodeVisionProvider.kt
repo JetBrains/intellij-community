@@ -34,9 +34,9 @@ import java.awt.event.MouseEvent
 /**
  * Similar to [ReferencesCodeVisionProvider] but not daemon based.
  */
-abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Any?> {
+abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Nothing?> {
 
-  override fun precomputeOnUiThread(editor: Editor): Any? = null
+  override fun precomputeOnUiThread(editor: Editor): Nothing? = null
 
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
@@ -45,7 +45,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Any?
     GotoDeclarationAction.startFindUsages(editor, element.project, element, if (event == null) null else RelativePoint(event))
   }
 
-  override fun computeCodeVision(editor: Editor, uiData: Any?): CodeVisionState {
+  override fun computeCodeVision(editor: Editor, uiData: Nothing?): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
     if (DumbService.isDumb(project)) return CodeVisionState.NotReady
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
