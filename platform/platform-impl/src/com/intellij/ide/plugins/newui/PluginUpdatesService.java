@@ -27,10 +27,10 @@ import java.util.function.Consumer;
 public class PluginUpdatesService {
   private static final List<PluginUpdatesService> SERVICES = new ArrayList<>();
   private static final Object ourLock = new Object();
-  private static Collection<IdeaPluginDescriptor> myCache;
-  private static boolean myPrepared;
-  private static boolean myPreparing;
-  private static boolean myReset;
+  private static Collection<IdeaPluginDescriptor> ourCache;
+  private static boolean ourPrepared;
+  private static boolean ourPreparing;
+  private static boolean ourReset;
 
   private Consumer<? super Integer> myCountCallback;
   private List<Consumer<? super Collection<IdeaPluginDescriptor>>> myUpdateCallbacks;
@@ -56,7 +56,7 @@ public class PluginUpdatesService {
     synchronized (ourLock) {
       SERVICES.add(service);
 
-      if (myPrepared) {
+      if (ourPrepared) {
         callback.accept(getCount());
         return service;
       }
@@ -73,8 +73,8 @@ public class PluginUpdatesService {
     synchronized (ourLock) {
       SERVICES.add(service);
 
-      if (myPrepared) {
-        callback.accept(myCache);
+      if (ourPrepared) {
+        callback.accept(ourCache);
       }
     }
 
@@ -88,8 +88,8 @@ public class PluginUpdatesService {
       }
       myUpdateCallbacks.add(callback);
 
-      if (myPrepared) {
-        callback.accept(myCache);
+      if (ourPrepared) {
+        callback.accept(ourCache);
         return;
       }
     }
@@ -98,11 +98,11 @@ public class PluginUpdatesService {
 
   private static void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
     synchronized (ourLock) {
-      if (!myPrepared || myCache == null) {
+      if (!ourPrepared || ourCache == null) {
         return;
       }
 
-      for (Iterator<IdeaPluginDescriptor> I = myCache.iterator(); I.hasNext(); ) {
+      for (Iterator<IdeaPluginDescriptor> I = ourCache.iterator(); I.hasNext(); ) {
         IdeaPluginDescriptor downloadedDescriptor = I.next();
 
         if (Objects.equals(downloadedDescriptor.getPluginId(), descriptor.getPluginId())) {
@@ -121,7 +121,7 @@ public class PluginUpdatesService {
 
   public void finishUpdate() {
     synchronized (ourLock) {
-      if (!myPrepared || myCache == null) {
+      if (!ourPrepared || ourCache == null) {
         return;
       }
 
@@ -138,7 +138,7 @@ public class PluginUpdatesService {
         service.runAllCallbacks(null);
       }
 
-      if (myPreparing) {
+      if (ourPreparing) {
         resetUpdates();
       }
       else {
@@ -148,7 +148,7 @@ public class PluginUpdatesService {
   }
 
   private static void resetUpdates() {
-    myReset = true;
+    ourReset = true;
   }
 
   public void dispose() {
@@ -160,9 +160,9 @@ public class PluginUpdatesService {
       SERVICES.remove(service);
 
       if (SERVICES.isEmpty()) {
-        myCache = null;
-        myPrepared = false;
-        myPreparing = false;
+        ourCache = null;
+        ourPrepared = false;
+        ourPreparing = false;
       }
     }
   }
@@ -171,8 +171,8 @@ public class PluginUpdatesService {
     PluginId pluginId = descriptor.getPluginId();
 
     synchronized (ourLock) {
-      if (myPrepared && myCache != null) {
-        for (IdeaPluginDescriptor downloader : myCache) {
+      if (ourPrepared && ourCache != null) {
+        for (IdeaPluginDescriptor downloader : ourCache) {
           if (pluginId.equals(downloader.getPluginId())) {
             return true;
           }
@@ -185,7 +185,7 @@ public class PluginUpdatesService {
 
   public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {
-      return !myPrepared || myPreparing || myCache == null ? null : myCache;
+      return !ourPrepared || ourPreparing || ourCache == null ? null : ourCache;
     }
   }
 
@@ -199,11 +199,11 @@ public class PluginUpdatesService {
 
   private static void calculateUpdates() {
     synchronized (ourLock) {
-      if (myPreparing) {
+      if (ourPreparing) {
         return;
       }
-      myPreparing = true;
-      myCache = null;
+      ourPreparing = true;
+      ourCache = null;
     }
 
     // for example, if executed as part of Traverse UI - don't wait check updates
@@ -217,16 +217,16 @@ public class PluginUpdatesService {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         synchronized (ourLock) {
-          myPreparing = false;
+          ourPreparing = false;
 
-          if (myReset) {
-            myReset = false;
+          if (ourReset) {
+            ourReset = false;
             calculateUpdates();
             return;
           }
 
-          myPrepared = true;
-          myCache = cache;
+          ourPrepared = true;
+          ourCache = cache;
 
           Integer countValue = getCount();
           for (PluginUpdatesService service : SERVICES) {
@@ -242,7 +242,7 @@ public class PluginUpdatesService {
 
     if (myUpdateCallbacks != null) {
       for (var callback : myUpdateCallbacks) {
-        callback.accept(countValue == null ? null : myCache);
+        callback.accept(countValue == null ? null : ourCache);
       }
     }
   }
@@ -254,6 +254,6 @@ public class PluginUpdatesService {
   }
 
   private static @Nullable Integer getCount() {
-    return myCache == null ? null : myCache.size();
+    return ourCache == null ? null : ourCache.size();
   }
 }
