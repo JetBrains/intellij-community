@@ -106,9 +106,9 @@ public final class MavenArtifactUtil {
     return Sanitize_nameKt.sanitizeFileName(name, null, false, null);
   }
 
-  private static Path getArtifactDirectory(File localRepository,
-                                           String groupId,
-                                           String artifactId) {
+  private static Path getArtifactDirectory(File localRepository, String groupId, String artifactId) {
+    groupId = sanitizeFileName(groupId);
+    artifactId = sanitizeFileName(artifactId);
     String relativePath = StringUtil.replace(groupId, ".", File.separator) + File.separator + artifactId;
     return localRepository.toPath().resolve(relativePath);
   }
