@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr
 
+import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.AppExitCodes
@@ -18,7 +19,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
-import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
@@ -128,7 +128,7 @@ class AgreementUiBuilder internal constructor() {
 
     eapPanel?.let { isPrivacyPolicy ->
       val eapPanel = JPanel(BorderLayout(0, 0))
-      val bundle = ResourceBundle.getBundle("messages.AgreementsBundle")
+      val bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle")
       val text =
         (if (isPrivacyPolicy) {
           bundle.getString("userAgreement.dialog.eap.consents.privacyPolicy")
