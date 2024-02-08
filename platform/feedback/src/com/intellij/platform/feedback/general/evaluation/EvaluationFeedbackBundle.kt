@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.EvaluationFeedbackMessages"
+private const val BUNDLE = "messages.EvaluationFeedbackMessagesBundle"
 
 
 internal object EvaluationFeedbackBundle : DynamicBundle(BUNDLE) {

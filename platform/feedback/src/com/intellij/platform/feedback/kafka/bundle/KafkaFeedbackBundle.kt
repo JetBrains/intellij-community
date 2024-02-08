@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey
 
 
 @NonNls
-private const val BUNDLE = "messages.KafkaFeedbackMessages"
+private const val BUNDLE = "messages.KafkaFeedbackMessagesBundle"
 
 
 internal object KafkaFeedbackBundle : DynamicBundle(BUNDLE) {

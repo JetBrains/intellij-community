@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.PyCharmCeFeedbackMessages"
+private const val BUNDLE = "messages.PyCharmCeFeedbackMessagesBundle"
 
 internal object PyCharmCeFeedbackBundle : DynamicBundle(BUNDLE) {
   @Suppress("SpreadOperator")

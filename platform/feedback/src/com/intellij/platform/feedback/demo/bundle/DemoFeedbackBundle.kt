@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.DemoFeedbackMessages"
+private const val BUNDLE = "messages.DemoFeedbackMessagesBundle"
 internal object DemoFeedbackBundle : DynamicBundle(BUNDLE) {
   @Suppress("SpreadOperator")
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any) = getMessage(key, *params)

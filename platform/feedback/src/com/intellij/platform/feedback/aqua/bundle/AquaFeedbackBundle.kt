@@ -7,7 +7,7 @@ import org.jetbrains.annotations.PropertyKey
 
 
 @NonNls
-private const val BUNDLE = "messages.AquaFeedbackMessages"
+private const val BUNDLE = "messages.AquaFeedbackMessagesBundle"
 
 
 internal object AquaFeedbackBundle : DynamicBundle(BUNDLE) {

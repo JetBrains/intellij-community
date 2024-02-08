@@ -4,7 +4,7 @@ package com.intellij.platform.feedback.eap
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.PropertyKey
 
-private const val BUNDLE = "messages.EAPFeedbackMessages"
+private const val BUNDLE = "messages.EAPFeedbackMessagesBundle"
 
 internal object EAPFeedbackBundle : DynamicBundle(BUNDLE) {
   @Suppress("SpreadOperator")
