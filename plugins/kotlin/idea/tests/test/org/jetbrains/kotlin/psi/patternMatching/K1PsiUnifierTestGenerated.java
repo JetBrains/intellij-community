@@ -183,6 +183,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                         runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/noParams.kt");
                     }
 
+                    @TestMetadata("nonUnitReturnType.kt")
+                    public void testNonUnitReturnType() throws Exception {
+                        runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/nonUnitReturnType.kt");
+                    }
+
                     @TestMetadata("receiverArgumentsRuntime.kt")
                     public void testReceiverArgumentsRuntime() throws Exception {
                         runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/receiverArgumentsRuntime.kt");
@@ -224,6 +229,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     @TestMetadata("multiDeclaration.kt")
                     public void testMultiDeclaration() throws Exception {
                         runTest("testData/unifier/equivalence/declarations/localCallables/multiDeclaration.kt");
+                    }
+
+                    @TestMetadata("propertyDeclaration.kt")
+                    public void testPropertyDeclaration() throws Exception {
+                        runTest("testData/unifier/equivalence/declarations/localCallables/propertyDeclaration.kt");
                     }
                 }
             }

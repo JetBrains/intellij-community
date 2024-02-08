@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo() {
     when {
         true -> <selection>{

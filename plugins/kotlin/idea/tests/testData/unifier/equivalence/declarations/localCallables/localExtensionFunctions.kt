@@ -1,26 +1,28 @@
-// IGNORE_K2
 // DISABLE-ERRORS
 class A(val n: Int)
 
 fun test() {
-    <selection>fun <T: A> foo(t: T): Int {
+    <selection>fun <T: A> foo(t: T): T {
         fun A.a(n: Int): Int = this.n + n
         fun A.b(n: Int): Int = this.n - n
 
-        return t.n + A(1).a(2) - A(2).b(1)
+        t.n + A(1).a(2) - A(2).b(1)
+        return t
     }</selection>
 
-    fun <U: A> foo(u: U): Int {
+    fun <U: A> foo(u: U): U {
         fun A.x(m: Int): Int = n + m
         fun A.y(n: Int): Int = this.n - n
 
-        return u.n + A(1).x(2) - A(2).y(1)
+        u.n + A(1).x(2) - A(2).y(1)
+        return u
     }
 
-    fun <V: A> foo(v: V): Int {
+    fun <V: A> foo(v: V): V {
         fun A.a(n: Int): Int = this.n + n
         fun A.b(n: Int): Int = this.n + n
 
-        return v.n + A(1).a(2) - A(2).b(1)
+        v.n + A(1).a(2) - A(2).b(1)
+        return v
     }
 }

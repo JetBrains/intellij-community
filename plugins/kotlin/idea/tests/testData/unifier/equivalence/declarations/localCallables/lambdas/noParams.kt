@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(f: (Int) -> Unit) {
     <selection>{
         val a = 1

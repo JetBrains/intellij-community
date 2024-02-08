@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(f: (Int) -> Unit) {
     { m: Int, n: Int, s: String ->
         val a = n + m
@@ -19,6 +18,12 @@ fun foo(f: (Int) -> Unit) {
     }</selection>
 
     val g: Int.(Int, String) -> Unit = { a, b ->
+        val m = a + this
+        println(b)
+        f(m)
+    }
+
+    val r: Short.(Int, String) -> Unit = { a, b ->
         val m = a + this
         println(b)
         f(m)

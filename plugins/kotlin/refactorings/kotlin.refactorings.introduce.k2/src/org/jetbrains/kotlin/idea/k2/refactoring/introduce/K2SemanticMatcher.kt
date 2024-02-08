@@ -1,10 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
+import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
+import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.getArgumentOrIndexExpressions
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
@@ -38,15 +45,92 @@ object K2SemanticMatcher {
     }
 
     context(KtAnalysisSession)
-    fun KtElement.isSemanticMatch(patternElement: KtElement): Boolean = accept(VisitingMatcher(this@KtAnalysisSession), patternElement)
+    fun KtElement.isSemanticMatch(
+        patternElement: KtElement,
+        context: MatchingContext = MatchingContext(analysisSession.token),
+    ): Boolean = accept(VisitingMatcher(this@KtAnalysisSession, context), patternElement)
 
-    context(KtAnalysisSession)
-    private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?): Boolean {
-        if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
-        return targetElement.isSemanticMatch(patternElement)
+    data class MatchingContext(
+        override val token: KtLifetimeToken,
+        private val _symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
+        private val _blockBodyOwners: MutableMap<KtFunctionLikeSymbol, KtFunctionLikeSymbol> = mutableMapOf(),
+    ) : KtLifetimeOwner {
+        context(KtAnalysisSession)
+        fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean = withValidityAssertion {
+            if (targetSymbol == null || patternSymbol == null) return targetSymbol == null && patternSymbol == null
+
+            targetSymbol == patternSymbol || _symbols[targetSymbol] == patternSymbol
+        }
+
+        context(KtAnalysisSession)
+        fun areBlockBodyOwnersEqualOrAssociated(targetFunction: KtFunctionLikeSymbol, patternFunction: KtFunctionLikeSymbol): Boolean =
+            withValidityAssertion { targetFunction == patternFunction || _blockBodyOwners[targetFunction] == patternFunction }
+
+        // TODO: current approach doesn't work on pairs of types such as `List<U>` and `List<T>`, where `U` and `T` are associated
+        context(KtAnalysisSession)
+        fun areTypesEqualOrAssociated(targetType: KtType?, patternType: KtType?): Boolean = withValidityAssertion {
+            if (targetType == null || patternType == null) return targetType == null && patternType == null
+
+            targetType.isEqualTo(patternType) ||
+                    targetType is KtTypeParameterType &&
+                    patternType is KtTypeParameterType &&
+                    _symbols[targetType.symbol] == patternType.symbol
+        }
+
+        context(KtAnalysisSession)
+        fun getAndAssociateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) =
+            withValidityAssertion { _symbols[targetDeclaration.getSymbol()] = patternDeclaration.getSymbol() }
+
+        context(KtAnalysisSession)
+        fun getAndAssociateSymbolsForBlockBodyOwners(targetFunction: KtFunction, patternFunction: KtFunction) = withValidityAssertion {
+            check(targetFunction.bodyExpression is KtBlockExpression && patternFunction.bodyExpression is KtBlockExpression)
+
+            _blockBodyOwners[targetFunction.getFunctionLikeSymbol()] = patternFunction.getFunctionLikeSymbol()
+        }
+
+        context(KtAnalysisSession)
+        fun getAndAssociateSingleParameterSymbolsForAnonymousFunctionsOrDoNothing(
+            targetFunction: KtFunction,
+            patternFunction: KtFunction,
+        ) = withValidityAssertion {
+            val targetSymbol = getSingleParameterSymbolForAnonymousFunctionOrNull(targetFunction) ?: return
+            val patternSymbol = getSingleParameterSymbolForAnonymousFunctionOrNull(patternFunction) ?: return
+
+            _symbols[targetSymbol] = patternSymbol
+        }
+
+        context(KtAnalysisSession)
+        fun getAndAssociateReceiverParameterSymbolsForCallablesOrDoNothing(
+            targetDeclaration: KtCallableDeclaration,
+            patternDeclaration: KtCallableDeclaration,
+        ) = withValidityAssertion {
+            val targetSymbol = targetDeclaration.getCallableSymbol().receiverParameter ?: return
+            val patternSymbol = patternDeclaration.getCallableSymbol().receiverParameter ?: return
+
+            _symbols[targetSymbol] = patternSymbol
+        }
+
+        context(KtAnalysisSession)
+        private fun getSingleParameterSymbolForAnonymousFunctionOrNull(function: KtFunction): KtValueParameterSymbol? {
+            val anonymousFunction = when (function) {
+                is KtNamedFunction -> function.getAnonymousFunctionSymbol()
+                is KtFunctionLiteral -> function.getAnonymousFunctionSymbol()
+                else -> unexpectedElementError<KtFunction>(function)
+            }
+            return anonymousFunction.valueParameters.singleOrNull()
+        }
     }
 
-    private class VisitingMatcher(private val analysisSession: KtAnalysisSession) : KtVisitor<Boolean, KtElement>() {
+    context(KtAnalysisSession)
+    private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?, context: MatchingContext): Boolean {
+        if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
+        return targetElement.isSemanticMatch(patternElement, context)
+    }
+
+    private class VisitingMatcher(
+        private val analysisSession: KtAnalysisSession,
+        private val context: MatchingContext,
+    ) : KtVisitor<Boolean, KtElement>() {
         private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?): Boolean {
             if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
 
@@ -55,7 +139,100 @@ object K2SemanticMatcher {
 
         override fun visitKtElement(element: KtElement, data: KtElement): Boolean = false
 
-        override fun visitDeclaration(dcl: KtDeclaration, data: KtElement): Boolean = false // TODO
+        override fun visitDeclaration(dcl: KtDeclaration, data: KtElement): Boolean {
+            val patternDcl = data as? KtDeclaration ?: return false
+
+            if (dcl is KtValVarKeywordOwner && patternDcl is KtValVarKeywordOwner) {
+                if (dcl.valOrVarKeyword?.elementType != patternDcl.valOrVarKeyword?.elementType) return false
+            }
+
+            if (dcl is KtTypeParameterListOwner && patternDcl is KtTypeParameterListOwner) {
+                if (!elementsMatchOrBothAreNull(dcl.typeParameterList, patternDcl.typeParameterList)) return false
+            }
+
+            if (dcl is KtFunction && patternDcl is KtFunction) {
+                if (dcl.isFunctionLiteralWithoutParameterSpecification() || patternDcl.isFunctionLiteralWithoutParameterSpecification()) {
+                    with(analysisSession) {
+                        if (!areFunctionsWithZeroOrOneParametersMatchingByResolve(dcl, patternDcl, context)) return false
+                        context.getAndAssociateSingleParameterSymbolsForAnonymousFunctionsOrDoNothing(dcl, patternDcl)
+                    }
+                } else {
+                    if (!elementsMatchOrBothAreNull(dcl.valueParameterList, patternDcl.valueParameterList)) return false
+                }
+            }
+
+            if (dcl is KtCallableDeclaration && patternDcl is KtCallableDeclaration) {
+                with(analysisSession) {
+                    if (!areReceiverParametersMatchingByResolve(dcl, patternDcl, context)) return false
+                    if (!areReturnTypesOfDeclarationsMatchingByResolve(dcl, patternDcl, context)) return false
+                    context.getAndAssociateReceiverParameterSymbolsForCallablesOrDoNothing(dcl, patternDcl)
+                }
+            }
+
+            // TODO: move and check if tests are failing
+            with(analysisSession) {
+                context.getAndAssociateSymbolsForDeclarations(dcl, patternDcl)
+            }
+
+            if (dcl is KtDeclarationWithBody && patternDcl is KtDeclarationWithBody) {
+                if (!elementsMatchOrBothAreNull(dcl.bodyExpression, patternDcl.bodyExpression)) return false
+            }
+
+            if (dcl is KtDeclarationWithInitializer && patternDcl is KtDeclarationWithInitializer) {
+                if (!elementsMatchOrBothAreNull(dcl.initializer, patternDcl.initializer)) return false
+            }
+
+            return true
+        }
+
+        override fun visitNamedFunction(function: KtNamedFunction, data: KtElement): Boolean {
+            val patternFunction = data as? KtNamedFunction ?: return false
+            return visitDeclaration(function, patternFunction)
+        }
+
+        override fun visitProperty(property: KtProperty, data: KtElement?): Boolean {
+            val patternProperty = data as? KtProperty ?: return false
+            return visitDeclaration(property, patternProperty)
+        }
+
+        override fun visitDestructuringDeclaration(multiDeclaration: KtDestructuringDeclaration, data: KtElement): Boolean = false // TODO
+
+        override fun visitTypeParameterList(list: KtTypeParameterList, data: KtElement): Boolean {
+            val patternList = data as? KtTypeParameterList ?: return false
+
+            if (list.parameters.size != patternList.parameters.size) return false
+            for ((targetParameter, patternParameter) in list.parameters.zip(patternList.parameters)) {
+                if (!elementsMatchOrBothAreNull(targetParameter, patternParameter)) return false
+            }
+
+            return true
+        }
+
+        override fun visitTypeParameter(parameter: KtTypeParameter, data: KtElement): Boolean {
+            val patternParameter = data as? KtTypeParameter ?: return false
+            with(analysisSession) {
+                if (!areTypeParametersMatchingByResolve(parameter, patternParameter, context)) return false
+            }
+            return visitDeclaration(parameter, patternParameter)
+        }
+
+        override fun visitParameterList(list: KtParameterList, data: KtElement): Boolean {
+            val patternList = data as? KtParameterList ?: return false
+
+            if (list.parameters.size != patternList.parameters.size) return false
+            for ((targetParameter, patternParameter) in list.parameters.zip(patternList.parameters)) {
+                if (!elementsMatchOrBothAreNull(targetParameter, patternParameter)) return false
+            }
+
+            return true
+        }
+
+        override fun visitParameter(parameter: KtParameter, data: KtElement): Boolean {
+            val patternParameter = data as? KtParameter ?: return false
+            return visitDeclaration(parameter, patternParameter)
+        }
+
+        override fun visitScript(script: KtScript, data: KtElement): Boolean = false // TODO()
 
         override fun visitExpression(expression: KtExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtExpression ?: return false
@@ -69,7 +246,7 @@ object K2SemanticMatcher {
             if (patternExpression !is KtReferenceExpression && patternExpression !is KtOperationExpression) return false
 
             with(analysisSession) {
-                if (!areCallsMatchingByResolve(expression, patternExpression)) return false
+                if (!areCallsMatchingByResolve(expression, patternExpression, context)) return false
             }
             return true
         }
@@ -90,7 +267,7 @@ object K2SemanticMatcher {
                 if (expression::class != patternExpression::class) return false
                 if (expression.operationToken != patternExpression.operationToken) return false
                 with(analysisSession) {
-                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
                 }
                 return elementsMatchOrBothAreNull(expression.baseExpression, patternExpression.baseExpression)
             }
@@ -102,7 +279,7 @@ object K2SemanticMatcher {
             if (patternExpression is KtBinaryExpression) {
                 if (expression.operationToken != patternExpression.operationToken) return false
                 with(analysisSession) {
-                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+                    if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
                 }
                 return elementsMatchOrBothAreNull(expression.left, patternExpression.left) &&
                         elementsMatchOrBothAreNull(expression.right, patternExpression.right)
@@ -113,7 +290,7 @@ object K2SemanticMatcher {
         override fun visitReturnExpression(expression: KtReturnExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtReturnExpression ?: return false
             with(analysisSession) {
-                if (!areReturnTargetsMatchingByResolve(expression, patternExpression)) return false
+                if (!areReturnTargetsMatchingByResolve(expression, patternExpression, context)) return false
             }
             return elementsMatchOrBothAreNull(expression.returnedExpression, patternExpression.returnedExpression)
         }
@@ -140,7 +317,12 @@ object K2SemanticMatcher {
 
         override fun visitTryExpression(expression: KtTryExpression, data: KtElement): Boolean = false
 
-        override fun visitLambdaExpression(expression: KtLambdaExpression, data: KtElement): Boolean = false
+        // TODO: match lambdas with anonymous functions
+        override fun visitLambdaExpression(expression: KtLambdaExpression, data: KtElement): Boolean {
+            val patternExpression = data as? KtLambdaExpression ?: return false
+
+            return visitDeclaration(expression.functionLiteral, patternExpression.functionLiteral)
+        }
 
         override fun visitAnnotatedExpression(expression: KtAnnotatedExpression, data: KtElement): Boolean = false // TODO()
 
@@ -153,12 +335,27 @@ object K2SemanticMatcher {
 
         override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression, data: KtElement): Boolean = false // TODO()
 
-        override fun visitBlockExpression(expression: KtBlockExpression, data: KtElement): Boolean = false
+        override fun visitBlockExpression(expression: KtBlockExpression, data: KtElement): Boolean {
+            val patternExpression = data as? KtBlockExpression ?: return false
+            if (expression.statements.size != patternExpression.statements.size) return false
+
+            val targetFunction = expression.parent as? KtFunction
+            val patternFunction = patternExpression.parent as? KtFunction
+            if (targetFunction != null || patternFunction != null) {
+                if (targetFunction == null || patternFunction == null) return false
+                with(analysisSession) { context.getAndAssociateSymbolsForBlockBodyOwners(targetFunction, patternFunction) }
+            }
+
+            for ((targetStatement, patternStatement) in expression.statements.zip(patternExpression.statements)) {
+                if (!elementsMatchOrBothAreNull(targetStatement, patternStatement)) return false
+            }
+            return true
+        }
 
         override fun visitThisExpression(expression: KtThisExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtThisExpression ?: return false
             with(analysisSession) {
-                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
             }
             return true
         }
@@ -166,13 +363,19 @@ object K2SemanticMatcher {
         override fun visitSuperExpression(expression: KtSuperExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtSuperExpression ?: return false
             with(analysisSession) {
-                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference)) return false
+                if (!areReferencesMatchingByResolve(expression.mainReference, patternExpression.mainReference, context)) return false
             }
             return true
         }
 
         override fun visitParenthesizedExpression(expression: KtParenthesizedExpression, data: KtElement): Boolean =
             expression.deparenthesized().accept(visitor = this, data)
+
+        override fun visitAnonymousInitializer(initializer: KtAnonymousInitializer, data: KtElement): Boolean = false // TODO()
+
+        override fun visitPropertyAccessor(accessor: KtPropertyAccessor, data: KtElement): Boolean = false // TODO()
+
+        override fun visitBackingField(accessor: KtBackingField, data: KtElement): Boolean = false // TODO()
 
         override fun visitBinaryWithTypeRHSExpression(expression: KtBinaryExpressionWithTypeRHS, data: KtElement): Boolean = false // TODO
 
@@ -201,11 +404,17 @@ object K2SemanticMatcher {
             return true
         }
 
+        override fun visitNamedDeclaration(declaration: KtNamedDeclaration, data: KtElement): Boolean = false // TODO()
+
         override fun visitIsExpression(expression: KtIsExpression, data: KtElement): Boolean = false // TODO
     }
 
     context(KtAnalysisSession)
-    private fun areCallsMatchingByResolve(targetExpression: KtExpression, patternExpression: KtExpression): Boolean {
+    private fun areCallsMatchingByResolve(
+        targetExpression: KtExpression,
+        patternExpression: KtExpression,
+        context: MatchingContext,
+    ): Boolean {
         val targetCall = targetExpression.resolveCall()?.calls?.singleOrNull() ?: return false
         val patternCall = patternExpression.resolveCall()?.calls?.singleOrNull() ?: return false
 
@@ -215,17 +424,17 @@ object K2SemanticMatcher {
             val targetAppliedSymbol = targetCall.partiallyAppliedSymbol
             val patternAppliedSymbol = patternCall.partiallyAppliedSymbol
 
-            if (targetCall.symbol != patternCall.symbol) return false
+            if (!context.areSymbolsEqualOrAssociated(targetCall.symbol, patternCall.symbol)) return false
 
-            if (!areReceiversMatching(targetAppliedSymbol.dispatchReceiver, patternAppliedSymbol.dispatchReceiver)) return false
-            if (!areReceiversMatching(targetAppliedSymbol.extensionReceiver, patternAppliedSymbol.extensionReceiver)) return false
+            if (!areReceiversMatching(targetAppliedSymbol.dispatchReceiver, patternAppliedSymbol.dispatchReceiver, context)) return false
+            if (!areReceiversMatching(targetAppliedSymbol.extensionReceiver, patternAppliedSymbol.extensionReceiver, context)) return false
         }
 
         val targetArguments = targetExpression.getArgumentsAndSortThemIfCallIsPresent(targetCall as? KtFunctionCall<*>)
         val patternArguments = patternExpression.getArgumentsAndSortThemIfCallIsPresent(patternCall as? KtFunctionCall<*>)
 
         for ((targetArgument, patternArgument) in targetArguments.zipWithNulls(patternArguments)) {
-            if (!elementsMatchOrBothAreNull(targetArgument, patternArgument)) return false
+            if (!elementsMatchOrBothAreNull(targetArgument, patternArgument, context)) return false
         }
 
         return true
@@ -247,28 +456,38 @@ object K2SemanticMatcher {
     }
 
     context(KtAnalysisSession)
-    private fun areReceiversMatching(targetReceiver: KtReceiverValue?, patternReceiver: KtReceiverValue?): Boolean {
-        return when (targetReceiver) {
-            is KtImplicitReceiverValue -> {
-                when (patternReceiver) {
-                    is KtImplicitReceiverValue -> targetReceiver.symbol == patternReceiver.symbol
-                    is KtExplicitReceiverValue -> targetReceiver.symbol == patternReceiver.getSymbolForThisExpressionOrNull()
-                    else -> false
+    private fun areReceiversMatching(
+        targetReceiver: KtReceiverValue?,
+        patternReceiver: KtReceiverValue?,
+        context: MatchingContext,
+    ): Boolean = when (targetReceiver) {
+        is KtImplicitReceiverValue -> {
+            when (patternReceiver) {
+                is KtImplicitReceiverValue -> targetReceiver.symbol == patternReceiver.symbol // TODO: test
+                is KtExplicitReceiverValue -> {
+                    val patternSymbol = patternReceiver.getSymbolForThisExpressionOrNull()
+                    patternSymbol != null && context.areSymbolsEqualOrAssociated(targetReceiver.symbol, patternSymbol)
                 }
+
+                else -> false
             }
-
-            is KtSmartCastedReceiverValue -> false // TODO()
-
-            is KtExplicitReceiverValue -> {
-                when (patternReceiver) {
-                    is KtImplicitReceiverValue -> targetReceiver.getSymbolForThisExpressionOrNull() == patternReceiver.symbol
-                    is KtExplicitReceiverValue -> targetReceiver.expression.isSemanticMatch(patternReceiver.expression)
-                    else -> false
-                }
-            }
-
-            null -> patternReceiver == null
         }
+
+        is KtSmartCastedReceiverValue -> false // TODO()
+
+        is KtExplicitReceiverValue -> {
+            when (patternReceiver) {
+                is KtImplicitReceiverValue -> {
+                    val targetSymbol = targetReceiver.getSymbolForThisExpressionOrNull()
+                    targetSymbol != null && context.areSymbolsEqualOrAssociated(targetSymbol, patternReceiver.symbol)
+                }
+
+                is KtExplicitReceiverValue -> targetReceiver.expression.isSemanticMatch(patternReceiver.expression, context)
+                else -> false
+            }
+        }
+
+        null -> patternReceiver == null
     }
 
     context(KtAnalysisSession)
@@ -276,12 +495,76 @@ object K2SemanticMatcher {
         (expression as? KtThisExpression)?.mainReference?.resolveToSymbol()
 
     context(KtAnalysisSession)
-    private fun areReferencesMatchingByResolve(targetReference: KtReference, patternReference: KtReference): Boolean =
-        targetReference.resolveToSymbol()?.equals(patternReference.resolveToSymbol()) == true
+    private fun areReferencesMatchingByResolve(
+        targetReference: KtReference,
+        patternReference: KtReference,
+        context: MatchingContext,
+    ): Boolean = context.areSymbolsEqualOrAssociated(targetReference.resolveToSymbol(), patternReference.resolveToSymbol())
 
     context(KtAnalysisSession)
-    private fun areReturnTargetsMatchingByResolve(targetExpression: KtReturnExpression, patternExpression: KtReturnExpression): Boolean =
-        targetExpression.getReturnTargetSymbol() == patternExpression.getReturnTargetSymbol()
+    private fun areReturnTargetsMatchingByResolve(
+        targetExpression: KtReturnExpression,
+        patternExpression: KtReturnExpression,
+        context: MatchingContext,
+    ): Boolean {
+        val targetReturnTargetSymbol = targetExpression.getReturnTargetSymbol() as? KtFunctionLikeSymbol ?: return false
+        val patternReturnTargetSymbol = patternExpression.getReturnTargetSymbol() as? KtFunctionLikeSymbol ?: return false
+
+        return context.areBlockBodyOwnersEqualOrAssociated(targetReturnTargetSymbol, patternReturnTargetSymbol)
+    }
+
+    context(KtAnalysisSession)
+    private fun areReturnTypesOfDeclarationsMatchingByResolve(
+        targetDeclaration: KtCallableDeclaration,
+        patternDeclaration: KtCallableDeclaration,
+        context: MatchingContext,
+    ): Boolean = context.areTypesEqualOrAssociated(targetDeclaration.getReturnKtType(), patternDeclaration.getReturnKtType())
+
+    context(KtAnalysisSession)
+    private fun areReceiverParametersMatchingByResolve(
+        targetDeclaration: KtCallableDeclaration,
+        patternDeclaration: KtCallableDeclaration,
+        context: MatchingContext
+    ): Boolean = context.areTypesEqualOrAssociated(
+        targetDeclaration.getCallableSymbol().receiverType,
+        patternDeclaration.getCallableSymbol().receiverType,
+    )
+
+    context(KtAnalysisSession)
+    private fun areFunctionsWithZeroOrOneParametersMatchingByResolve(
+        targetFunction: KtFunction,
+        patternFunction: KtFunction,
+        context: MatchingContext,
+    ): Boolean {
+        val targetParameters = targetFunction.getFunctionLikeSymbol().valueParameters
+        val patternParameters = patternFunction.getFunctionLikeSymbol().valueParameters
+        if (targetParameters.size > 1 || patternParameters.size > 1) return false
+
+        return context.areTypesEqualOrAssociated(targetParameters.singleOrNull()?.returnType, patternParameters.singleOrNull()?.returnType)
+    }
+
+    context(KtAnalysisSession)
+    private fun areTypeParametersMatchingByResolve(
+        targetParameter: KtTypeParameter,
+        patternParameter: KtTypeParameter,
+        context: MatchingContext,
+    ): Boolean {
+        val targetSymbol = targetParameter.getTypeParameterSymbol()
+        val patternSymbol = patternParameter.getTypeParameterSymbol()
+
+        // TODO: should we check variance and reified modifier?
+        if (targetSymbol.upperBounds.size != patternSymbol.upperBounds.size) return false
+        for ((targetUpperBound, patternUpperBound) in targetSymbol.upperBounds.zip(patternSymbol.upperBounds)) {
+            if (!context.areTypesEqualOrAssociated(targetUpperBound, patternUpperBound)) return false
+        }
+        return true
+    }
+
+    context(KtAnalysisSession)
+    private fun KtFunction.getFunctionLikeSymbol(): KtFunctionLikeSymbol = getSymbolOfType<KtFunctionLikeSymbol>()
+
+    context(KtAnalysisSession)
+    private fun KtCallableDeclaration.getCallableSymbol(): KtCallableSymbol = getSymbolOfType<KtCallableSymbol>()
 
     private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference
 
@@ -296,4 +579,7 @@ object K2SemanticMatcher {
 
     private fun KtExpression.isAssignmentOperation(): Boolean =
         (this as? KtOperationReferenceExpression)?.operationSignTokenType == KtTokens.EQ
+
+    private fun KtCallableDeclaration.isFunctionLiteralWithoutParameterSpecification(): Boolean =
+        this is KtFunctionLiteral && !this.hasParameterSpecification()
 }
