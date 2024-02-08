@@ -15,7 +15,15 @@ import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.*
+
+private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(EnumSet.of(
+  PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+  PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+  PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+))
 
 internal suspend fun packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
@@ -73,10 +81,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         continue
       }
 
-      var file: Path? = if (
-        os == OsFamily.LINUX ||
-        signTool.signNativeFileMode != SignNativeFileMode.ENABLED
-      ) {
+      var file: Path? = if (os == OsFamily.LINUX || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
         null
       }
       else {
@@ -87,18 +92,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
         file = tempDir.resolve(path)!!
         if (!dryRun) {
-          Files.createDirectories(file.parent)
-          FileChannel.open(file, W_CREATE_NEW).use { channel ->
-            val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
-            try {
-              while (byteBuffer.hasRemaining()) {
-                channel.write(byteBuffer)
-              }
-            }
-            finally {
-              zipFile.releaseBuffer(byteBuffer)
-            }
-          }
+          extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage)
         }
 
         if (os != OsFamily.LINUX) {
@@ -139,6 +133,25 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   }
 }
 
+private fun extractFileToDisk(file: Path, zipFile: HashMapZipFile, pathWithPackage: String) {
+  Files.createDirectories(file.parent)
+  when {
+    // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)
+    !isWindows && !file.fileName.toString().contains('.') -> FileChannel.open(file, W_CREATE_NEW, posixExecutableFileAttribute)
+    else -> FileChannel.open(file, W_CREATE_NEW)
+  }.use { channel ->
+    val byteBuffer = zipFile.getByteBuffer(pathWithPackage)!!
+    try {
+      while (byteBuffer.hasRemaining()) {
+        channel.write(byteBuffer)
+      }
+    }
+    finally {
+      zipFile.releaseBuffer(byteBuffer)
+    }
+  }
+}
+
 /**
  * Represent CPU architecture for which native code was built.
  */
@@ -153,6 +166,7 @@ private enum class NativeFileArchitecture(val jvmArch: JvmArchitecture?) {
   }
 }
 
+@Suppress("SpellCheckingInspection")
 private fun determineArch(os: OsFamily, path: String): NativeFileArchitecture? {
   // detect architecture from subfolders e.g. "linux-aarch64/libsqliteij.so"
   val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.substring(0, it) } ?: return null
