@@ -85,16 +85,16 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : EmbeddingsStorag
 
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
-    if (index.size == 0) return emptyList()
     triggerIndexing() // trigger indexing on first search usage
+    if (index.size == 0) return emptyList()
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
   }
 
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
-    if (index.size == 0) return emptySequence()
     triggerIndexing() // trigger indexing on first search usage
+    if (index.size == 0) return emptySequence()
     val embedding = generateEmbedding(text) ?: return emptySequence()
     return index.streamFindClose(embedding, similarityThreshold)
   }

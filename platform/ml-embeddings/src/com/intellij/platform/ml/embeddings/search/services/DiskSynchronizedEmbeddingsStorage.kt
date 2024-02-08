@@ -15,16 +15,16 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
 
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
-    if (index.size == 0) return emptyList()
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
+    if (index.size == 0) return emptyList()
     val embedding = generateEmbedding(text) ?: return emptyList()
     return index.findClosest(embedding, topK, similarityThreshold)
   }
 
   @RequiresBackgroundThread
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
-    if (index.size == 0) return emptySequence()
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
+    if (index.size == 0) return emptySequence()
     val embedding = generateEmbedding(text) ?: return emptySequence()
     return index.streamFindClose(embedding, similarityThreshold)
   }
