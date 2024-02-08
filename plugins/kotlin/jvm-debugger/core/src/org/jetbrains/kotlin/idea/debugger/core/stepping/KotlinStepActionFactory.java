@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.stepping;
 
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.MethodFilter;
-import com.intellij.debugger.engine.RequestHint;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.statistics.Engine;
@@ -31,6 +28,12 @@ public final class KotlinStepActionFactory {
             @Override
             protected @NotNull String getStatusText() {
                 return KotlinDebuggerCoreBundle.message("stepping.over.inline");
+            }
+
+            @Override
+            public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
+                LightOrRealThreadInfo lightFilter = CoroutineJobInfo.extractJobInfo(suspendContext);
+                return lightFilter != null ? lightFilter : super.getThreadFilterFromContext(suspendContext);
             }
 
             @Override

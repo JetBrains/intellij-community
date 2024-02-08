@@ -1965,6 +1965,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (activeExecutionStack != null) {
           thread = activeExecutionStack.getThreadProxy();
         }
+        else if (suspendContext.getAnotherThreadToFocus() != null) {
+          thread = suspendContext.getAnotherThreadToFocus();
+        }
         else {
           thread = suspendContext.getThread();
         }
