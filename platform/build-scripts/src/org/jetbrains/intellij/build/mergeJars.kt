@@ -141,6 +141,8 @@ data class InMemoryContentSource(@JvmField val relativePath: String, @JvmField v
 internal interface NativeFileHandler {
   val sourceToNativeFiles: MutableMap<ZipSource, List<String>>
 
+  fun isNative(name: String): Boolean
+
   suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path?
 }
 
@@ -272,7 +274,7 @@ private suspend fun handleZipSource(source: ZipSource,
     }
 
     if (isIncluded && !isDuplicated(uniqueNames, name, sourceFile)) {
-      if (nativeFileHandler != null && isNative(name)) {
+      if (nativeFileHandler?.isNative(name) == true) {
         if (source.isPreSignedAndExtractedCandidate) {
           nativeFiles!!.value.add(name)
         }
@@ -317,17 +319,6 @@ private fun isDuplicated(uniqueNames: MutableMap<String, Path>, name: String, so
     AttributeKey.stringKey("secondSource"), sourceFile.toString(),
   ))
   return true
-}
-
-fun isNative(name: String): Boolean {
-  @Suppress("SpellCheckingInspection", "RedundantSuppression")
-  return name.endsWith(".jnilib") ||
-         name.endsWith(".dylib") ||
-         name.endsWith(".so") ||
-         name.endsWith(".exe") ||
-         name.endsWith(".dll") ||
-         name.endsWith(".node") ||
-         name.endsWith(".tbd")
 }
 
 @Suppress("SpellCheckingInspection")

@@ -17,18 +17,23 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-internal suspend fun packNativePresignedFiles(nativeFiles: Map<ZipSource, List<String>>, dryRun: Boolean, context: BuildContext) {
+internal suspend fun packNativePresignedFiles(
+  nativeFiles: Map<ZipSource, List<String>>,
+  dryRun: Boolean,
+  context: BuildContext,
+  outDir: Path,
+) {
   coroutineScope {
     for ((source, paths) in nativeFiles) {
       val sourceFile = source.file
       launch(Dispatchers.IO) {
-        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context)
+        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context, outputDir = outDir)
       }
     }
   }
 }
 
-private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, dryRun: Boolean, context: BuildContext) {
+private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, dryRun: Boolean, context: BuildContext, outputDir: Path) {
   val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
@@ -48,19 +53,19 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   val allPlatformsRequired = libName == "async-profiler"
 
   HashMapZipFile.load(sourceFile).use { zipFile ->
-    val outDir = context.paths.tempDir.resolve(libName)
-    Files.createDirectories(outDir)
+    val tempDir = context.paths.tempDir.resolve(libName)
+    Files.createDirectories(tempDir)
     for (pathWithPackage in paths) {
       val path = pathWithPackage.substring(packagePrefix.length)
       val fileName = path.substring(path.lastIndexOf('/') + 1)
 
-      val os = determineOsFamily(path, fileName) ?: continue
+      val os = determineOsFamily(path) ?: continue
 
       if (!allPlatformsRequired && !context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
         continue
       }
 
-      val nativeFileArchitecture = determineArch(os, path, fileName) ?: continue
+      val nativeFileArchitecture = determineArch(os, path) ?: continue
 
       if (!allPlatformsRequired &&
           !nativeFileArchitecture.compatibleWithTarget(context.options.targetArch) &&
@@ -80,7 +85,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
 
       if (file == null) {
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        file = outDir.resolve(path)!!
+        file = tempDir.resolve(path)!!
         if (!dryRun) {
           Files.createDirectories(file.parent)
           FileChannel.open(file, W_CREATE_NEW).use { channel ->
@@ -102,11 +107,14 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
       }
 
       val arch = nativeFileArchitecture.jvmArch
-      val relativePath = "lib/$libName/" + getRelativePath(libName, arch, fileName, path)
-      val distFile = DistFile(file = file, relativePath = relativePath,
-                              os = os.takeUnless { allPlatformsRequired },
-                              arch = arch.takeUnless { allPlatformsRequired })
-      context.addDistFile(distFile)
+      val relativePath = outputDir.resolve(libName)
+        .resolve(getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path))
+      context.addDistFile(DistFile(
+        file = file,
+        relativePath = relativePath.toString(),
+        os = os.takeUnless { allPlatformsRequired },
+        arch = arch.takeUnless { allPlatformsRequired },
+      ))
     }
   }
 
@@ -145,36 +153,23 @@ private enum class NativeFileArchitecture(val jvmArch: JvmArchitecture?) {
   }
 }
 
-private fun determineArch(os: OsFamily, path: String, fileName: String): NativeFileArchitecture? {
+private fun determineArch(os: OsFamily, path: String): NativeFileArchitecture? {
   // detect architecture from subfolders e.g. "linux-aarch64/libsqliteij.so"
-  val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.substring(0, it) }
-  if (osAndArch != null) {
-    when {
-      osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> {
-        return AARCH_64
-      }
-      path.contains("x86-64") || path.contains("x86_64") -> {
-        return X_64
-      }
-      os == OsFamily.MACOS && path.count { it == '/' } == 1 -> {
-        return UNIVERSAL
-      }
-      !osAndArch.contains('-') && path.count { it == '/' } == 1 -> {
-        return X_64
-      }
-    }
+  val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.substring(0, it) } ?: return null
+  return when {
+    osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> AARCH_64
+    path.contains("x86-64") || path.contains("x86_64") -> X_64
+    os == OsFamily.MACOS && path.count { it == '/' } == 1 -> UNIVERSAL
+    !osAndArch.contains('-') && path.count { it == '/' } == 1 -> X_64
+    else -> null
   }
-
-  return null
 }
 
-private fun determineOsFamily(path: String, fileName: String): OsFamily? {
+private fun determineOsFamily(path: String): OsFamily? {
   val osFromPath = when {
     osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") || osNameStartsWith(path, "macos") -> OsFamily.MACOS
     path.startsWith("win32-") || osNameStartsWith(path, "win") || osNameStartsWith(path, "windows") -> OsFamily.WINDOWS
-    path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> {
-      return null
-    }
+    path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> return null
     osNameStartsWith(path, "linux") -> OsFamily.LINUX
     else -> null
   }
@@ -198,5 +193,5 @@ private fun getLibNameBySourceFile(sourceFile: Path): String {
 }
 
 private fun osNameStartsWith(path: String, prefix: String): Boolean {
-  return path.startsWith("${prefix}-", ignoreCase = true) || path.startsWith("${prefix}/", ignoreCase = true)
+  return path.startsWith("$prefix-", ignoreCase = true) || path.startsWith("$prefix/", ignoreCase = true)
 }
