@@ -30,6 +30,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -1104,6 +1105,11 @@ public final class PsiUtil extends PsiUtilCore {
     }
 
     PsiFile file = element.getContainingFile();
+    // Could be non-physical 'light file' created by some JVM languages
+    PsiFile navigationFile = file == null ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
+    if (navigationFile != null) {
+      file = navigationFile;
+    }
     if (file instanceof PsiJavaFile) {
       return ((PsiJavaFile)file).getLanguageLevel();
     }
