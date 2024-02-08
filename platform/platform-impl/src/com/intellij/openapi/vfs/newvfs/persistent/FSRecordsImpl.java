@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
@@ -201,6 +201,8 @@ public final class FSRecordsImpl implements Closeable {
    */
   private final @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy;
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
+  /** Statistics: how many times {@link #processFilesWithNames(Set, IntPredicate)} was called */
+  private final AtomicLong invertedNameIndexRequestsServed = new AtomicLong();
 
   private final @Nullable Closeable flushingTask;
 
@@ -919,6 +921,7 @@ public final class FSRecordsImpl implements Closeable {
           nameIds.add(nameId);
         }
       }
+      invertedNameIndexRequestsServed.incrementAndGet();
       return invertedNameIndexLazy.getValue().processFilesWithNames(nameIds, processor);
     }
     catch (IOException e) {
@@ -1446,6 +1449,10 @@ public final class FSRecordsImpl implements Closeable {
     return connection.corruptionsDetected();
   }
 
+  public long invertedNameIndexRequestsServed() {
+    return invertedNameIndexRequestsServed.get();
+  }
+
   //========== accessors for diagnostics & sanity checks: ========================
 
 
@@ -1468,6 +1475,8 @@ public final class FSRecordsImpl implements Closeable {
   PersistentFSRecordAccessor recordAccessor() {
     return recordAccessor;
   }
+
+
 
 
   @VisibleForTesting

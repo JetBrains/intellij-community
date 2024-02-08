@@ -45,10 +45,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.*;
@@ -70,6 +73,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -118,6 +122,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private final Application app;
 
+  //=========================== statistics:   ======================================================
+  private final AtomicLong fileByIdCacheHits = new AtomicLong();
+  private final AtomicLong fileByIdCacheMisses = new AtomicLong();
+
+  private final AtomicLong childByName = new AtomicLong();
+
+
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
     myVfsData = new VfsData(app, this);
@@ -160,6 +171,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     // state because of that. It's absolutely important to shutdown VFS after Indexes eagerly otherwise data might be lost.
     // Services might throw `AlreadyDisposedException`-s after and we have to suppress those exceptions or wrap with PCE-s.
     ShutDownTracker.getInstance().registerCacheShutdownTask(this::disconnect);
+
+    setupOTelMonitoring(TelemetryManager.getInstance().getMeter(PlatformScopesKt.VFS));
   }
 
   @ApiStatus.Internal
@@ -1728,13 +1741,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public @Nullable NewVirtualFile findFileById(int fileId) {
     if (fileId == FSRecords.NULL_FILE_ID) {
+      fileByIdCacheHits.incrementAndGet();  //a bit of a stretch, but...
       return null;
     }
     VirtualFileSystemEntry cached = myIdToDirCache.getCachedDir(fileId);
     if (cached != null) {
+      fileByIdCacheHits.incrementAndGet();
       return cached;
     }
 
+    fileByIdCacheMisses.incrementAndGet();
     ParentFinder finder = new ParentFinder();
     return finder.find(fileId);
   }
@@ -2442,6 +2458,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer;
   }
 
+
+  @ApiStatus.Internal
+  public void incrementFindChildByNameCount() {
+    childByName.incrementAndGet();
+  }
+
+
   @TestOnly
   @NotNull
   Iterable<? extends VirtualFileSystemEntry> getDirCache() {
@@ -2469,6 +2492,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
            (isHidden ? Flags.IS_HIDDEN : 0) |
            (isChildrenCaseSensitivityCached ? Flags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
            (areChildrenCaseSensitive ? Flags.CHILDREN_CASE_SENSITIVE : 0);
+  }
+
+  private void setupOTelMonitoring(@NotNull Meter meter) {
+    var fileByIdCacheHitsCounter = meter.counterBuilder("VFS.fileByIdCache.hits").buildObserver();
+    var fileByIdCacheMissesCounter = meter.counterBuilder("VFS.fileByIdCache.misses").buildObserver();
+    var fileChildByNameCounter = meter.counterBuilder("VFS.fileChildByName").buildObserver();
+    var invertedFileNameIndexRequestsCount = meter.counterBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
+    meter.batchCallback(() -> {
+      fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
+      fileByIdCacheMissesCounter.record(fileByIdCacheMisses.get());
+      fileChildByNameCounter.record(childByName.get());
+      FSRecordsImpl vfs = vfsPeer;
+      if (vfs != null) {
+        invertedFileNameIndexRequestsCount.record(vfs.invertedNameIndexRequestsServed());
+      }
+    }, fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter, invertedFileNameIndexRequestsCount);
   }
 
   private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {

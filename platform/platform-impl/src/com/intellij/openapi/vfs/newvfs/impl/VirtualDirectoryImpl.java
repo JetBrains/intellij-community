@@ -79,6 +79,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                                      boolean doRefresh,
                                                      boolean ensureCanonicalName,
                                                      @NotNull NewVirtualFileSystem fs) {
+    owningPersistentFS().incrementFindChildByNameCount();
+    
     updateCaseSensitivityIfUnknown(name);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, fs, isCaseSensitive());
 
