@@ -32,6 +32,7 @@ public class DynamicBundle extends AbstractBundle {
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
 
+  public static final Map<String, ResourceBundle> bundles = new HashMap<>();
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
    * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
@@ -86,7 +87,9 @@ public class DynamicBundle extends AbstractBundle {
     if (!resourceBundleEntry.isPresent()) {
       throw new RuntimeException("No such resource bundle: " + bundlePath);
     }
-    return resourceBundleEntry.get().getValue();
+    ResourceBundle bundle = resourceBundleEntry.get().getValue();
+    bundles.put(defaultPath, bundle);
+    return bundle;
   }
 
   @ApiStatus.Internal

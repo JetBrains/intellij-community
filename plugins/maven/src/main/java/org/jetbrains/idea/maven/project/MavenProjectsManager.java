@@ -72,9 +72,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable,
              MavenAsyncProjectsManager {
   private final ReentrantLock initLock = new ReentrantLock();
+  private final AtomicBoolean projectsTreeInitialized = new AtomicBoolean();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
-  private final AtomicBoolean runImportOnStartup = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
@@ -87,8 +87,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ModificationTracker myModificationTracker;
-
-  private MavenWorkspaceSettings myWorkspaceSettings;
 
   private final AtomicReference<MavenSyncConsole> mySyncConsole = new AtomicReference<>();
   private final MavenMergingUpdateQueue mySaveQueue;
@@ -128,7 +126,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
     if (isInitialized()) {
-      applyStateToTree(myProjectsTree, this);
+      applyStateToTree(getProjectsTree(), this);
       scheduleUpdateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManager.loadState"));
     }
   }
@@ -162,11 +160,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private MavenWorkspaceSettings getWorkspaceSettings() {
-    if (myWorkspaceSettings == null) {
-      myWorkspaceSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    }
-
-    return myWorkspaceSettings;
+    return MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
   }
 
   public File getLocalRepository() {
@@ -175,34 +169,13 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public int getFilterConfigCrc(@NotNull ProjectFileIndex projectFileIndex) {
-    return myProjectsTree.getFilterConfigCrc(projectFileIndex);
+    return getProjectsTree().getFilterConfigCrc(projectFileIndex);
   }
 
   @TestOnly
   public void initForTests() {
-    loadExistingTreeAndInit();
-  }
-
-  private void tryInit() {
-    if (!isNormalProject()) {
-      return;
-    }
-    boolean wasMavenized = !myState.originalFiles.isEmpty();
-    if (!wasMavenized) {
-      return;
-    }
-    loadExistingTreeAndInit();
-  }
-
-  private void loadExistingTreeAndInit() {
-    tryToLoadExistingTree();
+    initProjectsTree();
     doInit();
-    runImportOnStartup.set(true);
-  }
-
-  private void initAndActivate() {
-    doInit();
-    doActivate();
   }
 
   private void doInit() {
@@ -214,7 +187,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
       initPreloadMavenServices();
-      initProjectsTree();
       initWorkers();
       listenForSettingsChanges();
       registerSyncConsoleListener();
@@ -249,16 +221,18 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   protected void onProjectStartup() {
-    tryInit();
-    if (isInitialized()) {
-      doActivate();
-      if (runImportOnStartup.get()) {
-        var forceImport =
-          Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
-        if (forceImport) {
-          scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
-        }
-      }
+    if (!isNormalProject()) return;
+
+    boolean wasMavenized = !myState.originalFiles.isEmpty();
+    if (!wasMavenized) return;
+
+    initProjectsTree();
+    doInit();
+    doActivate();
+    var forceImport =
+      Boolean.TRUE.equals(myProject.getUserData(WorkspaceProjectImporterKt.getNOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY()));
+    if (forceImport) {
+      scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.onProjectStartup"));
     }
   }
 
@@ -301,39 +275,47 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     return mySyncConsole.get();
   }
 
-  private void tryToLoadExistingTree() {
-    Path file = getProjectsTreeFile();
+  private void initProjectsTree() {
+    initLock.lock();
     try {
-      if (Files.exists(file)) {
-        var readTree = MavenProjectsTree.read(myProject, file);
-        if (null != readTree) {
-          myProjectsTree = readTree;
-        }
-        else {
-          MavenLog.LOG.warn("Could not load existing tree, read null");
+      if (projectsTreeInitialized.getAndSet(true)) return;
+
+      try {
+        Path file = getProjectsTreeFile();
+        if (Files.exists(file)) {
+          var readTree = MavenProjectsTree.read(myProject, file);
+          if (null != readTree) {
+            myProjectsTree = readTree;
+          }
+          else {
+            MavenLog.LOG.warn("Could not load existing tree, read null");
+          }
         }
       }
-    }
-    catch (IOException e) {
-      MavenLog.LOG.info(e);
-    }
-  }
+      catch (IOException e) {
+        MavenLog.LOG.info(e);
+      }
 
-  @NotNull
-  private MavenProjectsTree initProjectsTree() {
-    if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
-    applyStateToTree(myProjectsTree, this);
-    myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
-    return myProjectsTree;
+      if (myProjectsTree == null) {
+        myProjectsTree = new MavenProjectsTree(myProject);
+      }
+
+      applyStateToTree(myProjectsTree, this);
+      myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
+    }
+    finally {
+      initLock.unlock();
+    }
   }
 
   private void applyTreeToState() {
-    myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.ignoredFiles = new HashSet<>(myProjectsTree.getIgnoredFilesPaths());
-    myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
+    var tree = getProjectsTree();
+    myState.originalFiles = tree.getManagedFilesPaths();
+    myState.ignoredFiles = new HashSet<>(tree.getIgnoredFilesPaths());
+    myState.ignoredPathMasks = tree.getIgnoredFilesPatterns();
   }
 
-  public static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
+  private static void applyStateToTree(MavenProjectsTree tree, MavenProjectsManager manager) {
     MavenWorkspaceSettings settings = manager.getWorkspaceSettings();
     MavenExplicitProfiles explicitProfiles = new MavenExplicitProfiles(settings.enabledProfiles, settings.disabledProfiles);
     tree.resetManagedFilesPathsAndProfiles(manager.myState.originalFiles, explicitProfiles);
@@ -343,15 +325,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void doSave() {
-    if (myProjectsTree == null) {
-      return;
-    }
-
     mySaveQueue.queue(new Update(this) {
       @Override
       public void run() {
         try {
-          myProjectsTree.save(getProjectsTreeFile());
+          getProjectsTree().save(getProjectsTreeFile());
         }
         catch (IOException e) {
           MavenLog.LOG.info(e);
@@ -441,13 +419,14 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected void doAddManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles, Module previewModuleToDelete) {
     myPreviewModule = previewModuleToDelete;
     if (!isInitialized()) {
-      initAndActivate();
+      doInit();
+      doActivate();
       var distributionUrl = getWrapperDistributionUrl(ProjectUtil.guessProjectDir(myProject));
       if (distributionUrl != null) {
         getGeneralSettings().setMavenHomeType(MavenWrapper.INSTANCE);
       }
     }
-    myProjectsTree.addManagedFilesWithProfiles(files, profiles);
+    getProjectsTree().addManagedFilesWithProfiles(files, profiles);
   }
 
   public void addManagedFiles(@NotNull List<VirtualFile> files) {
@@ -466,80 +445,67 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isManagedFile(@NotNull VirtualFile f) {
-    if (!isInitialized()) return false;
-    return myProjectsTree.isManagedFile(f);
+    return getProjectsTree().isManagedFile(f);
   }
 
   @NotNull
   public MavenExplicitProfiles getExplicitProfiles() {
-    if (!isInitialized()) return MavenExplicitProfiles.NONE;
-    return myProjectsTree.getExplicitProfiles();
+    return getProjectsTree().getExplicitProfiles();
   }
 
   @NotNull
   public Collection<String> getAvailableProfiles() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getAvailableProfiles();
+    return getProjectsTree().getAvailableProfiles();
   }
 
   @NotNull
   public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getProfilesWithStates();
+    return getProjectsTree().getProfilesWithStates();
   }
 
   public boolean hasProjects() {
-    if (!isInitialized()) return false;
-    return myProjectsTree.hasProjects();
+    return getProjectsTree().hasProjects();
   }
 
   @NotNull
   public List<MavenProject> getProjects() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getProjects();
+    return getProjectsTree().getProjects();
   }
 
   @NotNull
   public List<MavenProject> getRootProjects() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getRootProjects();
+    return getProjectsTree().getRootProjects();
   }
 
   @NotNull
   public List<MavenProject> getNonIgnoredProjects() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getNonIgnoredProjects();
+    return getProjectsTree().getNonIgnoredProjects();
   }
 
   @NotNull
   public List<VirtualFile> getProjectsFiles() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getProjectsFiles();
+    return getProjectsTree().getProjectsFiles();
   }
 
   @Nullable
   public MavenProject findProject(@NotNull VirtualFile f) {
-    if (!isInitialized()) return null;
-    return myProjectsTree.findProject(f);
+    return getProjectsTree().findProject(f);
   }
 
 
   public MavenProject findSingleProjectInReactor(@NotNull MavenId id) {
-    if (!isInitialized()) return null;
-    return myProjectsTree.findSingleProjectInReactor(id);
+    return getProjectsTree().findSingleProjectInReactor(id);
   }
 
 
   @Nullable
   public MavenProject findProject(@NotNull MavenId id) {
-    if (!isInitialized()) return null;
-    return myProjectsTree.findProject(id);
+    return getProjectsTree().findProject(id);
   }
 
   @Nullable
   public MavenProject findProject(@NotNull MavenArtifact artifact) {
-    if (!isInitialized()) return null;
-    return myProjectsTree.findProject(artifact);
+    return getProjectsTree().findProject(artifact);
   }
 
   @Nullable
@@ -579,8 +545,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @NotNull
   public Collection<MavenProject> findInheritors(@Nullable MavenProject parent) {
-    if (parent == null || !isInitialized()) return Collections.emptyList();
-    return myProjectsTree.findInheritors(parent);
+    if (parent == null) return Collections.emptyList();
+    return getProjectsTree().findInheritors(parent);
   }
 
   @Nullable
@@ -623,68 +589,56 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   public MavenProject findAggregator(@NotNull MavenProject mavenProject) {
-    if (!isInitialized()) return null;
-    return myProjectsTree.findAggregator(mavenProject);
+    return getProjectsTree().findAggregator(mavenProject);
   }
 
   @Nullable
   public MavenProject findRootProject(@NotNull MavenProject mavenProject) {
-    if (!isInitialized()) return null;
-    return myProjectsTree.findRootProject(mavenProject);
+    return getProjectsTree().findRootProject(mavenProject);
   }
 
   @NotNull
   public List<MavenProject> getModules(@NotNull MavenProject aggregator) {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getModules(aggregator);
+    return getProjectsTree().getModules(aggregator);
   }
 
   @NotNull
   public List<String> getIgnoredFilesPaths() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getIgnoredFilesPaths();
+    return getProjectsTree().getIgnoredFilesPaths();
   }
 
   public void setIgnoredFilesPaths(@NotNull List<String> paths) {
-    if (!isInitialized()) return;
-    myProjectsTree.setIgnoredFilesPaths(paths);
+    getProjectsTree().setIgnoredFilesPaths(paths);
   }
 
   public void removeIgnoredFilesPaths(final Collection<String> paths) {
-    if (!isInitialized()) return;
-    myProjectsTree.removeIgnoredFilesPaths(paths);
+    getProjectsTree().removeIgnoredFilesPaths(paths);
   }
 
   public boolean getIgnoredState(@NotNull MavenProject project) {
-    if (!isInitialized()) return false;
-    return myProjectsTree.getIgnoredState(project);
+    return getProjectsTree().getIgnoredState(project);
   }
 
   @ApiStatus.Internal
   public void setIgnoredStateForPoms(@NotNull List<String> pomPaths, boolean ignored) {
-    if (!isInitialized()) return;
-    myProjectsTree.setIgnoredStateForPoms(pomPaths, ignored);
+    getProjectsTree().setIgnoredStateForPoms(pomPaths, ignored);
   }
 
   public void setIgnoredState(@NotNull List<MavenProject> projects, boolean ignored) {
-    if (!isInitialized()) return;
-    myProjectsTree.setIgnoredState(projects, ignored);
+    getProjectsTree().setIgnoredState(projects, ignored);
   }
 
   @NotNull
   public List<String> getIgnoredFilesPatterns() {
-    if (!isInitialized()) return Collections.emptyList();
-    return myProjectsTree.getIgnoredFilesPatterns();
+    return getProjectsTree().getIgnoredFilesPatterns();
   }
 
   public void setIgnoredFilesPatterns(@NotNull List<String> patterns) {
-    if (!isInitialized()) return;
-    myProjectsTree.setIgnoredFilesPatterns(patterns);
+    getProjectsTree().setIgnoredFilesPatterns(patterns);
   }
 
   public boolean isIgnored(@NotNull MavenProject project) {
-    if (!isInitialized()) return false;
-    return myProjectsTree.isIgnored(project);
+    return getProjectsTree().isIgnored(project);
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {
@@ -704,8 +658,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @NotNull
   public MavenProjectsTree getProjectsTree() {
     if (myProjectsTree == null) {
-      tryToLoadExistingTree();
-      return initProjectsTree();
+      initProjectsTree();
     }
     return myProjectsTree;
   }
@@ -717,12 +670,12 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected abstract List<Module> updateAllMavenProjectsSync(MavenImportSpec spec);
 
   public synchronized void removeManagedFiles(@NotNull List<@NotNull VirtualFile> files) {
-    myProjectsTree.removeManagedFiles(files);
+    getProjectsTree().removeManagedFiles(files);
     scheduleUpdateAllMavenProjects(MavenSyncSpec.full("MavenProjectsManager.removeManagedFiles", true));
   }
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
-    myProjectsTree.setExplicitProfiles(profiles);
+    getProjectsTree().setExplicitProfiles(profiles);
   }
 
   @ApiStatus.Internal
