@@ -24,12 +24,14 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstallationService
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.io.computeDetached
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.coroutines.*
@@ -129,6 +131,7 @@ sealed interface PluginAdvertiserService {
   fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {})
 }
 
+@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
 open class PluginAdvertiserServiceImpl(
   private val project: Project,
   private val cs: CoroutineScope,
@@ -249,8 +252,8 @@ open class PluginAdvertiserServiceImpl(
         dependencies.get(implementationName).forEach(::putFeature)
       }
       else {
-        MarketplaceRequests.getInstance()
-          .getFeatures(featureType, implementationName)
+        val marketplaceFeatures = computeDetached { MarketplaceRequests.getInstance ().getFeatures(featureType, implementationName) }
+        marketplaceFeatures
           .asSequence()
           .mapNotNull { it.toPluginData() }
           .forEach { putFeature(it) }
@@ -271,17 +274,19 @@ open class PluginAdvertiserServiceImpl(
 
     val pluginIds = plugins.asSequence().map { it.pluginId }.toSet()
 
+    val lastCompatiblePluginDescriptors = computeDetached { MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds) }
     val result = ArrayList<IdeaPluginDescriptor>(RepositoryHelper.mergePluginsFromRepositories(
-      MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
+      lastCompatiblePluginDescriptors,
       customPlugins,
       true,
     ).asSequence()
       .filter { pluginIds.contains(it.pluginId) }
       .filterNot { isBrokenPlugin(it) }
-                                                   .filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
+      .filter { PluginManagementPolicy.getInstance().canInstallPlugin(it) }
       .toList())
 
-    for (compatibleUpdate in MarketplaceRequests.getLastCompatiblePluginUpdate(result.map { it.pluginId }.toSet())) {
+    val lastCompatiblePluginUpdate = computeDetached { MarketplaceRequests.getLastCompatiblePluginUpdate (result.map { it.pluginId }.toSet()) }
+    for (compatibleUpdate in lastCompatiblePluginUpdate) {
       val node = result.find { it.pluginId.idString == compatibleUpdate.pluginId }
       if (node is PluginNode) {
         node.externalPluginId = compatibleUpdate.externalPluginId
@@ -345,12 +350,13 @@ open class PluginAdvertiserServiceImpl(
     return node
   }
 
-  private fun fetchPluginSuggestions(
+  private suspend fun fetchPluginSuggestions(
     pluginIds: Set<PluginId>,
     customPlugins: List<PluginNode>
   ): List<PluginDownloader> {
+    val lastCompatiblePluginDescriptors = computeDetached { MarketplaceRequests.loadLastCompatiblePluginDescriptors (pluginIds) }
     return RepositoryHelper.mergePluginsFromRepositories(
-      MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds),
+      lastCompatiblePluginDescriptors,
       customPlugins,
       true,
     ).asSequence()
@@ -589,7 +595,7 @@ open class PluginAdvertiserServiceImpl(
     val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
     if (dependencyUnknownFeatures.isNotEmpty()) {
       run(
-        customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null),
+        customPlugins = computeDetached { RepositoryHelper.loadPluginsFromCustomRepositories(null) },
         unknownFeatures = dependencyUnknownFeatures,
       )
     }
