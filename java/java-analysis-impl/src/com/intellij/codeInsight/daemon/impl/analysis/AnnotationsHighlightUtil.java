@@ -680,7 +680,8 @@ public final class AnnotationsHighlightUtil {
   }
 
   static HighlightInfo.Builder checkFunctionalInterface(@NotNull PsiAnnotation annotation, @NotNull LanguageLevel languageLevel) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
+    if (JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(languageLevel) && 
+        Comparing.strEqual(annotation.getQualifiedName(), CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE)) {
       PsiAnnotationOwner owner = annotation.getOwner();
       if (owner instanceof PsiModifierList) {
         PsiElement parent = ((PsiModifierList)owner).getParent();

@@ -159,19 +159,18 @@ public class SwitchBlockHighlightingModel {
     SelectorKind kind = getSwitchSelectorKind();
     if (kind == SelectorKind.INT) return;
 
-    LanguageLevel requiredLevel = null;
-    if (kind == SelectorKind.ENUM) requiredLevel = LanguageLevel.JDK_1_5;
-    if (kind == SelectorKind.STRING) requiredLevel = LanguageLevel.JDK_1_7;
+    JavaFeature requiredFeature = null;
+    if (kind == SelectorKind.ENUM) requiredFeature = JavaFeature.ENUMS;
+    if (kind == SelectorKind.STRING) requiredFeature = JavaFeature.STRING_SWITCH;
 
-    if (kind == null || requiredLevel != null && !myLevel.isAtLeast(requiredLevel)) {
+    if (kind == null || requiredFeature != null && !requiredFeature.isSufficient(myLevel)) {
       boolean is7 = myLevel.isAtLeast(LanguageLevel.JDK_1_7);
       String expected = JavaErrorBundle.message(is7 ? "valid.switch.1_7.selector.types" : "valid.switch.selector.types");
       HighlightInfo.Builder info =
         createError(mySelector, JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType)));
       registerFixesOnInvalidSelector(info);
-      if (requiredLevel != null) {
-        IntentionAction action = getFixFactory().createIncreaseLanguageLevelFix(requiredLevel);
-        info.registerFix(action, null, null, null, null);
+      if (requiredFeature != null) {
+        HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, requiredFeature, info);
       }
       errorSink.accept(info);
     }

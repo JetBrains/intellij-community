@@ -252,7 +252,7 @@ public final class SwitchUtils {
     if (expression == null) {
       return null;
     }
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
+    if (JavaFeature.STRING_SWITCH.isSufficient(languageLevel)) {
       final PsiExpression jdk17Expression = determinePossibleJdk17SwitchExpression(expression, null);
       if (jdk17Expression != null) {
         return jdk17Expression;
@@ -472,8 +472,8 @@ public final class SwitchUtils {
     if (expression == null) {
       return false;
     }
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && expression instanceof PsiReferenceExpression) {
-      final PsiElement referent = ((PsiReference)expression).resolve();
+    if (JavaFeature.ENUMS.isSufficient(languageLevel) && expression instanceof PsiReferenceExpression ref) {
+      final PsiElement referent = ref.resolve();
       if (referent instanceof PsiEnumConstant) {
         return existingCaseValues == null || existingCaseValues.add(referent);
       }

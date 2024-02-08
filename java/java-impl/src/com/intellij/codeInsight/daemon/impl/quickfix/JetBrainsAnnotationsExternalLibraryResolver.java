@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ public final class JetBrainsAnnotationsExternalLibraryResolver extends ExternalL
 
   @NotNull
   public static ExternalLibraryDescriptor getAnnotationsLibraryDescriptor(@NotNull Module contextModule) {
-    boolean java8 = LanguageLevelUtil.getEffectiveLanguageLevel(contextModule).isAtLeast(LanguageLevel.JDK_1_8);
+    boolean java8 = JavaFeature.TYPE_ANNOTATIONS.isSufficient(LanguageLevelUtil.getEffectiveLanguageLevel(contextModule));
     return java8 ? JAVA8 : JAVA5;
   }
 

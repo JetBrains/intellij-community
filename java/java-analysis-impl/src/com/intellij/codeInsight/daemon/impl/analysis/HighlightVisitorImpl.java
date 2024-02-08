@@ -771,7 +771,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!hasErrorResults()) {
         add(HighlightClassUtil.checkClassRestrictedKeyword(myLanguageLevel, identifier));
       }
-      if (!hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      if (!hasErrorResults() && JavaFeature.EXTENSION_METHODS.isSufficient(myLanguageLevel)) {
         add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
       }
 

@@ -5,7 +5,7 @@ import com.intellij.codeInsight.MemberImplementorExplorer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
@@ -111,8 +111,7 @@ public class OverrideImplementExploreUtil {
   }
 
   private static boolean isDefaultMethod(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
-    return method.hasModifierProperty(PsiModifier.DEFAULT) &&
-           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8);
+    return method.hasModifierProperty(PsiModifier.DEFAULT) && PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass);
   }
 
   private static void fillMap(@NotNull HierarchicalMethodSignature signature, @NotNull PsiMethod method, @NotNull Map<MethodSignature, PsiMethod> map) {

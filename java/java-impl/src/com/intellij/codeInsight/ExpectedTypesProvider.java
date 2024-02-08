@@ -575,14 +575,13 @@ public final class ExpectedTypesProvider {
       }
       myResult.add(createInfoImpl(PsiTypes.intType(), PsiTypes.intType()));
       LanguageLevel level = PsiUtil.getLanguageLevel(statement);
-      if (level.isAtLeast(LanguageLevel.JDK_1_5)) {
+      if (JavaFeature.ENUMS.isSufficient(level)) {
         PsiClassType enumType = TypeUtils.getType(CommonClassNames.JAVA_LANG_ENUM, statement);
         myResult.add(createInfoImpl(enumType, enumType));
-
-        if (JavaFeature.STRING_SWITCH.isSufficient(level)) {
-          PsiClassType stringType = TypeUtils.getStringType(statement);
-          myResult.add(createInfoImpl(stringType, stringType));
-        }
+      }
+      if (JavaFeature.STRING_SWITCH.isSufficient(level)) {
+        PsiClassType stringType = TypeUtils.getStringType(statement);
+        myResult.add(createInfoImpl(stringType, stringType));
       }
     }
 

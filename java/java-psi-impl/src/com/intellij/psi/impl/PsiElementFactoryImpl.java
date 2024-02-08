@@ -9,6 +9,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -59,7 +60,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   private PsiClass createArrayClass(LanguageLevel level) {
-    String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
+    String text = JavaFeature.GENERICS.isSufficient(level) ?
                   "public static class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
                   "public static class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);

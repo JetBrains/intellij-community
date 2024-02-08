@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -266,7 +267,7 @@ public final class TypeConversionUtil {
     PsiManager manager = fromClass.getManager();
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     //  jep-397
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_17)) {
+    if (JavaFeature.SEALED_CLASSES.isSufficient(languageLevel)) {
       if (fromClass.isInterface() || toClass.isInterface()) {
         if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
           if (!canConvertSealedTo(fromClass, toClass)) return false;

@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
@@ -208,7 +208,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
                                      boolean acceptParameterizedFunctionTypes,
                                      boolean reportNotAnnotatedInterfaces,
                                      @NotNull Set<String> ignoredRuntimeAnnotations) {
-    if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
+    if (PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, aClass)) {
       final PsiClassType baseClassType = aClass.getBaseClassType();
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
       final PsiClass baseClass = resolveResult.getElement();

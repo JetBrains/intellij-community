@@ -1647,11 +1647,11 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void updateModifiersInInterface(PsiMethod newMethod) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(myTargetClass);
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+    if (JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) {
       if (!isStatic()) {
         final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(myCodeFragmentMember, PsiMethod.class, false);
         if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-          if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+          if (JavaFeature.PRIVATE_INTERFACE_METHODS.isSufficient(languageLevel)) {
             PsiUtil.setModifierProperty(newMethod, PsiModifier.PRIVATE, true); // don't increase the API surface
           }
           else {
@@ -1661,7 +1661,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       PsiUtil.setModifierProperty(newMethod, PsiModifier.PUBLIC, false);
       PsiUtil.setModifierProperty(newMethod, PsiModifier.PROTECTED, false);
-      if (isStatic() || !languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+      if (isStatic() || !JavaFeature.PRIVATE_INTERFACE_METHODS.isSufficient(languageLevel)) {
         PsiUtil.setModifierProperty(newMethod, PsiModifier.PRIVATE, false);
       }
     }

@@ -4,7 +4,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -96,7 +96,7 @@ public final class ClassInnerStuffCache {
   }
 
   private boolean classNameIsSealed() {
-    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_17);
+    return PsiKeyword.SEALED.equals(myClass.getName()) && PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, myClass);
   }
 
   @Nullable

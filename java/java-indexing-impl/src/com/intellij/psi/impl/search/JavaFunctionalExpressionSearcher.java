@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
@@ -340,13 +341,13 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
   }
 
   private static boolean hasJava8Modules(@NotNull Project project) {
-    final boolean projectLevelIsHigh = PsiUtil.getLanguageLevel(project).isAtLeast(LanguageLevel.JDK_1_8);
+    final boolean projectLevelIsHigh = JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(PsiUtil.getLanguageLevel(project));
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final LanguageLevelModuleExtension extension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
       if (extension != null) {
         final LanguageLevel level = extension.getLanguageLevel();
-        if (level == null ? projectLevelIsHigh : level.isAtLeast(LanguageLevel.JDK_1_8)) {
+        if (level == null ? projectLevelIsHigh : JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(level)) {
           return true;
         }
       }

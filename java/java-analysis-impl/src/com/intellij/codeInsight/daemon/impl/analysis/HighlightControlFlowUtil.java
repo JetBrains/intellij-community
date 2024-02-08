@@ -16,6 +16,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -724,7 +725,7 @@ public final class HighlightControlFlowUtil {
           return null;
         }
       }
-      boolean isToBeEffectivelyFinal = languageLevel.isAtLeast(LanguageLevel.JDK_1_8);
+      boolean isToBeEffectivelyFinal = JavaFeature.EFFECTIVELY_FINAL.isSufficient(languageLevel);
       if (isToBeEffectivelyFinal && isEffectivelyFinal(variable, scope, context)) {
         return null;
       }

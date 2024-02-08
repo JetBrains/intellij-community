@@ -30,7 +30,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -163,7 +163,7 @@ public final class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   private static boolean mayContainModuleInfo(@NotNull final Module module) {
-    return ReadAction.compute(() -> LanguageLevelUtil.getEffectiveLanguageLevel(module).isAtLeast(LanguageLevel.JDK_1_9));
+    return ReadAction.compute(() -> JavaFeature.MODULES.isSufficient(LanguageLevelUtil.getEffectiveLanguageLevel(module)));
   }
 
   @NotNull

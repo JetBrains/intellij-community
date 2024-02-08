@@ -14,7 +14,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
@@ -45,7 +45,7 @@ public final class MakeExternalAnnotationExplicit implements ModCommandAction {
     final PsiModifierListOwner owner = NonCodeAnnotationsLineMarkerProvider.getAnnotationOwner(leaf);
     if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
-        PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+        PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file)) {
       final PsiAnnotation[] annotations = getAnnotations(context.project(), owner);
       if (annotations.length > 0) {
         final String annos = StringUtil.join(annotations, annotation -> {

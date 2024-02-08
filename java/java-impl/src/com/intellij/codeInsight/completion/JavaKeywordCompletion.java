@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.FilterPositionUtil;
@@ -217,7 +216,7 @@ public class JavaKeywordCompletion {
     addKeyword(new OverridableSpace(createKeyword(PsiKeyword.NEW), TailTypes.insertSpaceType()));
     addKeyword(new OverridableSpace(createKeyword(PsiKeyword.SYNCHRONIZED), JavaTailTypes.SYNCHRONIZED_LPARENTH));
 
-    if (PsiUtil.getLanguageLevel(myPosition).isAtLeast(LanguageLevel.JDK_1_4)) {
+    if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, myPosition)) {
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ASSERT), TailTypes.insertSpaceType()));
     }
 

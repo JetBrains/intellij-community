@@ -220,8 +220,8 @@ public final class HighlightMethodUtil {
     }
 
     PsiType substitutedSuperReturnType;
-    boolean isJdk15 = languageLevel.isAtLeast(LanguageLevel.JDK_1_5);
-    if (isJdk15 && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+    boolean hasGenerics = JavaFeature.GENERICS.isSufficient(languageLevel);
+    if (hasGenerics && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
                                                                                                   superMethodSignature);
       substitutedSuperReturnType = unifyingSubstitutor == null
@@ -234,7 +234,7 @@ public final class HighlightMethodUtil {
 
     if (returnType.equals(substitutedSuperReturnType)) return null;
     if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      if (isJdk15 && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(),
+      if (hasGenerics && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(),
                                                                       methodSignature.getSubstitutor(),
                                                                       () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
         return null;
@@ -505,8 +505,8 @@ public final class HighlightMethodUtil {
           TextRange range = getFixRange(methodCall);
           registerStaticMethodQualifierFixes(methodCall, builder);
           registerUsageFixes(methodCall, builder, range);
-          if (resolved instanceof PsiVariable && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-            PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiVariable)resolved).getType());
+          if (resolved instanceof PsiVariable variable && JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(languageLevel)) {
+            PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(variable.getType());
             if (method != null) {
               IntentionAction action = QuickFixFactory.getInstance().createInsertMethodCallFix(methodCall, method);
               builder.registerFix(action, null, null, range, null);
@@ -1393,10 +1393,10 @@ public final class HighlightMethodUtil {
         description = JavaErrorBundle.message("extension.method.should.have.a.body");
       }
       else if (isInterface) {
-        if (isStatic && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        if (isStatic && JavaFeature.STATIC_INTERFACE_CALLS.isSufficient(languageLevel)) {
           description = JavaErrorBundle.message("static.methods.in.interfaces.should.have.body");
         }
-        else if (isPrivate && languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+        else if (isPrivate && JavaFeature.PRIVATE_INTERFACE_METHODS.isSufficient(languageLevel)) {
           description = JavaErrorBundle.message("private.methods.in.interfaces.should.have.body");
         }
       }
@@ -1407,7 +1407,7 @@ public final class HighlightMethodUtil {
     else if (isInterface) {
       if (!isExtension && !isStatic && !isPrivate && !isConstructor) {
         description = JavaErrorBundle.message("interface.methods.cannot.have.body");
-        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+        if (JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) {
           if (Stream.of(method.findDeepestSuperMethods())
             .map(PsiMethod::getContainingClass)
             .filter(Objects::nonNull)

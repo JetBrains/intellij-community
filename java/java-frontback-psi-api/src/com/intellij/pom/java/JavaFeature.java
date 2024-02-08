@@ -13,6 +13,8 @@ import java.util.Set;
  * whether a particular features is available in a given context
  */
 public enum JavaFeature {
+  ASSERTIONS(LanguageLevel.JDK_1_4, "feature.generics"),
+  ENUMS(LanguageLevel.JDK_1_5, "feature.enums"),
   GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
   ANNOTATIONS(LanguageLevel.JDK_1_5, "feature.annotations"),
   STATIC_IMPORTS(LanguageLevel.JDK_1_5, "feature.static.imports"),
@@ -46,6 +48,7 @@ public enum JavaFeature {
   REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
   MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
   COLLECTION_FACTORIES(LanguageLevel.JDK_1_9, "feature.collection.factories"),
+  PRIVATE_INTERFACE_METHODS(LanguageLevel.JDK_1_9, "feature.private.interface.methods"),
   LVTI(LanguageLevel.JDK_10, "feature.lvti"),
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
   NESTMATES(LanguageLevel.JDK_11, "feature.nestmates"),

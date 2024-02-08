@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -141,7 +140,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
         context.commitDocument();
       }
       if (psiClass != null && ConstructorInsertHandler.insertParentheses(context, item, psiClass, false)) {
-        fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
+        fillTypeArgs |= psiClass.hasTypeParameters() && PsiUtil.isAvailable(JavaFeature.GENERICS, file);
       }
     }
     else if (insertingAnnotation(context, item)) {
@@ -162,7 +161,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
     else if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR &&
              psiClass != null && psiClass.getTypeParameters().length == 1 &&
-             PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
+             PsiUtil.isAvailable(JavaFeature.GENERICS, file)) {
       wrapFollowingTypeInGenerics(context, context.getOffset(refEnd));
     }
   }

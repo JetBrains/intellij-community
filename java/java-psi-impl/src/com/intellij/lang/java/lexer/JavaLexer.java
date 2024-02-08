@@ -48,8 +48,8 @@ public final class JavaLexer extends BasicJavaLexer {
   }
   public static boolean isKeyword(@NotNull String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
-           level.isAtLeast(LanguageLevel.JDK_1_4) && ASSERT.equals(id) ||
-           level.isAtLeast(LanguageLevel.JDK_1_5) && ENUM.equals(id);
+           JavaFeature.ASSERTIONS.isSufficient(level) && ASSERT.equals(id) ||
+           JavaFeature.ENUMS.isSufficient(level) && ENUM.equals(id);
   }
 
   /**

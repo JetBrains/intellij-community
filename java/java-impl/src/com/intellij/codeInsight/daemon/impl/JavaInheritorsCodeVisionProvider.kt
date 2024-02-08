@@ -8,7 +8,7 @@ import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -91,6 +91,6 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
 
   private fun isDefaultMethod(aClass: PsiClass, method: PsiMethod): Boolean {
     return method.hasModifierProperty(PsiModifier.DEFAULT) &&
-           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)
+           PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass)
   }
 }

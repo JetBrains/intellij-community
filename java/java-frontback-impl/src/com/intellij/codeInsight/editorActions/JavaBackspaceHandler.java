@@ -3,7 +3,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.AbstractBasicJavaFile;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
@@ -23,7 +23,7 @@ public final class JavaBackspaceHandler extends BackspaceHandlerDelegate {
 
   private static boolean isHigherThan50r(@Nullable PsiFile file){
       return file instanceof AbstractBasicJavaFile &&
-             AbstractBasicJavaDefinitionService.getJavaDefinitionService().getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5);
+             JavaFeature.GENERICS.isSufficient(AbstractBasicJavaDefinitionService.getJavaDefinitionService().getLanguageLevel(file));
   }
 
   @Override

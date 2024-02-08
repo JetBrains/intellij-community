@@ -228,7 +228,7 @@ public final class PsiTypesUtil {
                                                       @NotNull Condition<? super IElementType> condition,
                                                       @NotNull LanguageLevel languageLevel) {
     //JLS3 15.8.2
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && isGetClass(method)) {
+    if (JavaFeature.GENERICS.isSufficient(languageLevel) && isGetClass(method)) {
       PsiExpression qualifier = methodExpression.getQualifierExpression();
       PsiType qualifierType = null;
       final Project project = call.getProject();

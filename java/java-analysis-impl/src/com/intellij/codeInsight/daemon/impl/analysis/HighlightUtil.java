@@ -2080,7 +2080,8 @@ public final class HighlightUtil {
       }
     }
 
-    if (qualifier != null && aClass.isInterface() && expr instanceof PsiSuperExpression && languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+    if (qualifier != null && aClass.isInterface() && expr instanceof PsiSuperExpression && 
+        JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) {
       //15.12.1 for method invocation expressions; 15.13 for method references
       //If TypeName denotes an interface, I, then let T be the type declaration immediately enclosing the method reference expression.
       //It is a compile-time error if I is not a direct superinterface of T,
@@ -2135,7 +2136,7 @@ public final class HighlightUtil {
   static HighlightInfo.Builder checkUnqualifiedSuperInDefaultMethod(@NotNull LanguageLevel languageLevel,
                                                             @NotNull PsiReferenceExpression expr,
                                                             @Nullable PsiExpression qualifier) {
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && qualifier instanceof PsiSuperExpression) {
+    if (JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel) && qualifier instanceof PsiSuperExpression) {
       PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
       if (method != null && method.hasModifierProperty(PsiModifier.DEFAULT) && ((PsiSuperExpression)qualifier).getQualifier() == null) {
         String description = JavaErrorBundle.message("unqualified.super.disallowed");
@@ -2152,7 +2153,7 @@ public final class HighlightUtil {
                                                            @Nullable PsiJavaCodeReferenceElement qualifier,
                                                            @NotNull PsiClass aClass,
                                                            @NotNull LanguageLevel languageLevel) {
-    if (!(expr instanceof PsiSuperExpression) || qualifier == null || !languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) return false;
+    if (!(expr instanceof PsiSuperExpression) || qualifier == null || !JavaFeature.EXTENSION_METHODS.isSufficient(languageLevel)) return false;
     PsiType superType = expr.getType();
     if (!(superType instanceof PsiClassType)) return false;
     PsiClass superClass = ((PsiClassType)superType).resolve();
@@ -3804,11 +3805,7 @@ public final class HighlightUtil {
     if (!feature.isSufficient(level)) {
       message = message == null ? getUnsupportedFeatureMessage(feature, level, file) : message;
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message);
-      List<IntentionAction> registrar = new ArrayList<>();
-      registerIncreaseLanguageLevelFixes(file, feature, registrar);
-      for (IntentionAction action : registrar) {
-        info.registerFix(action, null, null, null, null);
-      }
+      registerIncreaseLanguageLevelFixes(file, feature, info);
       return info;
     }
 
@@ -3822,15 +3819,22 @@ public final class HighlightUtil {
     if (!feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(feature, level, file);
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
-      List<IntentionAction> registrar = new ArrayList<>();
-      registerIncreaseLanguageLevelFixes(file, feature, registrar);
-      for (IntentionAction action : registrar) {
-        info.registerFix(action, null, null, null, null);
-      }
+      registerIncreaseLanguageLevelFixes(file, feature, info);
       return info;
     }
 
     return null;
+  }
+
+  public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
+                                                        @NotNull JavaFeature feature,
+                                                        HighlightInfo.Builder info) {
+    if (info == null) return;
+    List<IntentionAction> registrar = new ArrayList<>();
+    registerIncreaseLanguageLevelFixes(element, feature, registrar);
+    for (IntentionAction action : registrar) {
+      info.registerFix(action, null, null, null, null);
+    }
   }
 
   public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
