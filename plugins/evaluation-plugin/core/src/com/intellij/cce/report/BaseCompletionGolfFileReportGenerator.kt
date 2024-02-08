@@ -66,8 +66,22 @@ abstract class BaseCompletionGolfFileReportGenerator(
             span("stats-absent") { +"skipped" }
           }
           div("wrong-filters") {
-            label("labelText") { +"Wrong filters " }
-            span("stats-wrong-filters") { +"wrong" }
+            label("labelText") { +"Highlight wrong filters: " }
+            select {
+              id = "wrong-filters"
+              option {
+                value="no"
+                label = "no"
+              }
+              option {
+                value="raw"
+                label = "raw"
+              }
+              option {
+                value="analyzed"
+                label = "analyzed"
+              }
+            }
           }
           div("thresholds") {
             label("labelText") { +"Threshold grades:" }

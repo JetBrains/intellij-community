@@ -35,6 +35,34 @@ document.addEventListener("click", function (e) {
   }
 })
 
+const FilterClasses = {
+  Raw: "bg-raw-filter",
+  Analyzed: "bg-analyzed-filter",
+}
+
+function updateFilters(e) {
+  let selectedValue = e.target.selectedOptions[0].value
+  if (selectedValue === "no") {
+    changeBGColor(FilterClasses.Analyzed, "transparent")
+    changeBGColor(FilterClasses.Raw, "transparent")
+  } else if (selectedValue === "raw") {
+    changeBGColor(FilterClasses.Analyzed, "transparent")
+    changeBGColor(FilterClasses.Raw, "#FF3B305B")
+  } else if (selectedValue === "analyzed") {
+    changeBGColor(FilterClasses.Raw, "transparent")
+    changeBGColor(FilterClasses.Analyzed, "#FF3B305B")
+  }
+}
+
+document.getElementById("wrong-filters").onchange = updateFilters;
+
+function changeBGColor(className, color) {
+  let tokens = document.getElementsByClassName(className);
+  for(i = 0; i < tokens.length; i++) {
+    tokens[i].style.backgroundColor = color;
+  }
+}
+
 function closeAllLists() {
   const autocompleteDivs = document.getElementsByClassName("autocomplete-items")
   Array.from(autocompleteDivs).forEach((div) => {

@@ -50,8 +50,11 @@ class LineCompletionFileReportGenerator(
   }
 
   override fun getBackgroundClass(lookup: Lookup, expectedText: String): String {
-    if (lookup.additionalInfo["is_wrong_filtering"] == true) {
-      return "bg-wrong-filtering"
+    if (lookup.additionalInfo["wrong_raw_filters"] == true) {
+      return "bg-raw-filter"
+    }
+    if (lookup.additionalInfo["wrong_analyzed_filters"] == true) {
+      return "bg-analyzed-filter"
     }
     return ""
   }
