@@ -309,21 +309,23 @@ class ProjectWizardJdkComboBox(
 
   private suspend fun addExistingJdks() {
     val javaSdk = JavaSdk.getInstance()
-    val detectedJDKs = mutableListOf<DetectedJdk>()
 
-    JdkFinder.getInstance().suggestHomePaths().forEach { homePath: String ->
+    val detected = JdkFinder.getInstance().suggestHomePaths().mapNotNull { homePath: String ->
       val version = javaSdk.getVersionString(homePath)
-      if (version != null && javaSdk.isValidSdkHome(homePath)) {
-        val detected = DetectedJdk(version, homePath)
-        detectedJDKs.add(detected)
+      when {
+        version != null && javaSdk.isValidSdkHome(homePath) -> DetectedJdk(version, homePath)
+        else -> null
       }
     }
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      detectedJDKs.forEach { addItem(it) }
-      if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detectedJDKs.any()) {
+      detected.forEach {
+        detectedJDKs.add(it)
+        addItem(it)
+      }
+      if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detected.any()) {
         val regex = "(\\d+)".toRegex()
-        detectedJDKs
+        detected
           .maxBy { regex.find(it.version)?.value?.toInt() ?: 0 }
           .let { selectedItem = it }
       }
