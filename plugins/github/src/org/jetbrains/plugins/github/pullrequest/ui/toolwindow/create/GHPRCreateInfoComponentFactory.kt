@@ -280,9 +280,9 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           .thenCompose { adjustLabels(it, labels) }
           .successOnEdt {
             if (!progressIndicator.isCanceled) {
+              projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
               projectVm.viewPullRequest(it.prId)
               settings.recentNewPullRequestHead = headRepo.repository
-              projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
               projectVm.refreshPrOnCurrentBranch()
             }
             it
