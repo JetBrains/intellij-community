@@ -2,6 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
+    <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>
   </extensions>
 </idea-plugin>

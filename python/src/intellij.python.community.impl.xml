@@ -96,7 +96,6 @@
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
 
-    <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterBetweenBracesDelegate language="Python"
                                 implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
     <!--suppress PluginXmlValidity -->
