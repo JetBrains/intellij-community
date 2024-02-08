@@ -653,7 +653,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine() && shouldIgnoreThreadFiltering) {
           LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
           if (filter != null) {
-            if (!filter.checkSameThread(thread, suspendContext)) {
+            if (myPreparingToSuspendAll || !filter.checkSameThread(thread, suspendContext)) {
               notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
               suspendManager.voteResume(suspendContext);
               return;
@@ -754,7 +754,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             // Instead, create an auxiliary request to correctly stop all threads as soon as possible.
             // [SuspendOtherThreadsRequestor] will resume this suspendContext when the request hits.
             // Resume will be without voting.
-            SuspendOtherThreadsRequestor.enableRequest(mySession.getProcess(), suspendContext);
+            SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(DebugProcessEvents.this, suspendContext);
           }
           else {
             suspendManager.voteSuspend(suspendContext);

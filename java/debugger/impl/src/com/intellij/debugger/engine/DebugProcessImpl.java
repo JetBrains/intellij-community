@@ -140,6 +140,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
 
+  // These 3 fields are needs to switching from found suspend-thread context to user-friendly suspend-all context.
+  // The main related logic is in [SuspendOtherThreadsRequestor].
+  final Object myEvaluationStateLock = new Object();
+  volatile SuspendContextImpl myWaitedThreadSuspendContext = null;
+  volatile boolean myPreparingToSuspendAll = false;
+
   protected DebugProcessImpl(Project project) {
     myProject = project;
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
@@ -742,11 +748,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   /*Event dispatching*/
   public void addEvaluationListener(EvaluationListener evaluationListener) {
-    myEvaluationDispatcher.addListener(evaluationListener);
+    synchronized (myEvaluationStateLock) {
+      myEvaluationDispatcher.addListener(evaluationListener);
+    }
   }
 
   public void removeEvaluationListener(EvaluationListener evaluationListener) {
-    myEvaluationDispatcher.removeListener(evaluationListener);
+    synchronized (myEvaluationStateLock) {
+      myEvaluationDispatcher.removeListener(evaluationListener);
+    }
   }
 
 
@@ -1157,7 +1167,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
 
         resumeData = SuspendManagerUtil.prepareForResume(suspendContext);
-        suspendContext.setIsEvaluating(evaluationContext);
+        synchronized (myEvaluationStateLock) {
+          suspendContext.setIsEvaluating(evaluationContext);
+        }
 
         getVirtualMachineProxy().clearCaches();
 
@@ -1168,7 +1180,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
-        suspendContext.setIsEvaluating(null);
+        synchronized (myEvaluationStateLock) {
+          suspendContext.setIsEvaluating(null);
+        }
         if (resumeData != null) {
           SuspendManagerUtil.restoreAfterResume(suspendContext, resumeData);
         }
