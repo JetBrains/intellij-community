@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.lombok-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:lombok-compiler-plugin-for-ide:2.0.0-dev-14103">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:lombok-compiler-plugin-for-ide:2.0.0-dev-14793">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.0.0-dev-14103/lombok-compiler-plugin-for-ide-2.0.0-dev-14103.jar">
-          <sha256sum>fec5dbd20f4315b9407b7e2710a83a4436413494af419515132615b4d40c8e67</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.0.0-dev-14793/lombok-compiler-plugin-for-ide-2.0.0-dev-14793.jar">
+          <sha256sum>a86bae81de75c52d7d363835901357578341af1a25c11eae8db29ff4bd1a0d84</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.0.0-dev-14103/lombok-compiler-plugin-for-ide-2.0.0-dev-14103.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.0.0-dev-14793/lombok-compiler-plugin-for-ide-2.0.0-dev-14793.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.0.0-dev-14103/lombok-compiler-plugin-for-ide-2.0.0-dev-14103-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2.0.0-dev-14793/lombok-compiler-plugin-for-ide-2.0.0-dev-14793-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

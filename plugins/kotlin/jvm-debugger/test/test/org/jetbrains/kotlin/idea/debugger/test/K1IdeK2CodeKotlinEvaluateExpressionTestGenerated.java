@@ -1646,6 +1646,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("testData/evaluation/singleBreakpoint/privateFieldInCompanion.kt");
             }
 
+            @TestMetadata("privateFieldInSuperclass.kt")
+            public void testPrivateFieldInSuperclass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateFieldInSuperclass.kt");
+            }
+
             @TestMetadata("privateMember.kt")
             public void testPrivateMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
@@ -1674,6 +1679,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("properties.kt")
             public void testProperties() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/properties.kt");
+            }
+
+            @TestMetadata("protectedFieldInSuperclass.kt")
+            public void testProtectedFieldInSuperclass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedFieldInSuperclass.kt");
             }
 
             @TestMetadata("protectedGetterFromJavaInsideClass.kt")

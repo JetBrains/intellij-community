@@ -493,5 +493,10 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         public void testAllOpen() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/withTestCompilerPluginEnabled/allOpen.kt"));
         }
+
+        @TestMetadata("companionWithFoo_companionTypeUsedInJava_ReferenceFromKotlin.kt")
+        public void testCompanionWithFoo_companionTypeUsedInJava_ReferenceFromKotlin() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/withTestCompilerPluginEnabled/companionWithFoo_companionTypeUsedInJava_ReferenceFromKotlin.kt"));
+        }
     }
 }
