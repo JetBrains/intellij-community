@@ -86,6 +86,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/filterIsInstanceAlwaysEmpty")
             model("${idea}/inspectionsLocal/selfReferenceConstructorParameter")
             model("${idea}/inspectionsLocal/canBeVal")
+            model("${idea}/inspectionsLocal/replaceSubstring")
             model("${idea}/inspectionsLocal/addOperatorModifier")
             model("${idea}/inspectionsLocal/kotlinUnreachableCode")
             model("${idea}/inspectionsLocal/removeRedundantLabel")

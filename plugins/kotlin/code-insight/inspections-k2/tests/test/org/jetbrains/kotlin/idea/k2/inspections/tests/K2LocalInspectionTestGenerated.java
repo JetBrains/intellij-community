@@ -12981,6 +12981,190 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceSubstring")
+    public abstract static class ReplaceSubstring extends AbstractK2LocalInspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withDropLast")
+        public static class WithDropLast extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("immutableProperty.kt")
+            public void testImmutableProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withDropLast/immutableProperty.kt");
+            }
+
+            @TestMetadata("methodCallReceiver.kt")
+            public void testMethodCallReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withDropLast/methodCallReceiver.kt");
+            }
+
+            @TestMetadata("nonZeroFirstArgument.kt")
+            public void testNonZeroFirstArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withDropLast/nonZeroFirstArgument.kt");
+            }
+
+            @TestMetadata("replaceWithDropLast.kt")
+            public void testReplaceWithDropLast() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withDropLast/replaceWithDropLast.kt");
+            }
+
+            @TestMetadata("semicolon.kt")
+            public void testSemicolon() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withDropLast/semicolon.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withIndexingOperation")
+        public static class WithIndexingOperation extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("oneFirstTwoSecondArgument.kt")
+            public void testOneFirstTwoSecondArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withIndexingOperation/oneFirstTwoSecondArgument.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withIndexingOperation/simple.kt");
+            }
+
+            @TestMetadata("zeroFirstTenSecondArgument.kt")
+            public void testZeroFirstTenSecondArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withIndexingOperation/zeroFirstTenSecondArgument.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringAfter")
+        public static class WithSubstringAfter extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("immutableProperty.kt")
+            public void testImmutableProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringAfter/immutableProperty.kt");
+            }
+
+            @TestMetadata("methodCallReceiver.kt")
+            public void testMethodCallReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringAfter/methodCallReceiver.kt");
+            }
+
+            @TestMetadata("replaceWithSubstringAfter.kt")
+            public void testReplaceWithSubstringAfter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringAfter/replaceWithSubstringAfter.kt");
+            }
+
+            @TestMetadata("semicolon.kt")
+            public void testSemicolon() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringAfter/semicolon.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringBefore")
+        public static class WithSubstringBefore extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("immutableProperty.kt")
+            public void testImmutableProperty() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringBefore/immutableProperty.kt");
+            }
+
+            @TestMetadata("methodCallReceiver.kt")
+            public void testMethodCallReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringBefore/methodCallReceiver.kt");
+            }
+
+            @TestMetadata("nonZeroFirstArgument.kt")
+            public void testNonZeroFirstArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringBefore/nonZeroFirstArgument.kt");
+            }
+
+            @TestMetadata("replaceWithSubstringBefore.kt")
+            public void testReplaceWithSubstringBefore() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringBefore/replaceWithSubstringBefore.kt");
+            }
+
+            @TestMetadata("semicolon.kt")
+            public void testSemicolon() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withSubstringBefore/semicolon.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake")
+        public static class WithTake extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("constantAsFirstArgument.kt")
+            public void testConstantAsFirstArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/constantAsFirstArgument.kt");
+            }
+
+            @TestMetadata("expressionAsFirstArgument.kt")
+            public void testExpressionAsFirstArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/expressionAsFirstArgument.kt");
+            }
+
+            @TestMetadata("nonZeroFirstArgument.kt")
+            public void testNonZeroFirstArgument() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/nonZeroFirstArgument.kt");
+            }
+
+            @TestMetadata("replaceWithTake.kt")
+            public void testReplaceWithTake() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/replaceWithTake.kt");
+            }
+
+            @TestMetadata("semicolon.kt")
+            public void testSemicolon() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceSubstring/withTake/semicolon.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/addOperatorModifier")
     public static class AddOperatorModifier extends AbstractK2LocalInspectionTest {
         @java.lang.Override
