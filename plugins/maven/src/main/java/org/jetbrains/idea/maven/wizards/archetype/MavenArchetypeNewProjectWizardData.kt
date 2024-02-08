@@ -5,8 +5,9 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
+import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardData
 
-interface MavenArchetypeNewProjectWizardData {
+interface MavenArchetypeNewProjectWizardData : MavenNewProjectWizardData {
 
   val catalogItemProperty: GraphProperty<MavenCatalog>
 
