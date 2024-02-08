@@ -101,7 +101,7 @@
     </extensionPoint>
 
     <extensionPoint name="xml.xmlAttributeRenameProvider"
-                    interface="com.intellij.codeInspection.htmlInspections.XmlAttributeRenameProvider"
+                    interface="com.intellij.codeInspection.htmlInspections.XmlUnknownAttributeQuickFixProvider"
                     dynamic="true"/>
 
     <extensionPoint name="xml.autoPopupEnabler"
