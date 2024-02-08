@@ -41,23 +41,24 @@ class MavenProjectAsyncBuilder {
   fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     if (ApplicationManager.getApplication().isDispatchThread) {
       return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
-        commit(project, projectFile, modelsProvider)
+        commit(project, projectFile, modelsProvider, true)
       }
     }
     else {
       return runBlockingMaybeCancellable {
-        commit(project, projectFile, modelsProvider)
+        commit(project, projectFile, modelsProvider, true)
       }
     }
   }
 
   suspend fun commit(project: Project, projectFile: VirtualFile) {
-    commit(project, projectFile, null)
+    commit(project, projectFile, null, true)
   }
 
   suspend fun commit(project: Project,
                      projectFile: VirtualFile,
-                     modelsProvider: IdeModifiableModelsProvider?): List<Module> = project.trackActivity(MavenActivityKey) {
+                     modelsProvider: IdeModifiableModelsProvider?,
+                     syncProject: Boolean): List<Module> = project.trackActivity(MavenActivityKey) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
@@ -84,15 +85,27 @@ class MavenProjectAsyncBuilder {
       val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
       cs.launch {
         project.trackActivity(MavenActivityKey) {
-          doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, previewModule, importingSettings, generalSettings)
+          doCommit(project,
+                   importProjectFile,
+                   rootDirectoryPath,
+                   modelsProvider,
+                   previewModule,
+                   importingSettings,
+                   generalSettings,
+                   syncProject)
         }
       }
-      //blockingContext { manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, previewModule) }
       return@trackActivity if (null == previewModule) emptyList() else listOf(previewModule)
     }
 
-    return@trackActivity doCommit(project, importProjectFile, rootDirectoryPath, modelsProvider, null, importingSettings,
-                                               generalSettings)
+    return@trackActivity doCommit(project,
+                                  importProjectFile,
+                                  rootDirectoryPath,
+                                  modelsProvider,
+                                  null,
+                                  importingSettings,
+                                  generalSettings,
+                                  syncProject)
   }
 
   private suspend fun doCommit(project: Project,
@@ -101,7 +114,8 @@ class MavenProjectAsyncBuilder {
                                modelsProvider: IdeModifiableModelsProvider?,
                                previewModule: Module?,
                                importingSettings: MavenImportingSettings,
-                               generalSettings: MavenGeneralSettings): List<Module> {
+                               generalSettings: MavenGeneralSettings,
+                               syncProject: Boolean): List<Module> {
     MavenAsyncUtil.setupProjectSdk(project)
     val projectsNavigator = MavenProjectsNavigator.getInstance(project)
     if (projectsNavigator != null) projectsNavigator.groupModules = true
@@ -160,7 +174,7 @@ class MavenProjectAsyncBuilder {
     val manager = MavenProjectsManager.getInstance(project)
     manager.setIgnoredState(projects, false)
 
-    return manager.addManagedFilesWithProfilesAndUpdate(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule)
+    return manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(projects), selectedProfiles, modelsProvider, previewModule, syncProject)
   }
 
   private suspend fun createPreviewModule(project: Project, contentRoot: VirtualFile): Module? {

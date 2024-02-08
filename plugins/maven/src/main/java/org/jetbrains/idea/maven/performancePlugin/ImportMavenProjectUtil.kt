@@ -37,7 +37,7 @@ internal fun importProject(project: Project) {
     val mavenManager = MavenProjectsManager.getInstance(project)
     if (!mavenManager.isMavenizedProject) {
       val files = mavenManager.collectAllAvailablePomFiles()
-      mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+      mavenManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
     }
     else {
       mavenManager.updateAllMavenProjects(MavenSyncSpec.full("ImportMavenProjectUtil"))

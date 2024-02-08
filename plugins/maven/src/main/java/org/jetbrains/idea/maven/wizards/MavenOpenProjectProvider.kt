@@ -44,20 +44,21 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
-    if (Registry.`is`("external.system.auto.import.disabled")) {
-      LOG.debug("External system auto import disabled. Skip linking Maven project '$projectFile' to existing project ${project.name}")
-      return
+    val autoImportDisabled = Registry.`is`("external.system.auto.import.disabled")
+    if (autoImportDisabled) {
+      LOG.debug("External system auto import disabled. Adding '$projectFile' to existing project ${project.name}, but not syncing")
     }
+    val syncProject = !autoImportDisabled
 
-    doLinkToExistingProjectAsync(projectFile, project)
+    doLinkToExistingProjectAsync(projectFile, project, syncProject)
   }
 
   @ApiStatus.Internal
   suspend fun forceLinkToExistingProjectAsync(projectFilePath: String, project: Project) {
-    doLinkToExistingProjectAsync(getProjectFile(projectFilePath), project)
+    doLinkToExistingProjectAsync(getProjectFile(projectFilePath), project, true)
   }
 
-  private suspend fun doLinkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+  private suspend fun doLinkToExistingProjectAsync(projectFile: VirtualFile, project: Project, syncProject: Boolean) {
     LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
 
     val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
@@ -65,7 +66,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
     if (ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProjectAsync(project, systemId, projectRoot.toNioPath())) {
       val asyncBuilder = MavenProjectAsyncBuilder()
       project.trackActivity(MavenActivityKey) {
-        asyncBuilder.commit(project, projectFile, null)
+        asyncBuilder.commit(project, projectFile, null, syncProject)
       }
     }
   }

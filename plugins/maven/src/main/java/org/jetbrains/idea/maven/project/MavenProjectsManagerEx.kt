@@ -85,18 +85,21 @@ interface MavenAsyncProjectsManager {
                                 docs: Boolean)
 
   @ApiStatus.Internal
-  suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
-                                                   profiles: MavenExplicitProfiles,
-                                                   modelsProvider: IdeModifiableModelsProvider?,
-                                                   previewModule: Module?): List<Module>
+  suspend fun addManagedFilesWithProfiles(files: List<VirtualFile>,
+                                          profiles: MavenExplicitProfiles,
+                                          modelsProvider: IdeModifiableModelsProvider?,
+                                          previewModule: Module?,
+                                          syncProject: Boolean): List<Module>
 }
 
 open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project) {
-  override suspend fun addManagedFilesWithProfilesAndUpdate(files: List<VirtualFile>,
-                                                            profiles: MavenExplicitProfiles,
-                                                            modelsProvider: IdeModifiableModelsProvider?,
-                                                            previewModule: Module?): List<Module> {
+  override suspend fun addManagedFilesWithProfiles(files: List<VirtualFile>,
+                                                   profiles: MavenExplicitProfiles,
+                                                   modelsProvider: IdeModifiableModelsProvider?,
+                                                   previewModule: Module?,
+                                                   syncProject: Boolean): List<Module> {
     blockingContext { doAddManagedFilesWithProfiles(files, profiles, previewModule) }
+    if (!syncProject) return emptyList()
     return updateAllMavenProjects(MavenSyncSpec.incremental("MavenProjectsManagerEx.addManagedFilesWithProfilesAndUpdate"), modelsProvider)
   }
 
@@ -311,7 +314,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     try {
       val console = syncConsole
       console.startImport(spec.isExplicit)
-      if (MavenUtil.enablePreimport()) {
+      if (MavenUtil.enablePreimport()) { /////
         val result = MavenProjectStaticImporter.getInstance(myProject)
           .syncStatic(
             projectsTree.existingManagedFiles,

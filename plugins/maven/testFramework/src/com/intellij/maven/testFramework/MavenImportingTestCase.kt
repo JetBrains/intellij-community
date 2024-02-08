@@ -386,7 +386,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     }
     else {
       initProjectsManager(false)
-      projectsManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+      projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
     }
 
     IndexingTestUtil.suspendUntilIndexesAreReady(project)

@@ -52,7 +52,7 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
               MavenProjectStaticImporter.setPreimport(false)
               if (!mavenManager.isMavenizedProject) {
                 val files = mavenManager.collectAllAvailablePomFiles()
-                mavenManager.addManagedFilesWithProfilesAndUpdate(files, MavenExplicitProfiles.NONE, null, null)
+                mavenManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
               }
               else {
                 mavenManager.updateAllMavenProjects(MavenSyncSpec.full("ImportMavenProjectCommand"))
