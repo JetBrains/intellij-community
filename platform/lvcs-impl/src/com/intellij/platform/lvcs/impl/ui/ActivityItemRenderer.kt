@@ -27,9 +27,7 @@ private const val ROW_LEFT_RIGHT_BORDER = 5
 private const val ROW_TOP_BOTTOM_BORDER = 3
 private const val ROW_LEFT_RIGHT_INSETS = 10
 private const val ROW_TOP_BOTTOM_INSETS = 6
-private val HIGHLIGHTED_ARC = JBUI.value(4f)
 private val BACKGROUND_ARC = JBUI.value(8f)
-private val HIGHLIGHT_THICKNESS = JBUI.value(4f)
 private val VGAP = JBUI.value(2f)
 
 internal class ActivityItemRenderer(private val presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : ListCellRenderer<ActivityItem> {
@@ -49,34 +47,28 @@ internal class ActivityItemRenderer(private val presentationFunction: (item: Act
     val cellBackgroundColor = if (isSelected) list.selectionBackground
     else if (index == ListHoverListener.getHoveredIndex(list)) JBUI.CurrentTheme.List.Hover.background(cellHasFocus)
     else null
-    val cellHighlightColor = activityPresentation.highlightColor
-
     val rowComponent = createRowComponent(list, activityPresentation.text, activityPresentation.icon, value.timestamp,
-                                          cellBackgroundColor, cellHighlightColor, isSelected)
+                                          cellBackgroundColor, isSelected)
     contentPanel.addToCenter(rowComponent)
 
     return contentPanel
   }
 }
 
-private class RoundedPanel(var roundedBackgroundColor: Color?, var highlightColor: Color?) : JBPanel<RoundedPanel>() {
+private class RoundedPanel(var roundedBackgroundColor: Color?) : JBPanel<RoundedPanel>() {
   init {
     isOpaque = roundedBackgroundColor != null
   }
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-    if (roundedBackgroundColor != null || highlightColor != null) {
+    if (roundedBackgroundColor != null) {
       val config = GraphicsUtil.setupAAPainting(g)
 
-      val arc = if (highlightColor != null) HIGHLIGHTED_ARC.get() else BACKGROUND_ARC.get()
+      val arc = BACKGROUND_ARC.get()
       if (roundedBackgroundColor != null) {
         g.color = roundedBackgroundColor
         g.fillRoundRect(0, 0, width, height, arc, arc)
-      }
-      if (highlightColor != null) {
-        g.color = highlightColor
-        g.fillRoundRect(0, 0, HIGHLIGHT_THICKNESS.get(), height, arc, arc)
       }
 
       config.restore()
@@ -85,8 +77,8 @@ private class RoundedPanel(var roundedBackgroundColor: Color?, var highlightColo
 }
 
 private fun createRowComponent(list: JList<*>, @NlsContexts.Label text: String, icon: Icon?, timestamp: Long,
-                               backgroundColor: Color?, highlightColor: Color?, isSelected: Boolean): RoundedPanel {
-  val content = RoundedPanel(backgroundColor, highlightColor)
+                               backgroundColor: Color?, isSelected: Boolean): RoundedPanel {
+  val content = RoundedPanel(backgroundColor)
   content.layout = VerticalLayout(VGAP.get(), SwingConstants.LEFT)
   content.font = list.font
   content.foreground = if (isSelected) list.selectionForeground else list.foreground

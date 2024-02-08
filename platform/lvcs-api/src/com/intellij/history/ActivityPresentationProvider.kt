@@ -3,7 +3,6 @@ package com.intellij.history
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.awt.Color
 import javax.swing.Icon
 
 /**
@@ -17,12 +16,6 @@ interface ActivityPresentationProvider {
    * Unique provider identifier.
    */
   val id: String
-
-  /**
-   * Color to use for the activity presentation.
-   * @param kind activity identifier
-   */
-  fun getColor(kind: @NonNls String): Color? = null
 
   /**
    * Icon to use for the activity presentation.

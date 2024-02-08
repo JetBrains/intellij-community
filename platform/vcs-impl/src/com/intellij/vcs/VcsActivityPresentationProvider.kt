@@ -4,18 +4,11 @@ package com.intellij.vcs
 import com.intellij.history.ActivityId
 import com.intellij.history.ActivityPresentationProvider
 import com.intellij.icons.AllIcons
-import com.intellij.ui.JBColor
 import org.jetbrains.annotations.NonNls
-import java.awt.Color
 import javax.swing.Icon
 
 class VcsActivityPresentationProvider : ActivityPresentationProvider {
   override val id: String get() = ID
-
-  override fun getColor(kind: String): Color? {
-    if (kind == VcsActivity.Commit.kind) return JBColor.BLUE
-    return null
-  }
 
   override fun getIcon(kind: String): Icon? {
     return when (kind) {

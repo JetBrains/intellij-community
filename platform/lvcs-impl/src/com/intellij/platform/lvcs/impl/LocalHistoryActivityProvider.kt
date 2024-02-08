@@ -13,11 +13,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lvcs.impl.diff.createDiffData
-import com.intellij.ui.JBColor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import java.awt.Color
 
 internal const val USE_OLD_CONTENT = true
 
@@ -92,11 +90,8 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     val provider = activityId?.let { ACTIVITY_PRESENTATION_PROVIDER_EP.findFirstSafe { it.id == activityId.providerId } }
     val icon = provider?.getIcon(activityId.kind)
     return when (item) {
-      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon, highlightColor = null)
-      is LabelActivityItem -> {
-        val color = provider?.getColor(activityId.kind) ?: intToColor(item.color)
-        ActivityPresentation(item.name ?: "", icon, highlightColor = color)
-      }
+      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon)
+      is LabelActivityItem -> ActivityPresentation(item.name ?: "", icon)
       else -> null
     }
   }
@@ -126,8 +121,4 @@ private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: Id
   }
 }
 
-val ACTIVITY_PRESENTATION_PROVIDER_EP = ExtensionPointName.create<ActivityPresentationProvider>(
-  "com.intellij.history.activityPresentationProvider")
-
-private val USER_LABEL_COLOR = JBColor(Color(230, 230, 250), Color(89, 96, 74))
-private fun intToColor(color: Int) = color.takeIf { it != -1 }?.let { Color(it) } ?: USER_LABEL_COLOR
+val ACTIVITY_PRESENTATION_PROVIDER_EP = ExtensionPointName.create<ActivityPresentationProvider>("com.intellij.history.activityPresentationProvider")
