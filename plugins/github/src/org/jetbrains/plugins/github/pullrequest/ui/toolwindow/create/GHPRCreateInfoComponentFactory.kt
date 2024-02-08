@@ -327,6 +327,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     val textPane = SimpleHtmlPane(addBrowserListener = false).apply {
       setHtmlBody(HtmlBuilder()
                     .append(GithubBundle.message("pull.request.create.already.exists"))
+                    .nbsp()
                     .appendLink("VIEW", GithubBundle.message("pull.request.create.already.exists.view"))
                     .toString())
       addHyperlinkListener(object : HyperlinkAdapter() {
