@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.ui.ColoredTextContainer;
@@ -249,6 +250,7 @@ public class StackFrameItem {
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
+    private final boolean myShouldHide;
 
     private final String myPath;
     private final @NlsSafe String myMethodName;
@@ -270,6 +272,9 @@ public class StackFrameItem {
       myIsSynthetic = DebuggerUtils.isSynthetic(location.method());
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
+
+      myShouldHide = myIsSynthetic || myIsInLibraryContent ||
+                     (Registry.is("debugger.hide.frames.including.stepping.filters") && DebugProcessImpl.isPositionFiltered(location));
     }
 
     @Nullable
@@ -286,6 +291,11 @@ public class StackFrameItem {
     @Override
     public boolean isInLibraryContent() {
       return myIsInLibraryContent;
+    }
+
+    @Override
+    public boolean shouldHide() {
+      return myShouldHide;
     }
 
     @Override
