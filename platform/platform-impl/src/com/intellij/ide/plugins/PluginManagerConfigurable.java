@@ -304,6 +304,15 @@ public final class PluginManagerConfigurable
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
 
+    if (ApplicationManager.getApplication().isInternal()) {
+      actions.addSeparator();
+      actions.add(new DumbAwareAction(IdeBundle.message("plugin.manager.refresh")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          resetPanels();
+        }
+      });
+    }
     return actions;
   }
 
@@ -377,7 +386,8 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+                                                                     @NotNull PluginsGroup group) {
             return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
           }
         };
@@ -746,7 +756,8 @@ public final class PluginManagerConfigurable
 
         PluginsGroupComponentWithProgress panel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+                                                                     @NotNull PluginsGroup group) {
             return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, true);
           }
         };
@@ -809,7 +820,8 @@ public final class PluginManagerConfigurable
                   }
                   ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
-                } else {
+                }
+                else {
                   List<PluginNode> pluginsFromMarketplace =
                     myMarketplaceRequests.searchPlugins(parser.getUrlQuery(), 10000, true);
                   // compare plugin versions between marketplace & custom repositories
@@ -913,7 +925,8 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         myInstalledPanel = new PluginsGroupComponent(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+                                                                     @NotNull PluginsGroup group) {
             return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
           }
         };
@@ -1079,7 +1092,8 @@ public final class PluginManagerConfigurable
 
         PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
           @Override
-          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor,
+                                                                     @NotNull PluginsGroup group) {
             return new ListPluginComponent(myPluginModel, descriptor, group, mySearchListener, false);
           }
         };
@@ -1713,7 +1727,7 @@ public final class PluginManagerConfigurable
 
     private final Supplier<@Nls String> myPresentableNameSupplier;
 
-    InstalledSearchOption(Supplier<@Nls String> name) {myPresentableNameSupplier = name;}
+    InstalledSearchOption(Supplier<@Nls String> name) { myPresentableNameSupplier = name; }
   }
 
   private final class InstalledSearchOptionAction extends ToggleAction implements DumbAware {
@@ -1958,7 +1972,8 @@ public final class PluginManagerConfigurable
   public @Nullable Runnable enableSearch(String option, boolean ignoreTagMarketplaceTab) {
     if (myTabHeaderComponent == null) {
       myLaterSearchQuery = option;
-      return () -> {};
+      return () -> {
+      };
     }
     if (StringUtil.isEmpty(option) && (myTabHeaderComponent.getSelectionTab() == MARKETPLACE_TAB || myInstalledSearchPanel.isEmpty())) {
       return null;
