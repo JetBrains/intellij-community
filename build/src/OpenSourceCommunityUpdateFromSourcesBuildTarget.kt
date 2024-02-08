@@ -32,7 +32,7 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
     val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: communityHome.communityRoot
     runBlocking(Dispatchers.Default) {
       createBuildTasks(context = createCommunityBuildContext(communityHome = communityHome, options = options, projectHome = projectHome))
-        .buildUnpackedDistribution(targetDirectory = options.outputRootPath!!.resolve(distOutputRelativePath), includeBinAndRuntime = false)
+        .buildUnpackedDistribution(targetDirectory = options.outRootDir!!.resolve(distOutputRelativePath), includeBinAndRuntime = false)
     }
   }
 }

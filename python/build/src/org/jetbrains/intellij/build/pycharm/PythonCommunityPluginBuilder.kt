@@ -23,7 +23,7 @@ internal class PythonCommunityPluginBuilder(private val home: Path) {
     val homeDir = home
     val options = BuildOptions()
     options.buildNumber = pluginBuildNumber
-    options.outputRootPath = homeDir.resolve("out/pycharmCE")
+    options.outRootDir = homeDir.resolve("out/pycharmCE")
 
     val communityRoot = BuildDependenciesCommunityRoot(homeDir)
     val buildContext = BuildContextImpl.createContext(communityHome = communityRoot,

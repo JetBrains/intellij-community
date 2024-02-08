@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.kotlin
 import com.intellij.util.io.Decompressor
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -427,12 +428,14 @@ object KotlinPluginBuilder {
   }
 
   suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
-    val buildContext = BuildContextImpl.createContext(communityHome = communityHome,
-                                                      setupTracer = true,
-                                                      projectHome = home,
-                                                      productProperties = properties)
-    buildContext.options.enableEmbeddedJetBrainsClient = false
-    createBuildTasks(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
+    val context = BuildContextImpl.createContext(
+      communityHome = communityHome,
+      setupTracer = true,
+      projectHome = home,
+      productProperties = properties,
+      options = BuildOptions(enableEmbeddedJetBrainsClient = false),
+    )
+    createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
 
   enum class KotlinUltimateSources {

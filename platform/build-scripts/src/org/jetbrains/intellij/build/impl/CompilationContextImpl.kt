@@ -69,7 +69,7 @@ suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRo
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
   val logDir = options.logPath?.let { Path.of(it) }
-               ?: (options.outputRootPath ?: defaultOutputRoot).resolve("log")
+               ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
   return CompilationContextImpl.createCompilationContext(communityHome = communityHome,
                                                          projectHome = projectHome,
@@ -86,7 +86,7 @@ internal fun computeBuildPaths(
   artifactPathSupplier: (() -> Path)?,
   projectHome: Path,
 ): BuildPaths {
-  val buildOut = options.outputRootPath ?: buildOutputRootEvaluator(project)
+  val buildOut = options.outRootDir ?: buildOutputRootEvaluator(project)
   val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
   val result = BuildPaths(
     communityHomeDirRoot = communityHome,
@@ -286,7 +286,7 @@ class CompilationContextImpl private constructor(
     }
     suppressWarnings(project)
     ConsoleSpanExporter.setPathRoot(paths.buildOutputDir)
-    if (options.cleanOutputFolder || options.forceRebuild) {
+    if (options.cleanOutDir || options.forceRebuild) {
       cleanOutput()
     }
     else {
@@ -297,7 +297,7 @@ class CompilationContextImpl private constructor(
   }
 
   private fun overrideClassesOutputDirectory() {
-    val override = options.classesOutputDirectory
+    val override = options.classOutDir
     when {
       !override.isNullOrEmpty() -> classesOutputDirectory = Path.of(override)
       options.useCompiledClassesFromProjectOutput -> check(Files.exists(classesOutputDirectory)) {

@@ -91,12 +91,14 @@ class BuildContextImpl(
   }
 
   companion object {
-    suspend fun createContext(communityHome: BuildDependenciesCommunityRoot,
-                              projectHome: Path,
-                              productProperties: ProductProperties,
-                              setupTracer: Boolean = true,
-                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                              options: BuildOptions = BuildOptions()): BuildContext {
+    suspend fun createContext(
+      communityHome: BuildDependenciesCommunityRoot,
+      projectHome: Path,
+      productProperties: ProductProperties,
+      setupTracer: Boolean = true,
+      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+      options: BuildOptions = BuildOptions(),
+    ): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
         communityHome = communityHome,
         projectHome = projectHome,
@@ -235,7 +237,7 @@ class BuildContextImpl(
         artifactPathSupplier = if (prepareForBuild) {
           {
             @Suppress("DEPRECATION")
-            paths.artifactDir.resolve(productProperties.productCode!!)
+            paths.artifactDir.resolve(productProperties.productCode ?: applicationInfo.productCode)
           }
         }
         else {

@@ -108,10 +108,12 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     runDir
   }
 
-  val context = createBuildContext(productConfiguration = productConfiguration,
-                                   request = request,
-                                   runDir = runDir,
-                                   jarCacheDir = rootDir.resolve("jar-cache"))
+  val context = createBuildContext(
+    productConfiguration = productConfiguration,
+    request = request,
+    runDir = runDir,
+    jarCacheDir = rootDir.resolve("jar-cache"),
+  )
   compileIfNeeded(context)
 
   coroutineScope {
@@ -372,10 +374,12 @@ private suspend fun buildPlugins(request: BuildRequest,
   return pluginEntries
 }
 
-private suspend fun createBuildContext(productConfiguration: ProductConfiguration,
-                                       request: BuildRequest,
-                                       runDir: Path,
-                                       jarCacheDir: Path): BuildContext {
+private suspend fun createBuildContext(
+  productConfiguration: ProductConfiguration,
+  request: BuildRequest,
+  runDir: Path,
+  jarCacheDir: Path,
+): BuildContext {
   return coroutineScope {
     // ~1 second
     val productProperties = async {
@@ -394,11 +398,11 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
           printFreeSpace = false,
           validateImplicitPlatformModule = false,
           skipDependencySetup = true,
+          useCompiledClassesFromProjectOutput = true,
+          cleanOutDir = false,
+          outRootDir = runDir,
         )
-        options.useCompiledClassesFromProjectOutput = true
         options.setTargetOsAndArchToCurrent()
-        options.cleanOutputFolder = false
-        options.outputRootPath = runDir
         options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
         options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
         options.buildStepsToSkip.add(BuildOptions.FUS_METADATA_BUNDLE_STEP)

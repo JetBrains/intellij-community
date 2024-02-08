@@ -24,7 +24,7 @@ import java.util.function.BiPredicate
  */
 abstract class ProductProperties {
   /**
-   * The base name (i.e. a name without the extension and architecture suffix)
+   * The base name (i.e., a name without the extension and architecture suffix)
    * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx),
    * usually a short product name in lower case (`"idea"` for IntelliJ IDEA, `"webstorm"` for WebStorm, etc.).
    *
@@ -231,7 +231,7 @@ abstract class ProductProperties {
   var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
   /**
-   * Strings which are forbidden as a part of resulting class file path. E.g.:
+   * Strings which are forbidden as a part of the resulting class file path. E.g.:
    * "license"
    */
   var forbiddenClassFileSubPaths: PersistentList<String> = persistentListOf()

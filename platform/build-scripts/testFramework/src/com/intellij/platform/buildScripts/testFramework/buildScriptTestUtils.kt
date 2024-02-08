@@ -31,7 +31,10 @@ import java.nio.file.StandardCopyOption
 
 fun createBuildOptionsForTest(productProperties: ProductProperties, skipDependencySetup: Boolean = false): BuildOptions {
   val outDir = createTestBuildOutDir(productProperties)
-  val options = BuildOptions()
+  val options = BuildOptions(
+    cleanOutDir = false,
+    useCompiledClassesFromProjectOutput = true
+  )
   customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup)
   return options
 }
@@ -59,7 +62,7 @@ fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDepend
     BuildOptions.MAC_NOTARIZE_STEP,
   ))
   options.buildUnixSnaps = false
-  options.outputRootPath = outDir
+  options.outRootDir = outDir
   options.useCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
 }
@@ -73,25 +76,31 @@ suspend inline fun createBuildContext(
 ): BuildContext {
   val options = createBuildOptionsForTest(productProperties)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(communityHome = communityHomePath,
-                                        projectHome = homePath,
-                                        productProperties = productProperties,
-                                        proprietaryBuildTools = buildTools,
-                                        options = options)
+  return BuildContextImpl.createContext(
+    communityHome = communityHomePath,
+    projectHome = homePath,
+    productProperties = productProperties,
+    proprietaryBuildTools = buildTools,
+    options = options,
+  )
 }
 
 // don't expose BuildDependenciesCommunityRoot
-fun runTestBuild(homePath: Path,
-                 productProperties: ProductProperties,
-                 traceSpanName: String,
-                 buildTools: ProprietaryBuildTools,
-                 buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
-  runTestBuild(homePath = homePath,
-               productProperties = productProperties,
-               buildTools = buildTools,
-               traceSpanName = traceSpanName,
-               isReproducibilityTestAllowed = true,
-               buildOptionsCustomizer = buildOptionsCustomizer)
+fun runTestBuild(
+  homePath: Path,
+  productProperties: ProductProperties,
+  traceSpanName: String,
+  buildTools: ProprietaryBuildTools,
+  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
+) {
+  runTestBuild(
+    homePath = homePath,
+    productProperties = productProperties,
+    buildTools = buildTools,
+    traceSpanName = traceSpanName,
+    isReproducibilityTestAllowed = true,
+    buildOptionsCustomizer = buildOptionsCustomizer,
+  )
 }
 
 fun runTestBuild(

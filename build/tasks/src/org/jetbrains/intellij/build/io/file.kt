@@ -41,7 +41,6 @@ private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
   Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING)
 }
 
-@JvmOverloads
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(

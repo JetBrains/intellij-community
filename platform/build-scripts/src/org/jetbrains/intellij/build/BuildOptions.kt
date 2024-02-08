@@ -40,6 +40,24 @@ data class BuildOptions(
    */
   var isInDevelopmentMode: Boolean = SystemProperties.getBooleanProperty("intellij.build.dev.mode", System.getenv("TEAMCITY_VERSION") == null),
   var useCompiledClassesFromProjectOutput: Boolean = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, isInDevelopmentMode),
+
+  val cleanOutDir: Boolean = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true),
+
+  var classOutDir: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY),
+
+  var forceRebuild: Boolean = SystemProperties.getBooleanProperty(FORCE_REBUILD_PROPERTY, false),
+  /**
+   * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
+   * to allow starting JetBrains Client directly from the IDE's distribution.
+   */
+  @ApiStatus.Experimental
+  var enableEmbeddedJetBrainsClient: Boolean = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true),
+
+  /**
+   * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
+   * Use this property to change the output directory.
+   */
+  var outRootDir: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() }
 ) {
   companion object {
     /**
@@ -253,8 +271,6 @@ data class BuildOptions(
     private const val DEFAULT_SNAP_TOOL_IMAGE = "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627"
   }
 
-  var classesOutputDirectory: String? = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
-
   /**
    * Specifies for which operating systems distributions should be built.
    */
@@ -269,8 +285,6 @@ data class BuildOptions(
     targetOs = persistentListOf(OsFamily.currentOs)
     targetArch = JvmArchitecture.currentJvmArch
   }
-
-  var forceRebuild: Boolean = SystemProperties.getBooleanProperty(FORCE_REBUILD_PROPERTY, false)
 
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
@@ -332,20 +346,12 @@ data class BuildOptions(
    */
   var buildNumber: String? = System.getProperty("build.number")
 
-  /**
-   * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
-   * Use this property to change the output directory.
-   */
-  var outputRootPath: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() }
-
   var logPath: String? = System.getProperty("intellij.build.log.root")
 
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
    */
   var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
-
-  var cleanOutputFolder: Boolean = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_DIRECTORY_PROPERTY, true)
 
   /**
    * If `true`, the build is running as a unit test.
@@ -387,13 +393,6 @@ data class BuildOptions(
    */
   @ApiStatus.Experimental
   var generateRuntimeModuleRepository: Boolean = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", true)
-
-  /**
-   * If `true` and [ProductProperties.embeddedJetBrainsClientMainModule] is not null, the JAR files in the distribution will be adjusted
-   * to allow starting JetBrains Client directly from the IDE's distribution.
-   */
-  @ApiStatus.Experimental
-  var enableEmbeddedJetBrainsClient: Boolean = SystemProperties.getBooleanProperty("intellij.build.enable.embedded.jetbrains.client", true)
 
   /**
    * If `true` and embedded JetBrains Client is [enabled][BuildContext.isEmbeddedJetBrainsClientEnabled], launchers which start it will be
