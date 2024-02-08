@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -664,7 +665,11 @@ public class HintManagerImpl extends HintManager {
       if (pane != null) {
         pane.addHyperlinkListener(e -> {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && "action".equals(e.getDescription()) && hint.isVisible()) {
-            if (action.execute()) {
+            boolean execute;
+            try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+              execute = action.execute();
+            }
+            if (execute) {
               hint.hide();
             }
           }
