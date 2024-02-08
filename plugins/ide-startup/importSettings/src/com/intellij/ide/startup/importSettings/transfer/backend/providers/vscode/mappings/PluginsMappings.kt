@@ -39,6 +39,10 @@ private val logger = logger<CommonPluginMapping>()
 
 internal class CommonPluginMapping : VSCodePluginMapping {
 
+  init {
+    println()
+  }
+
   // Note that the later files will override the data from the former.
   private fun getResourceMappings(): List<String> = when {
     PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
