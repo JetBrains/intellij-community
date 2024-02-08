@@ -30,7 +30,7 @@ public final class SequencedCollectionMethodCanBeUsedInspection extends Abstract
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (PsiUtil.isAvailable(JavaFeature.SEQUENCED_COLLECTIONS, holder.getFile())) {
+    if (!PsiUtil.isAvailable(JavaFeature.SEQUENCED_COLLECTIONS, holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
