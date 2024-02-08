@@ -257,7 +257,7 @@ private class AlertDialog(project: Project?,
 
   override fun createContentPaneBorder(): Border {
     val insets = JButton().insets
-    return JBUI.Borders.empty(if (myIsTitleComponent) 20 else 14, 20, 18 - insets.bottom, 20 - insets.right)
+    return JBUI.Borders.empty(if (myIsTitleComponent) 20 else 14, 20, 20 - insets.bottom, 20 - insets.right)
   }
 
   override fun createRootLayout(): LayoutManager = myRootLayout
