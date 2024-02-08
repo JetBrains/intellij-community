@@ -3,6 +3,8 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -113,7 +115,21 @@ public final class OptionsEditorContext {
   }
 
   public boolean isModified(final Configurable configurable) {
-    return myModified.contains(configurable);
+    if (myModified.contains(configurable)) return true;
+
+    if (configurable instanceof Configurable.InnerWithModifiableParent inner) {
+      Configurable parent = inner.getModifiableParent();
+      if (myModified.contains(parent)) return true;
+
+      for (Configurable modified: myModified) {
+        if (modified instanceof ConfigurableWrapper wrapper) {
+          UnnamedConfigurable unwrapped = wrapper.getRawConfigurable();
+          if (unwrapped != null && unwrapped.equals(parent)) return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   public void setHoldingFilter(final boolean holding) {

@@ -226,6 +226,15 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   /**
+   * The interface is used to retrieve the parent configurable and enable `Reset` action if the parent is modified,
+   * even if the inner configurable wasn't modified.
+   */
+  @ApiStatus.Experimental
+  interface InnerWithModifiableParent {
+    @NotNull Configurable getModifiableParent();
+  }
+
+  /**
    * Ask opened configurable to focus on a control with a specified label.
    * It could be a tab name, name of the tree item, checkbox label, etc.
    * The configurable may or may not ignore this request.

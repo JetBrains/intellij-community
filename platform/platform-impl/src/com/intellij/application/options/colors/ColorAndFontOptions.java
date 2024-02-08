@@ -1410,7 +1410,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return child == null ? null : child.createPanel();
   }
 
-  private final class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {
+  private final class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll, InnerWithModifiableParent {
     private NewColorAndFontPanel mySubPanel;
     private boolean mySubInitInvoked = false;
     private final @NotNull ColorAndFontPanelFactory myFactory;
@@ -1543,6 +1543,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public @NotNull @NonNls String toString() {
       return "Color And Fonts for "+getDisplayName();
+    }
+
+    @Override
+    public Configurable getModifiableParent() {
+      return ColorAndFontOptions.this;
     }
   }
 
