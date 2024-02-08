@@ -1,10 +1,10 @@
 internal class Test : Base() {
     override fun hashCode(): Int {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     override fun equals(o: Any?): Boolean {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     @Throws(CloneNotSupportedException::class)
@@ -13,35 +13,35 @@ internal class Test : Base() {
     }
 
     override fun toString(): String {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     @Throws(Throwable::class)
     override fun finalize() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }
 
 internal open class Base : Cloneable {
     override fun hashCode(): Int {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     override fun equals(o: Any?): Boolean {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     @Throws(CloneNotSupportedException::class)
     override fun clone(): Any {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     override fun toString(): String {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     @Throws(Throwable::class)
     protected open fun finalize() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }

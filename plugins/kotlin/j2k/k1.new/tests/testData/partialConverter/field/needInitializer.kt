@@ -1,11 +1,11 @@
 class Init {
-    var field1: String = TODO("_root_ide_package_")
-    var field2: String = TODO("_root_ide_package_")
+    var field1: String = TODO()
+    var field2: String = TODO()
 
     var field3: Int = 0
-    var field4: Int = TODO("_root_ide_package_")
+    var field4: Int = TODO()
 
     init {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }

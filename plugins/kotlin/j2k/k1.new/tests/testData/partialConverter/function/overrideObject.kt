@@ -1,6 +1,6 @@
 internal class X : Cloneable {
     override fun hashCode(): Int {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     override fun equals(o: Any?): Boolean {
@@ -8,18 +8,18 @@ internal class X : Cloneable {
     }
 
     override fun toString(): String {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     @Throws(CloneNotSupportedException::class)
     override fun clone(): Any {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }
 
 internal class Y : Thread() {
     @Throws(CloneNotSupportedException::class)
     override fun clone(): Any {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }

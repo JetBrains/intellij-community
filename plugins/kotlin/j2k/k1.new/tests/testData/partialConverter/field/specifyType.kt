@@ -1,37 +1,37 @@
 internal class A {
-    private val field1: List<String> = TODO("_root_ide_package_")
+    private val field1: List<String> = TODO()
     val field2: List<String> = ArrayList()
-    val field3: Int = TODO("_root_ide_package_")
-    protected val field4: Int = TODO("_root_ide_package_")
+    val field3: Int = TODO()
+    protected val field4: Int = TODO()
 
-    private val field5: List<String> = TODO("_root_ide_package_")
-    var field6: List<String> = TODO("_root_ide_package_")
+    private val field5: List<String> = TODO()
+    var field6: List<String> = TODO()
 
-    private val field7: Int = TODO("_root_ide_package_")
-    var field8: Int = TODO("_root_ide_package_")
+    private val field7: Int = TODO()
+    var field8: Int = TODO()
 
-    private val field9: String? = TODO("_root_ide_package_")
-    private val field10: String? = TODO("_root_ide_package_")
+    private val field9: String? = TODO()
+    private val field10: String? = TODO()
 
     fun foo(): String {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun bar() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     internal interface I
 
-    private val anonymous: I = TODO("_root_ide_package_")
+    private val anonymous: I = TODO()
 
-    var anonymous2: I = TODO("_root_ide_package_")
+    var anonymous2: I = TODO()
 
-    private val anonymous3: I = TODO("_root_ide_package_")
+    private val anonymous3: I = TODO()
 
-    private val iimpl: I = TODO("_root_ide_package_")
+    private val iimpl: I = TODO()
 
     fun testAnonymousObject(i: Any?) {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }

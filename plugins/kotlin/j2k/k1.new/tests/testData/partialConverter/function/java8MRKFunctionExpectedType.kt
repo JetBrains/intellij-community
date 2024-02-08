@@ -2,62 +2,62 @@ package test
 
 internal class Test {
     fun memberFun(): Int {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     companion object {
-        var field: Java8Class = TODO("_root_ide_package_")
+        var field: Java8Class = TODO()
         fun staticFun(): Java8Class {
-            TODO("_root_ide_package_")
+            TODO()
         }
 
         fun testOverloads(): String {
-            TODO("_root_ide_package_")
+            TODO()
         }
 
         fun testOverloads(i: Int): String {
-            TODO("_root_ide_package_")
+            TODO()
         }
     }
 }
 
 internal class Java8Class {
-    private val field: Java8Class = TODO("_root_ide_package_")
+    private val field: Java8Class = TODO()
 
     fun testStaticFunction() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun testMemberFunctionThroughClass() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun testMemberFunctionThroughObject() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun testConstructor() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun testLibraryFunctions() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun testOverloads() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun testGenericFunctions() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun memberFun(): Int {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     init {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     companion object {

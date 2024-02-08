@@ -1,10 +1,10 @@
 internal class Test {
     fun <A, B> foo(value: A, `fun`: FunctionalI<A, B>?): B {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun toDouble(x: Int?): Double {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun nya(): Double {

@@ -1,6 +1,6 @@
 internal open class Base {
     protected open fun foo() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }
 

@@ -4,12 +4,12 @@ import kotlin.concurrent.Volatile
 internal class A {
     @Deprecated("")
     @Volatile
-    var field1: Int = TODO("_root_ide_package_")
+    var field1: Int = TODO()
 
     @Transient
     var field2: Int = 1
 
     // Should work even for bad modifiers
     @Strictfp
-    var field3: Double = TODO("_root_ide_package_")
+    var field3: Double = TODO()
 }

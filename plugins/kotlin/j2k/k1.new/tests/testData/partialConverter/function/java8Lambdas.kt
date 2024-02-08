@@ -1,18 +1,18 @@
 class Java8Class {
     fun foo0(r: Function0<String?>?) {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun foo1(r: Function1<Int, String?>?) {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun foo2(r: Function2<Int?, Int?, String?>?) {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun helper() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun foo() {

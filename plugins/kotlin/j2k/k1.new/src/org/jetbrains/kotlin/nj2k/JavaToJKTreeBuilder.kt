@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class JavaToJKTreeBuilder(
@@ -1088,17 +1087,8 @@ internal class JavaToJKTreeBuilder(
             return labels to currentStatement
         }
 
-        private fun createTodoExpression(): JKExpression = JKCallExpressionImpl(
-            symbolProvider.provideMethodSymbol("kotlin.TODO"),
-            JKArgumentList(
-                JKArgumentImpl(
-                    JKLiteralExpression(
-                        "\"${QualifiedExpressionResolver.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE}\"",
-                        STRING,
-                    )
-                )
-            ),
-        )
+        private fun createTodoExpression(): JKExpression =
+            JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.TODO"))
 
         private fun PsiElement.createErrorStatement(message: String? = null): JKStatement =
             JKErrorStatement(this, message)

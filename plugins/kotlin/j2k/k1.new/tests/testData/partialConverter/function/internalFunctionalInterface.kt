@@ -8,10 +8,10 @@ internal class Test {
     }
 
     fun toDouble(x: Int?): Double {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     fun nya(): Double {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }

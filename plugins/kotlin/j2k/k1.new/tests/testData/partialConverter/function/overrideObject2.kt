@@ -2,11 +2,11 @@ internal open class Base
 
 internal class X : Base(), Cloneable {
     override fun hashCode(): Int {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     override fun equals(o: Any?): Boolean {
-        TODO("_root_ide_package_")
+        TODO()
     }
 
     override fun toString(): String {
@@ -15,6 +15,6 @@ internal class X : Base(), Cloneable {
 
     @Throws(CloneNotSupportedException::class)
     override fun clone(): Any {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }

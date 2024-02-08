@@ -1,6 +1,6 @@
 internal open class Base {
     override fun equals(o: Any?): Boolean {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }
 

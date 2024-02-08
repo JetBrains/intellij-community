@@ -5,6 +5,6 @@ internal class A {
     }
 
     fun bar() {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }

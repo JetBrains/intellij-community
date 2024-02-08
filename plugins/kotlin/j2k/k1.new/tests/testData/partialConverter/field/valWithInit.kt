@@ -1,6 +1,6 @@
 internal class Foo(a: Int, b: Int) {
     init {
-        TODO("_root_ide_package_")
+        TODO()
     }
 }
 
