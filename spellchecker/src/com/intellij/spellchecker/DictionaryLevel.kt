@@ -46,11 +46,15 @@ class ProjectDictionaryLayer(val project: Project) : DictionaryLayer {
     val name = SpellCheckerBundle.messagePointer("dictionary.name.project.level")
   }
 
-  override val name = Companion.name.get()
-  override val dictionary: ProjectDictionary = project.service<ProjectDictionaryState>().projectDictionary
+  override val name: String
+    get() = Companion.name.get()
+  override val dictionary: ProjectDictionary
+    get() = project.service<ProjectDictionaryState>().projectDictionary
 }
 
 object ApplicationDictionaryLayer : DictionaryLayer {
-  override val name = SpellCheckerBundle.message("dictionary.name.application.level")
-  override val dictionary: EditableDictionary by lazy { AppDictionaryState.getInstance().dictionary }
+  override val name: String
+    get() = SpellCheckerBundle.message("dictionary.name.application.level")
+  override val dictionary: EditableDictionary
+    get() = AppDictionaryState.getInstance().dictionary
 }
