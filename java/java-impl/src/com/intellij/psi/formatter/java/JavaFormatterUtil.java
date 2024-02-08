@@ -522,7 +522,9 @@ public final class JavaFormatterUtil {
 
 
   /**
-   * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list
+   * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list.
+   * If the quantity of the call expressions is greater than {@link JavaFormatterUtil#CALL_EXPRESSION_DEPTH}, call expressions will not be
+   * collected, and you should not format them.
    * @param nodes List in which the method add nodes
    * @param node Node to traverse
    *
