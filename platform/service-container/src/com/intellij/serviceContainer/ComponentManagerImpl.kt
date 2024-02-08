@@ -1224,7 +1224,7 @@ abstract class ComponentManagerImpl(
         throw e
       }
       catch (e: Throwable) {
-        LOG.error(e)
+        LOG.warn(e)
         null
       }
     }
