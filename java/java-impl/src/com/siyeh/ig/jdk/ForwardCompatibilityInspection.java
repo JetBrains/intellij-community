@@ -43,7 +43,8 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
         JavaFeature feature = JavaLexer.softKeywordFeature(name);
-        if (feature != null && feature != JavaFeature.MODULES && // Keywords from module-info still can be used as class names
+        if (feature != null && 
+            feature != JavaFeature.MODULES && !name.equals(PsiKeyword.WHEN) && // Keywords from module-info and 'when' still can be used as class names
             !feature.isSufficient(languageLevel) && parent instanceof PsiClass) {
           return JavaErrorBundle.message("restricted.identifier.warn", name,
                                          feature.getMinimumLevel().toJavaVersion().feature);
