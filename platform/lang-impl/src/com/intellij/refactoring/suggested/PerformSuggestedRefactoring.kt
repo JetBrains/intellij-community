@@ -39,6 +39,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParam
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.TestOnly
 import java.awt.Font
 import java.awt.Insets
@@ -219,7 +220,9 @@ private fun doRefactor(
   val project = state.anchor.project
   UndoManager.getInstance(project).undoableActionPerformed(SuggestedRefactoringUndoableAction.create(editor.document, state))
 
-  performWithDumbEditor(editor, doRefactor)
+  SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+    performWithDumbEditor(editor, doRefactor)
+  }
 
   // no refactoring availability anymore even if no usages updated
   SuggestedRefactoringProvider.getInstance(project).reset()
