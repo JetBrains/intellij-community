@@ -2,6 +2,7 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
@@ -27,7 +28,10 @@ internal class DiffFileEditorProvider : DefaultPlatformFileEditorProvider, Struc
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val processor: DiffEditorViewer = (file as DiffViewerVirtualFile).createProcessor(project)
-    val editor = DiffEditorViewerFileEditor(file, processor)
+    val editor = when (processor) {
+      is DiffRequestProcessor -> @Suppress("DEPRECATION") DiffRequestProcessorEditor(file, processor)
+      else -> DiffEditorViewerFileEditor(file, processor)
+    }
     DiffRequestProcessorEditorCustomizer.customize(file, editor, processor.context)
     return editor
   }

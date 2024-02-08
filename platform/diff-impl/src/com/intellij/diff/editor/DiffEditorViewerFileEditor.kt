@@ -3,6 +3,7 @@ package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffEditorViewerListener
+import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -86,3 +87,8 @@ open class DiffEditorViewerFileEditor(
   }
 }
 
+@Deprecated("Use DiffEditorViewerFileEditors instead")
+open class DiffRequestProcessorEditor(
+  file: VirtualFile,
+  @Deprecated("use editorViewer instead") val processor: DiffRequestProcessor
+) : DiffEditorViewerFileEditor(file, processor)
