@@ -53,4 +53,13 @@ public final class GradleReflectionUtil {
       return null;
     }
   }
+
+  public static @Nullable Class<?> loadClassOrNull(@NotNull ClassLoader classLoader, @NotNull String className) {
+    try {
+      return classLoader.loadClass(className);
+    }
+    catch (ClassNotFoundException __) {
+      return null;
+    }
+  }
 }

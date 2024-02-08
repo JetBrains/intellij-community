@@ -28,7 +28,6 @@ import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 class GradleSourceSetGroovyHelper {
 
   private static final boolean is67OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("6.7")
-  private static final boolean is74OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("7.4")
   private static final boolean is80OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.0")
 
   @NotNull
@@ -43,24 +42,7 @@ class GradleSourceSetGroovyHelper {
     def ideaPluginOutDir = ideaPluginModule?.outputDir
     def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
 
-    def testSourceSets = []
-
-    def testingExtensionClass = null
-    try {
-      testingExtensionClass =
-        project.getPlugins().findPlugin("jvm-test-suite")?.getClass()?.classLoader?.loadClass("org.gradle.testing.base.TestingExtension")
-    }
-    catch (Exception ignore) {
-    }
-
-    if (is74OrBetter
-      && project.hasProperty("testing")
-      && testingExtensionClass != null
-      && testingExtensionClass.isAssignableFrom(project.testing.getClass())) {
-      testSourceSets = project.testing.suites.collect { it.getSources() }
-    }
-
-    def sourceSetResolutionContext = new GradleSourceSetResolutionContext(ideaPluginModule)
+    def sourceSetResolutionContext = new GradleSourceSetResolutionContext(project, ideaPluginModule)
 
     def projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project)
     def projectTargetCompatibility = JavaPluginUtil.getTargetCompatibility(project)
@@ -75,10 +57,6 @@ class GradleSourceSetGroovyHelper {
     def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = GradleResourceFilterModelBuilder.getFilters(project, context, 'processTestResources')
     //def (javaIncludes, javaExcludes) = GradleResourceFilterModelBuilder.getFilters(project, 'compileJava')
 
-    def testFixtures = sourceSets.findByName("testFixtures")
-    if (testFixtures != null) {
-      testSourceSets.add(testFixtures)
-    }
     sourceSets.each { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
@@ -197,9 +175,9 @@ class GradleSourceSetGroovyHelper {
       else {
         boolean isTestSourceSet = false
         boolean explicitlyMarkedAsTests = sourceSetResolutionContext.ideaTestSourceDirs.containsAll(javaDirectorySet.srcDirs)
-        boolean knownTestingSourceSet = testSourceSets.contains(sourceSet)
+        boolean knownTestSourceSet = sourceSetResolutionContext.testSourceSets.contains(sourceSet)
         if (!inheritOutputDirs && resolveSourceSetDependencies && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name
-          && (explicitlyMarkedAsTests || knownTestingSourceSet)) {
+          && (explicitlyMarkedAsTests || knownTestSourceSet)) {
           javaDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/classes")
           resourcesDirectorySet.outputDir = ideaPluginTestOutDir ?: new File(project.projectDir, "out/test/resources")
           sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)

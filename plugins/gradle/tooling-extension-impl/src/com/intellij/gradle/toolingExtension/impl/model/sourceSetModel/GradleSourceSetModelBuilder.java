@@ -5,8 +5,11 @@ import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
+import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
+import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifactSet;
@@ -35,6 +38,10 @@ import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getT
 
 @ApiStatus.Internal
 public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
+
+  private static final String JVM_TEST_SUITE_PLUGIN_ID = "jvm-test-suite";
+  private static final String TESTING_EXTENSION_CLASS = "org.gradle.testing.base.TestingExtension";
+  private static final String JVM_TEST_SUITE_CLASS = "org.gradle.api.plugins.jvm.JvmTestSuite";
 
   @Override
   public boolean canBuild(String modelName) {
@@ -359,6 +366,58 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       project.getLogger().info("Unable to resolve task source path: {} ({})", msg, className);
       return object;
     }
+  }
+
+  static @NotNull Collection<SourceSet> collectTestSourceSets(@NotNull Project project) {
+    Collection<SourceSet> result = new ArrayList<>();
+    result.addAll(collectJvmTestSuiteSourceSets(project));
+    result.addAll(collectTestFixtureSourceSets(project));
+    return result;
+  }
+
+  private static @NotNull Collection<SourceSet> collectJvmTestSuiteSourceSets(@NotNull Project project) {
+    if (GradleVersionUtil.isCurrentGradleOlderThan("7.4")) {
+      return Collections.emptyList();
+    }
+    Plugin<?> plugin = project.getPlugins().findPlugin(JVM_TEST_SUITE_PLUGIN_ID);
+    if (plugin == null) {
+      return Collections.emptyList();
+    }
+    ClassLoader pluginClassLoader = plugin.getClass().getClassLoader();
+    Class<?> testingExtensionClass = GradleReflectionUtil.loadClassOrNull(pluginClassLoader, TESTING_EXTENSION_CLASS);
+    Class<?> jvmTestSuiteClass = GradleReflectionUtil.loadClassOrNull(pluginClassLoader, JVM_TEST_SUITE_CLASS);
+    if (testingExtensionClass == null || jvmTestSuiteClass == null) {
+      return Collections.emptyList();
+    }
+    Object testingExtension = project.findProperty("testing");
+    if (testingExtension == null) {
+      return Collections.emptyList();
+    }
+    Collection<SourceSet> result = new ArrayList<>();
+    if (testingExtensionClass.isInstance(testingExtension)) {
+      Collection<?> suites = GradleReflectionUtil.reflectiveCall(testingExtension, "getSuites", Collection.class);
+      for (Object suite : suites) {
+        if (jvmTestSuiteClass.isInstance(suite)) {
+          SourceSet sourceSet = GradleReflectionUtil.reflectiveCall(suite, "getSources", SourceSet.class);
+          if (sourceSet != null) {
+            result.add(sourceSet);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static @NotNull Collection<SourceSet> collectTestFixtureSourceSets(@NotNull Project project) {
+    SourceSetContainer sourceSets = JavaPluginUtil.getSourceSetContainer(project);
+    if (sourceSets == null) {
+      return Collections.emptyList();
+    }
+    SourceSet testFixtureSourceSet = sourceSets.findByName("testFixtures");
+    if (testFixtureSourceSet == null) {
+      return Collections.emptyList();
+    }
+    return Collections.singleton(testFixtureSourceSet);
   }
 
   static void addUnprocessedIdeaSourceDirs(
