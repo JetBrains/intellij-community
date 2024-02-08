@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.MyFileEditorState
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,25 +18,23 @@ private const val SECOND_EDITOR = "second_editor"
 private const val SPLIT_LAYOUT = "split_layout"
 private const val VERTICAL_SPLIT = "is_vertical_split"
 
-@ApiStatus.Internal
-abstract class TextEditorWithPreviewProvider(
-  private val firstProvider: FileEditorProvider,
-  private val secondProvider: FileEditorProvider
-): AsyncFileEditorProvider, DumbAware {
-  private val editorTypeId = createSplitEditorProviderTypeId(firstProvider.editorTypeId, secondProvider.editorTypeId)
+@ApiStatus.Experimental
+abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEditorProvider): AsyncFileEditorProvider, DumbAware {
+  private val mainProvider: TextEditorProvider = TextEditorProvider.getInstance()
+  private val editorTypeId = createSplitEditorProviderTypeId(mainProvider.editorTypeId, previewProvider.editorTypeId)
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
-    return firstProvider.accept(project, file) && secondProvider.accept(project, file)
+    return mainProvider.accept(project, file) && previewProvider.accept(project, file)
   }
 
   override fun acceptRequiresReadAction(): Boolean {
-    return firstProvider.acceptRequiresReadAction() || secondProvider.acceptRequiresReadAction()
+    return mainProvider.acceptRequiresReadAction() || previewProvider.acceptRequiresReadAction()
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val first = firstProvider.createEditor(project, file)
-    val second = secondProvider.createEditor(project, file)
-    return createSplitEditor(first, second)
+    val first = mainProvider.createEditor(project, file)
+    val second = previewProvider.createEditor(project, file)
+    return createSplitEditor(first as TextEditor, second)
   }
 
   override fun getEditorTypeId(): String {
@@ -43,39 +42,39 @@ abstract class TextEditorWithPreviewProvider(
   }
 
   override fun createEditorAsync(project: Project, file: VirtualFile): AsyncFileEditorProvider.Builder {
-    val firstBuilder = createEditorBuilder(provider = firstProvider, project = project, file = file)
-    val secondBuilder = createEditorBuilder(provider = secondProvider, project = project, file = file)
+    val firstBuilder = createEditorBuilder(provider = mainProvider, project = project, file = file)
+    val secondBuilder = createEditorBuilder(provider = previewProvider, project = project, file = file)
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
-        return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
+        return createSplitEditor(firstEditor = firstBuilder.build() as TextEditor, secondEditor = secondBuilder.build())
       }
     }
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
-    val firstBuilder = createEditorBuilderAsync(provider = firstProvider, project = project, file = file, document = document)
-    val secondBuilder = createEditorBuilderAsync(provider = secondProvider, project = project, file = file, document = document)
+    val firstBuilder = createEditorBuilderAsync(provider = mainProvider, project = project, file = file, document = document)
+    val secondBuilder = createEditorBuilderAsync(provider = previewProvider, project = project, file = file, document = document)
     return object : AsyncFileEditorProvider.Builder() {
       override fun build(): FileEditor {
-        return createSplitEditor(firstEditor = firstBuilder.build(), secondEditor = secondBuilder.build())
+        return createSplitEditor(firstEditor = firstBuilder.build() as TextEditor, secondEditor = secondBuilder.build())
       }
     }
   }
 
   private fun readFirstProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
     val child = sourceElement.getChild(FIRST_EDITOR) ?: return null
-    return firstProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
+    return mainProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
   }
 
   private fun readSecondProviderState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState? {
     val child = sourceElement.getChild(SECOND_EDITOR) ?: return null
-    return secondProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
+    return previewProvider.readState(/* sourceElement = */ child, /* project = */ project, /* file = */ file)
   }
 
   private fun writeFirstProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
     val child = Element(FIRST_EDITOR)
     if (state != null) {
-      firstProvider.writeState(state, project, child)
+      mainProvider.writeState(state, project, child)
       targetElement.addContent(child)
     }
   }
@@ -83,7 +82,7 @@ abstract class TextEditorWithPreviewProvider(
   private fun writeSecondProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
     val child = Element(SECOND_EDITOR)
     if (state != null) {
-      secondProvider.writeState(state, project, child)
+      previewProvider.writeState(state, project, child)
       targetElement.addContent(child)
     }
   }
@@ -124,8 +123,8 @@ abstract class TextEditorWithPreviewProvider(
     targetElement.setAttribute(SPLIT_LAYOUT, value)
   }
 
-  protected open fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor {
-    return TextEditorWithPreview(firstEditor as TextEditor, secondEditor)
+  protected open fun createSplitEditor(firstEditor: TextEditor, secondEditor: FileEditor): FileEditor {
+    return TextEditorWithPreview(firstEditor, secondEditor)
   }
 
   override fun getPolicy(): FileEditorPolicy {
