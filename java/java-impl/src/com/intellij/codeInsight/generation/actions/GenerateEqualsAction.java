@@ -7,6 +7,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
 
 public class GenerateEqualsAction extends BaseGenerateAction implements DumbAware {
   public GenerateEqualsAction() {
@@ -16,6 +17,6 @@ public class GenerateEqualsAction extends BaseGenerateAction implements DumbAwar
   @Override
   protected PsiClass getTargetClass(Editor editor, PsiFile file) {
     final PsiClass targetClass = super.getTargetClass(editor, file);
-    return targetClass == null || targetClass instanceof PsiAnonymousClass || targetClass.isEnum() ? null : targetClass;
+    return targetClass == null || targetClass instanceof PsiAnonymousClass || targetClass instanceof PsiImplicitClass || targetClass.isEnum() ? null : targetClass;
   }
 }
