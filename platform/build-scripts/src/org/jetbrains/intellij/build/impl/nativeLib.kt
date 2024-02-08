@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.NativeFileArchitecture.*
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
@@ -18,6 +19,58 @@ import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.*
+
+@VisibleForTesting
+object OsFamilyDetector {
+  private val regex = "(^|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
+
+  fun detectOsFamily(path: String): Pair<OsFamily, Int>? {
+    val result = regex.find(path) ?: return null
+    return result.groups["macos"]?.run { OsFamily.MACOS to range.first }
+           ?: result.groups["win"]?.run { OsFamily.WINDOWS to range.first }
+           ?: result.groups["linux"]?.run { OsFamily.LINUX to range.first }
+  }
+}
+
+@VisibleForTesting
+class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsFamily>?, private val targetArch: JvmArchitecture?) {
+  private val iterator = paths.iterator()
+  var commonPathPrefix: CharSequence? = null
+
+  fun findNext(): Match? {
+    while (iterator.hasNext()) {
+      val pathWithPrefix = iterator.next()
+      val osAndIndex = OsFamilyDetector.detectOsFamily(pathWithPrefix) ?: continue
+      val prefix = commonPathPrefix?.apply {
+        assert(length == osAndIndex.second) {
+          "All native runtimes should have common path prefix. Failed to match $pathWithPrefix to $this"
+        }
+      } ?: pathWithPrefix.subSequence(startIndex = 0, endIndex = osAndIndex.second).also { commonPathPrefix = it }
+      val osFamily = osAndIndex.first
+      if (targetOs != null && !targetOs.contains(osFamily)) {
+        continue
+      }
+
+      val path = pathWithPrefix.substring(prefix.length)
+      val nativeFileArchitecture = determineArch(os = osFamily, path = path) ?: continue
+      if (targetArch != null && !nativeFileArchitecture.compatibleWithTarget(targetArch)) {
+        continue
+      }
+
+      return Match(pathWithPrefix = pathWithPrefix, path = path, osFamily = osFamily, arch = nativeFileArchitecture.jvmArch)
+    }
+    return null
+  }
+
+  data class Match(
+    @JvmField val pathWithPrefix: String,
+    @JvmField val path: String,
+    @JvmField val osFamily: OsFamily,
+    @JvmField val arch: JvmArchitecture?,
+  ) {
+    override fun toString(): String = "$pathWithPrefix, path=$path, os=$osFamily, arch=$arch"
+  }
+}
 
 private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(EnumSet.of(
   PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -35,51 +88,42 @@ internal suspend fun packNativePresignedFiles(
     for ((source, paths) in nativeFiles) {
       val sourceFile = source.file
       launch(Dispatchers.IO) {
-        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context, outputDir = outDir)
+        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context, outDir = outDir)
       }
     }
   }
 }
 
-private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, dryRun: Boolean, context: BuildContext, outputDir: Path) {
+private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, dryRun: Boolean, context: BuildContext, outDir: Path) {
   val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
-
-  val packagePrefix = if (paths.size == 1) {
-    // if a native lib is built with the only arch for testing purposes
-    val first = paths.first()
-    first.substring(0, first.indexOf('/') + 1)
-  }
-  else {
-    getCommonPath(paths)
-  }
 
   val libName = getLibNameBySourceFile(sourceFile)
   // We need to keep async-profiler agents for all platforms to support remote target profiling,
   // as a suitable agent is copied to a remote machine
   val allPlatformsRequired = libName == "async-profiler"
+  val targetOs: Collection<OsFamily>?
+  val targetArch: JvmArchitecture?
+  if (!allPlatformsRequired && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
+    targetOs = context.options.targetOs
+    targetArch = context.options.targetArch
+  } else {
+    targetOs = null
+    targetArch = null
+  }
 
+  val nativeFileMatcher = NativeFilesMatcher(paths, targetOs, targetArch)
   HashMapZipFile.load(sourceFile).use { zipFile ->
     val tempDir = context.paths.tempDir.resolve(libName)
     Files.createDirectories(tempDir)
-    for (pathWithPackage in paths) {
-      val path = pathWithPackage.substring(packagePrefix.length)
+    while (true) {
+      val match = nativeFileMatcher.findNext() ?: break
+      val pathWithPackage = match.pathWithPrefix
+      val path = match.path
       val fileName = path.substring(path.lastIndexOf('/') + 1)
-
-      val os = determineOsFamily(path) ?: continue
-
-      if (!allPlatformsRequired && !context.options.targetOs.contains(os) && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
-        continue
-      }
-
-      val nativeFileArchitecture = determineArch(os, path) ?: continue
-
-      if (!allPlatformsRequired &&
-          !nativeFileArchitecture.compatibleWithTarget(context.options.targetArch) &&
-          signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
-        continue
-      }
+      val os = match.osFamily
+      val arch = match.arch
 
       var file: Path? = if (os == OsFamily.LINUX || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
         null
@@ -100,12 +144,11 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         }
       }
 
-      val arch = nativeFileArchitecture.jvmArch
-      val relativePath = outputDir.resolve(libName)
+      val relativePath = outDir.resolve(libName)
         .resolve(getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path))
       context.addDistFile(DistFile(
         file = file,
-        relativePath = relativePath.toString(),
+        relativePath = context.paths.distAllDir.relativize(relativePath).toString(),
         os = os.takeUnless { allPlatformsRequired },
         arch = arch.takeUnless { allPlatformsRequired },
       ))
@@ -155,10 +198,10 @@ private fun extractFileToDisk(file: Path, zipFile: HashMapZipFile, pathWithPacka
 /**
  * Represent CPU architecture for which native code was built.
  */
-private enum class NativeFileArchitecture(val jvmArch: JvmArchitecture?) {
-  X_64(JvmArchitecture.x64), AARCH_64(JvmArchitecture.aarch64),
-
-  // Universal native file can be used by any platform
+private enum class NativeFileArchitecture(@JvmField val jvmArch: JvmArchitecture?) {
+  X_64(JvmArchitecture.x64),
+  AARCH_64(JvmArchitecture.aarch64),
+  // universal native file can be used by any platform
   UNIVERSAL(null);
 
   fun compatibleWithTarget(targetArch: JvmArchitecture?): Boolean {
@@ -167,9 +210,9 @@ private enum class NativeFileArchitecture(val jvmArch: JvmArchitecture?) {
 }
 
 @Suppress("SpellCheckingInspection")
-private fun determineArch(os: OsFamily, path: String): NativeFileArchitecture? {
+private fun determineArch(os: OsFamily, path: CharSequence): NativeFileArchitecture? {
   // detect architecture from subfolders e.g. "linux-aarch64/libsqliteij.so"
-  val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.substring(0, it) } ?: return null
+  val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.subSequence(0, it) } ?: return null
   return when {
     osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> AARCH_64
     path.contains("x86-64") || path.contains("x86_64") -> X_64
@@ -177,18 +220,6 @@ private fun determineArch(os: OsFamily, path: String): NativeFileArchitecture? {
     !osAndArch.contains('-') && path.count { it == '/' } == 1 -> X_64
     else -> null
   }
-}
-
-private fun determineOsFamily(path: String): OsFamily? {
-  val osFromPath = when {
-    osNameStartsWith(path, "darwin") || osNameStartsWith(path, "mac") || osNameStartsWith(path, "macos") -> OsFamily.MACOS
-    path.startsWith("win32-") || osNameStartsWith(path, "win") || osNameStartsWith(path, "windows") -> OsFamily.WINDOWS
-    path.startsWith("Linux-Android/") || path.startsWith("Linux-Musl/") -> return null
-    osNameStartsWith(path, "linux") -> OsFamily.LINUX
-    else -> null
-  }
-
-  return osFromPath
 }
 
 // each library has own implementation of handling path property
@@ -204,8 +235,4 @@ private fun getRelativePath(libName: String, arch: JvmArchitecture?, fileName: S
 private fun getLibNameBySourceFile(sourceFile: Path): String {
   val fileName = sourceFile.fileName.toString()
   return fileName.split('-').takeWhile { !it.contains('.') }.joinToString(separator = "-")
-}
-
-private fun osNameStartsWith(path: String, prefix: String): Boolean {
-  return path.startsWith("$prefix-", ignoreCase = true) || path.startsWith("$prefix/", ignoreCase = true)
 }
