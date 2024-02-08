@@ -26,6 +26,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public final class ProgressManagerImpl extends CoreProgressManager implements Disposable {
   private static final Key<Boolean> SAFE_PROGRESS_INDICATOR = Key.create("SAFE_PROGRESS_INDICATOR");
@@ -219,14 +220,18 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
       return false;
     }
 
-    CheckCanceledHook[] activeHooks = myHooks.isEmpty() ? CheckCanceledHook.EMPTY_ARRAY : myHooks.toArray(CheckCanceledHook.EMPTY_ARRAY);
     boolean result = myRunSleepHook && sleepIfNeededToGivePriorityToAnotherThread();
-    for (CheckCanceledHook hook : activeHooks) {
-      if (hook.runHook(indicator)) {
-        result = true; // but still continue to other hooks
-      }
+    if (myHooks.isEmpty()) {
+      return result;
     }
-    return result;
+
+    boolean[] resultAsArr = {result};
+    myHooks.forEach(hook -> {
+      if (hook.runHook(indicator)) {
+        resultAsArr[0] = true; // but still continue to other hooks
+      }
+    });
+    return resultAsArr[0];
   }
 
   @Override
