@@ -22,6 +22,7 @@ import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesP
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.*
@@ -33,6 +34,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
   private val indexingScope = cs.namedChildScope("Embedding indexing scope")
   private var isFirstIndexing = true
   private val isIndexingTriggered = AtomicBoolean(false)
+  private var indexLoaded = false
 
   private val filesLimit: Int?
     get() {
@@ -76,11 +78,13 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
         }
       }
       val settings = EmbeddingIndexSettingsImpl.getInstance(project)
+      indexLoaded = true
       launch {
         if (settings.shouldIndexFiles) {
           val index = FileEmbeddingsStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
           index.loadFromDisk()
+          indexLoaded = indexLoaded && index.size > 0
           logger.debug { "Loaded files embedding index from disk, size: ${index.size}, root: ${index.root}" }
         }
       }
@@ -89,6 +93,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           val index = ClassEmbeddingsStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
           index.loadFromDisk()
+          indexLoaded = indexLoaded && index.size > 0
           logger.debug { "Loaded classes embedding index from disk, size: ${index.size}, root: ${index.root}" }
         }
       }
@@ -97,6 +102,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           val index = SymbolEmbeddingStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
           index.loadFromDisk()
+          indexLoaded = indexLoaded && index.size > 0
           logger.debug { "Loaded symbols embedding index from disk, size: ${index.size}, root: ${index.root}" }
         }
       }
@@ -107,6 +113,8 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     logger.debug { "Started full project embedding indexing" }
     SEMANTIC_SEARCH_TRACER.spanBuilder(INDEXING_SPAN_NAME).useWithScope {
       try {
+        if (isFirstIndexing) onFirstIndexingStart()
+        logger.debug { "Is first indexing: ${isFirstIndexing}" }
         indexFiles(scanFiles().toList())
       }
       catch (e: CancellationException) {
@@ -127,53 +135,64 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     val settings = EmbeddingIndexSettingsImpl.getInstance(project)
     if (!settings.shouldIndexAnything) return
     withContext(indexingScope.coroutineContext) {
-      if (isFirstIndexing) onFirstIndexingStart()
       val psiManager = PsiManager.getInstance(project)
       var processedFiles = 0
-      withBackgroundProgress(project, EmbeddingsBundle.getMessage("ml.embeddings.indices.generation.label")) {
-        val total: Int = filesLimit?.let { minOf(files.size, it) } ?: files.size
-        reportProgress(total) { reporter ->
-          files.forEach { file ->
-            val limit = filesLimit
-            if (!EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return@reportProgress
-            if (limit == null || processedFiles < limit) {
-              if (file.isFile && file.isValid && file.isInLocalFileSystem) {
-                reporter.itemStep(file.presentableName) {
-                  if (settings.shouldIndexFiles) { // TODO: consider caching this value
-                    launch {
-                      val entity = IndexableFile(file)
-                      val index = FileEmbeddingsStorage.getInstance(project).index
-                      if (entity.id in index) return@launch
-                      EmbeddingIndexingTask.Add(listOf(entity.id), listOf(entity.indexableRepresentation)).run(index)
-                    }
-                  }
-                  if (settings.shouldIndexClasses) {
-                    launch {
-                      val entities = readAction {
-                        FileIndexableEntitiesProvider.extractClasses(psiManager.findFile(file) ?: return@readAction emptyFlow())
-                      }
-                      val index = ClassEmbeddingsStorage.getInstance(project).index
-                      entities.filter { it.id !in index }.collect {
-                        EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
-                      }
-                    }
-                  }
-                  if (settings.shouldIndexSymbols) {
-                    launch {
-                      val entities = readAction {
-                        FileIndexableEntitiesProvider.extractSymbols(psiManager.findFile(file) ?: return@readAction emptyFlow())
-                      }
-                      val index = SymbolEmbeddingStorage.getInstance(project).index
-                      entities.filter { it.id !in index }.collect {
-                        EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
-                      }
-                    }
-                  }
-                  ++processedFiles
-                }
-              }
-            }
+      val total: Int = filesLimit?.let { minOf(files.size, it) } ?: files.size
+      logger.debug { "Effective embedding indexing files limit: $total" }
+
+      suspend fun iterate(reporter: ProgressReporter? = null) {
+        for (file in files) {
+          val limit = filesLimit
+          if (limit != null && processedFiles >= limit) break
+          if (file.isFile && file.isValid && file.isInLocalFileSystem) {
+            reporter?.run {
+              itemStep(file.presentableName) { processFile(file, psiManager, settings) }
+            } ?: processFile(file, psiManager, settings)
+            ++processedFiles
           }
+          else {
+            logger.debug { "File is not valid: ${file.name}" }
+          }
+        }
+      }
+
+      if (!indexLoaded) {
+        withBackgroundProgress(project, EmbeddingsBundle.getMessage("ml.embeddings.indices.generation.label")) {
+          reportProgress(total) { iterate(it) }
+        }
+      }
+      else iterate()
+    }
+  }
+
+  private suspend fun processFile(file: VirtualFile, psiManager: PsiManager, settings: EmbeddingIndexSettings) = coroutineScope {
+    if (settings.shouldIndexFiles) { // TODO: consider caching this value
+      launch {
+        val entity = IndexableFile(file)
+        val index = FileEmbeddingsStorage.getInstance(project).index
+        if (entity.id in index) return@launch
+        EmbeddingIndexingTask.Add(listOf(entity.id), listOf(entity.indexableRepresentation)).run(index)
+      }
+    }
+    if (settings.shouldIndexClasses) {
+      launch {
+        val entities = readAction {
+          FileIndexableEntitiesProvider.extractClasses(psiManager.findFile(file) ?: return@readAction emptyFlow())
+        }
+        val index = ClassEmbeddingsStorage.getInstance(project).index
+        entities.filter { it.id !in index }.collect {
+          EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
+        }
+      }
+    }
+    if (settings.shouldIndexSymbols) {
+      launch {
+        val entities = readAction {
+          FileIndexableEntitiesProvider.extractSymbols(psiManager.findFile(file) ?: return@readAction emptyFlow())
+        }
+        val index = SymbolEmbeddingStorage.getInstance(project).index
+        entities.filter { it.id !in index }.collect {
+          EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
         }
       }
     }
@@ -183,7 +202,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     val scanLimit = filesLimit?.let { it * 2 } // do not scan all files if there is a limit
     var filteredFiles = 0
     return channelFlow {
-      SEMANTIC_SEARCH_TRACER.spanBuilder(SCANNING_SPAN_NAME).useWithScope(coroutineContext) {
+      SEMANTIC_SEARCH_TRACER.spanBuilder(SCANNING_SPAN_NAME).useWithScope {
         withBackgroundProgress(project, EmbeddingsBundle.getMessage("ml.embeddings.indices.scanning.label")) {
           // ProjectFileIndex.getInstance(project).iterateContent { file ->
           ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->

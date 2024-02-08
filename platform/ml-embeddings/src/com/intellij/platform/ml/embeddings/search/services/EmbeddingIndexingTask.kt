@@ -14,6 +14,7 @@ sealed interface EmbeddingIndexingTask {
     private val callback: () -> Unit = {}
   ) : EmbeddingIndexingTask {
     override suspend fun run(index: DiskSynchronizedEmbeddingSearchIndex) {
+      if (!EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return
       val embeddings = generateEmbeddings(texts) ?: return
       index.addEntries(ids zip embeddings)
       callback()
@@ -27,6 +28,7 @@ sealed interface EmbeddingIndexingTask {
     private val callback: () -> Unit = {}
   ) : EmbeddingIndexingTask {
     override suspend fun run(index: DiskSynchronizedEmbeddingSearchIndex) {
+      if (!EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) return
       val embeddings = generateEmbeddings(texts) ?: return
       (ids zip embeddings).forEach { index.addEntry(it.first, it.second) }
       callback()
