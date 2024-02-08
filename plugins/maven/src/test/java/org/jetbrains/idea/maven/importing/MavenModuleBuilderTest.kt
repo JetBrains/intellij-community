@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
@@ -366,13 +367,15 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     myBuilder!!.archetype = archetype
   }
 
-  private fun createNewModule(id: MavenId) {
+  private suspend fun createNewModule(id: MavenId) {
     myBuilder!!.projectId = id
 
-    WriteAction.runAndWait<Exception> {
-      val model = ModuleManager.getInstance(project).getModifiableModel()
-      myBuilder!!.createModule(model)
-      model.commit()
+    waitForImportWithinTimeout {
+      writeAction {
+        val model = ModuleManager.getInstance(project).getModifiableModel()
+        myBuilder!!.createModule(model)
+        model.commit()
+      }
     }
   }
 }
