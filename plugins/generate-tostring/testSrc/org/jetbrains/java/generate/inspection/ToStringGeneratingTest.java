@@ -193,6 +193,37 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
              """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
   }
 
+  public void testImplicitClass() {
+    doTest("""
+            private Integer i = 2;
+            
+            public void main()
+            {
+            }
+            
+            <caret>
+            
+            public class T{
+            }""",
+           """
+            private Integer i = 2;
+            
+            public void main()
+            {
+            }
+            
+            @Override
+            public String toString() {
+                return "a{" +
+                        "i=" + i +
+                        '}';
+            }
+            
+            
+            public class T{
+            }""", ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
+  }
+
   private void doTest(@NotNull String before,
                       @NotNull String after,
                       @NotNull ConflictResolutionPolicy policy,

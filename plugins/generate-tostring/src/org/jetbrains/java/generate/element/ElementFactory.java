@@ -39,8 +39,14 @@ public final class ElementFactory {
     ClassElement ce = new ClassElement();
 
     // name
-    ce.setName(clazz.getName());
+    if (clazz instanceof PsiImplicitClass) {
+      ce.setName(clazz.getQualifiedName());
+    }
+    else {
+      ce.setName(clazz.getName());
+    }
     ce.setQualifiedName(clazz.getQualifiedName());
+
 
     // super
     PsiClass superClass = clazz.getSuperClass();
