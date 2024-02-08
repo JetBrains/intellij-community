@@ -1099,7 +1099,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     for (Int2ObjectMap.Entry<List<GutterMark>> entry : Int2ObjectMaps.fastIterable(myLineToGutterRenderers)) {
       List<GutterMark> newValue = entry.getValue();
       for (GutterMarkPreprocessor preprocessor : gutterMarkPreprocessors) {
-        newValue = preprocessor.processMarkers(entry.getValue());
+        newValue = preprocessor.processMarkers(newValue);
       }
       // don't allow more than 4 icons per line
       entry.setValue(ContainerUtil.getFirstItems(newValue, 4));
