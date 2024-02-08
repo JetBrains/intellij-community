@@ -1953,7 +1953,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     assertNotNull(lastHintBeforeDeletion);
-    assertTrue(lastHintBeforeDeletion.getCachedIntentions().toString(), ContainerUtil.exists(lastHintBeforeDeletion.getCachedIntentions().getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
+    IntentionContainer lastHintIntentions = lastHintBeforeDeletion.getCachedIntentions();
+    assertNotNull(lastHintIntentions);
+    assertTrue(lastHintIntentions.toString(),
+               ContainerUtil.exists(lastHintIntentions.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
 
     delete(myEditor);
     assertNotEmpty(highlightErrors());
@@ -1965,6 +1968,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
     else {
       IntentionContainer after = lastHintAfterDeletion.getCachedIntentions();
+      assertNotNull(after);
       assertFalse(after.toString(), ContainerUtil.exists(after.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
     }
   }

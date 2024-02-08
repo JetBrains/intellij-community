@@ -61,6 +61,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -101,18 +103,27 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private final LightBulbPanel myLightBulbPanel;
   private final MyComponentHint myComponentHint;
-  private final IntentionPopup myPopup;
+  private final AbstractIntentionPopup myPopup;
 
   @RequiresEdt
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Editor editor,
                                  @NotNull IntentionContainer cachedIntentions) {
+    this(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), new IntentionPopup(project, file, editor, cachedIntentions));
+  }
+
+  @RequiresEdt
+  private IntentionHintComponent(@NotNull Project project,
+                                 @NotNull PsiFile file,
+                                 @NotNull Editor editor,
+                                 @NotNull Icon icon,
+                                 @NotNull AbstractIntentionPopup popup) {
     myEditor = editor;
-    myPopup = new IntentionPopup(project, file, editor, cachedIntentions);
+    myPopup = popup;
     Disposer.register(this, myPopup);
 
-    myLightBulbPanel = new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions));
+    myLightBulbPanel = new LightBulbPanel(project, file, editor, icon);
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
@@ -134,7 +145,20 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull IntentionContainer cachedIntentions) {
-    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
+    IntentionPopupProvider provider = IntentionPopupProvider.Companion.getProvider();
+    AbstractIntentionPopup popup = provider != null ? provider.createPopup(editor, file, project)
+                                                    : new IntentionPopup(project, file, editor, cachedIntentions);
+    return showIntentionHint(project, file, editor, showExpanded, LightBulbUtil.getIcon(cachedIntentions), popup);
+  }
+
+  @RequiresEdt
+  public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull Editor editor,
+                                                                  boolean showExpanded,
+                                                                  @NotNull Icon icon,
+                                                                  @NotNull AbstractIntentionPopup popup) {
+    IntentionHintComponent component = new IntentionHintComponent(project, file, editor, icon, popup);
 
     if (editor.getSettings().isShowIntentionBulb()) {
       component.showIntentionHintImpl(!showExpanded);
@@ -196,8 +220,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   @TestOnly
+  @Nullable
   public IntentionContainer getCachedIntentions() {
-    return myPopup.myCachedIntentions;
+    return myPopup instanceof IntentionPopup popupImpl ? popupImpl.myCachedIntentions : null;
   }
 
   private void showIntentionHintImpl(boolean delay) {
@@ -259,12 +284,13 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     Component component = toolbar.getHintComponent();
     if (component == null) return;
     RelativePoint defaultPosition = new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
-    ListPopup popup = getOrCreateListPopup();
     List<ActionButton> buttons = UIUtil.findComponentsOfType(toolbar.getHintComponent(), ActionButton.class);
     ActionButton intentionsButton = ContainerUtil.find(buttons, b -> b.getAction() instanceof ShowIntentionActionsAction);
     if (intentionsButton == null) return;
-    toolbar.attachPopupToButton(intentionsButton, popup);
-    showPopup(defaultPosition);
+    showPopup(defaultPosition, popup -> {
+      toolbar.attachPopupToButton(intentionsButton, popup);
+      return null;
+    });
   }
 
   private @Nullable CodeFloatingToolbar getFloatingToolbar() {
@@ -272,16 +298,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return CodeFloatingToolbar.getToolbar(myEditor);
   }
 
-  private ListPopup getOrCreateListPopup() {
-    if (myPopup.myListPopup == null) {
-      myPopup.myHint = this;
-      IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
-    }
-    return myPopup.myListPopup;
+  private void showPopup(@Nullable RelativePoint positionHint) {
+    myPopup.show(this, positionHint, null);
   }
 
-  private void showPopup(@Nullable RelativePoint positionHint) {
-    myPopup.show(this, positionHint);
+  private void showPopup(@Nullable RelativePoint positionHint, @Nullable Function1<? super ListPopup, Unit> listPopupCustomization) {
+    myPopup.show(this, positionHint, listPopupCustomization);
   }
 
   private @NotNull RelativePoint findPositionForBulbButton() {
@@ -572,7 +594,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  static final class IntentionPopup implements Disposable.Parent {
+  static final class IntentionPopup implements AbstractIntentionPopup, Disposable.Parent {
     private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
     private final @NotNull PsiFile myFile;
@@ -595,17 +617,23 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myPreviewPopupUpdateProcessor = new IntentionPreviewPopupUpdateProcessor(project, myFile, myEditor);
     }
 
-    private boolean isVisible() {
+    @Override
+    public boolean isVisible() {
       return myListPopup != null && SwingUtilities.getWindowAncestor(myListPopup.getContent()) != null;
     }
 
-    private void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint) {
+    @Override
+    public void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint,
+                     @Nullable Function1<? super ListPopup, Unit> listPopupCustomization) {
       if (myDisposed || myEditor.isDisposed() || (myListPopup != null && myListPopup.isDisposed()) || myPopupShown) return;
 
       if (myListPopup == null) {
         assert myHint == null;
         myHint = component;
         recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions));
+        if(listPopupCustomization != null) {
+          listPopupCustomization.invoke(myListPopup);
+        }
       }
       else {
         assert myHint == component;
@@ -626,7 +654,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       myPopupShown = true;
     }
 
-    private void close() {
+    @Override
+    public void close() {
       myListPopup.cancel();
       myPopupShown = false;
     }
@@ -657,7 +686,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     @RequiresEdt
-    private static void recreateMyPopup(@NotNull IntentionPopup popup, @NotNull ListPopupStep<IntentionActionWithTextCaching> step) {
+    private static void recreateMyPopup(@NotNull IntentionHintComponent.IntentionPopup popup, @NotNull ListPopupStep<IntentionActionWithTextCaching> step) {
       if (popup.myListPopup != null) {
         Disposer.dispose(popup.myListPopup);
       }
@@ -758,7 +787,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     private static void highlightOnHover(@NotNull IntentionActionWithTextCaching actionWithCaching, @NotNull HighlightingContext context,
-                                  @NotNull IntentionPopup popup) {
+                                  @NotNull IntentionHintComponent.IntentionPopup popup) {
       IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
 
       if (context.mayHaveHighlighting(action)) {
