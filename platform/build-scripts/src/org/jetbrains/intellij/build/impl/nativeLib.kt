@@ -100,7 +100,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
 
   val libName = getLibNameBySourceFile(sourceFile)
-  // We need to keep async-profiler agents for all platforms to support remote target profiling,
+  // we need to keep async-profiler agents for all platforms to support remote target profiling,
   // as a suitable agent is copied to a remote machine
   val allPlatformsRequired = libName == "async-profiler"
   val targetOs: Collection<OsFamily>?
@@ -108,7 +108,8 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
   if (!allPlatformsRequired && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
     targetOs = context.options.targetOs
     targetArch = context.options.targetArch
-  } else {
+  }
+  else {
     targetOs = null
     targetArch = null
   }

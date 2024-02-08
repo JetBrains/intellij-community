@@ -1,15 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 
 /**
  * All paths are absolute and use '/' as a separator
  */
-abstract class BuildPaths(
+class BuildPaths(
   val communityHomeDirRoot: BuildDependenciesCommunityRoot,
 
   val buildOutputDir: Path,
@@ -20,7 +19,11 @@ abstract class BuildPaths(
   /**
    * Path to a base directory of the project which will be compiled
    */
-  val projectHome: Path
+  val projectHome: Path,
+  /**
+   * Path to a directory where resulting artifacts like installer distributions will be placed
+   */
+  val artifactDir: Path = buildOutputDir.resolve("artifacts"),
 ) {
   val communityHomeDir: Path = communityHomeDirRoot.communityRoot
 
@@ -35,12 +38,6 @@ abstract class BuildPaths(
   val buildOutputRoot: String = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
 
   /**
-   * Path to a directory where resulting artifacts like installer distributions will be placed
-   */
-  lateinit var artifacts: String
-  lateinit var artifactDir: Path
-
-  /**
    * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems
    */
   var distAllDir: Path = buildOutputDir.resolve("dist.all")
@@ -50,21 +47,13 @@ abstract class BuildPaths(
   /**
    * Path to a directory where temporary files required for a particular build step can be stored
    */
-  val tempDir: Path
-    get() {
-      return buildOutputDir.resolve("temp").createDirectories()
-    }
-
-  /**
-   * Path to a directory where temporary files required for a particular build step can be stored
-   */
-  val temp: String = FileUtilRt.toSystemIndependentName(tempDir.toString())
+  val tempDir: Path = buildOutputDir.resolve("temp")
 
   /**
    * Build scripts use different folder to store JPS build artifacts
    * instead of 'out/classes/artifacts' which is IDE default folder for those artifacts.
    * Different folders are used not to affect incremental build of IDE.
-   * Not to be confused with [artifacts].
+   * Not to be confused with [artifactDir].
    */
   val jpsArtifacts: Path = buildOutputDir.resolve("jps-artifacts")
 

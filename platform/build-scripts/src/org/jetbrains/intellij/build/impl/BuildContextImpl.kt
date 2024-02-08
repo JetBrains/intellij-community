@@ -203,9 +203,11 @@ class BuildContextImpl(
     return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
-  override fun createCopyForProduct(productProperties: ProductProperties,
-                                    projectHomeForCustomizers: Path,
-                                    prepareForBuild: Boolean): BuildContext {
+  override fun createCopyForProduct(
+    productProperties: ProductProperties,
+    projectHomeForCustomizers: Path,
+    prepareForBuild: Boolean,
+  ): BuildContext {
     val projectHomeForCustomizersAsString = projectHomeForCustomizers.invariantSeparatorsPathString
     val sourceOptions = this.options
     val options = sourceOptions.copy()
@@ -220,7 +222,26 @@ class BuildContextImpl(
     val compilationContextCopy = compilationContext.createCopy(
       messages = messages,
       options = options,
-      buildOutputRootEvaluator = createBuildOutputRootEvaluator(paths.projectHome, productProperties, options)
+      paths = computeBuildPaths(
+        options = options,
+        project = project,
+        communityHome = paths.communityHomeDirRoot,
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(
+          projectHome = paths.projectHome,
+          productProperties = productProperties,
+          buildOptions = options,
+        ),
+        projectHome = paths.projectHome,
+        artifactPathSupplier = if (prepareForBuild) {
+          {
+            @Suppress("DEPRECATION")
+            paths.artifactDir.resolve(productProperties.productCode!!)
+          }
+        }
+        else {
+          null
+        }
+      )
     )
     val copy = BuildContextImpl(
       compilationContext = compilationContextCopy,
@@ -231,9 +252,6 @@ class BuildContextImpl(
       proprietaryBuildTools = proprietaryBuildTools,
     )
     if (prepareForBuild) {
-      @Suppress("DEPRECATION") val productCode = productProperties.productCode
-      copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
-      copy.paths.artifacts = "${paths.artifacts}/$productCode"
       copy.compilationContext.prepareForBuild()
     }
     return copy

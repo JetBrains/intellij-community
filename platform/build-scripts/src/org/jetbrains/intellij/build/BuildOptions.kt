@@ -47,36 +47,36 @@ data class BuildOptions(
      *
      * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.classesOutputDirectory]
      */
-    const val PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY = "intellij.project.classes.output.directory"
-    const val OS_LINUX = "linux"
-    const val OS_WINDOWS = "windows"
-    const val OS_MAC = "mac"
-    const val OS_ALL = "all"
-    const val OS_CURRENT = "current"
+    const val PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY: String = "intellij.project.classes.output.directory"
+    const val OS_LINUX: String = "linux"
+    const val OS_WINDOWS: String = "windows"
+    const val OS_MAC: String = "mac"
+    const val OS_ALL: String = "all"
+    const val OS_CURRENT: String = "current"
 
     /**
      * If this value is set no distributions of the product will be produced,
      * only [non-bundled plugins][ProductModulesLayout.pluginModulesToPublish] will be built.
      */
-    const val OS_NONE = "none"
+    const val OS_NONE: String = "none"
 
     /** Build actual searchableOptions.xml file. If skipped, the (possibly outdated) source version of the file will be used. */
-    const val SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
-    const val BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
-    const val PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
-    const val GENERATE_JAR_ORDER_STEP = "jar_order"
-    const val SOURCES_ARCHIVE_STEP = "sources_archive"
-    const val SCRAMBLING_STEP = "scramble"
-    const val NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+    const val SEARCHABLE_OPTIONS_INDEX_STEP: String = "search_index"
+    const val BROKEN_PLUGINS_LIST_STEP: String = "broken_plugins_list"
+    const val PROVIDED_MODULES_LIST_STEP: String = "provided_modules_list"
+    const val GENERATE_JAR_ORDER_STEP: String = "jar_order"
+    const val SOURCES_ARCHIVE_STEP: String = "sources_archive"
+    const val SCRAMBLING_STEP: String = "scramble"
+    const val NON_BUNDLED_PLUGINS_STEP: String = "non_bundled_plugins"
 
     /** Build Maven artifacts for IDE modules.  */
-    const val MAVEN_ARTIFACTS_STEP = "maven_artifacts"
+    const val MAVEN_ARTIFACTS_STEP: String = "maven_artifacts"
 
     /** Build macOS artifacts.  */
-    const val MAC_ARTIFACTS_STEP = "mac_artifacts"
+    const val MAC_ARTIFACTS_STEP: String = "mac_artifacts"
 
     /** Build .dmg file for macOS. If skipped, only .sit archive will be produced.  */
-    const val MAC_DMG_STEP = "mac_dmg"
+    const val MAC_DMG_STEP: String = "mac_dmg"
 
     /**
      * Publish .sit file for macOS. If skipped, only .dmg archive will be produced.
@@ -84,25 +84,25 @@ data class BuildOptions(
      *
      * Note: .sit is required to build patches.
      */
-    const val MAC_SIT_PUBLICATION_STEP = "mac_sit"
+    const val MAC_SIT_PUBLICATION_STEP: String = "mac_sit"
 
     /** Sign macOS distribution.  */
-    const val MAC_SIGN_STEP = "mac_sign"
+    const val MAC_SIGN_STEP: String = "mac_sign"
 
     /** Notarize macOS distribution.  */
-    const val MAC_NOTARIZE_STEP = "mac_notarize"
+    const val MAC_NOTARIZE_STEP: String = "mac_notarize"
 
     /** Build Linux artifacts.  */
-    const val LINUX_ARTIFACTS_STEP = "linux_artifacts"
+    const val LINUX_ARTIFACTS_STEP: String = "linux_artifacts"
 
     /** Build Linux tar.gz artifact without bundled Runtime.  */
-    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP = "linux_tar_gz_without_jre"
+    const val LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP: String = "linux_tar_gz_without_jre"
 
     /** Build *.exe installer for Windows distribution. If skipped, only .zip archive will be produced.  */
-    const val WINDOWS_EXE_INSTALLER_STEP = "windows_exe_installer"
+    const val WINDOWS_EXE_INSTALLER_STEP: String = "windows_exe_installer"
 
     /** Sign *.exe files in Windows distribution.  */
-    const val WIN_SIGN_STEP = "windows_sign"
+    const val WIN_SIGN_STEP: String = "windows_sign"
 
     @JvmField
     @ApiStatus.Internal
@@ -117,45 +117,45 @@ data class BuildOptions(
       .toPersistentMap()
 
     /** Build Frankenstein artifacts.  */
-    const val CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
+    const val CROSS_PLATFORM_DISTRIBUTION_STEP: String = "cross_platform_dist"
 
     /** Generate files containing lists of used third-party libraries  */
-    const val THIRD_PARTY_LIBRARIES_LIST_STEP = "third_party_libraries"
+    const val THIRD_PARTY_LIBRARIES_LIST_STEP: String = "third_party_libraries"
 
     /** Build community distributives  */
-    const val COMMUNITY_DIST_STEP = "community_dist"
-    const val OS_SPECIFIC_DISTRIBUTIONS_STEP = "os_specific_distributions"
-    const val PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
-    const val SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
-    const val VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
+    const val COMMUNITY_DIST_STEP: String = "community_dist"
+    const val OS_SPECIFIC_DISTRIBUTIONS_STEP: String = "os_specific_distributions"
+    const val PREBUILD_SHARED_INDEXES: String = "prebuild_shared_indexes"
+    const val SETUP_BUNDLED_MAVEN: String = "setup_bundled_maven"
+    const val VERIFY_CLASS_FILE_VERSIONS: String = "verify_class_file_versions"
 
-    const val ARCHIVE_PLUGINS = "archivePlugins"
+    const val ARCHIVE_PLUGINS: String = "archivePlugins"
 
-    const val VALIDATE_PLUGINS_TO_BE_PUBLISHED = "validatePluginsToBePublished"
+    const val VALIDATE_PLUGINS_TO_BE_PUBLISHED: String = "validatePluginsToBePublished"
 
     /**
      * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
      * Comprises many small publication steps.
      * Note: skipping this step won't affect publication of 'Artifact paths' in TeamCity build settings and vice versa
      */
-    const val TEAMCITY_ARTIFACTS_PUBLICATION_STEP = "teamcity_artifacts_publication"
+    const val TEAMCITY_ARTIFACTS_PUBLICATION_STEP: String = "teamcity_artifacts_publication"
 
     /**
      * @see org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
      */
-    const val FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
+    const val FUS_METADATA_BUNDLE_STEP: String = "fus_metadata_bundle_step"
 
     /**
      * @see org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
      */
-    const val REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
+    const val REPAIR_UTILITY_BUNDLE_STEP: String = "repair_utility_bundle_step"
 
-    const val DOC_AUTHORING_ASSETS_STEP = "doc_authoring_assets"
+    const val DOC_AUTHORING_ASSETS_STEP: String = "doc_authoring_assets"
 
     /**
      * By default, a build cleans up output directory before compilation. Use this property to change the behavior.
      */
-    const val CLEAN_OUTPUT_DIRECTORY_PROPERTY = "intellij.build.clean.output.root"
+    const val CLEAN_OUTPUT_DIRECTORY_PROPERTY: String = "intellij.build.clean.output.root"
 
     /**
      * If `false` build scripts compile project classes to a special output directory (to not interfere with the default project output if
@@ -165,89 +165,89 @@ data class BuildOptions(
      *
      * @see [org.jetbrains.intellij.build.impl.CompilationContextImpl.classesOutputDirectory]
      */
-    const val USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
+    const val USE_COMPILED_CLASSES_PROPERTY: String = "intellij.build.use.compiled.classes"
 
     /**
      * By default, if the incremental compilation fails, a clean rebuild is attempted.
      */
-    const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY = "intellij.build.incremental.compilation.fallback.rebuild"
+    const val INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY: String = "intellij.build.incremental.compilation.fallback.rebuild"
 
     /**
      * If `true` then [org.jetbrains.intellij.build.impl.compilation.CompiledClasses] will be rebuilt from scratch
      */
-    const val FORCE_REBUILD_PROPERTY = "intellij.jps.cache.rebuild.force"
+    const val FORCE_REBUILD_PROPERTY: String = "intellij.jps.cache.rebuild.force"
 
     /**
      * Enables module structure validation, `false` by default.
      */
-    const val VALIDATE_MODULES_STRUCTURE_PROPERTY = "intellij.build.module.structure"
+    const val VALIDATE_MODULES_STRUCTURE_PROPERTY: String = "intellij.build.module.structure"
 
     /**
      * Max number of dependency resolution retry attempts. `1` means no retries.
      *
      * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
-    const val RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY = "intellij.build.dependencies.resolution.retry.max.attempts"
+    const val RESOLVE_DEPENDENCIES_MAX_ATTEMPTS_PROPERTY: String = "intellij.build.dependencies.resolution.retry.max.attempts"
 
     /**
      * Initial delay in milliseconds between dependency resolution retries on fault. Default is `1000`.
      *
      * @see [org.jetbrains.intellij.build.impl.JpsCompilationRunner.resolveProjectDependencies]
      */
-    const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY = "intellij.build.dependencies.resolution.retry.delay.ms"
-    const val TARGET_OS_PROPERTY = "intellij.build.target.os"
-    const val TARGET_ARCH_PROPERTY = "intellij.build.target.arch"
+    const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY: String = "intellij.build.dependencies.resolution.retry.delay.ms"
+    const val TARGET_OS_PROPERTY: String = "intellij.build.target.os"
+    const val TARGET_ARCH_PROPERTY: String = "intellij.build.target.arch"
 
     /**
      * If `true`, the project modules will be compiled incrementally.
      */
-    const val INTELLIJ_BUILD_INCREMENTAL_COMPILATION = "intellij.build.incremental.compilation"
+    const val INTELLIJ_BUILD_INCREMENTAL_COMPILATION: String = "intellij.build.incremental.compilation"
 
     /**
      * Allows to override [ApplicationInfoProperties.isEAP].
      */
-    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP = "intellij.build.override.application.version.is.eap"
+    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP: String = "intellij.build.override.application.version.is.eap"
 
     /**
      * Allows to override [ApplicationInfoProperties.versionSuffix].
      */
-    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX = "intellij.build.override.application.version.suffix"
+    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX: String = "intellij.build.override.application.version.suffix"
 
     /**
      * Allows to override [ApplicationInfoProperties.majorReleaseDate].
      */
-    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE = "intellij.build.override.application.version.majorReleaseDate"
+    const val INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE: String = "intellij.build.override.application.version.majorReleaseDate"
 
     /**
      * Pass comma-separated names of build steps (see below) to this system property to skip them.
      */
-    const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
+    const val BUILD_STEPS_TO_SKIP_PROPERTY: String = "intellij.build.skip.build.steps"
 
     /**
      * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
      * Use this property to change the output directory.
      */
-    const val INTELLIJ_BUILD_OUTPUT_ROOT = "intellij.build.output.root"
+    const val INTELLIJ_BUILD_OUTPUT_ROOT: String = "intellij.build.output.root"
 
     /**
      * @see [pathToCompiledClassesArchive]
      */
-    const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE = "intellij.build.compiled.classes.archive"
+    const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE: String = "intellij.build.compiled.classes.archive"
 
     /**
      * @see [pathToCompiledClassesArchivesMetadata]
      */
-    const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA = "intellij.build.compiled.classes.archives.metadata"
+    const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA: String = "intellij.build.compiled.classes.archives.metadata"
 
     /**
      * By default, calculated based on build number.
      */
-    const val INTELLIJ_BUILD_IS_NIGHTLY = "intellij.build.is.nightly"
+    const val INTELLIJ_BUILD_IS_NIGHTLY: String = "intellij.build.is.nightly"
 
     /**
      * IJPL-176 Download pre-compiled IJent executables.
      */
-    const val IJENT_EXECUTABLE_DOWNLOADING = "ijent.executable.downloading"
+    const val IJENT_EXECUTABLE_DOWNLOADING: String = "ijent.executable.downloading"
 
     @Suppress("SpellCheckingInspection")
     private const val DEFAULT_SNAP_TOOL_IMAGE = "snapcore/snapcraft:stable@sha256:6d771575c134569e28a590f173f7efae8bf7f4d1746ad8a474c98e02f4a3f627"
@@ -270,7 +270,7 @@ data class BuildOptions(
     targetArch = JvmArchitecture.currentJvmArch
   }
 
-  var forceRebuild = SystemProperties.getBooleanProperty(FORCE_REBUILD_PROPERTY, false)
+  var forceRebuild: Boolean = SystemProperties.getBooleanProperty(FORCE_REBUILD_PROPERTY, false)
 
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
@@ -292,7 +292,7 @@ data class BuildOptions(
    * Pass `true` to this system property to produce .snap packages.
    * A build configuration should have "docker.version >= 17" in requirements.
    */
-  var buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
+  var buildUnixSnaps: Boolean = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
    * Docker image for snap package creation
@@ -400,7 +400,7 @@ data class BuildOptions(
    * included in the IDE's distributions.
    */
   @ApiStatus.Experimental
-  var includeLaunchersForEmbeddedJetBrainsClient = SystemProperties.getBooleanProperty("intellij.build.include.launchers.for.embedded.jetbrains.client", true) 
+  var includeLaunchersForEmbeddedJetBrainsClient: Boolean = SystemProperties.getBooleanProperty("intellij.build.include.launchers.for.embedded.jetbrains.client", true)
 
   /**
    * Specifies a prefix to use when looking for an artifact of a [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] to be bundled with distributions.

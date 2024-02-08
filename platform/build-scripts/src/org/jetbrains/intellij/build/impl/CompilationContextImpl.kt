@@ -78,14 +78,25 @@ suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRo
                                                          options = options)
 }
 
-private fun computeBuildPaths(options: BuildOptions,
-                              project: JpsProject,
-                              communityHome: BuildDependenciesCommunityRoot,
-                              buildOutputRootEvaluator: (JpsProject) -> Path,
-                              projectHome: Path): BuildPaths {
+internal fun computeBuildPaths(
+  options: BuildOptions,
+  project: JpsProject,
+  communityHome: BuildDependenciesCommunityRoot,
+  buildOutputRootEvaluator: (JpsProject) -> Path,
+  artifactPathSupplier: (() -> Path)?,
+  projectHome: Path,
+): BuildPaths {
   val buildOut = options.outputRootPath ?: buildOutputRootEvaluator(project)
   val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
-  return BuildPathsImpl(communityHome = communityHome, projectHome = projectHome, buildOut = buildOut, logDir = logDir)
+  val result = BuildPaths(
+    communityHomeDirRoot = communityHome,
+    buildOutputDir = buildOut,
+    logDir = logDir,
+    projectHome = projectHome,
+    artifactDir = artifactPathSupplier?.invoke() ?: buildOut.resolve("artifacts"),
+  )
+  Files.createDirectories(result.tempDir)
+  return result
 }
 
 @Internal
@@ -110,10 +121,15 @@ class CompilationContextImpl private constructor(
     }
 
   override val project: JpsProject = model.project
+
   override val projectModel: JpsModel = model
+
   override val dependenciesProperties: DependenciesProperties
+
   override val bundledRuntime: BundledRuntime
+
   override lateinit var compilationData: JpsCompilationData
+
   override val portableCompilationCache: PortableCompilationCache by lazy {
     PortableCompilationCache(this)
   }
@@ -181,11 +197,14 @@ class CompilationContextImpl private constructor(
                               kotlinBinaries = KotlinBinaries(communityHome),
                               isCompilationRequired = isCompilationRequired)
 
-      val buildPaths = computeBuildPaths(project = model.project,
-                                         communityHome = communityHome,
-                                         options = options,
-                                         buildOutputRootEvaluator = buildOutputRootEvaluator,
-                                         projectHome = projectHome)
+      val buildPaths = computeBuildPaths(
+        project = model.project,
+        communityHome = communityHome,
+        options = options,
+        buildOutputRootEvaluator = buildOutputRootEvaluator,
+        projectHome = projectHome,
+        artifactPathSupplier = null,
+      )
 
       // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
       // (see createCopyForProduct)
@@ -221,20 +240,16 @@ class CompilationContextImpl private constructor(
     }
   }
 
-  fun createCopy(messages: BuildMessages,
-                 options: BuildOptions,
-                 buildOutputRootEvaluator: (JpsProject) -> Path): CompilationContextImpl {
+  internal fun createCopy(
+    messages: BuildMessages,
+    options: BuildOptions,
+    paths: BuildPaths,
+  ): CompilationContextImpl {
     val copy = CompilationContextImpl(
       model = projectModel,
       communityHome = paths.communityHomeDirRoot,
       messages = messages,
-      paths = computeBuildPaths(
-        options = options,
-        project = project,
-        communityHome = communityHome,
-        buildOutputRootEvaluator = buildOutputRootEvaluator,
-        projectHome = paths.projectHome,
-      ),
+      paths = paths,
       options = options,
     )
     copy.compilationData = compilationData
@@ -396,17 +411,6 @@ private fun suppressWarnings(project: JpsProject) {
   compilerOptions.GENERATE_NO_WARNINGS = true
   compilerOptions.DEPRECATION = false
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
-}
-
-private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, projectHome: Path, buildOut: Path, logDir: Path)
-  : BuildPaths(communityHomeDirRoot = communityHome,
-               buildOutputDir = buildOut,
-               logDir = logDir,
-               projectHome = projectHome) {
-  init {
-    artifactDir = buildOutputDir.resolve("artifacts")
-    artifacts = FileUtilRt.toSystemIndependentName(artifactDir.toString())
-  }
 }
 
 private suspend fun defineJavaSdk(context: CompilationContext) {
