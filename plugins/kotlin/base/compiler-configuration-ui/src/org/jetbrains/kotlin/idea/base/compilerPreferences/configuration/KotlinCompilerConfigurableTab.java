@@ -29,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.KotlinVersion;
 import kotlin.collections.ArraysKt;
 import kotlin.collections.CollectionsKt;
+import kotlin.enums.EnumEntries;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Nls;
@@ -346,14 +347,16 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         VersionView selectedAPIView = getSelectedAPIVersionView();
         LanguageOrApiVersion selectedAPIVersion = selectedAPIView.getVersion();
         LanguageOrApiVersion upperBound = upperBoundView.getVersion();
-        List<VersionView> permittedAPIVersions = new ArrayList<>(LanguageVersion.values().length + 1);
-        if (isLessOrEqual(VersionView.LatestStable.INSTANCE.getVersion(), upperBound)) {
-            permittedAPIVersions.add(VersionView.LatestStable.INSTANCE);
-        }
+        EnumEntries<LanguageVersion> languageVersions = LanguageVersion.getEntries();
+        List<VersionView> permittedAPIVersions = new ArrayList<>(languageVersions.size() + 1);
+
+        final VersionView.LatestStable latestStable = VersionView.LatestStable.INSTANCE;
+
         ArraysKt.mapNotNullTo(
                 LanguageVersion.values(),
                 permittedAPIVersions,
                 languageVersion -> {
+                    if (latestStable.getVersion() == languageVersion) return null;
                     ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
                     if (isLessOrEqual(apiVersion, upperBound) && !apiVersion.isUnsupported()) {
                         return new VersionView.Specific(languageVersion);
@@ -362,6 +365,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                     return null;
                 }
         );
+
+        if (isLessOrEqual(latestStable.getVersion(), upperBound)) {
+            permittedAPIVersions.add(latestStable);
+        }
 
         apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
 
@@ -422,9 +429,6 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     }
 
     private void fillVersions() {
-        languageVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
-        apiVersionComboBox.addItem(VersionView.LatestStable.INSTANCE);
-
         if (isProjectSettings && jpsPluginSettings != null) {
             defaultJpsVersionItem = JpsVersionItem.createFromRawVersion(
                     KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)
@@ -484,7 +488,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             kotlinJpsPluginVersionPanel.setVisible(false);
         }
 
-        for (LanguageVersion languageVersion : LanguageVersion.values()) {
+        VersionView.LatestStable latestStable = VersionView.LatestStable.INSTANCE;
+        for (LanguageVersion languageVersion : LanguageVersion.getEntries()) {
+            if (languageVersion == latestStable.getVersion()) continue;
+
             if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion)) {
                 continue;
             }
@@ -498,6 +505,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                 languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
             }
         }
+
+        languageVersionComboBox.addItem(latestStable);
+        apiVersionComboBox.addItem(latestStable);
+
         languageVersionComboBox.setRenderer(new DescriptionListCellRenderer());
         kotlinJpsPluginVersionComboBox.setRenderer(new DescriptionListCellRenderer());
         apiVersionComboBox.setRenderer(new DescriptionListCellRenderer());
