@@ -385,7 +385,6 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
   }
 
   private static void verifyProperty1(Node<?> n) {
-    assert !isBlack(n) || isBlack(n);
     if (n == null) return;
     assert n.getParent() != n;
     assert n.getLeft() != n;
