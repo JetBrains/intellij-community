@@ -6,13 +6,13 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiCodeBlock
 import com.intellij.util.ProcessingContext
 
 class JavaLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
-           psiElement().inside(psiElement(PsiMethod::class.java)),
+           psiElement().inside(psiElement(PsiCodeBlock::class.java)),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val module = ModuleUtil.findModuleForFile(parameters.originalFile)
@@ -23,10 +23,14 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
 
                for (logger in availableLoggers) {
                  result.addElement(
-                   LookupElementBuilder.create(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER).withTypeText(logger.loggerTypeName).withInsertHandler { insertionContext, _ ->
-                     val loggerText = logger.createLogger(insertionContext.project, place) ?: return@withInsertHandler
-                     logger.insertLoggerAtClass(insertionContext.project, place, loggerText)
-                   }
+                   LookupElementBuilder
+                     .create(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
+                     .withTailText(" ${logger.loggerTypeName}")
+                     .withTypeText(logger.toString())
+                     .withInsertHandler { insertionContext, _ ->
+                       val loggerText = logger.createLogger(insertionContext.project, place) ?: return@withInsertHandler
+                       logger.insertLoggerAtClass(insertionContext.project, place, loggerText)
+                     }
                  )
                }
              }
