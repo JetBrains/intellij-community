@@ -1,5 +1,6 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
+import com.intellij.tools.ide.performanceTesting.commands.arguments.MavenArchetypeInfo
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path
@@ -575,8 +576,16 @@ fun <T : CommandChain> T.downloadMavenArtifacts(sources: Boolean = true, docs: B
   addCommand("${CMD_PREFIX}downloadMavenArtifacts $sources $docs")
 }
 
-fun <T : CommandChain> T.addMavenModule(moduleName: String, parentModuleName: String? = null): T = apply {
-  addCommand("${CMD_PREFIX}addMavenModule $moduleName|${parentModuleName ?: ""}")
+fun <T : CommandChain> T.addMavenModule(projectName: String,
+                                        parentModuleName: String? = null,
+                                        archetypeInfo: MavenArchetypeInfo? = null): T = apply {
+  val command = mutableListOf("${CMD_PREFIX}addMavenModule")
+  command.add(projectName)
+  command.add(parentModuleName ?: "")
+  command.add(archetypeInfo?.groupId ?: "")
+  command.add(archetypeInfo?.artefactId ?: "")
+  command.add(archetypeInfo?.version ?: "")
+  addCommandWithSeparator("|", *command.toTypedArray())
 }
 
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {
