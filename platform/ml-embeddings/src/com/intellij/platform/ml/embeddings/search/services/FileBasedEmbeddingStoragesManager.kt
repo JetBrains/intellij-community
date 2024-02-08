@@ -115,7 +115,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
       try {
         if (isFirstIndexing) onFirstIndexingStart()
         logger.debug { "Is first indexing: ${isFirstIndexing}" }
-        indexFiles(scanFiles().toList())
+        indexFiles(scanFiles().toList().sortedBy { it.name })
       }
       catch (e: CancellationException) {
         logger.debug { "Full project embedding indexing was cancelled" }
