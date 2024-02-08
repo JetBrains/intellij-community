@@ -12,13 +12,11 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
@@ -266,7 +264,9 @@ internal abstract class UltimateInstaller(
             val started = startUltimate(installationResult)
             if (started) {
               openActivity.finished()
-              blockingContext { runInEdt { ApplicationManager.getApplication().exit(true, true, false) } }
+
+              val application = ApplicationManager.getApplication()
+              application.invokeLater { application.exit(true, true, false) }
             }
           }
         }
