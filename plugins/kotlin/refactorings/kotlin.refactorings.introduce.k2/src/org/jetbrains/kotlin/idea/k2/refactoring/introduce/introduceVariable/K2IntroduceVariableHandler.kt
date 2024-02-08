@@ -13,9 +13,13 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
@@ -376,18 +380,26 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         referencesFromExpressionToExtract: List<KtReferenceExpression>,
     ): Sequence<ContainerWithContained> {
         return analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            val psiToCheck = referencesFromExpressionToExtract.mapNotNull { reference ->
+            val psiToCheck = referencesFromExpressionToExtract.flatMap { reference ->
                 // in case of an unresolved reference consider all containers applicable
-                val symbol = reference.mainReference.resolveToSymbol() ?: return@mapNotNull null
+                val symbol = reference.mainReference.resolveToSymbol() ?: return@flatMap emptyList()
+                val implicitReceivers = reference.resolveCall()
+                    ?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                    ?.let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
+                    ?.filterIsInstance<KtImplicitReceiverValue>()
 
-                if (symbol.origin == KtSymbolOrigin.SOURCE) {
-                    symbol.psi
-                } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
-                    (symbol.getContainingSymbol() as? KtAnonymousFunctionSymbol)?.psi as? KtFunctionLiteral
-                } else null
+                buildList {
+                    implicitReceivers?.forEach { addIfNotNull(it.symbol.psi) }
+
+                    if (symbol.origin == KtSymbolOrigin.SOURCE) {
+                        addIfNotNull(symbol.psi)
+                    } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                        addIfNotNull((symbol.getContainingSymbol() as? KtAnonymousFunctionSymbol)?.psi as? KtFunctionLiteral)
+                    }
+                }
             }
 
-            containersWithContainedLambdas.takeWhile { (container, contained) ->
+            containersWithContainedLambdas.takeWhile { (_, contained) ->
                 // `contained` is among parents of expression to extract;
                 // if reference is resolved and its psi is not inside `contained` then it will be accessible next to `contained`
                 psiToCheck.all { psi -> !psi.isInsideOf(listOf(contained)) }
