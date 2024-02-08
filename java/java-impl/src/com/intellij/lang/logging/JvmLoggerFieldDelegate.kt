@@ -29,7 +29,10 @@ class JvmLoggerFieldDelegate(
     return clazz.add(logger)
   }
 
-  override fun isAvailable(project: Project?): Boolean = JavaLibraryUtil.hasLibraryClass(project, loggerTypeName)
+  override fun isAvailable(project: Project?): Boolean {
+    return project != null
+           && JavaPsiFacade.getInstance(project).findClass(loggerTypeName, ProjectContainingLibrariesScope.getScope(project)) != null
+  }
 
   override fun isAvailable(module: Module?): Boolean = JavaLibraryUtil.hasLibraryClass(module, loggerTypeName)
 

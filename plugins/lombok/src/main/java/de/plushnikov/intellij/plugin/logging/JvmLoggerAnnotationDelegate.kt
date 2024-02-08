@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.logging
 
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.lang.logging.JvmLogger
+import com.intellij.lang.logging.ProjectContainingLibrariesScope
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -30,7 +31,9 @@ class JvmLoggerAnnotationDelegate(
   }
 
   override fun isAvailable(project: Project?): Boolean {
-    return project != null && JavaLibraryUtil.hasLibraryClass(project, fieldLoggerName) && LombokLibraryUtil.hasLombokLibrary(project)
+    return project != null &&
+           JavaPsiFacade.getInstance(project).findClass(fieldLoggerName, ProjectContainingLibrariesScope.getScope(project)) != null
+           && LombokLibraryUtil.hasLombokLibrary(project)
   }
 
   override fun isAvailable(module: Module?): Boolean {
