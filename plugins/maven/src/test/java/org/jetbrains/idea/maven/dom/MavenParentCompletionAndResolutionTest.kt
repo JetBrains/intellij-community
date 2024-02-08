@@ -195,7 +195,6 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      getEditor(projectPom).caretModel.moveToOffset(449)
       moveCaretTo(projectPom, """
         <parent>
           <groupId><caret>test</groupId>""".trimIndent())
