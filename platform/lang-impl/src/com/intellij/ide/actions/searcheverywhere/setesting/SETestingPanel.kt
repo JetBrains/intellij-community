@@ -106,7 +106,7 @@ internal class SETestingPanel(contributors: List<SearchEverywhereContributor<*>>
       ResultsGraph(c.groupName, t, maxTime).apply { setGroupingInterval(groupingIntervalSpinner.value as Int) }
     })
     resultsPanel.removeAll()
-    graphs.forEach { resultsPanel.add(it) }
+    graphs.sortedBy { it.contributorName }.forEach { resultsPanel.add(it) }
   }
 
   private fun createContributorsList(contributors: List<SearchEverywhereContributor<*>>): JList<SearchEverywhereContributor<*>> {
