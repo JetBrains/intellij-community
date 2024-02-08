@@ -771,7 +771,7 @@ fun loadDescriptorsFromOtherIde(
           context = context,
           customPluginDir = customPluginDir,
           bundledPluginDir = bundledPluginDir,
-          zipFilePool = null,
+          zipFilePool = ZipFilePool.POOL,
           mainClassLoader = DescriptorListLoadingContext::class.java.classLoader,
         )
       }, isMainProcess()),
