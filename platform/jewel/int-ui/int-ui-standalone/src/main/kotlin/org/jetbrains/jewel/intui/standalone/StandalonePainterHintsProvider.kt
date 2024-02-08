@@ -1,37 +1,117 @@
 package org.jetbrains.jewel.intui.standalone
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
-import org.jetbrains.jewel.ui.painter.BasePainterHintsProvider
 import org.jetbrains.jewel.ui.painter.PainterHint
+import org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
+import org.jetbrains.jewel.ui.painter.hints.ColorBasedPaletteReplacement
 import org.jetbrains.jewel.ui.painter.hints.Dark
 import org.jetbrains.jewel.ui.painter.hints.HiDpi
-import org.jetbrains.jewel.ui.painter.hints.Override
+import org.jetbrains.jewel.ui.painter.hints.KeyBasedPaletteReplacement
+import org.jetbrains.jewel.ui.painter.hints.PathOverride
+import org.jetbrains.jewel.ui.util.inDebugMode
 
+/** Provides the default [PainterHint]s to use to load images. */
 public class StandalonePainterHintsProvider(
     theme: ThemeDefinition,
-) : BasePainterHintsProvider(
+) : PalettePainterHintsProvider(
     theme.isDark,
     intellijColorPalette,
     theme.iconData.colorPalette,
     theme.colorPalette.rawMap,
 ) {
 
+    override val checkBoxByColorPaletteHint: PainterHint
+    override val checkBoxByKeyPaletteHint: PainterHint
+    override val treePaletteHint: PainterHint
+    override val uiPaletteHint: PainterHint
+
     private val overrideHint: PainterHint =
-        Override(
+        PathOverride(
             theme.iconData.iconOverrides.entries.associate { (k, v) ->
                 k.removePrefix("/") to v.removePrefix("/")
             },
         )
 
-    @Composable
-    override fun hints(path: String): List<PainterHint> = buildList {
-        add(getPaletteHint(path))
-        add(overrideHint)
-        add(HiDpi())
-        add(Dark(JewelTheme.isDark))
+    init {
+        val ui = mutableMapOf<Color, Color>()
+        val checkBoxesByColor = mutableMapOf<Color, Color>()
+        val checkBoxesByKey = mutableMapOf<String, Color>()
+        val trees = mutableMapOf<Color, Color>()
+
+        @Suppress("LoopWithTooManyJumpStatements")
+        for ((key, value) in themeIconPalette) {
+            if (value == null) continue
+
+            // Checkbox (and radio button) entries work differently: the ID field
+            // for each element that needs patching has a "[fillKey]_[strokeKey]"
+            // format, starting from IJP 241.
+            if (key.startsWith("Checkbox.")) {
+                registerIdBasedReplacement(checkBoxesByKey, key, value)
+            }
+
+            val map = selectMap(key, checkBoxesByColor, trees, ui) ?: continue
+            registerColorBasedReplacement(map, key, value)
+        }
+
+        checkBoxByKeyPaletteHint = KeyBasedPaletteReplacement(checkBoxesByKey)
+        checkBoxByColorPaletteHint = ColorBasedPaletteReplacement(checkBoxesByColor)
+        treePaletteHint = ColorBasedPaletteReplacement(trees)
+        uiPaletteHint = ColorBasedPaletteReplacement(ui)
     }
+
+    private fun registerColorBasedReplacement(
+        map: MutableMap<Color, Color>,
+        key: String,
+        value: String,
+    ) {
+        // If either the key or the resolved value aren't valid colors, ignore the entry
+        val keyAsColor = resolveKeyColor(key, intellijIconPalette, isDark) ?: return
+        val resolvedColor = resolveColor(value) ?: return
+
+        // Save the new entry (oldColor -> newColor) in the map
+        map[keyAsColor] = resolvedColor
+    }
+
+    private fun registerIdBasedReplacement(
+        map: MutableMap<String, Color>,
+        key: String,
+        value: String,
+    ) {
+        val adjustedKey = if (isDark) key.removeSuffix(".Dark") else key
+
+        if (adjustedKey !in supportedCheckboxKeys) {
+            if (inDebugMode) {
+                println("${if (isDark) "Dark" else "Light"} theme: color key $key is not supported, will be ignored")
+            }
+            return
+        }
+
+        if (adjustedKey != key && inDebugMode) {
+            println("${if (isDark) "Dark" else "Light"} theme: color key $key is deprecated, use $adjustedKey instead")
+        }
+
+        val parsedValue = resolveColor(value)
+        if (parsedValue == null) {
+            if (inDebugMode) {
+                println("${if (isDark) "Dark" else "Light"} theme: color key $key has invalid value: '$value'")
+            }
+            return
+        }
+
+        map[adjustedKey] = parsedValue
+    }
+
+    @Composable
+    override fun hints(path: String): List<PainterHint> =
+        buildList {
+            add(overrideHint)
+            add(getPaletteHint(path, isNewUi = true))
+            add(HiDpi())
+            add(Dark(JewelTheme.isDark))
+        }
 
     public companion object {
 
@@ -85,6 +165,19 @@ public class StandalonePainterHintsProvider(
                 "Checkbox.Focus.Thin.Selected.Dark" to "#466D94",
                 "Tree.iconColor" to "#808080",
                 "Tree.iconColor.Dark" to "#AFB1B3",
+            )
+
+        private val supportedCheckboxKeys: Set<String> =
+            setOf(
+                "Checkbox.Background.Default",
+                "Checkbox.Border.Default",
+                "Checkbox.Foreground.Selected",
+                "Checkbox.Background.Selected",
+                "Checkbox.Border.Selected",
+                "Checkbox.Focus.Wide",
+                "Checkbox.Foreground.Disabled",
+                "Checkbox.Background.Disabled",
+                "Checkbox.Border.Disabled",
             )
     }
 }

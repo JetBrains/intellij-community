@@ -12,7 +12,7 @@ import kotlin.math.roundToInt
 
 @Immutable
 @GenerateDataFunctions
-private class PaletteImpl(val map: Map<Color, Color>) : PainterSvgPatchHint {
+private class ColorBasedReplacementPainterSvgPatchHint(val map: Map<Color, Color>) : PainterSvgPatchHint {
 
     override fun PainterProviderScope.patch(element: Element) {
         element.patchPalette(map)
@@ -94,5 +94,11 @@ private fun fromHexOrNull(rawColor: String, alpha: Float): Color? {
     }
 }
 
-public fun Palette(map: Map<Color, Color>): PainterHint =
-    if (map.isEmpty()) PainterHint.None else PaletteImpl(map)
+/**
+ * Creates a PainterHint that replaces all colors in the [paletteMap] with their
+ * corresponding new value. It is used in IJ up to 23.3 to support patching the
+ * SVG colors for checkboxes and radio buttons.
+ */
+@Suppress("FunctionName")
+public fun ColorBasedPaletteReplacement(paletteMap: Map<Color, Color>): PainterHint =
+    if (paletteMap.isEmpty()) PainterHint.None else ColorBasedReplacementPainterSvgPatchHint(paletteMap)

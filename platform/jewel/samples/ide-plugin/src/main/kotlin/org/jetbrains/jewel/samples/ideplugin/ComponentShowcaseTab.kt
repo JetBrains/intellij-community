@@ -33,6 +33,7 @@ import org.jetbrains.jewel.foundation.modifier.onActivated
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
@@ -49,7 +50,7 @@ import org.jetbrains.jewel.ui.component.Tooltip
 
 @Composable
 internal fun ComponentShowcaseTab() {
-    val bgColor by remember(JewelTheme.isDark) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
+    val bgColor by remember(JBColor.PanelBackground.rgb) { mutableStateOf(JBColor.PanelBackground.toComposeColor()) }
 
     val scrollState = rememberScrollState()
     Row(
@@ -109,19 +110,37 @@ private fun RowScope.ColumnOne() {
         )
 
         var checked by remember { mutableStateOf(false) }
-        CheckboxRow(
-            checked = checked,
-            onCheckedChange = { checked = it },
-        ) {
-            Text("Hello, I am a themed checkbox")
+        var validated by remember { mutableStateOf(false) }
+        val outline = if (validated) Outline.Error else Outline.None
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            CheckboxRow(
+                checked = checked,
+                onCheckedChange = { checked = it },
+                outline = outline,
+            ) {
+                Text("Hello, I am a themed checkbox")
+            }
+
+            CheckboxRow(checked = validated, onCheckedChange = { validated = it }) {
+                Text("Show validation")
+            }
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             var index by remember { mutableStateOf(0) }
-            RadioButtonRow(selected = index == 0, onClick = { index = 0 }) {
+            RadioButtonRow(
+                selected = index == 0,
+                onClick = { index = 0 },
+                outline = outline,
+            ) {
                 Text("I am number one")
             }
-            RadioButtonRow(selected = index == 1, onClick = { index = 1 }) {
+            RadioButtonRow(
+                selected = index == 1,
+                onClick = { index = 1 },
+                outline = outline,
+            ) {
                 Text("Sad second")
             }
         }

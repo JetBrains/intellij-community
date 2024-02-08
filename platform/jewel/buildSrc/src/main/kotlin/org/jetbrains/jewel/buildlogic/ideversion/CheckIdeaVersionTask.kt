@@ -6,7 +6,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import java.io.IOException
-import java.net.URL
+import java.net.URI
 
 open class CheckIdeaVersionTask : DefaultTask() {
 
@@ -34,7 +34,7 @@ open class CheckIdeaVersionTask : DefaultTask() {
         logger.lifecycle("Fetching IntelliJ Platform releases from $releasesUrl...")
         val icReleases =
             try {
-                URL(releasesUrl)
+                URI.create(releasesUrl).toURL()
                     .openStream()
                     .use { json.decodeFromStream<List<ApiIdeaReleasesItem>>(it) }
                     .first()

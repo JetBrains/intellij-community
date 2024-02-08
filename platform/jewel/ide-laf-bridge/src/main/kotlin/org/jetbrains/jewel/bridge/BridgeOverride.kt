@@ -7,6 +7,11 @@ import org.jetbrains.jewel.ui.painter.PainterPathHint
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.ResourcePainterProviderScope
 
+/**
+ * A [PainterPathHint] that implements the
+ * [New UI Icon Mapping](https://plugins.jetbrains.com/docs/intellij/icons.html#mapping-entries)
+ * by delegating to the IntelliJ Platform.
+ */
 internal object BridgeOverride : PainterPathHint {
 
     private val dirProvider = DirProvider()
@@ -28,7 +33,8 @@ internal object BridgeOverride : PainterPathHint {
             // 233 EAP 4 broke path patching horribly; now it can return a
             // "reflective path", which is a FQN to an ExpUIIcons entry.
             // As a (hopefully) temporary solution, we undo this transformation
-            // back into the original path.
+            // back into the original path. The initial transform is lossy, and
+            // this attempt might fail.
             if (patchedPath?.startsWith("com.intellij.icons.ExpUiIcons") == true) {
                 return inferActualPathFromReflectivePath(patchedPath)
             }

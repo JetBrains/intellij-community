@@ -27,6 +27,7 @@ tasks {
         dependsOn("generateIntUiDarkTheme")
         dependsOn("generateIntUiLightTheme")
     }
+
     named<Jar>("sourcesJar") {
         dependsOn("generateIntUiDarkTheme")
         dependsOn("generateIntUiLightTheme")

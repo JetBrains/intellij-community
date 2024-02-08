@@ -2,7 +2,7 @@
 composeDesktop = "1.6.0-dev1397"
 detekt = "1.23.4"
 dokka = "1.8.20"
-idea = "241.9959.31-EAP-SNAPSHOT"
+idea = "241.10840.26-EAP-SNAPSHOT"
 ideaGradlePlugin = "1.17.0"
 jna = "5.14.0"
 kotlin = "1.8.21"

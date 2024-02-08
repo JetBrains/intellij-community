@@ -14,7 +14,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
-import java.net.URL
+import java.net.URI
 
 class ThemeGeneratorContainer(container: NamedDomainObjectContainer<ThemeGeneration>) :
     NamedDomainObjectContainer<ThemeGeneration> by container
@@ -59,7 +59,7 @@ open class IntelliJThemeGeneratorTask : DefaultTask() {
         }
 
         logger.lifecycle("Fetching theme descriptor from $url...")
-        val themeDescriptor = URL(url).openStream()
+        val themeDescriptor = URI.create(url).toURL().openStream()
             .use { json.decodeFromStream<IntellijThemeDescriptor>(it) }
 
         val className = ClassName.bestGuess(themeClassName.get())

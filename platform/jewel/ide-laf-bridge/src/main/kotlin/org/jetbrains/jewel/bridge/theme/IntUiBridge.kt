@@ -7,15 +7,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.takeOrElse
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.JBColor
+import com.intellij.ui.NewUI
 import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -222,12 +225,13 @@ private fun readDefaultButtonStyle(): ButtonStyle {
             borderHovered = normalBorder,
         )
 
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize()
     return ButtonStyle(
         colors = colors,
         metrics = ButtonMetrics(
             cornerSize = retrieveArcAsCornerSizeWithFallbacks("Button.default.arc", "Button.arc"),
             padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
-            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            minSize = DpSize(minimumSize.width.dp, minimumSize.height.dp),
             borderWidth = DarculaUIUtil.LW.dp,
         ),
     )
@@ -264,13 +268,14 @@ private fun readOutlinedButtonStyle(): ButtonStyle {
         borderHovered = normalBorder,
     )
 
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize()
     return ButtonStyle(
         colors = colors,
         metrics =
         ButtonMetrics(
             cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
             padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
-            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            minSize = DpSize(minimumSize.width.dp, minimumSize.height.dp),
             borderWidth = DarculaUIUtil.LW.dp,
         ),
     )
@@ -284,17 +289,84 @@ private fun readCheckboxStyle(): CheckboxStyle {
         contentSelected = textColor,
     )
 
+    val newUiTheme = isNewUiTheme()
+    val metrics = if (newUiTheme) NewUiCheckboxMetrics else ClassicUiCheckboxMetrics
+
+    // This value is not normally defined in the themes, but Swing checks it anyway.
+    // The default hardcoded in com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI.getDefaultIcon()
+    // is not correct though, the SVG is 19x19 and is missing 1px on the right
+    val checkboxSize = retrieveIntAsDpOrUnspecified("CheckBox.iconSize")
+        .let {
+            when {
+                it.isSpecified -> DpSize(it, it)
+                else -> metrics.checkboxSize
+            }
+        }
+
     return CheckboxStyle(
         colors = colors,
         metrics = CheckboxMetrics(
-            checkboxSize = DarculaCheckBoxUI().defaultIcon.let { DpSize(it.iconWidth.dp, it.iconHeight.dp) },
-            checkboxCornerSize = CornerSize(3.dp), // See DarculaCheckBoxUI#drawCheckIcon
-            outlineSize = DpSize(15.dp, 15.dp), // Extrapolated from SVG
-            outlineOffset = DpOffset(2.5.dp, 1.5.dp), // Extrapolated from SVG
-            iconContentGap = 5.dp, // See DarculaCheckBoxUI#textIconGap
+            checkboxSize = checkboxSize,
+            outlineCornerSize = CornerSize(metrics.outlineCornerSize),
+            outlineFocusedCornerSize = CornerSize(metrics.outlineFocusedCornerSize),
+            outlineSelectedCornerSize = CornerSize(metrics.outlineSelectedCornerSize),
+            outlineSelectedFocusedCornerSize = CornerSize(metrics.outlineSelectedFocusedCornerSize),
+            outlineSize = metrics.outlineSize,
+            outlineSelectedSize = metrics.outlineSelectedSize,
+            outlineFocusedSize = metrics.outlineFocusedSize,
+            outlineSelectedFocusedSize = metrics.outlineSelectedFocusedSize,
+            iconContentGap = metrics.iconContentGap,
         ),
         icons = CheckboxIcons(checkbox = bridgePainterProvider("${iconsBasePath}checkBox.svg")),
     )
+}
+
+private interface BridgeCheckboxMetrics {
+
+    val outlineSize: DpSize
+    val outlineFocusedSize: DpSize
+    val outlineSelectedSize: DpSize
+    val outlineSelectedFocusedSize: DpSize
+
+    val outlineCornerSize: Dp
+    val outlineFocusedCornerSize: Dp
+    val outlineSelectedCornerSize: Dp
+    val outlineSelectedFocusedCornerSize: Dp
+
+    val checkboxSize: DpSize
+    val iconContentGap: Dp
+}
+
+private object ClassicUiCheckboxMetrics : BridgeCheckboxMetrics {
+
+    override val outlineSize = DpSize(14.dp, 14.dp)
+    override val outlineFocusedSize = DpSize(15.dp, 15.dp)
+    override val outlineSelectedSize = outlineSize
+    override val outlineSelectedFocusedSize = outlineFocusedSize
+
+    override val outlineCornerSize = 2.dp
+    override val outlineFocusedCornerSize = 3.dp
+    override val outlineSelectedCornerSize = outlineCornerSize
+    override val outlineSelectedFocusedCornerSize = outlineFocusedCornerSize
+
+    override val checkboxSize = DpSize(20.dp, 19.dp)
+    override val iconContentGap = 4.dp
+}
+
+private object NewUiCheckboxMetrics : BridgeCheckboxMetrics {
+
+    override val outlineSize = DpSize(16.dp, 16.dp)
+    override val outlineFocusedSize = outlineSize
+    override val outlineSelectedSize = DpSize(20.dp, 20.dp)
+    override val outlineSelectedFocusedSize = outlineSelectedSize
+
+    override val outlineCornerSize = 3.dp
+    override val outlineFocusedCornerSize = outlineCornerSize
+    override val outlineSelectedCornerSize = 4.5.dp
+    override val outlineSelectedFocusedCornerSize = outlineSelectedCornerSize
+
+    override val checkboxSize = DpSize(24.dp, 24.dp)
+    override val iconContentGap = 5.dp
 }
 
 // Note: there isn't a chip spec, nor a chip UI, so we're deriving this from the
@@ -394,12 +466,13 @@ private fun readDefaultDropdownStyle(
         iconTintHovered = Color.Unspecified,
     )
 
-    val arrowWidth = DarculaUIUtil.ARROW_BUTTON_WIDTH.dp
+    val minimumSize = JBUI.CurrentTheme.ComboBox.minimumSize()
+    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
     return DropdownStyle(
         colors = colors,
         metrics = DropdownMetrics(
-            arrowMinSize = DpSize(arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
-            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp + arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            arrowMinSize = DpSize(arrowWidth, minimumSize.height.dp),
+            minSize = DpSize(minimumSize.width.dp + arrowWidth, minimumSize.height.dp),
             cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp),
             contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
             borderWidth = DarculaUIUtil.BW.dp,
@@ -441,12 +514,14 @@ private fun readUndecoratedDropdownStyle(
         iconTintHovered = Color.Unspecified,
     )
 
-    val arrowWidth = DarculaUIUtil.ARROW_BUTTON_WIDTH.dp
+    val arrowWidth = JBUI.CurrentTheme.Component.ARROW_AREA_WIDTH.dp
+    val minimumSize = JBUI.CurrentTheme.Button.minimumSize()
+
     return DropdownStyle(
         colors = colors,
         metrics = DropdownMetrics(
-            arrowMinSize = DpSize(arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
-            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp + arrowWidth, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            arrowMinSize = DpSize(arrowWidth, minimumSize.height.dp),
+            minSize = DpSize(minimumSize.width.dp + arrowWidth, minimumSize.height.dp),
             cornerSize = CornerSize(JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().dp),
             contentPadding = JBUI.CurrentTheme.MainToolbar.Dropdown.borderInsets().toPaddingValues(),
             borderWidth = 0.dp,
@@ -609,15 +684,64 @@ private fun readRadioButtonStyle(): RadioButtonStyle {
         contentSelectedDisabled = disabledContent,
     )
 
+    val newUiTheme = isNewUiTheme()
+    val metrics = if (newUiTheme) NewUiRadioButtonMetrics else ClassicUiRadioButtonMetrics
+
+    // This value is not normally defined in the themes, but Swing checks it anyway
+    // The default hardcoded in com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI.getDefaultIcon()
+    // is not correct though, the SVG is 19x19 and is missing 1px on the right
+    val radioButtonSize = retrieveIntAsDpOrUnspecified("RadioButton.iconSize")
+        .takeOrElse { metrics.radioButtonSize }
+        .let { DpSize(it, it) }
+
+    // val outlineSize = if (isNewUiButNotDarcula() DpSize(17.dp, 17.dp) else
+
     return RadioButtonStyle(
         colors = colors,
         metrics = RadioButtonMetrics(
-            radioButtonSize = DpSize(19.dp, 19.dp),
+            radioButtonSize = radioButtonSize,
+            outlineSize = metrics.outlineSize,
+            outlineFocusedSize = metrics.outlineFocusedSize,
+            outlineSelectedSize = metrics.outlineSelectedSize,
+            outlineSelectedFocusedSize = metrics.outlineSelectedFocusedSize,
             iconContentGap = retrieveIntAsDpOrUnspecified("RadioButton.textIconGap")
-                .takeOrElse { 4.dp },
+                .takeOrElse { metrics.iconContentGap },
         ),
         icons = RadioButtonIcons(radioButton = bridgePainterProvider("${iconsBasePath}radio.svg")),
     )
+}
+
+private interface BridgeRadioButtonMetrics {
+
+    val outlineSize: DpSize
+    val outlineFocusedSize: DpSize
+    val outlineSelectedSize: DpSize
+    val outlineSelectedFocusedSize: DpSize
+
+    val radioButtonSize: Dp
+    val iconContentGap: Dp
+}
+
+private object ClassicUiRadioButtonMetrics : BridgeRadioButtonMetrics {
+
+    override val outlineSize = DpSize(17.dp, 17.dp)
+    override val outlineFocusedSize = DpSize(19.dp, 19.dp)
+    override val outlineSelectedSize = outlineSize
+    override val outlineSelectedFocusedSize = outlineFocusedSize
+
+    override val radioButtonSize = 19.dp
+    override val iconContentGap = 4.dp
+}
+
+private object NewUiRadioButtonMetrics : BridgeRadioButtonMetrics {
+
+    override val outlineSize = DpSize(17.dp, 17.dp)
+    override val outlineFocusedSize = outlineSize
+    override val outlineSelectedSize = DpSize(22.dp, 22.dp)
+    override val outlineSelectedFocusedSize = outlineSelectedSize
+
+    override val radioButtonSize = 24.dp
+    override val iconContentGap = 4.dp
 }
 
 private fun readScrollbarStyle(isDark: Boolean) =
@@ -723,12 +847,13 @@ private fun readTextFieldStyle(textFieldStyle: TextStyle): TextFieldStyle {
         placeholder = NamedColorUtil.getInactiveTextColor().toComposeColor(),
     )
 
+    val minimumSize = JBUI.CurrentTheme.TextField.minimumSize()
     return TextFieldStyle(
         colors = colors,
         metrics = TextFieldMetrics(
-            cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp),
+            cornerSize = CornerSize(DarculaUIUtil.COMPONENT_ARC.dp / 2),
             contentPadding = PaddingValues(horizontal = 9.dp, vertical = 2.dp),
-            minSize = DpSize(DarculaUIUtil.MINIMUM_WIDTH.dp, DarculaUIUtil.MINIMUM_HEIGHT.dp),
+            minSize = DpSize(minimumSize.width.dp, minimumSize.height.dp),
             borderWidth = DarculaUIUtil.LW.dp,
         ),
         textStyle = textFieldStyle,
@@ -921,3 +1046,11 @@ private fun readIconButtonStyle(): IconButtonStyle =
             borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
         ),
     )
+
+@Suppress("UnstableApiUsage")
+internal fun isNewUiTheme(): Boolean {
+    if (!NewUI.isEnabled()) return false
+
+    val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
+    return lafInfo.name == "Light" || lafInfo.name == "Dark" || lafInfo.name == "Light with Light Header"
+}

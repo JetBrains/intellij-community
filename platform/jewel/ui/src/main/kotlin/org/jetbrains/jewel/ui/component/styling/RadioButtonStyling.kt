@@ -55,8 +55,22 @@ public class RadioButtonColors(
 @GenerateDataFunctions
 public class RadioButtonMetrics(
     public val radioButtonSize: DpSize,
+    public val outlineSize: DpSize,
+    public val outlineFocusedSize: DpSize,
+    public val outlineSelectedSize: DpSize,
+    public val outlineSelectedFocusedSize: DpSize,
     public val iconContentGap: Dp,
 ) {
+
+    @Composable
+    public fun outlineSizeFor(state: RadioButtonState): State<DpSize> = rememberUpdatedState(
+        when {
+            state.isFocused && state.isSelected -> outlineSelectedFocusedSize
+            !state.isFocused && state.isSelected -> outlineSelectedSize
+            state.isFocused && !state.isSelected -> outlineFocusedSize
+            else -> outlineSize
+        },
+    )
 
     public companion object
 }

@@ -17,7 +17,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
 import org.gradle.kotlin.dsl.setProperty
 import java.io.File
-import java.net.URL
+import java.net.URI
 
 open class StudioVersionsGenerationExtension(project: Project) {
 
@@ -69,7 +69,7 @@ open class AndroidStudioReleasesGeneratorTask : DefaultTask() {
             "Registered resources directories:\n" +
                 lookupDirs.joinToString("\n") { " * ${it.absolutePath}" }
         )
-        val releases = URL(url).openStream()
+        val releases = URI.create(url).toURL().openStream()
             .use { json.decodeFromStream<ApiAndroidStudioReleases>(it) }
 
         val className = ClassName.bestGuess(STUDIO_RELEASES_OUTPUT_CLASS_NAME)

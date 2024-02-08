@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.ui.component
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.Role
@@ -172,27 +172,37 @@ private fun RadioButtonImpl(
 
     val colors = style.colors
     val metrics = style.metrics
-    val radioButtonModifier = Modifier.size(metrics.radioButtonSize)
-        .outline(
-            radioButtonState,
-            outline,
-            outlineShape = CircleShape,
-            alignment = Stroke.Alignment.Inside,
-        )
+    val outlineModifier =
+        Modifier.size(metrics.outlineSizeFor(radioButtonState).value)
+            .outline(
+                state = radioButtonState,
+                outline = outline,
+                outlineShape = CircleShape,
+                alignment = Stroke.Alignment.Center,
+            )
+
     val radioButtonPainter by style.icons.radioButton.getPainter(
         Selected(radioButtonState),
         Stateful(radioButtonState),
     )
 
+    val radioButtonBoxModifier = Modifier.size(metrics.radioButtonSize)
+
     if (content == null) {
-        RadioButtonImage(wrapperModifier, radioButtonPainter, radioButtonModifier)
+        Box(radioButtonBoxModifier, contentAlignment = Alignment.Center) {
+            RadioButtonImage(radioButtonPainter)
+            Box(outlineModifier)
+        }
     } else {
         Row(
             wrapperModifier,
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RadioButtonImage(Modifier, radioButtonPainter, radioButtonModifier)
+            Box(radioButtonBoxModifier, contentAlignment = Alignment.Center) {
+                RadioButtonImage(radioButtonPainter)
+                Box(outlineModifier)
+            }
 
             val contentColor by colors.contentFor(radioButtonState)
             val resolvedContentColor = contentColor.takeOrElse { textStyle.color }
@@ -209,14 +219,8 @@ private fun RadioButtonImpl(
 }
 
 @Composable
-private fun RadioButtonImage(
-    outerModifier: Modifier,
-    radioButtonPainter: Painter,
-    radioButtonModifier: Modifier,
-) {
-    Box(outerModifier) {
-        Image(radioButtonPainter, contentDescription = null, modifier = radioButtonModifier)
-    }
+private fun RadioButtonImage(radioButtonPainter: Painter, modifier: Modifier = Modifier) {
+    Box(modifier.paint(radioButtonPainter, alignment = Alignment.TopStart))
 }
 
 @Immutable

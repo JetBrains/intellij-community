@@ -35,7 +35,46 @@ private class SizeImpl(
     }
 }
 
-public fun Size(width: Int, height: Int = width): PainterHint {
+/**
+ * Selects a size variant for the image. If the specific size that was
+ * requested is not available, the base image will be used.
+ *
+ * Note that combining a [Size] with [HiDpi] could lead to unexpected
+ * results and is not supported as of now. Generally speaking, however, the
+ * IntelliJ Platform tends to use only [Size] for SVGs and only [HiDpi]
+ * for PNGs, even though both are in theory supported for all formats.
+ *
+ * | Base image name    | Sized image name         |
+ * |--------------------|--------------------------|
+ * | `my-icon.svg`      | `my-icon@20x20.svg`      |
+ * | `my-icon_dark.png` | `my-icon@14x14_dark.png` |
+ *
+ * @see HiDpi
+ */
+@Suppress("FunctionName")
+public fun Size(size: Int): PainterHint {
+    require(size > 0) { "Size must be positive" }
+    return SizeImpl(size, size)
+}
+
+/**
+ * Selects a size variant for the image. If the specific size that was
+ * requested is not available, the base image will be used.
+ *
+ * Note that combining a [Size] with [HiDpi] could lead to unexpected
+ * results and is not supported as of now. Generally speaking, however, the
+ * IntelliJ Platform tends to use only [Size] for SVGs and only [HiDpi]
+ * for PNGs, even though both are in theory supported for all formats.
+ *
+ * | Base image name    | Sized image name         |
+ * |--------------------|--------------------------|
+ * | `my-icon.svg`      | `my-icon@20x20.svg`      |
+ * | `my-icon_dark.png` | `my-icon@14x14_dark.png` |
+ *
+ * @see HiDpi
+ */
+@Suppress("FunctionName")
+public fun Size(width: Int, height: Int): PainterHint {
     require(width > 0 && height > 0) { "Width and height must be positive" }
     return SizeImpl(width, height)
 }

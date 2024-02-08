@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.ui.component
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.triStateToggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.Role
@@ -261,6 +260,7 @@ private fun CheckboxImpl(
                 is PressInteraction.Cancel,
                 is PressInteraction.Release,
                 -> checkboxState = checkboxState.copy(pressed = false)
+
                 is HoverInteraction.Enter -> checkboxState = checkboxState.copy(hovered = true)
                 is HoverInteraction.Exit -> checkboxState = checkboxState.copy(hovered = false)
                 is FocusInteraction.Focus -> checkboxState = checkboxState.copy(focused = true)
@@ -283,15 +283,14 @@ private fun CheckboxImpl(
             indication = null,
         )
 
-    val checkBoxImageModifier = Modifier.size(metrics.checkboxSize)
-    val outlineModifier = Modifier.size(metrics.outlineSize)
-        .offset(metrics.outlineOffset.x, metrics.outlineOffset.y)
-        .outline(
-            state = checkboxState,
-            outline = outline,
-            outlineShape = RoundedCornerShape(metrics.checkboxCornerSize),
-            alignment = Stroke.Alignment.Center,
-        )
+    val outlineModifier =
+        Modifier.size(metrics.outlineSizeFor(checkboxState).value)
+            .outline(
+                state = checkboxState,
+                outline = outline,
+                outlineShape = RoundedCornerShape(metrics.outlineCornerSizeFor(checkboxState).value),
+                alignment = Stroke.Alignment.Center,
+            )
 
     val checkboxPainter by icons.checkbox.getPainter(
         if (checkboxState.toggleableState == ToggleableState.Indeterminate) {
@@ -303,10 +302,12 @@ private fun CheckboxImpl(
         Stateful(checkboxState),
     )
 
+    val checkboxBoxModifier = Modifier.size(metrics.checkboxSize)
+
     if (content == null) {
-        Box(contentAlignment = Alignment.TopStart) {
-            CheckBoxImage(wrapperModifier, checkboxPainter, checkBoxImageModifier)
-            Box(outlineModifier)
+        Box(checkboxBoxModifier, contentAlignment = Alignment.TopStart) {
+            CheckBoxImage(checkboxPainter)
+            Box(outlineModifier.align(Alignment.Center))
         }
     } else {
         Row(
@@ -314,9 +315,9 @@ private fun CheckboxImpl(
             horizontalArrangement = Arrangement.spacedBy(metrics.iconContentGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(contentAlignment = Alignment.TopStart) {
-                CheckBoxImage(Modifier, checkboxPainter, checkBoxImageModifier)
-                Box(outlineModifier)
+            Box(checkboxBoxModifier, contentAlignment = Alignment.TopStart) {
+                CheckBoxImage(checkboxPainter)
+                Box(outlineModifier.align(Alignment.Center))
             }
 
             val contentColor by colors.contentFor(checkboxState)
@@ -331,25 +332,20 @@ private fun CheckboxImpl(
 }
 
 private object CheckBoxIndeterminate : PainterSuffixHint() {
-
     override fun PainterProviderScope.suffix(): String = "Indeterminate"
 }
 
 @Composable
 private fun CheckBoxImage(
-    modifier: Modifier,
     checkboxPainter: Painter,
-    checkBoxModifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        Image(checkboxPainter, contentDescription = null, modifier = checkBoxModifier)
-    }
+    Box(modifier.paint(checkboxPainter, alignment = Alignment.TopStart))
 }
 
 @Immutable
 @JvmInline
 public value class CheckboxState(private val state: ULong) : ToggleableComponentState, FocusableComponentState {
-
     override val toggleableState: ToggleableState
         get() = state.readToggleableState()
 
@@ -393,7 +389,6 @@ public value class CheckboxState(private val state: ULong) : ToggleableComponent
             "isHovered=$isHovered, isPressed=$isPressed, isSelected=$isSelected, isActive=$isActive)"
 
     public companion object {
-
         public fun of(
             toggleableState: ToggleableState,
             enabled: Boolean = true,

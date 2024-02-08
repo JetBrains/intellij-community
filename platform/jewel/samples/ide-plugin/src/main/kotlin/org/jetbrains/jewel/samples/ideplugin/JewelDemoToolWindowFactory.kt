@@ -15,6 +15,7 @@ import org.jetbrains.jewel.bridge.addComposeTab
 import org.jetbrains.jewel.samples.ideplugin.releasessample.ReleasesSampleCompose
 import org.jetbrains.jewel.samples.ideplugin.releasessample.ReleasesSamplePanel
 
+@Suppress("unused")
 @ExperimentalCoroutinesApi
 internal class JewelDemoToolWindowFactory : ToolWindowFactory, DumbAware {
 

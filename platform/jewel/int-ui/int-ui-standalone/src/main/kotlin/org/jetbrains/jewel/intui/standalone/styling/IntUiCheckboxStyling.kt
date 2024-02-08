@@ -4,7 +4,6 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
@@ -49,18 +48,28 @@ public fun CheckboxColors.Companion.dark(
     CheckboxColors(content, contentDisabled, contentSelected)
 
 public fun CheckboxMetrics.Companion.defaults(
-    checkboxSize: DpSize = DpSize(19.dp, 19.dp),
-    checkboxCornerSize: CornerSize = CornerSize(3.dp),
-    outlineSize: DpSize = DpSize(15.dp, 15.dp),
-    outlineOffset: DpOffset = DpOffset(2.5.dp, 1.5.dp),
+    checkboxSize: DpSize = DpSize(24.dp, 24.dp),
+    outlineCornerSize: CornerSize = CornerSize(3.dp),
+    outlineFocusedCornerSize: CornerSize = outlineCornerSize,
+    outlineSelectedCornerSize: CornerSize = CornerSize(4.5.dp),
+    outlineSelectedFocusedCornerSize: CornerSize = outlineSelectedCornerSize,
+    outlineSize: DpSize = DpSize(16.dp, 16.dp),
+    outlineFocusedSize: DpSize = outlineSize,
+    outlineSelectedSize: DpSize = DpSize(20.dp, 20.dp),
+    outlineSelectedFocusedSize: DpSize = outlineSelectedSize,
     iconContentGap: Dp = 5.dp,
 ): CheckboxMetrics =
     CheckboxMetrics(
-        checkboxSize,
-        checkboxCornerSize,
-        outlineSize,
-        outlineOffset,
-        iconContentGap,
+        checkboxSize = checkboxSize,
+        outlineCornerSize = outlineCornerSize,
+        outlineFocusedCornerSize = outlineFocusedCornerSize,
+        outlineSelectedCornerSize = outlineSelectedCornerSize,
+        outlineSelectedFocusedCornerSize = outlineSelectedFocusedCornerSize,
+        outlineSize = outlineSize,
+        outlineFocusedSize = outlineFocusedSize,
+        outlineSelectedSize = outlineSelectedSize,
+        outlineSelectedFocusedSize = outlineSelectedFocusedSize,
+        iconContentGap = iconContentGap,
     )
 
 @Composable

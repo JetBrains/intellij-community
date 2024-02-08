@@ -67,10 +67,21 @@ public fun RadioButtonColors.Companion.dark(
     )
 
 public fun RadioButtonMetrics.Companion.defaults(
-    radioButtonSize: DpSize = DpSize(19.dp, 19.dp),
+    radioButtonSize: DpSize = DpSize(24.dp, 24.dp),
+    outlineSize: DpSize = DpSize(17.dp, 17.dp),
+    outlineFocusedSize: DpSize = outlineSize,
+    outlineSelectedSize: DpSize = DpSize(22.dp, 22.dp),
+    outlineSelectedFocusedSize: DpSize = outlineSelectedSize,
     iconContentGap: Dp = 8.dp,
 ): RadioButtonMetrics =
-    RadioButtonMetrics(radioButtonSize, iconContentGap)
+    RadioButtonMetrics(
+        radioButtonSize = radioButtonSize,
+        outlineSize = outlineSize,
+        outlineFocusedSize = outlineFocusedSize,
+        outlineSelectedSize = outlineSelectedSize,
+        outlineSelectedFocusedSize = outlineSelectedFocusedSize,
+        iconContentGap = iconContentGap,
+    )
 
 public fun RadioButtonIcons.Companion.light(
     radioButton: PainterProvider =

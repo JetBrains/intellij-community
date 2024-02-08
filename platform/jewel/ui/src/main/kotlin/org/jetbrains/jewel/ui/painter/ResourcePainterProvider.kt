@@ -87,13 +87,13 @@ public class ResourcePainterProvider(
         val cacheKey = scope.acceptedHints.hashCode() * 31 + LocalDensity.current.hashCode()
 
         if (inDebugMode && cache[cacheKey] != null) {
-            println("Cache hit for $basePath(${scope.acceptedHints.joinToString()})")
+            println("Cache hit for $basePath (accepted hints: ${scope.acceptedHints.joinToString()})")
         }
 
         val painter =
             cache.getOrPut(cacheKey) {
                 if (inDebugMode) {
-                    println("Cache miss for $basePath(${scope.acceptedHints.joinToString()})")
+                    println("Cache miss for $basePath (accepted hints: ${scope.acceptedHints.joinToString()})")
                 }
                 loadPainter(scope)
             }
@@ -110,14 +110,15 @@ public class ResourcePainterProvider(
             scopes = scopes.flatMap { listOfNotNull(it.apply(hint), it) }
         }
 
-        val (chosenScope, url) = scopes.firstNotNullOfOrNull { resolveResource(it) }
-            ?: run {
-                if (inDebugMode) {
-                    error("Resource '$basePath(${scope.acceptedHints.joinToString()})' not found")
-                } else {
-                    return errorPainter
+        val (chosenScope, url) =
+            scopes.firstNotNullOfOrNull { resolveResource(it) }
+                ?: run {
+                    if (inDebugMode) {
+                        error("Resource '$basePath(${scope.acceptedHints.joinToString()})' not found")
+                    } else {
+                        return errorPainter
+                    }
                 }
-            }
 
         val extension = basePath.substringAfterLast(".").lowercase()
 
@@ -151,7 +152,10 @@ public class ResourcePainterProvider(
     }
 
     @Composable
-    private fun createSvgPainter(scope: Scope, url: URL): Painter =
+    private fun createSvgPainter(
+        scope: Scope,
+        url: URL,
+    ): Painter =
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
@@ -165,7 +169,11 @@ public class ResourcePainterProvider(
             rememberAction = { remember(url, scope.density) { it } },
         )
 
-    private fun patchSvg(scope: Scope, inputStream: InputStream, hints: List<PainterHint>): InputStream {
+    private fun patchSvg(
+        scope: Scope,
+        inputStream: InputStream,
+        hints: List<PainterHint>,
+    ): InputStream {
         if (hints.all { it !is PainterSvgPatchHint }) {
             return inputStream
         }
@@ -179,12 +187,19 @@ public class ResourcePainterProvider(
                 with(hint) { scope.patch(document.documentElement) }
             }
 
-            return document.writeToString().byteInputStream()
+            return document.writeToString()
+                .also { patchedSvg ->
+                    if (inDebugMode) println("Patched SVG:\n\n$patchedSvg")
+                }
+                .byteInputStream()
         }
     }
 
     @Composable
-    private fun createVectorDrawablePainter(scope: Scope, url: URL): Painter =
+    private fun createVectorDrawablePainter(
+        scope: Scope,
+        url: URL,
+    ): Painter =
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
@@ -194,15 +209,17 @@ public class ResourcePainterProvider(
         )
 
     @Composable
-    private fun createBitmapPainter(scope: Scope, url: URL) =
-        tryLoadingResource(
-            url = url,
-            loadingAction = { resourceUrl ->
-                val bitmap = resourceUrl.openStream().use { loadImageBitmap(it) }
-                BitmapPainter(bitmap)
-            },
-            rememberAction = { remember(url, scope.density) { it } },
-        )
+    private fun createBitmapPainter(
+        scope: Scope,
+        url: URL,
+    ) = tryLoadingResource(
+        url = url,
+        loadingAction = { resourceUrl ->
+            val bitmap = resourceUrl.openStream().use { loadImageBitmap(it) }
+            BitmapPainter(bitmap)
+        },
+        rememberAction = { remember(url, scope.density) { it } },
+    )
 
     @Composable
     private fun <T> tryLoadingResource(
@@ -272,5 +289,7 @@ internal fun Document.writeToString(): String {
 }
 
 @Composable
-public fun rememberResourcePainterProvider(path: String, iconClass: Class<*>): PainterProvider =
-    remember(path, iconClass.classLoader) { ResourcePainterProvider(path, iconClass.classLoader) }
+public fun rememberResourcePainterProvider(
+    path: String,
+    iconClass: Class<*>,
+): PainterProvider = remember(path, iconClass.classLoader) { ResourcePainterProvider(path, iconClass.classLoader) }

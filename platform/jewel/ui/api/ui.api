@@ -855,14 +855,21 @@ public final class org/jetbrains/jewel/ui/component/styling/CheckboxIcons$Compan
 public final class org/jetbrains/jewel/ui/component/styling/CheckboxMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/CheckboxMetrics$Companion;
-	public synthetic fun <init> (JLandroidx/compose/foundation/shape/CornerSize;JJFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JLandroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/shape/CornerSize;JJJJFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCheckboxCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
 	public final fun getCheckboxSize-MYxV2XQ ()J
 	public final fun getIconContentGap-D9Ej5fM ()F
-	public final fun getOutlineOffset-RKDOV3M ()J
+	public final fun getOutlineCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getOutlineFocusedCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getOutlineFocusedSize-MYxV2XQ ()J
+	public final fun getOutlineSelectedCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getOutlineSelectedFocusedCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getOutlineSelectedFocusedSize-MYxV2XQ ()J
+	public final fun getOutlineSelectedSize-MYxV2XQ ()J
 	public final fun getOutlineSize-MYxV2XQ ()J
 	public fun hashCode ()I
+	public final fun outlineCornerSizeFor-f7CD9uA (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
+	public final fun outlineSizeFor-f7CD9uA (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -1631,11 +1638,16 @@ public final class org/jetbrains/jewel/ui/component/styling/RadioButtonIcons$Com
 public final class org/jetbrains/jewel/ui/component/styling/RadioButtonMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/RadioButtonMetrics$Companion;
-	public synthetic fun <init> (JFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJJJFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIconContentGap-D9Ej5fM ()F
+	public final fun getOutlineFocusedSize-MYxV2XQ ()J
+	public final fun getOutlineSelectedFocusedSize-MYxV2XQ ()J
+	public final fun getOutlineSelectedSize-MYxV2XQ ()J
+	public final fun getOutlineSize-MYxV2XQ ()J
 	public final fun getRadioButtonSize-MYxV2XQ ()J
 	public fun hashCode ()I
+	public final fun outlineSizeFor-ehnS_G0 (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/runtime/State;
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -2102,13 +2114,6 @@ public final class org/jetbrains/jewel/ui/painter/BadgePainter : org/jetbrains/j
 	public synthetic fun <init> (Landroidx/compose/ui/graphics/painter/Painter;JLorg/jetbrains/jewel/ui/painter/badge/BadgeShape;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
-public abstract class org/jetbrains/jewel/ui/painter/BasePainterHintsProvider : org/jetbrains/jewel/ui/painter/PainterHintsProvider {
-	public static final field $stable I
-	public fun <init> (ZLjava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
-	protected final fun getPaletteHint (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
-	public fun priorityHints (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)Ljava/util/List;
-}
-
 public abstract interface class org/jetbrains/jewel/ui/painter/BitmapPainterHint : org/jetbrains/jewel/ui/painter/PainterHint {
 	public abstract fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
@@ -2218,6 +2223,24 @@ public final class org/jetbrains/jewel/ui/painter/PainterWrapperHint$DefaultImpl
 	public static fun canApply (Lorg/jetbrains/jewel/ui/painter/PainterWrapperHint;Lorg/jetbrains/jewel/ui/painter/PainterProviderScope;)Z
 }
 
+public abstract class org/jetbrains/jewel/ui/painter/PalettePainterHintsProvider : org/jetbrains/jewel/ui/painter/PainterHintsProvider {
+	public static final field $stable I
+	public fun <init> (ZLjava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
+	protected abstract fun getCheckBoxByColorPaletteHint ()Lorg/jetbrains/jewel/ui/painter/PainterHint;
+	protected abstract fun getCheckBoxByKeyPaletteHint ()Lorg/jetbrains/jewel/ui/painter/PainterHint;
+	protected final fun getIntellijIconPalette ()Ljava/util/Map;
+	protected final fun getPaletteHint (Ljava/lang/String;Z)Lorg/jetbrains/jewel/ui/painter/PainterHint;
+	protected final fun getThemeColorPalette ()Ljava/util/Map;
+	protected final fun getThemeIconPalette ()Ljava/util/Map;
+	protected abstract fun getTreePaletteHint ()Lorg/jetbrains/jewel/ui/painter/PainterHint;
+	protected abstract fun getUiPaletteHint ()Lorg/jetbrains/jewel/ui/painter/PainterHint;
+	protected final fun isDark ()Z
+	public fun priorityHints (Ljava/lang/String;Landroidx/compose/runtime/Composer;I)Ljava/util/List;
+	protected final fun resolveColor-ijrfgN4 (Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
+	protected final fun resolveKeyColor-8tov2TA (Ljava/lang/String;Ljava/util/Map;Z)Landroidx/compose/ui/graphics/Color;
+	protected final fun selectMap (Ljava/lang/String;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;)Ljava/util/Map;
+}
+
 public final class org/jetbrains/jewel/ui/painter/ResizedPainter : org/jetbrains/jewel/ui/painter/DelegatePainter {
 	public static final field $stable I
 	public synthetic fun <init> (Landroidx/compose/ui/graphics/painter/Painter;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -2283,7 +2306,11 @@ public final class org/jetbrains/jewel/ui/painter/hints/BadgeKt {
 	public static final fun Badge-DxMtmZc (JLorg/jetbrains/jewel/ui/painter/badge/BadgeShape;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
-public final class org/jetbrains/jewel/ui/painter/hints/DarkOrStrokeKt {
+public final class org/jetbrains/jewel/ui/painter/hints/ColorBasedPaletteReplacementKt {
+	public static final fun ColorBasedPaletteReplacement (Ljava/util/Map;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
+}
+
+public final class org/jetbrains/jewel/ui/painter/hints/DarkAndStrokeKt {
 	public static final fun Dark (Z)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 	public static synthetic fun Dark$default (ZILjava/lang/Object;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 	public static final fun Stroke-8_81llA (J)Lorg/jetbrains/jewel/ui/painter/PainterHint;
@@ -2293,12 +2320,12 @@ public final class org/jetbrains/jewel/ui/painter/hints/HiDpiKt {
 	public static final fun HiDpi ()Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
-public final class org/jetbrains/jewel/ui/painter/hints/OverrideKt {
-	public static final fun Override (Ljava/util/Map;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
+public final class org/jetbrains/jewel/ui/painter/hints/KeyBasedPaletteReplacementKt {
+	public static final fun KeyBasedPaletteReplacement (Ljava/util/Map;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
-public final class org/jetbrains/jewel/ui/painter/hints/PaletteKt {
-	public static final fun Palette (Ljava/util/Map;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
+public final class org/jetbrains/jewel/ui/painter/hints/PathOverrideKt {
+	public static final fun PathOverride (Ljava/util/Map;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
 public final class org/jetbrains/jewel/ui/painter/hints/SelectedKt {
@@ -2308,8 +2335,8 @@ public final class org/jetbrains/jewel/ui/painter/hints/SelectedKt {
 }
 
 public final class org/jetbrains/jewel/ui/painter/hints/SizeKt {
+	public static final fun Size (I)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 	public static final fun Size (II)Lorg/jetbrains/jewel/ui/painter/PainterHint;
-	public static synthetic fun Size$default (IIILjava/lang/Object;)Lorg/jetbrains/jewel/ui/painter/PainterHint;
 }
 
 public final class org/jetbrains/jewel/ui/painter/hints/StatefulKt {
@@ -2347,6 +2374,7 @@ public final class org/jetbrains/jewel/ui/theme/JewelThemeKt {
 public final class org/jetbrains/jewel/ui/util/ColorExtensionsKt {
 	public static final fun fromRGBAHexStringOrNull (Landroidx/compose/ui/graphics/Color$Companion;Ljava/lang/String;)Landroidx/compose/ui/graphics/Color;
 	public static final fun isDark-8_81llA (J)Z
+	public static final fun toRgbaHexString (Ljava/awt/Color;)Ljava/lang/String;
 	public static final fun toRgbaHexString-8_81llA (J)Ljava/lang/String;
 }
 

@@ -43,7 +43,7 @@ jobs:
       - name: Run :check task
         run: ./gradlew check --continue
 
-      - uses: github/codeql-action/upload-sarif@v2
+      - uses: github/codeql-action/upload-sarif@v3
         if: ${{ always() }}
         with:
           sarif_file: ${{ github.workspace }}/build/reports/static-analysis.sarif

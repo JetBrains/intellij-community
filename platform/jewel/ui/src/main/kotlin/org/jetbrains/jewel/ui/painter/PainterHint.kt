@@ -75,9 +75,7 @@ public interface XmlPainterHint : PainterHint {
 @Immutable
 public interface PainterPathHint : PainterHint {
 
-    /**
-     * Replace the entire path with the given value.
-     */
+    /** Patch the path, if needed. */
     public fun PainterProviderScope.patch(): String
 }
 
