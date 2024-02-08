@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileDocumentContentImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FoldingModelSupport;
@@ -16,6 +17,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
@@ -28,6 +30,7 @@ import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareToggleAction;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -164,6 +167,11 @@ public final class TextDiffViewerUtil {
                                                                @NotNull Function<? super DocumentContent, ? extends T> propertyGetter) {
     List<T> properties = ContainerUtil.mapNotNull(contents, (content) -> {
       if (content instanceof EmptyContent) return null;
+      if (content instanceof FileDocumentContentImpl o && o.getProject() != null) {
+        try (AccessToken ignore = ProjectLocator.withPreferredProject(o.getFile(), o.getProject())) {
+          return propertyGetter.apply(o);
+        }
+      }
       return propertyGetter.fun((DocumentContent)content);
     });
 
