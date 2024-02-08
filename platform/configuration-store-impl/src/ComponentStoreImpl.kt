@@ -376,10 +376,12 @@ abstract class ComponentStoreImpl : IComponentStore {
           featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
 
-        setStateToSaveSessionProducer(state = state,
-                                      info = info,
-                                      effectiveComponentName = effectiveComponentName,
-                                      sessionProducer = sessionProducer)
+        setStateToSaveSessionProducer(
+          state = state,
+          info = info,
+          effectiveComponentName = effectiveComponentName,
+          sessionProducer = sessionProducer,
+        )
       }
     }
   }

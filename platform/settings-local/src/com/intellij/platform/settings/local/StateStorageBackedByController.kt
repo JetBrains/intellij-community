@@ -167,7 +167,7 @@ private class ControllerBackedSaveSessionProducer(
   override fun setState(component: Any?, componentName: String, state: Any?) {
     val settingDescriptor = storageController.createSettingDescriptor(componentName)
     if (state == null) {
-      put(settingDescriptor, null)
+      put(key = settingDescriptor, value = null)
       return
     }
 

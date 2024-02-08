@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.progress.ProcessCanceledException
 import kotlinx.coroutines.CancellationException
 import java.util.*
@@ -12,7 +13,7 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
   private val producers = Collections.synchronizedMap(LinkedHashMap<StateStorage, SaveSessionProducer>())
 
   fun getProducer(storage: StateStorage): SaveSessionProducer? {
-    var producer = producers[storage]
+    var producer = producers.get(storage)
     if (producer == null) {
       producer = storage.createSaveSessionProducer() ?: return null
       val prev = producers.put(storage, producer)
@@ -60,8 +61,12 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
       LOG.warn(e)
       result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
     }
-    catch (e: ProcessCanceledException) { throw e }
-    catch (e: CancellationException) { throw e }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Exception) {
       result.addError(e)
     }
@@ -75,8 +80,12 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
       LOG.warn(e)
       result.addReadOnlyFile(SaveSessionAndFile(e.session ?: session, e.file))
     }
-    catch (e: ProcessCanceledException) { throw e }
-    catch (e: CancellationException) { throw e }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Exception) {
       result.addError(e)
     }

@@ -6,7 +6,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -17,15 +16,17 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
   private val asyncSettingsSavingComponents = SynchronizedClearableLazy {
     val result = mutableListOf<SettingsSavingComponent>()
+    // filter for class is not used, as we process only created services
     for (instance in serviceContainer.instances()) {
       if (instance is SettingsSavingComponent) {
         result.add(instance)
       }
-      else if (instance is @Suppress("DEPRECATION") com.intellij.openapi.components.SettingsSavingComponent) {
+      else if (instance is @Suppress("DEPRECATION", "removal") com.intellij.openapi.components.SettingsSavingComponent) {
         result.add(object : SettingsSavingComponent {
           override suspend fun save() {
             withContext(Dispatchers.EDT) {
               blockingContext {
+                @Suppress("removal")
                 instance.save()
               }
             }
@@ -52,7 +53,11 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
   override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    saveSettingsAndCommitComponents(saveResult, forceSavingAllSettings, saveSessionManager)
+    saveSettingsAndCommitComponents(
+      saveResult = saveResult,
+      forceSavingAllSettings = forceSavingAllSettings,
+      sessionManager = saveSessionManager,
+    )
     saveSessionManager.save(saveResult)
   }
 
@@ -67,8 +72,9 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
           try {
             settingsSavingComponent.save()
           }
-          catch (e: ProcessCanceledException) { throw e }
-          catch (e: CancellationException) { throw e }
+          catch (e: CancellationException) {
+            throw e
+          }
           catch (e: Throwable) {
             saveResult.addError(e)
           }
@@ -78,7 +84,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
 
     // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components
     // (component state uses scheme manager in an ipr project, so, we must save it before) so, call it sequentially
-    commitComponents(forceSavingAllSettings, sessionManager, saveResult)
+    commitComponents(isForce = forceSavingAllSettings, sessionManager = sessionManager, saveResult = saveResult)
   }
 
   override suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
@@ -86,7 +92,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     runCatching {
       commitObsoleteComponents(session = sessionManager, isProjectLevel = false)
     }.getOrLogException(LOG)
-    super.commitComponents(isForce, sessionManager, saveResult)
+    super.commitComponents(isForce = isForce, sessionManager = sessionManager, saveResult = saveResult)
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
@@ -98,7 +104,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       val storage = (storageManager as? StateStorageManagerImpl)?.getOrCreateStorage(bean.file ?: continue, RoamingType.DISABLED)
       if (storage != null) {
         for (componentName in bean.components) {
-          session.getProducer(storage)?.setState(null, componentName, null)
+          session.getProducer(storage)?.setState(component = null, componentName = componentName, state = null)
         }
       }
     }

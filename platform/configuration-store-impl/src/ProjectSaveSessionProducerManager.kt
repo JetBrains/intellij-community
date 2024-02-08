@@ -3,13 +3,12 @@ package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
 import com.intellij.openapi.vfs.VirtualFile
 
-internal open class ProjectSaveSessionProducerManager(protected val project: Project, isUseVfsForWrite: Boolean)
+internal open class ProjectSaveSessionProducerManager(@JvmField protected val project: Project, isUseVfsForWrite: Boolean)
   : SaveSessionProducerManager(isUseVfsForWrite)
 {
   suspend fun saveAndValidate(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
@@ -57,8 +56,10 @@ internal open class ProjectSaveSessionProducerManager(protected val project: Pro
     }
   }
 
-  private fun getUnableToSaveNotifications(): Array<out UnableToSaveProjectNotification> =
-    serviceIfCreated<NotificationsManager>()?.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project) ?: emptyArray()
+  private fun getUnableToSaveNotifications(): Array<out UnableToSaveProjectNotification> {
+    return serviceIfCreated<NotificationsManager>()?.getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
+           ?: emptyArray()
+  }
 
   private fun getFileList(readonlyFiles: List<SaveSessionAndFile>): List<VirtualFile> = readonlyFiles.map { it.file }
 }

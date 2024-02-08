@@ -42,6 +42,12 @@ fun runSuppressing(vararg runnables: ThrowableRunnable<Throwable>) {
   }
 }
 
-fun <T: Throwable> addSuppressed(first: T?, next: T): T =
-  if (first != null) { first.addSuppressed(next); first }
-  else next
+fun <T: Throwable> addSuppressed(first: T?, next: T): T {
+  if (first != null) {
+    first.addSuppressed(next)
+    return first
+  }
+  else {
+    return next
+  }
+}

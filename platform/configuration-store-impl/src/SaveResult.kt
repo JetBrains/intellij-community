@@ -1,30 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.addSuppressed
 
 internal class SaveResult {
   private var error: Throwable? = null
 
   @JvmField
-  internal val readonlyFiles: MutableList<SaveSessionAndFile> = mutableListOf()
+  val readonlyFiles: MutableList<SaveSessionAndFile> = mutableListOf()
 
   @Synchronized
-  internal fun addError(t: Throwable) {
+  fun addError(t: Throwable) {
     error = addSuppressed(error, t)
   }
 
   @Synchronized
-  internal fun addReadOnlyFile(info: SaveSessionAndFile) {
+  fun addReadOnlyFile(info: SaveSessionAndFile) {
     readonlyFiles.add(info)
   }
 
   @Synchronized
-  internal fun rethrow() {
-    val e = error
-    if (e != null) {
-      throw e
+  fun rethrow() {
+    error?.let {
+      throw it
     }
   }
 }
+
+internal data class SaveSessionAndFile(@JvmField val session: SaveSession, @JvmField val file: VirtualFile)
