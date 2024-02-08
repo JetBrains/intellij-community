@@ -1,6 +1,8 @@
 package bar
 
 import foo.A
+import foo.J
+import foo.JConstr
 import foo.O
 import foo.O.objectExtensionMember2
 import foo.O.objectMember2

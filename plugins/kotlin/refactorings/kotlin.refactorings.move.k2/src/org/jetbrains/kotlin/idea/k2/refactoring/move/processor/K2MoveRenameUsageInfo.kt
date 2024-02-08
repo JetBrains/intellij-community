@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.isAncestor
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.computeWithoutAddingRedundantImp
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -36,14 +38,13 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 sealed class K2MoveRenameUsageInfo(
   element: PsiElement,
   reference: PsiReference,
-  val referencedElement: KtNamedDeclaration
+  referencedElement: PsiNamedElement
 ) : MoveRenameUsageInfo(element, reference, referencedElement) {
-    /**
-     * Corrects referenced element to make it retargatable.
-     */
-    protected fun KtNamedDeclaration.correctKotlinTarget() = if (this is KtConstructor<*>) {
-        containingClass() ?: error("Constructor had no containing class.")
-    } else this
+    protected fun PsiNamedElement.correctTarget() = when {
+        this is KtConstructor<*> -> containingClass() ?: error("Constructor had no containing class")
+        this is PsiMethod && isConstructor -> containingClass ?: error("Constructor had no containing class")
+        else -> this
+    }
 
     /**
      * Internal usages are usages that are inside the moved declaration.
@@ -61,9 +62,9 @@ sealed class K2MoveRenameUsageInfo(
      */
     abstract val isInternal: Boolean
 
-    open fun refresh(referenceElement: PsiElement, referencedElement: KtNamedDeclaration): K2MoveRenameUsageInfo = this
+    open fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo = this
 
-    abstract fun retarget(to: KtNamedDeclaration): PsiElement?
+    abstract fun retarget(to: PsiNamedElement): PsiElement?
 
     class Light(
         element: PsiElement,
@@ -75,7 +76,8 @@ sealed class K2MoveRenameUsageInfo(
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         override val isInternal: Boolean = false // internal usages are always Kotlin usages
 
-        override fun retarget(to: KtNamedDeclaration): PsiElement? {
+        override fun retarget(to: PsiNamedElement): PsiElement? {
+            if (to !is KtNamedDeclaration) error("Light usages must reference a Kotlin element")
             val element = element ?: return element
             val newLightElement = to.toLightElements()[lightElementIndex]
             if (element is PsiReferenceExpression
@@ -131,21 +133,19 @@ sealed class K2MoveRenameUsageInfo(
     class Qualifiable(
       element: KtElement,
       reference: KtSimpleNameReference,
-      referencedElement: KtNamedDeclaration,
+      referencedElement: PsiNamedElement,
       override val isInternal: Boolean
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
-        override fun refresh(referenceElement: PsiElement, referencedElement: KtNamedDeclaration): K2MoveRenameUsageInfo {
+        override fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
             if (referenceElement !is KtElement) return this
             val reference = (referenceElement.mainReference as? KtSimpleNameReference) ?: return this
            return Qualifiable(referenceElement, reference, referencedElement, isInternal)
         }
 
-        override fun retarget(to: KtNamedDeclaration): PsiElement? {
-            // shortening needs to be delayed because shortening might depend on other references
-            // Lets say we for example want to replace `a.Foo` (imported) here by `b.Foo`: val x: Foo = Foo()
-            // The typer reference can't shorten without changing the reference to the constructor call.
-            return (element?.reference as? KtSimpleNameReference)
-                ?.bindToElement(to.correctKotlinTarget(), KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
+        override fun retarget(to: PsiNamedElement): PsiElement? {
+            val reference = element?.reference as? KtSimpleNameReference ?: return null
+            val target = to.correctTarget()
+            return reference.bindToElement(target, KtSimpleNameReference.ShorteningMode.NO_SHORTENING)
         }
     }
 
@@ -156,19 +156,26 @@ sealed class K2MoveRenameUsageInfo(
     class Unqualifiable(
       element: KtElement,
       reference: KtReference,
-      referencedElement: KtNamedDeclaration,
+      referencedElement: PsiNamedElement,
       override val isInternal: Boolean
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
-        override fun refresh(referenceElement: PsiElement, referencedElement: KtNamedDeclaration): K2MoveRenameUsageInfo {
+        override fun refresh(referenceElement: PsiElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
             if (referenceElement !is KtElement) return this
             val reference = referenceElement.mainReference ?: return this
             return Unqualifiable(referenceElement, reference, referencedElement, isInternal)
         }
 
-        override fun retarget(to: KtNamedDeclaration): PsiElement? {
-            val element = (element as? KtElement) ?: return element
-            val containingFile = element.containingKtFile
-            computeWithoutAddingRedundantImports(containingFile) { to.correctKotlinTarget().fqName?.let(containingFile::addImport) }
+        override fun retarget(to: PsiNamedElement): PsiElement? {
+            val fqn = when (val target = to.correctTarget()) {
+                is KtNamedDeclaration -> target.fqName?.asString()
+                is PsiQualifiedNamedElement -> target.qualifiedName
+                is PsiMember -> PsiUtil.getMemberQualifiedName(target)
+                else -> null
+            } ?: return null
+            val containingFile = (element as? KtElement)?.containingKtFile ?: return null
+            computeWithoutAddingRedundantImports(containingFile) {
+                containingFile.addImport(FqName(fqn))
+            }
             return element
         }
     }
@@ -206,7 +213,9 @@ sealed class K2MoveRenameUsageInfo(
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
                 if (refExpr.parent is KtThisExpression || refExpr.parent is KtSuperExpression) return@forEachDescendantOfType
                 if (!refExpr.isImportable()) return@forEachDescendantOfType
-                val resolved = analyze(refExpr) { refExpr.mainReference.resolveToSymbol()?.psi } as? KtNamedDeclaration ?: return@forEachDescendantOfType
+                val resolved = analyze(refExpr) {
+                    refExpr.mainReference.resolveToSymbol()?.psi
+                } as? PsiNamedElement ?: return@forEachDescendantOfType
                 val usageInfo = refExpr.mainReference.createKotlinUsageInfo(resolved, isInternal = true)
                 usages.add(usageInfo)
                 refExpr.internalUsageInfo = usageInfo
@@ -275,7 +284,7 @@ sealed class K2MoveRenameUsageInfo(
             return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
         }
 
-        private fun KtSimpleNameReference.createKotlinUsageInfo(declaration: KtNamedDeclaration, isInternal: Boolean): K2MoveRenameUsageInfo {
+        private fun KtSimpleNameReference.createKotlinUsageInfo(declaration: PsiNamedElement, isInternal: Boolean): K2MoveRenameUsageInfo {
             val refExpr = element
             return if (refExpr.isUnqualifiable()) {
                 Unqualifiable(refExpr, this, declaration, isInternal)
@@ -299,7 +308,7 @@ sealed class K2MoveRenameUsageInfo(
                 if (usageInfo?.element != null) return@mapNotNull usageInfo
                 val referencedElement = (usageInfo as? MoveRenameUsageInfo)?.referencedElement ?: return@mapNotNull null
                 val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
-                if (!newReferencedElement.isValid || newReferencedElement !is KtNamedDeclaration) return@mapNotNull null
+                if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
                 usageInfo.refresh(refExpr, newReferencedElement)
             }
         }
@@ -349,7 +358,8 @@ sealed class K2MoveRenameUsageInfo(
                 usageInfosByFile.forEach { (file, usageInfos) ->
                     // TODO instead of manually handling of qualifiable/non-qualifiable references we should invoke `bindToElement` in bulk
                     val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
-                        val newDeclaration = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
+                        val newDeclaration = (oldToNewMap[usageInfo.referencedElement] ?: usageInfo.referencedElement) as? PsiNamedElement
+                            ?: return@mapNotNull null
                         val qualifiedReference = usageInfo.retarget(newDeclaration)
                         if (usageInfo is Qualifiable && qualifiedReference != null) {
                             qualifiedReference to newDeclaration

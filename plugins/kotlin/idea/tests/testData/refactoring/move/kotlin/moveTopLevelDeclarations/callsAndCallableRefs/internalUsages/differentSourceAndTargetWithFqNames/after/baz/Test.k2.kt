@@ -1,6 +1,7 @@
 package baz
 
 import foo.A
+import foo.J
 import foo.O
 import foo.O.objectExtensionMember2
 import foo.classExtension
@@ -16,8 +17,8 @@ fun test() {
     O.objectExtension()
     A.companionMember()
     A.companionExtension()
-    foo.J().javaClassMember()
-    foo.J.javaClassStaticMember()
+    J().javaClassMember()
+    J.javaClassStaticMember()
     topLevel()
     with(O) { 1.objectExtensionMember1() }
     1.objectExtensionMember2()
@@ -34,9 +35,9 @@ fun test() {
     (A)::companionMember
     A.Companion::companionExtension
     (A)::companionExtension
-    foo.J()::javaClassMember
-    foo.J::javaClassMember
-    foo.J::javaClassStaticMember
+    J()::javaClassMember
+    J::javaClassMember
+    J::javaClassStaticMember
     //::topLevel // not usable without import
 
     with(A()) {
@@ -49,7 +50,7 @@ fun test() {
         this::classExtension
     }
 
-    with(foo.J()) {
+    with(J()) {
         javaClassMember()
         this.javaClassMember()
 

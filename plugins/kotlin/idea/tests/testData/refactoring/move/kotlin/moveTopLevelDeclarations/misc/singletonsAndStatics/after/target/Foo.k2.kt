@@ -1,5 +1,6 @@
 package target
 
+import library.JavaClass
 import library.KtClass
 import library.KtObject
 import source.Bar
