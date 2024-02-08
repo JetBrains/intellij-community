@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
@@ -33,8 +33,10 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
   private lateinit var testDisposable: Disposable
 
-  override val project: Project get() = _project
-  override val module: Module get() = project.modules.single { it.name == project.name }
+  override val project: Project
+    get() = _project
+  override val module: Module
+    get() = project.modules.single { it.name == project.name }
 
   constructor(
     projectName: String,
@@ -66,7 +68,13 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override fun tearDown() {
     runAll(
       { runBlocking { fileFixture.root.refreshAndAwait() } },
-      { runBlocking { project.closeProjectAsync() } },
+      {
+        runBlocking {
+          if (this@GradleProjectTestFixtureImpl::_project.isInitialized) {
+            _project.closeProjectAsync()
+          }
+        }
+      },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() }
