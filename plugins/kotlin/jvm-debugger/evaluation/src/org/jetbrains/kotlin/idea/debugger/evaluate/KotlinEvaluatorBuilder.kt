@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.caching.ConcurrentFactoryCache
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
@@ -588,7 +589,9 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
         var LOG_COMPILATIONS: Boolean = false
 
         private fun logCompilation(codeFragment: KtCodeFragment) {
-            if (@Suppress("TestOnlyProblems") LOG_COMPILATIONS) {
+            val needLog = @Suppress("TestOnlyProblems") LOG_COMPILATIONS &&
+                    true != codeFragment.getUserData(KotlinPlatformUtils.suppressCodeFragmentCompilationLogging)
+            if (needLog) {
                 LOG.debug("Compile bytecode for ${codeFragment.text}")
             }
         }
