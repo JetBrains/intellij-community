@@ -95,7 +95,7 @@ private class CopyDirectoryVisitor(private val sourceDir: Path,
     }
 
     val targetFile = sourceToTargetFile(sourceFile)
-    Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(sourceFile, targetFile, StandardCopyOption.COPY_ATTRIBUTES, LinkOption.NOFOLLOW_LINKS)
     return FileVisitResult.CONTINUE
   }
 }
