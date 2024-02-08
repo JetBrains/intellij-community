@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project
 
 import com.intellij.application.options.PathMacrosImpl
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
@@ -21,6 +20,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries
@@ -103,7 +103,7 @@ class IntelliJProjectConfiguration {
 
     @JvmStatic
     fun loadIntelliJProject(projectHome: String): JpsProject {
-      val m2Repo = getLocalMavenRepo().systemIndependentPath
+      val m2Repo = getLocalMavenRepo().invariantSeparatorsPathString
       val project = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo), true)
       val outPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java)).parent.parent
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = outPath.toString()

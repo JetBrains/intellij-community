@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project
 
 import com.google.gson.GsonBuilder
@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import com.intellij.util.ObjectUtils.consumeIfCast
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -27,6 +26,7 @@ import org.jetbrains.plugins.gradle.settings.TestRunner.*
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.nio.file.Files
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 
 class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
@@ -132,9 +132,9 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
 
     val activator = ExternalProjectsManagerImpl.getInstance(project).taskActivator
     val taskActivationEntry = ExternalSystemTaskActivator.TaskActivationEntry(GradleConstants.SYSTEM_ID,
-      ExternalSystemTaskActivator.Phase.AFTER_SYNC,
-      projectData.linkedExternalProjectPath,
-      "processIdeaSettings")
+                                                                              ExternalSystemTaskActivator.Phase.AFTER_SYNC,
+                                                                              projectData.linkedExternalProjectPath,
+                                                                              "processIdeaSettings")
 
     activator.removeTask(taskActivationEntry)
     if (configuration.find("requiresPostprocessing") as? Boolean != true) {
@@ -142,7 +142,7 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
     }
 
     activator.addTask(taskActivationEntry)
-    val f =  File(projectData.linkedExternalProjectPath).toPath()
+    val f = File(projectData.linkedExternalProjectPath).toPath()
     val extProjectDir = if (f.isDirectory()) {
       f
     }
@@ -150,7 +150,7 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
       f.parent
     }
 
-    val dotIdeaDirPath = project.stateStore.projectFilePath.parent.systemIndependentPath
+    val dotIdeaDirPath = project.stateStore.projectFilePath.parent.invariantSeparatorsPathString
     val projectNode = ExternalSystemApiUtil.findProjectNode(project, projectData.owner, projectData.linkedExternalProjectPath) ?: return
 
     val moduleNodes = ExternalSystemApiUtil.getChildren(projectNode, ProjectKeys.MODULE)

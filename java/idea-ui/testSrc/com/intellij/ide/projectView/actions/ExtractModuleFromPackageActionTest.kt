@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions
 
 import com.intellij.openapi.application.runReadAction
@@ -12,7 +12,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.junit.ClassRule
@@ -20,6 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.invariantSeparatorsPathString
 
 class ExtractModuleFromPackageActionTest {
   companion object {
@@ -48,11 +48,12 @@ class ExtractModuleFromPackageActionTest {
     val mainRoots = ModuleRootManager.getInstance(main)
     assertThat(mainRoots.dependencies).containsExactly(dep2)
   }
+
   @Test
   fun `extract module to separate directory`() {
     val (main, directory) = prepareProject()
 
-    val targetSourceRoot = projectModel.baseProjectDir.rootPath.resolve("xxx/src").systemIndependentPath
+    val targetSourceRoot = projectModel.baseProjectDir.rootPath.resolve("xxx/src").invariantSeparatorsPathString
     extractModule(directory, main, targetSourceRoot)
     val srcRoot = LocalFileSystem.getInstance().findFileByPath(targetSourceRoot)!!
     val xxx = projectModel.moduleManager.findModuleByName("main.xxx")!!

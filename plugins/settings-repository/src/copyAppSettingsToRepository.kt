@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
@@ -8,10 +8,10 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readBytes
 
@@ -22,11 +22,11 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
   fileToItems.keys.forEachGuaranteed { file ->
     var fileSpec: String
     try {
-      val absolutePath = file.toAbsolutePath().systemIndependentPath
+      val absolutePath = file.toAbsolutePath().invariantSeparatorsPathString
       fileSpec = normalizeFileSpec(storageManager, absolutePath)
       if (fileSpec == absolutePath) {
         // we have not experienced such problem yet, but we are just aware
-        val canonicalPath = file.toRealPath().systemIndependentPath
+        val canonicalPath = file.toRealPath().invariantSeparatorsPathString
         if (canonicalPath != absolutePath) {
           fileSpec = normalizeFileSpec(storageManager, absolutePath)
         }

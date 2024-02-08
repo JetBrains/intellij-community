@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore.schemeManager
@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -26,6 +25,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
                                                             private val oldList: SchemeCollection<T>,
@@ -309,7 +309,7 @@ internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageMa
 internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
   ioDir.createDirectories()
   val parentFile = ioDir.parent
-  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath))
+  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.invariantSeparatorsPathString))
                           ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
   return parentVirtualFile.getOrCreateChild(ioDir.fileName.toString(), requestor)
 }

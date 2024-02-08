@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots
 
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -15,11 +15,11 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.invariantSeparatorsPathString
 
 class JavaModuleExtensionsTest {
   companion object {
@@ -76,15 +76,19 @@ class JavaModuleExtensionsTest {
   fun `change module output`() {
     val module = projectModel.createModule("foo")
     val outputRoot = projectModel.baseProjectDir.rootPath.resolve("out")
-    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = VfsUtilCore.pathToUrl(outputRoot.systemIndependentPath)
-    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(outputRoot.resolve("production/foo").systemIndependentPath))
-    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrlForTests).isEqualTo(VfsUtilCore.pathToUrl(outputRoot.resolve("test/foo").systemIndependentPath))
+    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = VfsUtilCore.pathToUrl(
+      outputRoot.invariantSeparatorsPathString)
+    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(
+      outputRoot.resolve("production/foo").invariantSeparatorsPathString))
+    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrlForTests).isEqualTo(VfsUtilCore.pathToUrl(
+      outputRoot.resolve("test/foo").invariantSeparatorsPathString))
 
-    val customOutputUrl = VfsUtilCore.pathToUrl(outputRoot.resolve("custom").systemIndependentPath)
+    val customOutputUrl = VfsUtilCore.pathToUrl(outputRoot.resolve("custom").invariantSeparatorsPathString)
     ModuleRootModificationUtil.updateModel(module) {
       it.getModuleExtension(CompilerModuleExtension::class.java).setCompilerOutputPath(customOutputUrl)
     }
-    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrlForTests).isEqualTo(VfsUtilCore.pathToUrl(outputRoot.resolve("test/foo").systemIndependentPath))
+    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrlForTests).isEqualTo(VfsUtilCore.pathToUrl(
+      outputRoot.resolve("test/foo").invariantSeparatorsPathString))
 
     ModuleRootModificationUtil.updateModel(module) {
       it.getModuleExtension(CompilerModuleExtension::class.java).inheritCompilerOutputPath(false)
@@ -96,13 +100,16 @@ class JavaModuleExtensionsTest {
   fun `change project output`() {
     val module = projectModel.createModule("foo")
     val outputRoot = projectModel.baseProjectDir.rootPath.resolve("out")
-    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = VfsUtilCore.pathToUrl(outputRoot.systemIndependentPath)
-    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(outputRoot.resolve("production/foo").systemIndependentPath))
+    CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = VfsUtilCore.pathToUrl(
+      outputRoot.invariantSeparatorsPathString)
+    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(
+      outputRoot.resolve("production/foo").invariantSeparatorsPathString))
 
     val newOutputRoot = projectModel.baseProjectDir.rootPath.resolve("out")
-    val newOutputUrl = VfsUtilCore.pathToUrl(newOutputRoot.systemIndependentPath)
+    val newOutputUrl = VfsUtilCore.pathToUrl(newOutputRoot.invariantSeparatorsPathString)
     CompilerProjectExtension.getInstance(projectModel.project)!!.compilerOutputUrl = newOutputUrl
-    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(newOutputRoot.resolve("production/foo").systemIndependentPath))
+    assertThat(CompilerModuleExtension.getInstance(module)!!.compilerOutputUrl).isEqualTo(VfsUtilCore.pathToUrl(
+      newOutputRoot.resolve("production/foo").invariantSeparatorsPathString))
   }
 
   private class MyLanguageLevelListener : LanguageLevelProjectExtension.LanguageLevelChangeListener {

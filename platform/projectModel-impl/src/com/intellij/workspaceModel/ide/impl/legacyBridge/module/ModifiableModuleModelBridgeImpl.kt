@@ -23,7 +23,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -33,6 +32,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import io.opentelemetry.api.metrics.Meter
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG: Logger
   get() = logger<ModifiableModuleModelBridgeImpl>()
@@ -144,7 +144,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return null
   }
 
-  override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
+  override fun loadModule(file: Path) = loadModule(file.invariantSeparatorsPathString)
 
   override fun loadModule(filePath: String): Module = loadModuleTimeMs.addMeasuredTime {
     val moduleName = ModulePath.getModuleNameByFilePath(filePath)

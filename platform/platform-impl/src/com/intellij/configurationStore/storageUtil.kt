@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.configurationStore
@@ -24,12 +24,12 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 @NonNls const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
@@ -134,13 +134,13 @@ private fun collect(componentManager: ComponentManager,
 
 @ApiStatus.Internal
 fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)
+  var virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.invariantSeparatorsPathString)
   if (virtualFile == null) {
     val parentFile = file.parent
     parentFile.createDirectories()
 
     // need refresh if the directory has just been created
-    val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.systemIndependentPath)
+    val parentVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(parentFile.invariantSeparatorsPathString)
                             ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
 
     virtualFile = runAsWriteActionIfNeeded {

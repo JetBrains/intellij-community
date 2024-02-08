@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -32,7 +32,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.jupiter.api.extension.*
 import org.junit.rules.ExternalResource
@@ -40,6 +39,7 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 open class ProjectModelRule : TestRule {
   val baseProjectDir: TempDirectory = TempDirectory()
@@ -89,7 +89,7 @@ open class ProjectModelRule : TestRule {
   fun addSourceRoot(module: Module, relativePath: String, rootType: JpsModuleSourceRootType<*>): VirtualFile {
     val srcRoot = baseProjectDir.newVirtualDirectory("${module.name}/$relativePath")
     ModuleRootModificationUtil.updateModel(module) { model ->
-      val contentRootUrl = VfsUtil.pathToUrl(projectRootDir.resolve(module.name).systemIndependentPath)
+      val contentRootUrl = VfsUtil.pathToUrl(projectRootDir.resolve(module.name).invariantSeparatorsPathString)
       val contentEntry = model.contentEntries.find { it.url == contentRootUrl } ?: model.addContentEntry(contentRootUrl)
       require(contentEntry.sourceFolders.none { it.url == srcRoot.url }) { "Source folder $srcRoot already exists" }
       contentEntry.addSourceFolder(srcRoot, rootType)

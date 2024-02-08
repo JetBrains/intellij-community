@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vsmac.parsers
 
 import com.intellij.ide.RecentProjectMetaInfo
@@ -6,11 +6,11 @@ import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 
 private val logger = logger<RecentProjectsParser>()
@@ -54,7 +54,7 @@ class RecentProjectsParser(private val settings: Settings) {
           }
         }
 
-        settings.recentProjects.add(RecentPathInfo(path.systemIndependentPath, rpmi))
+        settings.recentProjects.add(RecentPathInfo(path.invariantSeparatorsPathString, rpmi))
       }
       catch (t: Throwable) {
         logger.warn(t)

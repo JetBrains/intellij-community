@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots
 
 import com.intellij.openapi.module.Module
@@ -11,13 +11,13 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.zipFile
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Checks that proper [com.intellij.openapi.roots.ModuleRootListener.rootsChanged] are sent for changes in library roots. 
@@ -94,7 +94,7 @@ class LibraryRootsChangedTest {
 
   private fun createLibraryDirectory(relativePath: String) {
     val path = projectModel.baseProjectDir.rootPath.resolve(relativePath)
-    val url = VfsUtil.pathToUrl(path.systemIndependentPath)
+    val url = VfsUtil.pathToUrl(path.invariantSeparatorsPathString)
     projectModel.addModuleLevelLibrary(module, "lib") {
       it.addRoot(url, OrderRootType.CLASSES)
     }

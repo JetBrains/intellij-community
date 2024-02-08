@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PathKt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,13 +37,13 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   public void addClasspathParameter(List<String> classpathInHost, List<String> classpathInTarget) {
     StringBuilder builder = new StringBuilder();
     for (String file : classpathInHost) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append(File.pathSeparator);
       }
       builder.append(FileUtil.toCanonicalPath(file));
     }
     for (String s : classpathInTarget) {
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         builder.append(File.pathSeparator);
       }
       builder.append(getHostWorkingDirectory().resolve(s));
@@ -53,7 +53,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public @NotNull String getWorkingDirectory() {
-    return PathKt.getSystemIndependentPath(getHostWorkingDirectory());
+    return FileUtilRt.toSystemIndependentName(getHostWorkingDirectory().toString());
   }
 
   @Override

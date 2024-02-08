@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
@@ -25,7 +25,6 @@ import com.intellij.testFramework.SystemPropertyRule
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.WaitFor
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
@@ -34,6 +33,7 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlin.io.path.invariantSeparatorsPathString
 
 @RunsInEdt
 class SdkLookupTest : BareTestFixtureTestCase() {
@@ -146,8 +146,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
-    val eternalTask = object: SdkDownloadTask {
-      val home = tempDir.newDirectoryPath("planned-home").systemIndependentPath
+    val eternalTask = object : SdkDownloadTask {
+      val home = tempDir.newDirectoryPath("planned-home").invariantSeparatorsPathString
       override fun getPlannedHomeDir() = home
       override fun getSuggestedSdkName() = "suggested name"
       override fun getPlannedVersion() = "planned version"
@@ -204,7 +204,7 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
     val eternalTask = object : SdkDownloadTask {
-      val home = tempDir.newDirectoryPath("planned-home").systemIndependentPath
+      val home = tempDir.newDirectoryPath("planned-home").invariantSeparatorsPathString
       override fun getPlannedHomeDir() = home
       override fun getSuggestedSdkName() = "suggested name"
       override fun getPlannedVersion() = "planned version"
@@ -264,8 +264,8 @@ class SdkLookupTest : BareTestFixtureTestCase() {
     val taskLatch = CountDownLatch(1)
     val downloadStarted = CountDownLatch(1)
     Disposer.register(testRootDisposable, Disposable { taskLatch.countDown() })
-    val eternalTask = object: SdkDownloadTask {
-      val home = tempDir.newDirectoryPath("planned-home").systemIndependentPath
+    val eternalTask = object : SdkDownloadTask {
+      val home = tempDir.newDirectoryPath("planned-home").invariantSeparatorsPathString
       override fun getPlannedHomeDir() = home
       override fun getSuggestedSdkName() = "suggested name"
       override fun getPlannedVersion() = "planned version"

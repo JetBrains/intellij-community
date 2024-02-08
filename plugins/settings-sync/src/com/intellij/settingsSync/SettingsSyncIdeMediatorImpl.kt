@@ -12,10 +12,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.util.io.inputStreamIfExists
-import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.io.write
 import com.intellij.ui.NewUiValue
+import com.intellij.util.io.inputStreamIfExists
+import com.intellij.util.io.write
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -201,7 +200,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
         if (!file.isRegularFile()) return FileVisitResult.CONTINUE
 
         val shouldProceed = file.inputStream().use { inputStream ->
-          val fileSpec = rootConfig.relativize(file).systemIndependentPath
+          val fileSpec = rootConfig.relativize(file).invariantSeparatorsPathString
           read(fileSpec) {
             processor(file.fileName.toString(), inputStream, false)
           }

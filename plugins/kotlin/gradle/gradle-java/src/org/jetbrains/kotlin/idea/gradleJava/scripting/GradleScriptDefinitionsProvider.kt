@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.io.systemIndependentPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.core.script.*
@@ -79,7 +78,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
         }
 
         fun getDefinitionsTemplateClasspath(gradleHome: String?): List<String> = try {
-            getFullDefinitionsClasspath(gradleHome).first.map(Path::systemIndependentPath)
+            getFullDefinitionsClasspath(gradleHome).first.map { it.invariantSeparatorsPathString }
         } catch (e: Throwable) {
             scriptingInfoLog("cannot get gradle classpath for Gradle Kotlin DSL scripts: ${e.message}")
 

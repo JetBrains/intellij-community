@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.SmartList
-import com.intellij.util.io.systemIndependentPath
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class SchemeFileTracker<T : Scheme, M : T>(
   private val schemeManager: SchemeManagerImpl<T, M>,
@@ -76,7 +76,7 @@ internal class SchemeFileTracker<T : Scheme, M : T>(
   private fun isMyDirectory(parent: VirtualFile): Boolean {
     val virtualDirectory = schemeManager.cachedVirtualDirectory
     return when (virtualDirectory) {
-      null -> schemeManager.ioDirectory.systemIndependentPath == parent.path
+      null -> schemeManager.ioDirectory.invariantSeparatorsPathString == parent.path
       else -> virtualDirectory == parent
     }
   }

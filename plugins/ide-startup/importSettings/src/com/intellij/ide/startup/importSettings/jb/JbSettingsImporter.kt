@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -20,12 +20,14 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.registry.*
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.copy
-import com.intellij.util.io.systemIndependentPath
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -33,7 +35,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.collections.ArrayList
 import kotlin.io.path.*
 
 class JbSettingsImporter(private val configDirPath: Path,
@@ -470,7 +471,7 @@ class JbSettingsImporter(private val configDirPath: Path,
           if (!file.isRegularFile()) return FileVisitResult.CONTINUE
 
           val shouldProceed = file.inputStream().use { inputStream ->
-            val fileSpec = configDirPath.relativize(file).systemIndependentPath
+            val fileSpec = configDirPath.relativize(file).invariantSeparatorsPathString
             read(fileSpec) {
               processor(file.fileName.toString(), inputStream, false)
             }

@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
@@ -37,6 +36,7 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 class SetupJDKStep(private val project: Project) : SetupSdkStep() {
   override val name: String = "Set up JDK step"
@@ -147,8 +147,9 @@ private fun forceUseProjectJdkForImporter(project: Project) {
     }
     JvmBuildSystem.JpsIntellij -> {
       val projectHome = project.guessProjectDir()!!.path
-      val m2Repo = Paths.get(SystemProperties.getUserHome(), ".m2/repository").systemIndependentPath
-      val jpsProject = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo), true)
+      val m2Repo = Paths.get(SystemProperties.getUserHome(), ".m2/repository").invariantSeparatorsPathString
+      val jpsProject = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo),
+                                                                         true)
       val outPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java)).parent.parent
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(jpsProject).outputUrl = outPath.toString()
     }

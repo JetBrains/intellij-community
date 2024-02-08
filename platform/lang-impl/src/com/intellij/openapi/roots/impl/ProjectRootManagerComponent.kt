@@ -41,7 +41,6 @@ import com.intellij.project.stateStore
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
 import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
@@ -53,6 +52,7 @@ import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<ProjectRootManagerComponent>()
 private val LOG_CACHES_UPDATE by lazy(LazyThreadSafetyMode.NONE) {
@@ -266,8 +266,8 @@ open class ProjectRootManagerComponent(project: Project,
     val store = project.stateStore
     val projectFilePath = store.projectFilePath
     if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
-      flatPaths += projectFilePath.systemIndependentPath
-      flatPaths += store.workspacePath.systemIndependentPath
+      flatPaths += projectFilePath.invariantSeparatorsPathString
+      flatPaths += store.workspacePath.invariantSeparatorsPathString
       WATCH_ROOTS_LOG.trace { "  project store: ${flatPaths}" }
     }
 

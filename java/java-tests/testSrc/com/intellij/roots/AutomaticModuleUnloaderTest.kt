@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots
 
 import com.intellij.openapi.application.ApplicationManager
@@ -15,11 +15,13 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.TestProjectManager
-import com.intellij.testFramework.*
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.DisposableRule
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
+import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -33,6 +35,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 @RunWith(Parameterized::class)
 class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
@@ -233,7 +236,7 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
     val moduleRootComponent = JDomSerializationUtil.findComponent(rootElement, JpsProjectLoader.MODULE_MANAGER_COMPONENT)
     val modulesTag = moduleRootComponent!!.getChild("modules")!!
     moduleFiles.forEach {
-      val filePath = it.systemIndependentPath
+      val filePath = it.invariantSeparatorsPathString
       val fileUrl = VfsUtil.pathToUrl(filePath)
       modulesTag.addContent(Element("module").setAttribute("fileurl", fileUrl).setAttribute("filepath", filePath))
     }

@@ -37,7 +37,6 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.createParentDirectories
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -60,6 +59,7 @@ import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -271,7 +271,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   protected open fun getRecentProjectMetadata(path: String, project: Project): String? = null
 
   open fun getProjectPath(projectStoreBaseDir: Path): String? {
-    return projectStoreBaseDir.systemIndependentPath
+    return projectStoreBaseDir.invariantSeparatorsPathString
   }
 
   open fun getProjectPath(project: Project): String? {
@@ -688,7 +688,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
     var file: Path? = Path.of(projectPath)
     while (file != null) {
-      val projectMetaInfo = state.additionalInfo.remove(file.systemIndependentPath)
+      val projectMetaInfo = state.additionalInfo.remove(file.invariantSeparatorsPathString)
       if (projectMetaInfo != null) {
         modCounter.increment()
         fireChangeEvent()

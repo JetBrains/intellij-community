@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse
 
 import com.intellij.openapi.application.ApplicationManager
@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
 
 internal val eclipseTestDataRoot: Path
@@ -77,7 +78,7 @@ internal fun loadEditSaveAndCheck(testDataDirs: List<Path>,
   }
   val projectDir = tempDirectory.newDirectory("project").toPath()
   originalProjectDir.toFile().walk().filter { it.name == ".classpath" }.forEach {
-    val text = it.readText().replace("\$ROOT\$", projectDir.systemIndependentPath)
+    val text = it.readText().replace("\$ROOT\$", projectDir.invariantSeparatorsPathString)
     it.writeText(if (SystemInfo.isWindows) text else text.replace("${EclipseXml.FILE_PROTOCOL}/", EclipseXml.FILE_PROTOCOL))
   }
   val modulesXml = originalProjectDir.resolve(".idea/modules.xml")

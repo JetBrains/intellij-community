@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -23,7 +23,6 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.systemIndependentPath
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -34,6 +33,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
 
 const val ESCAPED_MODULE_DIR = "\$MODULE_DIR$"
@@ -92,7 +92,7 @@ class ModuleStoreTest {
       // we must not use VFS here, file must not be created
       val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
       projectRule.createModule(moduleFile).useAndDispose {
-        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.systemIndependentPath)
+        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parent.invariantSeparatorsPathString)
         project.stateStore.save()
         assertThat(moduleFile).isRegularFile
         assertThat(Strings.convertLineSeparators(moduleFile.readText())).startsWith("""
@@ -121,7 +121,7 @@ class ModuleStoreTest {
         }
       })
 
-      ModuleRootModificationUtil.addContentRoot(module, root.resolve(moduleName).systemIndependentPath)
+      ModuleRootModificationUtil.addContentRoot(module, root.resolve(moduleName).invariantSeparatorsPathString)
       assertThat(module.contentRootUrls).hasSize(1)
     }
 

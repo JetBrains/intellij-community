@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleExecutionUtil")
 
 package org.jetbrains.plugins.gradle.service.execution
@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.systemIndependentPath
 import org.gradle.tooling.GradleConnector
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -28,6 +27,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 fun ensureInstalledWrapper(project: Project, externalProjectPath: Path, gradleVersion: GradleVersion, callback: Runnable) {
   val ensureInstalledWrapperTask = EnsureInstalledWrapperExecutionTask(project, externalProjectPath, gradleVersion)
@@ -47,7 +47,7 @@ private class EnsureInstalledWrapperExecutionTask(
   project: Project,
   externalProjectPath: Path,
   private val gradleVersion: GradleVersion
-) : AbstractExternalSystemTask(SYSTEM_ID, EXECUTE_TASK, project, externalProjectPath.systemIndependentPath) {
+) : AbstractExternalSystemTask(SYSTEM_ID, EXECUTE_TASK, project, externalProjectPath.invariantSeparatorsPathString) {
   private val progressNotificationManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl()
   private val newCancellationTokenSource = GradleConnector.newCancellationTokenSource()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.application.options.CodeStyle
@@ -28,7 +28,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
@@ -40,6 +39,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 
 class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
@@ -131,7 +131,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
       if (relativePaths.isNotEmpty()) {
         modulesToCheck.getOrPut(moduleEntity to sourceRoot) { mutableSetOf() }
-          .addAll(relativePaths.onlySubpaths().map { it.systemIndependentPath })
+          .addAll(relativePaths.onlySubpaths().map { it.invariantSeparatorsPathString })
       }
     }
 
@@ -225,7 +225,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     isTestModule: Boolean
   ): Boolean {
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
-    myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
+    myFixture.copyDirectoryToProject(relativize.invariantSeparatorsPathString, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
     setupCustomIndent(moduleEntity)
 
@@ -280,7 +280,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   ): Boolean {
     val genSourceRoots = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.filter { it.generated }
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
-    myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
+    myFixture.copyDirectoryToProject(relativize.invariantSeparatorsPathString, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
     setupCustomIndent(moduleEntity)
 

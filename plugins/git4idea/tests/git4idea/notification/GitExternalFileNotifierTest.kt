@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.notification
 
 import com.intellij.openapi.util.registry.Registry
@@ -6,13 +6,13 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.systemIndependentPath
 import git4idea.GitVcs
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitBranchWorkerTest
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
 import java.io.File
+import kotlin.io.path.invariantSeparatorsPathString
 
 class GitExternalFileNotifierTest : GitSingleRepoTest() {
 
@@ -20,7 +20,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
     super.setUpProject()
     //ensure project root created by VFS (isFromRefresh == false) and not via external process like Git,
     //otherwise all unversioned files under such project root will be considered like external.
-    VfsUtil.createDirectories(projectNioRoot.systemIndependentPath)
+    VfsUtil.createDirectories(projectNioRoot.invariantSeparatorsPathString)
   }
 
   override fun setUp() {

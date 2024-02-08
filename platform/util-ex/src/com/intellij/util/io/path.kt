@@ -2,7 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
-import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -82,7 +82,7 @@ fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
   return true
 }
 
-@get:Obsolete
+@get:ApiStatus.Obsolete
 val Path.systemIndependentPath: String
   get() = invariantSeparatorsPathString
 
@@ -97,9 +97,16 @@ fun Path.readChars(): CharSequence {
 }
 
 @Throws(IOException::class)
-@JvmOverloads
-fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
-  outputStream().use { it.write(data, offset, size) }
+fun Path.write(data: ByteArray, offset: Int, size: Int): Path {
+  parent?.createDirectories()
+  Files.newOutputStream(this).use { it.write(data, offset, size) }
+  return this
+}
+
+@Throws(IOException::class)
+fun Path.write(data: ByteArray): Path {
+  parent?.createDirectories()
+  Files.write(this, data)
   return this
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
@@ -13,8 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.ui.UIUtil.*
+import com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
 import org.junit.Test
@@ -23,10 +22,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlin.io.path.invariantSeparatorsPathString
 
 class SdkDownloaderTest : LightPlatformTestCase() {
-  private val successDownloadTask = object: SdkDownloadTask {
-    val home = createTempDir("planned-home").toPath().systemIndependentPath
+  private val successDownloadTask = object : SdkDownloadTask {
+    val home = createTempDir("planned-home").toPath().invariantSeparatorsPathString
     override fun getPlannedHomeDir() = home
     override fun getSuggestedSdkName() = "suggested name"
     override fun getPlannedVersion() = "planned version"
