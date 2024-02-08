@@ -48,16 +48,6 @@ final class FacetModificationTrackingServiceImpl extends FacetModificationTracki
     pair.second.getMulticaster().modificationCountChanged(facet);
   }
 
-  @Override
-  public <T extends Facet<?>> void addModificationTrackerListener(final T facet, final ModificationTrackerListener<? super T> listener, final Disposable parent) {
-    getFacetInfo(facet).second.addListener(listener, parent);
-  }
-
-  @Override
-  public void removeModificationTrackerListener(final Facet<?> facet, final ModificationTrackerListener<?> listener) {
-    getFacetInfo(facet).second.removeListener(listener);
-  }
-
   private final class FacetModificationTrackingListener implements FacetManagerListener {
     private final Module module;
 
