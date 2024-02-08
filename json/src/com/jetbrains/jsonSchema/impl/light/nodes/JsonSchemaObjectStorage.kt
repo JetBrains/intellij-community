@@ -38,7 +38,6 @@ internal class JsonSchemaObjectStorage {
   fun getOrComputeSchemaRootObject(schemaFile: VirtualFile): JsonSchemaObject? {
     if (isNotLoadedHttpFile(schemaFile)) return null
 
-    println("SIZE: ${parsedSchemaById.size}")
     return parsedSchemaById[schemaFile.asSchemaId()]
       .takeIf { it !is MissingJsonSchemaObject }
   }
