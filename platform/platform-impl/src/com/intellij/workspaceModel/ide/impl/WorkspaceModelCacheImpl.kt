@@ -15,11 +15,12 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.isConsistent
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
@@ -102,6 +103,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     doCacheSaving()
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   private fun doCacheSaving(): Unit = saveWorkspaceModelCachesTimeMs.addMeasuredTime {
     val workspaceModel = WorkspaceModel.getInstance(project)
     val storage = workspaceModel.currentSnapshot
@@ -118,8 +120,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
       val (timeMs, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
       WorkspaceModelFusLogger.logCacheSave(timeMs + assertConsistencyDuration.inWholeMilliseconds, size ?: -1)
-      //todo check that where are no entities in the storage instead
-      if (unloadedStorage != ImmutableEntityStorage.empty()) {
+      if (!(unloadedStorage as EntityStorageInstrumentation).isEmpty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
         unloadedStorage.assertConsistency()
         cacheSerializer.saveCacheToFile(unloadedStorage, unloadedEntitiesCacheFile, userPreProcessor = true)

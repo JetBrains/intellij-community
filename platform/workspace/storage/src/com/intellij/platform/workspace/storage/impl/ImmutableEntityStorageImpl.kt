@@ -920,6 +920,8 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return entitiesByType[entityClass.toClassId()]?.size() ?: 0
   }
 
+  override fun isEmpty(): Boolean = entitiesByType.size() == 0
+
   internal fun entityDataById(id: EntityId): WorkspaceEntityData<out WorkspaceEntity>? = entitiesByType[id.clazz]?.get(id.arrayId)
 
   internal fun entityDataByIdOrDie(id: EntityId): WorkspaceEntityData<out WorkspaceEntity> {

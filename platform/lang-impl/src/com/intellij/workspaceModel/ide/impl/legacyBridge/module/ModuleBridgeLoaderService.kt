@@ -11,6 +11,8 @@ import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListe
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.component1
+import com.intellij.openapi.util.component2
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -129,7 +131,8 @@ private suspend fun loadModules(project: Project,
   span("modules instantiation") {
     val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
     if (targetBuilder != null && targetUnloadedEntitiesBuilder != null) {
-      moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder)
+      val (modulesToLoad, modulesToUnload) = moduleManager.calculateUnloadModules(targetBuilder, targetUnloadedEntitiesBuilder)
+      moduleManager.updateUnloadedStorage(modulesToLoad, modulesToUnload)
     }
     val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
     val unloadedEntities = (targetUnloadedEntitiesBuilder ?: WorkspaceModel.getInstance(project).internal.currentSnapshotOfUnloadedEntities)

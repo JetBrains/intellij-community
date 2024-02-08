@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Pair
 import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -30,28 +31,30 @@ import kotlinx.coroutines.launch
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {
+  override fun calculateNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
+    val defaultResult = Pair(emptyList<String>(), emptyList<String>())
+
     if (currentModules.isEmpty()) {
-      return
+      return defaultResult
     }
 
     val oldLoaded = state.modules.toHashSet()
     // if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine,
     // so let's not unload all modules
     if (oldLoaded.isEmpty()) {
-      return
+      return defaultResult
     }
 
     val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
     val unloadedModulesHolder = unloadedStorage.unloadedModuleNameHolder
     // if no modules were unloaded by user, automatic unloading shouldn't start
     if (!unloadedModulesHolder.hasUnloaded()) {
-      return
+      return defaultResult
     }
 
     //no new modules were added, nothing to process
     if (currentModules.all { it in oldLoaded || unloadedModulesHolder.isUnloaded(it) }) {
-      return
+      return defaultResult
     }
 
     val oldLoadedWithDependencies = HashSet<String>()
@@ -66,8 +69,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
       LOG.info("Old unloaded modules: $unloadedModulesHolder")
       LOG.info("New modules to unload: $toUnload")
     }
-    fireNotifications(toLoad, toUnload)
-    unloadedStorage.addUnloadedModuleNames(toUnload)
+
     if (toUnload.isNotEmpty()) {
       val toUnloadSet = toUnload.toSet()
       /* we need to create a snapshot because adding entities from one builder to another will result
@@ -85,6 +87,14 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
         builder.removeEntity(moduleEntity)
       }
     }
+    return Pair(toLoad, toUnload)
+  }
+
+  override fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {
+    fireNotifications(modulesToLoad, modulesToUnload)
+
+    val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
+    unloadedStorage.addUnloadedModuleNames(modulesToUnload)
   }
 
   private fun processTransitiveDependencies(moduleId: ModuleId, storage: EntityStorage, unloadedEntitiesStorage: EntityStorage,

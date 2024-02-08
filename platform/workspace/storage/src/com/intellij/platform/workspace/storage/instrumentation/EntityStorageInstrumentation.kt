@@ -35,6 +35,12 @@ public interface EntityStorageInstrumentation : EntityStorage {
    */
   @ApiStatus.Internal
   public fun <E : WorkspaceEntity> entityCount(entityClass: Class<E>): Int
+
+  /**
+   * Returns `true` if the storage doesn't have entities
+   */
+  @ApiStatus.Internal
+  public fun isEmpty(): Boolean
 }
 
 @EntityStorageInstrumentationApi

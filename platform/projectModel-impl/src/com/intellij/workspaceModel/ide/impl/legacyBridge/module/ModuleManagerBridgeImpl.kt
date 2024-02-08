@@ -25,6 +25,7 @@ import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Pair
 import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -195,11 +196,15 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     }
   }
 
-  override fun unloadNewlyAddedModulesIfPossible(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {
+  override fun calculateUnloadModules(builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
     val currentModuleNames = HashSet<String>()
     builder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
     unloadedEntityBuilder.entities(ModuleEntity::class.java).mapTo(currentModuleNames) { it.name }
-    AutomaticModuleUnloader.getInstance(project).processNewModules(currentModuleNames, builder, unloadedEntityBuilder)
+    return AutomaticModuleUnloader.getInstance(project).calculateNewModules(currentModuleNames, builder, unloadedEntityBuilder)
+  }
+
+  override fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {
+    AutomaticModuleUnloader.getInstance(project).updateUnloadedStorage(modulesToLoad, modulesToUnload)
   }
 
   override fun getModifiableModel(): ModifiableModuleModel {

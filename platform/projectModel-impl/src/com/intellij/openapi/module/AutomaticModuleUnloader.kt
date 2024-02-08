@@ -5,11 +5,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.util.Pair
+
 
 @ApiStatus.Internal
 interface AutomaticModuleUnloader {
-  fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage)
+  fun calculateNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>>
 
+  fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>)
   /**
    * The list of modules should be empty if all modules are loaded.
    */
@@ -21,7 +24,11 @@ interface AutomaticModuleUnloader {
 }
 
 internal class DummyAutomaticModuleUnloader : AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage) {}
+  override fun calculateNewModules(currentModules: Set<String>, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage): Pair<List<String>, List<String>> {
+    return Pair(emptyList(), emptyList())
+  }
+
+  override fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {}
 
   override fun setLoadedModules(modules: Collection<String>) {}
 }
