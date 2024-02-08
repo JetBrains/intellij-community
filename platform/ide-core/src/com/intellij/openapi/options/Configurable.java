@@ -226,12 +226,12 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   /**
-   * The interface is used to retrieve the parent configurable and enable `Reset` action if the parent is modified,
+   * The interface is used to retrieve the parent configurables and enable `Reset` action if any of the parents is modified,
    * even if the inner configurable wasn't modified.
    */
   @ApiStatus.Experimental
   interface InnerWithModifiableParent {
-    @NotNull Configurable getModifiableParent();
+    @NotNull java.util.List<Configurable> getModifiableParents();
   }
 
   /**

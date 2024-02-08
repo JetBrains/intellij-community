@@ -1546,8 +1546,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     @Override
-    public Configurable getModifiableParent() {
-      return ColorAndFontOptions.this;
+    public @NotNull List<Configurable> getModifiableParents() {
+      return List.of(ColorAndFontOptions.this);
     }
   }
 

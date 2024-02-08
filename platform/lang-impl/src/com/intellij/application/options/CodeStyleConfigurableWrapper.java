@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -167,8 +168,8 @@ public class CodeStyleConfigurableWrapper
   }
 
   @Override
-  public @NotNull Configurable getModifiableParent() {
-    return myOwner;
+  public @NotNull List<Configurable> getModifiableParents() {
+    return List.of(myOwner);
   }
 
   @NotNull

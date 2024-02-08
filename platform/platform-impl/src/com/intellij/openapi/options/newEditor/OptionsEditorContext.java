@@ -118,13 +118,14 @@ public final class OptionsEditorContext {
     if (myModified.contains(configurable)) return true;
 
     if (configurable instanceof Configurable.InnerWithModifiableParent inner) {
-      Configurable parent = inner.getModifiableParent();
-      if (myModified.contains(parent)) return true;
+      for (Configurable parent: inner.getModifiableParents()) {
+        if (myModified.contains(parent)) return true;
 
-      for (Configurable modified: myModified) {
-        if (modified instanceof ConfigurableWrapper wrapper) {
-          UnnamedConfigurable unwrapped = wrapper.getRawConfigurable();
-          if (unwrapped != null && unwrapped.equals(parent)) return true;
+        for (Configurable modified: myModified) {
+          if (modified instanceof ConfigurableWrapper wrapper) {
+            UnnamedConfigurable unwrapped = wrapper.getRawConfigurable();
+            if (unwrapped != null && unwrapped.equals(parent)) return true;
+          }
         }
       }
     }
