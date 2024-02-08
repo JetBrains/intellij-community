@@ -24,6 +24,7 @@ import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -31,10 +32,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBScalableIcon;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -46,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -240,8 +239,15 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     return new XDebuggerGroupedFrameListRenderer();
   }
 
+  Color getFrameBgColor(XStackFrame stackFrame) {
+    if (stackFrame instanceof ItemWithCustomBackgroundColor) {
+      return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
+    }
+    return myFileColorsCache.get(getFile(stackFrame));
+  }
+
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
-    private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer();
+    private XDebuggerFrameListRenderer myOriginalRenderer;
 
     XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
@@ -266,30 +272,54 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     }
 
     @Override
+    protected Border getDefaultItemComponentBorder() {
+      return null;
+    }
+
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (myDescriptor.hasSeparatorAboveOf(value)) {
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (hasSeparator(value, index)) {
-          setSeparatorFont(list.getFont());
-        }
-        var itemComponent = (XDebuggerFrameListRenderer)getItemComponent();
-        itemComponent.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        itemComponent.setOpaque(true); // For colored background, see IDEA-343961.
-        return component;
+      setSeparatorFont(list.getFont());
+      myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      var itemComponent = getItemComponent();
+      if (itemComponent instanceof SelectablePanel selectablePanel) {
+        Color stackFrameColor = value instanceof XStackFrame stackFrame ? getFrameBgColor(stackFrame) : null;
+        selectablePanel.setOpaque(true);
+        selectablePanel.setBackground(stackFrameColor);
+        selectablePanel.setSelectionColor(myOriginalRenderer.background);
+      } else {
+        myOriginalRenderer.setBackground(myOriginalRenderer.background);
       }
-      else {
-        return myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
+
+      return result;
     }
 
     @Override
     protected JComponent createItemComponent() {
       createLabel();
-      return new XDebuggerFrameListRenderer();
+      myOriginalRenderer = new XDebuggerFrameListRenderer();
+      return layoutComponent(myOriginalRenderer);
     }
   }
 
   private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
+
+    Color background;
+
+    private XDebuggerFrameListRenderer() {
+      if (ExperimentalUI.isNewUI()) {
+        getIpad().left = 0;
+        getIpad().right = 0;
+      }
+    }
+
+    @Override
+    // Avoid usage of cached icons in paintSelectionAwareIcon, because the icon can change background
+    protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
+      Rectangle area = computePaintArea();
+      icon.paintIcon(this, g, offset, area.y + (area.height - icon.getIconHeight()) / 2);
+    }
+
     private final XDebuggerPopFrameIcon myPopFrameIcon = JBUIScale.scaleIcon(
       new XDebuggerPopFrameIcon(AllIcons.Actions.InlineDropFrame, AllIcons.Actions.InlineDropFrameSelected, 16, 16)
     );
@@ -300,6 +330,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
                                          final int index,
                                          final boolean selected,
                                          final boolean hasFocus) {
+      background = null;
       if (value == null) {
         append(XDebuggerBundle.message("stack.frame.loading.text"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         return;
@@ -320,14 +351,14 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       if (!selected) {
         Color c = getFrameBgColor(stackFrame);
         if (index <= hoveredIndex && canDropSomething && iconHovered) {
-          setBackground(RenderingUtil.getHoverBackground(list));
+          background = RenderingUtil.getHoverBackground(list);
         }
         else if (c != null) {
-          setBackground(c);
+          background = c;
         }
       }
       else {
-        setBackground(UIUtil.getListSelectionBackground(hasFocus));
+        background = UIUtil.getListSelectionBackground(hasFocus);
         setForeground(NamedColorUtil.getListSelectionForeground(hasFocus));
         mySelectionForeground = getForeground();
       }
@@ -382,16 +413,11 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       if (p == null || bounds == null) {
         return false;
       }
-      var leftPadding = this.getIpad().left;
+      var leftPadding = ExperimentalUI.isNewUI() ?
+                        JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left
+                                                 : this.getIpad().left;
       var iconWidth = myPopFrameIcon.getIconWidth();
       return new Rectangle(leftPadding, 0, iconWidth, bounds.height).contains(p);
-    }
-
-    Color getFrameBgColor(XStackFrame stackFrame) {
-      if (stackFrame instanceof ItemWithCustomBackgroundColor) {
-        return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
-      }
-      return myFileColorsCache.get(getFile(stackFrame));
     }
   }
 

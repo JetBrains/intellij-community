@@ -21,6 +21,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -479,7 +480,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return JBUIScale.scale(16);
   }
 
-  private Rectangle computePaintArea() {
+  @ApiStatus.Internal
+  protected Rectangle computePaintArea() {
     Rectangle area = new Rectangle(getWidth(), getHeight());
     JBInsets.removeFrom(area, getInsets());
     JBInsets.removeFrom(area, myIpad);
