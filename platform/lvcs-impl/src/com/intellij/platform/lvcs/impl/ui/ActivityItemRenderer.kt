@@ -25,8 +25,8 @@ import javax.swing.SwingConstants
 
 private const val ROW_LEFT_RIGHT_BORDER = 5
 private const val ROW_TOP_BOTTOM_BORDER = 3
-private const val ROW_LEFT_RIGHT_INSETS = 12
-private const val ROW_TOP_BOTTOM_INSETS = 8
+private const val ROW_LEFT_RIGHT_INSETS = 10
+private const val ROW_TOP_BOTTOM_INSETS = 6
 private val HIGHLIGHTED_ARC = JBUI.value(4f)
 private val BACKGROUND_ARC = JBUI.value(8f)
 private val HIGHLIGHT_THICKNESS = JBUI.value(4f)
