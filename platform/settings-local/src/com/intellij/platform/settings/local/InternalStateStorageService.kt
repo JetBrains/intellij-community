@@ -33,10 +33,6 @@ internal class InternalStateStorageService(@JvmField val map: MvMapManager, tele
   private val getMeasurer = Measurer(meter, "get")
   private val setMeasurer = Measurer(meter, "set")
 
-  fun clear() {
-    map.clear()
-  }
-
   fun <T : Any> getValue(key: String, serializer: SettingSerializerDescriptor<T>, pluginId: PluginId): T? {
     val start = System.nanoTime()
     var bytes: ByteArray? = null
@@ -100,11 +96,8 @@ internal class InternalStateStorageService(@JvmField val map: MvMapManager, tele
     catch (e: CancellationException) {
       throw e
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (e: Throwable) {
-      thisLogger().error(PluginException(e, pluginId))
+      thisLogger().error(PluginException("Cannot set value for key $key", e, pluginId))
     }
   }
 }

@@ -38,7 +38,8 @@ private class LocalSettingsController : DelegatedSettingsController {
 
 @Service(Service.Level.APP)
 private class LocalSettingsControllerService : SettingsSavingComponent {
-  @JvmField val storeManager: MvStoreManager = MvStoreManager()
+  @JvmField
+  val storeManager: MvStoreManager = MvStoreManager()
 
   // Telemetry is not ready at this point yet
   private val cacheMap by lazy { InternalStateStorageService(storeManager.openMap("cache_v1"), telemetryScopeName = "cacheStateStorage") }
@@ -85,13 +86,15 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
   }
 
   fun invalidateCaches() {
-    cacheMap.clear()
+    cacheMap.map.clear()
   }
 
   private fun getEffectiveKey(key: SettingDescriptor<*>): String = "${key.pluginId.idString}.${key.key}"
 
-  private inline fun  <T: Any> operate(key: SettingDescriptor<T>,
-                                       internalOperation: (map: InternalStateStorageService, componentName: String?) -> Unit) {
+  private inline fun <T : Any> operate(
+    key: SettingDescriptor<T>,
+    internalOperation: (map: InternalStateStorageService, componentName: String?) -> Unit,
+  ) {
     var componentName: String? = null
     for (tag in key.tags) {
       when (tag) {
