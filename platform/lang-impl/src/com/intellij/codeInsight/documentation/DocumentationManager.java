@@ -1904,7 +1904,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
     text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
     text = replaceIgnoreQuotesType(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
-    if (!containsIgnoreQuotesType(text, CONTENT_START)) {
+    boolean hasContent = containsIgnoreQuotesType(text, CONTENT_START);
+    if (!hasContent) {
       if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
         int bodyStart = findContentStart(text);
         if (bodyStart > 0) {
@@ -1916,6 +1917,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         else {
           text = CONTENT_START + text + CONTENT_END;
         }
+        hasContent = true;
       }
       else if (!containsIgnoreQuotesType(text, SECTIONS_START)) {
         text = replaceIgnoreQuotesType(text, DEFINITION_START, "<div class='definition-only'><pre>");
@@ -1924,21 +1926,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
       text = replaceIgnoreQuotesType(text, "class='content'", "class='content-only'");
     }
-    if (downloadDocumentationActionLink != null || location != null) {
-      text += HtmlChunk.div().setClass("separator-container")
-        .child(HtmlChunk.div().setClass("separator"));
-      if (downloadDocumentationActionLink != null) {
-        text += HtmlChunk.div()
-          .children(
-            HtmlChunk.icon("AllIcons.Plugins.Downloads", AllIcons.Plugins.Downloads),
-            HtmlChunk.nbsp(),
-            HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
-          )
-          .setClass("download-documentation");
-      }
-      if (location != null) {
-        text += location;
-      }
+    if (downloadDocumentationActionLink != null) {
+      text += HtmlChunk.div()
+        .children(
+          HtmlChunk.icon("AllIcons.Plugins.Downloads", AllIcons.Plugins.Downloads),
+          HtmlChunk.nbsp(),
+          HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
+        )
+        .setClass("download-documentation");
+    }
+    if (location != null) {
+      text += getBottom(hasContent).child(location);
     }
     if (links != null) {
       text += getBottom(location != null).child(links);

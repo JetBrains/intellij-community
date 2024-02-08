@@ -68,11 +68,8 @@ public final class DocumentationHtmlUtil {
       "             border-bottom: thin solid " + borderColor + "; }",
       ".bottom { padding: 3px 16px 0 " + leftPadding + "px; }",
       ".download-documentation { padding: 0px 0px 18px; }",
-      ".separator-container { padding: 18px " + leftPadding + "px 0px; }",
-      ".separator-container .separator { border-top: thin solid " + borderColor + "; }",
       ".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }",
       ".grayed { color: #909090; display: inline;}",
-      ".location .spacer { padding-top: 8px }",
 
       // sections table
       ".sections { padding: 0 16px 0 " + leftPadding + "px; border-spacing: 0; }",

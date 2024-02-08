@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -326,7 +326,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
       assertTrue(
-        component.decoratedText.contains("<div class=\"separator-container\"><div class=\"separator\"/></div><icon src=\"AllIcons.Nodes.PpLibFolder\"/>&nbsp;&lt; java 1.7 &gt;"))
+        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\"/>&nbsp;&lt; java 1.7 &gt;</div>"))
       return@getDocumentationText null
     }
   }
