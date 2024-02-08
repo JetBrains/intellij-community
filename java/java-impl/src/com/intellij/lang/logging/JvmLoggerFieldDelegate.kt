@@ -53,6 +53,6 @@ class JvmLoggerFieldDelegate(
   }
 
   companion object {
-    private const val LOGGER_IDENTIFIER = "log"
+    const val LOGGER_IDENTIFIER = "log"
   }
 }
