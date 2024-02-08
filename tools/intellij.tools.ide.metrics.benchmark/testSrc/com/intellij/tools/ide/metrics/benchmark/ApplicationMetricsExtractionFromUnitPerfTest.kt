@@ -1,0 +1,63 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.tools.ide.metrics.benchmark
+
+import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
+
+@JvmField
+internal val ExtractionMetricsScope: Scope = Scope("ExtractionMetricsScope", PlatformMetrics)
+
+/** Class intentionally named *Perf* (and not a *Performance*) test.
+ * That way it will not be ignored during Aggregator run */
+@TestApplication
+class ApplicationMetricsExtractionFromUnitPerfTest {
+  private val tracer = TelemetryManager.getTracer(ExtractionMetricsScope)
+
+  private fun getFullTestName(testInfo: TestInfo, launchName: String) =
+    "${testInfo.testClass.get().name}.${testInfo.testMethod.get().name} - $launchName"
+
+  @Test
+  fun reportingAnyCustomMetricsFromPerfTest(testInfo: TestInfo) {
+    val testName = testInfo.testMethod.get().name
+    val customSpanName = "custom span"
+
+    PlatformTestUtil.newPerformanceTest(testName) {
+      runWithSpan(tracer, customSpanName) {
+        runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
+      }
+
+      runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
+    }.start()
+    MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
+  }
+
+  @Test
+  fun customSpanSubtest(testInfo: TestInfo) {
+    val testName = testInfo.testMethod.get().name
+    val customSpanName = "custom span"
+
+    val perfTest = PlatformTestUtil.newPerformanceTest(testName) {
+      runWithSpan(tracer, customSpanName) {
+        runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
+      }
+
+      runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
+    }
+
+    perfTest.startAsSubtest("launch1")
+    MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, "launch1"), withWarmup = true, customSpanName)
+
+    perfTest.startAsSubtest("launch2")
+    MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, "launch2"), withWarmup = true, customSpanName)
+  }
+}

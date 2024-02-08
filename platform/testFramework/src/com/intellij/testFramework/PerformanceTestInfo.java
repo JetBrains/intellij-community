@@ -62,6 +62,16 @@ public class PerformanceTestInfo {
     System.setProperty("idea.diagnostic.opentelemetry.file",
                        PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString());
 
+    var telemetryInstance = TelemetryManager.getInstance();
+
+    // looks like telemetry manager is properly initialized
+    if (telemetryInstance.hasSpanExporters()) return;
+
+    System.err.printf(
+      "%nTelemetry instance will be overriden since span exporters aren't registered. " +
+      "This means your metrics (meters or spans), configured before any test execution will not be reported. " +
+      "Consider using TestApplication that will setup proper instance of telemetry.%n");
+
     try {
       TelemetryManager.Companion.resetGlobalSdk();
       var telemetryClazz = Class.forName("com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl");
@@ -176,22 +186,15 @@ public class PerformanceTestInfo {
    * @see PerformanceTestInfo#start(String)
    **/
   public void start() {
-    start(getCallingTestMethod());
+    start(getCallingTestMethod(), launchName);
   }
 
   /**
-   * Start the perf test where the test's artifact path will have a name inferred from test method.
+   * Start the perf test where the test's artifact path will have a name inferred from test method + subtest name.
+   *
    * @see PerformanceTestInfo#start()
-   * @see PerformanceTestInfo#start(kotlin.reflect.KFunction)
-   **/
-  public void start(@NotNull Method javaTestMethod) {
-    start(javaTestMethod, "");
-  }
-
-  /**
-   * The same as {@link PerformanceTestInfo#start(Method)} but with option to specify a subtest name.
-   * @see PerformanceTestInfo#start(Method)
    * @see PerformanceTestInfo#startAsSubtest(String)
+   * @see PerformanceTestInfo#start(kotlin.reflect.KFunction)
    **/
   public void start(@NotNull Method javaTestMethod, String subTestName) {
     var fullTestName = String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName());
@@ -240,7 +243,6 @@ public class PerformanceTestInfo {
    *                                    For Java you can use {@link com.intellij.testFramework.UsefulTestCase#getQualifiedTestMethodName()}
    *                                    OR
    *                                    {@link com.intellij.testFramework.fixtures.BareTestFixtureTestCase#getQualifiedTestMethodName()}
-   *
    * @see PerformanceTestInfo#start()
    */
   public void start(String fullQualifiedTestMethodName) {
@@ -248,9 +250,13 @@ public class PerformanceTestInfo {
     start(IterationMode.MEASURE, fullQualifiedTestMethodName);
   }
 
-  private void start(IterationMode iterationType, String fullQualifiedTestMethodName) {
+  /**
+   * @param uniqueTestName - should be at least full qualified test method name.
+   *                       Sometimes additional suffixes might be added like here {@link PerformanceTestInfo#startAsSubtest(String)}
+   */
+  private void start(IterationMode iterationType, String uniqueTestName) {
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
-    System.out.printf("Starting performance test \"%s\" in mode: %s%n", fullQualifiedTestMethodName, iterationType);
+    System.out.printf("Starting performance test \"%s\" in mode: %s%n", uniqueTestName, iterationType);
 
     int maxIterationsNumber;
     if (iterationType.equals(IterationMode.WARMUP)) {
@@ -266,7 +272,7 @@ public class PerformanceTestInfo {
     }
 
     try {
-      computeWithSpanAttribute(tracer, launchName, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
+      computeWithSpanAttribute(tracer, uniqueTestName, "warmup", (st) -> String.valueOf(iterationType.equals(IterationMode.WARMUP)), () -> {
         try {
           PlatformTestUtil.waitForAllBackgroundActivityToCalmDown();
 
@@ -305,7 +311,7 @@ public class PerformanceTestInfo {
       try {
         // publish warmup and final measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
-          MetricsPublisher.Companion.getInstance().publishSync(fullQualifiedTestMethodName, launchName);
+          MetricsPublisher.Companion.getInstance().publishSync(uniqueTestName, uniqueTestName);
         }
       }
       catch (Throwable t) {

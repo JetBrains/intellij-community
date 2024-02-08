@@ -69,6 +69,8 @@ interface TelemetryManager {
 
   var verboseMode: Boolean
 
+  fun hasSpanExporters(): Boolean
+
   /**
    * Method creates a tracer with the scope name.
    * Separate tracers define different scopes, and as a result, separate main nodes in the result data.
@@ -133,6 +135,8 @@ private val instance = SynchronizedClearableLazy {
 
 class NoopTelemetryManager : TelemetryManager {
   override var verboseMode: Boolean = false
+
+  override fun hasSpanExporters(): Boolean = false
 
   override fun getTracer(scope: Scope): IJTracer = IJNoopTracer
 

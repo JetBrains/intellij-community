@@ -5,9 +5,8 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.tool.withRetryAsync
 import com.intellij.tools.ide.metrics.collector.metrics.*
-import com.intellij.tools.ide.metrics.collector.telemetry.MetricSpanProcessor
+import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetryJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
-import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
 import java.nio.file.Path
 import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.milliseconds
@@ -30,21 +29,7 @@ class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTel
     return requireNotNull(originalMetrics) { "Couldn't find metrics for '$spanName' in $telemetryJsonFile" }
   }
 
-  private fun extractOpenTelemetrySpanMetrics(spanName: String, forWarmup: Boolean): List<PerformanceMetrics.Metric> {
-    val originalMetrics = getMetricsFromSpanAndChildren(file = telemetryJsonFile,
-                                                        filter = SpanFilter { it.name == spanName && it.isWarmup == forWarmup },
-                                                        metricSpanProcessor = MetricSpanProcessor(ignoreWarmupSpan = !forWarmup))
-
-    var metricsPrefix = ""
-    if (forWarmup) metricsPrefix = "warmup."
-
-    val allAttempts = originalMetrics.filter { it.id.name.contains("Attempt", ignoreCase = true) }
-    val worstCount = allAttempts.size.toDouble().times(0.05).toInt()
-    val attempts = if (forWarmup) allAttempts else allAttempts.sortedBy { it.value }.dropLast(worstCount)
-
-    // some tests might be forced to run without warmup attempts
-    if (forWarmup && attempts.isEmpty()) return listOf()
-
+  private fun getAttemptsStatisticalMetrics(attempts: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
     val medianValueOfAttempts: Long = attempts.medianValue()
     val madValueOfAttempts = attempts.map { (it.value - medianValueOfAttempts).absoluteValue }.median()
 
@@ -62,10 +47,46 @@ class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTel
     // "... the MAD is a robust statistic, being more resilient to outliers in a data set than the standard deviation."
     // See https://en.m.wikipedia.org/wiki/Median_absolute_deviation
     val attemptMadMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mad.ms", madValueOfAttempts)
+
+    return listOf(attemptMeanMetric, attemptMedianMetric, attemptMinMetric,
+                  attemptRangeMetric, attemptSumMetric, attemptCountMetric, attemptStandardDeviationMetric, attemptMadMetric)
+  }
+
+  /**
+   * Author ot the perf test might want to report custom metrics from the test (span or meters)
+   */
+  private fun getAggregatedCustomMetricsReportedFromTests(customMetrics: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
+    return customMetrics.groupBy { it.id.name }
+      .map { group ->
+        PerformanceMetrics.newDuration("${metricsPrefix}${group.key}", group.value.map { it.value }.average().toLong())
+      }
+  }
+
+  private fun extractOpenTelemetrySpanMetrics(spanName: String, forWarmup: Boolean): List<PerformanceMetrics.Metric> {
+    val originalMetrics = OpentelemetryJsonParser(SpanFilter { it.name == spanName && it.isWarmup == forWarmup })
+      .getSpanElements(telemetryJsonFile)
+      .map { PerformanceMetrics.newDuration(it.name, it.duration) }
+      .toList()
+
+    val attemptSuffix = "Attempt"
+    var metricsPrefix = ""
+    if (forWarmup) metricsPrefix = "warmup."
+
+    val allAttempts = originalMetrics.filter { it.id.name.startsWith(attemptSuffix, ignoreCase = true) }
+    val worstCount = allAttempts.size.toDouble().times(0.05).toInt()
+    val attempts: List<PerformanceMetrics.Metric> = if (forWarmup) allAttempts else allAttempts.sortedBy { it.value }.dropLast(worstCount)
+
+    // some tests might be forced to run without warmup attempts
+    if (forWarmup && attempts.isEmpty()) return listOf()
+
+    val attemptsStatisticalMetrics: List<PerformanceMetrics.Metric> = getAttemptsStatisticalMetrics(attempts, metricsPrefix)
+
     val mainMetricValue: Long = originalMetrics.single { it.id.name == spanName }.value
     val totalTestDurationMetric = PerformanceMetrics.newDuration("${metricsPrefix}total.test.duration.ms", mainMetricValue)
 
-    return listOf(totalTestDurationMetric, attemptMeanMetric, attemptMedianMetric, attemptMinMetric,
-                  attemptRangeMetric, attemptSumMetric, attemptCountMetric, attemptStandardDeviationMetric, attemptMadMetric)
+    val customMetrics = originalMetrics.filterNot { it.id.name.startsWith(attemptSuffix, ignoreCase = true) || it.id.name == spanName }
+    val aggregatedCustomMetrics = getAggregatedCustomMetricsReportedFromTests(customMetrics, metricsPrefix)
+
+    return attemptsStatisticalMetrics.plus(totalTestDurationMetric).plus(aggregatedCustomMetrics)
   }
 }

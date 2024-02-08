@@ -121,6 +121,8 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     }
   }
 
+  override fun hasSpanExporters(): Boolean = hasSpanExporters
+
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
     aggregatedMetricExporter.addMetricsExporters(exporters)
   }

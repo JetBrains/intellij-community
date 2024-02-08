@@ -27,7 +27,7 @@ fun getMetricsFromSpanAndChildren(file: Path,
                                   filter: SpanFilter,
                                   metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
                                   aliases: Map<String, String> = mapOf()): List<Metric> {
-  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList().toList().map {
+  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList().map {
     val name = aliases.getOrDefault(it.name, it.name)
     if (name != it.name) {
       return@map it.copy(name = name)
