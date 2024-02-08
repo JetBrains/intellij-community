@@ -838,6 +838,11 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
     }
 
+    @TestMetadata("kotlin/moveTopLevelDeclarations/operationReference/operationReference.test")
+    public void testKotlin_moveTopLevelDeclarations_operationReference_OperationReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/operationReference/operationReference.test");
+    }
+
     @TestMetadata("kotlin/moveTopLevelDeclarations/propertyAlreadyInaccessible/propertyAlreadyInaccessible.test")
     public void testKotlin_moveTopLevelDeclarations_propertyAlreadyInaccessible_PropertyAlreadyInaccessible() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveTopLevelDeclarations/propertyAlreadyInaccessible/propertyAlreadyInaccessible.test");

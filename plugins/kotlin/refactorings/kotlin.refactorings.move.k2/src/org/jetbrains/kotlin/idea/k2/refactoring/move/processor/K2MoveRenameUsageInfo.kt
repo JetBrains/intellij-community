@@ -7,6 +7,7 @@ import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler
 import com.intellij.refactoring.move.moveMembers.MoveMemberHandler
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions
@@ -16,10 +17,11 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
@@ -264,11 +266,10 @@ sealed class K2MoveRenameUsageInfo(
             // example: a.foo() where foo is an extension function
             fun KtSimpleNameExpression.isExtensionReference(): Boolean = allowAnalysisFromWriteAction {
                 analyze(this) {
-                    val call = resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>() ?: return false
-                    val partiallyAppliedSymbol = call.partiallyAppliedSymbol
-                    if (partiallyAppliedSymbol.extensionReceiver != null) return true
-                    if (call is KtVariableAccessCall) {
-                        val returnType = partiallyAppliedSymbol.signature.returnType
+                    val callable = mainReference.resolveToSymbol() as? KtCallableSymbol
+                    if (callable?.isExtension == true) return true
+                    if (callable is KtPropertySymbol) {
+                        val returnType = callable.returnType
                         return returnType is KtFunctionalType && returnType.receiverType != null
                     }
                     return false
@@ -280,7 +281,7 @@ sealed class K2MoveRenameUsageInfo(
                 val parent = parent
                 return parent is KtCallableReferenceExpression && parent.receiverExpression == null
             }
-
+            if (parentOfType<KtImportDirective>() != null) return false
             return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
         }
 
