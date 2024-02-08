@@ -8,25 +8,23 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 object GenerateLoggerStatisticsCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("jvm.logger.generation", 1)
+  private val GROUP = EventLogGroup("jvm.logger.generation", 2)
 
-  private const val ACTION_INVOKED = "action_invoked"
+  private const val ACTION_STARTED = "action_started"
 
-  private const val ACTION_COMPLETED = "action_completed"
+  private const val ACTION_FINISHED = "action_finished"
 
-  private val ACTION_TYPE: EventField<String?> = EventFields.String("event_type", listOf(ACTION_INVOKED, ACTION_COMPLETED))
+  private val ACTION_STATUS: EventField<String?> = EventFields.String("action_status", listOf(ACTION_STARTED, ACTION_FINISHED))
 
-  private val HANDLE_EVENT = group.registerVarargEvent("handle",
-                                                       ACTION_TYPE,
-                                                       EventFields.Count)
+  private val ACTION_INVOKED = GROUP.registerVarargEvent("action.invoked", ACTION_STATUS)
 
-  override fun getGroup(): EventLogGroup = group
+  override fun getGroup(): EventLogGroup = GROUP
 
   fun logActionInvoked(project: Project) {
-    HANDLE_EVENT.log(project, ACTION_TYPE.with(ACTION_INVOKED), EventFields.Count.with(1))
+    ACTION_INVOKED.log(project, ACTION_STATUS.with(ACTION_STARTED))
   }
 
   fun logActionCompleted(project: Project) {
-    HANDLE_EVENT.log(project, ACTION_TYPE.with(ACTION_COMPLETED), EventFields.Count.with(1))
+    ACTION_INVOKED.log(project, ACTION_STATUS.with(ACTION_FINISHED))
   }
 }
