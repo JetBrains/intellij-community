@@ -11,7 +11,7 @@ import java.util.Set;
 
 public final class SmartSerializer {
   private Set<String> serializedAccessorNameTracker;
-  private Object2FloatMap<String> myOrderedBindings;
+  private Object2FloatMap<String> orderedBindings;
   private final SerializationFilter mySerializationFilter;
 
   private SmartSerializer(boolean trackSerializedNames, boolean useSkipEmptySerializationFilter) {
@@ -46,15 +46,15 @@ public final class SmartSerializer {
   public void readExternal(@NotNull Object bean, @NotNull Element element) {
     if (serializedAccessorNameTracker != null) {
       serializedAccessorNameTracker.clear();
-      myOrderedBindings = null;
+      orderedBindings = null;
     }
 
     BeanBinding beanBinding = getBinding(bean);
     assert beanBinding.bindings != null;
-    BeanBindingKt.deserializeBeanInto(bean, element, serializedAccessorNameTracker, beanBinding.bindings, 0, beanBinding.bindings.length);
+    BeanBindingKt.deserializeBeanInto(bean, element, beanBinding.bindings, 0, beanBinding.bindings.length, serializedAccessorNameTracker);
 
     if (serializedAccessorNameTracker != null) {
-      myOrderedBindings = beanBinding.computeBindingWeights(serializedAccessorNameTracker);
+      orderedBindings = beanBinding.computeBindingWeights(serializedAccessorNameTracker);
     }
   }
 
@@ -64,8 +64,8 @@ public final class SmartSerializer {
 
   public void writeExternal(@NotNull Object bean, @NotNull Element element, boolean preserveCompatibility) {
     BeanBinding binding = getBinding(bean);
-    if (preserveCompatibility && myOrderedBindings != null) {
-      binding.sortBindings(myOrderedBindings);
+    if (preserveCompatibility && orderedBindings != null) {
+      binding.sortBindings(orderedBindings);
     }
 
     if (preserveCompatibility || serializedAccessorNameTracker == null) {

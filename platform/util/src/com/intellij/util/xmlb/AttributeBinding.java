@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
@@ -49,7 +49,7 @@ final class AttributeBinding extends BasePrimitiveBinding {
     return context;
   }
 
-  void set(@NotNull Object host, @NotNull String value) {
+  void setValue(@NotNull Object host, @NotNull String value) {
     if (converter == null) {
       XmlSerializerImpl.doSet(host, value, accessor, valueClass);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
@@ -49,7 +49,7 @@ final class TextBinding implements NestedBinding {
     return context;
   }
 
-  void set(@NotNull Object context, @NotNull String value) {
+  void setValue(@NotNull Object context, @NotNull String value) {
     XmlSerializerImpl.doSet(context, value, accessor, valueClass);
   }
 }
