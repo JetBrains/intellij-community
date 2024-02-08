@@ -9,6 +9,7 @@ import com.intellij.collaboration.util.filePath
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.findLatestCommitWithChangesTo
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabPersistentMergeRequestChangesViewedState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
@@ -41,9 +43,10 @@ interface GitLabMergeRequestDiffReviewViewModel {
 
 internal class GitLabMergeRequestDiffReviewViewModelImpl(
   project: Project,
-  private val change: RefComparisonChange,
   private val mergeRequest: GitLabMergeRequest,
+  private val parsedChanges: GitBranchComparisonResult,
   private val diffData: GitTextFilePatchWithHistory,
+  private val change: RefComparisonChange,
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>
@@ -88,6 +91,12 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   }
 
   override fun markViewed() {
-    persistentChangesViewedState.markViewed(mergeRequest, listOf(change.filePath), change.revisionNumberAfter.toString(), true)
+    val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, change.filePath) ?: return
+    persistentChangesViewedState.markViewed(
+      mergeRequest.glProject, mergeRequest.iid,
+      mergeRequest.gitRepository,
+      listOf(change.filePath to sha),
+      true
+    )
   }
 }

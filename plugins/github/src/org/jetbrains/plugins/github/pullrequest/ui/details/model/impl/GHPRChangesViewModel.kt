@@ -101,8 +101,8 @@ internal class GHPRChangesViewModelImpl(
     }
   }
 
-  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) {
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, it).also { vm ->
+  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) { changeList ->
+    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changeList).also { vm ->
       launch {
         isUpdatingChanges.collect {
           vm.setUpdating(it)

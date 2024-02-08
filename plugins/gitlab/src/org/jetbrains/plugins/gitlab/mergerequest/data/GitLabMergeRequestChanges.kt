@@ -8,15 +8,19 @@ import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
+import git4idea.changes.filePath
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.fetch.GitFetchSupport
+import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -42,6 +46,11 @@ interface GitLabMergeRequestChanges {
    * Check that all merge request revisions are fetched and fetch the missing revisions
    */
   suspend fun ensureAllRevisionsFetched()
+}
+
+fun GitBranchComparisonResult.findLatestCommitWithChangesTo(gitRepository: GitRepository, filePath: FilePath): String? {
+  val relativePath = VcsFileUtil.relativePath(gitRepository.root, filePath)
+  return commits.lastOrNull { commit -> commit.patches.any { it.filePath == relativePath } }?.sha
 }
 
 private val LOG = logger<GitLabMergeRequestChanges>()

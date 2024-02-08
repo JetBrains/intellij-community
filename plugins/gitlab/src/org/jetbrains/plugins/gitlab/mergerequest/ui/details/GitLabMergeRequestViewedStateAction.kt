@@ -24,8 +24,7 @@ internal abstract class GitLabViewedStateAction(
     val changeListVm = e.getData(CodeReviewChangeListViewModel.DATA_KEY)
                          .asSafely<GitLabMergeRequestChangeListViewModel>() ?: return
 
-    val isOnLatest = changeListVm.isOnLatest.value
-    if (!isOnLatest) return
+    if (!changeListVm.isOnLatest) return
 
     val selectedChanges = e.getData(SELECTED_CHANGES) ?: return
     val allFilesViewed = changeListVm.isViewedStateForAllChanges(selectedChanges, isViewed)

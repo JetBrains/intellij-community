@@ -11,7 +11,9 @@ import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.*
+import git4idea.changes.GitBranchComparisonResult
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -36,15 +38,16 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   private val cs = parentCs.childScope()
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val changesContainer: Flow<Result<CodeReviewChangesContainer>> = mergeRequest.changes.mapLatest {
+  private val changesContainer: Flow<Result<GitLabChangesContainer>> = mergeRequest.changes.mapLatest {
     runCatchingUser {
-      val changes = it.getParsedChanges()
-      CodeReviewChangesContainer(changes.changes, changes.commits.map { it.sha }, changes.changesByCommits)
+      GitLabChangesContainer(it.getParsedChanges())
     }
   }
 
-  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) {
-    GitLabMergeRequestChangeListViewModelImpl(project, this, mergeRequest, it)
+  private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) { changesContainer, changeList ->
+    changesContainer as GitLabChangesContainer
+
+    GitLabMergeRequestChangeListViewModelImpl(project, this, mergeRequest, changesContainer.changes, changeList)
   }
 
   override val reviewCommits: SharedFlow<List<GitLabCommit>> =
@@ -79,4 +82,12 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 
   override fun commitHash(commit: GitLabCommit): String = commit.shortId
 }
+
+internal class GitLabChangesContainer(
+  val changes: GitBranchComparisonResult
+) : CodeReviewChangesContainer(
+  changes.changes,
+  changes.commits.map { it.sha },
+  changes.changesByCommits
+)
 

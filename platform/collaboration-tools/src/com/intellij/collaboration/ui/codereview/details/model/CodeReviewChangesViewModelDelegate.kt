@@ -13,8 +13,14 @@ import kotlin.coroutines.cancellation.CancellationException
 class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
   private val cs: CoroutineScope,
   changesContainer: Flow<Result<CodeReviewChangesContainer>>,
-  private val vmProducer: CoroutineScope.(CodeReviewChangeList) -> T
+  private val vmProducer: CoroutineScope.(CodeReviewChangesContainer, CodeReviewChangeList) -> T
 ) {
+  constructor(
+    cs: CoroutineScope,
+    changesContainer: Flow<Result<CodeReviewChangesContainer>>,
+    vmProducer: CoroutineScope.(CodeReviewChangeList) -> T
+  ) : this(cs, changesContainer, { _, changeList -> vmProducer(changeList) })
+
   private val selectionRequests = MutableSharedFlow<ChangesRequest>()
 
   private val _selectedCommit = MutableStateFlow<String?>(null)
@@ -48,7 +54,7 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
             csAndVm?.first?.cancelAndJoinSilently()
             val newChangeList = changes.getChangeList(commit)
             val newCs = parentCs.childScope()
-            val newVm = vmProducer(newChangeList).apply {
+            val newVm = vmProducer(changes, newChangeList).apply {
               this.selectChange(change)
             }
             csAndVm = newCs to newVm
@@ -136,14 +142,14 @@ private sealed interface ChangesRequest {
   data class SelectChange(val change: RefComparisonChange) : ChangesRequest
 }
 
-class CodeReviewChangesContainer(val summaryChanges: List<RefComparisonChange>,
-                                 val commits: List<String>,
-                                 val changesByCommits: Map<String, List<RefComparisonChange>>) {
+open class CodeReviewChangesContainer(val summaryChanges: List<RefComparisonChange>,
+                                      val commits: List<String>,
+                                      val changesByCommits: Map<String, List<RefComparisonChange>>) {
   val commitsByChange: Map<RefComparisonChange, String> = mutableMapOf<RefComparisonChange, String>().apply {
-      changesByCommits.entries.forEach { (commit, changes) ->
-        changes.forEach {
-          put(it, commit)
-        }
+    changesByCommits.entries.forEach { (commit, changes) ->
+      changes.forEach {
+        put(it, commit)
       }
     }
+  }
 }

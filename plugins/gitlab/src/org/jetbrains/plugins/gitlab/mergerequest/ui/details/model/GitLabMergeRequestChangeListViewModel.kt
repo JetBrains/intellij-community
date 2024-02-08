@@ -11,17 +11,15 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
-import org.jetbrains.plugins.gitlab.mergerequest.data.firstNote
-import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabMergeRequestChangeListViewModel : CodeReviewChangeListViewModel.WithDetails {
-  val isOnLatest: StateFlow<Boolean>
+  val isOnLatest: Boolean
 
   fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
 }
@@ -30,40 +28,44 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   override val project: Project,
   parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
+  private val parsedChanges: GitBranchComparisonResult,
   changeList: CodeReviewChangeList,
 ) : CodeReviewChangeListViewModelBase(parentCs, changeList),
     GitLabMergeRequestChangeListViewModel {
-
   private val persistentChangesViewedState = project.service<GitLabPersistentMergeRequestChangesViewedState>()
 
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests: Flow<Unit> = _showDiffRequests.asSharedFlow()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override val isOnLatest: StateFlow<Boolean> = mergeRequest.changes.mapLatest {
-    selectedCommit == null || it.commits.await().size == 1
-  }.stateIn(cs, SharingStarted.Lazily, selectedCommit == null)
+  override val isOnLatest: Boolean = selectedCommit == null || parsedChanges.commits.size == 1
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
-    combine(createUnresolvedDiscussionsPositionsFlow(mergeRequest),
-            createUnresolvedDraftsPositionsFlow(mergeRequest),
-            mergeRequest.changes.map { it.getParsedChanges() }.catch { }) { discPos, draftsPos, parsedChanges ->
-      persistentChangesViewedState.updatesFlow.withInitial(Unit).combine(isOnLatest) { _, isOnLatest ->
-        changes.associateWith { change ->
-          val isRead = !isOnLatest || persistentChangesViewedState.isViewed(mergeRequest, change.filePath, change.revisionNumberAfter.toString())
-          val patch = parsedChanges.patchesByChange[change]
-          if (patch == null) {
-            CodeReviewChangeDetails(isRead, 0)
-          }
-          else {
-            //TODO: cache?
-            val discussions = discPos.count { it.mapToLocation(patch) != null } + draftsPos.count { it.mapToLocation(patch) != null }
-            CodeReviewChangeDetails(isRead, discussions)
-          }
+    combine(
+      createUnresolvedDiscussionsPositionsFlow(mergeRequest),
+      createUnresolvedDraftsPositionsFlow(mergeRequest),
+      persistentChangesViewedState.updatesFlow.withInitial(Unit),
+    ) { discPos, draftsPos, _ ->
+      changes.associateWith { change ->
+        val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, change.filePath)
+        val isRead = !isOnLatest || sha?.let {
+          persistentChangesViewedState.isViewed(
+            mergeRequest.glProject, mergeRequest.iid,
+            mergeRequest.gitRepository,
+            change.filePath, it
+          )
+        } ?: false
+
+        val patch = parsedChanges.patchesByChange[change]
+        if (patch == null) {
+          CodeReviewChangeDetails(isRead, 0)
+        }
+        else {
+          //TODO: cache?
+          val discussions = discPos.count { it.mapToLocation(patch) != null } + draftsPos.count { it.mapToLocation(patch) != null }
+          CodeReviewChangeDetails(isRead, discussions)
         }
       }
-    }.flatMapLatest { it }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
+    }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
 
   override fun showDiffPreview() {
     cs.launch {
@@ -75,8 +77,18 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   override fun showDiff() = showDiffPreview()
 
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
-    persistentChangesViewedState.markViewed(mergeRequest, changes.map { it.filePath },
-                                            changes.first().revisionNumberAfter.toString(), viewed)
+    val filePathsWithShas = changes.mapNotNull { change ->
+      val path = change.filePath
+      parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRepository, path)?.let {
+        path to it
+      }
+    }
+    persistentChangesViewedState.markViewed(
+      mergeRequest.glProject, mergeRequest.iid,
+      mergeRequest.gitRepository,
+      filePathsWithShas,
+      viewed
+    )
   }
 }
 

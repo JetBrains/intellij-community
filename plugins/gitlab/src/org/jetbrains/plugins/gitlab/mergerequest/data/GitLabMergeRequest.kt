@@ -29,6 +29,7 @@ private val LOG = logger<GitLabMergeRequest>()
 
 interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val glProject: GitLabProjectCoordinates
+  val gitRepository: GitRepository
 
   val iid: String
   val gid: String
@@ -104,6 +105,7 @@ internal class LoadedGitLabMergeRequest(
   private val cs = parentCs.childScope(Dispatchers.Default + CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   override val glProject: GitLabProjectCoordinates = projectMapping.repository
+  override val gitRepository: GitRepository = projectMapping.gitRepository
 
   override val iid: String = mergeRequest.iid
   override val gid: String = mergeRequest.id
