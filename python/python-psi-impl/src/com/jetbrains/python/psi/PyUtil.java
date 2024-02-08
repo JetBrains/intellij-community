@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
@@ -344,26 +343,8 @@ public final class PyUtil {
     return f1 == f2;
   }
 
-  public static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
-    PsiFile firstFile = e1.getContainingFile();
-    PsiFile secondFile = e2.getContainingFile();
-    if (firstFile == null || secondFile == null) return false;
-    Document document = firstFile.getFileDocument();
-    if (document != secondFile.getFileDocument()) return false;
-    return document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
-  }
-
   public static boolean isTopLevel(@NotNull PsiElement element) {
-    if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
-      if (stub != null) {
-        final StubElement parentStub = stub.getParentStub();
-        if (parentStub != null) {
-          return parentStub.getPsi() instanceof PsiFile;
-        }
-      }
-    }
-    return ScopeUtil.getScopeOwner(element) instanceof PsiFile;
+    return PyUtilCore.isTopLevel(element);
   }
 
   public static void deletePycFiles(String pyFilePath) {
@@ -688,21 +669,6 @@ public final class PyUtil {
     }
   }
 
-  /**
-   * Returns the line comment that immediately precedes statement list of the given compound statement. Python parser ensures
-   * that it follows the statement header, i.e. it's directly after the colon, not on its own line.
-   */
-  @Nullable
-  public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
-    return as(getHeaderEndAnchor(container), PsiComment.class);
-  }
-
-  @NotNull
-  public static PsiElement getHeaderEndAnchor(@NotNull PyStatementListContainer container) {
-    final PyStatementList statementList = container.getStatementList();
-    return Objects.requireNonNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
-  }
-
   public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {
     if (LanguageLevel.forElement(node).isPython2()) {
       if (!node.isQualified()) {
@@ -1012,10 +978,6 @@ public final class PyUtil {
    */
   public static boolean isClassPrivateName(@NotNull String name) {
     return name.startsWith("__") && !name.endsWith("__");
-  }
-
-  public static boolean isSpecialName(@NotNull String name) {
-    return name.length() > 4 && name.startsWith("__") && name.endsWith("__");
   }
 
   /**

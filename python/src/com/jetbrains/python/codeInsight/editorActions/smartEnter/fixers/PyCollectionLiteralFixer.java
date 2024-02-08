@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyParsingBundle;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
 import com.jetbrains.python.psi.*;
@@ -57,9 +58,9 @@ public class PyCollectionLiteralFixer extends PyFixer<PySequenceExpression> {
       return;
     }
 
-    PsiElement nextOnSameLine = PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(collectionItem);
+    PsiElement nextOnSameLine = PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(collectionItem);
     if (nextOnSameLine != null && isMissingColonError(nextOnSameLine)) {
-      nextOnSameLine = PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(nextOnSameLine);
+      nextOnSameLine = PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(nextOnSameLine);
     }
     if (nextOnSameLine == null || nextOnSameLine instanceof PsiComment) {
       int separatorOffset = collectionItem.getTextRange().getEndOffset();

@@ -117,6 +117,24 @@ public final class PyPsiUtilsCore {
     return result;
   }
 
+  /**
+   * Returns the first non-whitespace sibling following the given element but within its line boundaries.
+   */
+  @Nullable
+  public static PsiElement getNextNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
+    PsiElement cur = element.getNextSibling();
+    while (cur != null) {
+      if (!(cur instanceof PsiWhiteSpace)) {
+        return cur;
+      }
+      else if (cur.textContains('\n')) {
+        break;
+      }
+      cur = cur.getNextSibling();
+    }
+    return null;
+  }
+
   private static abstract class TopLevelVisitor extends PyAstRecursiveElementVisitor {
     @Override
     public void visitPyElement(final @NotNull PyAstElement node) {

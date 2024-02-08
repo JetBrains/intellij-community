@@ -14,10 +14,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -46,8 +49,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 
 public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpressionStub> implements PyTargetExpression {
@@ -618,35 +619,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public String getQualifiedName() {
     return QualifiedNameFinder.getQualifiedName(this);
-  }
-
-  @Nullable
-  @Override
-  public PsiComment getTypeComment() {
-    PsiComment comment = null;
-    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
-    if (assignment != null) {
-      final PyExpression assignedValue = assignment.getAssignedValue();
-      if (assignedValue != null && !PsiTreeUtil.isAncestor(assignedValue, this, false)) {
-        comment = as(PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(assignedValue), PsiComment.class);
-      }
-    }
-    else {
-      PyStatementListContainer forOrWith = null;
-      final PyForPart forPart = PsiTreeUtil.getParentOfType(this, PyForPart.class);
-      if (forPart != null && PsiTreeUtil.isAncestor(forPart.getTarget(), this, false)) {
-        forOrWith = forPart;
-      }
-      final PyWithItem withPart = PsiTreeUtil.getParentOfType(this, PyWithItem.class);
-      if (withPart != null && PsiTreeUtil.isAncestor(withPart.getTarget(), this, false)) {
-        forOrWith = as(withPart.getParent(), PyWithStatement.class);
-      }
-
-      if (forOrWith != null) {
-        comment = PyUtil.getCommentOnHeaderLine(forOrWith);
-      }
-    }
-    return comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null ? comment : null;
   }
 
   @Nullable

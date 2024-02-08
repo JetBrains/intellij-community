@@ -29,8 +29,8 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstElementVisitor;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
@@ -672,7 +672,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
       // skip module level dunders
       boolean hasModuleLevelDunders = false;
-      while (AddImportHelper.isAssignmentToModuleLevelDunderName(currentStatement)) {
+      while (PyUtilCore.isAssignmentToModuleLevelDunderName(currentStatement)) {
         hasModuleLevelDunders = true;
         currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
       }

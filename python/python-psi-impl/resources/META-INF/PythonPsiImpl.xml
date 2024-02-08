@@ -12,11 +12,6 @@
     <!-- We run it before FilePathCompletionContributor (id="filePath") to get help text about full path results in the extended completion -->
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PySoftFileReferenceContributor" language="Python"
                               order="before filePath"/>
-    <fileType name="PythonStub"
-              language="PythonStub"
-              extensions="pyi"
-              implementationClass="com.jetbrains.python.pyi.PyiFileType"
-              fieldName="INSTANCE"/>
 
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyReferenceExpression"
                              implementationClass="com.jetbrains.python.psi.impl.PyReferenceExpressionManipulator"/>
@@ -72,7 +67,6 @@
                              implementationClass="com.jetbrains.python.psi.impl.references.PyKeywordPatternManipulator"/>
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
 
-    <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
     <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>

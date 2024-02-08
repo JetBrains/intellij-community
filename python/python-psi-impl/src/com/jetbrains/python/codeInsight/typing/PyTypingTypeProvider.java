@@ -4,7 +4,6 @@ package com.jetbrains.python.codeInsight.typing;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,6 +19,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -43,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.RecursionManager.doPreventingRecursion;
@@ -119,7 +118,6 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static final String PY3_BINARY_FILE_TYPE = "typing.BinaryIO";
   private static final String PY3_TEXT_FILE_TYPE = "typing.TextIO";
 
-  private static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]+) *(#.*)?");
   public static final Pattern TYPE_IGNORE_PATTERN = Pattern.compile("# *type: *ignore(\\[ *[^ ,\\]]+ *(, *[^ ,\\]]+ *)*\\])? *($|(#.*))",
                                                                     Pattern.CASE_INSENSITIVE);
 
@@ -577,11 +575,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
    */
   @Nullable
   public static String getTypeCommentValue(@NotNull String text) {
-    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
-    if (m.matches()) {
-      return StringUtil.nullize(m.group(1).trim());
-    }
-    return null;
+    return PyUtilCore.getTypeCommentValue(text);
   }
 
   /**
@@ -591,14 +585,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
    */
   @Nullable
   public static TextRange getTypeCommentValueRange(@NotNull String text) {
-    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
-    if (m.matches()) {
-      final String hint = getTypeCommentValue(text);
-      if (hint != null) {
-        return TextRange.from(m.start(1), hint.length());
-      }
-    }
-    return null;
+    return PyUtilCore.getTypeCommentValueRange(text);
   }
 
   @Nullable

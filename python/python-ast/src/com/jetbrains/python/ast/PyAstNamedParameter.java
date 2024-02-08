@@ -16,9 +16,7 @@
 package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
@@ -164,5 +162,21 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
     pyVisitor.visitPyNamedParameter(this);
+  }
+
+  @Nullable
+  @Override
+  default PsiComment getTypeComment() {
+    for (PsiElement next = getNextSibling(); next != null; next = next.getNextSibling()) {
+      if (next.textContains('\n')) break;
+      if (!(next instanceof PsiWhiteSpace)) {
+        if (",".equals(next.getText())) continue;
+        if (next instanceof PsiComment && PyUtilCore.getTypeCommentValue(next.getText()) != null) {
+          return (PsiComment)next;
+        }
+        break;
+      }
+    }
+    return null;
   }
 }

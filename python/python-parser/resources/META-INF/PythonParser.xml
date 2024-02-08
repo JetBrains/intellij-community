@@ -6,6 +6,11 @@
               hashBangs="python"
               implementationClass="com.jetbrains.python.PythonFileType"
               fieldName="INSTANCE"/>
+    <fileType name="PythonStub"
+              language="PythonStub"
+              extensions="pyi"
+              implementationClass="com.jetbrains.python.pyi.PyiFileType"
+              fieldName="INSTANCE"/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"

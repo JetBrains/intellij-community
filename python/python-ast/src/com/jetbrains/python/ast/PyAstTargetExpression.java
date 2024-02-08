@@ -2,6 +2,7 @@
 package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
@@ -12,6 +13,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.ast.docstring.DocStringUtilCore;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -204,5 +206,34 @@ public interface PyAstTargetExpression extends PyAstQualifiedExpression, PsiName
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
     pyVisitor.visitPyTargetExpression(this);
+  }
+
+  @Nullable
+  @Override
+  default PsiComment getTypeComment() {
+    PsiComment comment = null;
+    final PyAstAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAstAssignmentStatement.class);
+    if (assignment != null) {
+      final PyAstExpression assignedValue = assignment.getAssignedValue();
+      if (assignedValue != null && !PsiTreeUtil.isAncestor(assignedValue, this, false)) {
+        comment = ObjectUtils.tryCast(PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(assignedValue), PsiComment.class);
+      }
+    }
+    else {
+      PyAstStatementListContainer forOrWith = null;
+      final PyAstForPart forPart = PsiTreeUtil.getParentOfType(this, PyAstForPart.class);
+      if (forPart != null && PsiTreeUtil.isAncestor(forPart.getTarget(), this, false)) {
+        forOrWith = forPart;
+      }
+      final PyAstWithItem withPart = PsiTreeUtil.getParentOfType(this, PyAstWithItem.class);
+      if (withPart != null && PsiTreeUtil.isAncestor(withPart.getTarget(), this, false)) {
+        forOrWith = ObjectUtils.tryCast(withPart.getParent(), PyAstWithStatement.class);
+      }
+
+      if (forOrWith != null) {
+        comment = PyUtilCore.getCommentOnHeaderLine(forOrWith);
+      }
+    }
+    return comment != null && PyUtilCore.getTypeCommentValue(comment.getText()) != null ? comment : null;
   }
 }

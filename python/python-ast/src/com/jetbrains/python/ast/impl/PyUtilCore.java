@@ -1,8 +1,10 @@
 package com.jetbrains.python.ast.impl;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -10,6 +12,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.ast.*;
 import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtilCore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Assorted utility methods for Python code insight.
@@ -27,6 +33,8 @@ import java.util.List;
  */
 @ApiStatus.Experimental
 public final class PyUtilCore {
+
+  private static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *([^#]+) *(#.*)?");
 
   private PyUtilCore() {
   }
@@ -80,6 +88,28 @@ public final class PyUtilCore {
     return unfoldParentheses(targets, new ArrayList<>(targets.length), false, true);
   }
 
+  public static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+    PsiFile firstFile = e1.getContainingFile();
+    PsiFile secondFile = e2.getContainingFile();
+    if (firstFile == null || secondFile == null) return false;
+    Document document = firstFile.getFileDocument();
+    if (document != secondFile.getFileDocument()) return false;
+    return document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
+  }
+
+  public static boolean isTopLevel(@NotNull PsiElement element) {
+    if (element instanceof StubBasedPsiElement) {
+      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
+      if (stub != null) {
+        final StubElement parentStub = stub.getParentStub();
+        if (parentStub != null) {
+          return parentStub.getPsi() instanceof PsiFile;
+        }
+      }
+    }
+    return ScopeUtilCore.getScopeOwner(element) instanceof PsiFile;
+  }
+
   /**
    * Retrieves the document from {@link PsiDocumentManager} using the anchor PSI element and, if it's not null,
    * passes it to the consumer function.
@@ -113,6 +143,10 @@ public final class PyUtilCore {
       }
     }
     return null;
+  }
+
+  public static boolean isSpecialName(@NotNull String name) {
+    return name.length() > 4 && name.startsWith("__") && name.endsWith("__");
   }
 
   @Nullable
@@ -195,6 +229,69 @@ public final class PyUtilCore {
         result.add(((PyAstStringLiteralExpression)element).getStringValue());
       }
       return result;
+    }
+    return null;
+  }
+
+  public static boolean isAssignmentToModuleLevelDunderName(@Nullable PsiElement element) {
+    if (element instanceof PyAstAssignmentStatement statement && isTopLevel(element)) {
+      PyAstExpression[] targets = statement.getTargets();
+      if (targets.length == 1) {
+        String name = targets[0].getName();
+        return name != null && isSpecialName(name);
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns the line comment that immediately precedes statement list of the given compound statement. Python parser ensures
+   * that it follows the statement header, i.e. it's directly after the colon, not on its own line.
+   */
+  @Nullable
+  public static PsiComment getCommentOnHeaderLine(@NotNull PyAstStatementListContainer container) {
+    return ObjectUtils.tryCast(getHeaderEndAnchor(container), PsiComment.class);
+  }
+
+  @NotNull
+  public static PsiElement getHeaderEndAnchor(@NotNull PyAstStatementListContainer container) {
+    final PyAstStatementList statementList = container.getStatementList();
+    return Objects.requireNonNull(PsiTreeUtil.skipWhitespacesBackward(statementList));
+  }
+
+  /**
+   * Checks that text of a comment starts with "# type:" prefix and returns trimmed type hint after it.
+   * The trailing part is supposed to contain type annotation in PEP 484 compatible format and an optional
+   * plain text comment separated from it with another "#".
+   * <p>
+   * For instance, for {@code # type: List[int]  # comment} it returns {@code List[int]}.
+   * <p>
+   * This method cannot return an empty string.
+   *
+   * @see #getTypeCommentValueRange(String)
+   */
+  @Nullable
+  public static String getTypeCommentValue(@NotNull String text) {
+    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+    if (m.matches()) {
+      return StringUtil.nullize(m.group(1).trim());
+    }
+    return null;
+  }
+
+  /**
+   * Returns the corresponding text range for a type hint as returned by {@link #getTypeCommentValue(String)}.
+   *
+   * @see #getTypeCommentValue(String)
+   */
+  @Nullable
+  public static TextRange getTypeCommentValueRange(@NotNull String text) {
+    final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+    if (m.matches()) {
+      final String hint = getTypeCommentValue(text);
+      if (hint != null) {
+        return TextRange.from(m.start(1), hint.length());
+      }
     }
     return null;
   }

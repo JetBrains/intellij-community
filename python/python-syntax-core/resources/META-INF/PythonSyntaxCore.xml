@@ -8,5 +8,7 @@
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonCodeStyleService"
                         serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl"/>
+
+    <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
   </extensions>
 </idea-plugin>

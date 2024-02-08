@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.psi.*;
@@ -252,7 +253,7 @@ public final class PyPep8NamingInspection extends PyInspection {
       if (ignoreOverriddenFunctions && isOverriddenMethod(function)) return;
       final String name = function.getName();
       if (name == null) return;
-      if (containingClass != null && (PyUtil.isSpecialName(name) || isIgnoredOrHasIgnoredAncestor(containingClass))) {
+      if (containingClass != null && (PyUtilCore.isSpecialName(name) || isIgnoredOrHasIgnoredAncestor(containingClass))) {
         return;
       }
       if (!LOWERCASE_REGEX.matcher(name).matches()) {

@@ -21,6 +21,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
@@ -84,7 +85,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return false;
     }
     final String name = target.getName();
-    if (name == null || PyUtil.isSpecialName(name)) {
+    if (name == null || PyUtilCore.isSpecialName(name)) {
       return false;
     }
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);

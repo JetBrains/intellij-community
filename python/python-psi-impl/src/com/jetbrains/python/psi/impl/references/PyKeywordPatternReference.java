@@ -10,6 +10,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -76,7 +77,7 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
 
   private static boolean isMeaningfulClassPatternAttribute(@NotNull LookupElement lookupElement) {
     String lookupString = lookupElement.getLookupString();
-    if (lookupString.contains(".") || PyUtil.isSpecialName(lookupString)) {
+    if (lookupString.contains(".") || PyUtilCore.isSpecialName(lookupString)) {
       return false;
     }
     PsiElement elem = lookupElement.getPsiElement();

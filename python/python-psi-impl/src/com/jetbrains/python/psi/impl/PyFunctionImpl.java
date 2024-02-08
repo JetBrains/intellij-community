@@ -17,18 +17,18 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -470,23 +470,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return stub.getAnnotation();
     }
     return PyFunction.super.getAnnotationValue();
-  }
-
-  @Override
-  public @Nullable PsiComment getTypeComment() {
-    final PsiComment inlineComment = PyUtil.getCommentOnHeaderLine(this);
-    if (inlineComment != null && PyTypingTypeProvider.getTypeCommentValue(inlineComment.getText()) != null) {
-      return inlineComment;
-    }
-
-    final PyStatementList statements = getStatementList();
-    if (statements.getStatements().length != 0) {
-      final PsiComment comment = as(statements.getFirstChild(), PsiComment.class);
-      if (comment != null && PyTypingTypeProvider.getTypeCommentValue(comment.getText()) != null) {
-        return comment;
-      }
-    }
-    return null;
   }
 
   @Override

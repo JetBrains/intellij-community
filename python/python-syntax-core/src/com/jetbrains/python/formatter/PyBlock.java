@@ -17,10 +17,10 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
+import com.jetbrains.python.ast.impl.PyUtilCore;
+import com.jetbrains.python.pyi.PyiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +28,6 @@ import java.util.*;
 
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
 import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
-import static com.jetbrains.python.psi.PyUtil.as;
 
 
 public class PyBlock implements ASTBlock {
@@ -369,7 +368,7 @@ public class PyBlock implements ASTBlock {
     }
     else if (parentType == PyElementTypes.GENERATOR_EXPRESSION || parentType == PyElementTypes.PARENTHESIZED_EXPRESSION) {
       final boolean tupleOrGenerator = parentType == PyElementTypes.GENERATOR_EXPRESSION ||
-                                       myNode.getPsi(PyParenthesizedExpression.class).getContainedExpression() instanceof PyTupleExpression;
+                                       myNode.getPsi(PyAstParenthesizedExpression.class).getContainedExpression() instanceof PyAstTupleExpression;
       if ((childType == PyTokenTypes.RPAR && !(tupleOrGenerator && settings.HANG_CLOSING_BRACKETS)) ||
           !hasLineBreaksBeforeInSameParent(child, 1)) {
         childIndent = Indent.getNoneIndent();
@@ -399,7 +398,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
-      final PyExpression indexExpression = ((PySubscriptionExpression)myNode.getPsi()).getIndexExpression();
+      final PyAstExpression indexExpression = ((PyAstSubscriptionExpression)myNode.getPsi()).getIndexExpression();
       if (indexExpression != null && child == indexExpression.getNode()) {
         childIndent = Indent.getNormalIndent();
       }
@@ -414,9 +413,9 @@ public class PyBlock implements ASTBlock {
           else {
             PyBlock b = myParent;
             while (b != null) {
-              if (b.getNode().getPsi() instanceof PyParenthesizedExpression ||
-                  b.getNode().getPsi() instanceof PyArgumentList ||
-                  b.getNode().getPsi() instanceof PyParameterList) {
+              if (b.getNode().getPsi() instanceof PyAstParenthesizedExpression ||
+                  b.getNode().getPsi() instanceof PyAstArgumentList ||
+                  b.getNode().getPsi() instanceof PyAstParameterList) {
                 childAlignment = getAlignmentOfChild(b, 1);
                 break;
               }
@@ -514,13 +513,14 @@ public class PyBlock implements ASTBlock {
 
   private static boolean isIfCondition(@NotNull ASTNode node) {
     @NotNull PsiElement element = node.getPsi();
-    final PyIfPart ifPart = as(element.getParent(), PyIfPart.class);
+    final PyAstIfPart ifPart = ObjectUtils.tryCast(element.getParent(), PyAstIfPart.class);
     return ifPart != null && ifPart.getCondition() == element && !ifPart.isElif();
   }
 
   private static boolean isCondition(@NotNull ASTNode node) {
     final PsiElement element = node.getPsi();
-    final PyConditionalStatementPart conditionalStatement = as(element.getParent(), PyConditionalStatementPart.class);
+    final PyAstConditionalStatementPart conditionalStatement =
+      ObjectUtils.tryCast(element.getParent(), PyAstConditionalStatementPart.class);
     return conditionalStatement != null && conditionalStatement.getCondition() == element;
   }
 
@@ -559,11 +559,11 @@ public class PyBlock implements ASTBlock {
   }
 
   private static boolean isValueOfKeyValuePair(@NotNull ASTNode node) {
-    return isChildOfKeyValuePair(node) && node.getTreeParent().getPsi(PyKeyValueExpression.class).getValue() == node.getPsi();
+    return isChildOfKeyValuePair(node) && node.getTreeParent().getPsi(PyAstKeyValueExpression.class).getValue() == node.getPsi();
   }
 
   private static boolean isEmptySequence(@NotNull ASTNode node) {
-    return node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).isEmpty();
+    return node.getPsi() instanceof PyAstSequenceExpression && ((PyAstSequenceExpression)node.getPsi()).isEmpty();
   }
 
   private boolean argumentMayHaveSameIndentAsFollowingStatementList() {
@@ -572,29 +572,29 @@ public class PyBlock implements ASTBlock {
     }
     // This check is supposed to prevent PEP8's error: Continuation line with the same indent as next logical line
     final PsiElement header = getControlStatementHeader(myNode);
-    if (header instanceof PyStatementListContainer) {
-      final PyStatementList statementList = ((PyStatementListContainer)header).getStatementList();
-      return PyUtil.onSameLine(header, myNode.getPsi()) && !PyUtil.onSameLine(header, statementList);
+    if (header instanceof PyAstStatementListContainer) {
+      final PyAstStatementList statementList = ((PyAstStatementListContainer)header).getStatementList();
+      return PyUtilCore.onSameLine(header, myNode.getPsi()) && !PyUtilCore.onSameLine(header, statementList);
     }
     return false;
   }
 
   // Check https://www.python.org/dev/peps/pep-0008/#indentation
   private static boolean hasHangingIndent(@NotNull PsiElement elem) {
-    if (elem instanceof PyCallExpression) {
-      final PyArgumentList argumentList = ((PyCallExpression)elem).getArgumentList();
+    if (elem instanceof PyAstCallExpression) {
+      final PyAstArgumentList argumentList = ((PyAstCallExpression)elem).getArgumentList();
       return argumentList != null && hasHangingIndent(argumentList);
     }
-    else if (elem instanceof PyFunction) {
-      return hasHangingIndent(((PyFunction)elem).getParameterList());
+    else if (elem instanceof PyAstFunction) {
+      return hasHangingIndent(((PyAstFunction)elem).getParameterList());
     }
 
     final PsiElement firstChild;
-    if (elem instanceof PyFromImportStatement) {
-      firstChild = ((PyFromImportStatement)elem).getLeftParen();
+    if (elem instanceof PyAstFromImportStatement) {
+      firstChild = ((PyAstFromImportStatement)elem).getLeftParen();
     }
-    else if (elem instanceof PyWithStatement) {
-      firstChild = PyPsiUtils.getFirstChildOfType(elem, PyTokenTypes.LPAR);
+    else if (elem instanceof PyAstWithStatement) {
+      firstChild = PyPsiUtilsCore.getFirstChildOfType(elem, PyTokenTypes.LPAR);
     }
     else {
       firstChild = elem.getFirstChild();
@@ -613,20 +613,20 @@ public class PyBlock implements ASTBlock {
         return !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
       }
       else {
-        if (firstItem instanceof PyNamedParameter) {
-          final PyExpression defaultValue = ((PyNamedParameter)firstItem).getDefaultValue();
+        if (firstItem instanceof PyAstNamedParameter) {
+          final PyAstExpression defaultValue = ((PyAstNamedParameter)firstItem).getDefaultValue();
           return defaultValue != null && hasHangingIndent(defaultValue);
         }
-        else if (firstItem instanceof PyKeywordArgument) {
-          final PyExpression valueExpression = ((PyKeywordArgument)firstItem).getValueExpression();
+        else if (firstItem instanceof PyAstKeywordArgument) {
+          final PyAstExpression valueExpression = ((PyAstKeywordArgument)firstItem).getValueExpression();
           return valueExpression != null && hasHangingIndent(valueExpression);
         }
-        else if (firstItem instanceof PyKeyValueExpression) {
-          final PyExpression value = ((PyKeyValueExpression)firstItem).getValue();
+        else if (firstItem instanceof PyAstKeyValueExpression) {
+          final PyAstExpression value = ((PyAstKeyValueExpression)firstItem).getValue();
           return value != null && hasHangingIndent(value);
         }
-        else if (firstItem instanceof PyWithItem) {
-          PyExpression contextExpression = ((PyWithItem)firstItem).getExpression();
+        else if (firstItem instanceof PyAstWithItem) {
+          PyAstExpression contextExpression = ((PyAstWithItem)firstItem).getExpression();
           return hasHangingIndent(contextExpression);
         }
         return hasHangingIndent(firstItem);
@@ -640,32 +640,32 @@ public class PyBlock implements ASTBlock {
   @Nullable
   private static PsiElement getFirstItem(@NotNull PsiElement elem) {
     PsiElement[] items = PsiElement.EMPTY_ARRAY;
-    if (elem instanceof PySequenceExpression) {
-      items = ((PySequenceExpression)elem).getElements();
+    if (elem instanceof PyAstSequenceExpression) {
+      items = ((PyAstSequenceExpression)elem).getElements();
     }
-    else if (elem instanceof PyParameterList) {
-      items = ((PyParameterList)elem).getParameters();
+    else if (elem instanceof PyAstParameterList) {
+      items = ((PyAstParameterList)elem).getParameters();
     }
-    else if (elem instanceof PyArgumentList) {
-      items = ((PyArgumentList)elem).getArguments();
+    else if (elem instanceof PyAstArgumentList) {
+      items = ((PyAstArgumentList)elem).getArguments();
     }
-    else if (elem instanceof PyFromImportStatement) {
-      items = ((PyFromImportStatement)elem).getImportElements();
+    else if (elem instanceof PyAstFromImportStatement) {
+      items = ((PyAstFromImportStatement)elem).getImportElements();
     }
-    else if (elem instanceof PyWithStatement) {
-      items = ((PyWithStatement)elem).getWithItems();
+    else if (elem instanceof PyAstWithStatement) {
+      items = ((PyAstWithStatement)elem).getWithItems();
     }
-    else if (elem instanceof PyParenthesizedExpression) {
-      final PyExpression containedExpression = ((PyParenthesizedExpression)elem).getContainedExpression();
-      if (containedExpression instanceof PyTupleExpression) {
-        items = ((PyTupleExpression)containedExpression).getElements();
+    else if (elem instanceof PyAstParenthesizedExpression) {
+      final PyAstExpression containedExpression = ((PyAstParenthesizedExpression)elem).getContainedExpression();
+      if (containedExpression instanceof PyAstTupleExpression) {
+        items = ((PyAstTupleExpression)containedExpression).getElements();
       }
       else if (containedExpression != null) {
         return containedExpression;
       }
     }
-    else if (elem instanceof PyComprehensionElement) {
-      return ((PyComprehensionElement)elem).getResultExpression();
+    else if (elem instanceof PyAstComprehensionElement) {
+      return ((PyAstComprehensionElement)elem).getResultExpression();
     }
     return ArrayUtil.getFirstElement(items);
   }
@@ -683,22 +683,22 @@ public class PyBlock implements ASTBlock {
   }
 
   private static boolean isIndentNext(@NotNull ASTNode child) {
-    final PsiElement psi = PsiTreeUtil.getParentOfType(child.getPsi(), PyStatement.class);
+    final PsiElement psi = PsiTreeUtil.getParentOfType(child.getPsi(), PyAstStatement.class);
 
-    return psi instanceof PyIfStatement ||
-           psi instanceof PyForStatement ||
-           psi instanceof PyWithStatement ||
-           psi instanceof PyClass ||
-           psi instanceof PyFunction ||
-           psi instanceof PyTryExceptStatement ||
-           psi instanceof PyElsePart ||
-           psi instanceof PyIfPart ||
-           psi instanceof PyWhileStatement;
+    return psi instanceof PyAstIfStatement ||
+           psi instanceof PyAstForStatement ||
+           psi instanceof PyAstWithStatement ||
+           psi instanceof PyAstClass ||
+           psi instanceof PyAstFunction ||
+           psi instanceof PyAstTryExceptStatement ||
+           psi instanceof PyAstElsePart ||
+           psi instanceof PyAstIfPart ||
+           psi instanceof PyAstWhileStatement;
   }
 
   private static boolean isSubscriptionOperand(@NotNull ASTNode child) {
     return child.getTreeParent().getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION &&
-           child.getPsi() == ((PySubscriptionExpression)child.getTreeParent().getPsi()).getOperand();
+           child.getPsi() == ((PyAstSubscriptionExpression)child.getTreeParent().getPsi()).getOperand();
   }
 
   private boolean isInControlStatement() {
@@ -707,11 +707,11 @@ public class PyBlock implements ASTBlock {
 
   @Nullable
   private static PsiElement getControlStatementHeader(@NotNull ASTNode node) {
-    final PyStatementPart statementPart = PsiTreeUtil.getParentOfType(node.getPsi(), PyStatementPart.class, false, PyStatementList.class);
+    final PyAstStatementPart statementPart = PsiTreeUtil.getParentOfType(node.getPsi(), PyAstStatementPart.class, false, PyAstStatementList.class);
     if (statementPart != null) {
       return statementPart;
     }
-    final PyWithItem withItem = PsiTreeUtil.getParentOfType(node.getPsi(), PyWithItem.class);
+    final PyAstWithItem withItem = PsiTreeUtil.getParentOfType(node.getPsi(), PyAstWithItem.class);
     if (withItem != null) {
       return withItem.getParent();
     }
@@ -719,8 +719,8 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean isSliceOperand(@NotNull ASTNode child) {
-    if (myNode.getPsi() instanceof PySliceExpression sliceExpression) {
-      final PyExpression operand = sliceExpression.getOperand();
+    if (myNode.getPsi() instanceof PyAstSliceExpression sliceExpression) {
+      final PyAstExpression operand = sliceExpression.getOperand();
       return operand.getNode() == child;
     }
     return false;
@@ -728,11 +728,11 @@ public class PyBlock implements ASTBlock {
 
   private static boolean isAfterStatementList(@NotNull ASTNode child) {
     final PsiElement prev = child.getPsi().getPrevSibling();
-    if (!(prev instanceof PyStatement)) {
+    if (!(prev instanceof PyAstStatement)) {
       return false;
     }
     final PsiElement lastChild = PsiTreeUtil.getDeepestLast(prev);
-    return lastChild.getParent() instanceof PyStatementList;
+    return lastChild.getParent() instanceof PyAstStatementList;
   }
 
   private boolean needListAlignment(@NotNull ASTNode child) {
@@ -876,14 +876,14 @@ public class PyBlock implements ASTBlock {
 
       PsiElement psi2 = node2.getPsi();
 
-      if (psi2 instanceof PyStatementList) {
+      if (psi2 instanceof PyAstStatementList) {
         // Quite odd getSpacing() doesn't get called with child1=null for the first statement
         // in the statement list of a class, yet it does get called for the preceding colon and
         // the statement list itself. Hence we have to handle blank lines around methods here in
         // addition to SpacingBuilder.
         if (myNode.getElementType() == PyElementTypes.CLASS_DECLARATION) {
-          final PyStatement[] statements = ((PyStatementList)psi2).getStatements();
-          if (statements.length > 0 && statements[0] instanceof PyFunction) {
+          final PyAstStatement[] statements = ((PyAstStatementList)psi2).getStatements();
+          if (statements.length > 0 && statements[0] instanceof PyAstFunction) {
             return getBlankLinesForOption(pySettings.BLANK_LINES_BEFORE_FIRST_METHOD);
           }
         }
@@ -900,7 +900,7 @@ public class PyBlock implements ASTBlock {
 
       // skip not inline comments to handles blank lines between various declarations
       if (psi2 instanceof PsiComment && hasLineBreaksBeforeInSameParent(node2, 1)) {
-        final PsiElement nonCommentAfter = PyPsiUtils.getNextNonCommentSibling(psi2, true);
+        final PsiElement nonCommentAfter = PyPsiUtilsCore.getNextNonCommentSibling(psi2, true);
         if (nonCommentAfter != null) {
           psi2 = nonCommentAfter;
         }
@@ -927,14 +927,14 @@ public class PyBlock implements ASTBlock {
       }
 
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
-        final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
+        final PyAstNamedParameter namedParameter = ObjectUtils.tryCast(myNode.getPsi(), PyAstNamedParameter.class);
         if (namedParameter != null && namedParameter.getAnnotation() != null) {
           return Spacing.createSpacing(1, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
 
-      if (psi1 instanceof PyImportStatementBase) {
-        if (psi2 instanceof PyImportStatementBase) {
+      if (psi1 instanceof PyAstImportStatementBase) {
+        if (psi2 instanceof PyAstImportStatementBase) {
           final Boolean leftImportIsGroupStart = psi1.getCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN);
           final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN);
           // Cleanup user data, it's no longer needed
@@ -952,8 +952,8 @@ public class PyBlock implements ASTBlock {
             return Spacing.createSpacing(0, 0, 1, false, 0);
           }
         }
-        if (psi2 instanceof PyStatement && !(psi2 instanceof PyImportStatementBase)) {
-          if (PyUtil.isTopLevel(psi1)) {
+        if (psi2 instanceof PyAstStatement && !(psi2 instanceof PyAstImportStatementBase)) {
+          if (PyUtilCore.isTopLevel(psi1)) {
             // If there is any function or class after a top-level import, it should be top-level as well
             if (PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
               return getBlankLinesForOption(Math.max(settings.BLANK_LINES_AFTER_IMPORTS,
@@ -967,14 +967,14 @@ public class PyBlock implements ASTBlock {
         }
       }
 
-      if (psi2 instanceof PyImportStatementBase && AddImportHelper.isAssignmentToModuleLevelDunderName(psi1)) {
+      if (psi2 instanceof PyAstImportStatementBase && PyUtilCore.isAssignmentToModuleLevelDunderName(psi1)) {
         // blank line between module-level dunder name and import statement
         return Spacing.createSpacing(0, 0, 2, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
 
       if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
           STATEMENT_OR_DECLARATION.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
-        if (PyUtil.isTopLevel(psi1)) {
+        if (PyUtilCore.isTopLevel(psi1)) {
           return getBlankLinesForOption(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
         }
       }
@@ -992,11 +992,11 @@ public class PyBlock implements ASTBlock {
 
   private boolean needLineBreakInStatement() {
     final PsiElement psiElement = myNode.getPsi();
-    final boolean isInStubFile = PyiUtil.isInsideStub(psiElement);
-    if (psiElement instanceof PyStatementListContainer) {
-      final PyStatement statement = PsiTreeUtil.getParentOfType(psiElement, PyStatement.class);
+    final boolean isInStubFile = PyiUtilCore.isInsideStub(psiElement);
+    if (psiElement instanceof PyAstStatementListContainer) {
+      final PyAstStatement statement = PsiTreeUtil.getParentOfType(psiElement, PyAstStatement.class);
       if (statement != null) {
-        final Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
+        final Collection<PyAstStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyAstStatementPart.class);
         return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON && !isInStubFile) ||
                (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE);
       }
@@ -1014,7 +1014,7 @@ public class PyBlock implements ASTBlock {
 
     if (newChildIndex > 0) {
       // always pass decision to a sane block from top level from file or definition
-      if (myNode.getPsi() instanceof PyFile || myNode.getElementType() == PyTokenTypes.COLON) {
+      if (myNode.getPsi() instanceof PyAstFile || myNode.getElementType() == PyTokenTypes.COLON) {
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
 
@@ -1039,13 +1039,13 @@ public class PyBlock implements ASTBlock {
       }
 
       // stmt lists, parts and definitions should also think for themselves
-      if (prevElt instanceof PyStatementList) {
-        if (dedentAfterLastStatement((PyStatementList)prevElt)) {
+      if (prevElt instanceof PyAstStatementList) {
+        if (dedentAfterLastStatement((PyAstStatementList)prevElt)) {
           return new ChildAttributes(Indent.getNoneIndent(), getChildAlignment());
         }
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
-      else if (prevElt instanceof PyStatementPart) {
+      else if (prevElt instanceof PyAstStatementPart) {
         return ChildAttributes.DELEGATE_TO_PREV_CHILD;
       }
 
@@ -1058,7 +1058,7 @@ public class PyBlock implements ASTBlock {
       while (lastChild != null) {
         final IElementType lastType = lastChild.getElementType();
         if (lastType == PyElementTypes.STATEMENT_LIST && hasLineBreaksBeforeInSameParent(lastChild, 1)) {
-          if (dedentAfterLastStatement((PyStatementList)lastChild.getPsi())) {
+          if (dedentAfterLastStatement((PyAstStatementList)lastChild.getPsi())) {
             break;
           }
           statementListsBelow++;
@@ -1099,20 +1099,20 @@ public class PyBlock implements ASTBlock {
     return new ChildAttributes(childIndent, childAlignment);
   }
 
-  private static boolean dedentAfterLastStatement(@NotNull PyStatementList statementList) {
-    final PyStatement[] statements = statementList.getStatements();
+  private static boolean dedentAfterLastStatement(@NotNull PyAstStatementList statementList) {
+    final PyAstStatement[] statements = statementList.getStatements();
     if (statements.length == 0) {
       return false;
     }
-    final PyStatement last = statements[statements.length - 1];
-    return last instanceof PyReturnStatement || last instanceof PyRaiseStatement || last instanceof PyPassStatement || isEllipsis(last);
+    final PyAstStatement last = statements[statements.length - 1];
+    return last instanceof PyAstReturnStatement || last instanceof PyAstRaiseStatement || last instanceof PyAstPassStatement || isEllipsis(last);
   }
 
-  private static boolean isEllipsis(@NotNull PyStatement statement) {
-    if (statement instanceof PyExpressionStatement) {
-      final PyExpression expression = ((PyExpressionStatement)statement).getExpression();
-      if (expression instanceof PyNoneLiteralExpression) {
-        return ((PyNoneLiteralExpression)expression).isEllipsis();
+  private static boolean isEllipsis(@NotNull PyAstStatement statement) {
+    if (statement instanceof PyAstExpressionStatement) {
+      final PyAstExpression expression = ((PyAstExpressionStatement)statement).getExpression();
+      if (expression instanceof PyAstNoneLiteralExpression) {
+        return ((PyAstNoneLiteralExpression)expression).isEllipsis();
       }
     }
 
@@ -1130,26 +1130,26 @@ public class PyBlock implements ASTBlock {
         return null;
       }
       final PsiElement elem = myNode.getPsi();
-      if (elem instanceof PyParameterList && !myContext.getSettings().ALIGN_MULTILINE_PARAMETERS) {
+      if (elem instanceof PyAstParameterList && !myContext.getSettings().ALIGN_MULTILINE_PARAMETERS) {
         return null;
       }
-      if ((elem instanceof PySequenceExpression || elem instanceof PyComprehensionElement) &&
+      if ((elem instanceof PyAstSequenceExpression || elem instanceof PyAstComprehensionElement) &&
           !myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS) {
         return null;
       }
-      if (elem instanceof PyParenthesizedExpression) {
-        final PyExpression parenthesized = ((PyParenthesizedExpression)elem).getContainedExpression();
-        if (parenthesized instanceof PyTupleExpression && !myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS) {
+      if (elem instanceof PyAstParenthesizedExpression) {
+        final PyAstExpression parenthesized = ((PyAstParenthesizedExpression)elem).getContainedExpression();
+        if (parenthesized instanceof PyAstTupleExpression && !myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS) {
           return null;
         }
       }
-      if (elem instanceof PyDictLiteralExpression) {
-        final PyKeyValueExpression lastElement = ArrayUtil.getLastElement(((PyDictLiteralExpression)elem).getElements());
+      if (elem instanceof PyAstDictLiteralExpression) {
+        final PyAstKeyValueExpression lastElement = ArrayUtil.getLastElement(((PyAstDictLiteralExpression)elem).getElements());
         if (lastElement == null || lastElement.getValue() == null /* incomplete */) {
           return null;
         }
       }
-      if (elem instanceof PyWithStatement && PyPsiUtils.getFirstChildOfType(elem, PyTokenTypes.LPAR) == null) {
+      if (elem instanceof PyAstWithStatement && PyPsiUtilsCore.getFirstChildOfType(elem, PyTokenTypes.LPAR) == null) {
         return null;
       }
       return getAlignmentForChildren();
@@ -1185,7 +1185,7 @@ public class PyBlock implements ASTBlock {
     }
 
     if (afterNode != null && afterNode.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION) {
-      final PyKeyValueExpression keyValue = (PyKeyValueExpression)afterNode.getPsi();
+      final PyAstKeyValueExpression keyValue = (PyAstKeyValueExpression)afterNode.getPsi();
       if (keyValue != null && keyValue.getValue() == null) {  // incomplete
         return Indent.getContinuationIndent();
       }
@@ -1200,7 +1200,7 @@ public class PyBlock implements ASTBlock {
     if (ourCollectionLiteralTypes.contains(parentType) || parentType == PyElementTypes.TUPLE_EXPRESSION) {
       return settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
     }
-    else if (ourListElementTypes.contains(parentType) || myNode.getPsi() instanceof PyStatementPart) {
+    else if (ourListElementTypes.contains(parentType) || myNode.getPsi() instanceof PyAstStatementPart) {
       return Indent.getNormalIndent();
     }
 
@@ -1263,7 +1263,7 @@ public class PyBlock implements ASTBlock {
         }
       }
       if (lastChild.getElementType() == PyElementTypes.BINARY_EXPRESSION) {
-        final PyBinaryExpression binaryExpression = (PyBinaryExpression)lastChild.getPsi();
+        final PyAstBinaryExpression binaryExpression = (PyAstBinaryExpression)lastChild.getPsi();
         if (binaryExpression.getRightExpression() == null) {
           return true;
         }
@@ -1271,7 +1271,7 @@ public class PyBlock implements ASTBlock {
       if (isIncompleteCall(lastChild)) return true;
     }
 
-    if (myNode.getPsi() instanceof PyArgumentList argumentList) {
+    if (myNode.getPsi() instanceof PyAstArgumentList argumentList) {
       return argumentList.getClosingParen() == null;
     }
     if (isIncompleteCall(myNode) || isIncompleteExpressionWithBrackets(myNode.getPsi())) {
@@ -1283,8 +1283,8 @@ public class PyBlock implements ASTBlock {
 
   private static boolean isIncompleteCall(@NotNull ASTNode node) {
     if (node.getElementType() == PyElementTypes.CALL_EXPRESSION) {
-      final PyCallExpression callExpression = (PyCallExpression)node.getPsi();
-      final PyArgumentList argumentList = callExpression.getArgumentList();
+      final PyAstCallExpression callExpression = (PyAstCallExpression)node.getPsi();
+      final PyAstArgumentList argumentList = callExpression.getArgumentList();
       if (argumentList == null || argumentList.getClosingParen() == null) {
         return true;
       }
@@ -1293,7 +1293,7 @@ public class PyBlock implements ASTBlock {
   }
 
   private static boolean isIncompleteExpressionWithBrackets(@NotNull PsiElement elem) {
-    if (elem instanceof PySequenceExpression || elem instanceof PyComprehensionElement || elem instanceof PyParenthesizedExpression) {
+    if (elem instanceof PyAstSequenceExpression || elem instanceof PyAstComprehensionElement || elem instanceof PyAstParenthesizedExpression) {
       return PyTokenTypes.OPEN_BRACES.contains(elem.getFirstChild().getNode().getElementType()) &&
              !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
     }

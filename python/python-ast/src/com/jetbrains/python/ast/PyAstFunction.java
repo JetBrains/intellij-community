@@ -2,10 +2,7 @@
 package com.jetbrains.python.ast;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
@@ -281,5 +278,22 @@ public interface PyAstFunction extends PsiNameIdentifierOwner, PyAstCompoundStat
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
     pyVisitor.visitPyFunction(this);
+  }
+
+  @Override
+  default @Nullable PsiComment getTypeComment() {
+    final PsiComment inlineComment = PyUtilCore.getCommentOnHeaderLine(this);
+    if (inlineComment != null && PyUtilCore.getTypeCommentValue(inlineComment.getText()) != null) {
+      return inlineComment;
+    }
+
+    final PyAstStatementList statements = getStatementList();
+    if (statements.getStatements().length != 0) {
+      final PsiComment comment = ObjectUtils.tryCast(statements.getFirstChild(), PsiComment.class);
+      if (comment != null && PyUtilCore.getTypeCommentValue(comment.getText()) != null) {
+        return comment;
+      }
+    }
+    return null;
   }
 }

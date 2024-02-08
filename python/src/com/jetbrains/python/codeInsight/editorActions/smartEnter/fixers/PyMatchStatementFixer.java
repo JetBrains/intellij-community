@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -83,7 +84,7 @@ public final class PyMatchStatementFixer extends PyFixer<PyStatement> {
     }
     if (isMatchIdentifier(statement)) {
       // "<caret>match expr"
-      PsiElement nextSibling = PyPsiUtils.getNextNonWhitespaceSiblingOnSameLine(statement);
+      PsiElement nextSibling = PyPsiUtilsCore.getNextNonWhitespaceSiblingOnSameLine(statement);
       if (nextSibling instanceof PyExpressionStatement) {
         return Couple.of(statement, nextSibling);
       }

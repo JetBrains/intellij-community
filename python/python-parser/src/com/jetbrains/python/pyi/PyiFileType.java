@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.pyi;
 
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyParsingBundle;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public final class PyiFileType extends PythonFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return PyPsiBundle.message("filetype.python.stub.description");
+    return PyParsingBundle.message("filetype.python.stub.description");
   }
 
   @NotNull
