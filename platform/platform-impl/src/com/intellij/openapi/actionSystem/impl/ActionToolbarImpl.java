@@ -976,9 +976,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                              "Newly created toolbars are updated automatically on `addNotify`.", myCreationTrace));
       return;
     }
-    if (!isTestMode && myCachedImage == null && getComponentCount() == 0 && isShowing()) {
-      addLoadingIcon();
-    }
     updateActionsWithoutLoadingIcon(includeInvisible);
   }
 
