@@ -201,7 +201,9 @@ class JarPackager private constructor(private val outDir: Path,
       return coroutineScope {
         if (nativeFiles.isNotEmpty()) {
           launch {
-            packNativePresignedFiles(nativeFiles = nativeFiles, dryRun = dryRun, context = context, outDir = outputDir)
+            packNativePresignedFiles(nativeFiles = nativeFiles, dryRun = dryRun, context = context, toRelativePath = { libName, fileName ->
+              "lib/$libName/$fileName"
+            })
           }
         }
 

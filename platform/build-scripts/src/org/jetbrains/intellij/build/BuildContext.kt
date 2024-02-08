@@ -145,7 +145,9 @@ class BuiltinModulesFileData(
   @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
 )
 
-data class DistFile(@JvmField val file: Path,
-                    @JvmField val relativePath: String,
-                    @JvmField val os: OsFamily? = null,
-                    @JvmField val arch: JvmArchitecture? = null)
+data class DistFile(
+  @JvmField val file: Path,
+  @JvmField val relativePath: String,
+  @JvmField val os: OsFamily? = null,
+  @JvmField val arch: JvmArchitecture? = null,
+)

@@ -82,19 +82,31 @@ internal suspend fun packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
   dryRun: Boolean,
   context: BuildContext,
-  outDir: Path,
+  toRelativePath: (String, String) -> String,
 ) {
   coroutineScope {
     for ((source, paths) in nativeFiles) {
       val sourceFile = source.file
       launch(Dispatchers.IO) {
-        unpackNativeLibraries(sourceFile = sourceFile, paths = paths, dryRun = dryRun, context = context, outDir = outDir)
+        unpackNativeLibraries(
+          sourceFile = sourceFile,
+          paths = paths,
+          dryRun = dryRun,
+          context = context,
+          toRelativePath = toRelativePath,
+        )
       }
     }
   }
 }
 
-private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>, dryRun: Boolean, context: BuildContext, outDir: Path) {
+private suspend fun unpackNativeLibraries(
+  sourceFile: Path,
+  paths: List<String>,
+  dryRun: Boolean,
+  context: BuildContext,
+  toRelativePath: (String, String) -> String,
+) {
   val libVersion = sourceFile.getName(sourceFile.nameCount - 2).toString()
   val signTool = context.proprietaryBuildTools.signTool
   val unsignedFiles = TreeMap<OsFamily, MutableList<Path>>()
@@ -145,11 +157,9 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
         }
       }
 
-      val relativePath = outDir.resolve(libName)
-        .resolve(getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path))
       context.addDistFile(DistFile(
         file = file,
-        relativePath = context.paths.distAllDir.relativize(relativePath).toString(),
+        relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
         os = os.takeUnless { allPlatformsRequired },
         arch = arch.takeUnless { allPlatformsRequired },
       ))
