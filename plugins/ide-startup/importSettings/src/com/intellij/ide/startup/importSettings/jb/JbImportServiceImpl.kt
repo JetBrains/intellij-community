@@ -39,7 +39,7 @@ data class JbProductInfo(override val version: String,
                          val configDirPath: Path,
                          val pluginsDirPath: Path
 ) : Product {
-  private val descriptors = CopyOnWriteArrayList<IdeaPluginDescriptorImpl>()
+  private val descriptors = CopyOnWriteArrayList<Pair<IdeaPluginDescriptorImpl, Boolean>>()
   private var descriptors2ProcessCnt: Int = 0
 
   internal fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
@@ -51,10 +51,40 @@ data class JbProductInfo(override val version: String,
       def.invokeOnCompletion {
         coroutineScope.async {
           val descr = def.await() ?: return@async
-          descriptors.add(descr)
+          val compatible = isCompatible(descr)
+          descriptors.add(descr to compatible)
         }
       }
     }
+  }
+
+  private fun isCompatible(descriptor: IdeaPluginDescriptorImpl): Boolean {
+    if (!descriptor.isEnabled) {
+      JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
+                                   "because it is disabled in the source IDE")
+      return false
+    }
+
+    // check for incompatibilities
+    for (ic in descriptor.incompatibilities) {
+      if (PluginManagerCore.getPluginSet().isPluginEnabled(ic)) {
+        JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
+                                     "because it is incompatible with ${ic}")
+        return false
+      }
+    }
+
+    // check for missing dependencies
+    for (dependency in descriptor.pluginDependencies) {
+      if (dependency.isOptional)
+        continue
+      if (!PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId)) {
+        JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
+                                      "because of the missing required dependency: ${dependency.pluginId}")
+        return false
+      }
+    }
+    return true
   }
 
   fun getPluginsDescriptors(): List<IdeaPluginDescriptorImpl> {
@@ -62,7 +92,7 @@ data class JbProductInfo(override val version: String,
     if (retval.size != descriptors2ProcessCnt) {
       JbImportServiceImpl.LOG.warn("found ${retval.size} custom plugins, but found only $descriptors2ProcessCnt")
     }
-    return retval
+    return retval.filter { it.second }.map { it.first }
   }
 
   private val _lastUsage = LocalDate.ofInstant(lastUsageTime.toInstant(), ZoneId.systemDefault())
@@ -295,7 +325,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
           if (importer.importOptions(progressIndicator, filteredCategories)) {
             restartRequired = true
           }
-        } catch (pce: ProcessCanceledException) {
+        }
+        catch (pce: ProcessCanceledException) {
           LOG.info("Import process cancelled. Proceeding to normal IDE start")
           return@async
         }
