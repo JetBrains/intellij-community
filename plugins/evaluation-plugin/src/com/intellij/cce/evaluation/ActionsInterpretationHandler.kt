@@ -55,8 +55,12 @@ class ActionsInterpretationHandler(
       workspace2.fullLineLogsStorage.enableLogging(fileActions.path)
       try {
         val sessions = interpreter.interpret(fileActions) { session -> featuresStorage.saveSession(session, fileActions.path) }
-        val fileText = FilesHelper.getFile(project, fileActions.path).text()
-        workspace2.sessionsStorage.saveSessions(FileSessionsInfo(config.projectName, fileActions.path, fileText, sessions))
+        if (sessions.isNotEmpty()) {
+          val fileText = FilesHelper.getFile(project, fileActions.path).text()
+          workspace2.sessionsStorage.saveSessions(FileSessionsInfo(config.projectName, fileActions.path, fileText, sessions))
+        } else {
+          LOG.warn("No sessions collected from file: $file")
+        }
       }
       catch (e: Throwable) {
         try {
