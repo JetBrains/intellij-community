@@ -16,35 +16,34 @@ class LocalizationUtil {
     val pluginClassLoader: ClassLoader? = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
     private fun convertPathToLocalizationFolderUsage(path: String, locale: Locale, withRegion: Boolean): String {
       val localizationFolderName = "localization"
-      val result = StringBuilder("$localizationFolderName/${locale.language}/")
+      var result = Path("$localizationFolderName/${locale.language}")
       if (withRegion && locale.country.isNotEmpty()) {
-        result.append(locale.country)
-        result.append("/")
+        result = result.resolve(locale.country)
       }
       val myPath = path.removeSuffix("/").removePrefix("/")
-      result.append(myPath)
-      return result.toString()
+      result = result.resolve(myPath)
+      return result.pathString
     }
 
     private fun convertPathToLocaleSuffixUsage(filePath: String, locale: Locale?, withRegion: Boolean): String {
       if (locale == null) return filePath
       val path = Path(filePath)
-      val fileName = path.nameWithoutExtension
+      val fileName = StringBuilder(path.nameWithoutExtension)
       val extension = path.extension
-      val foldersPath = path.parent?.pathString ?: ""
-      val result = StringBuilder(foldersPath).append("/").append(fileName)
+      val foldersPath = path.parent ?: Path("")
       val language = locale.language
       if (!language.isEmpty()) {
-        result.append('_').append(language)
+        fileName.append('_').append(language)
         val country = locale.country
         if (country.isNotEmpty() && withRegion) {
-          result.append('_').append(country)
+          fileName.append('_').append(country)
         }
       }
       if (extension.isNotEmpty()) {
-        result.append(".").append(extension)
+        fileName.append(".").append(extension)
       }
-      return result.toString()
+      val result = foldersPath.resolve(fileName.toString())
+      return result.pathString
     }
 
     fun getResourceAsStream(defaultLoader: ClassLoader?, basePath: String, fileName: String): InputStream? {
@@ -66,14 +65,14 @@ class LocalizationUtil {
       return getLocalizedPaths(fileNameAndPath.first, fileNameAndPath.second)
     }
 
-    fun getBasePathAndFileName(filePath: String): Pair<String, String> {
+    private fun getBasePathAndFileName(filePath: String): Pair<String, String> {
       val path = Path(filePath)
       val basePath = path.parent?.pathString ?: ""
       val fileName = path.fileName?.pathString ?: ""
       return Pair(basePath, fileName)
     }
 
-    fun getLocalizedPaths(basePath: String, fileName: String): List<String> {
+    private fun getLocalizedPaths(basePath: String, fileName: String): List<String> {
       val fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/")
       val result = mutableListOf<String>()
       if (locale != null) {
@@ -100,7 +99,7 @@ class LocalizationUtil {
       return getFolderLocalizedPaths(fileNameAndPath.first, fileNameAndPath.second)
     }
 
-    fun getFolderLocalizedPaths(basePath: String, fileName: String): List<String> {
+    private fun getFolderLocalizedPaths(basePath: String, fileName: String): List<String> {
       val fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/")
       val result = mutableListOf<String>()
       if (locale != null) {
