@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLineMouseEvent;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.view.EditorView;
@@ -4267,13 +4268,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             }
           }, true, false);
-          if (!expansion) {
+          if (!expansion && !(e instanceof StickyLineMouseEvent)) {
             int newY = visualLineToY(offsetToVisualLine(range.getStartOffset()));
             EditorUtil.runWithAnimationDisabled(EditorImpl.this, () -> myScrollingModel.scrollVertically(newY - scrollShift));
           }
           myGutterComponent.updateSize();
           validateMousePointer(e, null);
           e.consume();
+          if (myStickyLinesPanel != null && e instanceof StickyLineMouseEvent && !expansion) {
+            myStickyLinesPanel.repaintLines();
+          }
           return false;
         }
       }
@@ -4284,6 +4288,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         if (e.isConsumed()) return false;
         x = 0;
+      }
+      if (myStickyLinesPanel != null && e instanceof StickyLineMouseEvent) {
+        e.consume();
+        return false;
       }
 
       Caret selectionCaret = null;
@@ -5652,6 +5660,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public Dimension getPreferredSize() {
       return myScrollPane.getPreferredSize();
     }
+  }
+
+  @ApiStatus.Internal
+  public MouseListener getMouseListener() {
+    return myMouseListener;
+  }
+
+  @ApiStatus.Internal
+  public void onGutterHover(boolean hovered) {
+    myGutterComponent.onHover(hovered);
   }
 
   @Nullable StickyLinesPanel getStickyLinesPanel() {

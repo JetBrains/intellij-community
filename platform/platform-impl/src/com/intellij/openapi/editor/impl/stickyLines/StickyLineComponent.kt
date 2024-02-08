@@ -9,22 +9,18 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.util.ui.MouseEventAdapter
-import com.intellij.util.ui.MouseEventHandler
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import java.awt.Graphics
-import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
-import java.awt.event.MouseWheelEvent
+import java.awt.event.*
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
 import javax.swing.JPopupMenu
-import javax.swing.JScrollPane
+import javax.swing.SwingUtilities
 
 /**
  * Represents one editor's line (gutter + line text)
@@ -40,11 +36,10 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
 
   init {
     border = null
-    val mouseEventHandler = MyMouseEventHandler()
-    addMouseListener(mouseEventHandler)
-    addMouseMotionListener(mouseEventHandler)
-    addMouseWheelListener(MyMouseWheelListener())
-    addMouseListener(GutterMouseEventHandler())
+    val mouseListener = StickyMouseListener()
+    addMouseListener(mouseListener)
+    addMouseMotionListener(mouseListener)
+    addMouseWheelListener(mouseListener)
   }
 
   fun setLine(
@@ -156,9 +151,10 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     return "${debugText ?: ""}(primary=$primaryVisualLine, scope=$scopeVisualLine, onClick=$offsetOnClick)"
   }
 
-  inner class MyMouseEventHandler : MouseEventHandler() {
+  inner class StickyMouseListener : MouseListener, MouseMotionListener, MouseWheelListener {
     private val popMenu: JPopupMenu
     private var isPopup = false
+    private var isGutterHovered = false
 
     init {
       val actionManager = ActionManager.getInstance()
@@ -166,49 +162,98 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       popMenu = actionManager.createActionPopupMenu("StickyLine", actionGroup).component
     }
 
-    override fun handle(event: MouseEvent) {
-      if (event.isConsumed) return
+    override fun mousePressed(e: MouseEvent?)         = handleEvent(e)
+    override fun mouseReleased(e: MouseEvent?)        = handleEvent(e)
+    override fun mouseClicked(e: MouseEvent?)         = handleEvent(e)
+    override fun mouseEntered(e: MouseEvent?)         = handleEvent(e)
+    override fun mouseExited(e: MouseEvent?)          = handleEvent(e)
+    override fun mouseDragged(e: MouseEvent?)         = handleEvent(e)
+    override fun mouseMoved(e: MouseEvent?)           = handleEvent(e)
+    override fun mouseWheelMoved(e: MouseWheelEvent?) = handleEvent(e)
+
+    private fun handleEvent(event: MouseEvent?) {
+      if (event == null || event.isConsumed || isEmpty()) {
+        return
+      }
       when (event.id) {
         MouseEvent.MOUSE_ENTERED,
         MouseEvent.MOUSE_EXITED,
         MouseEvent.MOUSE_MOVED -> {
-          handleHoverEvent(event)
+          onHover(event)
         }
-        else -> {
+        MouseEvent.MOUSE_PRESSED,
+        MouseEvent.MOUSE_RELEASED,
+        MouseEvent.MOUSE_CLICKED -> {
           if (isGutterEvent(event)) {
-            handleGutter(event)
+            gutterClick(event)
           } else {
-            handleLine(event)
+            popupOrNavigate(event)
           }
         }
-      }
-    }
-
-    private fun handleHoverEvent(event: MouseEvent) {
-      when (event.id) {
-        MouseEvent.MOUSE_ENTERED -> {
-          isHovered = !isGutterEvent(event)
-          if (isHovered) {
-            repaint()
-          }
+        MouseEvent.MOUSE_WHEEL -> {
+          forwardToScrollPane(event)
         }
-        MouseEvent.MOUSE_EXITED -> {
-          isHovered = false
-          repaint()
-        }
-        MouseEvent.MOUSE_MOVED -> {
-          val isGutterEvent = isGutterEvent(event)
-          if (isGutterEvent && isHovered || !isGutterEvent && !isHovered) {
-            isHovered = !isHovered
-            repaint()
-          }
-        }
-        else -> throw IllegalArgumentException("unhandled event $event")
       }
       event.consume()
     }
 
-    private fun handleLine(event: MouseEvent) {
+    private fun forwardToScrollPane(event: MouseEvent) {
+      val converted = MouseEventAdapter.convert(event, editor.scrollPane)
+      editor.scrollPane.dispatchEvent(converted)
+    }
+
+    private fun onHover(event: MouseEvent) {
+      val isGutterEvent = isGutterEvent(event)
+      when (event.id) {
+        MouseEvent.MOUSE_ENTERED -> {
+          onTextHover(!isGutterHovered)
+          onGutterHover(isGutterHovered)
+        }
+        MouseEvent.MOUSE_EXITED -> {
+          onTextHover(false)
+          onGutterHover(false)
+        }
+        MouseEvent.MOUSE_MOVED -> {
+          if (isGutterEvent && isHovered && !isGutterHovered) {
+            onTextHover(false)
+            onGutterHover(true)
+          } else if (!isGutterEvent && !isHovered && isGutterHovered) {
+            onTextHover(true)
+            onGutterHover(false)
+          }
+        }
+        else -> throwUnhandledEvent(event)
+      }
+    }
+
+    private fun onTextHover(hovered: Boolean) {
+      if (hovered != isHovered) {
+        isHovered = hovered
+        repaint()
+      }
+    }
+
+    private fun onGutterHover(hovered: Boolean) {
+      if (hovered != isGutterHovered) {
+        isGutterHovered = hovered
+        (editor as EditorImpl).onGutterHover(hovered)
+        repaint()
+      }
+    }
+
+    private fun gutterClick(event: MouseEvent) {
+      if (event.id == MouseEvent.MOUSE_PRESSED || (event.id == MouseEvent.MOUSE_RELEASED && event.isPopupTrigger)) {
+        val converted = convert(event)
+        val mouseListener = (editor as EditorImpl).mouseListener
+        if (event.id == MouseEvent.MOUSE_PRESSED) {
+          mouseListener.mousePressed(converted)
+        } else {
+          mouseListener.mouseReleased(converted)
+        }
+      }
+    }
+
+    private fun popupOrNavigate(event: MouseEvent) {
       when (event.id) {
         MouseEvent.MOUSE_PRESSED -> {
           isPopup = event.isPopupTrigger
@@ -226,7 +271,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
           }
         }
         MouseEvent.MOUSE_CLICKED -> {
-          if (!isPopup && !isEmpty()) {
+          if (!isPopup) {
             // wrap into command to support "Back navigation" IJPL-591
             CommandProcessor.getInstance().executeCommand(
               editor.project,
@@ -243,41 +288,27 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
             )
           }
         }
-        MouseEvent.MOUSE_DRAGGED -> {}
+        else -> throwUnhandledEvent(event)
       }
-      event.consume()
-    }
-
-    private fun handleGutter(event: MouseEvent) {
-      // TODO: folding region collapsing/expanding
     }
 
     private fun isGutterEvent(event: MouseEvent): Boolean {
       return event.x <= editor.gutterComponentEx.width
     }
-  }
 
-  inner class MyMouseWheelListener : MouseEventAdapter<JScrollPane>(editor.scrollPane) {
-    override fun convertWheel(event: MouseWheelEvent): MouseWheelEvent {
-      return convert(event, editor.scrollPane) as MouseWheelEvent
-    }
-
-    override fun mouseWheelMoved(event: MouseWheelEvent?) {
-      if (event == null || event.isConsumed) return
-      editor.scrollPane.dispatchEvent(convertWheel(event))
-    }
-  }
-
-  inner class GutterMouseEventHandler : MouseEventAdapter<EditorGutterComponentEx>(editor.gutterComponentEx) {
-    override fun convert(event: MouseEvent): MouseEvent {
-      return convert(event, editor.gutterComponentEx)
-    }
-
-    override fun getMouseListener(adapter: EditorGutterComponentEx): MouseListener? {
-      if (adapter is MouseListener && adapter.isShowing) {
-        return adapter
+    private fun convert(event: MouseEvent): MouseEvent {
+      val y = if (event.isPopupTrigger) {
+        val point = event.getLocationOnScreen()
+        SwingUtilities.convertPointFromScreen(point, editor.gutterComponentEx)
+        point.y
+      } else {
+        editor.visualLineToY(primaryVisualLine) + event.y
       }
-      return null
+      return StickyLineMouseEvent(event, editor.gutterComponentEx, y)
+    }
+
+    private fun throwUnhandledEvent(event: MouseEvent) {
+      throw IllegalArgumentException("unhandled event $event")
     }
   }
 }

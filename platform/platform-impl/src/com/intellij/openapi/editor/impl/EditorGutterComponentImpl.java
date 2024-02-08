@@ -48,6 +48,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLineMouseEvent;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
@@ -2560,7 +2561,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void invokePopup(MouseEvent e) {
     int logicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
     Point point = e.getPoint();
-    PointInfo info = getPointInfo(point);
+    PointInfo info = e instanceof StickyLineMouseEvent ? null : getPointInfo(point);
     if (info != null) {
       logGutterIconClick(info.renderer);
     }
@@ -2839,6 +2840,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
+  void onHover(boolean hovered) {
+    if (ExperimentalUI.isNewUI()) {
+      myHovered = hovered;
+      updateFoldingOutlineVisibility();
+    }
+  }
+
   private static int getInitialLineNumberWidth() {
     if (ExperimentalUI.isNewUI()) {
       //have a placeholder for breakpoints
@@ -2876,9 +2884,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final HoverStateListener HOVER_STATE_LISTENER = new HoverStateListener() {
     @Override
     protected void hoverChanged(@NotNull Component component, boolean hovered) {
-      if (component instanceof EditorGutterComponentImpl gutter && ExperimentalUI.isNewUI()) {
-        gutter.myHovered = hovered;
-        gutter.updateFoldingOutlineVisibility();
+      if (component instanceof EditorGutterComponentImpl gutter) {
+        gutter.onHover(hovered);
       }
     }
   };
