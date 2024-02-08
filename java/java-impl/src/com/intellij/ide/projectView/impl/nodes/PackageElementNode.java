@@ -69,12 +69,13 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     final List<AbstractTreeNode<?>> children = new ArrayList<>();
     final Module module = value.getModule();
     final PsiPackage aPackage = value.getPackage();
+    var nodeBuilder = new PackageNodeBuilder(module, isLibraryElement());
 
     if (!getSettings().isFlattenPackages()) {
 
-      final PsiPackage[] subpackages = PackageUtil.getSubpackages(aPackage, module, isLibraryElement());
+      final PsiPackage[] subpackages = nodeBuilder.getSubpackages(aPackage);
       for (PsiPackage subpackage : subpackages) {
-        PackageUtil.addPackageAsChild(children, subpackage, module, getSettings(), isLibraryElement());
+        nodeBuilder.addPackageAsChild(children, subpackage, getSettings());
       }
     }
     // process only files in package's directories

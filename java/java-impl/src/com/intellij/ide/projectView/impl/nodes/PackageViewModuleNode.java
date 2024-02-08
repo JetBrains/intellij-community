@@ -45,7 +45,8 @@ public class PackageViewModuleNode extends AbstractModuleNode{
 
   private void addSourceRoots(Module module, ArrayList<AbstractTreeNode<?>> result) {
     List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
-    result.addAll(PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false));
+    var nodeBuilder = new PackageNodeBuilder(module, false);
+    result.addAll(nodeBuilder.createPackageViewChildrenOnFiles(roots, myProject, getSettings()));
   }
 
   private void addLibraries(Module module, ArrayList<AbstractTreeNode<?>> result) {
