@@ -5166,9 +5166,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/explicitThis/nestedReceiversExtensionDifferentParameters.kt");
         }
 
+        @TestMetadata("overloadedIntFunction.kt")
+        public void testOverloadedIntFunction() throws Exception {
+            runTest("testData/inspectionsLocal/explicitThis/overloadedIntFunction.kt");
+        }
+
         @TestMetadata("property.kt")
         public void testProperty() throws Exception {
             runTest("testData/inspectionsLocal/explicitThis/property.kt");
+        }
+
+        @TestMetadata("propertyNamedCode.kt")
+        public void testPropertyNamedCode() throws Exception {
+            runTest("testData/inspectionsLocal/explicitThis/propertyNamedCode.kt");
         }
 
         @TestMetadata("propertyReference.kt")
