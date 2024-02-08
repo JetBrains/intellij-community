@@ -1332,6 +1332,7 @@
         <action id="TestProgressWindow" internal="true" class="com.intellij.internal.TestProgressWindow"/>
         <action id="TestCoroutineProgress" internal="true" class="com.intellij.internal.TestCoroutineProgressAction"/>
         <separator/>
+        <action id="ShowBundleLocalizationDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowBundleMessagesDialogAction"/>
         <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction"/>
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd"/>
         <action id="PositionTrackerTestAction" internal="true" class="com.intellij.internal.ui.PositionTrackerTestAction"/>
