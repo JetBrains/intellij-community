@@ -3,8 +3,6 @@ package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.ide.IdeBundle
 import com.intellij.model.Pointer
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
@@ -26,7 +24,6 @@ import com.jetbrains.python.psi.*
 import java.time.Instant
 
 internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement) : DocumentationTarget {
-  private val project: Project = ApplicationManager.getApplication().runReadAction<Project> { myElement.project }
 
   override fun createPointer(): Pointer<out DocumentationTarget> {
     val psiElementPointer = myElement.createSmartPointer()
@@ -80,7 +77,6 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
       val builder = HuggingFaceHtmlBuilder(
         entityDataApiContent,
         modelCardContent,
-        project,
         entityKind
       )
 

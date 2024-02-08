@@ -13,4 +13,3 @@
     <postStartupActivity implementation="com.intellij.python.community.impl.huggingFace.service.HuggingFaceProjectStartupActivity"/>
   </extensions>
 </idea-plugin>
-

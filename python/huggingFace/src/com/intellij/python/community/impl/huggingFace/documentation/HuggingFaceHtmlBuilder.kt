@@ -3,7 +3,6 @@ package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
@@ -12,21 +11,20 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasic
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 
-private val DOWNLOADS_ICON = HtmlChunk.tag("icon").attr("src", "com.intellij.python.community.impl.huggingFace.HuggingFaceIcons.DownloadIcon")
-private val LIKES_ICON = HtmlChunk.tag("icon").attr(".src", "com.intellij.python.community.impl.huggingFace.HuggingFaceIcons.LikeIcon")
+private val DOWNLOADS_ICON = HtmlChunk.tag("icon").attr("src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Download")
+private val LIKES_ICON = HtmlChunk.tag("icon").attr(".src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Like")
 
 
 class HuggingFaceHtmlBuilder(
   private val modelDataApiContent: HuggingFaceEntityBasicApiData,
   private val modelCardContent: String,
-  private val project: Project,
   private val entityKind: HuggingFaceEntityKind
 ) {
   @NlsSafe
   suspend fun build(): String {
     val headChunk = HtmlChunk.tag("head").child(HuggingFaceQuickDocStyles.styleChunk())
     val cardHeaderChunk = generateCardHeader(modelDataApiContent)
-    val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter(project).convert(modelCardContent) }
+    val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter().convert(modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
       .setClass("content")

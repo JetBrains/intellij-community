@@ -5,12 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlin.time.Duration
 
-private const val SERVICE_NAME = "HuggingFaceSafeExecutor"
 
 @Service(Service.Level.APP)
 class HuggingFaceExecutorService(val coroutineScope: CoroutineScope)
@@ -32,28 +30,20 @@ class HuggingFaceSafeExecutor(private val coroutineScope: CoroutineScope, privat
 
   companion object {
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun createInstance(name: String = SERVICE_NAME,
-                               defaultTimeout: Duration = Duration.INFINITE,
-                               parallelism: Int = 10): HuggingFaceSafeExecutor {
+    private fun getInstance(
+      name: String = SERVICE_NAME,
+      defaultTimeout: Duration = Duration.INFINITE,
+      parallelism: Int = 10): HuggingFaceSafeExecutor {
+
       val childScope = service<HuggingFaceExecutorService>().coroutineScope.childScope(
         Dispatchers.IO.limitedParallelism(parallelism) + CoroutineName(name))
+
       return HuggingFaceSafeExecutor(childScope, defaultTimeout)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun createInstance(parentDisposable: Disposable,
-                       name: String = SERVICE_NAME,
-                       defaultTimeout: Duration = Duration.INFINITE,
-                       parallelism: Int = 10): HuggingFaceSafeExecutor {
-      val childScope = service<HuggingFaceExecutorService>().coroutineScope.childScope(
-        Dispatchers.IO.limitedParallelism(parallelism) + CoroutineName(name))
-      return HuggingFaceSafeExecutor(childScope, defaultTimeout).also {
-        Disposer.register(parentDisposable, it)
-      }
-    }
+    val instance by lazy { getInstance() }
 
-    val instance: HuggingFaceSafeExecutor = createInstance()
-
+    const val SERVICE_NAME = "HuggingFaceSafeExecutor"
     val LOG = Logger.getInstance(HuggingFaceSafeExecutor::class.java)
   }
 }

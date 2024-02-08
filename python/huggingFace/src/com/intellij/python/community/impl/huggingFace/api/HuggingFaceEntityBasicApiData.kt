@@ -4,7 +4,6 @@ package com.intellij.python.community.impl.huggingFace.api
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import org.jetbrains.annotations.Nls
-import org.codehaus.jettison.json.JSONObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -18,36 +17,6 @@ data class HuggingFaceEntityBasicApiData (
   val lastModified: String,
   @NlsSafe val pipelineTag: String
 ) {
-  @Suppress("unused")
-  fun toJson(): JSONObject {
-    return JSONObject(mapOf(
-      "kind" to kind.ordinal,
-      "itemId" to itemId,
-      "gated" to gated,
-      "downloads" to downloads,
-      "likes" to likes,
-      "lastModified" to lastModified,
-      "pipeline_tag" to pipelineTag
-    ))
-  }
-
-  companion object {
-    @Suppress("unused")
-    fun fromJson(json: JSONObject): HuggingFaceEntityBasicApiData {
-      @NlsSafe val itemId = json.getString("itemId")
-      @NlsSafe val pipelineTag = json.getString("pipeline_tag")
-      return HuggingFaceEntityBasicApiData(
-        HuggingFaceEntityKind.entries[json.getInt("kind")],
-        itemId,
-        json.getString("gated"),
-        json.getInt("downloads"),
-        json.getInt("likes"),
-        json.getString("lastModified"),
-        pipelineTag
-      )
-    }
-  }
-
   @Nls
   private fun humanReadableNumber(rawNumber: Int): String {
     if (rawNumber < 1000) return rawNumber.toString()

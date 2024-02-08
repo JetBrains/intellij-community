@@ -9,83 +9,16 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceLastCache
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceSafeExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.codehaus.jettison.json.JSONArray
-import org.codehaus.jettison.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Duration
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 
-
-data class HuggingFaceExtendedApiModelData(
-  val id: String,
-  val author: String,
-  val lastModified: String,
-  val gated: Boolean,
-  val pipelineTag: String?,
-  val libraryName: String?,
-  val likes: Int,
-  val config: String,
-  val cardData: CardDataBase,
-  val transformersInfo: TransformersInfoBase?
-)
-
-data class CardDataBase(
-  val language: List<String>?,
-  val tags: List<String>?,
-  val license: String?
-)
-
-data class TransformersInfoBase(
-  val autoModel: String,
-  val pipelineTag: String,
-  val processor: String
-)
 
 
 object HuggingFaceApi {
-  @Suppress("unused")  // will be necessary for future tasks like PY-63671
-  suspend fun fetchDetailedModelDataFromApi(modelID: String): HuggingFaceExtendedApiModelData? {
-    val apiEndpoint = HuggingFaceURLProvider.getModelApiLink(modelID)
-
-    val huggingFaceExecutor = HuggingFaceSafeExecutor.instance
-    return huggingFaceExecutor.asyncSuspend("Fetching Model Data") {
-      val connection: HttpURLConnection = apiEndpoint.openConnection() as HttpURLConnection
-      connection.requestMethod = "GET"
-
-      if (connection.responseCode == 200) {
-        val rawJsonResponse: String = connection.inputStream.bufferedReader().use { it.readText() }
-        val jsonResponse = JSONObject(rawJsonResponse)
-
-        HuggingFaceExtendedApiModelData(
-          id = jsonResponse.getString("id"),
-          author = jsonResponse.getString("author"),
-          lastModified = jsonResponse.getString("lastModified"),
-          gated = jsonResponse.getString("gated").toBoolean(),
-          pipelineTag = jsonResponse.optString("pipeline_tag", null),
-          libraryName = jsonResponse.optString("library_name", null),
-          likes = jsonResponse.getInt("likes"),
-          config = jsonResponse.getString("config"),
-          cardData = jsonResponse.getJSONObject("cardData").let {
-            CardDataBase(
-              language = it.optJSONArray("language")?.let { array -> List(array.length()) { i -> array.getString(i) } },
-              tags = it.optJSONArray("tags")?.let { array -> List(array.length()) { i -> array.getString(i) } },
-              license = it.optString("license", null)
-            )
-          },
-          transformersInfo = jsonResponse.optJSONObject("transformersInfo")?.let {
-            TransformersInfoBase(
-              autoModel = it.getString("auto_model"),
-              pipelineTag = it.getString("pipeline_tag"),
-              processor = it.getString("processor")
-            )
-          }
-        )
-      } else {
-        null
-      }
-    }.await()
-  }
-
   fun fillCacheWithBasicApiData(endpoint: HuggingFaceEntityKind, cache: HuggingFaceCache, maxCount: Int, project: Project) {
     val refreshState = project.getService(HuggingFaceLastCacheRefresh::class.java)
 
@@ -137,28 +70,36 @@ object HuggingFaceApi {
     return nextLinkMatch?.let { URL(it.groupValues[1]) }
   }
 
-  private fun parseBasicEntityData(endpointKind: HuggingFaceEntityKind, json: String): Map<String, HuggingFaceEntityBasicApiData> {
-    val jsonArray = JSONArray(json)
+  private fun parseBasicEntityData(
+    endpointKind: HuggingFaceEntityKind,
+    json: String
+  ): Map<String, HuggingFaceEntityBasicApiData> {
+    val jsonArray: JsonArray = JsonParser.parseString(json).asJsonArray
     val modelDataMap = mutableMapOf<String, HuggingFaceEntityBasicApiData>()
 
-    for (i in 0 until jsonArray.length()) {
-      val jsonObject = jsonArray.getJSONObject(i)
-      jsonObject.optString("id").let {id: String ->
+    jsonArray.forEach { element ->
+      val jsonObject: JsonObject = element.asJsonObject
+      jsonObject.get("id")?.asString?.let { id ->
         if (id.isNotEmpty()) {
-
           @NlsSafe val nlsSafeId = id
-          @NlsSafe val pipelineTag = jsonObject.optString("pipeline_tag", "unknown")
+          @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asString ?: "unknown"
+
+          val gated = jsonObject.get("gated")?.asString ?: "true"
+          val downloads = jsonObject.get("downloads")?.asInt ?: -1
+          val likes = jsonObject.get("likes")?.asInt ?: -1
+          val lastModified =
+            jsonObject.get("lastModified")?.asString ?: "1000-01-01T01:01:01.000Z"
 
           val modelData = HuggingFaceEntityBasicApiData(
             endpointKind,
             nlsSafeId,
-            jsonObject.optString("gated", "true"),
-            jsonObject.optInt("downloads", -1),
-            jsonObject.optInt("likes", -1),
-            jsonObject.optString("lastModified", "1000-01-01T01:01:01.000Z"),
+            gated,
+            downloads,
+            likes,
+            lastModified,
             pipelineTag
           )
-          modelDataMap[id] = modelData
+          modelDataMap[nlsSafeId] = modelData
         }
       }
     }
