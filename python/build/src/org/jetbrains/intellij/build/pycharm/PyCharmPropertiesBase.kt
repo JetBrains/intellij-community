@@ -28,17 +28,17 @@ abstract class PyCharmPropertiesBase : JetBrainsProductProperties() {
     ))
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
     val tasks = createBuildTasks(context)
     tasks.zipSourcesOfModules(
       modules = listOf("intellij.python.community", "intellij.python.psi"),
-      targetFile = Path.of("$targetDirectory/lib/src/pycharm-openapi-src.zip"),
+      targetFile = Path.of("$targetDir/lib/src/pycharm-openapi-src.zip"),
       includeLibraries = false,
     )
 
     copyDirWithFileFilter(
       fromDir = getKeymapReferenceDirectory(context),
-      targetDir = Path.of(targetDirectory, "help"),
+      targetDir = targetDir.resolve("help"),
       fileFilter = Predicate { it.toString().endsWith(".pdf") }
     )
   }

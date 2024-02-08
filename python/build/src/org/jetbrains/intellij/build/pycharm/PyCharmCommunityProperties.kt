@@ -58,12 +58,12 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     mavenArtifacts.forIdeModules = true
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-    super.copyAdditionalFiles(context, targetDirectory)
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
+    super.copyAdditionalFiles(context, targetDir)
 
-    val targetDir = Path.of(targetDirectory, "license")
-    copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
-    copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), targetDir)
+    val licenseTargetDir = targetDir.resolve("license")
+    copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), licenseTargetDir)
+    copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), licenseTargetDir)
   }
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {

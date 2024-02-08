@@ -25,11 +25,10 @@ class BuildPaths(
    */
   val artifactDir: Path = buildOutputDir.resolve("artifacts"),
 ) {
-  val communityHomeDir: Path = communityHomeDirRoot.communityRoot
-
   /**
    * Path to a directory where idea/community Git repository is checked out
    */
+  val communityHomeDir: Path = communityHomeDirRoot.communityRoot
   val communityHome: String = FileUtilRt.toSystemIndependentName(communityHomeDir.toString())
 
   /**
@@ -41,8 +40,6 @@ class BuildPaths(
    * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems
    */
   var distAllDir: Path = buildOutputDir.resolve("dist.all")
-
-  fun getDistAll(): String = FileUtilRt.toSystemIndependentName(distAllDir.toString())
 
   /**
    * Path to a directory where temporary files required for a particular build step can be stored

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.io.Decompressor
@@ -10,7 +10,7 @@ object ExternalPluginBundler {
   fun bundle(pluginName: String,
              dependenciesProjectDir: Path,
              context: BuildContext,
-             targetDirectory: String,
+             targetDirectory: Path,
              buildTaskName: String = pluginName) {
     GradleRunner(gradleProjectDir = dependenciesProjectDir,
                  options = context.options,
@@ -30,7 +30,7 @@ object ExternalPluginBundler {
     extractPlugin(pluginZip, targetDirectory)
   }
 
-  fun extractPlugin(pluginZip: Path, targetDirectory: String) {
-    Decompressor.Zip(pluginZip).extract(Path.of(targetDirectory, "plugins"))
+  fun extractPlugin(pluginZip: Path, targetDirectory: Path) {
+    Decompressor.Zip(pluginZip).extract(targetDirectory.resolve("plugins"))
   }
 }

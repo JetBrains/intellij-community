@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
@@ -29,12 +29,12 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-    copyAdditionalFilesBlocking(context, targetDirectory)
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
+    copyAdditionalFilesBlocking(context, targetDir)
   }
 
   @Obsolete
-  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path) {
   }
 
   override fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {

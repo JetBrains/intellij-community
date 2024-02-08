@@ -90,10 +90,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     additionalVmOptions += "-Dide.show.tips.on.startup.default.value=false"
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-    super.copyAdditionalFiles(context, targetDirectory)
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
+    super.copyAdditionalFiles(context, targetDir)
 
-    val targetDir = Path.of(targetDirectory)
     copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), targetDir)
     copyFileToDir(context.paths.communityHomeDir.resolve("NOTICE.txt"), targetDir)
 
@@ -101,10 +100,10 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       sourceDir = context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"),
       targetDir = targetDir.resolve("bin"),
     )
-    bundleExternalPlugins(context, targetDirectory)
+    bundleExternalPlugins(context, targetDir)
   }
 
-  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: String) {
+  protected open fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {
     //temporary unbundle VulnerabilitySearch
     //ExternalPluginBundler.bundle('VulnerabilitySearch',
     //                             "$buildContext.paths.communityHome/build/dependencies",
