@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -304,7 +304,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       }
       RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
       if (Registry.is("execution.dump.threads.using.attach") && processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
-        String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)processHandler).getProcess()));
+        String pid = String.valueOf(((BaseProcessHandler<?>)processHandler).getProcess().pid());
         RunTab runTab = event.getData(RunTab.KEY);
         GlobalSearchScope scope =
           runTab instanceof RunContentBuilder ? ((RunContentBuilder)runTab).getSearchScope() : GlobalSearchScope.allScope(project);
@@ -424,8 +424,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
             if (debugProcess instanceof JavaDebugProcess) {
               RemoteConnection connection = ((JavaDebugProcess)debugProcess).getDebuggerSession().getProcess().getConnection();
               if (connection instanceof PidRemoteConnection) {
-                if (((PidRemoteConnection)connection).getPid()
-                  .equals(String.valueOf(OSProcessUtil.getProcessID(myProcessHandler.getProcess())))) {
+                if (((PidRemoteConnection)connection).getPid().equals(String.valueOf(myProcessHandler.getProcess().pid()))) {
                   myAttachedSession.set(started ? debugProcess.getSession() : null);
                 }
               }
