@@ -30,7 +30,7 @@ internal val COMBINED_DIFF_PREVIEW_MODEL = Key.create<CombinedDiffPreviewModel>(
 abstract class CombinedDiffPreviewVirtualFile() : CombinedDiffVirtualFile("CombinedDiffPreviewVirtualFile"), DiffVirtualFileWithTabName {
   override fun getEditorTabName(project: Project, editors: List<FileEditor>): String? {
     val processor = editors.filterIsInstance<DiffEditorViewerFileEditor>()
-      .map { it.processor }
+      .map { it.editorViewer }
       .filterIsInstance<CombinedDiffComponentProcessor>()
       .firstOrNull()
     return processor?.context?.getUserData(COMBINED_DIFF_PREVIEW_TAB_NAME)?.invoke()

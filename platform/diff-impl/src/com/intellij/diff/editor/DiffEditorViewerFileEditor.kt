@@ -20,22 +20,22 @@ import javax.swing.JComponent
 @Suppress("LeakingThis")
 open class DiffEditorViewerFileEditor(
   file: VirtualFile,
-  val processor: DiffEditorViewer
+  val editorViewer: DiffEditorViewer
 ) : DiffFileEditorBase(file,
-                       processor.component,
-                       processor.disposable), FileEditorWithTextEditors {
+                       editorViewer.component,
+                       editorViewer.disposable), FileEditorWithTextEditors {
 
   init {
-    processor.addListener(MyEditorViewerListener(), this)
+    editorViewer.addListener(MyEditorViewerListener(), this)
   }
 
   override fun dispose() {
-    val explicitDisposable = processor.context.getUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE)
+    val explicitDisposable = editorViewer.context.getUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE)
     if (explicitDisposable != null) {
       explicitDisposable.run()
     }
     else {
-      Disposer.dispose(processor.disposable)
+      Disposer.dispose(editorViewer.disposable)
     }
     super.dispose()
   }
@@ -45,27 +45,27 @@ open class DiffEditorViewerFileEditor(
       return FileEditorState.INSTANCE
     }
 
-    return processor.getState(level)
+    return editorViewer.getState(level)
   }
 
   override fun setState(state: FileEditorState) {
     if (!Registry.`is`(DIFF_IN_NAVIGATION_HISTORY_KEY)) return
 
-    processor.setState(state)
+    editorViewer.setState(state)
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? = processor.preferredFocusedComponent
+  override fun getPreferredFocusedComponent(): JComponent? = editorViewer.preferredFocusedComponent
 
   override fun selectNotify() {
-    processor.fireProcessorActivated()
+    editorViewer.fireProcessorActivated()
   }
 
-  override fun getFilesToRefresh(): List<VirtualFile> = processor.filesToRefresh
-  override fun getEmbeddedEditors(): List<Editor> = processor.embeddedEditors
+  override fun getFilesToRefresh(): List<VirtualFile> = editorViewer.filesToRefresh
+  override fun getEmbeddedEditors(): List<Editor> = editorViewer.embeddedEditors
 
   private inner class MyEditorViewerListener : DiffEditorViewerListener {
     override fun onActiveFileChanged() {
-      val project = processor.context.project ?: return
+      val project = editorViewer.context.project ?: return
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(file)
     }
   }

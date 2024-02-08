@@ -70,7 +70,7 @@ public class PreviewDiffVirtualFile extends DiffVirtualFile implements DiffVirtu
   @Override
   public @NlsContexts.TabTitle String getEditorTabName(@NotNull Project project, @NotNull List<? extends FileEditor> editors) {
     DiffEditorViewerFileEditor editor = ContainerUtil.findInstance(editors, DiffEditorViewerFileEditor.class);
-    DiffRequestProcessor processor = editor != null ? ObjectUtils.tryCast(editor.getProcessor(), DiffRequestProcessor.class) : null;
+    DiffRequestProcessor processor = editor != null ? ObjectUtils.tryCast(editor.getEditorViewer(), DiffRequestProcessor.class) : null;
     return myProvider.getEditorTabName(processor);
   }
 }

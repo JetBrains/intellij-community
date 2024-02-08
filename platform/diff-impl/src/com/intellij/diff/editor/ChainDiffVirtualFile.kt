@@ -12,7 +12,7 @@ open class ChainDiffVirtualFile(val chain: DiffRequestChain, name: String) : Dif
 
   override fun getEditorTabName(project: Project, editors: List<FileEditor>): String? {
     val processor = editors.filterIsInstance<DiffEditorViewerFileEditor>()
-      .map { it.processor }
+      .map { it.editorViewer }
       .filterIsInstance<DiffRequestProcessor>()
       .firstOrNull()
     return processor?.activeRequest?.title
