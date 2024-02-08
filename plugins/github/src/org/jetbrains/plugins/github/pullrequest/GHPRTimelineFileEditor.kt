@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsManager.TOPIC
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +65,7 @@ internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
   }
 
   private fun doCreateContent(): JComponent {
-    val panel = JPanel(null)
+    val panel = JBPanel<JBPanel<*>>()
     cs.launchNow {
       timelineVm.detailsVm.details.collectLatest {
         when (val result = it.result) {
