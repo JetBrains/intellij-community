@@ -170,7 +170,8 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     override val isExternalSystemStorageEnabled: Boolean
       get() = (componentManager as Module?)?.project?.isExternalStorageEnabled == true
 
-    override val isUseVfsForWrite: Boolean = !useBackgroundSave
+    override val isUseVfsForWrite: Boolean
+      get() = !useBackgroundSave
 
     override fun createFileBasedStorage(
       file: Path,

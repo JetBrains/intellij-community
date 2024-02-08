@@ -38,7 +38,6 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
 internal val LOG: Logger = logger<ComponentStoreImpl>()
 private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
@@ -95,10 +94,10 @@ abstract class ComponentStoreImpl : IComponentStore {
   fun getComponentNames(): Set<String> = HashSet(components.keys)
 
   override fun clearCaches() {
-    components.values.forEach(Consumer {
-      it.updateModificationCount(-1)
-    })
-    (storageManager as? StateStorageManagerImpl)?.clearStorages()
+    for (info in components.values) {
+      info.updateModificationCount(-1)
+    }
+    storageManager.clearStorages()
   }
 
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
@@ -701,7 +700,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override fun release() {
     components.clear()
-    (storageManager as? StateStorageManagerImpl)?.disposed()
+    storageManager.release()
   }
 
   override fun toString(): String = storageManager.componentManager.toString()
@@ -721,7 +720,7 @@ interface ExternalStorageWithInternalPart {
  * Provides a way to temporarily ignore a known component extending deprecated JDOMExternalizable interface to avoid having unnecessary
  * errors in the log. Each entry must be accompanied by a link to the corresponding YouTrack issue.
  */
-private val ignoredDeprecatedJDomExternalizableComponents = setOf(
+private val ignoredDeprecatedJDomExternalizableComponents = java.util.Set.of(
   "jetbrains.buildServer.codeInspection.InspectionPassRegistrar", //TW-82189
 )
 
@@ -731,7 +730,7 @@ internal fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
   }
 
   if (!storages.first().deprecated) {
-    val othersAreDeprecated = (1 until storages.size).any { storages[it].deprecated }
+    val othersAreDeprecated = (1 until storages.size).any { storages.get(it).deprecated }
     if (othersAreDeprecated) {
       return storages.toList()
     }

@@ -231,14 +231,15 @@ open class StateStorageManagerImpl(
     return storage
   }
 
-  internal open val isUseVfsForWrite: Boolean = false
+  internal open val isUseVfsForWrite: Boolean
+    get() = false
 
   protected open fun createDirectoryBasedStorage(
     dir: Path,
     collapsedPath: String,
     @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
   ): StateStorage {
-    return TrackedDirectoryStorage(storageManager = this, dir, splitter, macroSubstitutor)
+    return TrackedDirectoryStorage(storageManager = this, dir = dir, splitter = splitter, macroSubstitutor = macroSubstitutor)
   }
 
   protected open fun createFileBasedStorage(
@@ -272,7 +273,8 @@ open class StateStorageManagerImpl(
     dir: Path,
     @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
     macroSubstitutor: PathMacroSubstitutor?
-  ) : DirectoryBasedStorage(dir, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
+  ) : DirectoryBasedStorage(dir = dir, splitter = splitter, pathMacroSubstitutor = macroSubstitutor),
+      StorageVirtualFileTracker.TrackedStorage {
     override val isUseVfsForWrite: Boolean
       get() = storageManager.isUseVfsForWrite
   }
@@ -340,7 +342,7 @@ open class StateStorageManagerImpl(
   protected open fun beforeElementLoaded(element: Element) {
   }
 
-  fun clearStorages() {
+  final override fun clearStorages() {
     storageLock.write {
       try {
         if (virtualFileTracker != null) {
@@ -390,7 +392,7 @@ open class StateStorageManagerImpl(
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
 
-  internal fun disposed() {
+  final override fun release() {
     virtualFileTracker?.remove { it.storageManager === this }
     controller?.release()
   }

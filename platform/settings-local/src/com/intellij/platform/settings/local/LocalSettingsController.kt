@@ -42,7 +42,9 @@ private class LocalSettingsControllerService : SettingsSavingComponent {
   val storeManager: MvStoreManager = MvStoreManager()
 
   // Telemetry is not ready at this point yet
-  private val cacheMap by lazy { InternalStateStorageService(storeManager.openMap("cache_v1"), telemetryScopeName = "cacheStateStorage") }
+  private val cacheMap by lazy {
+    InternalStateStorageService(storeManager.openMap("cache_v1"), telemetryScopeName = "cacheStateStorage")
+  }
 
   private val internalMap by lazy {
     InternalStateStorageService(storeManager.openMap("internal_v1"), telemetryScopeName = "internalStateStorage")

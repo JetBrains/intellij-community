@@ -87,7 +87,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     commitComponents(isForce = forceSavingAllSettings, sessionManager = sessionManager, saveResult = saveResult)
   }
 
-  override suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
+  final override suspend fun commitComponents(isForce: Boolean, sessionManager: SaveSessionProducerManager, saveResult: SaveResult) {
     // ensure that this task will not interrupt regular saving
     runCatching {
       commitObsoleteComponents(session = sessionManager, isProjectLevel = false)
@@ -108,5 +108,11 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
         }
       }
     }
+  }
+
+  final override fun release() {
+    asyncSettingsSavingComponents.drop()
+
+    super.release()
   }
 }

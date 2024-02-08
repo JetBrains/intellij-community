@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
+@ApiStatus.NonExtendable
 interface StateStorageManager {
   val macroSubstitutor: PathMacroSubstitutor?
     get() = null
@@ -26,7 +29,17 @@ interface StateStorageManager {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, message = "Use expandMacro(collapsedPath)", replaceWith = ReplaceWith("expandMacro(collapsedPath)"))
-  fun expandMacros(collapsedPath: String): String = expandMacro(collapsedPath).systemIndependentPath
+  fun expandMacros(collapsedPath: String): String = expandMacro(collapsedPath).invariantSeparatorsPathString
+
+  @IntellijInternalApi
+  @Internal
+  fun clearStorages() {
+  }
+
+  @IntellijInternalApi
+  @Internal
+  fun release() {
+  }
 }
 
 interface RenameableStateStorageManager {
