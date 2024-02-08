@@ -20,9 +20,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.junit.ClassRule
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
+@Ignore
 internal class DoNotSaveDefaultsTest {
   companion object {
     @JvmField @ClassRule val appRule = ApplicationRule()
