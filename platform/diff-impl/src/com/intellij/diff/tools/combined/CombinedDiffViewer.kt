@@ -5,7 +5,6 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
-import com.intellij.diff.impl.ui.DiffInfo
 import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffViewer
@@ -118,21 +117,20 @@ class CombinedDiffViewer(
 
   private val blockListeners = EventDispatcher.create(BlockListener::class.java)
 
-  private val diffInfo = object : DiffInfo() {
-    private var currentIndex: Int = 0
-    private val currentBlock get() = blockState[currentIndex] ?: getCurrentBlockId()
-
-    fun updateForBlock(blockId: CombinedBlockId) {
-      val newIndex = blockState.indexOf(blockId)
-      if (currentIndex != newIndex) {
-        currentIndex = newIndex
-        update()
-      }
+  private fun updateDiffInfo(blockId: CombinedBlockId) {
+    val viewer = diffViewers[blockId] as? DiffViewerBase
+    if (viewer == null) {
+      viewState.setDiffInfo(CombinedDiffUIState.DiffInfoState.Empty)
+      return
     }
 
-    override fun getContentTitles(): List<String?> {
-      return currentBlock.let { blockId -> diffViewers[blockId] as? DiffViewerBase }?.request?.contentTitles ?: return emptyList()
+    val titles = viewer.request.contentTitles.filter { it.isNotBlank() }
+    val newDiffInfo = when (titles.size) {
+      0 -> CombinedDiffUIState.DiffInfoState.Empty
+      1 -> CombinedDiffUIState.DiffInfoState.SingleTitle(titles[0])
+      else -> CombinedDiffUIState.DiffInfoState.TwoTitles(titles[0], titles[1])
     }
+    viewState.setDiffInfo(newDiffInfo)
   }
 
   private val combinedEditorSettingsAction =
@@ -170,7 +168,7 @@ class CombinedDiffViewer(
       createDiffBlock.component.validate()
       newViewer.init()
 
-      diffInfo.update()
+      updateDiffInfo(blockState.currentBlock)
       val requestFocus = DiffUtil.isUserDataFlagSet(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, context)
       if (requestFocus && blockState.currentBlock == blockId) {
         requestFocusInDiffViewer(blockId)
@@ -215,7 +213,6 @@ class CombinedDiffViewer(
   fun init(): FrameDiffTool.ToolbarComponents {
     val components = FrameDiffTool.ToolbarComponents()
     components.toolbarActions = createToolbarActions()
-    components.diffInfo = diffInfo
     components.needTopToolbarBorder = true
     return components
   }
@@ -392,7 +389,7 @@ class CombinedDiffViewer(
       viewState.setStickyHeaderUnderBorder(true)
     }
 
-    diffInfo.updateForBlock(block.id)
+    updateDiffInfo(block.id)
   }
 
   fun getCurrentBlockId(): CombinedBlockId = blockState.currentBlock

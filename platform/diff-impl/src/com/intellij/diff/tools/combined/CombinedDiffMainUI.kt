@@ -20,6 +20,7 @@ import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 import com.intellij.openapi.project.DumbAwareAction
@@ -28,26 +29,34 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
+import java.lang.Runnable
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
 class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToChangeAction: AnAction?) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private val cs: CoroutineScope = GlobalScope.namedChildScope("CombinedDiffMainUI", Dispatchers.EDT)
 
   private val context: DiffContext = model.context
   private val settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE))
@@ -65,6 +74,8 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   private val combinedDiffUIState = CombinedDiffUIState()
 
   private val mainToolbar: CombinedDiffMainToolbar = CombinedDiffMainToolbar(
+    cs,
+    combinedDiffUIState,
     mainPanel,
     diffToolChooser,
     goToChangeAction,
@@ -87,6 +98,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   private var searchController: CombinedDiffSearchController? = null
 
   init {
+    Disposer.register(ourDisposable) {
+      cs.cancel()
+    }
+
     Touchbar.setActions(mainPanel, touchbarActionGroup)
     updateAvailableDiffTools()
 
@@ -111,7 +126,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     clear()
     contentPanel.setContent(viewer.component)
     val toolbarComponents = viewer.init()
-    mainToolbar.updateDiffInfo(toolbarComponents.diffInfo)
     mainToolbar.updateToolbar(blockState, toolbarComponents.toolbarActions)
     buildActionPopup(toolbarComponents.popupActions)
   }
@@ -318,6 +332,11 @@ class CombinedDiffUIState {
   private val searchMode: MutableStateFlow<Boolean> = MutableStateFlow(false)
   private val stickyHeaderUnderBorder: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+  private val _diffInfoState: MutableStateFlow<DiffInfoState> = MutableStateFlow(DiffInfoState.Empty)
+
+  val diffInfoStateFlow: StateFlow<DiffInfoState>
+    get() = _diffInfoState
+
   val separatorState: Flow<Boolean> = combine(searchMode, stickyHeaderUnderBorder) { search, header -> search || header }
 
   fun setSearchMode(isSearchMode: Boolean) {
@@ -331,5 +350,16 @@ class CombinedDiffUIState {
   fun reset() {
     setStickyHeaderUnderBorder(false)
     setSearchMode(false)
+    setDiffInfo(DiffInfoState.Empty)
+  }
+
+  fun setDiffInfo(diffInfoState: DiffInfoState) {
+    _diffInfoState.value = diffInfoState
+  }
+
+  sealed class DiffInfoState {
+    data object Empty : DiffInfoState()
+    data class SingleTitle(@Nls val title: String) : DiffInfoState()
+    data class TwoTitles(@Nls val leftTitle: String, @Nls val rightTitle: String) : DiffInfoState()
   }
 }

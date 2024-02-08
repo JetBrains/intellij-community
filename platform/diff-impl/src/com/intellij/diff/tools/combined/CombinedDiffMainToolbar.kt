@@ -2,33 +2,43 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
-import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.ui.DiffToolChooser
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
-import com.intellij.ide.DataManager
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.ui.GuiUtils
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.Centerizer
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+import java.awt.*
 import javax.swing.JComponent
+import javax.swing.JPanel
+import kotlin.math.max
 
 internal class CombinedDiffMainToolbar(
+  private val cs: CoroutineScope,
+  private val uiState: CombinedDiffUIState,
   private val targetComponent: JComponent,
   private val diffToolChooser: DiffToolChooser,
   private val goToChangeAction: AnAction?,
   private val context: DiffContext
 ) {
   private val searchPanel = Wrapper()
-  private val diffInfoPanel = Wrapper()
+  private val diffInfoPanel = DiffInfoComponent()
 
   private val leftToolbarPanel: Centerizer
   private val rightToolbarPanel: Centerizer
@@ -39,11 +49,8 @@ internal class CombinedDiffMainToolbar(
   private val rightToolbarGroup = DefaultActionGroup()
   private val rightToolbar: ActionToolbar
 
-  private val panel: BorderLayoutPanel = BorderLayoutPanel()
-
-  val component: JComponent = panel
-
-  private val topPanel: BorderLayoutPanel
+  private val topPanel: JPanel = JPanel(null)
+  val component: JComponent = topPanel
 
   init {
     leftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, leftToolbarGroup, true)
@@ -61,30 +68,38 @@ internal class CombinedDiffMainToolbar(
     rightToolbar.component.border = JBUI.Borders.empty()
     rightToolbarPanel = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)
 
-    topPanel = buildTopPanel()
+    GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
+    GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
     configureTopPanelForActionsMode()
-    panel.addToTop(topPanel)
-      .addToBottom(searchPanel)
+
+    cs.launch {
+      uiState.diffInfoStateFlow.collectLatest { diffInfo ->
+        diffInfoPanel.updateForState(diffInfo)
+      }
+    }
   }
 
   fun setSearchComponent(searchComponent: JComponent) {
     searchPanel.setContent(searchComponent)
     searchComponent.border = SideBorder(JBColor.border(), SideBorder.LEFT)
-    topPanel.removeAll()
-    topPanel.addToCenter(searchPanel).addToLeft(leftToolbarPanel)
     configureTopPanelForSearchMode()
     revalidateAndRepaint()
   }
 
   fun hideSearch() {
     searchPanel.setContent(null)
-    topPanel.removeAll()
-    topPanel.addToCenter(diffInfoPanel).addToLeft(leftToolbarPanel).addToRight(rightToolbarPanel)
     configureTopPanelForActionsMode()
     revalidateAndRepaint()
   }
 
   private fun configureTopPanelForActionsMode() {
+    topPanel.apply {
+      removeAll()
+      layout = MainToolbarLayout(leftToolbarPanel, rightToolbarPanel, diffInfoPanel)
+      add(diffInfoPanel.panel)
+      add(leftToolbarPanel)
+      add(rightToolbarPanel)
+    }
     topPanel.border = JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
     val background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
     topPanel.background = background
@@ -93,6 +108,12 @@ internal class CombinedDiffMainToolbar(
   }
 
   private fun configureTopPanelForSearchMode() {
+    topPanel.apply {
+      removeAll()
+      layout = BorderLayout()
+      add(leftToolbarPanel, BorderLayout.WEST)
+      add(searchPanel, BorderLayout.CENTER)
+    }
     topPanel.border = JBUI.Borders.emptyLeft(CombinedDiffUI.MAIN_HEADER_INSETS.left)
     val background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
     topPanel.background = background
@@ -101,10 +122,7 @@ internal class CombinedDiffMainToolbar(
     leftToolbar.component.border = JBUI.Borders.emptyRight(CombinedDiffUI.MAIN_HEADER_INSETS.left)
   }
 
-  fun getSearchDataProvider(): DataProvider? = DataManager.getDataProvider(searchPanel)
-
-  fun isFocusedInWindow(): Boolean = DiffUtil.isFocusedComponentInWindow(leftToolbar.component) || DiffUtil.isFocusedComponentInWindow(
-    rightToolbar.component)
+  fun isFocusedInWindow(): Boolean = DiffUtil.isFocusedComponentInWindow(leftToolbar.component) || DiffUtil.isFocusedComponentInWindow(rightToolbar.component)
 
   fun getPreferredFocusedComponent(): JComponent? {
     val component = leftToolbar.component
@@ -112,38 +130,14 @@ internal class CombinedDiffMainToolbar(
     return null
   }
 
-  fun updateDiffInfo(diffInfo: FrameDiffTool.DiffInfo?) {
-    if (diffInfo != null) {
-      val component = diffInfo.component
-      component.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
-      val centerizer = Centerizer(component, Centerizer.TYPE.BOTH)
-      diffInfoPanel.setContent(centerizer)
-    }
-    else {
-      diffInfoPanel.setContent(null)
-    }
-  }
-
   fun clear() {
-    diffInfoPanel.setContent(null)
     leftToolbarGroup.removeAll()
     rightToolbarGroup.removeAll()
   }
 
-  private fun buildTopPanel(): BorderLayoutPanel {
-    val topPanel = JBUI.Panels.simplePanel(diffInfoPanel)
-      .andOpaque()
-      .addToLeft(leftToolbarPanel)
-      .addToRight(rightToolbarPanel)
-    GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
-    GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
-
-    return topPanel
-  }
-
   private fun revalidateAndRepaint() {
-    panel.revalidate()
-    panel.repaint()
+    component.revalidate()
+    component.repaint()
   }
 
   fun updateToolbar(blockState: BlockState, toolbarActions: List<AnAction>?) {
@@ -182,7 +176,7 @@ internal class CombinedDiffMainToolbar(
   }
 
   fun setVerticalSizeReferent(component: JComponent) {
-    diffInfoPanel.setVerticalSizeReferent(component)
+    //diffInfoPanel.setVerticalSizeReferent(component)
   }
 
   private val openInEditorAction = object : OpenInEditorAction() {
@@ -190,5 +184,98 @@ internal class CombinedDiffMainToolbar(
       super.update(e)
       e.presentation.isVisible = false
     }
+  }
+}
+
+/**
+ * The goal of this layout is to center [DiffInfoComponent] in the way that its logical (e.g sarrow icon) center is always in the center of toolbar
+ */
+private class MainToolbarLayout(
+  private val left: JComponent,
+  private val right: JComponent,
+  private val diffInfo: DiffInfoComponent,
+) : LayoutManager2 {
+  override fun addLayoutComponent(comp: Component?, constraints: Any?) {}
+  override fun addLayoutComponent(name: String?, comp: Component?) {}
+  override fun removeLayoutComponent(comp: Component?) {}
+
+  override fun preferredLayoutSize(parent: Container): Dimension = size(parent)
+  override fun minimumLayoutSize(parent: Container): Dimension = Dimension(parent.width, 0)
+  override fun maximumLayoutSize(target: Container): Dimension = size(target)
+
+  private fun size(parent: Container): Dimension {
+    val w = parent.width
+    return Dimension(w, maxOfHeights() + parent.insets.top + parent.insets.bottom)
+  }
+
+  private fun maxOfHeights(): Int = max(diffInfo.panel.preferredSize.height,
+                                        max(left.preferredSize.height, right.preferredSize.height))
+
+  override fun layoutContainer(parent: Container) {
+    val bounds = parent.bounds
+    JBInsets.removeFrom(bounds, parent.insets)
+    val h = bounds.height
+    val w = bounds.width
+
+    val leftSize = left.preferredSize
+    left.bounds = Rectangle(bounds.x, bounds.y, leftSize.width, h)
+
+    val rightSize = right.preferredSize
+    right.bounds = Rectangle(bounds.x + w - rightSize.width, bounds.y, rightSize.width, h)
+
+    val centerSize: Dimension = diffInfo.panel.preferredSize
+
+    val centerX = w / 2 - diffInfo.getCenterX()
+    diffInfo.panel.bounds = Rectangle(bounds.x + centerX, bounds.y, centerSize.width, h)
+  }
+
+  override fun getLayoutAlignmentX(target: Container?): Float = Component.LEFT_ALIGNMENT
+
+  override fun getLayoutAlignmentY(target: Container?): Float = Component.CENTER_ALIGNMENT
+
+  override fun invalidateLayout(target: Container?) {}
+}
+
+private class DiffInfoComponent {
+  private val leftTitle = JBLabel().setCopyable(true)
+  private val rightLabel = JBLabel().setCopyable(true)
+  private val arrows = JBLabel(AllIcons.Diff.ArrowLeftRight)
+  private val gap = 10
+  val panel = JPanel(HorizontalLayout(gap))
+
+  init {
+    panel.add(leftTitle)
+    panel.add(arrows)
+    panel.add(rightLabel)
+  }
+
+  fun updateForState(diffInfo: CombinedDiffUIState.DiffInfoState) {
+    when (diffInfo) {
+      CombinedDiffUIState.DiffInfoState.Empty -> {
+        leftTitle.isVisible = false
+        arrows.isVisible = false
+        rightLabel.isVisible = false
+      }
+      is CombinedDiffUIState.DiffInfoState.SingleTitle -> {
+        leftTitle.isVisible = true
+        arrows.isVisible = false
+        rightLabel.isVisible = false
+        leftTitle.text = diffInfo.title
+      }
+      is CombinedDiffUIState.DiffInfoState.TwoTitles -> {
+        leftTitle.isVisible = true
+        arrows.isVisible = true
+        rightLabel.isVisible = true
+        leftTitle.text = diffInfo.leftTitle
+        rightLabel.text = diffInfo.rightTitle
+      }
+    }
+  }
+
+  fun getCenterX(): Int {
+    if (arrows.isVisible) {
+      return leftTitle.preferredSize.width + JBUIScale.scale(gap) + arrows.preferredSize.width / 2
+    }
+    return panel.preferredSize.width / 2
   }
 }
