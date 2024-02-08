@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
@@ -14,7 +15,7 @@ class LayoutsGroup : DefaultActionGroup() {
   override fun update(e: AnActionEvent) { }
 }
 
-class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
+class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction>(emptyList(), 0) {
     CustomLayoutActionGroup(it)
