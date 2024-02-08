@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class CodeStyleConfigurableWrapper
-  implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable {
+  implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable, Configurable.InnerWithModifiableParent {
 
   private final CodeStyleSettingsProvider myProvider;
   private final CodeStyleSettingsPanelFactory myFactory;
@@ -164,6 +164,11 @@ public class CodeStyleConfigurableWrapper
   public void selectTab(@NotNull String tab) {
     createComponent();
     myPanel.showTabOnCurrentPanel(tab);
+  }
+
+  @Override
+  public @NotNull Configurable getModifiableParent() {
+    return myOwner;
   }
 
   @NotNull
