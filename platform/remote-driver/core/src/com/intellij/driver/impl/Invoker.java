@@ -539,7 +539,9 @@ public class Invoker implements InvokerMBean {
         if (r != null) return r.value;
       }
 
-      throw new IllegalStateException("No such reference with id " + id);
+      throw new IllegalStateException("No such reference with id " + id + ". " +
+                                      "It may happen if a weak reference to the variable expires. " +
+                                      "Please use `Driver.withContext { }` for hard variable references.");
     }
 
     WeakReference<Object> reference = adhocReferenceMap.get(id);

@@ -44,7 +44,7 @@ fun Driver.openEditor(project: Project? = null, file: VirtualFile): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String) {
+fun Driver.openFile(relativePath: String) = withContext {
   val fileToOpen = findFile(relativePath = relativePath)
   if (fileToOpen == null) {
     throw IllegalArgumentException("Fail to find file $relativePath")
