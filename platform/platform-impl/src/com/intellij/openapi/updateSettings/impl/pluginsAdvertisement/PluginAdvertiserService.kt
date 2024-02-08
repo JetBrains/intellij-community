@@ -252,7 +252,7 @@ open class PluginAdvertiserServiceImpl(
         dependencies.get(implementationName).forEach(::putFeature)
       }
       else {
-        val marketplaceFeatures = computeDetached { MarketplaceRequests.getInstance ().getFeatures(featureType, implementationName) }
+        val marketplaceFeatures = MarketplaceRequests.getInstance().getFeatures(featureType, implementationName)
         marketplaceFeatures
           .asSequence()
           .mapNotNull { it.toPluginData() }

@@ -150,7 +150,7 @@ internal fun findSuggestedPlugins(project: Project, customRepositories: Map<Stri
 
 private suspend fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, PluginDataSet> {
   val params = mapOf("featureType" to featureType)
-  val features = computeDetached { MarketplaceRequests.getInstance ().getFeatures(params) }
+  val features = MarketplaceRequests.getInstance().getFeatures(params)
   return features
     .groupBy(
       { it.implementationName!! },
