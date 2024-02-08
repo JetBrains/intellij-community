@@ -346,6 +346,11 @@
     <action id="Refresh" class="com.intellij.ide.actions.RefreshAction" icon="AllIcons.Actions.Refresh"/>
     <action id="ForceRefresh" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ForceRefresh"/>
 
+    <group id="TextEditorWithPreview.LayoutGroup">
+      <action id="TextEditorWithPreview.Layout.EditorOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorOnly"/>
+      <action id="TextEditorWithPreview.Layout.EditorAndPreview" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$EditorAndPreview"/>
+      <action id="TextEditorWithPreview.Layout.PreviewOnly" class="com.intellij.openapi.fileEditor.ChangePreviewLayoutAction$PreviewOnly"/>
+    </group>
     <group id="TextEditorWithPreview.SplitGroup" popup="true" class="com.intellij.openapi.fileEditor.EditorSplitGroup">
       <action id="TextEditorWithPreview.SplitVertically" class="com.intellij.openapi.fileEditor.SplitVerticallyAction"/>
       <action id="TextEditorWithPreview.SplitHorizontally" class="com.intellij.openapi.fileEditor.SplitHorizontallyAction"/>

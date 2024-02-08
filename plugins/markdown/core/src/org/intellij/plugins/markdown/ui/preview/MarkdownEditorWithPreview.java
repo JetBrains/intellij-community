@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -14,8 +12,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
@@ -88,21 +84,6 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   @Override
   public void setLayout(@NotNull Layout layout) {
     super.setLayout(layout);
-  }
-
-  @Override
-  protected @NotNull ToggleAction getShowEditorAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorOnly"));
-  }
-
-  @Override
-  protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorAndPreview"));
-  }
-
-  @Override
-  protected @NotNull ToggleAction getShowPreviewAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.PreviewOnly"));
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {

@@ -9,11 +9,11 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -485,15 +485,15 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   protected @NotNull ToggleAction getShowEditorAction() {
-    return new ChangeViewModeAction(Layout.SHOW_EDITOR);
-  }
-
-  protected @NotNull ToggleAction getShowPreviewAction() {
-    return new ChangeViewModeAction(Layout.SHOW_PREVIEW);
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.EditorOnly"));
   }
 
   protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
-    return new ChangeViewModeAction(Layout.SHOW_EDITOR_AND_PREVIEW);
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.EditorAndPreview"));
+  }
+
+  protected @NotNull ToggleAction getShowPreviewAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("TextEditorWithPreview.Layout.PreviewOnly"));
   }
 
   public enum Layout {
@@ -539,43 +539,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
-  private final class ChangeViewModeAction extends ToggleAction implements DumbAware {
-    private final Layout myActionLayout;
-
-    ChangeViewModeAction(Layout layout) {
-      super(layout.getName(), layout.getName(), layout.getIcon(TextEditorWithPreview.this));
-      myActionLayout = layout;
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myLayout == myActionLayout;
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state) {
-        setLayout(myActionLayout);
-      }
-      else {
-        if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
-          mySplitter.setOrientation(!myIsVerticalSplit);
-          myIsVerticalSplit = !myIsVerticalSplit;
-        }
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setIcon(myActionLayout.getIcon(TextEditorWithPreview.this));
-    }
-  }
-
   private static final class ConditionalActionGroup extends ActionGroup {
     private final AnAction[] myActions;
     private final Supplier<Boolean> myCondition;
@@ -587,7 +550,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      return myCondition.get() ? myActions : AnAction.EMPTY_ARRAY;
+      return myCondition.get() ? myActions : EMPTY_ARRAY;
     }
   }
 
@@ -633,8 +596,8 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return FileEditorManager.getInstance(project).openFile(file, true);
   }
 
-  public static TextEditorWithPreview getParentSplitEditor(@NotNull FileEditor fileEditor) {
-    return PARENT_SPLIT_EDITOR_KEY.get(fileEditor);
+  public static TextEditorWithPreview getParentSplitEditor(@Nullable FileEditor fileEditor) {
+    return fileEditor instanceof TextEditorWithPreview ? (TextEditorWithPreview)fileEditor : PARENT_SPLIT_EDITOR_KEY.get(fileEditor);
   }
 
   private static final class MyEditorLayeredComponentWrapper extends JBLayeredPane {
