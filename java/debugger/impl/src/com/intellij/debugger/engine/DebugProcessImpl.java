@@ -143,7 +143,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   // These 3 fields are needs to switching from found suspend-thread context to user-friendly suspend-all context.
   // The main related logic is in [SuspendOtherThreadsRequestor].
   final Object myEvaluationStateLock = new Object();
-  volatile SuspendContextImpl myWaitedThreadSuspendContext = null;
+  volatile ParametersForSuspendAllReplacing myParametersForSuspendAllReplacing = null;
   volatile boolean myPreparingToSuspendAll = false;
 
   protected DebugProcessImpl(Project project) {

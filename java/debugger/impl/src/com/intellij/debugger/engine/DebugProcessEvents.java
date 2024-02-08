@@ -63,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
@@ -748,13 +749,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
           //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           //}
-          if (filterWasUsed && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD &&
-              requestor.needReplaceWithAllThreadSuspendContext()) {
+          Function<SuspendContextImpl, Boolean> performOnSuspendAll = requestor.callbackAfterReplacementForAllThreadSuspendContext();
+          if (filterWasUsed && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && performOnSuspendAll != null) {
             // Do not vote to resume.
             // Instead, create an auxiliary request to correctly stop all threads as soon as possible.
             // [SuspendOtherThreadsRequestor] will resume this suspendContext when the request hits.
             // Resume will be without voting.
-            SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(DebugProcessEvents.this, suspendContext);
+            SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(DebugProcessEvents.this, suspendContext, performOnSuspendAll);
           }
           else {
             suspendManager.voteSuspend(suspendContext);

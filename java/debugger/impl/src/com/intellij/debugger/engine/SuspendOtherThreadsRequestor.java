@@ -12,18 +12,22 @@ import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+
 class SuspendOtherThreadsRequestor implements FilteredRequestor {
   private final @NotNull DebugProcessImpl myProcess;
-  private final @NotNull SuspendContextImpl myThreadSuspendContext;
+  private final @NotNull ParametersForSuspendAllReplacing myParameters;
 
-  SuspendOtherThreadsRequestor(@NotNull DebugProcessImpl process, @NotNull SuspendContextImpl threadSuspendContext) {
+  SuspendOtherThreadsRequestor(@NotNull DebugProcessImpl process, @NotNull ParametersForSuspendAllReplacing parameters) {
     myProcess = process;
-    myThreadSuspendContext = threadSuspendContext;
+    myParameters = parameters;
   }
 
-  static void initiateTransferToSuspendAll(@NotNull DebugProcessImpl process, @NotNull SuspendContextImpl suspendContext) {
+  static void initiateTransferToSuspendAll(@NotNull DebugProcessImpl process,
+                                           @NotNull SuspendContextImpl suspendContext,
+                                           @NotNull Function<SuspendContextImpl, Boolean> performOnSuspendAll) {
     process.myPreparingToSuspendAll = true;
-    process.myWaitedThreadSuspendContext = suspendContext;
+    process.myParametersForSuspendAllReplacing = new ParametersForSuspendAllReplacing(suspendContext, performOnSuspendAll);
     EvaluationListener listener = addFinishEvaluationListener(process);
     boolean isSuccessTry = tryToIssueSuspendContextReplacement(process);
     if (isSuccessTry) {
@@ -31,8 +35,8 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
     }
   }
 
-  private static void enableRequest(DebugProcessImpl process, @NotNull SuspendContextImpl threadSuspendContext) {
-    var requestor = new SuspendOtherThreadsRequestor(process, threadSuspendContext);
+  private static void enableRequest(DebugProcessImpl process, @NotNull ParametersForSuspendAllReplacing parameters) {
+    var requestor = new SuspendOtherThreadsRequestor(process, parameters);
     var request = process.getRequestsManager().createMethodEntryRequest(requestor);
 
     request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
@@ -44,7 +48,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
       @Override
       public void evaluationFinished(SuspendContextImpl context) {
         tryToIssueSuspendContextReplacement(process);
-        if (process.myWaitedThreadSuspendContext == null) {
+        if (process.myParametersForSuspendAllReplacing == null) {
           process.removeEvaluationListener(this);
         }
       }
@@ -54,18 +58,18 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
   }
 
   private static boolean tryToIssueSuspendContextReplacement(@NotNull DebugProcessImpl process) {
-    if (process.myWaitedThreadSuspendContext == null) {
+    if (process.myParametersForSuspendAllReplacing == null) {
       return false;
     }
     long count = getNumberOfEvaluations(process);
     if (count != 0) {
       return false;
     }
-    SuspendContextImpl needToResume;
+    ParametersForSuspendAllReplacing needToResume;
     synchronized (process.myEvaluationStateLock) { // here can be any (same object) lock just to synchronize this place
-      needToResume = process.myWaitedThreadSuspendContext;
+      needToResume = process.myParametersForSuspendAllReplacing;
       if (needToResume != null) {
-        process.myWaitedThreadSuspendContext = null;
+        process.myParametersForSuspendAllReplacing = null;
       }
     }
     if (needToResume != null) {
@@ -98,7 +102,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
       new SingleAlarm(() -> myProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() {
-          enableRequest(myProcess, myThreadSuspendContext);
+          enableRequest(myProcess, myParameters);
         }
       }), 200).request();
       return false;
@@ -107,12 +111,13 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
     myProcess.myPreparingToSuspendAll = false;
 
     // Need to 'replace' the myThreadSuspendContext (single-thread suspend context passed filtering) with this one.
-    suspendContext.setAnotherThreadToFocus(myThreadSuspendContext.getThread());
+    suspendContext.setAnotherThreadToFocus(myParameters.getThreadSuspendContext().getThread());
 
     // Note, myThreadSuspendContext is resuming without SuspendManager#voteSuspend.
     // Look at the end of DebugProcessEvents#processLocatableEvent for more details.
-    myProcess.getSuspendManager().voteResume(myThreadSuspendContext);
-    return true;
+    myProcess.getSuspendManager().voteResume(myParameters.getThreadSuspendContext());
+
+    return myParameters.getPerformOnSuspendAll().apply(suspendContext);
   }
 
   @Override

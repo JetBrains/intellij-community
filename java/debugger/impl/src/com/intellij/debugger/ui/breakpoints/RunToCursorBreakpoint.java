@@ -4,6 +4,7 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.RequestHint;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -14,6 +15,8 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 /**
  * @author Eugene Zhuravlev
@@ -93,7 +96,7 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint implements St
   }
 
   @Override
-  public boolean needReplaceWithAllThreadSuspendContext() {
-    return myNeedReplaceWithAllThreadSuspendContext;
+  public @Nullable Function<@NotNull SuspendContextImpl, @NotNull Boolean> callbackAfterReplacementForAllThreadSuspendContext() {
+    return myNeedReplaceWithAllThreadSuspendContext ? (c -> true) : null;
   }
 }
