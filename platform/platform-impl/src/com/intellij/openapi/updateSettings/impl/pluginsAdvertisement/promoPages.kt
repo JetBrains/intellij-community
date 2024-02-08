@@ -5,11 +5,13 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
 import javax.swing.Icon
+import javax.swing.JButton
 import javax.swing.SwingConstants
 
 class PromoFeaturePage(
@@ -27,7 +29,7 @@ class PromoFeatureListItem(
 )
 
 object PromoPages {
-  fun build(page: PromoFeaturePage, openLearnMore: (url: String) -> Unit, openDownloadLink: () -> Unit): DialogPanel {
+  fun build(page: PromoFeaturePage, openLearnMore: (url: String) -> Unit, openDownloadLink: (DialogWrapper?) -> Unit): DialogPanel {
     val panel = panel {
       row {
         icon(page.productIcon)
@@ -64,8 +66,10 @@ object PromoPages {
       row {
         cell()
 
-        (button(FeaturePromoBundle.message("get.prefix.with.placeholder", page.suggestedIde.name)) {
-          openDownloadLink()
+        (button(FeaturePromoBundle.message("get.prefix.with.placeholder", page.suggestedIde.name)) { event ->
+          val source = event.source as? JButton
+          val dialog = source?.parent?.let {  DialogWrapper.findInstance(it) }
+          openDownloadLink(dialog)
         }).applyToComponent {
           this.icon = AllIcons.Ide.External_link_arrow
           this.horizontalTextPosition = SwingConstants.LEFT
