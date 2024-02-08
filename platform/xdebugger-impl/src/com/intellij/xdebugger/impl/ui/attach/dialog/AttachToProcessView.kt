@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addPreferredFocusedComponent
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
@@ -51,7 +52,6 @@ abstract class AttachToProcessView(
   }
 
   private val currentComponentDisposables: SequentialDisposables = SequentialDisposables(state.dialogDisposable)
-  private var updateJob: Job? = null
 
   protected val centerPanel = JPanel(MigLayout("ins 0, fill, gapy 0")).apply {
     border = JBUI.Borders.empty(0, 0, 0, 0)
@@ -64,6 +64,7 @@ abstract class AttachToProcessView(
     logger.error(throwable)
   }
   protected val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + coroutineExceptionHandler)
+  protected var updateScope = coroutineScope.childScope()
 
   init {
     state.searchFieldValue.afterChange { updateSearchFilter(it) }
@@ -76,8 +77,9 @@ abstract class AttachToProcessView(
     ThreadingAssertions.assertEventDispatchThread()
     if (state.dialogDisposable.isNotAlive) return
     showLoadingPanel()
-    updateJob?.cancel()
-    updateJob = coroutineScope.launch(coroutineExceptionHandler) {
+    updateScope.cancel()
+    updateScope = coroutineScope.childScope()
+    updateScope.launch(coroutineExceptionHandler) {
       doUpdateProcesses()
     }
   }
@@ -162,12 +164,11 @@ abstract class AttachToProcessView(
   private suspend fun processDiagnosticInfo(problem: ProcessesFetchingProblemException, host: XAttachHost) {
     val panel = getActionablePane(problem) { selectedAction ->
       try {
-        coroutineScope.launch {
+        updateScope.launch {
           withUiContextAnyModality {
-
             val progressIndicator = showLoadingPanel()
             selectedAction.action(project, host, progressIndicator)
-            updateProcesses()
+            doUpdateProcesses()
           }
         }
       }
@@ -220,7 +221,7 @@ abstract class AttachToProcessView(
   }
 
   private fun updateSearchFilter(searchFilter: String) {
-    coroutineScope.launch {
+    updateScope.launch {
       withUiContextAnyModality {
         val attachList = state.currentList.get()
         attachList?.updateFilter(searchFilter)
