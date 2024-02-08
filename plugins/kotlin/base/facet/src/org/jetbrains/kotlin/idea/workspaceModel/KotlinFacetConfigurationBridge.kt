@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -8,14 +8,14 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetConfiguratio
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinModuleKind
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
+import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.serialization.KotlinFacetSettingsWorkspaceModel
 
 class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity> {
     override val settings: IKotlinFacetSettings by lazy { KotlinFacetSettingsWorkspaceModel(kotlinSettingsEntity) }
 
     private val kotlinSettingsEntity: KotlinSettingsEntity.Builder
-    private var myModule: ModuleEntity? = null
 
     private constructor(kotlinSettingsEntity: KotlinSettingsEntity.Builder) : super() {
         this.kotlinSettingsEntity = kotlinSettingsEntity
@@ -75,11 +75,9 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                 originKotlinSettingsEntity.entitySource
             ) {
             } as KotlinSettingsEntity.Builder) {
-        myModule = originKotlinSettingsEntity.module
     }
 
     override fun init(moduleEntity: ModuleEntity, entitySource: EntitySource) {
-        myModule = moduleEntity
         kotlinSettingsEntity.moduleId = moduleEntity.symbolicId
         kotlinSettingsEntity.entitySource = entitySource
     }
