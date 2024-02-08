@@ -80,7 +80,7 @@ public final class LanguageLevelUtil {
 
   @Nullable
   public static String getShortMessage(@NotNull LanguageLevel languageLevel) {
-    return ourPresentableShortMessage.get(languageLevel.getSupportedLevel());
+    return ourPresentableShortMessage.get(languageLevel);
   }
 
   /**

@@ -36,7 +36,10 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -1078,8 +1081,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /**
-   * Returns the element language level. If {@linkplain LanguageLevel#isUnsupported() unsupported} language level 
-   * is selected for project or module, this method returns the supported alias.
+   * Returns the element language level.
    * <p>
    * Note that it's a rare case when one may need a language level. Usually, it's interesting to check
    * whether a particular language feature is available at a given context. 
@@ -1090,16 +1092,6 @@ public final class PsiUtil extends PsiUtilCore {
    */
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
-    return getDeclaredLanguageLevel(element).getSupportedLevel();
-  }
-
-  /**
-   * @param element element to get Java language level for
-   * @return the language level. May return {@linkplain LanguageLevel#isUnsupported() unsupported} level.
-   */
-  @NotNull
-  @ApiStatus.Experimental
-  public static LanguageLevel getDeclaredLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       return JavaDirectoryService.getInstance().getLanguageLevel((PsiDirectory)element);
     }

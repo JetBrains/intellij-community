@@ -4,6 +4,10 @@ package com.intellij.pom.java;
 import com.intellij.core.JavaPsiBundle;
 import org.jetbrains.annotations.*;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * Represents Java language, JVM, or standard library features and provides information 
  * whether a particular features is available in a given context
@@ -59,15 +63,20 @@ public enum JavaFeature {
   ALWAYS_STRICTFP(LanguageLevel.JDK_17, "feature.strictfp"),
   INNER_NOT_CAPTURE_THIS(LanguageLevel.JDK_18, "feature.no.this.capture"),
   JAVADOC_SNIPPETS(LanguageLevel.JDK_18, "feature.javadoc.snippets"),
-  PATTERNS_IN_SWITCH(LanguageLevel.JDK_21, "feature.patterns.in.switch"),
-  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns"),
+  PATTERNS_IN_SWITCH(LanguageLevel.JDK_21, "feature.patterns.in.switch",
+                     LanguageLevel.JDK_17_PREVIEW, LanguageLevel.JDK_18_PREVIEW, LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
+  PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns",
+                                     LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   /**
    * Was a preview feature in Java 20 Preview. 
    * Keep the implementation, as it could reappear in the future.
    */
-  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each"),
-  VIRTUAL_THREADS(LanguageLevel.JDK_21, "feature.virtual.threads"),
-  FOREIGN_FUNCTIONS(LanguageLevel.JDK_21, "feature.foreign.functions"),
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
+                              LanguageLevel.JDK_20_PREVIEW),
+  VIRTUAL_THREADS(LanguageLevel.JDK_21, "feature.virtual.threads",
+                  LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
+  FOREIGN_FUNCTIONS(LanguageLevel.JDK_21, "feature.foreign.functions",
+                    LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
   STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates"),
   UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_22, "feature.unnamed.vars") {
@@ -90,9 +99,22 @@ public enum JavaFeature {
   @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) 
   private final @NotNull String myKey;
   private final boolean myCanBeCustomized;
+  private final Set<LanguageLevel> myObsoletePreviewLevels;
 
   JavaFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key) {
     this(level, key, false);
+  }
+
+  JavaFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key,
+              @NotNull LanguageLevel @NotNull ... obsoletePreviewLevels) {
+    myLevel = level;
+    myKey = key;
+    myCanBeCustomized = false;
+    myObsoletePreviewLevels = EnumSet.noneOf(LanguageLevel.class);
+    for (LanguageLevel obsoletePreviewLevel : obsoletePreviewLevels) {
+      if (!obsoletePreviewLevel.isUnsupported()) throw new IllegalArgumentException(obsoletePreviewLevel.toString());
+      myObsoletePreviewLevels.add(obsoletePreviewLevel);
+    }
   }
 
   JavaFeature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaPsiBundle.BUNDLE) String key,
@@ -100,6 +122,7 @@ public enum JavaFeature {
     myLevel = level;
     myKey = key;
     myCanBeCustomized = canBeCustomized;
+    myObsoletePreviewLevels = Collections.emptySet();
   }
 
   /**
@@ -126,8 +149,8 @@ public enum JavaFeature {
   }
 
   public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
-    useSiteLevel = useSiteLevel.getSupportedLevel();
-    return useSiteLevel.isAtLeast(myLevel) &&
+    return (useSiteLevel.isAtLeast(myLevel) || 
+            useSiteLevel.isUnsupported() && myObsoletePreviewLevels.contains(useSiteLevel)) &&
            (!myLevel.isPreview() || useSiteLevel.isPreview());
   }
 
