@@ -49,4 +49,11 @@ interface GitTelemetrySpan : VcsTelemetrySpan {
       override fun getName() = "git-log-reading-branches"
     }
   }
+
+  enum class GitBranchesPopup : VcsTelemetrySpan {
+    BuildingTree {
+      override fun getName() = "git-branches-popup-building-tree"
+    }
+  }
+
 }

@@ -7,7 +7,6 @@ import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsScope
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
 import com.intellij.psi.codeStyle.MinusculeMatcher
@@ -21,6 +20,7 @@ import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
+import git4idea.telemetry.GitTelemetrySpan
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import javax.swing.tree.TreePath
@@ -303,7 +303,7 @@ internal class LazyBranchesSubtreeHolder(
 
   val tree: Map<String, Any> by lazy {
     val branchesList = matchingResult.matchedNodes
-    computeWithSpan(getInstance().getTracer(VcsScope), VcsTelemetrySpan.GitBranchesPopup.BuildingTree.getName()) {
+    computeWithSpan(getInstance().getTracer(VcsScope), GitTelemetrySpan.GitBranchesPopup.BuildingTree.getName()) {
       buildSubTree(branchesList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
     }
   }
