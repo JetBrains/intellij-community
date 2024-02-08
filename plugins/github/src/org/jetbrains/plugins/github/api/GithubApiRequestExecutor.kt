@@ -253,7 +253,7 @@ sealed class GithubApiRequestExecutor {
   }
 }
 
-internal suspend fun <T> GithubApiRequestExecutor.executeSuspend(request: GithubApiRequest<T>): T =
+suspend fun <T> GithubApiRequestExecutor.executeSuspend(request: GithubApiRequest<T>): T =
   withContext(Dispatchers.IO) {
     coroutineToIndicator {
       val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()

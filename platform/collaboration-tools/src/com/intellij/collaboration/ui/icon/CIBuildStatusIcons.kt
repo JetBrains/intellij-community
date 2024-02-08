@@ -10,6 +10,12 @@ object CIBuildStatusIcons {
   val pending: Icon
     get() = AllIcons.RunConfigurations.TestNotRan
 
+  val cancelled: Icon
+    get() = AllIcons.RunConfigurations.TestIgnored
+
+  val inProgress: Icon
+    get() = AllIcons.Process.Step_1
+
   val failed: Icon
     get() = AllIcons.RunConfigurations.TestError
 
@@ -24,6 +30,9 @@ object CIBuildStatusIcons {
 
   val paused: Icon
     get() = AllIcons.RunConfigurations.TestPaused
+
+  val info: Icon
+    get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Info else AllIcons.RunConfigurations.TestPassed
 
   val success: Icon
     get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed

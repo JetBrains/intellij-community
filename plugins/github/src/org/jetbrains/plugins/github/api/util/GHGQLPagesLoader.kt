@@ -37,7 +37,13 @@ abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExec
     val executionDate = Date()
     val response = executor.execute(progressIndicator, requestProducer(pagination))
     val page = extractPageInfo(response)
-    iterationDataRef.compareAndSet(iterationData, IterationData(page, executionDate))
+    val nextIteration = if (page != null) {
+      IterationData(page, executionDate)
+    }
+    else {
+      IterationData(false, null, null)
+    }
+    iterationDataRef.compareAndSet(iterationData, nextIteration)
 
     return extractResult(response)
   }
@@ -46,7 +52,7 @@ abstract class GHGQLPagesLoader<T, R>(private val executor: GithubApiRequestExec
     iterationDataRef.set(IterationData(true))
   }
 
-  protected abstract fun extractPageInfo(result: T): GraphQLCursorPageInfoDTO
+  protected abstract fun extractPageInfo(result: T): GraphQLCursorPageInfoDTO?
   protected abstract fun extractResult(result: T): R
 
   private class IterationData(val hasNext: Boolean, val timestamp: Date? = null, val cursor: String? = null) {
