@@ -48,11 +48,17 @@ public abstract class JdkVersionDetector {
     public final JavaVersion version;
     public final Variant variant;
     public final CpuArch arch;
+    public final String graalVersion;
 
     public JdkVersionInfo(@NotNull JavaVersion version, @Nullable Variant variant, @NotNull CpuArch arch) {
+      this(version, variant, arch, null);
+    }
+
+    public JdkVersionInfo(@NotNull JavaVersion version, @Nullable Variant variant, @NotNull CpuArch arch, @Nullable String graalVersion) {
       this.version = version;
       this.variant = variant != null ? variant : Variant.Unknown;
       this.arch = arch;
+      this.graalVersion = graalVersion;
     }
 
     public @NotNull String suggestedName() {
@@ -61,7 +67,9 @@ public abstract class JdkVersionDetector {
     }
 
     public @NotNull String displayVersionString() {
-      String s = "version " + version;
+      String s = graalVersion == null
+                 ? "version " + version
+                 : graalVersion + " (Java " + version + ")";
       return variant.displayName != null ? variant.displayName + ' ' + s : s;
     }
 
