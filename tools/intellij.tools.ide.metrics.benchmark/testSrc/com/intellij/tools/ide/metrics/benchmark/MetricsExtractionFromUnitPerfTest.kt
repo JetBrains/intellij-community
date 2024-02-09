@@ -25,7 +25,7 @@ class MetricsExtractionFromUnitPerfTest {
   companion object {
     fun checkMetricsAreFlushedToTelemetryFile(spanName: String, withWarmup: Boolean = true, vararg customSpanNames: String) {
       val extractedMetrics = runBlocking {
-        MetricsExtractor().waitTillMetricsExported(spanName = spanName)
+        SpanMetricsExtractor().waitTillMetricsExported(spanName = spanName)
       }
 
       if (withWarmup) {
@@ -57,7 +57,7 @@ class MetricsExtractionFromUnitPerfTest {
   fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) = runBlocking {
     val mainMetricName = "simple perf test"
 
-    val extractedMetrics = MetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json"))
+    val extractedMetrics = SpanMetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json"))
       .waitTillMetricsExported(spanName = mainMetricName)
 
     // warmup metrics

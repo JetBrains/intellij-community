@@ -4,16 +4,17 @@
 package com.intellij.platform.testFramework.diagnostic
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
 interface MetricsPublisher {
-  suspend fun publish(fullQualifiedTestMethodName: String, metricName: String)
+  suspend fun publish(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector)
 
-  fun publishSync(fullQualifiedTestMethodName: String, metricName: String) {
+  fun publishSync(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {
     runBlocking {
-      publish(fullQualifiedTestMethodName, metricName)
+      publish(fullQualifiedTestMethodName, *metricsCollectors)
     }
   }
 
@@ -24,7 +25,7 @@ interface MetricsPublisher {
 
 /** Dummy that always "works successfully" */
 class NoopMetricsPublisher : MetricsPublisher {
-  override suspend fun publish(fullQualifiedTestMethodName: String, metricName: String) {}
+  override suspend fun publish(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {}
 }
 
 private val instance: SynchronizedClearableLazy<MetricsPublisher> = SynchronizedClearableLazy {

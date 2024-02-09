@@ -1,16 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.metrics.benchmark
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.tools.ide.metrics.collector.OpenTelemetryMeterCollector
+import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -28,6 +33,12 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
 
   @Test
   fun reportingAnyCustomMetricsFromPerfTest(testInfo: TestInfo) {
+    val counter: AtomicLong = AtomicLong()
+    val counterMeter = TelemetryManager.getMeter(ExtractionMetricsScope)
+      .counterBuilder("custom.counter")
+      .buildWithCallback { it.record(counter.get()) }
+
+    val meterCollector = OpenTelemetryMeterCollector(MetricsSelectionStrategy.SUM) { it.key.contains("custom") }
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
@@ -36,9 +47,17 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
 
+      counter.incrementAndGet()
+
       runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
-    }.start()
+    }
+      .withTelemetryMeters(meterCollector)
+      .start()
+
     MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
+    val meters = meterCollector.collect(PathManager.getLogDir())
+
+    Assertions.assertTrue(meters.count { it.id.name == "custom.counter" } == 1, "Counter meter should be present in .csv metrics file")
   }
 
   @Test

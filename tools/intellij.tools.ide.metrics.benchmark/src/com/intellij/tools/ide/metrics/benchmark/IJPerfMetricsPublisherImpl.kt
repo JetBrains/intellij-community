@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
@@ -50,10 +51,13 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       else setBuildParams()
     )
 
-    private suspend fun prepareMetricsForPublishing(fullQualifiedTestMethodName: String, spanName: String): PerformanceMetricsDto {
-      val metrics: List<PerformanceMetrics.Metric> = MetricsExtractor().waitTillMetricsExported(spanName)
+    private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector): PerformanceMetricsDto {
+      val metrics: List<PerformanceMetrics.Metric> = SpanMetricsExtractor().waitTillMetricsExported(uniqueTestIdentifier)
+      val additionalMetrics: List<PerformanceMetrics.Metric> = metricsCollectors.flatMap { it.collect(PathManager.getLogDir()) }
 
-      teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = fullQualifiedTestMethodName)
+      val mergedMetrics = metrics.plus(additionalMetrics)
+
+      teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = uniqueTestIdentifier)
 
       val buildInfo = CIServerBuildInfo(
         buildId = teamCityClient.buildId,
@@ -69,19 +73,19 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       )
 
       return PerformanceMetricsDto.create(
-        projectName = fullQualifiedTestMethodName,
+        projectName = uniqueTestIdentifier,
         projectURL = "",
         projectDescription = "",
-        methodName = fullQualifiedTestMethodName,
+        methodName = uniqueTestIdentifier,
         buildNumber = BuildNumber.currentVersion(),
-        metrics = metrics,
+        metrics = mergedMetrics,
         buildInfo = buildInfo
       )
     }
   }
 
-  override suspend fun publish(fullQualifiedTestMethodName: String, metricName: String) {
-    val metricsDto = prepareMetricsForPublishing(fullQualifiedTestMethodName, metricName)
+  override suspend fun publish(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {
+    val metricsDto = prepareMetricsForPublishing(fullQualifiedTestMethodName, *metricsCollectors)
 
     withContext(Dispatchers.IO) {
       val artifactName = "metrics.performance.json"

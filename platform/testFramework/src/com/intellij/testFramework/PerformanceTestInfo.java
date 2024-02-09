@@ -8,6 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
+import com.intellij.tools.ide.metrics.collector.OpenTelemetryMeterCollector;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
@@ -39,14 +41,15 @@ public class PerformanceTestInfo {
     MEASURE
   }
 
-  private final ThrowableComputable<Integer, ?> test; // runnable to measure; returns actual input size
-  private final int expectedInputSize;    // size of input the test is expected to process;
-  private ThrowableRunnable<?> setup;      // to run before each test
-  private int maxMeasurementAttempts = 3;             // number of retries
-  private final String launchName;         // to print on fail
-  private int warmupIterations = 1; // default warmup iterations should be positive
+  private final ThrowableComputable<Integer, ?> test;   // runnable to measure; returns actual input size
+  private final int expectedInputSize;                  // size of input the test is expected to process;
+  private ThrowableRunnable<?> setup;                   // to run before each test
+  private int maxMeasurementAttempts = 3;               // number of retries
+  private final String launchName;                      // to print on fail
+  private int warmupIterations = 1;                      // default warmup iterations should be positive
   @NotNull
   private final IJTracer tracer;
+  private OpenTelemetryMeterCollector meterCollector = null;
 
   private static final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(
     SupervisorKt.SupervisorJob(null).plus(Dispatchers.getIO())
@@ -89,8 +92,27 @@ public class PerformanceTestInfo {
     }
   }
 
+  private static void cleanupOutdatedMeters() {
+    try {
+      // force spans and meters to be written to disk before any test starts
+      // it's at least what we can do to minimize interference of the same meter on different tests
+      TelemetryManager.getInstance().forceFlushMetricsBlocking();
+
+      var csvFilesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) -> it.toString().endsWith(".csv")).toList();
+      for (Path file : csvFilesWithMetrics) {
+        Files.deleteIfExists(file);
+      }
+    }
+    catch (Exception e) {
+      System.err.println(
+        "Error during removing Telemetry .csv files with meters before start of perf test. This might affect metrics value");
+      e.printStackTrace();
+    }
+  }
+
   PerformanceTestInfo(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName) {
     initOpenTelemetry();
+    cleanupOutdatedMeters();
 
     this.test = test;
     this.expectedInputSize = expectedInputSize;
@@ -109,6 +131,12 @@ public class PerformanceTestInfo {
   @Contract(pure = true) // to warn about not calling .start() in the end
   public PerformanceTestInfo attempts(int attempts) {
     this.maxMeasurementAttempts = attempts;
+    return this;
+  }
+
+  @Contract(pure = true) // to warn about not calling .start() in the end
+  public PerformanceTestInfo withTelemetryMeters(OpenTelemetryMeterCollector meterCollector) {
+    this.meterCollector = meterCollector;
     return this;
   }
 
@@ -311,7 +339,13 @@ public class PerformanceTestInfo {
       try {
         // publish warmup and final measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
-          MetricsPublisher.Companion.getInstance().publishSync(uniqueTestName, uniqueTestName);
+          var publisherInstance = MetricsPublisher.Companion.getInstance();
+          if (meterCollector != null) {
+            publisherInstance.publishSync(uniqueTestName, meterCollector);
+          }
+          else {
+            publisherInstance.publishSync(uniqueTestName);
+          }
         }
       }
       catch (Throwable t) {

@@ -11,7 +11,7 @@ import java.nio.file.Path
 import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.milliseconds
 
-class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTelemetrySpanJson()) {
+class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTelemetrySpanJson()) {
   companion object {
     fun getDefaultPathToTelemetrySpanJson(): Path {
       return Path.of(System.getProperty("idea.diagnostic.opentelemetry.file",
@@ -29,7 +29,7 @@ class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTel
     return requireNotNull(originalMetrics) { "Couldn't find metrics for '$spanName' in $telemetryJsonFile" }
   }
 
-  private fun getAttemptsStatisticalMetrics(attempts: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
+  private fun getAttemptsSpansStatisticalMetrics(attempts: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
     val medianValueOfAttempts: Long = attempts.medianValue()
     val madValueOfAttempts = attempts.map { (it.value - medianValueOfAttempts).absoluteValue }.median()
 
@@ -55,7 +55,7 @@ class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTel
   /**
    * Author ot the perf test might want to report custom metrics from the test (span or meters)
    */
-  private fun getAggregatedCustomMetricsReportedFromTests(customMetrics: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
+  private fun getAggregatedCustomSpansMetricsReportedFromTests(customMetrics: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
     return customMetrics.groupBy { it.id.name }
       .map { group ->
         PerformanceMetrics.newDuration("${metricsPrefix}${group.key}", group.value.map { it.value }.average().toLong())
@@ -79,13 +79,13 @@ class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTel
     // some tests might be forced to run without warmup attempts
     if (forWarmup && attempts.isEmpty()) return listOf()
 
-    val attemptsStatisticalMetrics: List<PerformanceMetrics.Metric> = getAttemptsStatisticalMetrics(attempts, metricsPrefix)
+    val attemptsStatisticalMetrics: List<PerformanceMetrics.Metric> = getAttemptsSpansStatisticalMetrics(attempts, metricsPrefix)
 
     val mainMetricValue: Long = originalMetrics.single { it.id.name == spanName }.value
     val totalTestDurationMetric = PerformanceMetrics.newDuration("${metricsPrefix}total.test.duration.ms", mainMetricValue)
 
     val customMetrics = originalMetrics.filterNot { it.id.name.startsWith(attemptSuffix, ignoreCase = true) || it.id.name == spanName }
-    val aggregatedCustomMetrics = getAggregatedCustomMetricsReportedFromTests(customMetrics, metricsPrefix)
+    val aggregatedCustomMetrics = getAggregatedCustomSpansMetricsReportedFromTests(customMetrics, metricsPrefix)
 
     return attemptsStatisticalMetrics.plus(totalTestDurationMetric).plus(aggregatedCustomMetrics)
   }
