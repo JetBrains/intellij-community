@@ -344,9 +344,32 @@
       <val name="flags" val="{java.awt.Event.SHIFT_MASK, java.awt.Event.CTRL_MASK, java.awt.Event.META_MASK, java.awt.Event.ALT_MASK, java.awt.event.InputEvent.SHIFT_DOWN_MASK, java.awt.event.InputEvent.CTRL_DOWN_MASK, java.awt.event.InputEvent.META_DOWN_MASK, java.awt.event.InputEvent.ALT_DOWN_MASK, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, java.awt.event.InputEvent.BUTTON2_DOWN_MASK, java.awt.event.InputEvent.BUTTON3_DOWN_MASK, java.awt.event.InputEvent.ALT_GRAPH_DOWN_MASK}" />
     </annotation>
   </item>
+  <item name='java.awt.event.MouseWheelEvent double getPreciseWheelRotation()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseWheelEvent int getScrollAmount()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.awt.event.MouseWheelEvent int getScrollType()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, java.awt.event.MouseWheelEvent.WHEEL_BLOCK_SCROLL}" />
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseWheelEvent int getUnitsToScroll()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.awt.event.MouseWheelEvent int getWheelRotation()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
 </root>
