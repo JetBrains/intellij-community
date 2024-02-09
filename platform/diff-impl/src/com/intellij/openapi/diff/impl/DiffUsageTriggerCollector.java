@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 3);
+  private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 4);
   private static final StringEventField DIFF_PLACE_FIELD = EventFields.String("diff_place",
                                                                              List.of("Default", "ChangesView", "VcsLogView", "CommitDialog",
                                                                                      "TestsFiledAssertions", "Merge", "DirDiff", "External",
@@ -35,7 +35,7 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
   private static final StringEventField DIFF_TOOL_NAME = EventFields.String("value",
                                                                             List.of("Side-by-side_viewer", "Binary_file_viewer", "Unified_viewer",
                                                                            "Error_viewer", "Patch_content_viewer", "Apply_patch_somehow",
-                                                                           "Data_Diff_Viewer", "Database_Schema_Diff_Viewer",
+                                                                           "Data_Diff_Viewer", "Jupyter_side-by-side_viewer", "Database_Schema_Diff_Viewer",
                                                                            "Directory_viewer", "SVN_properties_viewer"));
   private final static EventId3<PluginInfo, String, String> TOGGLE_DIFF_TOOL =
     GROUP.registerEvent("toggle.diff.tool", EventFields.PluginInfo, DIFF_TOOL_NAME, DIFF_PLACE_FIELD);
