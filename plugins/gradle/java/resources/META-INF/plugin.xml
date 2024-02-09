@@ -100,6 +100,9 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.AnnotationProcessingDataService"/>
 
+    <documentation.documentationDownloader
+      implementation="org.jetbrains.plugins.gradle.codeInsight.documentation.GradleDocumentationDownloader"/>
+
     <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
 
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector"/>

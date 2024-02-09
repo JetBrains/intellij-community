@@ -48,7 +48,7 @@ import java.awt.Rectangle
 import javax.swing.*
 
 internal class DocumentationUI(
-  project: Project,
+  val project: Project,
   val browser: DocumentationBrowser,
 ) : DataProvider, Disposable {
 
@@ -143,6 +143,7 @@ internal class DocumentationUI(
   override fun dispose() {
     cs.cancel("DocumentationUI disposal")
     clearImages()
+    documentationDownloader = null
   }
 
   override fun getData(dataId: String): Any? {
@@ -196,12 +197,12 @@ internal class DocumentationUI(
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent.Content) {
     val content = pageContent.content
     imageResolver = content.imageResolver
-    val targetElement = pageContent.targetElement
+    val targetFile = pageContent.targetElement?.containingFile?.virtualFile
     var downloadSourcesLink: String? = null
-    if (targetElement != null) {
-      documentationDownloader = DocumentationDownloader.EP.extensionList.find { it.canHandle(targetElement) }
+    if (targetFile != null) {
+      documentationDownloader = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, targetFile) }
       if (documentationDownloader != null) {
-        downloadSourcesLink = DocumentationDownloader.formatLink(targetElement)
+        downloadSourcesLink = DocumentationDownloader.formatLink(targetFile)
       }
     }
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
@@ -274,7 +275,7 @@ internal class DocumentationUI(
       val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
       if (file != null) {
         cs.launch(Dispatchers.Default) {
-          documentationDownloader?.download(file)
+          documentationDownloader?.download(project, file)
         }
       }
     }

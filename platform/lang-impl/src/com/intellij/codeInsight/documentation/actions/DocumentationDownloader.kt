@@ -2,23 +2,23 @@
 package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface DocumentationDownloader {
 
-  suspend fun canHandle(target: PsiElement): Boolean
+  suspend fun canHandle(project: Project, file: VirtualFile): Boolean
 
-  suspend fun download(target: VirtualFile)
+  suspend fun download(project: Project, file: VirtualFile)
 
   companion object {
     val EP = ExtensionPointName.create<DocumentationDownloader>("com.intellij.documentation.documentationDownloader")
     const val HREF_PREFIX = "download_sources:"
 
-    fun formatLink(target: PsiElement): String? {
-      val virtualFileUrl: String = target.containingFile?.virtualFile?.url ?: return null
+    fun formatLink(target: VirtualFile?): String? {
+      val virtualFileUrl: String = target?.url ?: return null
       return HREF_PREFIX + virtualFileUrl
     }
   }
