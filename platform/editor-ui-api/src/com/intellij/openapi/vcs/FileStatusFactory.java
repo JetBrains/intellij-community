@@ -14,11 +14,19 @@ import java.util.function.Supplier;
 public abstract class FileStatusFactory {
   public static final String FILESTATUS_COLOR_KEY_PREFIX = "FILESTATUS_";
 
+  /**
+   * @deprecated this method is not locale-friendly or plugin unloading-friendly
+   */
+  @Deprecated
   public final FileStatus createFileStatus(@NonNls @NotNull String id,
                                      @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description) {
     return createFileStatus(id, () -> description, null, null);
   }
 
+  /**
+   * @deprecated this method is not locale-friendly or plugin unloading-friendly
+   */
+  @Deprecated
   public final FileStatus createFileStatus(@NonNls @NotNull String id,
                                      @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description,
                                      @Nullable Color color) {
