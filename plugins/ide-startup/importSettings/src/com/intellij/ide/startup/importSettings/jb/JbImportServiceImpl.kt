@@ -65,6 +65,11 @@ data class JbProductInfo(override val version: String,
       return false
     }
 
+    if (PluginManagerCore.getPluginSet().isPluginEnabled(descriptor.pluginId)) {
+      JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" is already present in \"${IDEData.getSelf()?.fullName}\"")
+      return false
+    }
+
     // check for incompatibilities
     for (ic in descriptor.incompatibilities) {
       if (PluginManagerCore.getPluginSet().isPluginEnabled(ic)) {
