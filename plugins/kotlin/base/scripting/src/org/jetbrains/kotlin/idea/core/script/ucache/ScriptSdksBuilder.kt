@@ -77,7 +77,7 @@ class ScriptSdksBuilder(
             null
         } ?: return null
 
-        return runReadAction { ProjectJdkTable.getInstance() }.allJdks
+        return ProjectJdkTable.getInstance().allJdks
             .firstOrNull { it.homeDirectory == javaHomeVF && it.canBeUsedForScript()}
     }
 
@@ -85,7 +85,7 @@ class ScriptSdksBuilder(
         sdks.getOrPut(SdkId.default) { defaultSdk }
 
     private fun addSdkByName(sdkName: String) {
-        val sdk = runReadAction { ProjectJdkTable.getInstance() }.allJdks
+        val sdk = ProjectJdkTable.getInstance().allJdks
             .find { it.name == sdkName }
             ?.takeIf { it.canBeUsedForScript() }
             ?: defaultSdk
@@ -99,7 +99,7 @@ class ScriptSdksBuilder(
         val projectSdk = ProjectRootManager.getInstance(project).projectSdk?.takeIf { it.canBeUsedForScript() }
         if (projectSdk != null) return projectSdk
 
-        val allJdks = runReadAction { ProjectJdkTable.getInstance() }.allJdks
+        val allJdks = ProjectJdkTable.getInstance().allJdks
 
         val anyJavaSdk = allJdks.find { it.canBeUsedForScript() }
         if (anyJavaSdk != null) {
