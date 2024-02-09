@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -15,18 +15,18 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   const val ACTION_FINISHED_EVENT_ID: String = "action.finished"
 
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("actions", 75)
+  val GROUP: EventLogGroup = EventLogGroup("actions", 76)
 
   @JvmField
-  val ACTION_ID: PrimitiveEventField<String?> = ActioIdEventField("action_id")
+  val ACTION_ID: PrimitiveEventField<String?> = ActionIdEventField("action_id")
 
   @Deprecated("Introduced only for MLSE. Do not use.",
               ReplaceWith("com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_ID"))
   @Suppress("FunctionName")
   @JvmStatic
-  fun ActioID(@NonNls name: String): PrimitiveEventField<String?> = ActioIdEventField(name)
+  fun ActioID(@NonNls name: String): PrimitiveEventField<String?> = ActionIdEventField(name)
 
-  private data class ActioIdEventField(override val name: String) : PrimitiveEventField<String?>() {
+  private data class ActionIdEventField(override val name: String) : PrimitiveEventField<String?>() {
 
     override fun addData(fuData: FeatureUsageData, value: String?) {
       if (value == null) {
@@ -37,7 +37,12 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
     }
 
     override val validationRule: List<String>
-      get() = listOf("{util#${CustomValidationRule.getRuleId(ActionRuleValidator::class.java)}}")
+      get() = listOf("{enum:${actionIdsFromHolders().joinToString("|")}}",
+                     "{util#${CustomValidationRule.getRuleId(ActionRuleValidator::class.java)}}")
+
+    private fun actionIdsFromHolders(): List<String> {
+      return ActionIdsHolder.EP_NAME.extensionList.flatMap(ActionIdsHolder::getActionsIds)
+    }
   }
 
   @JvmField

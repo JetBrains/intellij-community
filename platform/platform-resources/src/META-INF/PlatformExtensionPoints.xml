@@ -268,6 +268,7 @@
     <extensionPoint name="statistics.collectorExtension" interface="com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension"/>
     <extensionPoint name="statistics.actionCustomPlaceAllowlist" beanClass="com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist" dynamic="true"/>
     <extensionPoint name="statistics.notificationIdsHolder" interface="com.intellij.notification.impl.NotificationIdsHolder" dynamic="true"/>
+    <extensionPoint name="statistics.actionIdsHolder" interface="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdsHolder" dynamic="true"/>
     <extensionPoint name="statistics.balloonIdsHolder" interface="com.intellij.internal.statistic.collectors.fus.ui.BalloonIdsHolder" dynamic="true"/>
 
     <extensionPoint name="editorHighlighterProvider" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
