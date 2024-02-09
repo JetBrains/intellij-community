@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
+import com.intellij.ide.startup.importSettings.chooser.ui.ScrollSnapToFocused
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.application.ApplicationBundle
@@ -12,7 +13,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
@@ -109,11 +109,8 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
         border = JBUI.Borders.empty(16, 0, 12, 0)
         background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
 
-        add(JBScrollPane(listPane).apply {
-          border = JBUI.Borders.empty()
+        add(ScrollSnapToFocused(listPane, this@SettingChooserPage).apply {
           viewport.isOpaque = false
-          horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-          minimumSize = Dimension(0, 0)
           background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
 
           SwingUtilities.invokeLater {

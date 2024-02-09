@@ -2,14 +2,10 @@
 package com.intellij.ide.startup.importSettings.wizard.pluginChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
-import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
-import com.intellij.ide.startup.importSettings.chooser.ui.WizardController
-import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
+import com.intellij.ide.startup.importSettings.chooser.ui.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -80,13 +76,10 @@ class WizardPluginsPage(val controller: WizardController) : OnboardingPage {
         layout = BoxLayout(this, BoxLayout.Y_AXIS)
         preferredSize = Dimension(preferredSize.width, 0)
 
-        add(JBScrollPane(listPane).apply {
+        add(ScrollSnapToFocused(listPane, this@WizardPluginsPage).apply {
           viewport.isOpaque = false
           isOpaque = true
           background = JBColor.namedColor("WelcomeScreen.Details.background", JBColor(Color.white, Color(0x313335)))
-          horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-          border = JBUI.Borders.empty()
-          minimumSize = Dimension(0, 0)
 
           SwingUtilities.invokeLater {
             this.requestFocus()
