@@ -2501,9 +2501,6 @@
 
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
-    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.compilation.InvalidCompilationStatistics"/>
-    <notificationGroup id="Invalid Compilation Errors" displayType="STICKY_BALLOON" hideFromSettings="true" />
-
     <iconMapper mappingFile="JavaUIIconsMapping.json"/>
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
 
@@ -2550,9 +2547,6 @@
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"
               topic="com.intellij.refactoring.listeners.RefactoringEventListener"/>
-    <listener class="com.intellij.ide.compilation.InvalidCompilationListener"
-              topic="com.intellij.openapi.compiler.CompilationStatusListener"
-              activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.roots.impl.LanguageLevelChangedListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
   </projectListeners>
