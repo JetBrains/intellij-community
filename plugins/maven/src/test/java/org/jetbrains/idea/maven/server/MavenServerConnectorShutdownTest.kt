@@ -10,13 +10,20 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.withProjectAsync
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardTestCase
+import org.junit.Assume.assumeTrue
 
 class MavenServerConnectorShutdownTest : MavenNewProjectWizardTestCase() {
   override fun runInDispatchThread() = false
 
+  private fun isWorkspaceImport(): Boolean {
+    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+  }
+
   fun `test connector is shut down on project closing`() = runBlocking {
+    assumeTrue(isWorkspaceImport())
     val mavenServerManager = MavenServerManager.getInstance()
     val connectorRef = Ref<MavenServerConnector>()
     // create project
