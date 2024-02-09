@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.VcsActivity;
@@ -58,6 +59,15 @@ public class RollbackWorker {
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles) {
     doRollback(changes, deleteLocallyAddedFiles, VcsBundle.message("activity.name.rollback"), VcsActivity.Rollback);
+  }
+
+  public void doRollback(@NotNull Collection<? extends Change> changes,
+                         boolean deleteLocallyAddedFiles,
+                         @Nullable Runnable afterVcsRefreshInAwt,
+                         @Nullable @Nls String localHistoryActionName) {
+    doRollback(changes, deleteLocallyAddedFiles, afterVcsRefreshInAwt,
+               ObjectUtils.chooseNotNull(localHistoryActionName, VcsBundle.message("activity.name.rollback")),
+               VcsActivity.Rollback, false);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
