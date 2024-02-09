@@ -81,6 +81,8 @@ public final class AutoCloseableResourceInspection extends ResourceInspection {
       .add("org.hibernate.Session", "close")
       .add("java.io.PrintWriter", "printf")
       .add("java.io.PrintStream", "printf")
+      .add("java.lang.foreign.Arena", "ofAuto")
+      .add("java.lang.foreign.Arena", "global")
       .finishDefault();
   }
 
