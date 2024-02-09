@@ -1530,16 +1530,9 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
     }
   }
 
-  if (!Cancellation.isInNonCancelableSection()) {
-    val className = isInsideClassInitializer()
-    if (className != null) {
-      // TODO make this an error
-      LOG.warn("$className <clinit> requests $debugString instance. " +
-               "Class initialization must not depend on services. " +
-               "Consider using instance of the service on-demand instead.")
-      Cancellation.withNonCancelableSection().use {
-        return getOrCreateInstanceBlocking(debugString = debugString, keyClass = keyClass)
-      }
+  if (!Cancellation.isInNonCancelableSection() && !checkOutsideClassInitializer(debugString)) {
+    Cancellation.withNonCancelableSection().use {
+      return getOrCreateInstanceBlocking(debugString = debugString, keyClass = keyClass)
     }
   }
 
@@ -1552,6 +1545,21 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
     throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = e)
     throw e
   }
+}
+
+/**
+ * @return `true` if called outside a class initializer, `false` if called inside a class initializer
+ */
+private fun checkOutsideClassInitializer(debugString: String): Boolean {
+  val className = isInsideClassInitializer()
+                  ?: return true
+  // TODO make this an error
+  LOG.warn(
+    "$className <clinit> requests $debugString instance. " +
+    "Class initialization must not depend on services. " +
+    "Consider using instance of the service on-demand instead.",
+  )
+  return false
 }
 
 private fun isInsideClassInitializer(): String? = StackWalker.getInstance().walk { frames: Stream<StackFrame> ->
