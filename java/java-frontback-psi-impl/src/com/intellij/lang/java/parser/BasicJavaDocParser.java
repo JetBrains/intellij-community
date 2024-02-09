@@ -33,6 +33,7 @@ public final class BasicJavaDocParser {
   private static final String LINK_TAG = "@link";
   private static final String LINK_PLAIN_TAG = "@linkplain";
   private static final String PARAM_TAG = "@param";
+  private static final String RETURN_TAG = "@return";
   private static final String VALUE_TAG = "@value";
   private static final String SNIPPET_TAG = "@snippet";
   private static final Set<String> REFERENCE_TAGS = ContainerUtil.immutableSet("@throws", "@exception", "@provides", "@uses");
@@ -88,14 +89,17 @@ public final class BasicJavaDocParser {
                                     @Nullable String tagName,
                                     boolean isInline,
                                     @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+    int initialBraceScope = getBraceScope(builder);
     IElementType tokenType = getTokenType(builder);
     if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_START) {
       int braceScope = getBraceScope(builder);
       if (braceScope > 0) {
         setBraceScope(builder, braceScope + 1);
         builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
-        builder.advanceLexer();
-        return;
+        if (!RETURN_TAG.equals(tagName)) {
+          builder.advanceLexer();
+          return;
+        }
       }
 
       PsiBuilder.Marker tag = builder.mark();
@@ -125,7 +129,7 @@ public final class BasicJavaDocParser {
         if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
           braceScope = getBraceScope(builder);
           if (braceScope > 0) setBraceScope(builder, --braceScope);
-          if (braceScope == 0) break;
+          if (braceScope == initialBraceScope) break;
         }
       }
 
