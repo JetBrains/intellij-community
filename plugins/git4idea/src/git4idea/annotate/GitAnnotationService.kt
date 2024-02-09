@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -105,7 +105,7 @@ class GitAnnotationService(private val project: Project, private val cs: Corouti
     return ProviderResult(
       provider,
       measureTimedValue {
-        runCatching { blockingContext { provider.annotate(project, root, filePath, revision, file) } }
+        runCatching { coroutineToIndicator { provider.annotate(project, root, filePath, revision, file) } }
           .onFailure {
             if (it is ProcessCanceledException || it is CancellationException) {
               throw it
