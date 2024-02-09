@@ -562,7 +562,7 @@ class A {{
 
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
     myFixture.type '\t'
-    myFixture.checkResult 'class A { void f() { Stri   "; } }'
+    myFixture.checkResult '    class A { void f() { String s = "tpl"; } }'
   }
 
   void "test expand current live template on no suggestions in lookup"() {
