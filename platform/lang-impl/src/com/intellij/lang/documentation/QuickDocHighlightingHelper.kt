@@ -313,14 +313,14 @@ object QuickDocHighlightingHelper {
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,
                                                   code: CharSequence, isForRenderedDoc: Boolean): StringBuilder {
-    val trimmedCode = code.toString().trim('\n', '\r').trimIndent().replace(' ', ' ')
+    val processedCode = code.toString().trim('\n', '\r').replace(' ', ' ').trimEnd()
     if (language != null && doHighlighting) {
       HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
-        this, project, language, trimmedCode,
+        this, project, language, processedCode,
         DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
     }
     else {
-      append(XmlStringUtil.escapeString(trimmedCode))
+      append(XmlStringUtil.escapeString(processedCode.trimIndent()))
     }
     return this
   }

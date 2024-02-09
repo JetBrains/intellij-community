@@ -33,7 +33,7 @@ object DocMarkdownToHtmlConverter {
   private val LOG = Logger.getInstance(DocMarkdownToHtmlConverter::class.java)
   private val TAG_START_OR_CLOSE_PATTERN: Pattern = Pattern.compile("(<)/?(\\w+)[> ]")
   internal val TAG_PATTERN: Pattern = Pattern.compile("^</?([a-z][a-z-_0-9]*)[^>]*>$", Pattern.CASE_INSENSITIVE)
-  private val SPLIT_BY_LINE_PATTERN: Pattern = Pattern.compile("\n|\r|\r\n")
+  private val FENCE_PATTERN = "\\s+```.*".toRegex()
   private const val FENCED_CODE_BLOCK = "```"
 
   private val HTML_DOC_SUBSTITUTIONS: Map<String, String> = mapOf(
@@ -44,8 +44,7 @@ object DocMarkdownToHtmlConverter {
     "<strong>" to "<b>",
     "</strong>" to "</b>",
     ": //" to "://", // Fix URL
-    "<p></p><pre>" to "<pre>",
-    "</p><pre>" to "<pre>",
+    "<p></p>" to "",
     "</p>" to "",
     "<br  />" to "",
   )
@@ -85,23 +84,27 @@ object DocMarkdownToHtmlConverter {
   @RequiresReadLock
   @JvmOverloads
   fun convert(project: Project, @Nls markdownText: String, defaultLanguage: Language? = null): @Nls String {
-    val lines = SPLIT_BY_LINE_PATTERN.split(markdownText.trimIndent())
+    val lines = markdownText.lines()
+    val minCommonIndent =
+      lines
+        .filter(String::isNotBlank)
+        .minOfOrNull { line -> line.indexOfFirst { !it.isWhitespace() }.let { if (it == -1) line.length else it } }
+      ?: 0
     val processedLines = ArrayList<String>(lines.size)
     var isInCode = false
     var isInTable = false
     var tableFormats: List<String>? = null
     for (i in lines.indices) {
-      val line = lines[i]
-      var processedLine = StringUtil.trimTrailing(line)
-      if (processedLine.matches("\\s+```.*".toRegex())) {
-        processedLine = processedLine.trim { it <= ' ' }
-      }
-
+      var processedLine = lines[i].let { if (it.length <= minCommonIndent) "" else it.substring(minCommonIndent) }
+      processedLine = processedLine.trimEnd()
       val count = StringUtil.getOccurrenceCount(processedLine, FENCED_CODE_BLOCK)
       if (count > 0) {
         isInCode = if (count % 2 == 0) isInCode else !isInCode
+        if (processedLine.matches(FENCE_PATTERN)) {
+          processedLine = processedLine.trim { it <= ' ' }
+        }
       }
-      else {
+      else if (!isInCode) {
         // TODO merge custom table generation code with Markdown parser
         val tableDelimiterIndex = processedLine.indexOf('|')
         if (tableDelimiterIndex != -1) {
@@ -130,11 +133,8 @@ object DocMarkdownToHtmlConverter {
     var normalizedMarkdown = StringUtil.join(processedLines, "\n")
     if (isInTable) normalizedMarkdown += "</table>" //NON-NLS
 
-    var html = performConversion(project, defaultLanguage, normalizedMarkdown)
-    if (html == null) {
-      html = replaceProhibitedTags(convertNewLinePlaceholdersToTags(markdownText), ContainerUtil.emptyList())
-    }
-    return adjustHtml(html)
+    return performConversion(project, defaultLanguage, normalizedMarkdown)?.trimEnd()
+           ?: adjustHtml(replaceProhibitedTags(convertNewLinePlaceholdersToTags(markdownText), ContainerUtil.emptyList()))
   }
 
   private fun convertNewLinePlaceholdersToTags(generatedDoc: String): String {
@@ -252,7 +252,9 @@ object DocMarkdownToHtmlConverter {
   private fun adjustHtml(html: String): String {
     var str = html
     for ((key, value) in HTML_DOC_SUBSTITUTIONS) {
-      str = str.replace(key, value)
+      if (str.indexOf(key) > 0) {
+        str = str.replace(key, value)
+      }
     }
     return str.trim { it <= ' ' }
   }
