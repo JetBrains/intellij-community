@@ -25,6 +25,11 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true; // to avoid retrieving and validating all children (SLOW!) just to figure out if it's a leaf
+  }
+
+  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (!index.isInLibrary(file)) return false;
