@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -13,7 +13,6 @@ import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
@@ -154,8 +153,10 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
  * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
  */
 suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildContext) {
-  val entries = generateProjectStructureMapping(context = context,
-                                                platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context))
+  val entries = generateProjectStructureMapping(
+    context = context,
+    platformLayout = createPlatformLayout(pluginsToPublish = emptySet(), context = context),
+  )
   writeProjectStructureReport(
     entries = entries.first + entries.second,
     file = targetFile,
@@ -166,7 +167,7 @@ suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildCont
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
 
 @JvmField
-val SUPPORTED_DISTRIBUTIONS: PersistentList<SupportedDistribution> = persistentListOf(
+val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = java.util.List.of(
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),

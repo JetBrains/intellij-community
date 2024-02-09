@@ -100,10 +100,9 @@ internal suspend fun buildDistribution(
       }
     }
 
-    listOfNotNull(
-      buildPlatformJob,
+    val pluginTasks = listOfNotNull(
       async {
-        buildBundledPlugins(
+        doBuildBundledPlugins(
           state = state,
           plugins = pluginLayouts,
           isUpdateFromSources = isUpdateFromSources,
@@ -130,7 +129,18 @@ internal suspend fun buildDistribution(
         )
       },
     )
-  }.flatMap { it.getCompleted() }
+
+    val lists = pluginTasks.awaitAll()
+    val pluginClassPath = lists.map {
+      async { generatePluginClassPath(it) }
+    }.awaitAll().joinToString(separator = "\n")
+
+    for ((_, pluginDir) in getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)) {
+      Files.writeString(pluginDir.resolve("plugin-classpath.txt"), pluginClassPath)
+    }
+
+    buildPlatformJob.await().asSequence() + lists.flatMap { it.flatMap { it.second } }
+  }.toList()
 
   // must be before reorderJars as these additional plugins maybe required for IDE start-up
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
@@ -188,13 +198,14 @@ fun getProductModules(state: DistributionBuilderState): List<String> {
     .toList()
 }
 
-private fun getPluginDirectories(context: BuildContext, isUpdateFromSources: Boolean): Map<SupportedDistribution, Path> {
-  return if (isUpdateFromSources) {
-    mapOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> {
+  if (isUpdateFromSources) {
+    return listOf(SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch) to
+                    context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
   }
   else {
-    SUPPORTED_DISTRIBUTIONS.associateWith {
-      getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context).resolve(PLUGINS_DIRECTORY)
+    return SUPPORTED_DISTRIBUTIONS.map {
+      it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context).resolve(PLUGINS_DIRECTORY)
     }
   }
 }
@@ -205,7 +216,23 @@ suspend fun buildBundledPlugins(
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
   context: BuildContext,
-): List<DistributionFileEntry> {
+) {
+  doBuildBundledPlugins(
+    state = state,
+    plugins = plugins,
+    isUpdateFromSources = isUpdateFromSources,
+    buildPlatformJob = buildPlatformJob,
+    context = context,
+  )
+}
+
+private suspend fun doBuildBundledPlugins(
+  state: DistributionBuilderState,
+  plugins: Collection<PluginLayout>,
+  isUpdateFromSources: Boolean,
+  buildPlatformJob: Job?,
+  context: BuildContext,
+): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
@@ -229,7 +256,7 @@ suspend fun buildBundledPlugins(
 
       buildPlatformSpecificPluginResources(
         plugins = pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
-        targetDirs = getPluginDirectories(context, isUpdateFromSources),
+        targetDirs = getPluginDirs(context, isUpdateFromSources),
         context = context,
       )
 
@@ -243,140 +270,138 @@ private suspend fun buildOsSpecificBundledPlugins(
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
   context: BuildContext,
-): List<DistributionFileEntry> {
+): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
     .useWithScope {
-      coroutineScope {
-        getPluginDirectories(context, isUpdateFromSources).mapNotNull { (dist, targetDir) ->
-          val (os, arch) = dist
-          if (!context.shouldBuildDistributionForOS(os, arch)) {
-            return@mapNotNull null
-          }
+      getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources).mapNotNull { (dist, targetDir) ->
+        val (os, arch) = dist
+        if (!context.shouldBuildDistributionForOS(os = os, arch = arch)) {
+          return@mapNotNull null
+        }
 
-          val osSpecificPlugins = plugins.filter {
-            satisfiesBundlingRequirements(plugin = it, osFamily = os, arch = arch, context = context)
-          }
-          if (osSpecificPlugins.isEmpty()) {
-            return@mapNotNull null
-          }
+        val osSpecificPlugins = plugins.filter {
+          satisfiesBundlingRequirements(plugin = it, osFamily = os, arch = arch, context = context)
+        }
+        if (osSpecificPlugins.isEmpty()) {
+          return@mapNotNull null
+        }
 
-          async(Dispatchers.IO) {
-            spanBuilder("build bundled plugins")
-              .setAttribute("os", os.osName)
-              .setAttribute("arch", arch.name)
-              .setAttribute("count", osSpecificPlugins.size.toLong())
-              .setAttribute("outDir", targetDir.toString())
-              .useWithScope {
-                buildPlugins(
-                  moduleOutputPatcher = ModuleOutputPatcher(),
-                  plugins = osSpecificPlugins,
-                  targetDir = targetDir,
-                  state = state,
-                  context = context,
-                  buildPlatformJob = buildPlatformJob,
-                )
-              }
-          }
+        async(Dispatchers.IO) {
+          spanBuilder("build bundled plugins")
+            .setAttribute("os", os.osName)
+            .setAttribute("arch", arch.name)
+            .setAttribute("count", osSpecificPlugins.size.toLong())
+            .setAttribute("outDir", targetDir.toString())
+            .useWithScope {
+              buildPlugins(
+                moduleOutputPatcher = ModuleOutputPatcher(),
+                plugins = osSpecificPlugins,
+                targetDir = targetDir,
+                state = state,
+                context = context,
+                buildPlatformJob = buildPlatformJob,
+              )
+            }
         }
       }
-    }.flatMap { it.getCompleted() }
+    }.flatMap { deferred -> deferred.getCompleted() }
 }
 
-suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
-                                   compressPluginArchive: Boolean,
-                                   buildPlatformLibJob: Job?,
-                                   state: DistributionBuilderState,
-                                   context: BuildContext): List<DistributionFileEntry> {
+suspend fun buildNonBundledPlugins(
+  pluginsToPublish: Set<PluginLayout>,
+  compressPluginArchive: Boolean,
+  buildPlatformLibJob: Job?,
+  state: DistributionBuilderState,
+  context: BuildContext,
+): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope { span ->
     if (pluginsToPublish.isEmpty()) {
-      return@useWithScope emptyList<DistributionFileEntry>()
+      return@useWithScope emptyList()
     }
     if (context.isStepSkipped(BuildOptions.NON_BUNDLED_PLUGINS_STEP)) {
       span.addEvent("skip")
-      return@useWithScope emptyList<DistributionFileEntry>()
+      return@useWithScope emptyList()
     }
 
     val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
     val autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
-    coroutineScope {
-      val buildKeymapPluginsTask = async { buildKeymapPlugins(targetDir = autoUploadingDir, context = context) }
-      val moduleOutputPatcher = ModuleOutputPatcher()
-      val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
-      NioFiles.deleteRecursively(stageDir)
-      val dirToJar = ConcurrentLinkedQueue<NonBundledPlugin>()
-      val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
-        "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
+    val buildKeymapPluginsTask = async { buildKeymapPlugins(targetDir = autoUploadingDir, context = context) }
+    val moduleOutputPatcher = ModuleOutputPatcher()
+    val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
+    NioFiles.deleteRecursively(stageDir)
+    val dirToJar = ConcurrentLinkedQueue<NonBundledPlugin>()
+    val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
+      "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
+    }
+    else {
+      context.buildNumber
+    }
+
+    // buildPlugins pluginBuilt listener is called concurrently
+    val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
+    val autoPublishPluginChecker = loadPluginAutoPublishList(context)
+    val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
+                                        !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
+    // we don't simplify the layout for non-bundled plugins, because PluginInstaller not ready for this (see rootEntryName)
+    val mappings = buildPlugins(
+      moduleOutputPatcher = moduleOutputPatcher,
+      plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
+      targetDir = stageDir,
+      state = state,
+      context = context,
+      buildPlatformJob = buildPlatformLibJob,
+    ) { plugin, pluginDirOrFile ->
+      val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
+      val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
+      val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
+      val pluginVersion = if (Files.exists(pluginXmlPath)) {
+        plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context)
       }
       else {
-        context.buildNumber
+        defaultPluginVersion
       }
+      val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
+      val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
+      pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
+      dirToJar.add(NonBundledPlugin(pluginDirOrFile, destFile, !plugin.enableSymlinksAndExecutableResources))
+    }
 
-      // buildPlugins pluginBuilt listener is called concurrently
-      val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
-      val autoPublishPluginChecker = loadPluginAutoPublishList(context)
-      val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
-                                          !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
-      // we don't simplify the layout for non-bundled plugins, because PluginInstaller not ready for this (see rootEntryName)
-      val mappings = buildPlugins(
+    archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context = context)
+
+    val helpPlugin = buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)
+    if (helpPlugin != null) {
+      val spec = buildHelpPlugin(
+        helpPlugin = helpPlugin,
+        pluginsToPublishDir = stageDir,
+        targetDir = autoUploadingDir,
         moduleOutputPatcher = moduleOutputPatcher,
-        plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
-        targetDir = stageDir,
         state = state,
         context = context,
-        buildPlatformJob = buildPlatformLibJob,
-      ) { plugin, pluginDirOrFile ->
-        val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
-        val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
-        val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
-        val pluginVersion = if (Files.exists(pluginXmlPath)) {
-          plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context)
-        }
-        else {
-          defaultPluginVersion
-        }
-        val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
-        val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
-        pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
-        dirToJar.add(NonBundledPlugin(pluginDirOrFile, destFile, !plugin.enableSymlinksAndExecutableResources))
-      }
-
-      archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context = context)
-
-      val helpPlugin = buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)
-      if (helpPlugin != null) {
-        val spec = buildHelpPlugin(
-          helpPlugin = helpPlugin,
-          pluginsToPublishDir = stageDir,
-          targetDir = autoUploadingDir,
-          moduleOutputPatcher = moduleOutputPatcher,
-          state = state,
-          context = context,
-        )
-        pluginSpecs.add(spec)
-      }
-
-      for (item in buildKeymapPluginsTask.await()) {
-        pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
-      }
-
-      if (prepareCustomPluginRepository) {
-        val list = pluginSpecs.sortedBy { it.pluginZip }
-        generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
-        generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
-      }
-
-      if (!context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)) {
-        for (plugin in pluginSpecs) {
-          launch {
-            validatePlugin(path = plugin.pluginZip, context = context)
-          }
-        }
-      }
-
-      mappings
+      )
+      pluginSpecs.add(spec)
     }
+
+    for (item in buildKeymapPluginsTask.await()) {
+      pluginSpecs.add(PluginRepositorySpec(pluginZip = item.first, pluginXml = item.second))
+    }
+
+    if (prepareCustomPluginRepository) {
+      val list = pluginSpecs.sortedBy { it.pluginZip }
+      generatePluginRepositoryMetaFile(list, nonBundledPluginsArtifacts, context)
+      generatePluginRepositoryMetaFile(list.filter { it.pluginZip.startsWith(autoUploadingDir) }, autoUploadingDir, context)
+    }
+
+    if (!context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)) {
+      for (plugin in pluginSpecs) {
+        launch {
+          validatePlugin(path = plugin.pluginZip, context = context)
+        }
+      }
+    }
+
+    mappings
   }
 }
 
@@ -473,7 +498,7 @@ private suspend fun buildPlugins(
   context: BuildContext,
   buildPlatformJob: Job?,
   pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
-): List<DistributionFileEntry> {
+): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
@@ -482,7 +507,7 @@ private suspend fun buildPlugins(
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
   val moduleWithSearchableOptions = getModuleWithSearchableOptions(context)
-  val entries: List<DistributionFileEntry> = coroutineScope {
+  val entries = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != "intellij.platform.builtInHelp") {
         checkOutputOfPluginModules(
@@ -531,13 +556,13 @@ private suspend fun buildPlugins(
         }
         else {
           // we cannot start executing right now because the plugin can use other plugins in a scramble classpath
-          scrambleTasks.add(ScrambleTask(plugin, pluginDir, targetDir))
+          scrambleTasks.add(ScrambleTask(plugin = plugin, pluginDir = pluginDir, targetDir = targetDir))
         }
       }
 
-      task
+      PluginBuildDescriptor(dir = pluginDir, layout = plugin, moduleNames = emptyList()) to task.await()
     }
-  }.flatMap { it.getCompleted() }
+  }
 
   if (scrambleTasks.isNotEmpty()) {
     checkNotNull(scrambleTool)
@@ -580,16 +605,20 @@ private suspend fun getModuleWithSearchableOptions(context: BuildContext): Set<S
   }
 }
 
-private suspend fun buildPlatformSpecificPluginResources(plugins: Collection<PluginLayout>,
-                                                         targetDirs: Map<SupportedDistribution, Path>,
-                                                         context: BuildContext) {
+private suspend fun buildPlatformSpecificPluginResources(
+  plugins: Collection<PluginLayout>,
+  targetDirs: List<Pair<SupportedDistribution, Path>>,
+  context: BuildContext,
+) {
   plugins.asSequence()
-    .flatMap { plugin -> 
-      plugin.platformResourceGenerators.entries.flatMap { (dist, generators) -> 
+    .flatMap { plugin ->
+      plugin.platformResourceGenerators.entries.flatMap { (dist, generators) ->
         generators.map { generator -> Triple(dist, generator, plugin.directoryName) }
       }
     }
-    .mapNotNull { (dist, generator, dirName) -> targetDirs[dist]?.let { path -> generator to path.resolve(dirName) } }
+    .mapNotNull {
+      (dist, generator, dirName) -> targetDirs.firstOrNull { it.first == dist }?.let { path -> generator to path.second.resolve(dirName) }
+    }
     .forEach { (generator, pluginDir) ->
       spanBuilder("plugin")
         .setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString())
@@ -1165,7 +1194,7 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
 }
 
 private fun checkModuleExcludes(moduleExcludes: Map<String, List<String>>, context: CompilationContext) {
-  moduleExcludes.keys.forEach { module ->
+  for (module in moduleExcludes.keys) {
     check(Files.exists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
       "There are excludes defined for module '${module}', but the module wasn't compiled;" +
       " most probably it means that '${module}' isn't included into the product distribution," +

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl;
@@ -13,6 +13,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -55,12 +56,12 @@ public class PluginDescriptorLoadingTest {
       jar.addFile(PluginManagerCore.PLUGIN_XML_PATH, "<idea-plugin><id>test.plugin</id></idea-plugin>".getBytes(StandardCharsets.UTF_8));
     }
 
-    File zipFile = tempDir.newFile("test.zip");
+    Path zipFile = tempDir.newFile("test.zip").toPath();
     try (Compressor.Zip zip = new Compressor.Zip(zipFile)) {
       zip.addFile("test.plugin/lib/plugin.jar", jarFile);
     }
 
-    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(zipFile.toPath(), null);
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(zipFile, null);
     assertNotNull(descriptor);
     assertEquals("test.plugin", descriptor.getPluginId().getIdString());
   }

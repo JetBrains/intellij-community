@@ -2,18 +2,22 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
+import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.PlatformJarNames
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val excludedLibJars = setOf(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
 
@@ -148,4 +152,51 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
       packageIndexBuilder.writePackageIndex(zipCreator)
     }
   }
+}
+
+data class PluginBuildDescriptor(
+  @JvmField val dir: Path,
+  @JvmField val layout: PluginLayout,
+  @JvmField val moduleNames: List<String>,
+)
+
+fun generatePluginClassPath(
+  pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
+): CharSequence {
+  val s = StringBuilder()
+  for ((pluginAsset, entries) in pluginEntries) {
+    val files = entries.asSequence()
+      .filter {
+        val relativeOutputFile = it.relativeOutputFile
+        relativeOutputFile == null || !relativeOutputFile.contains('/')
+      }
+      .map { it.path }
+      .distinct()
+      .toMutableList()
+    if (files.size > 1) {
+      // always sort
+      putMoreLikelyPluginJarsFirst(pluginDirName = pluginAsset.dir.fileName.toString(), filesInLibUnderPluginDir = files)
+
+      // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
+      var pluginDirIndex = files.indexOfFirst { Files.isDirectory(it) && Files.exists(it.resolve("META-INF/plugin.xml")) }
+      if (pluginDirIndex == -1) {
+        pluginDirIndex = files.indexOfFirst {
+          !Files.isDirectory(it) && HashMapZipFile.load(it).use { zip ->
+            zip.getRawEntry("META-INF/plugin.xml") != null
+          }
+        }
+      }
+
+      check(pluginDirIndex != -1) { "plugin descriptor is not found among\n  ${files.joinToString(separator = "\n  ")}" }
+      if (pluginDirIndex != 0) {
+        files.add(0, files.removeAt(pluginDirIndex))
+      }
+    }
+
+    // plugin dir as the last item in the list
+    s.append(pluginAsset.dir.fileName.invariantSeparatorsPathString).append(';')
+    files.joinTo(buffer = s, separator = ";") { pluginAsset.dir.relativize(it).invariantSeparatorsPathString }
+    s.appendLine()
+  }
+  return s
 }

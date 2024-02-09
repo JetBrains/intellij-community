@@ -7,10 +7,8 @@ import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.sha3_224
-import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
@@ -42,7 +40,6 @@ import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import kotlin.String
-import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.seconds
 
 private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
@@ -155,17 +152,18 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
 
     val pluginDistributionEntriesDeferred = async {
-      buildPlugins(request = request,
-                   context = context,
-                   runDir = runDir,
-                   platformLayout = platformLayout,
-                   artifactTask = artifactTask)
+      buildPlugins(
+        request = request,
+        context = context,
+        runDir = runDir,
+        platformLayout = platformLayout,
+        artifactTask = artifactTask,
+      )
     }
 
-    if (isUnpackedDist) {
-      launch(Dispatchers.IO) {
-        writePluginClassPath(pluginEntries = pluginDistributionEntriesDeferred.await(), runDir = runDir)
-      }
+    launch(Dispatchers.IO) {
+      val s = generatePluginClassPath(pluginEntries = pluginDistributionEntriesDeferred.await())
+      Files.writeString(runDir.resolve("plugins").resolve("plugin-classpath.txt"), s)
     }
 
     if (context.generateRuntimeModuleRepository) {
@@ -240,45 +238,6 @@ private suspend fun compileIfNeeded(context: BuildContext) {
       }
     }
   }
-}
-
-private fun writePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, runDir: Path) {
-  val pluginDir = runDir.resolve("plugins")
-  val s = StringBuilder()
-  for ((buildDescriptor, entries) in pluginEntries) {
-    val files = entries.asSequence()
-      .filter {
-        val relativeOutputFile = it.relativeOutputFile
-        relativeOutputFile == null || !relativeOutputFile.contains('/')
-      }
-      .map { it.path }
-      .distinct()
-      .toMutableList()
-    if (files.size > 1) {
-      // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
-      var pluginDirIndex = files.indexOfFirst { Files.isDirectory(it) && Files.exists(it.resolve("META-INF/plugin.xml")) }
-      if (pluginDirIndex == -1) {
-        putMoreLikelyPluginJarsFirst(pluginDirName = buildDescriptor.dir.fileName.toString(), filesInLibUnderPluginDir = files)
-        pluginDirIndex = files.indexOfFirst {
-          !Files.isDirectory(it) && HashMapZipFile.load(it).use { zip ->
-            zip.getRawEntry("META-INF/plugin.xml") != null
-          }
-        }
-      }
-
-      check(pluginDirIndex != -1) { "plugin descriptor is not found among\n  ${files.joinToString(separator = "\n  ")}" }
-      if (pluginDirIndex != 0) {
-        files.add(0, files.removeAt(pluginDirIndex))
-      }
-    }
-
-    files.joinTo(buffer = s, separator = ";") { pluginDir.relativize(it).invariantSeparatorsPathString }
-    // plugin dir as the last item in the list
-    s.append(';').append(pluginDir.relativize(buildDescriptor.dir).invariantSeparatorsPathString)
-    s.appendLine()
-  }
-
-  Files.writeString(pluginDir.resolve("plugin-classpath.txt"), s)
 }
 
 private suspend fun computeIdeFingerprint(

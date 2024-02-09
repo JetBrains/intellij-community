@@ -722,7 +722,9 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
                                              productBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
                                              transient = true)
 
-  val descriptor = runBlocking {
+  val fileName = file.fileName.toString()
+  if (fileName.endsWith(".jar", ignoreCase = true)) {
+    val descriptor = runBlocking {
     loadDescriptorFromFileOrDir(
       file = file,
       context = context,
@@ -733,9 +735,14 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
       useCoreClassLoader = false,
       pool = NonShareableJavaZipFilePool(),
     )
+    }
+    if (descriptor != null) {
+      return descriptor
+    }
   }
-  if (descriptor != null || !file.toString().endsWith(".zip")) {
-    return descriptor
+
+  if (!fileName.endsWith(".zip", ignoreCase = true)) {
+    return null
   }
 
   val outputDir = Files.createTempDirectory("plugin")!!
@@ -748,16 +755,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
       val rootDir = NioFiles.list(outputDir).firstOrNull { it.fileName.toString() != "__index__" }
       if (rootDir != null) {
         return runBlocking {
-          loadDescriptorFromFileOrDir(
-            file = rootDir,
-            context = context,
-            pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-            isBundled = false,
-            isEssential = false,
-            isDirectory = true,
-            useCoreClassLoader = false,
-            pool = NonShareableJavaZipFilePool(),
-          )
+          loadFromPluginDir(file = rootDir, parentContext = context, isUnitTestMode = isUnitTestMode, pool = NonShareableJavaZipFilePool())
         }
       }
     }

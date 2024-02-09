@@ -15,6 +15,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 
 /**
  * This class is temporarily added to support two ways of loading the plugin descriptors: [the old one][PathBasedProductLoadingStrategy]
@@ -86,7 +87,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
 
     val effectiveBundledPluginDir = bundledPluginDir
                                     ?: (if (isUnitTestMode) null else Paths.get(PathManager.getPreInstalledPluginsPath()))
-                                    ?: return emptyList()
+                                    ?: return Collections.emptyList()
     return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
   }
 
@@ -102,12 +103,16 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
         return@mapNotNull null
       }
 
-      val files = line.splitToSequence(';').map { bundledPluginDir.resolve(it) }.toList()
+      val fileIterator = line.splitToSequence(';').iterator()
+      val pluginDir = bundledPluginDir.resolve(fileIterator.next())
+      val files = ArrayList<Path>()
+      for (p in fileIterator) {
+        files.add(pluginDir.resolve(p))
+      }
       scope.asyncOrNull(files) {
         val file = files.first()
-        val classPath = files.subList(0, files.size - 1)
-        val dataLoader = MixedDirAndJarDataLoader(files = classPath, pool = zipFilePool)
-        val pluginPathResolver = PluginXmlPathResolver(classPath)
+        val dataLoader = MixedDirAndJarDataLoader(files = files, pool = zipFilePool)
+        val pluginPathResolver = PluginXmlPathResolver(files)
         val raw = readModuleDescriptor(
           input = if (file.toString().endsWith(".jar")) {
             dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH)!!
@@ -125,14 +130,14 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
 
         val descriptor = IdeaPluginDescriptorImpl(
           raw = raw,
-          path = files.last(),
+          path = pluginDir,
           isBundled = true,
           id = null,
           moduleName = null,
         )
         context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
         descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, isSub = false, dataLoader = dataLoader)
-        descriptor.jarFiles = classPath
+        descriptor.jarFiles = files
         descriptor
       }
     }

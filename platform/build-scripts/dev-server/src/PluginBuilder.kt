@@ -8,27 +8,23 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
-import java.nio.file.Path
 import java.util.concurrent.atomic.LongAdder
 
-internal data class PluginBuildDescriptor(@JvmField val dir: Path,
-                                          @JvmField val layout: PluginLayout,
-                                          @JvmField val moduleNames: List<String>)
-
-internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescriptor>,
-                                  platformLayout: PlatformLayout,
-                                  context: BuildContext): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+internal suspend fun buildPlugins(
+  pluginBuildDescriptors: List<PluginBuildDescriptor>,
+  platformLayout: PlatformLayout,
+  context: BuildContext,
+): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
   return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope { span ->
     val counter = LongAdder()
     val pluginEntries = coroutineScope {
       pluginBuildDescriptors.map { plugin ->
         async {
-          plugin to buildPluginIfNotCached(plugin = plugin,
-                                           platformLayout = platformLayout,
-                                           context = context)
+          plugin to buildPluginIfNotCached(plugin = plugin, platformLayout = platformLayout, context = context)
         }
       }
     }.map { it.getCompleted() }
