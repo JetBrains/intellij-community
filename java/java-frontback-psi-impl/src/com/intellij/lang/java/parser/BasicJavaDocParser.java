@@ -68,7 +68,7 @@ public final class BasicJavaDocParser {
         parseTag(builder, javaDocElementTypeContainer);
       }
       else {
-        parseDataItem(builder, null, false, javaDocElementTypeContainer);
+        parseDataItem(builder, null, false, javaDocElementTypeContainer, true);
       }
     }
   }
@@ -81,7 +81,7 @@ public final class BasicJavaDocParser {
     while (true) {
       IElementType tokenType = getTokenType(builder);
       if (tokenType == null || tokenType == JavaDocTokenType.DOC_TAG_NAME || tokenType == JavaDocTokenType.DOC_COMMENT_END) break;
-      parseDataItem(builder, tagName, false, javaDocElementTypeContainer);
+      parseDataItem(builder, tagName, false, javaDocElementTypeContainer, true);
     }
     tag.done(javaDocElementTypeContainer.DOC_TAG);
   }
@@ -89,17 +89,20 @@ public final class BasicJavaDocParser {
   private static void parseDataItem(PsiBuilder builder,
                                     @Nullable String tagName,
                                     boolean isInline,
-                                    @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer) {
+                                    @NotNull AbstractBasicJavaDocElementTypeFactory.JavaDocElementTypeContainer javaDocElementTypeContainer,
+                                    boolean allowNestedMarkup) {
     int initialBraceScope = getBraceScope(builder);
     IElementType tokenType = getTokenType(builder);
     if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_START) {
       int braceScope = getBraceScope(builder);
+      boolean isLiteralTag = CODE_TAG.equals(tagName) || LITERAL_TAG.equals(tagName) || SNIPPET_TAG.equals(tagName);
+      boolean allowNestedMarkupInside = !isLiteralTag && allowNestedMarkup;
+
       if (braceScope > 0) {
         setBraceScope(builder, braceScope + 1);
-        builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
         // Some inline tags can contain arbitrary other markup, process it as such
-        boolean isLiteralTag = CODE_TAG.equals(tagName) || LITERAL_TAG.equals(tagName) || SNIPPET_TAG.equals(tagName);
-        if (isLiteralTag) {
+        if (!allowNestedMarkupInside) {
+          builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
           builder.advanceLexer();
           return;
         }
@@ -128,7 +131,7 @@ public final class BasicJavaDocParser {
           break;
         }
 
-        parseDataItem(builder, inlineTagName, true, javaDocElementTypeContainer);
+        parseDataItem(builder, inlineTagName, true, javaDocElementTypeContainer, allowNestedMarkupInside);
         if (tokenType == JavaDocTokenType.DOC_INLINE_TAG_END) {
           braceScope = getBraceScope(builder);
           if (braceScope > 0) setBraceScope(builder, --braceScope);
@@ -169,7 +172,7 @@ public final class BasicJavaDocParser {
       }
     }
     else {
-      remapAndAdvance(builder);
+      remapAndAdvance(builder, allowNestedMarkup);
     }
   }
 
@@ -388,8 +391,8 @@ public final class BasicJavaDocParser {
     builder.putUserData(BRACE_SCOPE_KEY, braceScope);
   }
 
-  private static void remapAndAdvance(PsiBuilder builder) {
-    if (INLINE_TAG_BORDERS_SET.contains(builder.getTokenType()) && getBraceScope(builder) != 1) {
+  private static void remapAndAdvance(PsiBuilder builder, boolean allowNestedMarkup) {
+    if (INLINE_TAG_BORDERS_SET.contains(builder.getTokenType()) && !allowNestedMarkup) {
       builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
     }
     builder.advanceLexer();
