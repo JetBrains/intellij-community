@@ -6,14 +6,11 @@ import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.Gradl
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
-import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
@@ -26,9 +23,6 @@ import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getT
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 class GradleSourceSetGroovyHelper {
-
-  private static final boolean is67OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("6.7")
-  private static final boolean is80OrBetter = GradleVersionUtil.isCurrentGradleAtLeast("8.0")
 
   @NotNull
   @CompileDynamic
@@ -44,9 +38,6 @@ class GradleSourceSetGroovyHelper {
 
     def sourceSetResolutionContext = new GradleSourceSetResolutionContext(project, ideaPluginModule)
 
-    def projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project)
-    def projectTargetCompatibility = JavaPluginUtil.getTargetCompatibility(project)
-
     def result = new LinkedHashMap<String, DefaultExternalSourceSet>()
     def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSets == null) {
@@ -61,33 +52,7 @@ class GradleSourceSetGroovyHelper {
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
 
-      def javaCompileTask = project.tasks.findByName(sourceSet.compileJavaTaskName)
-      if (javaCompileTask instanceof JavaCompile) {
-        if (is67OrBetter) {
-          def compiler = javaCompileTask.javaCompiler
-          if (compiler.present) {
-            try {
-              def metadata = compiler.get().metadata
-              def configuredInstallationPath = metadata.installationPath.asFile.canonicalPath
-              boolean isFallbackToolchain =
-                is80OrBetter && metadata instanceof JavaToolchain && ((JavaToolchain)metadata).isFallbackToolchain()
-              if (!isFallbackToolchain) {
-                externalSourceSet.jdkInstallationPath = configuredInstallationPath
-              }
-            } catch (Throwable e) {
-              project.logger.warn("Skipping java toolchain information for $javaCompileTask.path : $e.message")
-              project.logger.info("Failed to resolve java toolchain info for $javaCompileTask.path", e)
-            }
-          }
-        }
-        externalSourceSet.sourceCompatibility = javaCompileTask.sourceCompatibility ?: projectSourceCompatibility
-        externalSourceSet.preview = javaCompileTask.options.compilerArgs.contains("--enable-preview")
-        externalSourceSet.targetCompatibility = javaCompileTask.targetCompatibility ?: projectTargetCompatibility
-      }
-      else {
-        externalSourceSet.sourceCompatibility = projectSourceCompatibility
-        externalSourceSet.targetCompatibility = projectTargetCompatibility
-      }
+      GradleSourceSetModelBuilder.addJavaCompilerOptions(externalSourceSet, project, sourceSet, sourceSetResolutionContext)
 
       project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
         if (containsAllSourceSetOutput(task, sourceSet)) {

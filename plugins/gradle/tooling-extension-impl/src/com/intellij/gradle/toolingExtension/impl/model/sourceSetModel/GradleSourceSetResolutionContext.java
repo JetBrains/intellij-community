@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
@@ -17,6 +18,9 @@ import java.util.Set;
 @ApiStatus.Internal
 class GradleSourceSetResolutionContext {
 
+  public final @Nullable String projectSourceCompatibility;
+  public final @Nullable String projectTargetCompatibility;
+
   public final @NotNull Collection<SourceSet> testSourceSets;
 
   public final @NotNull Set<File> ideaSourceDirs;
@@ -31,6 +35,9 @@ class GradleSourceSetResolutionContext {
     @NotNull Project project,
     @Nullable IdeaModule ideaPluginModule
   ) {
+    projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project);
+    projectTargetCompatibility = JavaPluginUtil.getTargetCompatibility(project);
+
     testSourceSets = GradleSourceSetModelBuilder.collectTestSourceSets(project);
 
     if (ideaPluginModule != null) {

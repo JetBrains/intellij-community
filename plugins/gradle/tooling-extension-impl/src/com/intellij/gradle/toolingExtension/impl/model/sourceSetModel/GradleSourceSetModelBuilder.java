@@ -11,15 +11,19 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.tasks.AbstractCopyTask;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.SourceSetContainer;
-import org.gradle.api.tasks.SourceSetOutput;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.bundling.Jar;
+import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.jvm.toolchain.JavaCompiler;
+import org.gradle.jvm.toolchain.JavaInstallationMetadata;
+import org.gradle.jvm.toolchain.internal.JavaToolchain;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -418,6 +422,57 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       return Collections.emptyList();
     }
     return Collections.singleton(testFixtureSourceSet);
+  }
+
+  static void addJavaCompilerOptions(
+    @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
+    @NotNull Project project,
+    @NotNull SourceSet sourceSet,
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext
+  ) {
+    Task javaCompileTask = project.getTasks().findByName(sourceSet.getCompileJavaTaskName());
+    if (javaCompileTask instanceof JavaCompile) {
+      JavaCompile javaCompile = (JavaCompile)javaCompileTask;
+      externalSourceSet.setJdkInstallationPath(getJavaToolchainInstallationPath(project, javaCompile));
+      externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
+      externalSourceSet.setPreview(javaCompile.getOptions().getCompilerArgs().contains("--enable-preview"));
+      externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
+    }
+    if (externalSourceSet.getSourceCompatibility() == null) {
+      externalSourceSet.setSourceCompatibility(sourceSetResolutionContext.projectSourceCompatibility);
+    }
+    if (externalSourceSet.getSourceCompatibility() == null) {
+      externalSourceSet.setTargetCompatibility(sourceSetResolutionContext.projectTargetCompatibility);
+    }
+  }
+
+  private static @Nullable String getJavaToolchainInstallationPath(@NotNull Project project, @NotNull JavaCompile javaCompile) {
+    if (GradleVersionUtil.isCurrentGradleOlderThan("6.7")) {
+      return null;
+    }
+    Property<JavaCompiler> compiler = javaCompile.getJavaCompiler();
+    if (!compiler.isPresent()) {
+      return null;
+    }
+    try {
+      JavaInstallationMetadata metadata = compiler.get().getMetadata();
+      String configuredInstallationPath = metadata.getInstallationPath().getAsFile().getCanonicalPath();
+      if (GradleVersionUtil.isCurrentGradleOlderThan("8.0")) {
+        return configuredInstallationPath;
+      }
+      if (metadata instanceof JavaToolchain) {
+        JavaToolchain javaToolchain = (JavaToolchain)metadata;
+        if (!javaToolchain.isFallbackToolchain()) {
+          return configuredInstallationPath;
+        }
+      }
+    }
+    catch (Throwable e) {
+      Logger logger = project.getLogger();
+      logger.warn(String.format("Skipping java toolchain information for %s : %s", javaCompile.getPath(), e.getMessage()));
+      logger.info(String.format("Failed to resolve java toolchain info for %s", javaCompile.getPath()), e);
+    }
+    return null;
   }
 
   static void addUnprocessedIdeaSourceDirs(
