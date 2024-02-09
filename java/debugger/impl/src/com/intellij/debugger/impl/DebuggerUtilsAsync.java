@@ -506,7 +506,7 @@ public final class DebuggerUtilsAsync {
   public static <T> T logError(@Nullable Throwable throwable) {
     Throwable e = unwrap(throwable);
     if (!(e instanceof CancellationException)) {
-      DebuggerUtilsImpl.logError(new Throwable(e)); // wrap to keep the exact catch position
+      DebuggerUtilsImpl.logError(e, true); // wrap to keep the exact catch position
     }
     return null;
   }

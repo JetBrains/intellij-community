@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -229,10 +229,14 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   public static void logError(Throwable e) {
+    logError(e, false);
+  }
+
+  static void logError(Throwable e, boolean wrapIntoThrowable) {
     if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
       throw (RuntimeException)e;
     }
-    LOG.error(e);
+    LOG.error(wrapIntoThrowable ? new Throwable(e) : e);
   }
 
   public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
