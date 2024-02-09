@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,7 +137,7 @@ final class PassExecutorService implements Disposable {
     List<EditorBoundHighlightingPass> editorBoundPasses = new ArrayList<>();
     Int2ObjectMap<TextEditorHighlightingPass> id2Pass = new Int2ObjectOpenHashMap<>(30);
 
-    List<ScheduledPass> freePasses = new ArrayList<>();
+    List<ScheduledPass> freePasses = new ArrayList<>(); // passes free to start, with no "after" dependencies
     AtomicInteger threadsToStartCountdown = new AtomicInteger(0);
 
     for (HighlightingPass pass : passes) {
@@ -172,7 +173,7 @@ final class PassExecutorService implements Disposable {
     }
 
     if (LOG.isDebugEnabled()) {
-      log(updateProgress, null, virtualFile + " ----- starting " + threadsToStartCountdown.get(), freePasses);
+      log(updateProgress, null, "submitPasses: "+virtualFile.getName() + " ----- starting " + threadsToStartCountdown.get() + "passes. free:"+freePasses+"; editorBound:"+editorBoundPasses+"; documentBound:"+documentBoundPasses);
     }
 
     for (ScheduledPass dependentPass : dependentPasses) {
@@ -390,7 +391,7 @@ final class PassExecutorService implements Disposable {
     private void doRun() {
       if (myUpdateProgress.isCanceled()) return;
 
-      log(myUpdateProgress, myPass, "Started. ");
+      log(myUpdateProgress, myPass, "Started.");
 
       for (ScheduledPass successor : mySuccessorsOnSubmit) {
         int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
