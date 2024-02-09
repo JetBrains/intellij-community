@@ -9,18 +9,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.ActivityScope
 
 object LocalHistoryCounter : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("local.history.counter", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("local.history.counter", 2)
 
   private val KIND_FIELD = EventFields.Enum<Kind>("kind")
   private val IS_TOOL_WINDOW_UI_FIELD = EventFields.Boolean("is_toolwindow_ui")
 
-  private val OPEN_EVENT = GROUP.registerEvent("event.open", KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
-  private val ACTION_EVENT = GROUP.registerEvent("event.action", EventFields.Enum<ActionKind>("actionKind"), KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
-  private val FILTER_EVENT = GROUP.registerEvent("event.filter", KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
+  private val OPEN_EVENT = GROUP.registerEvent("opened", KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
+  private val ACTION_EVENT = GROUP.registerEvent("action.used", EventFields.Enum<ActionKind>("actionKind"), KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
+  private val FILTER_EVENT = GROUP.registerEvent("filter.used", KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD)
 
-  private val LOAD_REVISIONS_ACTIVITY = GROUP.registerIdeActivity(activityName = "activity.load.items", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
-  private val LOAD_DIFFS_ACTIVITY = GROUP.registerIdeActivity(activityName = "activity.load.diff", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
-  private val FILTER_ACTIVITY = GROUP.registerIdeActivity(activityName = "activity.filter", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
+  private val LOAD_REVISIONS_ACTIVITY = GROUP.registerIdeActivity(activityName = "load.items", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
+  private val LOAD_DIFFS_ACTIVITY = GROUP.registerIdeActivity(activityName = "load.diff", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
+  private val FILTER_ACTIVITY = GROUP.registerIdeActivity(activityName = "filter", startEventAdditionalFields = arrayOf(KIND_FIELD, IS_TOOL_WINDOW_UI_FIELD))
 
   override fun getGroup(): EventLogGroup = GROUP
 
