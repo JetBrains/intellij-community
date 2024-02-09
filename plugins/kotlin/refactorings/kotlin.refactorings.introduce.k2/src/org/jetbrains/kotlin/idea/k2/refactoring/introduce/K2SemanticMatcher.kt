@@ -82,7 +82,18 @@ object K2SemanticMatcher {
 
         context(KtAnalysisSession)
         fun getAndAssociateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) =
-            withValidityAssertion { _symbols[targetDeclaration.getSymbol()] = patternDeclaration.getSymbol() }
+            withValidityAssertion {
+                val targetSymbol = targetDeclaration.getSymbol()
+                val patternSymbol = patternDeclaration.getSymbol()
+
+                if (targetSymbol is KtDestructuringDeclarationSymbol && patternSymbol is KtDestructuringDeclarationSymbol) {
+                    for ((targetEntry, patternEntry) in targetSymbol.entries.zip(patternSymbol.entries)) {
+                        _symbols[targetEntry] = patternEntry
+                    }
+                } else {
+                    _symbols[targetSymbol] = patternSymbol
+                }
+            }
 
         context(KtAnalysisSession)
         fun getAndAssociateSymbolsForBlockBodyOwners(targetFunction: KtFunction, patternFunction: KtFunction) = withValidityAssertion {
@@ -198,7 +209,11 @@ object K2SemanticMatcher {
             return visitDeclaration(property, patternProperty)
         }
 
-        override fun visitDestructuringDeclaration(multiDeclaration: KtDestructuringDeclaration, data: KtElement): Boolean = false // TODO
+        override fun visitDestructuringDeclaration(multiDeclaration: KtDestructuringDeclaration, data: KtElement): Boolean {
+            val patternMultiDeclaration = data as? KtDestructuringDeclaration ?: return false
+            if (multiDeclaration.entries.size != patternMultiDeclaration.entries.size) return false
+            return visitDeclaration(multiDeclaration, patternMultiDeclaration)
+        }
 
         override fun visitTypeParameterList(list: KtTypeParameterList, data: KtElement): Boolean {
             val patternList = data as? KtTypeParameterList ?: return false

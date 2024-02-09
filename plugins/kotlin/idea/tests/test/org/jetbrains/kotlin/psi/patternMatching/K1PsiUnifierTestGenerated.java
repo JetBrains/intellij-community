@@ -173,6 +173,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
 
+                    @TestMetadata("destructuringDeclarations.kt")
+                    public void testDestructuringDeclarations() throws Exception {
+                        runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/destructuringDeclarations.kt");
+                    }
+
                     @TestMetadata("multipleParamsRuntime.kt")
                     public void testMultipleParamsRuntime() throws Exception {
                         runTest("testData/unifier/equivalence/declarations/localCallables/lambdas/multipleParamsRuntime.kt");
