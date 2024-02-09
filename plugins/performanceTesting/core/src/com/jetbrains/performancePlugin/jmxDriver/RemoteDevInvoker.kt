@@ -5,11 +5,15 @@ import com.intellij.driver.client.impl.JmxCallHandler
 import com.intellij.driver.client.impl.JmxHost
 import com.intellij.driver.impl.InvokerMBean
 import com.intellij.driver.model.ProductVersion
+import com.intellij.driver.model.transport.Ref
 import com.intellij.driver.model.transport.RemoteCall
 import com.intellij.driver.model.transport.RemoteCallResult
+import kotlin.jvm.java
 
 
-internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJmxAddress: String) : InvokerMBean {
+interface RemoteDevInvokerMBean : InvokerMBean
+
+internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJmxAddress: String) : RemoteDevInvokerMBean {
   private val remoteInvoker = JmxCallHandler.jmx(Invoker::class.java, JmxHost(null, null, remoteJmxAddress))
 
   override fun getProductVersion(): ProductVersion {
@@ -52,5 +56,9 @@ internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJm
 
   override fun takeScreenshot(outFolder: String?) {
     return localInvoker.takeScreenshot(outFolder)
+  }
+
+  override fun putAdhocReference(item: Any): Ref {
+    return localInvoker.putAdhocReference(item)
   }
 }

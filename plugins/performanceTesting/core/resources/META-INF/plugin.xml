@@ -40,6 +40,10 @@
     <extensionPoint interface="com.jetbrains.performancePlugin.RunCallbackHandler" name="runCallbackHandler"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.profilers.SnapshotOpener" name="snapshotOpener" dynamic="true"/>
     <extensionPoint interface="com.jetbrains.performancePlugin.profilers.Profiler" name="profiler" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelSubTreeProvider"
+                    name="remoteDriver.xpathDataModelExtension" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebServiceExtension"
+                    name="remoteDriver.uiHierarchyExtension" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.remotedriver
 
+import com.intellij.driver.model.RefDelegate
 import com.intellij.driver.model.TextDataList
 import com.intellij.openapi.components.Service
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
@@ -16,11 +17,11 @@ internal class RobotService {
 
   private val xpathSearcher: XpathSearcher = XpathSearcher(TextToKeyCache)
 
-  fun findAll(xpath: String): List<Component> {
+  fun findAll(xpath: String): List<RefDelegate<Component>> {
     return xpathSearcher.findComponents(xpath, null)
   }
 
-  fun findAll(xpath: String, component: Component): List<Component> {
+  fun findAll(xpath: String, component: Component): List<RefDelegate<Component>> {
     return xpathSearcher.findComponents(xpath, component)
   }
 

@@ -20,5 +20,8 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.driver.model" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="library" name="jsoup" level="project" />
+    <orderEntry type="module" module-name="intellij.driver.impl" />
+    <orderEntry type="module" module-name="intellij.driver.client" />
   </component>
 </module>

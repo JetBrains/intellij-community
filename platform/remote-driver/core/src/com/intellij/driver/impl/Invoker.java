@@ -1,7 +1,6 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.OnDispatcher;
-import com.intellij.driver.model.ProductVersion;
+import com.intellij.driver.model.*;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -162,16 +161,14 @@ public class Invoker implements InvokerMBean {
     }
 
     if (call.getSessionId() == NO_SESSION_ID) {
-      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
-      Ref ref = RefProducer.makeRef(id, result);
-      adhocReferenceMap.put(id, new WeakReference<>(result));
+      Ref ref = putAdhocReference(result);
 
       if (result instanceof Collection<?>) {
         List<Ref> items = new ArrayList<>(((Collection<?>)result).size());
         for (Object item : ((Collection<?>)result)) {
           items.add(putAdhocReference(item));
         }
-        return new RemoteCallResult(new RefList(id, result.getClass().getName(), items));
+        return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
       }
 
       if (result.getClass().isArray()) {
@@ -181,23 +178,19 @@ public class Invoker implements InvokerMBean {
         for (Object item : array) {
           items.add(putAdhocReference(item));
         }
-        return new RemoteCallResult(new RefList(id, result.getClass().getName(), items));
+        return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
       }
 
       return new RemoteCallResult(ref);
     }
     else {
       Session session = sessions.get(call.getSessionId());
-      Ref ref = session.putReference(result);
-
-      // also make variable available out ouf `driver.withContext { }` block as weak reference
-      adhocReferenceMap.put(ref.id(), new WeakReference<>(result));
+      Ref ref = putAdhocReferenceToSession(result, session);
 
       if (result instanceof Collection<?>) {
         List<Ref> items = new ArrayList<>(((Collection<?>)result).size());
         for (Object item : ((Collection<?>)result)) {
-          Ref child = session.putReference(item);
-          adhocReferenceMap.put(child.id(), new WeakReference<>(item));
+          Ref child = putAdhocReferenceToSession(item, session);
           items.add(child);
         }
         return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
@@ -208,8 +201,7 @@ public class Invoker implements InvokerMBean {
         List<Ref> items = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
           Object item = Array.get(result, i);
-          Ref child = session.putReference(item);
-          adhocReferenceMap.put(child.id(), new WeakReference<>(item));
+          Ref child = putAdhocReferenceToSession(item, session);
           items.add(child);
         }
 
@@ -308,10 +300,33 @@ public class Invoker implements InvokerMBean {
     }
   }
 
-  private @NotNull Ref putAdhocReference(@NotNull Object item) {
+  @Override
+  public @NotNull Ref putAdhocReference(@NotNull Object item) {
+    if (item instanceof LocalRefDelegate<?> delegate) {
+      item = delegate.getLocalValue();
+    }
+    if (item instanceof RemoteRefDelegate<?> delegate) {
+      return delegate.getRemoteRef();
+    }
     String itemId = refIdPrefix + REF_SEQUENCE.getAndIncrement();
     adhocReferenceMap.put(itemId, new WeakReference<>(item));
     return RefProducer.makeRef(itemId, item);
+  }
+
+  private @NotNull Ref putAdhocReferenceToSession(@NotNull Object item, @NotNull Session session) {
+    if (item instanceof LocalRefDelegate<?> delegate) {
+      item = delegate.getLocalValue();
+    }
+    if (item instanceof RemoteRefDelegate<?> delegate) {
+      return delegate.getRemoteRef();
+    }
+
+    Ref ref = session.putReference(item);
+
+    // also make variable available out ouf `driver.withContext { }` block as weak reference
+    adhocReferenceMap.put(ref.id(), new WeakReference<>(item));
+
+    return ref;
   }
 
   private static Constructor<?> getConstructor(@NotNull RemoteCall call, @NotNull Class<?> targetClass, Object[] transformedArgs) {
@@ -623,6 +638,15 @@ final class Session {
 final class RefProducer {
   public static @NotNull Ref makeRef(String id, @NotNull Object value) {
     if (value instanceof Ref) return (Ref)value;
+
+    if (value instanceof RefDelegate) {
+      if (value instanceof RemoteRefDelegate) {
+        return ((RemoteRefDelegate<?>)value).getRemoteRef();
+      }
+      if (value instanceof LocalRefDelegate) {
+        value = ((LocalRefDelegate<?>)value).getLocalValue();
+      }
+    }
 
     return new Ref(
       id,
