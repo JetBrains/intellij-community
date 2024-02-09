@@ -147,7 +147,7 @@
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 8, 22, 24 ],
+      "includeGroups": [ 8, 22, 24, 28 ],
       "shouldLogElementFeatures": false
     },
     {
@@ -171,7 +171,7 @@
     {
       "id": "php",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 8, 22, 24 ],
+      "includeGroups": [ 8, 22, 24, 28 ],
       "shouldLogElementFeatures": false
     },
     {
