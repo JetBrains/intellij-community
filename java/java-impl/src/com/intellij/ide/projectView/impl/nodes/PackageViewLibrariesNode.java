@@ -35,6 +35,11 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
+  public boolean isAutoExpandAllowed() {
+    return false;
+  }
+
+  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (!index.isInLibrary(file)) return false;
