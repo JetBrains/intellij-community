@@ -111,7 +111,7 @@ public class PyEnvTaskRunner {
       }
       catch (final RuntimeException | Error ex) {
         // Runtime and error are logged including environment info
-        LOG.warn(joinStrings(passedRoots, "Tests passed environments: ") +
+        LOG.warn(formatCollectionToString(passedRoots, "Tests passed environments") +
                  "Test failed on " +
                  getEnvType() +
                  " environment " +
@@ -137,9 +137,9 @@ public class PyEnvTaskRunner {
       throw new RuntimeException("test " +
                                  testName +
                                  " was not executed.\n" +
-                                 joinStrings(myRoots, "All roots: ") +
+                                 formatCollectionToString(myRoots, "All roots") +
                                  "\n" +
-                                 joinStrings(requiredTags, "Required tags in tags.txt in root: "));
+                                 formatCollectionToString(requiredTags, "Required tags in tags.txt in root"));
     }
   }
 
@@ -236,7 +236,7 @@ public class PyEnvTaskRunner {
   }
 
   @NotNull
-  private static String joinStrings(final Collection<String> roots, final String rootsName) {
-    return !roots.isEmpty() ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
+  private static String formatCollectionToString(Collection<String> coll, String collName) {
+    return !coll.isEmpty() ? collName + ": " + StringUtil.join(coll, ", ") + "\n" : "";
   }
 }
