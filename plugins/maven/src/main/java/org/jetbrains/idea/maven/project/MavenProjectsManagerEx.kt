@@ -224,9 +224,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                            filesToDelete: List<VirtualFile>) {
     importMutex.withLock {
       withContext(tracer.span("updateMavenProjects")) {
-        MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ")
+        MavenLog.LOG.warn("updateMavenProjects started: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
         doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
-        MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size}")
+        MavenLog.LOG.warn("updateMavenProjects finished: $spec ${filesToUpdate.size} ${filesToDelete.size} ${myProject.name}")
       }
     }
   }
@@ -288,9 +288,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                              modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     return importMutex.withLock {
       withContext(tracer.span("updateAllMavenProjects")) {
-        MavenLog.LOG.warn("updateAllMavenProjects started: $spec")
+        MavenLog.LOG.warn("updateAllMavenProjects started: $spec ${myProject.name}")
         val result = doUpdateAllMavenProjects(spec, modelsProvider)
-        MavenLog.LOG.warn("updateAllMavenProjects finished: $spec")
+        MavenLog.LOG.warn("updateAllMavenProjects finished: $spec ${myProject.name}")
         result
       }
     }
@@ -306,7 +306,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                             modelsProvider: IdeModifiableModelsProvider?,
                                             read: suspend () -> MavenProjectsTreeUpdateResult): List<Module> {
     // display all import activities using the same build progress
-    logDebug("Start update ${project.name}, $spec")
+    logDebug("Start update ${project.name}, $spec ${myProject.name}")
     ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncStarted(myProject)
 
     MavenSyncConsole.startTransaction(myProject)
@@ -314,7 +314,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     try {
       val console = syncConsole
       console.startImport(spec.isExplicit)
-      if (MavenUtil.enablePreimport()) { /////
+      if (MavenUtil.enablePreimport()) {
         val result = MavenProjectStaticImporter.getInstance(myProject)
           .syncStatic(
             projectsTree.existingManagedFiles,
@@ -351,7 +351,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       return emptyList()
     }
     finally {
-      logDebug("Finish update ${project.name}, $spec")
+      logDebug("Finish update ${project.name}, $spec ${myProject.name}")
       MavenSyncConsole.finishTransaction(myProject)
       syncActivity.finished {
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
