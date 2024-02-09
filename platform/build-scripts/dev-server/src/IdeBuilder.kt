@@ -3,12 +3,12 @@
 
 package org.jetbrains.intellij.build.devServer
 
+import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.sha3_224
 import com.intellij.util.lang.PathClassLoader
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
@@ -30,7 +30,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -47,7 +46,6 @@ private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoo
 data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
-  @JvmField val isIdeProfileAware: Boolean = false,
   @JvmField val homePath: Path,
   @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
                                                       ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
@@ -63,7 +61,6 @@ data class BuildRequest(
   override fun toString(): String {
     return "BuildRequest(platformPrefix='$platformPrefix', " +
            "additionalModules=$additionalModules, " +
-           "isIdeProfileAware=$isIdeProfileAware, homePath=$homePath, " +
            "productionClassOutput=$productionClassOutput, " +
            "keepHttpClient=$keepHttpClient, " +
            "generateRuntimeModuleRepository=$generateRuntimeModuleRepository"
@@ -85,8 +82,9 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
   }
 
   val runDir = withContext(Dispatchers.IO.limitedParallelism(4)) {
-    val classifier = if (request.isIdeProfileAware) computeAdditionalModulesFingerprint(request.additionalModules) else ""
-    val productDirName = (if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier
+    val classifier = computeAdditionalModulesFingerprint(request.additionalModules)
+    val productDirName = ((if (request.platformPrefix == "Idea") "idea-community" else request.platformPrefix) + classifier)
+      .takeLast(255)
 
     val runDir = rootDir.resolve("$productDirName/$productDirName")
     // on start, delete everything to avoid stale data
@@ -278,7 +276,7 @@ private suspend fun computeIdeFingerprint(
   val fingerprint = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)
   withContext(Dispatchers.IO) {
     Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
-    Files.writeString(runDir.resolve("fingerprint-debug.txt"), debug)
+    //Files.writeString(runDir.resolve("fingerprint-debug.txt"), debug)
   }
   Span.current().addEvent("IDE fingerprint: $fingerprint")
 }
@@ -506,9 +504,11 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
     return ""
   }
   else {
-    return BigInteger(1, sha3_224().digest(additionalModules.sorted()
-                                             .joinToString(separator = ",")
-                                             .toByteArray())).toString(Character.MAX_RADIX)
+    val hash = Hashing.komihash5_0().hashStream()
+    hash.putUnorderedIterable(additionalModules, HashFunnel.forString(), Hashing.komihash5_0())
+
+    return "-" + additionalModules.joinToString(separator = "-") { it.removePrefix("intellij.").take(4) } + "-" +
+           java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
   }
 }
 

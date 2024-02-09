@@ -3,17 +3,17 @@
 
 package org.jetbrains.intellij.build.jarCache
 
+import com.dynatrace.hash4j.hashing.HashStream64
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.Source
 import org.jetbrains.intellij.build.ZipSource
 import java.nio.file.Path
-import java.security.MessageDigest
 
 internal interface SourceBuilder {
   val useCacheAsTargetFile: Boolean
 
   // one module (source) can be included in different plugins - cache per plugin
-  fun updateDigest(digest: MessageDigest)
+  fun updateDigest(digest: HashStream64)
 
   suspend fun produce(targetFile: Path)
 }

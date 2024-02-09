@@ -136,10 +136,11 @@ internal suspend fun buildDistribution(
     }.awaitAll().joinToString(separator = "\n")
 
     for ((_, pluginDir) in getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)) {
+      Files.createDirectories(pluginDir)
       Files.writeString(pluginDir.resolve("plugin-classpath.txt"), pluginClassPath)
     }
 
-    buildPlatformJob.await().asSequence() + lists.flatMap { it.flatMap { it.second } }
+    buildPlatformJob.await().asSequence() + lists.flatMap { list -> list.flatMap { it.second } }
   }.toList()
 
   // must be before reorderJars as these additional plugins maybe required for IDE start-up
@@ -1159,12 +1160,14 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
   val rootElement = artifact.rootElement
   for (element in rootElement.children) {
     if (element is JpsProductionModuleOutputPackagingElement) {
-      entries.add(ModuleOutputEntry(path = artifactFile,
-                                    moduleName = element.moduleReference.moduleName,
-                                    size = 0,
-                                    hash = 0,
-                                    relativeOutputFile = "",
-                                    reason = "artifact: ${artifact.name}"))
+      entries.add(ModuleOutputEntry(
+        path = artifactFile,
+        moduleName = element.moduleReference.moduleName,
+        size = 0,
+        hash = 0,
+        relativeOutputFile = "",
+        reason = "artifact: ${artifact.name}",
+      ))
     }
     else if (element is JpsTestModuleOutputPackagingElement) {
       entries.add(ModuleTestOutputEntry(path = artifactFile, moduleName = element.moduleReference.moduleName))
@@ -1173,21 +1176,26 @@ private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection
       val library = element.libraryReference.resolve()
       val parentReference = library!!.createReference().parentReference
       if (parentReference is JpsModuleReference) {
-        entries.add(ModuleLibraryFileEntry(path = artifactFile,
-                                           moduleName = parentReference.moduleName,
-                                           libraryName = LibraryLicensesListGenerator.getLibraryName(library),
-                                           libraryFile = null,
-                                           hash = 0,
-                                           size = 0))
+        entries.add(ModuleLibraryFileEntry(
+          path = artifactFile,
+          moduleName = parentReference.moduleName,
+          libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+          libraryFile = null,
+          hash = 0,
+          size = 0,
+          relativeOutputFile = null,
+        ))
       }
       else {
         val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED, reason = "<- artifact ${artifact.name}")
-        entries.add(ProjectLibraryEntry(path = artifactFile,
-                                        data = libraryData,
-                                        libraryFile = null,
-                                        hash = 0,
-                                        size = 0,
-                                        relativeOutputFile = null))
+        entries.add(ProjectLibraryEntry(
+          path = artifactFile,
+          data = libraryData,
+          libraryFile = null,
+          hash = 0,
+          size = 0,
+          relativeOutputFile = null,
+        ))
       }
     }
   }

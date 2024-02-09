@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.dynatrace.hash4j.hashing.HashStream64
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
@@ -25,7 +26,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import java.security.MessageDigest
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
@@ -336,8 +336,8 @@ class BuildContextImpl(
         override val useCacheAsTargetFile: Boolean
           get() = false
 
-        override fun updateDigest(digest: MessageDigest) {
-          digest.update(Byte.MIN_VALUE)
+        override fun updateDigest(digest: HashStream64) {
+          digest.putByte(Byte.MIN_VALUE)
         }
 
         override suspend fun produce(targetFile: Path) {

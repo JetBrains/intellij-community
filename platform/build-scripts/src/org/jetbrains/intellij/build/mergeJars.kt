@@ -42,7 +42,7 @@ data class ZipSource(
   @JvmField val excludes: List<Regex> = emptyList(),
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
   @JvmField val optimizeConfigId: String? = null,
-  val distributionFileEntryProducer: DistributionFileEntryProducer?,
+  @JvmField val distributionFileEntryProducer: DistributionFileEntryProducer?,
 ) : Source, Comparable<ZipSource> {
   override var size: Int = 0
   override var hash: Long = 0

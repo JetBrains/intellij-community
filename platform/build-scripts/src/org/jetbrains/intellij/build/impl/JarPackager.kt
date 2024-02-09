@@ -30,7 +30,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.*
-import java.security.MessageDigest
 import java.util.*
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readLines
@@ -419,6 +418,7 @@ class JarPackager private constructor(private val outDir: Path,
                 libraryFile = file,
                 hash = hash,
                 size = size,
+                relativeOutputFile = item.relativeOutputFile,
               )
             }
             else {
@@ -576,10 +576,7 @@ class JarPackager private constructor(private val outDir: Path,
   ) {
     val moduleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
     val sources = asset.sources
-    var isPreSignedCandidate = asset.nativeFiles != null || (isRootDir && isLibPreSigned(library))
-    if (asset.nativeFiles != null) {
-      isPreSignedCandidate = true
-    }
+    val isPreSignedCandidate = asset.nativeFiles != null || (isRootDir && isLibPreSigned(library))
     val libraryName = library.name
     for (file in files) {
       sources.add(ZipSource(
@@ -595,6 +592,7 @@ class JarPackager private constructor(private val outDir: Path,
               libraryFile = file,
               hash = hash,
               size = size,
+              relativeOutputFile = relativeOutputFile,
             )
           } ?: ProjectLibraryEntry(
             path = targetFile,
@@ -614,7 +612,7 @@ class JarPackager private constructor(private val outDir: Path,
       asset = getJarAsset(targetFile = targetFile, relativeOutputFile = relativeOutputFile, metaInfDir = null),
       files = files,
       library = library,
-      relativeOutputFile = null,
+      relativeOutputFile = relativeOutputFile,
     )
   }
 
@@ -799,14 +797,13 @@ private suspend fun buildJars(assets: Collection<AssetDescriptor>,
                 override val useCacheAsTargetFile: Boolean
                   get() = useCacheAsTargetFile && !asset.relativePath.contains('/')
 
-                override fun updateDigest(digest: MessageDigest) {
+                override fun updateDigest(digest: HashStream64) {
                   if (layout is PluginLayout) {
                     val mainModule = layout.mainModule
-                    digest.update(mainModule.length.toByte())
-                    digest.update(mainModule.encodeToByteArray())
+                    digest.putString(mainModule)
                   }
                   else {
-                    digest.update(0)
+                    digest.putByte(0)
                   }
                 }
 

@@ -3,7 +3,8 @@
 
 package org.jetbrains.intellij.build.jarCache
 
-import com.intellij.util.io.sha3_224
+import com.dynatrace.hash4j.hashing.HashStream64
+import com.dynatrace.hash4j.hashing.Hashing
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -18,12 +19,10 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
-import java.math.BigInteger
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
-import java.security.MessageDigest
 import java.time.Instant
 import kotlin.time.Duration.Companion.days
 
@@ -50,22 +49,26 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
                                        producer: SourceBuilder): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, classOutDirectory = classOutDirectory)
 
-    // 224 bit and not 256/512 - use a slightly shorter filename
-    // xxh3 is not used as it is not secure and moreover, better to stick to JDK API
-    val hash = sha3_224()
-    hash.update(cacheVersion)
-    hashAsShort(hash, items.size)
+    val hash = Hashing.komihash5_0().hashStream()
+    hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
     for (source in items) {
-      hashAsShort(hash, source.path.length)
-      hash.update(source.path.encodeToByteArray())
-
+      hash.putString(source.path)
       source.updateDigest(hash)
     }
 
-    producer.updateDigest(hash)
+    val hash1 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
 
-    val hashString = BigInteger(1, hash.digest()).toString(Character.MAX_RADIX)
-    val cacheName = "${targetFile.fileName.toString().removeSuffix(jarSuffix)}-$hashString"
+    // another 64-bit hash based on paths only to reduce the chance of collision
+    hash.reset()
+    producer.updateDigest(hash)
+    for (source in items.asReversed()) {
+      hash.putString(source.path)
+    }
+    hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
+
+    val hash2 = java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
+
+    val cacheName = "${targetFile.fileName.toString().removeSuffix(jarSuffix)}-$hash1-$hash2"
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
@@ -94,7 +97,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     }
 
     val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(System.currentTimeMillis(), Character.MAX_RADIX)}"
-                                  .takeLast(255))
+                                      .takeLast(255))
     var fileMoved = false
     try {
       producer.produce(tempFile)
@@ -108,10 +111,12 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     }
 
     val sourceCacheItems = items.map { source ->
-      SourceCacheItem(path = source.path,
-                      size = source.getSize().toInt(),
-                      hash = source.getHash(),
-                      nativeFiles = (source.source as? ZipSource)?.let { nativeFiles?.get(it) } ?: emptyList())
+      SourceCacheItem(
+        path = source.path,
+        size = source.getSize().toInt(),
+        hash = source.getHash(),
+        nativeFiles = (source.source as? ZipSource)?.let { nativeFiles?.get(it) } ?: emptyList(),
+      )
     }
 
     coroutineScope {
@@ -141,9 +146,12 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
   }
 }
 
-private fun hashAsShort(hash: MessageDigest, value: Int) {
-  hash.update(value.toByte())
-  hash.update((value shr 8).toByte())
+private fun hashCommonMeta(hash: HashStream64,
+                      items: List<SourceAndCacheStrategy>,
+                      targetFile: Path) {
+  hash.putByte(cacheVersion)
+  hash.putInt(items.size)
+  hash.putString(targetFile.fileName.toString())
 }
 
 private fun checkCache(cacheMetadataFile: Path,

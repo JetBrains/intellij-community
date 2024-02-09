@@ -18,8 +18,6 @@ sealed interface DistributionFileEntry {
   val type: String
 
   val hash: Long
-
-  fun changePath(newFile: Path): DistributionFileEntry
 }
 
 sealed interface LibraryFileEntry : DistributionFileEntry {
@@ -30,26 +28,17 @@ sealed interface LibraryFileEntry : DistributionFileEntry {
 /**
  * Represents a file in module-level library
  */
-internal data class ModuleLibraryFileEntry(override val path: Path,
-                                           @JvmField val moduleName: String,
-                                           @JvmField val libraryName: String,
-                                           override val libraryFile: Path?,
-                                           override val size: Int,
-                                           override val hash: Long) : DistributionFileEntry, LibraryFileEntry {
-  override val relativeOutputFile: String?
-    get() = null
-
+internal data class ModuleLibraryFileEntry(
+  override val path: Path,
+  @JvmField val moduleName: String,
+  @JvmField val libraryName: String,
+  override val libraryFile: Path?,
+  override val size: Int,
+  override val hash: Long,
+  override val relativeOutputFile: String?,
+) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "module-library-file"
-
-  override fun changePath(newFile: Path): ModuleLibraryFileEntry {
-    return ModuleLibraryFileEntry(path = newFile,
-                                  moduleName = moduleName,
-                                  libraryName = libraryName,
-                                  libraryFile = libraryFile,
-                                  hash = hash,
-                                  size = size)
-  }
 }
 
 /**
@@ -64,8 +53,6 @@ internal data class ModuleTestOutputEntry(override val path: Path, @JvmField val
 
   override val hash: Long
     get() = 0
-
-  override fun changePath(newFile: Path) = ModuleTestOutputEntry(path = newFile, moduleName = moduleName)
 }
 
 /**
@@ -80,17 +67,7 @@ internal data class ProjectLibraryEntry(
   override val relativeOutputFile: String?,
 ) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
-    get() = "project-library"
-
-  override fun changePath(newFile: Path): ProjectLibraryEntry {
-    return ProjectLibraryEntry(path = newFile,
-                               data = data,
-                               libraryFile = libraryFile,
-                               hash = hash,
-                               size = size,
-                               relativeOutputFile = relativeOutputFile)
-  }
-}
+    get() = "project-library" }
 
 /**
  * Represents production classes of a module
@@ -105,13 +82,4 @@ data class ModuleOutputEntry(
 ) : DistributionFileEntry {
   override val type: String
     get() = "module-output"
-
-  override fun changePath(newFile: Path): ModuleOutputEntry {
-    return ModuleOutputEntry(path = newFile,
-                             moduleName = moduleName,
-                             size = size,
-                             hash = hash,
-                             relativeOutputFile = relativeOutputFile,
-                             reason = reason)
-  }
 }
