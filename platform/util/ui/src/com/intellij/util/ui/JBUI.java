@@ -1509,7 +1509,7 @@ public final class JBUI {
       }
 
       public static Insets separatorLabelInsets() {
-        return insets("Popup.separatorLabelInsets", insets(3, 20));
+        return insets("Popup.separatorLabelInsets", insets(3, 16));
       }
 
       public static Color separatorTextColor() {
@@ -1526,7 +1526,7 @@ public final class JBUI {
 
       public static final class Selection {
         public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
-        public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 12);
+        public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 8);
 
         public static @NotNull Insets innerInsets() {
           JBInsets result = insets("Popup.Selection.innerInsets", insets(0, 8));
@@ -1561,7 +1561,7 @@ public final class JBUI {
         }
 
         public static @NotNull JBInsets outerInsets() {
-          return insets("PopupMenu.Selection.outerInsets", insets(1, 4));
+          return insets("PopupMenu.Selection.outerInsets", insets(1, 7));
         }
 
         public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
