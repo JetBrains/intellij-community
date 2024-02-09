@@ -5,16 +5,10 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -23,12 +17,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.idea.codeinsight.utils.getClassId
-import org.jetbrains.kotlin.idea.codeinsight.utils.getInitializerOrGetterInitializer
-import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
-import org.jetbrains.kotlin.idea.codeinsight.utils.isExplicitTypeReferenceNeededForTypeInferenceByPsi
-import org.jetbrains.kotlin.idea.codeinsight.utils.isSetterParameter
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.returnTypeOfCallDependsOnTypeParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.typeReferencesTypeParameter
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -150,15 +141,6 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
     }
 
     context(KtAnalysisSession)
-    private fun returnTypeOfCallDependsOnTypeParameters(callElement: KtElement): Boolean {
-        val call = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return true
-        val callSymbol = call.partiallyAppliedSymbol.symbol
-        val typeParameters = callSymbol.typeParameters
-        val returnType = callSymbol.returnType
-        return typeParameters.any { typeReferencesTypeParameter(it, returnType) }
-    }
-
-    context(KtAnalysisSession)
     private fun isCallableReferenceExpressionTypeContextIndependent(callableReferenceExpression: KtCallableReferenceExpression): Boolean {
         val resolved = callableReferenceExpression.callableReference.references.firstNotNullOfOrNull { it.resolve() } ?: return false
         if (resolved !is KtNamedFunction) return true
@@ -170,15 +152,6 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
 
         val receiverType = symbol.receiverType ?: return false
         return typeParameters.all { typeReferencesTypeParameter(it, receiverType) }
-    }
-
-    context(KtAnalysisSession)
-    private fun typeReferencesTypeParameter(typeParameter: KtTypeParameterSymbol, type: KtType): Boolean {
-        return when (type) {
-            is KtTypeParameterType -> type.symbol == typeParameter
-            is KtNonErrorClassType -> type.ownTypeArguments.mapNotNull { it.type }.any { typeReferencesTypeParameter(typeParameter, it) }
-            else -> false
-        }
     }
 
     private val KtDeclaration.isVar: Boolean
