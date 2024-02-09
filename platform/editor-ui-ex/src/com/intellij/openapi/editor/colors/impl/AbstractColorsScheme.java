@@ -26,7 +26,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -66,11 +65,16 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String CONSOLE_FONT_SIZE = "CONSOLE_FONT_SIZE";
   private static final @NonNls String EDITOR_LIGATURES = "EDITOR_LIGATURES";
   private static final @NonNls String CONSOLE_LIGATURES = "CONSOLE_LIGATURES";
-  private static final SimpleDateFormat META_INFO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
   private static final @NonNls String META_INFO_ELEMENT = "metaInfo";
   private static final @NonNls String PROPERTY_ELEMENT = "property";
   private static final @NonNls String PROPERTY_NAME_ATTR = "name";
+  /**
+   * Obsolete: removed since 24.1
+   */
   private static final @NonNls String META_INFO_CREATION_TIME = "created";
+  /**
+   * Obsolete: removed since 24.1
+   */
   private static final @NonNls String META_INFO_MODIFIED_TIME = "modified";
   private static final @NonNls String META_INFO_IDE = "ide";
   private static final @NonNls String META_INFO_IDE_VERSION = "ideVersion";
@@ -100,7 +104,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public void setDefaultMetaInfo(@Nullable AbstractColorsScheme parentScheme) {
-    metaInfo.setProperty(META_INFO_CREATION_TIME, META_INFO_DATE_FORMAT.format(new Date()));
     metaInfo.setProperty(META_INFO_IDE, PlatformUtils.getPlatformPrefix());
     metaInfo.setProperty(META_INFO_IDE_VERSION, ApplicationInfo.getInstance().getStrictVersion());
     if (parentScheme != null &&
@@ -657,7 +660,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private @NotNull Element metaInfoToElement() {
     Element metaInfoElement = new Element(META_INFO_ELEMENT);
-    metaInfo.setProperty(META_INFO_MODIFIED_TIME, META_INFO_DATE_FORMAT.format(new Date()));
     List<String> sortedPropertyNames = new ArrayList<>(metaInfo.stringPropertyNames());
     sortedPropertyNames.sort(null);
     for (String propertyName : sortedPropertyNames) {
