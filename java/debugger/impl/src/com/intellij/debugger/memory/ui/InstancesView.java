@@ -101,6 +101,8 @@ class InstancesView extends InstancesViewBase {
 
   private final ReferenceType myClassType;
 
+  private boolean myIsDisposed = false;
+
   InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, @NotNull ReferenceType classType,  Consumer<? super String> warningMessageConsumer) {
     super(new BorderLayout(0, JBUIScale.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
     myClassType = classType;
@@ -174,6 +176,7 @@ class InstancesView extends InstancesViewBase {
 
   @Override
   public void dispose() {
+    myIsDisposed = true;
     cancelFilteringTask();
     Disposer.dispose(myInstancesTree);
   }
@@ -191,6 +194,7 @@ class InstancesView extends InstancesViewBase {
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         final EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
         final XExpression expression = ReadAction.compute(() -> myFilterConditionEditor.getExpression());
+        if (myIsDisposed) return;
         if (selectRepresentation(expression)) {
           updateRepresentation();
         }
