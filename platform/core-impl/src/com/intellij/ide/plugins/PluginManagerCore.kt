@@ -364,23 +364,29 @@ object PluginManagerCore {
 
   @Internal
   fun scheduleDescriptorLoading(coroutineScope: CoroutineScope) {
-    scheduleDescriptorLoading(coroutineScope = coroutineScope,
-                              zipFilePoolDeferred = null,
-                              mainClassLoaderDeferred = CompletableDeferred(PluginManagerCore::class.java.classLoader), 
-                              logDeferred = null)
+    scheduleDescriptorLoading(
+      coroutineScope = coroutineScope,
+      zipFilePoolDeferred = CompletableDeferred(NonShareableJavaZipFilePool()),
+      mainClassLoaderDeferred = CompletableDeferred(PluginManagerCore::class.java.classLoader),
+      logDeferred = null,
+    )
   }
 
   @Internal
   @Synchronized
-  fun scheduleDescriptorLoading(coroutineScope: CoroutineScope,
-                                zipFilePoolDeferred: Deferred<ZipFilePool>?,
-                                mainClassLoaderDeferred: Deferred<ClassLoader>?,
-                                logDeferred: Deferred<Logger>?): Deferred<PluginSet> {
+  fun scheduleDescriptorLoading(
+    coroutineScope: CoroutineScope,
+    zipFilePoolDeferred: Deferred<ZipFilePool>,
+    mainClassLoaderDeferred: Deferred<ClassLoader>?,
+    logDeferred: Deferred<Logger>?,
+  ): Deferred<PluginSet> {
     var result = initFuture
     if (result == null) {
-      result = coroutineScope.scheduleLoading(zipFilePoolDeferred = zipFilePoolDeferred,
-                                              mainClassLoaderDeferred = mainClassLoaderDeferred,
-                                              logDeferred = logDeferred)
+      result = coroutineScope.scheduleLoading(
+        zipFilePoolDeferred = zipFilePoolDeferred,
+        mainClassLoaderDeferred = mainClassLoaderDeferred,
+        logDeferred = logDeferred,
+      )
       initFuture = result
     }
     return result

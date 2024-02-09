@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DynamicPluginsTestUtil")
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
@@ -24,20 +24,14 @@ internal fun loadDescriptorInTest(
 
   val buildNumber = BuildNumber.fromString("2042.42")!!
   val result = runBlocking {
-    loadDescriptorFromFileOrDir(
+    loadDescriptorFromFileOrDirInTests(
       file = dir,
       context = DescriptorListLoadingContext(
         customBrokenPluginVersions = emptyMap(),
         productBuildNumber = { buildNumber },
         customDisabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
       ),
-      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
       isBundled = isBundled,
-      isEssential = true,
-      isDirectory = Files.isDirectory(dir),
-      useCoreClassLoader = false,
-      isUnitTestMode = true,
-      pool = null,
     )
   }
 

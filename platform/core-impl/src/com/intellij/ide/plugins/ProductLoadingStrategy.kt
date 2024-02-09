@@ -44,11 +44,13 @@ abstract class ProductLoadingStrategy {
    */
   abstract fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader)
 
-  abstract fun loadBundledPluginDescriptors(scope: CoroutineScope,
-                                            bundledPluginDir: Path?,
-                                            isUnitTestMode: Boolean,
-                                            context: DescriptorListLoadingContext,
-                                            zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>>
+  abstract fun loadBundledPluginDescriptors(
+    scope: CoroutineScope,
+    bundledPluginDir: Path?,
+    isUnitTestMode: Boolean,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): List<Deferred<IdeaPluginDescriptorImpl?>>
 
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 
@@ -62,18 +64,22 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
   }
 
-  override fun loadBundledPluginDescriptors(scope: CoroutineScope,
-                                            bundledPluginDir: Path?,
-                                            isUnitTestMode: Boolean,
-                                            context: DescriptorListLoadingContext,
-                                            zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  override fun loadBundledPluginDescriptors(
+    scope: CoroutineScope,
+    bundledPluginDir: Path?,
+    isUnitTestMode: Boolean,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     if (bundledPluginDir != null) {
       val classPathFile = bundledPluginDir.parent.resolve("plugin-classpath.txt")
       if (Files.exists(classPathFile)) {
-        return loadFromPluginClasspathDescriptor(classPathFile = classPathFile,
-                                                 scope = scope,
-                                                 context = context,
-                                                 zipFilePool = zipFilePool!!)
+        return loadFromPluginClasspathDescriptor(
+          classPathFile = classPathFile,
+          scope = scope,
+          context = context,
+          zipFilePool = zipFilePool,
+        )
       }
     }
 

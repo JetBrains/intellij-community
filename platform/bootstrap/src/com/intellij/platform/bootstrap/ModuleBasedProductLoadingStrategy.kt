@@ -44,11 +44,13 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     classPath.addFiles(mainGroupClassPath)
   }
 
-  override fun loadBundledPluginDescriptors(scope: CoroutineScope,
-                                            bundledPluginDir: Path?,
-                                            isUnitTestMode: Boolean,
-                                            context: DescriptorListLoadingContext,
-                                            zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  override fun loadBundledPluginDescriptors(
+    scope: CoroutineScope,
+    bundledPluginDir: Path?,
+    isUnitTestMode: Boolean,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     val mainGroupModules = productModules.mainModuleGroup.includedModules.map { it.moduleDescriptor.moduleId }
     return productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
@@ -65,10 +67,12 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
     }
   }
-  
-  private fun loadPluginDescriptorFromRuntimeModule(pluginModuleGroup: RuntimeModuleGroup,
-                                                    context: DescriptorListLoadingContext,
-                                                    zipFilePool: ZipFilePool?): IdeaPluginDescriptorImpl? {
+
+  private fun loadPluginDescriptorFromRuntimeModule(
+    pluginModuleGroup: RuntimeModuleGroup,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): IdeaPluginDescriptorImpl? {
     val includedModules = pluginModuleGroup.includedModules
     //we rely on the fact that PluginXmlReader.loadPluginModules adds the main module to the beginning of the list  
     val mainModule = includedModules.firstOrNull()
@@ -76,7 +80,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       thisLogger().warn("No modules are included in $pluginModuleGroup, the plugin won't be loaded")
       return null
     }
-    
+
     val mainResourceRoot = mainModule.moduleDescriptor.resourceRootPaths.singleOrNull()
     if (mainResourceRoot == null) {
       thisLogger().warn("Main plugin module must have single resource root, so '${mainModule.moduleDescriptor.moduleId.stringId}' with roots ${mainModule.moduleDescriptor.resourceRootPaths} won't be loaded")

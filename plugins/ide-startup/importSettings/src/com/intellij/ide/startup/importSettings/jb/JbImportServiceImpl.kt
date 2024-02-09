@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -36,13 +37,14 @@ import java.util.regex.Pattern
 import javax.swing.Icon
 import kotlin.io.path.*
 
-data class JbProductInfo(override val version: String,
-                         val lastUsageTime: FileTime,
-                         override val id: String,
-                         override val name: String,
-                         internal val codeName: String,
-                         val configDirPath: Path,
-                         val pluginsDirPath: Path
+internal data class JbProductInfo(
+  override val version: String,
+  val lastUsageTime: FileTime,
+  override val id: String,
+  override val name: String,
+  internal val codeName: String,
+  val configDir: Path,
+  val pluginDir: Path,
 ) : Product {
   private val descriptors = CopyOnWriteArrayList<Pair<IdeaPluginDescriptorImpl, Boolean>>()
   private var descriptors2ProcessCnt: Int = 0
@@ -75,10 +77,10 @@ data class JbProductInfo(override val version: String,
   }
 
   private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
-    JbImportServiceImpl.LOG.debug("Prefetching plugin descriptors from $pluginsDirPath")
-    val descriptorDeferreds = loadCustomDescriptorsFromDir(coroutineScope, pluginsDirPath, context, null)
+    JbImportServiceImpl.LOG.debug("Prefetching plugin descriptors from $pluginDir")
+    val descriptorDeferreds = loadCustomDescriptorsFromDir(scope = coroutineScope, dir = pluginDir, context = context)
     descriptors2ProcessCnt = descriptorDeferreds.size
-    JbImportServiceImpl.LOG.debug("There are ${descriptorDeferreds.size} plugins in $pluginsDirPath")
+    JbImportServiceImpl.LOG.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
     for (def in descriptorDeferreds) {
       def.invokeOnCompletion {
         coroutineScope.async {
@@ -333,7 +335,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                            && unselectedPlugins.isNullOrEmpty()
 
     val importData = TransferSettingsProgress(productInfo)
-    val importer = JbSettingsImporter(productInfo.configDirPath, productInfo.pluginsDirPath, null)
+    val importer = JbSettingsImporter(productInfo.configDir, productInfo.pluginDir, null)
     val progressIndicator = importData.createProgressIndicatorAdapter()
     val importLifetime = LifetimeDefinition()
     SettingsService.getInstance().importCancelled.advise(importLifetime) {
@@ -380,7 +382,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         }
         LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
         progressIndicator.fraction = 0.1
-        storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2import)
+        storeImportConfig(productInfo.configDir, filteredCategories, plugins2import)
         LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
         LOG.info("Calling restart...")
         // restart if we install plugins

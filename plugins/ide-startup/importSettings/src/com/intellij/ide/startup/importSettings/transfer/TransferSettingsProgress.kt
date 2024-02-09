@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.icons.AllIcons
@@ -17,7 +17,7 @@ import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.compose
 
-class TransferSettingsProgress(override val from: DialogImportItem) : ImportFromProduct {
+internal class TransferSettingsProgress(override val from: DialogImportItem) : ImportFromProduct {
 
   constructor(sourceIdeVersion: IdeVersion) : this(DialogImportItem(
       TransferSettingsContributor(sourceIdeVersion),
