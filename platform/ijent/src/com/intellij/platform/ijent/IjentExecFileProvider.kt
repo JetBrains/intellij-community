@@ -14,7 +14,7 @@ interface IjentExecFileProvider {
     suspend fun getInstance(): IjentExecFileProvider = serviceAsync()
   }
 
-  enum class SupportedPlatform(private val os: OS, private val arch: Arch) {
+  enum class SupportedPlatform(val os: OS, val arch: Arch) {
     AARCH64__DARWIN(OS.DARWIN, Arch.AARCH64),
     AARCH64__LINUX(OS.LINUX, Arch.AARCH64),
     X86_64__DARWIN(OS.DARWIN, Arch.X86_64),

@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.fs
 
+import com.intellij.platform.ijent.IjentExecFileProvider
+import com.intellij.platform.ijent.IjentExecFileProvider.SupportedPlatform.OS.*
+import com.intellij.platform.ijent.fs.IjentPath.Absolute.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 
@@ -229,4 +232,10 @@ fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
   when (this) {
     is IjentPathResult.Ok -> path
     is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
+  }
+
+val IjentExecFileProvider.SupportedPlatform.OS.pathOs: OS
+  get() = when (this) {
+    DARWIN, LINUX -> OS.UNIX
+    WINDOWS -> OS.WINDOWS
   }
