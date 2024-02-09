@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class ConsoleTokenUtil {
+public final class ConsoleTokenUtil {
   private static final char BACKSPACE = '\b';
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
@@ -98,11 +98,11 @@ final class ConsoleTokenUtil {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
-  static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
+  public static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
     return m.getUserData(CONTENT_TYPE);
   }
 
-  private static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
+  public static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
     m.putUserData(CONTENT_TYPE, contentType);
   }
 
