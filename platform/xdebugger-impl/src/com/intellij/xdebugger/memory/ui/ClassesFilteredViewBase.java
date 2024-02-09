@@ -155,6 +155,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
     group.setPopup(true);
     final Presentation actionsPresentation = new Presentation(XDebuggerBundle.messagePointer("action.memory.view.settings.text"));
+    actionsPresentation.setPopupGroup(true);
     actionsPresentation.setIcon(AllIcons.General.GearPlain);
 
     final ActionButton button = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));
