@@ -10,8 +10,6 @@ import com.intellij.util.indexing.IndexableFilesIndex
 internal class CachingProjectIndexableFilesFilter(private val project: Project) : ProjectIndexableFilesFilter(false) {
   private val fileIds: ConcurrentThreeStateBitSet = ConcurrentThreeStateBitSet.create()
 
-  override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
-
   override fun containsFileId(fileId: Int): Boolean {
     return containsFileId(fileIds, fileId)
   }

@@ -6,8 +6,6 @@ import com.intellij.util.containers.ConcurrentBitSet
 internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFilter(true) {
   private val fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
 
-  override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
-
   override fun containsFileId(fileId: Int): Boolean = fileIds.get(fileId)
 
   @Suppress("LocalVariableName")

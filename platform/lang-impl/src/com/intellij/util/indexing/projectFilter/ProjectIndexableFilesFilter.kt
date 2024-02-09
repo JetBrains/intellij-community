@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicReference
 internal abstract class ProjectIndexableFilesFilter(private val checkAllExpectedIndexableFilesDuringHealthcheck: Boolean) : IdFilter() {
   private val parallelUpdatesCounter = AtomicVersionedCounter()
 
+  override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
+
   abstract fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean
   abstract fun removeFileId(fileId: Int)
   abstract fun resetFileIds()
