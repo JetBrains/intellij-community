@@ -160,7 +160,7 @@ public final class JavaGenericsUtil {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(castClass.getProject());
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
-            //only explicitly declared typeParameters
+            //only parameters declared in containing classes
             if (typeParameter.getOwner() instanceof PsiMethod) {
               continue;
             }
@@ -179,7 +179,7 @@ public final class JavaGenericsUtil {
           }
           Set<PsiTypeParameter> capturedWildcardType = new HashSet<>();
           for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(operandClass)) {
-            //only explicitly declared typeParameters
+            //only parameters declared in containing classes
             if (parameter.getOwner() instanceof PsiMethod) {
               continue;
             }
