@@ -20,10 +20,18 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   val project: Project?
     get() = driver.utility(ProjectFrameHelper::class).getFrameHelper(component).getProject()
+
+  val isFullScreen: Boolean
+    get() = driver.cast(component, IdeFrameImpl::class).isInFullScreen()
 }
 
 @Remote("com.intellij.openapi.wm.impl.ProjectFrameHelper")
 interface ProjectFrameHelper {
   fun getFrameHelper(window: Component): ProjectFrameHelper
   fun getProject(): Project?
+}
+
+@Remote("com.intellij.openapi.wm.impl.IdeFrameImpl")
+interface IdeFrameImpl {
+  fun isInFullScreen(): Boolean
 }
