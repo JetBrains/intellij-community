@@ -109,6 +109,8 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     return IndexingRequestTokenImpl(appCurrent)
   }
 
+  fun isScanningCompleted(): Boolean = !storage.readIncompleteScanningMark()
+
   @RequiresBackgroundThread
   fun newScanningToken(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()

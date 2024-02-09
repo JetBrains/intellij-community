@@ -10,10 +10,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
-internal abstract class ProjectIndexableFilesFilter : IdFilter() {
+internal abstract class ProjectIndexableFilesFilter(private val checkAllExpectedIndexableFilesDuringHealthcheck: Boolean) : IdFilter() {
   private val parallelUpdatesCounter = AtomicVersionedCounter()
 
   abstract fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean
@@ -30,7 +31,7 @@ internal abstract class ProjectIndexableFilesFilter : IdFilter() {
     }
   }
 
-  fun <T> runAndCheckThatNoChangesHappened(action: () -> T): T {
+  private fun <T> runAndCheckThatNoChangesHappened(action: () -> T): T {
     val (numberOfParallelUpdates, version) = parallelUpdatesCounter.getCounterAndVersion()
     if (numberOfParallelUpdates != 0) throw ProcessCanceledException()
     val res = action()
@@ -41,9 +42,29 @@ internal abstract class ProjectIndexableFilesFilter : IdFilter() {
     return res
   }
 
-  abstract fun runHealthCheck(project: Project): List<HealthCheckError>
+  fun runHealthCheck(project: Project): List<HealthCheckError> {
+    return runIfScanningScanningIsCompleted(project) {
+      runAndCheckThatNoChangesHappened {
+        // It is possible that scanning will start and finish while we are performing healthcheck,
+        // but then healthcheck will be terminated by the fact that filter was update.
+        // If it was not updated, then we don't care that scanning happened, and we can trust healthcheck result
+        runHealthCheck(project, checkAllExpectedIndexableFilesDuringHealthcheck, getFileStatuses())
+      }
+    }
+  }
 
-  protected fun runHealthCheck(project: Project, checkAllExpectedIndexableFiles: Boolean, fileStatuses: Sequence<Pair<Int, Boolean>>): List<HealthCheckError> {
+  protected abstract fun getFileStatuses(): Sequence<Pair<Int, Boolean>>
+
+  /**
+   * This healthcheck makes the most sense for [com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilter]
+   * because it's filled during scanning which iterates over [com.intellij.util.indexing.roots.IndexableFilesIterator]s
+   * so if we iterate over IndexableFilesIterator again, it should match filter.
+   * Such errors would mean that we missed some event when a file became (un)indexed e.g., when it was deleted or marked excluded.
+   *
+   * Errors reported for [com.intellij.util.indexing.projectFilter.CachingProjectIndexableFilesFilter] could also mean an inconsistency
+   * between [com.intellij.util.indexing.roots.IndexableFilesIterator] and [com.intellij.util.indexing.IndexableFilesIndex].
+   */
+  private fun runHealthCheck(project: Project, checkAllExpectedIndexableFiles: Boolean, fileStatuses: Sequence<Pair<Int, Boolean>>): List<HealthCheckError> {
     val errors = mutableListOf<HealthCheckError>()
 
     val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
@@ -124,4 +145,12 @@ private class AtomicVersionedCounter {
   }
 
   fun getCounterAndVersion(): Pair<Int, Int> = counterAndVersion.get()
+}
+
+private fun <T> runIfScanningScanningIsCompleted(project: Project, action: () -> T): T {
+  val service = project.getService(ProjectIndexingDependenciesService::class.java)
+  if (!service.isScanningCompleted()) throw ProcessCanceledException()
+  val res = action()
+  if (!service.isScanningCompleted()) throw ProcessCanceledException()
+  return res
 }

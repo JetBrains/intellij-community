@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowe
 import com.intellij.util.containers.ConcurrentThreeStateBitSet
 import com.intellij.util.indexing.IndexableFilesIndex
 
-internal class CachingProjectIndexableFilesFilter(private val project: Project) : ProjectIndexableFilesFilter() {
+internal class CachingProjectIndexableFilesFilter(private val project: Project) : ProjectIndexableFilesFilter(false) {
   private val fileIds: ConcurrentThreeStateBitSet = ConcurrentThreeStateBitSet.create()
 
   override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
@@ -62,12 +62,9 @@ internal class CachingProjectIndexableFilesFilter(private val project: Project) 
     fileIds.clear()
   }
 
-  override fun runHealthCheck(project: Project): List<HealthCheckError> {
-    return runAndCheckThatNoChangesHappened {
-      val fileStatuses = (0 until fileIds.size()).asSequence().mapNotNull { fileId ->
-        fileIds[fileId]?.let { status -> fileId to status }
-      }
-      runHealthCheck(project, false, fileStatuses)
+  override fun getFileStatuses(): Sequence<Pair<Int, Boolean>> {
+    return (0 until fileIds.size()).asSequence().mapNotNull { fileId ->
+      fileIds[fileId]?.let { status -> fileId to status }
     }
   }
 }

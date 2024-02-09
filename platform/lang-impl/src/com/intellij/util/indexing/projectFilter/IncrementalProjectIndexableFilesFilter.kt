@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.projectFilter
 
-import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ConcurrentBitSet
 
-internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFilter() {
+internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFilter(true) {
   private val fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
 
   override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
@@ -39,10 +38,7 @@ internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFil
     fileIds.clear()
   }
 
-  override fun runHealthCheck(project: Project): List<HealthCheckError> {
-    return runAndCheckThatNoChangesHappened {
-      val fileStatuses = (0 until fileIds.size()).asSequence().map { it to fileIds[it] }
-      runHealthCheck(project, true, fileStatuses)
-    }
+  override fun getFileStatuses(): Sequence<Pair<Int, Boolean>> {
+    return (0 until fileIds.size()).asSequence().map { it to fileIds[it] }
   }
 }
