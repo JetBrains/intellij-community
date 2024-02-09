@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
+import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.diagnostic.VMOptions
@@ -159,6 +160,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 
       // load code style scheme manager
       CodeStyleSchemes.getInstance()
+      ApplicationInspectionProfileManager.getInstanceImpl()
       val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
       schemeManagerFactory.process {
         progressIndicator.checkCanceled()
