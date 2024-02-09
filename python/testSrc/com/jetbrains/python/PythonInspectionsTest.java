@@ -179,6 +179,10 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON34);
   }
 
+  public void testPyPropertyDefinitionInspection312() {
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.getLatest());
+  }
+
   public void testInconsistentIndentation() {
     doHighlightingTest(PyInconsistentIndentationInspection.class, LanguageLevel.PYTHON26);
   }
@@ -263,9 +267,9 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testInspectionsDisabledInFunctionTypeComments() {
     myFixture.enableInspections(PyIncorrectDocstringInspection.class);
     myFixture.enableInspections(PyMissingOrEmptyDocstringInspection.class);
-    myFixture.enableInspections(PySingleQuotedDocstringInspection.class); 
-    myFixture.enableInspections(PyByteLiteralInspection.class); 
-    myFixture.enableInspections(PyMandatoryEncodingInspection.class); 
+    myFixture.enableInspections(PySingleQuotedDocstringInspection.class);
+    myFixture.enableInspections(PyByteLiteralInspection.class);
+    myFixture.enableInspections(PyMandatoryEncodingInspection.class);
     myFixture.enableInspections(PyNonAsciiCharInspection.class);
 
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");

@@ -221,10 +221,6 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
     private void checkGetter(PyCallable callable, PsiElement beingChecked) {
       if (callable != null) {
         checkOneParameter(callable, beingChecked, true);
-        PyClass cls = PsiTreeUtil.getParentOfType(callable, PyClass.class);
-        if (cls != null && isProtocol(cls, myTypeEvalContext)) {
-          return;
-        }
         checkReturnValueAllowed(callable, beingChecked, true, PyPsiBundle.message("INSP.getter.return.smth"));
       }
     }
@@ -282,6 +278,11 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
       if (callable instanceof PyFunction function) {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
+          return;
+        }
+
+        PyClass containingClass = function.getContainingClass();
+        if (containingClass != null && isProtocol(containingClass, myTypeEvalContext)) {
           return;
         }
 
