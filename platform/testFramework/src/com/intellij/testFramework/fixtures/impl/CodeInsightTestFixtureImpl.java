@@ -2234,6 +2234,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * @return whether the action has made the file writable itself
    */
   public static boolean withReadOnlyFile(VirtualFile vFile, Project project, Runnable action) {
+    if (PlatformUtils.isFleetBackend() && vFile.getFileSystem().isReadOnly()) {
+      action.run();
+      return false;
+    }
     boolean writable;
     ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(project);
     setReadOnly(vFile, true);
