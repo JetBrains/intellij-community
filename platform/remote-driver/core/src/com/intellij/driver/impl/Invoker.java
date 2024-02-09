@@ -539,7 +539,6 @@ public class Invoker implements InvokerMBean {
         return dereference(adhocReference, id);
       }
 
-      // first lookup in the current session
       Session session = sessions.get(sessionId);
       if (session == null) {
         throw new IllegalStateException("No such session " + sessionId);
@@ -547,12 +546,6 @@ public class Invoker implements InvokerMBean {
 
       HardReference reference = session.findReference(id);
       if (reference != null) return reference.value;
-
-      // otherwise check any sessions
-      for (Session s : sessions.values()) {
-        HardReference r = s.findReference(id);
-        if (r != null) return r.value;
-      }
 
       throw new IllegalStateException("No such reference with id " + id + ". " +
                                       "It may happen if a weak reference to the variable expires. " +

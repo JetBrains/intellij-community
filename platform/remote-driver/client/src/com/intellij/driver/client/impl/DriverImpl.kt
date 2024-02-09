@@ -12,7 +12,6 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 import java.lang.reflect.UndeclaredThrowableException
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
@@ -20,7 +19,7 @@ import kotlin.reflect.KClass
 
 internal class DriverImpl(host: JmxHost?) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
-  private val sessionHolder = ThreadLocal.withInitial { LinkedList<Session>() }
+  private val sessionHolder = ThreadLocal<Session>()
 
   private val appServices: MutableMap<Class<*>, Any> = ConcurrentHashMap()
   private val projectServices: MutableMap<ProjectRef, MutableMap<Class<*>, Any>> = ConcurrentHashMap()
@@ -76,7 +75,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     val remote = findRemoteMeta(clazz.java)
                  ?: throw IllegalArgumentException("Class $clazz is not annotated with @Remote annotation")
 
-    val (sessionId, dispatcher, semantics) = currentSession()
+    val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
     val call = NewInstanceCall(
       sessionId,
       null,
@@ -166,7 +165,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         "hashCode" -> clazz.hashCode()
         "toString" -> "@Service " + remote.value
         else -> {
-          val (sessionId, dispatcher, semantics) = currentSession()
+          val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = ServiceCall(
             sessionId,
             findTimedMeta(method)?.value,
@@ -186,11 +185,6 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     }
   }
 
-  private fun currentSession(): Session {
-    val sessions = sessionHolder.get()
-    return sessions.firstOrNull() ?: NO_SESSION
-  }
-
   private fun getPluginId(remote: Remote): String? {
     return remote.plugin.takeIf { it.isNotBlank() }
   }
@@ -204,7 +198,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         "hashCode" -> clazz.hashCode()
         "toString" -> "@Service(APP) " + remote.value
         else -> {
-          val (sessionId, dispatcher, semantics) = currentSession()
+          val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = ServiceCall(
             sessionId,
             findTimedMeta(method)?.value,
@@ -242,7 +236,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         "hashCode" -> clazz.hashCode()
         "toString" -> "Utility " + remote.value
         else -> {
-          val (sessionId, dispatcher, semantics) = currentSession()
+          val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = UtilityCall(
             sessionId,
             findTimedMeta(method)?.value,
@@ -272,7 +266,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
         "getRef" -> ref
         "getRefPluginId" -> pluginId
         else -> {
-          val (sessionId, dispatcher, semantics) = currentSession()
+          val (sessionId, dispatcher, semantics) = sessionHolder.get() ?: NO_SESSION
           val call = RefCall(
             sessionId,
             findTimedMeta(method)?.value,
@@ -302,9 +296,9 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   override fun <T> withContext(dispatcher: OnDispatcher,
                                semantics: LockSemantics,
                                code: Driver.() -> T): T {
-    val sessions = sessionHolder.get()
-    val runAsSession = Session(invoker.newSession(), dispatcher, semantics)
-    sessions.push(runAsSession)
+    val currentValue = sessionHolder.get()
+    val runAsSession = Session(currentValue?.id ?: invoker.newSession(), dispatcher, semantics)
+    sessionHolder.set(runAsSession)
     return try {
       this.code()
     }
@@ -313,13 +307,19 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       throw t
     }
     finally {
-      try {
-        invoker.cleanup(runAsSession.id)
+      if (currentValue != null) {
+        sessionHolder.set(currentValue)
       }
-      catch (e: JmxCallException) {
-        System.err.println("Unable to cleanup remote Driver session")
+      else {
+        try {
+          invoker.cleanup(runAsSession.id)
+        }
+        catch (e: JmxCallException) {
+          System.err.println("Unable to cleanup remote Driver session")
+        }
+
+        sessionHolder.remove()
       }
-      sessions.pop()
     }
   }
 
