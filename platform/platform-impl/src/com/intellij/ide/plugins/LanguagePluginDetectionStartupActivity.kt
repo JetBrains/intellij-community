@@ -11,7 +11,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
@@ -63,7 +62,7 @@ private var PropertiesComponent.ignoreLanguageDetector: Boolean
   set(value) = setValue(IGNORE_LANGUAGE_DETECTOR_PROPERTY_NAME, value)
 
 @RequiresBackgroundThread
-private fun findLanguagePluginToInstall(): PluginNode? {
+private suspend fun findLanguagePluginToInstall(): PluginNode? {
   try {
     val locale = Locale.getDefault()
     if (locale == Locale.ENGLISH
@@ -76,12 +75,10 @@ private fun findLanguagePluginToInstall(): PluginNode? {
 
     val requests = MarketplaceRequests.getInstance()
 
-    fun getLanguagePlugins(implementationName: String) = runBlockingCancellable {
-      requests.getFeatures(
-        featureType = "com.intellij.locale",
-        implementationName = implementationName,
-      )
-    }
+    suspend fun getLanguagePlugins(implementationName: String) = requests.getFeatures(
+      featureType = "com.intellij.locale",
+      implementationName = implementationName,
+    )
 
     val pattern = if (SystemInfoRt.isMac) {
       if (Locale.SIMPLIFIED_CHINESE.language.equals(locale.language)
