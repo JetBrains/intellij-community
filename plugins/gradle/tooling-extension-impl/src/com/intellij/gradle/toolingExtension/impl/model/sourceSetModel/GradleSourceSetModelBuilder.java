@@ -33,7 +33,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile;
-import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.dynamicCheckInstanceOf;
 
 @ApiStatus.Internal
 public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
@@ -321,13 +320,12 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
    */
   private static boolean isSafeToResolve(Object param, Project project) {
     Object object = tryUnpackPresentProvider(param, project);
-    boolean isDirectoryOrRegularFile = dynamicCheckInstanceOf(object, "org.gradle.api.file.Directory", "org.gradle.api.file.RegularFile");
-
     return object instanceof CharSequence ||
            object instanceof File ||
            object instanceof Path ||
-           isDirectoryOrRegularFile ||
-           object instanceof SourceSetOutput;
+           object instanceof SourceSetOutput ||
+           GradleReflectionUtil.isInstance(object, "org.gradle.api.file.Directory") ||
+           GradleReflectionUtil.isInstance(object, "org.gradle.api.file.RegularFile");
   }
 
   /**
@@ -339,7 +337,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
    * @return provided value or current if value isn't present or cannot be evaluated
    */
   private static Object tryUnpackPresentProvider(Object object, Project project) {
-    if (!dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
+    if (!GradleReflectionUtil.isInstance(object, "org.gradle.api.provider.Provider")) {
       return object;
     }
     try {
@@ -353,8 +351,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
     catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException exception) {
       Throwable cause = exception.getCause();
-      boolean isCodeException = dynamicCheckInstanceOf(cause, "org.gradle.api.InvalidUserCodeException");
-      boolean isDataException = dynamicCheckInstanceOf(cause, "org.gradle.api.InvalidUserDataException");
+      boolean isCodeException = GradleReflectionUtil.isInstance(cause, "org.gradle.api.InvalidUserCodeException");
+      boolean isDataException = GradleReflectionUtil.isInstance(cause, "org.gradle.api.InvalidUserDataException");
       if (isCodeException || isDataException) {
         return object;
       }
