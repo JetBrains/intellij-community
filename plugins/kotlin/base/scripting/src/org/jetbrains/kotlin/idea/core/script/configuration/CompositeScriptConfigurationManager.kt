@@ -152,29 +152,11 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
         })
     }
 
-    /**
-     * Returns script classpath roots
-     * Loads script configuration if classpath roots don't contain [file] yet
-     */
-    private fun getActualClasspathRoots(file: VirtualFile): ScriptClassRootsCache {
-        try {
-            // we should run default loader if this [file] is not cached in [classpathRoots]
-            // and it is not supported by any of [plugins]
-            // getOrLoadConfiguration will do this
-            // (despite that it's result becomes unused, it still may populate [classpathRoots])
-            getOrLoadConfiguration(file, null)
-        } catch (cancelled: ProcessCanceledException) {
-            // read actions may be cancelled if we are called by impatient reader
-        }
-
-        return this.classpathRoots
-    }
-
     override fun getScriptSdk(file: VirtualFile): Sdk? =
         if (ScratchUtil.isScratch(file)) {
             ProjectRootManager.getInstance(project).projectSdk
         } else {
-            getActualClasspathRoots(file).getScriptSdk(file)
+            classpathRoots.getScriptSdk(file)
         }
 
     override fun getFirstScriptsSdk(): Sdk? =
