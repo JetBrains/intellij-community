@@ -37,6 +37,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.flow.withIndex
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
@@ -55,6 +56,8 @@ class InlineCompletionHandler(
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val sessionManager = createSessionManager()
   private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
+
+  private var customDocumentChangesAllowed = false
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -253,8 +256,29 @@ class InlineCompletionHandler(
       invokeEvent(event)
     }
     else {
-      sessionManager.invalidate()
+      if (!customDocumentChangesAllowed) {
+        sessionManager.invalidate()
+      }
     }
+  }
+
+  /**
+   * All the document events (except typings) that appear while executing [block] do not clear the current session
+   * and do not change anything in the state.
+   *
+   * Intended to be used to customly change a document when reacting to events.
+   *
+   * **This API is highly experimental**.
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt
+  fun <T> withIgnoringDocumentChanges(block: () -> T): T {
+    ThreadingAssertions.assertEventDispatchThread()
+    val currentCustomDocumentChangesAllowed = customDocumentChangesAllowed
+    customDocumentChangesAllowed = true
+    val result = block()
+    customDocumentChangesAllowed = currentCustomDocumentChangesAllowed
+    return result
   }
 
   private suspend fun request(
