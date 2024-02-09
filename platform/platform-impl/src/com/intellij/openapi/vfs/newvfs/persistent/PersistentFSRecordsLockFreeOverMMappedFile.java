@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.CorruptedException;
@@ -49,22 +49,24 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    */
   private static final int HEADER_RECORDS_ALLOCATED = HEADER_RESERVED_OFFSET_1;
 
-  private static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+  @VisibleForTesting
+  static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
 
-  private static final class RecordLayout {
+  @VisibleForTesting
+  static final class RecordLayout {
     //@formatter:off
-    private static final int PARENT_REF_OFFSET        = 0;   //int32
-    private static final int NAME_REF_OFFSET          = 4;   //int32
-    private static final int FLAGS_OFFSET             = 8;   //int32
-    private static final int ATTR_REF_OFFSET          = 12;  //int32
-    private static final int CONTENT_REF_OFFSET       = 16;  //int32
-    private static final int MOD_COUNT_OFFSET         = 20;  //int32
+    static final int PARENT_REF_OFFSET        = 0;   //int32
+    static final int NAME_REF_OFFSET          = 4;   //int32
+    static final int FLAGS_OFFSET             = 8;   //int32
+    static final int ATTR_REF_OFFSET          = 12;  //int32
+    static final int CONTENT_REF_OFFSET       = 16;  //int32
+    static final int MOD_COUNT_OFFSET         = 20;  //int32
 
     //RC: moved TIMESTAMP 1 field down so both LONG fields are 8-byte aligned (for atomic accesses alignment is important)
-    private static final int TIMESTAMP_OFFSET         = 24;  //int64
-    private static final int LENGTH_OFFSET            = 32;  //int64
+    static final int TIMESTAMP_OFFSET         = 24;  //int64
+    static final int LENGTH_OFFSET            = 32;  //int64
 
-    private static final int RECORD_SIZE_IN_BYTES     = 40;
+    static final int RECORD_SIZE_IN_BYTES     = 40;
     //@formatter:on
   }
 
@@ -648,7 +650,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /** Without recordId bounds checking */
   @VisibleForTesting
-  private long recordOffsetInFileUnchecked(final int recordId) {
+  long recordOffsetInFileUnchecked(final int recordId) {
     //recordId is 1-based, convert to 0-based recordNo:
     final int recordNo = recordId - 1;
 
@@ -661,7 +663,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     final int fullPages = recordNo / recordsPerPage;
     final int recordsOnLastPage = recordNo % recordsPerPage;
 
-    //header on the first page "push out" few records:
+    //header on the first page "pushes out" few records:
     final int recordsExcessBecauseOfHeader = recordsPerPage - recordsOnHeaderPage;
 
     //so the last page could turn into +1 page:
