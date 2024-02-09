@@ -12608,6 +12608,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/lambdaToAnonymousFunction/extention2.kt");
         }
 
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("testData/intentions/lambdaToAnonymousFunction/flexibleType.kt");
+        }
+
         @TestMetadata("fullyQualified.kt")
         public void testFullyQualified() throws Exception {
             runTest("testData/intentions/lambdaToAnonymousFunction/fullyQualified.kt");

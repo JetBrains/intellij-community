@@ -49,6 +49,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("code-insight/intentions-k2/tests/testData/intentions", pattern = pattern)
             model("${idea}intentions/convertBinaryExpressionWithDemorgansLaw", pattern = pattern)
             model("${idea}intentions/invertIfCondition", pattern = pattern)
+            model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
 
             //
             model("${idea}intentions/addJvmOverloads", pattern = pattern, isIgnored = true)
@@ -151,7 +152,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/indentRawString", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceAddWithPlusAssign", pattern = pattern, isIgnored = true)
             model("${idea}intentions/reconstructTypeInCastOrIs", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeLabeledReturnInLambda", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertParameterToReceiver", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertCollectionConstructorToFunction", pattern = pattern, isIgnored = true)

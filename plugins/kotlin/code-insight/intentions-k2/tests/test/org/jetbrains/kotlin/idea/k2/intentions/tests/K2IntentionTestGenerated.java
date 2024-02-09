@@ -4995,6 +4995,169 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction")
+    public static class LambdaToAnonymousFunction extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("argument.kt")
+        public void testArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/argument.kt");
+        }
+
+        @TestMetadata("callExpression.kt")
+        public void testCallExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/callExpression.kt");
+        }
+
+        @TestMetadata("callExpression2.kt")
+        public void testCallExpression2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/callExpression2.kt");
+        }
+
+        @TestMetadata("destructuringParameter.kt")
+        public void testDestructuringParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/destructuringParameter.kt");
+        }
+
+        @TestMetadata("explicitParameterName.kt")
+        public void testExplicitParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/explicitParameterName.kt");
+        }
+
+        @TestMetadata("extention1.kt")
+        public void testExtention1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/extention1.kt");
+        }
+
+        @TestMetadata("extention2.kt")
+        public void testExtention2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/extention2.kt");
+        }
+
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/flexibleType.kt");
+        }
+
+        @TestMetadata("fullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/fullyQualified.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/hasComment.kt");
+        }
+
+        @TestMetadata("hasReturn1.kt")
+        public void testHasReturn1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/hasReturn1.kt");
+        }
+
+        @TestMetadata("hasReturn2.kt")
+        public void testHasReturn2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/hasReturn2.kt");
+        }
+
+        @TestMetadata("hasReturn3.kt")
+        public void testHasReturn3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/hasReturn3.kt");
+        }
+
+        @TestMetadata("hasReturn4.kt")
+        public void testHasReturn4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/hasReturn4.kt");
+        }
+
+        @TestMetadata("hasSomeStatements.kt")
+        public void testHasSomeStatements() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/hasSomeStatements.kt");
+        }
+
+        @TestMetadata("implicitParameterName.kt")
+        public void testImplicitParameterName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/implicitParameterName.kt");
+        }
+
+        @TestMetadata("inInlineFunction.kt")
+        public void testInInlineFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/inInlineFunction.kt");
+        }
+
+        @TestMetadata("incorrectOffset.kt")
+        public void testIncorrectOffset() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/incorrectOffset.kt");
+        }
+
+        @TestMetadata("javaMethod.kt")
+        public void testJavaMethod() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/javaMethod.kt");
+        }
+
+        @TestMetadata("namedArgument.kt")
+        public void testNamedArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/namedArgument.kt");
+        }
+
+        @TestMetadata("noParameter.kt")
+        public void testNoParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/noParameter.kt");
+        }
+
+        @TestMetadata("returnUnit.kt")
+        public void testReturnUnit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/returnUnit.kt");
+        }
+
+        @TestMetadata("suspendFunction.kt")
+        public void testSuspendFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/suspendFunction.kt");
+        }
+
+        @TestMetadata("suspendVariable.kt")
+        public void testSuspendVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/suspendVariable.kt");
+        }
+
+        @TestMetadata("underscoreParameter.kt")
+        public void testUnderscoreParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/underscoreParameter.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/variable.kt");
+        }
+
+        @TestMetadata("variable2.kt")
+        public void testVariable2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/variable2.kt");
+        }
+
+        @TestMetadata("variable3.kt")
+        public void testVariable3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/variable3.kt");
+        }
+
+        @TestMetadata("variable4.kt")
+        public void testVariable4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/variable4.kt");
+        }
+
+        @TestMetadata("withLabel.kt")
+        public void testWithLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/withLabel.kt");
+        }
+
+        @TestMetadata("withPackage.kt")
+        public void testWithPackage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/lambdaToAnonymousFunction/withPackage.kt");
+        }
+    }
+
 
 
 
@@ -5073,8 +5236,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/mergeIfs/simple.kt");
         }
     }
-
-
 
 
 

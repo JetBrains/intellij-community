@@ -1,8 +1,5 @@
-/*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
-package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -14,7 +11,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal object BranchedFoldingUtils {
+object BranchedFoldingUtils {
     private val KtIfExpression.branches: List<KtExpression?> get() = ifBranchesOrThis()
 
     private fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
@@ -59,7 +56,7 @@ internal object BranchedFoldingUtils {
     fun tryFoldToAssignment(expression: KtExpression) {
         var lhs: KtExpression? = null
         var op: String? = null
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(expression.project)
         fun KtBinaryExpression.replaceWithRHS() {
             if (lhs == null || op == null) {
                 lhs = left!!.copy() as KtExpression
@@ -251,7 +248,7 @@ internal object BranchedFoldingUtils {
             }
         }
         lift(expression)
-        return expression.replaced(KtPsiFactory(expression).createExpressionByPattern("return $0", expression))
+        return expression.replaced(KtPsiFactory(expression.project).createExpressionByPattern("return $0", expression))
     }
 
     /**
@@ -364,4 +361,50 @@ internal object BranchedFoldingUtils {
     context(KtAnalysisSession)
     private fun KtWhenExpression.hasMissingCases(): Boolean =
         !KtPsiUtil.checkWhenExpressionHasSingleElse(this) && getMissingCases().isNotEmpty()
+
+    context(KtAnalysisSession)
+    private fun getFoldableReturns(branches: List<KtExpression?>): List<KtReturnExpression>? =
+        branches.fold<KtExpression?, MutableList<KtReturnExpression>?>(mutableListOf()) { prevList, branch ->
+            if (prevList == null) return@fold null
+            val foldableBranchedReturn = getFoldableBranchedReturn(branch)
+            if (foldableBranchedReturn != null) {
+                prevList.add(foldableBranchedReturn)
+            } else {
+                val currReturns = getFoldableReturns(branch?.lastBlockStatementOrThis()) ?: return@fold null
+                prevList += currReturns
+            }
+            prevList
+        }
+
+
+    context(KtAnalysisSession)
+    fun getFoldableReturns(expression: KtExpression?): List<KtReturnExpression>? = when (expression) {
+        is KtWhenExpression -> {
+            val entries = expression.entries
+            when {
+                expression.hasMissingCases() -> null
+                entries.isEmpty() -> null
+                else -> getFoldableReturns(entries.map { it.expression })
+            }
+        }
+        is KtIfExpression -> {
+            val branches = expression.branches
+            when {
+                branches.isEmpty() -> null
+                branches.lastOrNull()?.getStrictParentOfType<KtIfExpression>()?.`else` == null -> null
+                else -> getFoldableReturns(branches)
+            }
+        }
+        is KtTryExpression -> {
+            if (expression.finallyBlock?.finalExpression?.let { getFoldableReturns(listOf(it)) }?.isNotEmpty() == true)
+                null
+            else
+                getFoldableReturns(expression.tryBlockAndCatchBodies())
+        }
+        is KtCallExpression -> {
+            if (expression.getKtType()?.isNothing == true) emptyList() else null
+        }
+        is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> emptyList()
+        else -> null
+    }
 }

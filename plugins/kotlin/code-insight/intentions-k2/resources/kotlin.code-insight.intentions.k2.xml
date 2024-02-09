@@ -1,4 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.intentions">
+  <dependencies>
+    <module name="kotlin.refactorings.k2"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
 
     <testDiffProvider language="kotlin" implementationClass="com.intellij.execution.testframework.JvmTestDiffProvider"/>
@@ -239,6 +243,13 @@
     <intentionAction>
       <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.InvertIfConditionIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.LambdaToAnonymousFunctionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
