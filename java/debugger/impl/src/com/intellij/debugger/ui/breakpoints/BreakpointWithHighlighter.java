@@ -249,7 +249,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @RequiresReadLock
   @Override
   public void reload() {
-    resetSourcePosition();
+    if (!myProject.isDisposed()) {
+      resetSourcePosition();
+    }
   }
 
   private void resetSourcePosition() {
