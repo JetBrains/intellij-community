@@ -544,6 +544,24 @@ class MavenStaticSyncTest : MavenMultiVersionImportingTestCase() {
     }
   }
 
+  @Test
+  fun `test cyclic dependency`() = runBlocking {
+    importProjectAsync("""
+                <groupId>group</groupId>
+                <artifactId>parent</artifactId>
+                <version>1</version>
+                <packaging>pom</packaging>
+                <parent>
+                  <groupId>group</groupId>
+                  <artifactId>parent</artifactId>
+                  <version>1</version>
+                </parent>
+                """.trimIndent())
+
+    val projects = projectsManager.projects
+    assertEmpty(projects)
+  }
+
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)

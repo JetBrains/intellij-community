@@ -218,6 +218,16 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
         myDeferred.complete(project)
         return@async project
       }
+      else {
+        val mavenId = project.mavenId
+        var ancestorId = project.parentId
+        while (ancestorId != null) {
+          if (ancestorId == mavenId) {
+            throw RuntimeException("Cyclic dependency found: $mavenId")
+          }
+          ancestorId = tree.project(ancestorId)?.parentId
+        }
+      }
 
 
       val parentInterpolated = interpolate(parentInReactor, tree, interpolatedCache).await()
@@ -242,7 +252,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
     }
     catch (e: Throwable) {
-      MavenLog.LOG.error(e)
+      MavenLog.LOG.warn(e)
 
     }
     myDeferred.complete(project)
