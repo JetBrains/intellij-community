@@ -1101,7 +1101,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractIdeLightClassesByFqNameTest> {
-            model("asJava/lightClasses/lightClassByFqName", pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model(
+                "asJava/lightClasses/lightClassByFqName",
+                excludedDirectories = listOf(
+                    "withTestCompilerPluginEnabled", // relevant only for K2
+                ),
+                pattern = KT_OR_KTS_WITHOUT_DOTS,
+            )
         }
 
         testClass<AbstractIdeLightClassesByPsiTest> {
@@ -1111,7 +1117,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractIdeCompiledLightClassesByFqNameTest> {
             model(
                 "asJava/lightClasses/lightClassByFqName",
-                excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"),
+                excludedDirectories = listOf(
+                    "local",
+                    "compilationErrors",
+                    "ideRegression",
+                    "script",
+                    "withTestCompilerPluginEnabled", // relevant only for K2
+                ),
                 pattern = KT_OR_KTS_WITHOUT_DOTS,
             )
         }
