@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Lookup
@@ -50,11 +50,11 @@ abstract class BaseCompletionGolfFileReportGenerator(
           div {
             label("labelText") { +"With delimiter:" }
             select("delimiter-pick") {
+              delOption("cg-delimiter-none", "none")
               delOption("cg-delimiter-integral", "&int;")
               delOption("cg-delimiter-box-small", "&#10073;")
               delOption("cg-delimiter-box-big", "&#10074;")
               delOption("cg-delimiter-underscore", "_")
-              delOption("cg-delimiter-none", "none")
             }
           }
           div("trigger") {
@@ -108,7 +108,7 @@ abstract class BaseCompletionGolfFileReportGenerator(
             }
           }
         }
-        code("cg-file cg-delimiter-integral") {
+        code("cg-file cg-delimiter-none") {
           table {
             getTable(fileEvaluations, text)
           }
