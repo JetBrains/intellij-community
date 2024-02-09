@@ -656,6 +656,7 @@
     <statistics.counterUsagesCollector implementationClass="git4idea.GitRefreshUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="git4idea.GitOperationsCollector"/>
     <statistics.notificationIdsHolder implementation="git4idea.GitNotificationIdsHolder"/>
+    <statistics.actionIdsHolder implementation="git4idea.GitActionIdsHolder"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
     <gitRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializerImpl"/>
     <gitSilentFileAdder implementation="git4idea.repo.GitSilentFileAdderProviderImpl"/>
