@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,6 +38,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -338,6 +339,13 @@ public final class VcsLogUtil {
 
   public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
     return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
+  }
+
+  public static boolean isProjectLog(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    return Arrays.stream(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots())
+      .map(VcsRoot::getPath)
+      .collect(Collectors.toSet())
+      .containsAll(providers.keySet());
   }
 
   public static void invokeOnChange(@NotNull VcsLogUi ui, @NotNull Runnable runnable) {

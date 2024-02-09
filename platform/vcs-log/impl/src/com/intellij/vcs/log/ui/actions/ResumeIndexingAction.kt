@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.icons.AllIcons
@@ -27,7 +27,7 @@ class ResumeIndexingAction : DumbAwareAction() {
 
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: project.serviceIfCreated<VcsProjectLog>()?.dataManager
     val index = data?.index as? VcsLogModifiableIndex
-    if (data == null || index == null) {
+    if (data == null || index == null || !VcsLogUtil.isProjectLog(project, data.logProviders)) {
       e.presentation.isEnabledAndVisible = false
       return
     }
