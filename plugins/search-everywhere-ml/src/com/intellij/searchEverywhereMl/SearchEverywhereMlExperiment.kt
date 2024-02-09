@@ -42,11 +42,13 @@ class SearchEverywhereMlExperiment {
     ),
 
     SearchEverywhereTabWithMlRanking.FILES to Experiment(
+      1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.NO_ML
     ),
 
     SearchEverywhereTabWithMlRanking.CLASSES to Experiment(
+      1 to ExperimentType.ENABLE_SEMANTIC_SEARCH,
       2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
       3 to ExperimentType.NO_ML
     ),

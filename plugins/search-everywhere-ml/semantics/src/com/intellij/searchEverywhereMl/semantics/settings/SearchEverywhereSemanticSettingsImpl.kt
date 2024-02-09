@@ -52,7 +52,7 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
       val providerId = FileSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.files.enable") ||
-             (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+             isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
                SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {
@@ -70,7 +70,7 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
       val providerId = ClassSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.classes.enable") ||
-             (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+             isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
                SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {
