@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.MultiMap;
@@ -32,18 +30,7 @@ public final class FileStatusFactoryImpl extends FileStatusFactory {
     return myStatuses.values().toArray(new FileStatus[0]);
   }
 
-  private synchronized void onPluginUnload(@NotNull PluginId pluginId) {
+  synchronized void onPluginUnload(@NotNull PluginId pluginId) {
     myStatuses.remove(pluginId);
-  }
-
-  static final class PluginListener implements DynamicPluginListener {
-    @Override
-    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-      PluginId pluginId = pluginDescriptor.getPluginId();
-      FileStatusFactory factory = getInstance();
-      if (factory instanceof FileStatusFactoryImpl) {
-        ((FileStatusFactoryImpl)factory).onPluginUnload(pluginId);
-      }
-    }
   }
 }
