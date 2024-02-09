@@ -15,10 +15,14 @@
  */
 package org.jetbrains.java.generate.element;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PropertyUtilBase;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
 /**
@@ -41,6 +45,10 @@ public final class ElementFactory {
     // name
     if (clazz instanceof PsiImplicitClass) {
       ce.setName(clazz.getQualifiedName());
+    }
+    else if (clazz instanceof PsiAnonymousClass anonymousClass) {
+      String name = anonymousClass.getBaseClassReference().getReferenceName();
+      ce.setName(getAnonymousClassName(name));
     }
     else {
       ce.setName(clazz.getName());
@@ -65,6 +73,13 @@ public final class ElementFactory {
     ce.setTypeParams(clazz.getTypeParameters().length);
 
     return ce;
+  }
+
+  @NotNull
+  @Nls
+  private static String getAnonymousClassName(@Nls String name) {
+    return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name)
+                        : JavaElementKind.ANONYMOUS_CLASS.subject();
   }
 
   /**
