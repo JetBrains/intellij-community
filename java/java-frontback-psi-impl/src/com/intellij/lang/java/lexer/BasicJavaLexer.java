@@ -171,7 +171,7 @@ public class BasicJavaLexer extends LexerBase {
         break;
 
       case '#': // this assumes the Unix shell used does not understand Unicode escapes sequences
-        if (myBufferIndex == 0 && mySymbolLength == 1 && myBufferEndOffset > 1 && charAt(1) == '!' && mySymbolLength == 1) {
+        if (myBufferIndex == 0 && mySymbolLength == 1 && myBufferEndOffset > 1 && charAt(1) == '!') {
           myTokenType = JavaTokenType.END_OF_LINE_COMMENT;
           myTokenEndOffset = getLineTerminator(2);
         }

@@ -61,7 +61,7 @@ class JavaStringLiteralLexer extends StringLiteralLexer {
     if (code != '\\' || i >= myBufferEnd) return i;
     char c = myBuffer.charAt(i);
     if (StringUtil.isOctalDigit(c)) {
-      if (i + 2 < myBufferEnd && StringUtil.isOctalDigit(myBuffer.charAt(i + 1)) && StringUtil.isOctalDigit(myBuffer.charAt(i + 1))) {
+      if (i + 2 < myBufferEnd && StringUtil.isOctalDigit(myBuffer.charAt(i + 1)) && StringUtil.isOctalDigit(myBuffer.charAt(i + 2))) {
         return i + 3;
       }
     }

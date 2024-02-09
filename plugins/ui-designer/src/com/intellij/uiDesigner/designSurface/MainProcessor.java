@@ -302,7 +302,7 @@ public final class MainProcessor extends EventProcessor{
     else if (component instanceof RadRootContainer || e.isShiftDown()) {
       myCurrentProcessor = new GroupSelectionProcessor(myEditor, component);
     }
-    else if (!e.isShiftDown()) {
+    else {
       myCurrentProcessor = new DragSelectionProcessor(myEditor);
     }
 

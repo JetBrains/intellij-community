@@ -18,6 +18,7 @@ import kotlin.time.Duration
 suspend fun Process.awaitExit(): Int {
   return loopInterruptible { timeout: Duration ->
     if (timeout.isInfinite()) {
+      @Suppress("UsePlatformProcessAwaitExit")
       Attempt.success(waitFor())
     }
     else if (waitFor(timeout.inWholeNanoseconds, TimeUnit.NANOSECONDS)) {

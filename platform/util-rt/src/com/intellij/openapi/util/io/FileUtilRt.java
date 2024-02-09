@@ -927,7 +927,7 @@ public final class FileUtilRt {
     return null;
   }
 
-  protected static boolean deleteFile(@NotNull final File file) {
+  static boolean deleteFile(@NotNull final File file) {
     Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
       @Override
       public Boolean execute(boolean lastAttempt) {
