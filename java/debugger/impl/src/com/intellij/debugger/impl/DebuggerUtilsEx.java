@@ -401,6 +401,56 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
+  public static ArrayReference mirrorOfByteArray(byte[] bytes, EvaluationContext context)
+    throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
+    context = ((EvaluationContextImpl)context).withAutoLoadClasses(true);
+    ArrayType arrayClass = (ArrayType)context.getDebugProcess().findClass(context, "byte[]", context.getClassLoader());
+    ArrayReference reference = mirrorOfArray(arrayClass, bytes.length, context);
+    VirtualMachine virtualMachine = reference.virtualMachine();
+    List<Value> mirrors = new ArrayList<>(bytes.length);
+    for (byte b : bytes) {
+      mirrors.add(virtualMachine.mirrorOf(b));
+    }
+
+    if (isAndroidVM(virtualMachine)) {
+      // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
+      setChuckByChunk(reference, mirrors);
+    }
+    else {
+      try {
+        setValuesNoCheck(reference, mirrors);
+      }
+      catch (VMMismatchException e) {
+        LOG.error("Class vm: " + arrayClass.virtualMachine() +
+                  " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
+                  "\nReference vm: " + reference.virtualMachine() +
+                  " loaded by " + reference.virtualMachine().getClass().getClassLoader() +
+                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct()
+                    .map(vm -> {
+                      return vm +
+                             " loaded by " + vm.getClass().getClassLoader() +
+                             " same as ref vm = " + (vm == reference.virtualMachine());
+                    })
+                    .joining(", ")
+          , e);
+      }
+    }
+
+    return reference;
+  }
+
+  private static final int BATCH_SIZE = 4096;
+
+  private static void setChuckByChunk(ArrayReference reference, List<? extends Value> values)
+    throws ClassNotLoadedException, InvalidTypeException {
+    int loaded = 0;
+    while (loaded < values.size()) {
+      int chunkSize = Math.min(BATCH_SIZE, values.size() - loaded);
+      reference.setValues(loaded, values, loaded, chunkSize);
+      loaded += chunkSize;
+    }
+  }
+
   public static void setValuesNoCheck(ArrayReference array, List<Value> values) throws ClassNotLoadedException, InvalidTypeException {
     if (array instanceof ArrayReferenceImpl) {
       ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, false);
