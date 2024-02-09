@@ -89,7 +89,7 @@ interface InlineCompletionSuggestionUpdateManager {
 
     @RequiresEdt
     @RequiresBlockingContext
-    fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): Same = Same
+    fun onCustomEvent(event: InlineCompletionEvent, variant: InlineCompletionVariant.Snapshot): UpdateResult = Same
   }
 
   /**
