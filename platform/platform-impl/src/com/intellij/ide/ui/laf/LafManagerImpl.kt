@@ -352,6 +352,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     currentTheme = theme
     preferredLightThemeId = null
     preferredDarkThemeId = null
+    preferredLightEditorSchemeId = null
+    preferredDarkEditorSchemeId = null
     autodetect = false
   }
 
@@ -754,10 +756,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun setPreferredDarkLaf(value: UIThemeLookAndFeelInfo) {
     preferredDarkThemeId = value.id
+    preferredDarkEditorSchemeId = value.defaultSchemeName
   }
 
   override fun setPreferredLightLaf(value: UIThemeLookAndFeelInfo) {
     preferredLightThemeId = value.id
+    preferredLightEditorSchemeId = value.defaultSchemeName
   }
 
   private fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
@@ -842,7 +846,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
       val result = ArrayList<AnAction>()
       result.add(Separator.create(separatorText))
-      lafs.mapTo(result) { LafToggleAction(name = it.name, themeId = it.id, isDark = isDark) }
+      lafs.mapTo(result) {
+        LafToggleAction(name = it.name, themeId = it.id, editorSchemeId = it.defaultSchemeName, isDark = isDark)
+      }
       return result
     }
   }
@@ -858,7 +864,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val themeGroups = ThemeListProvider.getInstance().getShownThemes()
       val schemeIdToIsDark = mutableMapOf<String, Pair<Int, Boolean>>()
       themeGroups.infos.asSequence().flatMap { it.items }.forEachIndexed { index, lafInfo ->
-        val schemeId = lafInfo.editorSchemeId ?: defaultNonLaFSchemeName(lafInfo.isDark)
+        val schemeId = lafInfo.defaultSchemeName
         schemeIdToIsDark[schemeId] = index to lafInfo.isDark
       }
 
@@ -963,7 +969,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     (if (isDark) defaultDarkLaf.editorSchemeId else defaultLightLaf.editorSchemeId)
     ?: defaultNonLaFSchemeName(isDark)
 
-  private inner class LafToggleAction(name: @Nls String?, private val themeId: String, private val isDark: Boolean) : ToggleAction(name) {
+  private inner class LafToggleAction(name: @Nls String?,
+                                      private val themeId: String,
+                                      private val editorSchemeId: String,
+                                      private val isDark: Boolean) : ToggleAction(name) {
     override fun isSelected(e: AnActionEvent): Boolean {
       return if (isDark) {
         (preferredDarkThemeId ?: defaultDarkLaf.id) == themeId
@@ -977,11 +986,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       if (isDark) {
         if (preferredDarkThemeId != themeId) {
           preferredDarkThemeId = themeId.takeIf { it != defaultDarkLaf.id }
+          preferredDarkEditorSchemeId = editorSchemeId.takeIf { preferredDarkThemeId != null }
           detectAndSyncLaf()
         }
       }
       else if (preferredLightThemeId != themeId) {
         preferredLightThemeId = themeId.takeIf { it != defaultLightLaf.id }
+        preferredLightEditorSchemeId = editorSchemeId.takeIf { preferredLightThemeId != null }
         detectAndSyncLaf()
       }
     }
@@ -1268,6 +1279,7 @@ private fun applyDensityOnUpdateUi(uiDefaults: UIDefaults) {
   }
 }
 
+private val UIThemeLookAndFeelInfo.defaultSchemeName: String get() = editorSchemeId ?: defaultNonLaFSchemeName(isDark)
 private fun defaultNonLaFSchemeName(dark: Boolean) = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
 
 @JvmField
