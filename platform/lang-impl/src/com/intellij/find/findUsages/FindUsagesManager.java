@@ -12,6 +12,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -50,6 +51,7 @@ import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -448,7 +450,11 @@ public final class FindUsagesManager {
                          @NotNull FindUsagesHandlerBase handler,
                          @NotNull FindUsagesOptions findUsagesOptions,
                          boolean toSkipUsagePanelWhenOneUsage) {
-    doFindUsages(primaryElements, secondaryElements, handler, findUsagesOptions, toSkipUsagePanelWhenOneUsage);
+    ReadAction.nonBlocking(() -> createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()))
+      .expireWith(handler.getProject())
+      .finishOnUiThread(ModalityState.nonModal(),
+                        presentation -> doFindUsages(primaryElements, secondaryElements, handler, findUsagesOptions, toSkipUsagePanelWhenOneUsage, presentation))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public UsageView doFindUsages(PsiElement @NotNull [] primaryElements,
@@ -456,6 +462,15 @@ public final class FindUsagesManager {
                                 @NotNull FindUsagesHandlerBase handler,
                                 @NotNull FindUsagesOptions findUsagesOptions,
                                 boolean toSkipUsagePanelWhenOneUsage) {
+    return doFindUsages(primaryElements, secondaryElements, handler, findUsagesOptions, toSkipUsagePanelWhenOneUsage,
+                        createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()));
+  }
+
+  public UsageView doFindUsages(PsiElement @NotNull [] primaryElements,
+                                PsiElement @NotNull [] secondaryElements,
+                                @NotNull FindUsagesHandlerBase handler,
+                                @NotNull FindUsagesOptions findUsagesOptions,
+                                boolean toSkipUsagePanelWhenOneUsage, UsageViewPresentation presentation) {
     if (primaryElements.length == 0) {
       throw new AssertionError(handler + " " + findUsagesOptions);
     }
@@ -464,11 +479,16 @@ public final class FindUsagesManager {
     PsiElement2UsageTargetAdapter[] targets = ArrayUtil.mergeArrays(primaryTargets, secondaryTargets);
     Factory<UsageSearcher> factory = () -> createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, null);
     UsageView usageView = UsageViewManager.getInstance(myProject).searchAndShowUsages(targets,
-                                                                                    factory, !toSkipUsagePanelWhenOneUsage,
-                                                                                    true,
-                                                                                    createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()),
-                                                                                    null);
-    myHistory.add(targets[0]);
+                                                                                      factory, !toSkipUsagePanelWhenOneUsage,
+                                                                                      true,
+                                                                                      presentation,
+                                                                                      null);
+    PsiElement2UsageTargetAdapter target = targets[0];
+    ReadAction.nonBlocking(() -> target.getLongDescriptiveName())
+      .expireWith(usageView != null ? usageView : handler.getProject())
+      .finishOnUiThread(ModalityState.nonModal(), descriptiveName -> myHistory.add(target, descriptiveName))
+      .submit(AppExecutorUtil.getAppExecutorService());
+
     return usageView;
   }
 
@@ -661,7 +681,10 @@ public final class FindUsagesManager {
   }
 
   public void addToHistory(@NotNull ConfigurableUsageTarget usageTarget) {
-    myHistory.add(usageTarget);
+    ReadAction.nonBlocking(() -> usageTarget.getLongDescriptiveName())
+      .expireWith(myProject)
+      .finishOnUiThread(ModalityState.nonModal(), descriptiveName -> myHistory.add(usageTarget, descriptiveName))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @NotNull

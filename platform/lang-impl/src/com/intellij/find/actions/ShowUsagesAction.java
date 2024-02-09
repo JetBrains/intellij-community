@@ -203,19 +203,26 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     DataContext dataContext = e.getDataContext();
-    showUsages(project, dataContext, ResolverKt.allTargets(dataContext));
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    RelativePoint popupPosition = editor != null
+                                  ? popupFactory.guessBestPopupLocation(editor)
+                                  : popupFactory.guessBestPopupLocation(dataContext);
+    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+    ReadAction.nonBlocking(() -> ResolverKt.allTargets(dataContext))
+      .expireWith(project).finishOnUiThread(ModalityState.nonModal(), variants -> showUsages(project, variants, popupPosition, editor, searchScope))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @ApiStatus.Internal
   public static void showUsages(@NotNull Project project,
-                                @NotNull DataContext dataContext,
-                                @NotNull List<? extends @NotNull TargetVariant> targetVariants) {
-    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
-    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+                                @NotNull List<? extends @NotNull TargetVariant> targetVariants,
+                                RelativePoint popupPosition,
+                                @Nullable Editor editor,
+                                SearchScope searchScope) {
     try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       findShowUsages(
-        project, dataContext, targetVariants, FindBundle.message("show.usages.ambiguous.title"),
+        project, editor, popupPosition, targetVariants, FindBundle.message("show.usages.ambiguous.title"),
         createVariantHandler(project, editor, popupPosition, searchScope)
       );
     }
@@ -267,6 +274,15 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                                                     @NotNull RelativePoint popupPosition,
                                                                     @Nullable Editor editor,
                                                                     @Nullable SearchScope scope) {
+    return startFindUsagesWithResult(element, popupPosition, editor, scope, getUsagesTitle(element));
+  }
+
+  @ApiStatus.Internal
+  public static Future<Collection<Usage>> startFindUsagesWithResult(@NotNull PsiElement element,
+                                                                    @NotNull RelativePoint popupPosition,
+                                                                    @Nullable Editor editor,
+                                                                    @Nullable SearchScope scope,
+                                                                    @Nls @NotNull String title) {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandlerBase handler = findUsagesManager.getFindUsagesHandler(element, USAGES_WITH_DEFAULT_OPTIONS);
@@ -274,11 +290,15 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     //noinspection deprecation
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
     if (scope != null) options.searchScope = scope;
-    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), createActionHandler(handler, options));
+    return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), 
+                                       createActionHandler(handler, options, title));
   }
 
   public static void startFindUsages(@NotNull PsiElement element, @NotNull RelativePoint popupPosition, @Nullable Editor editor) {
-    startFindUsagesWithResult(element, popupPosition, editor, null);
+    ReadAction.nonBlocking(() -> getUsagesTitle(element))
+      .expireWhen(() -> editor != null && editor.isDisposed())
+      .finishOnUiThread(ModalityState.nonModal(), title -> startFindUsagesWithResult(element, popupPosition, editor, null, title))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static void rulesChanged(@NotNull UsageViewImpl usageView, @NotNull PingEDT pingEDT, JBPopup popup) {
@@ -320,12 +340,13 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       wrapWith("font").attr("color", "#" + ColorUtil.toHex(color));
   }
 
-  private static @NotNull ShowUsagesActionHandler createActionHandler(@NotNull FindUsagesHandlerBase handler, @NotNull FindUsagesOptions options) {
+  private static @NotNull ShowUsagesActionHandler createActionHandler(@NotNull FindUsagesHandlerBase handler,
+                                                                      @NotNull FindUsagesOptions options,
+                                                                      @Nls @NotNull String title) {
     // show super method warning dialogs before starting finding usages
     PsiElement[] primaryElements = handler.getPrimaryElements();
     PsiElement[] secondaryElements = handler.getSecondaryElements();
 
-    String title = getUsagesTitle(handler.getPsiElement());
     String optionsString = options.generateUsagesString();
 
     return new ShowUsagesActionHandler() {
@@ -371,7 +392,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
           return null;
         }
         else {
-          return createActionHandler(handler, newOptions);
+          return createActionHandler(handler, newOptions, title);
         }
       }
 
@@ -390,7 +411,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       public @NotNull ShowUsagesActionHandler withScope(@NotNull SearchScope searchScope) {
         FindUsagesOptions newOptions = options.clone();
         newOptions.searchScope = searchScope;
-        return createActionHandler(handler, newOptions);
+        return createActionHandler(handler, newOptions, title);
       }
 
       @Override

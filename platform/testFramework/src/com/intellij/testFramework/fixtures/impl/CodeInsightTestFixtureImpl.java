@@ -1031,7 +1031,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (fileNames.length > 0) { // don't change configured files if already configured
       configureByFiles(fileNames);
     }
-    EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    });
     Disposer.register(getTestRootDisposable(), () -> {
       UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());
       Content selectedContent;
@@ -1040,6 +1043,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     });
     return EdtTestUtil.runInEdtAndGet(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       long startMillis = System.currentTimeMillis();
       UsageView view;
       boolean viewWasInitialized = false;

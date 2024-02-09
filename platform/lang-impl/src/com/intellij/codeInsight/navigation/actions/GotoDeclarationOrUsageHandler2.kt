@@ -6,8 +6,10 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOnlyHandler2.gotoDeclaration
 import com.intellij.codeInsight.navigation.impl.*
+import com.intellij.find.FindSettings
 import com.intellij.find.actions.ShowUsagesAction.showUsages
 import com.intellij.find.actions.TargetVariant
+import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
@@ -19,6 +21,7 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
@@ -82,7 +85,11 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
       .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.contentComponent)
       .build()
     try {
-      showUsages(project, dataContext, searchTargets)
+      showUsages(project,
+                 searchTargets,
+                 JBPopupFactory.getInstance().guessBestPopupLocation(editor),
+                 editor,
+                 FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName()))
     }
     catch (e: IndexNotReadyException) {
       DumbService.getInstance(project).showDumbModeNotificationForFunctionality(

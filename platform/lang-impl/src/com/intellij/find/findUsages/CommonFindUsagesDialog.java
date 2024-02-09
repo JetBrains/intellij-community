@@ -4,6 +4,9 @@ package com.intellij.find.findUsages;
 
 import com.intellij.lang.HelpID;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -13,6 +16,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +56,10 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   public void configureLabelComponent(@NotNull SimpleColoredComponent coloredComponent) {
     coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
     coloredComponent.append(" ");
-    coloredComponent.append(DescriptiveNameUtil.getDescriptiveName(myPsiElement), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    ReadAction.nonBlocking(() -> DescriptiveNameUtil.getDescriptiveName(myPsiElement))
+      .expireWith(getDisposable())
+      .finishOnUiThread(ModalityState.any(), name -> coloredComponent.append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
