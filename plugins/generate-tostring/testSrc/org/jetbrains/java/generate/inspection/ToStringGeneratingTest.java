@@ -194,7 +194,8 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testImplicitClass() {
-    doTest("""
+    doTest(
+            """
             private Integer i = 2;
             
             public void main()
@@ -212,16 +213,39 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
             {
             }
             
+            
+            
+            public class T{
+            }
+            
             @Override
             public String toString() {
                 return "a{" +
                         "i=" + i +
                         '}';
+            }""", ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
+  }
+
+  public void testImplicitClassWithoutMain() {
+    doTest("""
+            public void main()
+            {
             }
             
-            
-            public class T{
-            }""", ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
+            <caret>
+            """,
+           """
+             public void main()
+             {
+             }
+             
+             @Override
+             public String toString() {
+                 return "a{}";
+             }
+             
+             
+             """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
   }
 
   public void testAnonymousClass() {

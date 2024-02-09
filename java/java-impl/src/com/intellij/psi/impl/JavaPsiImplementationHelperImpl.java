@@ -278,7 +278,10 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
   public PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
     CodeStyleSettings settings = CodeStyle.getSettings(aClass.getContainingFile());
     MemberOrderService service = ApplicationManager.getApplication().getService(MemberOrderService.class);
-    PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+    PsiElement anchor = null;
+    if (!(aClass instanceof PsiImplicitClass)) {
+      anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+    }
 
     PsiElement newAnchor = skipWhitespaces(aClass, anchor);
     if (newAnchor != null) {

@@ -16,7 +16,14 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.generation.actions.BaseGenerateAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.util.PsiMethodUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This action handles the generation of a {@code toString()} method that dumps the fields
@@ -24,8 +31,22 @@ import com.intellij.openapi.project.DumbAware;
  */
 public class GenerateToStringAction extends BaseGenerateAction implements DumbAware {
 
-    public GenerateToStringAction() {
-        super(new GenerateToStringActionHandlerImpl());
-    }
+  public GenerateToStringAction() {
+    super(new GenerateToStringActionHandlerImpl());
+  }
 
+  @Nullable
+  @Override
+  protected PsiClass getTargetClass(Editor editor, PsiFile file) {
+    PsiClass targetClass = super.getTargetClass(editor, file);
+    if (targetClass != null) return targetClass;
+    if (file instanceof PsiJavaFile javaFile) {
+      PsiClass[] classes = javaFile.getClasses();
+      if (classes.length == 1 && classes[0] instanceof PsiImplicitClass implicitClass &&
+          implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
+        return classes[0];
+      }
+    }
+    return null;
+  }
 }

@@ -67,11 +67,22 @@ public final class GenerateMembersUtil {
                                                                           @NotNull Function<? super PsiElement, ? extends PsiClass> aClassFunction) throws IncorrectOperationException {
     if (memberPrototypes.isEmpty()) return memberPrototypes;
     final PsiElement leaf = file.findElementAt(offset);
-    if (leaf == null) return Collections.emptyList();
-
-    PsiClass aClass = aClassFunction.fun(leaf);
-    if (aClass == null) return Collections.emptyList();
-    PsiElement anchor = memberPrototypes.get(0).findInsertionAnchor(aClass, leaf);
+    PsiElement anchor;
+    PsiClass aClass;
+    if (leaf != null){
+      aClass = aClassFunction.fun(leaf);
+      if (aClass == null) return Collections.emptyList();
+      anchor = memberPrototypes.get(0).findInsertionAnchor(aClass, leaf);
+    }
+    else if (file instanceof PsiJavaFile javaFile &&
+             javaFile.getClasses().length == 1 &&
+             javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass) {
+      anchor = null;
+      aClass = implicitClass;
+    }
+    else {
+      return Collections.emptyList();
+    }
 
     if (anchor instanceof PsiWhiteSpace) {
       final ASTNode spaceNode = anchor.getNode();

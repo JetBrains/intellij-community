@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.JBColor;
@@ -203,11 +204,16 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         int offset = editor.getCaretModel().getOffset();
         PsiElement context = file.findElementAt(offset);
 
-        if (context == null) return null;
-
         PsiClass clazz = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
         if (clazz == null) {
+          if (file instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1 &&
+              javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass &&
+              implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
+            clazz = implicitClass;
+          }
+          else {
             return null;
+          }
         }
 
         //exclude interfaces, non-java classes etc
