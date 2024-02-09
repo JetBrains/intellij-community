@@ -42,7 +42,7 @@ public class PyEnvTaskRunner {
   /**
    * Runs test on all interpreters.
    *
-   * @param skipOnFlavors optional array of flavors of interpreters to skip
+   * @param skipOnFlavors optional array of interpreter flavors to skip
    *
    * @param tagsRequiredByTest optional array of tags to run tests on interpreters with these tags only
    */
@@ -95,7 +95,7 @@ public class PyEnvTaskRunner {
           if (myLoggingRule != null) {
             final PyExecutionFixtureTestTask execTask = ObjectUtils.tryCast(testTask, PyExecutionFixtureTestTask.class);
             if (execTask != null) {
-              // Fill be disabled automatically on project dispose
+              // Fill be disabled automatically on project disposing.
               myLoggingRule.startLogging(execTask.getProject(), execTask.getClassesToEnableDebug());
             }
           }
@@ -119,13 +119,12 @@ public class PyEnvTaskRunner {
         throw ex;
       }
       catch (final Exception e) {
-        // Exception can't be thrown with out of
         throw new PyEnvWrappingException(e);
       }
       finally {
         try {
-          // Teardown should be called on main thread because fixture teardown checks for
-          // thread leaks, and blocked main thread is considered as leaked
+          // Teardown should be called on the main thread because fixture teardown checks for
+          // thread leaks, and blocked main thread is considered as leaked.
           testTask.tearDown();
         }
         catch (final Exception e) {
