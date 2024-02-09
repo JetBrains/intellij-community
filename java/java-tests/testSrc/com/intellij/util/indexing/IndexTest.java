@@ -1524,9 +1524,10 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     int fileId = ((VirtualFileWithId)file).getId();
 
-    assertTrue(fileBasedIndex.getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
-    assertFalse(fileBasedIndex.getFilesToUpdateCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
+    assertTrue(fileBasedIndex.getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(null).containsFile(fileId));
+    assertFalse(fileBasedIndex.getFilesToUpdateCollector().getDirtyFiles().getProjectDirtyFiles(null).containsFile(fileId));
     fileBasedIndex.getChangedFilesCollector().ensureUpToDate(); // schedule file for update
+    // now new file is already added to ProjectIndexableFilesFilter and should be moved to the dirty files queue of the project
     assertFalse(fileBasedIndex.getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
     assertTrue(fileBasedIndex.getFilesToUpdateCollector().getDirtyFiles().getProjectDirtyFiles(getProject()).containsFile(fileId));
 
