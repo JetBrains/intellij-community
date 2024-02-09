@@ -87,8 +87,9 @@ open class DiffEditorViewerFileEditor(
   }
 }
 
-@Deprecated("Use DiffEditorViewerFileEditors instead")
+@Deprecated("Use DiffEditorViewerFileEditors instead", replaceWith = ReplaceWith("DiffEditorViewerFileEditor"))
 open class DiffRequestProcessorEditor(
   file: VirtualFile,
-  @Deprecated("use editorViewer instead") val processor: DiffRequestProcessor
+  @Deprecated("use editorViewer instead", replaceWith = ReplaceWith("editorViewer"))
+  val processor: DiffRequestProcessor
 ) : DiffEditorViewerFileEditor(file, processor)

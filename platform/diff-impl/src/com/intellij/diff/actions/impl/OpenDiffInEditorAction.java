@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions.impl;
 
-import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.editor.SimpleDiffVirtualFile;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -11,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenDiffInEditorAction extends DumbAwareAction {
@@ -32,7 +32,7 @@ public class OpenDiffInEditorAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     DiffRequest request = e.getRequiredData(DiffDataKeys.DIFF_REQUEST);
 
-    DiffVirtualFile file = new SimpleDiffVirtualFile(request);
+    VirtualFile file = new SimpleDiffVirtualFile(request);
     FileEditorManager.getInstance(project).openFile(file, true);
   }
 }

@@ -5,8 +5,10 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.project.Project
 
+@Deprecated("Use DiffViewerVirtualFile instead", replaceWith = ReplaceWith("DiffViewerVirtualFile"))
 abstract class DiffVirtualFile(name: String) : DiffViewerVirtualFile(name) {
 
+  @Deprecated("Use createViewer instead", replaceWith = ReplaceWith("createViewer"))
   abstract fun createProcessor(project: Project): DiffRequestProcessor
 
   override fun createViewer(project: Project): DiffEditorViewer = createProcessor(project)
