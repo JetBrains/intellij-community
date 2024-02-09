@@ -2,7 +2,6 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleSourceSetDependencyResolver
-import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
@@ -33,17 +32,13 @@ class GradleSourceSetGroovyHelper {
     def ideaPluginOutDir = ideaPluginModule?.outputDir
     def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
 
-    def sourceSetResolutionContext = new GradleSourceSetResolutionContext(project, ideaPluginModule)
+    def sourceSetResolutionContext = new GradleSourceSetResolutionContext(project, context, ideaPluginModule)
 
     def result = new LinkedHashMap<String, DefaultExternalSourceSet>()
     def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
     if (sourceSets == null) {
       return result
     }
-
-    def (resourcesIncludes, resourcesExcludes, filterReaders) = GradleResourceFilterModelBuilder.getFilters(project, context, 'processResources')
-    def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = GradleResourceFilterModelBuilder.getFilters(project, context, 'processTestResources')
-    //def (javaIncludes, javaExcludes) = GradleResourceFilterModelBuilder.getFilters(project, 'compileJava')
 
     sourceSets.each { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
@@ -85,8 +80,6 @@ class GradleSourceSetGroovyHelper {
 
       javaDirectorySet.outputDir = new File(ideaOutDir, "classes")
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
-//      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
-//      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
       DefaultExternalSourceDirectorySet generatedDirectorySet = null
       def hasExplicitlyDefinedGeneratedSources = !sourceSetResolutionContext.ideaGeneratedSourceDirs.isEmpty()
@@ -118,9 +111,9 @@ class GradleSourceSetGroovyHelper {
           javaDirectorySet.outputDir = ideaPluginTestOutDir
           resourcesDirectorySet.outputDir = ideaPluginTestOutDir
         }
-        resourcesDirectorySet.excludes = testResourcesExcludes + sourceSet.resources.excludes
-        resourcesDirectorySet.includes = testResourcesIncludes + sourceSet.resources.includes
-        resourcesDirectorySet.filters = testFilterReaders
+        resourcesDirectorySet.excludes = sourceSetResolutionContext.testResourcesExcludes + sourceSet.resources.excludes
+        resourcesDirectorySet.includes = sourceSetResolutionContext.testResourcesIncludes + sourceSet.resources.includes
+        resourcesDirectorySet.filters = sourceSetResolutionContext.testResourceFilters
         sources.put(ExternalSystemSourceType.TEST, javaDirectorySet)
         sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
         if (generatedDirectorySet) {
@@ -144,9 +137,10 @@ class GradleSourceSetGroovyHelper {
           resourcesDirectorySet.outputDir = ideaPluginOutDir
         }
 
-        resourcesDirectorySet.excludes = resourcesExcludes + sourceSet.resources.excludes
-        resourcesDirectorySet.includes = resourcesIncludes + sourceSet.resources.includes
-        resourcesDirectorySet.filters = filterReaders
+        resourcesDirectorySet.excludes = sourceSetResolutionContext.resourcesExcludes + sourceSet.resources.excludes
+        resourcesDirectorySet.includes = sourceSetResolutionContext.resourcesIncludes + sourceSet.resources.includes
+        resourcesDirectorySet.filters = sourceSetResolutionContext.resourceFilters
+
         if (!isTestSourceSet) {
           sources.put(ExternalSystemSourceType.SOURCE, javaDirectorySet)
           sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)

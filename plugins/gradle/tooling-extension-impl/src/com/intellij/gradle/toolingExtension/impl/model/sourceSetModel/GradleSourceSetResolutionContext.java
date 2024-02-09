@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
+import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder;
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import org.gradle.api.Project;
@@ -9,10 +10,13 @@ import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.DefaultExternalFilter;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -31,8 +35,16 @@ class GradleSourceSetResolutionContext {
 
   public final @NotNull Set<File> unprocessedIdeaGeneratedSourceDirs;
 
+  public final @NotNull Set<String> resourcesIncludes;
+  public final @NotNull Set<String> resourcesExcludes;
+  public final @NotNull Set<String> testResourcesIncludes;
+  public final @NotNull Set<String> testResourcesExcludes;
+  public final @NotNull List<DefaultExternalFilter> resourceFilters;
+  public final @NotNull List<DefaultExternalFilter> testResourceFilters;
+
   GradleSourceSetResolutionContext(
     @NotNull Project project,
+    @NotNull ModelBuilderContext context,
     @Nullable IdeaModule ideaPluginModule
   ) {
     projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project);
@@ -55,5 +67,12 @@ class GradleSourceSetResolutionContext {
       ideaGeneratedSourceDirs = new LinkedHashSet<>();
     }
     unprocessedIdeaGeneratedSourceDirs = new LinkedHashSet<>(ideaGeneratedSourceDirs);
+
+    resourcesIncludes = GradleResourceFilterModelBuilder.getIncludes(project, "processResources");
+    resourcesExcludes = GradleResourceFilterModelBuilder.getExcludes(project, "processResources");
+    resourceFilters = GradleResourceFilterModelBuilder.getFilters(project, context, "processResources");
+    testResourcesIncludes = GradleResourceFilterModelBuilder.getIncludes(project, "processTestResources");
+    testResourcesExcludes = GradleResourceFilterModelBuilder.getExcludes(project, "processTestResources");
+    testResourceFilters = GradleResourceFilterModelBuilder.getFilters(project, context, "processTestResources");
   }
 }
