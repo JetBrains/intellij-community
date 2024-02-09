@@ -12,6 +12,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
@@ -50,6 +52,10 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testOverrideRecordMethods() {
     addRecordClass();
+    doTest(false);
+  }
+
+  public void testOverrideForImplicitClass() {
     doTest(false);
   }
 
@@ -528,7 +534,12 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
   private void invokeAction(boolean toImplement) {
     int offset = myFixture.getEditor().getCaretModel().getOffset();
-    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), offset, PsiClass.class, false);
+    PsiFile psiFile = myFixture.getFile();
+    PsiClass psiClass = PsiTreeUtil.findElementOfClassAtOffset(psiFile, offset, PsiClass.class, false);
+    if (psiFile instanceof PsiJavaFile javaFile && javaFile.getClasses().length == 1 &&
+        javaFile.getClasses()[0] instanceof PsiImplicitClass implicitClass) {
+      psiClass = implicitClass;
+    }
     assertNotNull(psiClass);
     OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), myFixture.getEditor(), psiClass, toImplement);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();

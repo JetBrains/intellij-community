@@ -789,13 +789,13 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     try {
       int offset = editor.getCaretModel().getOffset();
       PsiElement brace = aClass.getLBrace();
-      if (brace == null) {
+      if (brace == null && !(aClass instanceof PsiImplicitClass)) {
         PsiClass psiClass = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass("X");
         brace = aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
         LOG.assertTrue(brace != null, aClass.getLastChild());
       }
 
-      int lbraceOffset = brace.getTextOffset();
+      int lbraceOffset = brace == null ? 0 : brace.getTextOffset();
       List<PsiGenerationInfo<PsiMethod>> resultMembers;
       if (offset <= lbraceOffset || aClass.isEnum()) {
         resultMembers = new ArrayList<>();
@@ -904,6 +904,13 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     final PsiClass aClass = (PsiClass)element;
     if (aClass instanceof PsiSyntheticClass) return null;
+    if (file instanceof PsiJavaFile javaFile) {
+      PsiClass[] classes = javaFile.getClasses();
+      if (classes.length == 1 && classes[0] instanceof PsiImplicitClass implicitClass &&
+          implicitClass.getFirstChild() != null && PsiMethodUtil.hasMainMethod(implicitClass)) {
+        return classes[0];
+      }
+    }
     return aClass == null || !allowInterface && aClass.isInterface() ? null : aClass;
   }
 

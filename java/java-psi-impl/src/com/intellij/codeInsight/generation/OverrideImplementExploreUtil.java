@@ -65,7 +65,9 @@ public class OverrideImplementExploreUtil {
       PsiClass hisClass = method.getContainingClass();
       if (hisClass == null) continue;
       // filter non-immediate super constructors
-      if (method.isConstructor() && (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass || aClass.isEnum())) {
+      if (method.isConstructor() &&
+          (!aClass.isInheritor(hisClass, false) || aClass instanceof PsiAnonymousClass ||
+           aClass.isEnum() || aClass instanceof  PsiImplicitClass)) {
         continue;
       }
       // filter already implemented
