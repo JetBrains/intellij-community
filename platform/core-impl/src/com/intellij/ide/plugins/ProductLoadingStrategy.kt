@@ -72,9 +72,10 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     zipFilePool: ZipFilePool,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     if (bundledPluginDir != null) {
-      val classPathFile = bundledPluginDir.parent.resolve("plugin-classpath.txt")
+      val classPathFile = bundledPluginDir.resolve("plugin-classpath.txt")
       if (Files.exists(classPathFile)) {
         return loadFromPluginClasspathDescriptor(
+          bundledPluginDir = bundledPluginDir,
           classPathFile = classPathFile,
           scope = scope,
           context = context,
@@ -89,16 +90,19 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
   }
 
-  private fun loadFromPluginClasspathDescriptor(classPathFile: Path?,
-                                                scope: CoroutineScope,
-                                                context: DescriptorListLoadingContext,
-                                                zipFilePool: ZipFilePool): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  private fun loadFromPluginClasspathDescriptor(
+    classPathFile: Path?,
+    scope: CoroutineScope,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+    bundledPluginDir: Path,
+  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
     return Files.readAllLines(classPathFile).mapNotNull { line ->
       if (line.isEmpty()) {
         return@mapNotNull null
       }
 
-      val files = line.splitToSequence(';').map { Paths.get(it) }.toList()
+      val files = line.splitToSequence(';').map { bundledPluginDir.resolve(it) }.toList()
       scope.asyncOrNull(files) {
         val file = files.first()
         val classPath = files.subList(0, files.size - 1)

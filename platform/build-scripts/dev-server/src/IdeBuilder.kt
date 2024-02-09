@@ -42,6 +42,7 @@ import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import kotlin.String
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.seconds
 
 private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
@@ -242,6 +243,7 @@ private suspend fun compileIfNeeded(context: BuildContext) {
 }
 
 private fun writePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, runDir: Path) {
+  val pluginDir = runDir.resolve("plugins")
   val s = StringBuilder()
   for ((buildDescriptor, entries) in pluginEntries) {
     val files = entries.asSequence()
@@ -270,13 +272,13 @@ private fun writePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor,
       }
     }
 
-    files.joinTo(buffer = s, separator = ";")
+    files.joinTo(buffer = s, separator = ";") { pluginDir.relativize(it).invariantSeparatorsPathString }
     // plugin dir as the last item in the list
-    s.append(';').append(buildDescriptor.dir)
+    s.append(';').append(pluginDir.relativize(buildDescriptor.dir).invariantSeparatorsPathString)
     s.appendLine()
   }
 
-  Files.writeString(runDir.resolve("plugin-classpath.txt"), s)
+  Files.writeString(pluginDir.resolve("plugin-classpath.txt"), s)
 }
 
 private suspend fun computeIdeFingerprint(
