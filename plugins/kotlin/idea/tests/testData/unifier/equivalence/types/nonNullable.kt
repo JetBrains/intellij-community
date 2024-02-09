@@ -1,4 +1,3 @@
-// IGNORE_K2
 val a: <selection>String</selection> = ""
 val b: String? = ""
 val c: kotlin.String? = ""

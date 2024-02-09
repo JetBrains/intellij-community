@@ -234,6 +234,14 @@ object K2SemanticMatcher {
 
         override fun visitScript(script: KtScript, data: KtElement): Boolean = false // TODO()
 
+        override fun visitTypeReference(typeReference: KtTypeReference, data: KtElement): Boolean {
+            val patternTypeReference = data as? KtTypeReference ?: return false
+            with(analysisSession) {
+                if (!areTypeReferencesMatchingByResolve(typeReference, patternTypeReference, context)) return false
+            }
+            return true
+        }
+
         override fun visitExpression(expression: KtExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtExpression ?: return false
             if (patternExpression is KtQualifiedExpression) {
@@ -559,6 +567,13 @@ object K2SemanticMatcher {
         }
         return true
     }
+
+    context(KtAnalysisSession)
+    private fun areTypeReferencesMatchingByResolve(
+        targetTypeReference: KtTypeReference,
+        patternTypeReference: KtTypeReference,
+        context: MatchingContext
+    ): Boolean = context.areTypesEqualOrAssociated(targetTypeReference.getKtType(), patternTypeReference.getKtType())
 
     context(KtAnalysisSession)
     private fun KtFunction.getFunctionLikeSymbol(): KtFunctionLikeSymbol = getSymbolOfType<KtFunctionLikeSymbol>()

@@ -1,4 +1,3 @@
-// IGNORE_K2
 import java.util.HashMap
 
 val a: <selection>Map<String, MutableList<Any>></selection> = HashMap()
