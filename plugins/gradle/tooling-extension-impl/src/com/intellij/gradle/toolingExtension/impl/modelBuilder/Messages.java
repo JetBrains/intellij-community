@@ -23,6 +23,8 @@ public final class Messages {
   public final static @NotNull String SOURCE_SET_MODEL_SKIPPED_NON_SOURCE_SET_ARTIFACT_GROUP = "gradle.sourceSetModel.nonSourceSetArtifact.skipped.group";
   public final static @NotNull String SOURCE_SET_MODEL_PROJECT_CONFIGURATION_ARTIFACT_GROUP = "gradle.sourceSetModel.projectConfigurationArtifact.group";
   public final static @NotNull String SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP = "gradle.sourceSetModel.projectConfigurationArtifact.skipped.group";
+  public final static @NotNull String SOURCE_SET_MODEL_SOURCE_SET_ARTIFACT_GROUP = "gradle.sourceSetModel.sourceSetArtifact.group";
+  public final static @NotNull String SOURCE_SET_MODEL_SKIPPED_SOURCE_SET_ARTIFACT_GROUP = "gradle.sourceSetModel.sourceSetArtifact.skipped.group";
   public final static @NotNull String SOURCE_SET_CACHE_GET_GROUP = "gradle.sourceSetModel.cacheGet.group";
   public final static @NotNull String SOURCE_SET_CACHE_SET_GROUP = "gradle.sourceSetModel.cacheSet.group";
 

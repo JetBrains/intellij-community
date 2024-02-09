@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import groovy.transform.CompileDynamic
 import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
@@ -18,8 +17,6 @@ import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
-import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.containsAllSourceSetOutput
-import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 class GradleSourceSetGroovyHelper {
@@ -51,15 +48,8 @@ class GradleSourceSetGroovyHelper {
     sourceSets.each { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
-
+      externalSourceSet.artifacts = GradleSourceSetModelBuilder.collectSourceSetArtifacts(project, context, sourceSet)
       GradleSourceSetModelBuilder.addJavaCompilerOptions(externalSourceSet, project, sourceSet, sourceSetResolutionContext)
-
-      project.tasks.withType(AbstractArchiveTask) { AbstractArchiveTask task ->
-        if (containsAllSourceSetOutput(task, sourceSet)) {
-          externalSourceSet.artifacts.add(getTaskArchiveFile(task))
-        }
-      }
-
 
       def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()

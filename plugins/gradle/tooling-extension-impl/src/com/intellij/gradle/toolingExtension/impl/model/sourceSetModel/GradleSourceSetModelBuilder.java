@@ -38,8 +38,6 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile;
-
 @ApiStatus.Internal
 public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
@@ -89,7 +87,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
       @Override
       public void visit(Jar element) {
-        File archiveFile = getTaskArchiveFile(element);
+        File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
         if (archiveFile != null) {
           taskArtifacts.add(archiveFile);
         }
@@ -111,8 +109,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_TASK_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
-          .withText("Artifact files collecting for project Jar task was finished. " +
-                    "Resolution for Jar task " + element.getPath() + " will be skipped.")
+          .withText("Artifact files collecting for project Jar tasks was finished. " +
+                    "Resolution for the Jar task " + element.getPath() + " will be skipped.")
           .withKind(Message.Kind.INTERNAL)
           .withStackTrace()
           .reportMessage(project);
@@ -121,14 +119,16 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return new ArrayList<>(taskArtifacts);
   }
 
-  @NotNull
-  private static List<File> collectNonSourceSetArtifacts(@NotNull Project project, @NotNull ModelBuilderContext context) {
+  private static @NotNull List<File> collectNonSourceSetArtifacts(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
     List<File> additionalArtifacts = new ArrayList<>();
     GradleCollectionVisitor.accept(project.getTasks().withType(Jar.class), new GradleCollectionVisitor<Jar>() {
 
       @Override
       public void visit(Jar element) {
-        File archiveFile = getTaskArchiveFile(element);
+        File archiveFile = GradleTaskUtil.getTaskArchiveFile(element);
         if (archiveFile != null) {
           if (isJarDescendant(element) || containsPotentialClasspathElements(element, project)) {
             additionalArtifacts.add(archiveFile);
@@ -141,7 +141,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_NON_SOURCE_SET_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
-          .withText("Cannot resolve artifact file for the project Jar task: " + element.getPath())
+          .withText("Cannot resolve an artifact file for the project Jar task: " + element.getPath())
           .withKind(Message.Kind.WARNING)
           .withException(exception)
           .reportMessage(project);
@@ -152,8 +152,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_NON_SOURCE_SET_ARTIFACT_GROUP)
           .withTitle("Jar task configuration error")
-          .withText("Artifact files collecting for project Jar task was finished. " +
-                    "Resolution for Jar task " + element.getPath() + " will be skipped.")
+          .withText("Artifact files collecting for project Jar tasks was finished. " +
+                    "Resolution for the Jar task " + element.getPath() + " will be skipped.")
           .withKind(Message.Kind.INTERNAL)
           .withStackTrace()
           .reportMessage(project);
@@ -162,9 +162,10 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return additionalArtifacts;
   }
 
-  @NotNull
-  private static Map<String, Set<File>> collectProjectConfigurationArtifacts(@NotNull Project project,
-                                                                             @NotNull ModelBuilderContext context) {
+  private static @NotNull Map<String, Set<File>> collectProjectConfigurationArtifacts(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
     Map<String, Set<File>> configurationArtifacts = new HashMap<>();
     GradleCollectionVisitor.accept(project.getConfigurations(), new GradleCollectionVisitor<Configuration>() {
 
@@ -181,7 +182,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
           .withTitle("Project configuration error")
-          .withText("Cannot resolve artifact files for project configuration" + element)
+          .withText("Cannot resolve an artifact file for the project configuration" + element)
           .withKind(Message.Kind.WARNING)
           .withException(exception)
           .reportMessage(project);
@@ -192,14 +193,56 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         context.getMessageReporter().createMessage()
           .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP)
           .withTitle("Project configuration error")
-          .withText("Artifact files collecting for project configuration was finished. " +
-                    "Resolution for configuration " + element + " will be skipped.")
+          .withText("Artifact files collecting for project configurations was finished. " +
+                    "Resolution for the configuration " + element + " will be skipped.")
           .withKind(Message.Kind.INTERNAL)
           .withStackTrace()
           .reportMessage(project);
       }
     });
     return configurationArtifacts;
+  }
+
+  static @NotNull Collection<File> collectSourceSetArtifacts(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull SourceSet sourceSet
+  ) {
+    Collection<File> sourceSetArtifacts = new LinkedHashSet<>();
+    TaskCollection<AbstractArchiveTask> archiveTaskCollection = project.getTasks().withType(AbstractArchiveTask.class);
+    GradleCollectionVisitor.accept(archiveTaskCollection, new GradleCollectionVisitor<AbstractArchiveTask>() {
+
+      @Override
+      public void visit(AbstractArchiveTask element) {
+        if (containsAllSourceSetOutput(element, sourceSet)) {
+          sourceSetArtifacts.add(GradleTaskUtil.getTaskArchiveFile(element));
+        }
+      }
+
+      @Override
+      public void onFailure(AbstractArchiveTask element, @NotNull Exception exception) {
+        context.getMessageReporter().createMessage()
+          .withGroup(Messages.SOURCE_SET_MODEL_SOURCE_SET_ARTIFACT_GROUP)
+          .withTitle("Project configuration error")
+          .withText("Cannot resolve an artifact file for the source set " + element)
+          .withKind(Message.Kind.WARNING)
+          .withException(exception)
+          .reportMessage(project);
+      }
+
+      @Override
+      public void visitAfterAccept(AbstractArchiveTask element) {
+        context.getMessageReporter().createMessage()
+          .withGroup(Messages.SOURCE_SET_MODEL_SKIPPED_SOURCE_SET_ARTIFACT_GROUP)
+          .withTitle("Project configuration error")
+          .withText("Artifact files collecting for source sets was finished. " +
+                    "Resolution for the source set" + element + " will be skipped.")
+          .withKind(Message.Kind.INTERNAL)
+          .withStackTrace()
+          .reportMessage(project);
+      }
+    });
+    return sourceSetArtifacts;
   }
 
   static void cleanupSharedSourceDirs(
