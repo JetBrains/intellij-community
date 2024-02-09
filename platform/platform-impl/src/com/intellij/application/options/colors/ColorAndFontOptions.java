@@ -141,7 +141,14 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   public EditorColorsScheme selectScheme(@NotNull String name) {
-    mySelectedScheme = getScheme(name);
+    MyColorScheme schemeToSelect = getScheme(name);
+    if (schemeToSelect != null) {
+      mySelectedScheme = schemeToSelect;
+    }
+    else {
+      LOG.warn("Scheme " + name + " can not be selected. Schemes: " + mySchemes.keySet());
+    }
+
     return mySelectedScheme;
   }
 
@@ -366,11 +373,15 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   @ApiStatus.Internal
   public void preselectScheme(@NotNull String schemeName) {
-    selectScheme(schemeName);
-    if (myInitResetCompleted) {
-      resetSchemesCombo(this);
+    if (mySchemes.containsKey(schemeName)) {
+      selectScheme(schemeName);
+
+      if (myInitResetCompleted) {
+        resetSchemesCombo(this);
+      }
     }
-    else {
+
+    if (!myInitResetCompleted) {
       myPreselectedSchemeName = schemeName;
     }
   }
