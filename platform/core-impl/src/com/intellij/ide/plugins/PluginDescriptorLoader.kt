@@ -6,6 +6,7 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.ide.plugins.PluginManagerCore.isUnitTestMode
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -48,16 +49,7 @@ private val LOG: Logger
 
 @TestOnly
 fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext): IdeaPluginDescriptorImpl? {
-  return loadDescriptorFromFileOrDir(
-    file = file,
-    context = parentContext,
-    pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-    isBundled = false,
-    isEssential = false,
-    isDirectory = Files.isDirectory(file),
-    useCoreClassLoader = false,
-    pool = NonShareableJavaZipFilePool(),
-  )
+  return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = NonShareableJavaZipFilePool())
 }
 
 internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
@@ -69,10 +61,9 @@ internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescr
       descriptorRelativePath = "${PluginManagerCore.META_INF}$fileName",
       pluginDir = null,
       context = parentContext,
+      pathResolver = pathResolver,
       isBundled = true,
       isEssential = true,
-      pathResolver = pathResolver,
-      useCoreClassLoader = false,
     )
   }
   else {
@@ -94,13 +85,13 @@ internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescr
 
 fun loadDescriptorFromDir(
   dir: Path,
-  descriptorRelativePath: String,
   pluginDir: Path?,
   context: DescriptorListLoadingContext,
+  pathResolver: PathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+  descriptorRelativePath: String = PluginManagerCore.PLUGIN_XML_PATH,
   isBundled: Boolean,
-  isEssential: Boolean,
-  useCoreClassLoader: Boolean,
-  pathResolver: PathResolver,
+  isEssential: Boolean = false,
+  useCoreClassLoader: Boolean = false,
 ): IdeaPluginDescriptorImpl? {
   try {
     val dataLoader = LocalFsDataLoader(dir)
@@ -140,12 +131,12 @@ fun loadDescriptorFromDir(
 
 fun loadDescriptorFromJar(
   file: Path,
-  descriptorRelativePath: String,
-  pathResolver: PathResolver,
+  descriptorRelativePath: String = PluginManagerCore.PLUGIN_XML_PATH,
+  pathResolver: PathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
   parentContext: DescriptorListLoadingContext,
-  isBundled: Boolean,
-  isEssential: Boolean,
-  useCoreClassLoader: Boolean,
+  isBundled: Boolean = false,
+  isEssential: Boolean = false,
+  useCoreClassLoader: Boolean = false,
   pluginDir: Path?,
   pool: ZipFilePool,
   customDataLoader: DataLoader? = null,
@@ -171,12 +162,14 @@ fun loadDescriptorFromJar(
       locationSource = file.toString(),
     )
 
-    val descriptor = IdeaPluginDescriptorImpl(raw = raw,
-                                              path = pluginDir ?: file,
-                                              isBundled = isBundled,
-                                              id = null,
-                                              moduleName = null,
-                                              useCoreClassLoader = useCoreClassLoader)
+    val descriptor = IdeaPluginDescriptorImpl(
+      raw = raw,
+      path = pluginDir ?: file,
+      isBundled = isBundled,
+      id = null,
+      moduleName = null,
+      useCoreClassLoader = useCoreClassLoader,
+    )
     parentContext.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = parentContext, isSub = false, dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
@@ -203,11 +196,8 @@ fun loadDescriptorFromFileOrDirInTests(
   return loadDescriptorFromFileOrDir(
     file = file,
     context = context,
-    pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
     isBundled = isBundled,
     isEssential = true,
-    isDirectory = Files.isDirectory(file),
-    useCoreClassLoader = false,
     isUnitTestMode = true,
     pool = NonShareableJavaZipFilePool(),
   )
@@ -216,15 +206,14 @@ fun loadDescriptorFromFileOrDirInTests(
 internal fun loadDescriptorFromFileOrDir(
   file: Path,
   context: DescriptorListLoadingContext,
-  pathResolver: PathResolver,
-  isBundled: Boolean,
-  isEssential: Boolean,
-  isDirectory: Boolean,
-  useCoreClassLoader: Boolean,
+  pathResolver: PathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+  isBundled: Boolean = false,
+  isEssential: Boolean = false,
+  useCoreClassLoader: Boolean = false,
   isUnitTestMode: Boolean = false,
   pool: ZipFilePool,
 ): IdeaPluginDescriptorImpl? {
-  if (isDirectory) {
+  if (Files.isDirectory(file)) {
     return loadFromPluginDir(
       file = file,
       parentContext = context,
@@ -258,10 +247,10 @@ internal fun loadDescriptorFromFileOrDir(
 private fun loadFromPluginDir(
   file: Path,
   parentContext: DescriptorListLoadingContext,
-  isBundled: Boolean,
-  isEssential: Boolean,
-  useCoreClassLoader: Boolean,
-  pathResolver: PathResolver,
+  isBundled: Boolean = false,
+  isEssential: Boolean = false,
+  useCoreClassLoader: Boolean = false,
+  pathResolver: PathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
   isUnitTestMode: Boolean = false,
   pool: ZipFilePool,
 ): IdeaPluginDescriptorImpl? {
@@ -296,7 +285,6 @@ private fun loadFromPluginDir(
       .firstNotNullOfOrNull {
         loadDescriptorFromDir(
           dir = it,
-          descriptorRelativePath = PluginManagerCore.PLUGIN_XML_PATH,
           pluginDir = file,
           context = parentContext,
           isBundled = isBundled,
@@ -351,10 +339,6 @@ private fun CoroutineScope.loadDescriptorsFromProperty(
       loadDescriptorFromFileOrDir(
         file = file,
         context = context,
-        pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-        isBundled = false,
-        isEssential = false,
-        isDirectory = Files.isDirectory(file),
         useCoreClassLoader = useCoreClassLoaderForPluginsFromProperty,
         pool = pool,
       )
@@ -718,23 +702,16 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 @Throws(IOException::class)
 @RequiresBackgroundThread
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
-  val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
-                                             productBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
-                                             transient = true)
+  val context = DescriptorListLoadingContext(
+    isMissingSubDescriptorIgnored = true,
+    productBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
+    transient = true,
+  )
 
   val fileName = file.fileName.toString()
   if (fileName.endsWith(".jar", ignoreCase = true)) {
     val descriptor = runBlocking {
-    loadDescriptorFromFileOrDir(
-      file = file,
-      context = context,
-      pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-      isBundled = false,
-      isEssential = false,
-      isDirectory = false,
-      useCoreClassLoader = false,
-      pool = NonShareableJavaZipFilePool(),
-    )
+    loadDescriptorFromJar(file = file, parentContext = context, pluginDir = null, pool = NonShareableJavaZipFilePool())
     }
     if (descriptor != null) {
       return descriptor
@@ -781,9 +758,6 @@ fun loadDescriptor(
         context = context,
         pathResolver = pathResolver,
         isBundled = isBundled,
-        isEssential = false,
-        isDirectory = Files.isDirectory(file),
-        useCoreClassLoader = false,
         pool = NonShareableJavaZipFilePool(),
       )
     }
@@ -865,16 +839,7 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
   return Files.newDirectoryStream(dir).use { dirStream ->
     dirStream.map { file ->
       async {
-        loadDescriptorFromFileOrDir(
-          file = file,
-          context = context,
-          pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-          isBundled = isBundled,
-          isDirectory = Files.isDirectory(file),
-          isEssential = false,
-          useCoreClassLoader = false,
-          pool = pool,
-        )
+        loadDescriptorFromFileOrDir(file = file, context = context, isBundled = isBundled, pool = pool)
       }
     }
   }
@@ -935,21 +900,25 @@ private fun loadDescriptorFromResource(
       else -> return null
     }
 
-    val raw = readModuleDescriptor(input = input,
-                                   readContext = context,
-                                   pathResolver = pathResolver,
-                                   dataLoader = dataLoader,
-                                   includeBase = null,
-                                   readInto = null,
-                                   locationSource = file.toString())
+    val raw = readModuleDescriptor(
+      input = input,
+      readContext = context,
+      pathResolver = pathResolver,
+      dataLoader = dataLoader,
+      includeBase = null,
+      readInto = null,
+      locationSource = file.toString(),
+    )
     // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must use their own class loader if not running from sources
-    val descriptor = IdeaPluginDescriptorImpl(raw = raw,
-                                              path = basePath,
-                                              isBundled = true,
-                                              id = null,
-                                              moduleName = null,
-                                              useCoreClassLoader = useCoreClassLoader)
+    val descriptor = IdeaPluginDescriptorImpl(
+      raw = raw,
+      path = basePath,
+      isBundled = true,
+      id = null,
+      moduleName = null,
+      useCoreClassLoader = useCoreClassLoader,
+    )
     context.debugData?.recordDescriptorPath(descriptor, raw, filename)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
     // do not set jarFiles by intention - doesn't make sense
