@@ -80,6 +80,7 @@ class GitAnnotationService(private val project: Project, private val cs: Corouti
 
         val value = providerResult.timedValue.value.getOrNull()
         if (value != null && result.complete(value)) {
+          LOG.debug("Annotations was loaded using ${providerResult.provider.presentableName()}")
           logFirstResult(file, revision, providerResult)
         }
       }

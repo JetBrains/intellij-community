@@ -95,13 +95,6 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
         throw new VcsException(GitBundle.message("annotate.cannot.annotate.dir"));
       }
 
-      for (GitRawAnnotationProvider another : GitRawAnnotationProvider.EP_NAME.getExtensions(myProject)) {
-        GitFileAnnotation res = another.annotate(file, revision);
-        if (res != null) {
-          return res;
-        }
-      }
-
       if (revision == null) {
         Pair<FilePath, VcsRevisionNumber> pair = getPathAndRevision(file);
         return annotate(pair.first, pair.second, file);
