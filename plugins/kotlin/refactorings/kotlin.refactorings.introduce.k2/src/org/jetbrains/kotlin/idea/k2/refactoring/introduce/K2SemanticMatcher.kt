@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -412,7 +413,15 @@ object K2SemanticMatcher {
 
         override fun visitBackingField(accessor: KtBackingField, data: KtElement): Boolean = false // TODO()
 
-        override fun visitBinaryWithTypeRHSExpression(expression: KtBinaryExpressionWithTypeRHS, data: KtElement): Boolean = false // TODO
+        override fun visitBinaryWithTypeRHSExpression(expression: KtBinaryExpressionWithTypeRHS, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtBinaryExpressionWithTypeRHS ?: return false
+
+            if (expression.operationToken != patternExpression.operationToken) return false
+            if (!expression.left.accept(this, patternExpression.left)) return false
+            if (!elementsMatchOrBothAreNull(expression.right, patternExpression.right)) return false
+
+            return true
+        }
 
         override fun visitStringTemplateExpression(expression: KtStringTemplateExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtStringTemplateExpression ?: return false
@@ -441,7 +450,15 @@ object K2SemanticMatcher {
 
         override fun visitNamedDeclaration(declaration: KtNamedDeclaration, data: KtElement): Boolean = false // TODO()
 
-        override fun visitIsExpression(expression: KtIsExpression, data: KtElement): Boolean = false // TODO
+        override fun visitIsExpression(expression: KtIsExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtIsExpression ?: return false
+
+            if (expression.operationToken != patternExpression.operationToken) return false
+            if (!expression.leftHandSide.accept(this, patternExpression.leftHandSide)) return false
+            if (!elementsMatchOrBothAreNull(expression.typeReference, patternExpression.typeReference)) return false
+
+            return true
+        }
     }
 
     context(KtAnalysisSession)
@@ -643,6 +660,8 @@ object K2SemanticMatcher {
     private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference
 
     private val KtOperationExpression.mainReference: KtSimpleNameReference get() = operationReference.mainReference
+
+    private val KtOperationExpression.operationToken: IElementType get() = operationReference.getReferencedNameElementType()
 
     private fun KtElement.deparenthesized(): KtElement = when (this) {
         is KtExpression -> this.safeDeparenthesize()

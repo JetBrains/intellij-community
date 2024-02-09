@@ -1,6 +1,7 @@
-// IGNORE_K2
 fun foo(a: Any, b: Any) {
     <selection>a is String</selection>
     a as String
     b is String
+    a !is String
+    (a is String)
 }

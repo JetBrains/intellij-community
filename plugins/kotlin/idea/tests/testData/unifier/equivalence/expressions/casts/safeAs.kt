@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(a: Any, b: Any) {
     <selection>a as? String</selection>
     b as String
