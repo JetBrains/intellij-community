@@ -46,6 +46,16 @@ class JbSettingsImporter(private val configDirPath: Path,
   private val defaultNewUIValue = true
   private val additionalSchemeDirs = mapOf(FileTemplatesScheme.TEMPLATES_DIR to SettingsCategory.CODE)
 
+  // will be used as toposort for dependencies
+  // TODO: move to the component declaration instead
+  private val componentNamesDependencies = mapOf(
+    //IDEA-342818
+    "SshLocalRecentConnectionsManager" to listOf("SshConfigs"),
+    "SshHostStorage" to listOf("SshConfigs"),
+    //IDEA-324914
+    "EditorColorsManagerImpl" to listOf("LafManager")
+  )
+
   // these are options that need to be reloaded after restart
   // for instance, LaFManager, because the actual theme might be provided by a plugin.
   // Same applies to the Keymap manager.
@@ -144,10 +154,13 @@ class JbSettingsImporter(private val configDirPath: Path,
       LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
       progressIndicator.checkCanceled()
       val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+      val defaultProject = ProjectManager.getInstance().defaultProject
+      val defaultProjectStore = (defaultProject as ComponentManager).stateStore as ComponentStoreImpl
+      val defaultProjectStorage = defaultProjectStore.storageManager.getStateStorage(FileStorageAnnotation("", false))
+
       val loadNotLoadedComponents = loadNotLoadedComponents(progressIndicator, componentManagerImpl, notLoadedComponents, null)
       notLoadedComponents.removeAll(loadNotLoadedComponents)
 
-      val defaultProject = ProjectManager.getInstance().defaultProject
       val projectDefaultComponentNames = loadProjectDefaultComponentNames()
       if (projectDefaultComponentNames.isNotEmpty()) {
         loadNotLoadedComponents(progressIndicator, defaultProject.actualComponentManager as ComponentManagerImpl,
@@ -190,12 +203,15 @@ class JbSettingsImporter(private val configDirPath: Path,
         (configDirPath / it).copy(PathManager.getConfigDir() / it)
       }
 
-      val defaultProjectStore = (defaultProject as ComponentManager).stateStore as ComponentStoreImpl
-      val defaultProjectStorage = defaultProjectStore.storageManager.getStateStorage(FileStorageAnnotation("", false))
+      // we use LinkedHashSet, because we need ordering here
+      val appComponentNames: LinkedHashSet<String> = toposortComponentNames(componentAndFilesMap.keys)
 
       withExternalStreamProvider(arrayOf(storageManager, defaultProjectStore.storageManager)) {
         progressIndicator.checkCanceled()
-        componentStore.reloadComponents(componentFiles + schemeFiles, emptyList(), componentAndFilesMap.keys)
+        componentStore.reloadComponents(changedFileSpecs = componentFiles + schemeFiles,
+                                        deletedFileSpecs = emptyList(),
+                                        componentNames2reload = appComponentNames,
+                                        forceReloadNonReloadable = true)
         defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
       }
       RegistryManager.getInstanceAsync().resetValueChangeListener()
@@ -208,6 +224,20 @@ class JbSettingsImporter(private val configDirPath: Path,
       LOG.error(th)
       return false
     }
+  }
+
+  // very basic and primitive toposort. Doesn't traverse, doesn't support transitive deps, etc.
+  private fun toposortComponentNames(components: Collection<String>): LinkedHashSet<String> {
+    val retval = LinkedHashSet<String>()
+    for (c in components) {
+      for (d in componentNamesDependencies[c]?:emptyList()) {
+        if (!retval.contains(d)){
+          retval.add(d)
+        }
+      }
+      retval.add(c)
+    }
+    return retval
   }
 
   private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: suspend () -> Unit) {
