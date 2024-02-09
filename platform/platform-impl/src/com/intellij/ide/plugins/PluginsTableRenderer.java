@@ -193,7 +193,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         }
       }
       String pluginName = myPluginDescriptor.getName() + "  ";
-      if (query instanceof String) {
+      if (query != null) {
         if (!Objects.equals(initialNameForeground, myName.getForeground())) {
           attr = attr.derive(attr.getStyle(), myName.getForeground(), attr.getBgColor(), attr.getWaveColor());
         }

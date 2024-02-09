@@ -395,9 +395,7 @@ public final class GenerateMembersUtil {
     for (PsiType type : substitutor.getSubstitutionMap().values()) {
       if (type != null && Objects.equals(type.getCanonicalText(), typeParamName)) {
         final String newName = suggestUniqueTypeParameterName(typeParamName, sourceTypeParameterList, PsiTreeUtil.getParentOfType(target, PsiClass.class, false));
-        final PsiTypeParameter newTypeParameter = factory.createTypeParameter(newName, typeParam.getSuperTypes());
-        substitutor.put(typeParam, factory.createType(newTypeParameter));
-        return newTypeParameter;
+        return factory.createTypeParameter(newName, typeParam.getSuperTypes());
       }
     }
     return factory.createTypeParameter(typeParamName, typeParam.getSuperTypes());

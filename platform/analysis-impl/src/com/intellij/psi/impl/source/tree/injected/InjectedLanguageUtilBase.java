@@ -50,6 +50,7 @@ public class InjectedLanguageUtilBase {
       PsiElement context = containingFile.getContext();
       if (context != null) {
         PsiFile topFile = context.getContainingFile();
+        //noinspection ResultOfMethodCallIgnored
         topFile.getNode();  //load tree
         TextRange textRange = host.getTextRange().shiftRight(context.getTextRange().getStartOffset());
 
