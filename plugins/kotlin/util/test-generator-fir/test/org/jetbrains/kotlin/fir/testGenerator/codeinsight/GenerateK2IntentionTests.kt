@@ -50,6 +50,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertBinaryExpressionWithDemorgansLaw", pattern = pattern)
             model("${idea}intentions/invertIfCondition", pattern = pattern)
             model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
+            model("${idea}intentions/removeExplicitTypeArguments", pattern = pattern)
 
             //
             model("${idea}intentions/addJvmOverloads", pattern = pattern, isIgnored = true)
