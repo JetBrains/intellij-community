@@ -339,6 +339,7 @@ class GitStageLineStatusTracker(
         if (unstaged) {
           if (unstagedTracker.blocks.isEmpty()) {
             saveDocumentWhenUnchanged(project, document)
+            saveDocumentWhenUnchanged(project, stagedDocument)
           }
         }
         else {
