@@ -24,7 +24,7 @@ public class FilesToUpdateCollector {
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
-  public void scheduleForUpdate(@NotNull VirtualFile file, @NotNull List<Project> dirtyQueueProjects) {
+  public void scheduleForUpdate(@NotNull VirtualFile file, @NotNull Collection<Project> dirtyQueueProjects) {
     int fileId = FileBasedIndex.getFileId(file);
     if (!(file instanceof DeletedVirtualFileStub)) {
       Set<Project> projects = myFileBasedIndex.get().getContainingProjects(file);

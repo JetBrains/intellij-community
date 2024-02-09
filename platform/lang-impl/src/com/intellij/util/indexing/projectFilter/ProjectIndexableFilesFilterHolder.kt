@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.indexing.*
@@ -25,7 +26,7 @@ internal sealed class ProjectIndexableFilesFilterHolder {
   /**
    * @returns true if fileId already contained in or was added to one of project filters
    */
-  abstract fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Project?
+  abstract fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): List<Project>
 
   abstract fun addFileId(fileId: Int, project: Project)
 
@@ -70,16 +71,14 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     else IncrementalProjectIndexableFilesFilter()
   }
 
-  override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Project? {
+  override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): List<Project> {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
-    val actualProjects = myProjectFilters.mapNotNull { (p, filter) ->
+    return myProjectFilters.mapNotNullTo(SmartList()) { (p, filter) ->
       val fileIsInProject = filter.ensureFileIdPresent(fileId) {
         matchedProjects.contains(p)
       }
       if (fileIsInProject) p else null
     }
-
-    return actualProjects.firstOrNull()
   }
 
   override fun addFileId(fileId: Int, project: Project) {

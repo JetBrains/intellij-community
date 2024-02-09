@@ -587,7 +587,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  public IntSet getAllDirtyFiles(@Nullable Project project) {
+  private IntSet getAllDirtyFiles(@Nullable Project project) {
     IntSet dirtyFileIds = new IntOpenHashSet();
     ProjectDirtyFiles dirtyFiles1 = getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(project);
     if (dirtyFiles1 != null) dirtyFiles1.addAllTo(dirtyFileIds);
@@ -1358,7 +1358,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private boolean isPendingDeletionFileAppearedInIndexableFilter(int fileId, @NotNull VirtualFile file) {
     if (file instanceof DeletedVirtualFileStub deletedFileStub) {
       if (deletedFileStub.isOriginalValid() &&
-          ensureFileBelongsToIndexableFilter(fileId, deletedFileStub.getOriginalFile()) != null) {
+          !ensureFileBelongsToIndexableFilter(fileId, deletedFileStub.getOriginalFile()).isEmpty()) {
         return true;
       }
     }
@@ -1843,11 +1843,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged, @NotNull List<Project> dirtyQueueProjects) {
-    Project projectForFile = ensureFileBelongsToIndexableFilter(fileId, file);
-    if (projectForFile == null) {
+    List<Project> projectsForFile = ensureFileBelongsToIndexableFilter(fileId, file);
+    if (projectsForFile.isEmpty()) {
       doInvalidateIndicesForFile(fileId, file, dirtyQueueProjects);
       return;
     }
+    Project projectForFile = projectsForFile.get(0);
 
     var indexingRequest = projectForFile.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
     var indexingStamp = indexingRequest.getFileIndexingStamp(file);
@@ -1867,7 +1868,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // with old content)
     if (!file.isValid() || (isRegularFile && isTooLarge(file))) {
       // large file might be scheduled for update in before event when its size was not large
-      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file), dirtyQueueProjects);
+      getFilesToUpdateCollector().scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file), ContainerUtil.union(dirtyQueueProjects, projectsForFile));
     }
     else {
       FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
@@ -1891,7 +1892,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
 
           IndexingStamp.flushCache(fileId);
-          getFilesToUpdateCollector().scheduleForUpdate(file, dirtyQueueProjects);
+          getFilesToUpdateCollector().scheduleForUpdate(file, ContainerUtil.union(dirtyQueueProjects, projectsForFile));
         }
         else {
           IndexingFlag.setFileIndexed(file, indexingStamp);
@@ -1926,8 +1927,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myIndexableFilesFilterHolder.findProjectForFile(fileId);
   }
 
-  @Nullable
-  private Project ensureFileBelongsToIndexableFilter(int fileId, @NotNull VirtualFile file) {
+  @NotNull
+  private List<Project> ensureFileBelongsToIndexableFilter(int fileId, @NotNull VirtualFile file) {
     return myIndexableFilesFilterHolder.ensureFileIdPresent(fileId, () -> getContainingProjects(file));
   }
 
