@@ -1534,7 +1534,6 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
     val className = isInsideClassInitializer()
     if (className != null) {
       // TODO make this an error
-      @Suppress("SpellCheckingInspection")
       LOG.warn("$className <clinit> requests $debugString instance. " +
                "Class initialization must not depend on services. " +
                "Consider using instance of the service on-demand instead.")
@@ -1557,7 +1556,6 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
 
 private fun isInsideClassInitializer(): String? = StackWalker.getInstance().walk { frames: Stream<StackFrame> ->
   frames.asSequence().firstNotNullOfOrNull { frame ->
-    @Suppress("SpellCheckingInspection")
     if (frame.methodName == "<clinit>") {
       frame.className
     }
