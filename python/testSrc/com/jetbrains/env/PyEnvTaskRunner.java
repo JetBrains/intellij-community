@@ -232,7 +232,7 @@ public class PyEnvTaskRunner {
   }
 
   public static boolean isJython(@NotNull String sdkHome) {
-    return sdkHome.toLowerCase().contains("jython");
+    return sdkHome.toLowerCase(Locale.ROOT).contains("jython");
   }
 
   @NotNull
