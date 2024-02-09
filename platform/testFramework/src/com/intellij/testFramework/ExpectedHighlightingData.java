@@ -500,7 +500,7 @@ public class ExpectedHighlightingData {
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return o1==null||o2==null?o1==o2:haveSamePresentation(o1, o2, true);
+        return o1==null||o2==null?o1==o2:o1.getSeverity()==o2.getSeverity()&&haveSamePresentation(o1, o2, true);
       }
     });
     if (!myIgnoreExtraHighlighting) {
@@ -700,7 +700,7 @@ public class ExpectedHighlightingData {
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
-      sb.insert(0, text.substring(info.startOffset, endPos));
+      sb.insert(0, text.substring(info.startOffset, Math.max(endPos,info.startOffset)));
 
       StringBuilder str = new StringBuilder().append('<').append(severity);
 
