@@ -33,7 +33,8 @@ public final class BasicJavaDocParser {
   private static final String LINK_TAG = "@link";
   private static final String LINK_PLAIN_TAG = "@linkplain";
   private static final String PARAM_TAG = "@param";
-  private static final String RETURN_TAG = "@return";
+  private static final String CODE_TAG = "@code";
+  private static final String LITERAL_TAG = "@literal";
   private static final String VALUE_TAG = "@value";
   private static final String SNIPPET_TAG = "@snippet";
   private static final Set<String> REFERENCE_TAGS = ContainerUtil.immutableSet("@throws", "@exception", "@provides", "@uses");
@@ -96,7 +97,9 @@ public final class BasicJavaDocParser {
       if (braceScope > 0) {
         setBraceScope(builder, braceScope + 1);
         builder.remapCurrentToken(JavaDocTokenType.DOC_COMMENT_DATA);
-        if (!RETURN_TAG.equals(tagName)) {
+        // Some inline tags can contain arbitrary other markup, process it as such
+        boolean isLiteralTag = CODE_TAG.equals(tagName) || LITERAL_TAG.equals(tagName) || SNIPPET_TAG.equals(tagName);
+        if (isLiteralTag) {
           builder.advanceLexer();
           return;
         }
