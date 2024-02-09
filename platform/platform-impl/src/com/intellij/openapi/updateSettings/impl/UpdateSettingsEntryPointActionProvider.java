@@ -272,7 +272,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
           if (platformUpdateInfo instanceof PlatformUpdates.Loaded &&
               pluginResults != null) {
             setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
-            newPlatformUpdate(pluginResults.getPluginUpdates().getAll(),
+            newPlatformUpdate(pluginResults.getPluginUpdates().getAllEnabled().stream().toList(),
                               pluginResults.getPluginNods(),
                               null);
 
