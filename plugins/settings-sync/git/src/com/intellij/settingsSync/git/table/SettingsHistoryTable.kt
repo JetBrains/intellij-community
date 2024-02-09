@@ -84,10 +84,10 @@ internal class SettingsHistoryTable(private val tableModel: SettingsHistoryTable
     if (column == 1) {
       // It's done only for one column because it affects the whole row and there is no need to do it for each column
       if (rowEntity is SeparatorRow) {
-        setRowHeight(row, 16)
+        if (getRowHeight(row) != 16) setRowHeight(row, 16)
       }
       else {
-        setRowHeight(row, 24)
+        if (getRowHeight(row) != 24) setRowHeight(row, 24)
       }
 
       return when (rowEntity) {
