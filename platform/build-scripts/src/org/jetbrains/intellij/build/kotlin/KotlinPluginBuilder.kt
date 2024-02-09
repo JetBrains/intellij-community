@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
+import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -22,7 +23,7 @@ object KotlinPluginBuilder {
    * Module which contains META-INF/plugin.xml
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
-  const val MAIN_FRONTEND_MODULE_NAME = "kotlin.frontend"
+  const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend"
 
   val MODULES: List<String> = persistentListOf(
     "kotlin.plugin.common",
@@ -308,13 +309,13 @@ object KotlinPluginBuilder {
 
       spec.withPatch { patcher, context ->
         val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
-        val jars = library.getFiles(JpsOrderRootType.COMPILED)
+        val jars = library.getPaths(JpsOrderRootType.COMPILED)
         if (jars.size != 1) {
           throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
         }
 
-        consumeDataByPrefix(jars[0].toPath(), "META-INF/extensions/") { name, data ->
-          patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
+        consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
+          patcher.patchModuleOutput(moduleName = MAIN_KOTLIN_PLUGIN_MODULE, path = name, content = data)
         }
       }
 
@@ -330,7 +331,7 @@ object KotlinPluginBuilder {
       spec.withGeneratedResources { targetDir, context ->
         val distLibName = "kotlinc.kotlin-dist"
         val library = context.project.libraryCollection.findLibrary(distLibName)!!
-        val jars = library.getFiles(JpsOrderRootType.COMPILED)
+        val jars = library.getPaths(JpsOrderRootType.COMPILED)
         if (jars.size != 1) {
           throw IllegalStateException("$distLibName is expected to have only one jar")
         }
@@ -351,7 +352,7 @@ object KotlinPluginBuilder {
             // In this environment, ideBuildVersion equals to build number.
             // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
             val version = ideBuildVersion.replace("IJ", kind.toString())
-            context.messages.info("Kotlin plugin IJ version: $version")
+            Span.current().addEvent("Kotlin plugin IJ version: $version")
             return version
           }
 

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
@@ -23,9 +25,11 @@ typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 /**
  * Describes layout of a plugin in the product distribution
  */
-class PluginLayout private constructor(val mainModule: String,
-                                       mainJarNameWithoutExtension: String,
-                                       @Internal @JvmField val auto: Boolean = false) : BaseLayout() {
+class PluginLayout private constructor(
+  val mainModule: String,
+  mainJarNameWithoutExtension: String,
+  @Internal @JvmField val auto: Boolean = false,
+) : BaseLayout() {
   constructor(mainModule: String, auto: Boolean = false) : this(
     mainModule = mainModule,
     mainJarNameWithoutExtension = convertModuleNameToFileName(mainModule),
@@ -151,7 +155,10 @@ class PluginLayout private constructor(val mainModule: String,
     }
   }
 
-  override fun toString() = "Plugin '$mainModule'" + if (bundlingRestrictions != PluginBundlingRestrictions.NONE) ", restrictions: $bundlingRestrictions" else ""
+  override fun toString(): String {
+    return "Plugin '$mainModule'" +
+           if (bundlingRestrictions == PluginBundlingRestrictions.NONE) "" else ", restrictions: $bundlingRestrictions"
+  }
 
   override fun withModule(moduleName: String) {
     if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
@@ -169,7 +176,7 @@ class PluginLayout private constructor(val mainModule: String,
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResource(resourcePath: String, relativeOutputPath: String) {
-      layout.withResourceFromModule(layout.mainModule, resourcePath, relativeOutputPath)
+      layout.withResourceFromModule(moduleName = layout.mainModule, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
     }
 
     fun withGeneratedResources(generator: ResourceGenerator) {
@@ -178,7 +185,7 @@ class PluginLayout private constructor(val mainModule: String,
 
     fun withGeneratedPlatformResources(os: OsFamily, arch: JvmArchitecture, generator: ResourceGenerator) {
       val key = SupportedDistribution(os, arch)
-      val newValue = layout.platformResourceGenerators[key]?.let { it + generator } ?: persistentListOf(generator) 
+      val newValue = layout.platformResourceGenerators.get(key)?.let { it + generator } ?: persistentListOf(generator)
       layout.platformResourceGenerators += key to newValue
     }
 
@@ -187,7 +194,7 @@ class PluginLayout private constructor(val mainModule: String,
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
+      layout.withResourceFromModule(moduleName = moduleName, resourcePath = resourcePath, relativeOutputPath = relativeOutputPath)
     }
   }
 
