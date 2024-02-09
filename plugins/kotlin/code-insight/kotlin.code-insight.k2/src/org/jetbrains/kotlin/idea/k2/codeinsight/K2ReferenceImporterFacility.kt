@@ -14,7 +14,47 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 class K2ReferenceImporterFacility : KotlinReferenceImporterFacility {
-    override fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> = sequence {
+    /**
+     * N.B. This implementation is currently non-lazy, because there is no good way to combine [KtAnalysisSession]
+     * with a possibly suspended execution of a lazy sequence.
+     *
+     * Schematically, the lazy implementation looks like this:
+     *
+     * ```kt
+     * fun getImportFixes() = sequence {
+     *   analyze {
+     *      yield(fix1)
+     *
+     *      // after the fix1 is yielded, lazy sequence is suspended here, the analyze call is not yet finished
+     *
+     *      yield(fix2)
+     *   }
+     * }
+     * ```
+     *
+     * Now imagine that on the outside we have code like this:
+     *
+     * ```kt
+     * analyze {
+     *   val fix1 = getImportFixes().first()
+     *   ... // the rest of the fixes are ignored
+     * }
+     *```
+     *
+     * In this situation, the inner [analyze] call inside of `getImportFixes` will never be finished
+     * (meaning it will never execute all the possible validity checks the Analysis API side).
+     *
+     * That might lead to some exceptions like in KTIJ-28700.
+     *
+     * To avoid that, we sacrifice some possible performance, but make sure that the [analyze] call is properly finished instead.
+     */
+    override fun createImportFixesForExpression(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> {
+        val eagerlyComputedImportFixes = createImportFixesForExpressionLazy(expression).toList()
+
+        return eagerlyComputedImportFixes.asSequence()
+    }
+
+    private fun createImportFixesForExpressionLazy(expression: KtExpression): Sequence<KotlinImportQuickFixAction<*>> = sequence {
         analyze(expression) {
             val file = expression.containingKtFile
             if (file.hasUnresolvedImportWhichCanImport(expression)) return@sequence
