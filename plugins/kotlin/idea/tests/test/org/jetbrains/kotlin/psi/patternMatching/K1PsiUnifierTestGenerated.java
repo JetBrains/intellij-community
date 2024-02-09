@@ -345,6 +345,16 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/calls/unresolved.kt");
                 }
 
+                @TestMetadata("unresolvedArrayAccess.kt")
+                public void testUnresolvedArrayAccess() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/calls/unresolvedArrayAccess.kt");
+                }
+
+                @TestMetadata("unresolvedOperationReference.kt")
+                public void testUnresolvedOperationReference() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/calls/unresolvedOperationReference.kt");
+                }
+
                 @TestMetadata("varargs.kt")
                 public void testVarargs() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/calls/varargs.kt");
@@ -661,6 +671,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @TestMetadata("simpleNameRuntime.kt")
                 public void testSimpleNameRuntime() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/simpleNameRuntime.kt");
+                }
+
+                @TestMetadata("simpleNameUnresolved.kt")
+                public void testSimpleNameUnresolved() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/simpleNameUnresolved.kt");
                 }
 
                 @TestMetadata("stringTemplate.kt")

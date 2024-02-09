@@ -5,6 +5,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
@@ -22,6 +23,8 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.utils.addToStdlib.zipWithNulls
 
 object K2SemanticMatcher {
@@ -360,6 +363,15 @@ object K2SemanticMatcher {
             return true
         }
 
+        override fun visitTypeArgumentList(typeArgumentList: KtTypeArgumentList, data: KtElement): Boolean {
+            val patternTypeArgumentList = data as? KtTypeArgumentList ?: return false
+            if (typeArgumentList.arguments.size != patternTypeArgumentList.arguments.size) return false
+            for ((targetTypeArgument, patternTypeArgument) in typeArgumentList.arguments.zip(patternTypeArgumentList.arguments)) {
+                if (!elementsMatchOrBothAreNull(targetTypeArgument?.typeReference, patternTypeArgument?.typeReference)) return false
+            }
+            return true
+        }
+
         override fun visitThisExpression(expression: KtThisExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtThisExpression ?: return false
             with(analysisSession) {
@@ -423,10 +435,20 @@ object K2SemanticMatcher {
         patternExpression: KtExpression,
         context: MatchingContext,
     ): Boolean {
-        val targetCall = targetExpression.resolveCall()?.calls?.singleOrNull() ?: return false
-        val patternCall = patternExpression.resolveCall()?.calls?.singleOrNull() ?: return false
+        val targetCallInfo = targetExpression.resolveCall() ?: return false
+        val patternCallInfo = patternExpression.resolveCall() ?: return false
 
-        if (targetCall.javaClass != patternCall.javaClass) return false
+        if (targetCallInfo is KtErrorCallInfo && patternCallInfo is KtErrorCallInfo) {
+            if (targetCallInfo.isUnresolvedCall() != patternCallInfo.isUnresolvedCall()) return false
+            if (targetCallInfo.isUnresolvedCall() && patternCallInfo.isUnresolvedCall()) {
+                if (!areUnresolvedCallsMatchingByResolve(targetExpression, patternExpression, context)) return false
+            }
+        }
+
+        val targetCall = targetExpression.resolveCall()?.calls?.singleOrNull()
+        val patternCall = patternExpression.resolveCall()?.calls?.singleOrNull()
+
+        if (targetCall?.javaClass != patternCall?.javaClass) return false
 
         if (targetCall is KtCallableMemberCall<*, *> && patternCall is KtCallableMemberCall<*, *>) {
             val targetAppliedSymbol = targetCall.partiallyAppliedSymbol
@@ -461,6 +483,28 @@ object K2SemanticMatcher {
             .map { (argument, _) -> argument }
 
         return sortedMappedArguments + allArguments.filterNot { it in mappedArguments }
+    }
+
+    context(KtAnalysisSession)
+    private fun areUnresolvedCallsMatchingByResolve(
+        targetExpression: KtExpression,
+        patternExpression: KtExpression,
+        context: MatchingContext,
+    ): Boolean {
+        if (targetExpression::class != patternExpression::class) return false
+
+        val targetCallee = targetExpression.getCalleeExpressionIfAny()
+        val patternCallee = patternExpression.getCalleeExpressionIfAny()
+
+        if (targetCallee?.text != patternCallee?.text) return false
+        if (targetCallee?.isCalleeInCall() != patternCallee?.isCalleeInCall()) return false
+
+        if (
+            !elementsMatchOrBothAreNull(targetExpression.getTypeArgumentList(), patternExpression.getTypeArgumentList(), context) ||
+            !elementsMatchOrBothAreNull(targetExpression.getReceiverForSelector(), patternExpression.getReceiverForSelector(), context)
+        ) return false
+
+        return true
     }
 
     context(KtAnalysisSession)
@@ -597,4 +641,12 @@ object K2SemanticMatcher {
 
     private fun KtCallableDeclaration.isFunctionLiteralWithoutParameterSpecification(): Boolean =
         this is KtFunctionLiteral && !this.hasParameterSpecification()
+
+    private fun KtErrorCallInfo.isUnresolvedCall(): Boolean = diagnostic is KtFirDiagnostic.UnresolvedReference
+
+    private fun KtExpression.isCalleeInCall(): Boolean = this == (parent as? KtCallElement)?.calleeExpression
+
+    private fun KtExpression.getTypeArgumentList(): KtTypeArgumentList? = (this as? KtCallElement)?.typeArgumentList
+
+    private fun KtElement.getReceiverForSelector(): KtExpression? = getQualifiedExpressionForSelector()?.receiverExpression
 }
