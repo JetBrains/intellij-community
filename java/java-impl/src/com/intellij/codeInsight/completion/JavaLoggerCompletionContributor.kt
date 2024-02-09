@@ -24,7 +24,7 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
                for (logger in availableLoggers) {
                  result.addElement(
                    LookupElementBuilder
-                     .create(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
+                     .create(logger, JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
                      .withTailText(" ${logger.loggerTypeName}")
                      .withTypeText(logger.toString())
                      .withInsertHandler { insertionContext, _ ->
