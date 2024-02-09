@@ -30,6 +30,11 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
+  public boolean isIncludedInExpandAll() {
+    return false; // expanding all libraries makes no sense, as they typically contain too many nodes
+  }
+
+  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (!index.isInLibrary(file)) return false;
