@@ -90,7 +90,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(myFile.getProject());
+    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(getFile().getProject());
     HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile());
     try {
       List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
@@ -144,11 +144,11 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
                                         true,
                                         applyIncrementallyCallback,
                                         contextFinishedCallback,
-                                        wrapper -> !wrapper.getTool().isSuppressedFor(myFile));
+                                        wrapper -> !wrapper.getTool().isSuppressedFor(getFile()));
         myInfos = fileInfos;
       }
       Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      highlightInfoUpdater.recycleHighlightsForObsoleteTools(myFile, pairs, invalidElementsRecycler);
+      highlightInfoUpdater.recycleHighlightsForObsoleteTools(getFile(), pairs, invalidElementsRecycler);
       highlightInfoUpdater.removeWarningsInsideErrors(myHighlightingSession);  // must be the last
     }
     finally {
@@ -181,7 +181,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
     HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributesKey attributesKey = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
     if (problemDescriptor.getHighlightType() == ProblemHighlightType.GENERIC_ERROR_OR_WARNING && attributesKey == null) {
-      attributesKey = myProfileWrapper.getInspectionProfile().getEditorAttributes(key.toString(), myFile);
+      attributesKey = myProfileWrapper.getInspectionProfile().getEditorAttributes(key.toString(), getFile());
     }
     TextAttributes attributes = attributesKey == null || editorColorsScheme == null || severity.getName().equals(attributesKey.getExternalName())
                                 ? severityRegistrar.getTextAttributesBySeverity(severity)
