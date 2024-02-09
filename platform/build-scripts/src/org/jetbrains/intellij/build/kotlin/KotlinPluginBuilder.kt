@@ -325,8 +325,8 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
-      spec.withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
-      spec.withProjectLibrary("javax-inject", LibraryPackMode.STANDALONE_MERGED)
+      spec.withProjectLibrary("javaslang")
+      spec.withProjectLibrary("javax-inject")
 
       spec.withGeneratedResources { targetDir, context ->
         val distLibName = "kotlinc.kotlin-dist"
