@@ -411,6 +411,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                   MavenLog.LOG.warn("Plugin resolution error", e)
                 }
               }
+              syncConsole.finishPluginResolution()
               project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pluginResolutionFinished()
             }
           }

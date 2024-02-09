@@ -189,7 +189,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       initPreloadMavenServices();
       initWorkers();
       listenForSettingsChanges();
-      registerSyncConsoleListener();
       updateTabTitles();
     }
     finally {
@@ -354,20 +353,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   protected abstract void listenForSettingsChanges();
-
-  private void registerSyncConsoleListener() {
-    myProjectsTreeDispatcher.addListener(new MavenProjectsTree.Listener() {
-      @Override
-      public void pluginsResolved(@NotNull MavenProject project) {
-        getSyncConsole().finishPluginResolution();
-      }
-
-      @Override
-      public void artifactsDownloaded(@NotNull MavenProject project) {
-        getSyncConsole().finishArtifactsDownload();
-      }
-    });
-  }
 
   public void listenForExternalChanges() {
     myWatcher.start();
