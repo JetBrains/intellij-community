@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.resourceFilterModel.GradleResourceFilterModelBuilder;
 import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
+import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.SourceSet;
@@ -27,6 +28,10 @@ class GradleSourceSetResolutionContext {
 
   public final @NotNull Collection<SourceSet> testSourceSets;
 
+  public final boolean isIdeaInheritOutputDirs;
+  public final @Nullable File ideaOutputDir;
+  public final @Nullable File ideaTestOutputDir;
+
   public final @NotNull Set<File> ideaSourceDirs;
   public final @NotNull Set<File> ideaResourceDirs;
   public final @NotNull Set<File> ideaTestSourceDirs;
@@ -44,15 +49,20 @@ class GradleSourceSetResolutionContext {
 
   GradleSourceSetResolutionContext(
     @NotNull Project project,
-    @NotNull ModelBuilderContext context,
-    @Nullable IdeaModule ideaPluginModule
+    @NotNull ModelBuilderContext context
   ) {
     projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project);
     projectTargetCompatibility = JavaPluginUtil.getTargetCompatibility(project);
 
     testSourceSets = GradleSourceSetModelBuilder.collectTestSourceSets(project);
 
+
+    IdeaModule ideaPluginModule = GradleIdeaPluginUtil.getIdeaModule(project);
     if (ideaPluginModule != null) {
+      isIdeaInheritOutputDirs = GradleObjectUtil.notNull(ideaPluginModule.getInheritOutputDirs(), false);
+      ideaOutputDir = ideaPluginModule.getOutputDir();
+      ideaTestOutputDir = ideaPluginModule.getTestOutputDir();
+
       ideaSourceDirs = GradleIdeaPluginUtil.getSourceDirectories(ideaPluginModule);
       ideaResourceDirs = GradleIdeaPluginUtil.getResourceDirectories(ideaPluginModule);
       ideaTestSourceDirs = GradleIdeaPluginUtil.getTestSourceDirectories(ideaPluginModule);
@@ -60,6 +70,10 @@ class GradleSourceSetResolutionContext {
       ideaGeneratedSourceDirs = GradleIdeaPluginUtil.getGeneratedSourceDirectories(ideaPluginModule);
     }
     else {
+      isIdeaInheritOutputDirs = false;
+      ideaOutputDir = null;
+      ideaTestOutputDir = null;
+
       ideaSourceDirs = new LinkedHashSet<>();
       ideaResourceDirs = new LinkedHashSet<>();
       ideaTestSourceDirs = new LinkedHashSet<>();
