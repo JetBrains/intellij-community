@@ -1191,6 +1191,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     RangeMarker marker = ConsoleTokenUtil.findTokenMarker(getEditor(), getProject(), lastOffset);
     if (marker == null || ConsoleTokenUtil.getTokenType(marker) != ConsoleViewContentType.USER_INPUT) {
       print(text, ConsoleViewContentType.USER_INPUT);
+      flushDeferredText();
       moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
       return;
     }
