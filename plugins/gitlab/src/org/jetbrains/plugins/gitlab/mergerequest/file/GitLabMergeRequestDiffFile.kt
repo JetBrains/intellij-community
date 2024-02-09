@@ -46,7 +46,7 @@ internal data class GitLabMergeRequestDiffFile(
 
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
-  override fun createProcessor(project: Project): DiffEditorViewer {
+  override fun createViewer(project: Project): DiffEditorViewer {
     if (GitLabRegistry.isCombinedDiffEnabled()) {
       return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
     }

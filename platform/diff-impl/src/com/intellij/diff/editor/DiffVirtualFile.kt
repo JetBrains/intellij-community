@@ -7,10 +7,12 @@ import com.intellij.openapi.project.Project
 
 abstract class DiffVirtualFile(name: String) : DiffViewerVirtualFile(name) {
 
-  abstract override fun createProcessor(project: Project): DiffRequestProcessor
+  abstract fun createProcessor(project: Project): DiffRequestProcessor
+
+  override fun createViewer(project: Project): DiffEditorViewer = createProcessor(project)
 }
 
 abstract class DiffViewerVirtualFile(name: String) : DiffVirtualFileBase(name) {
 
-  abstract fun createProcessor(project: Project): DiffEditorViewer
+  abstract fun createViewer(project: Project): DiffEditorViewer
 }

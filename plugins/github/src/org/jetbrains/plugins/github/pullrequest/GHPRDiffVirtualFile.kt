@@ -28,7 +28,7 @@ internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
 
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
-  override fun createProcessor(project: Project): DiffEditorViewer {
+  override fun createViewer(project: Project): DiffEditorViewer {
     if (GHRegistry.isCombinedDiffEnabled()) {
       return project.service<GHPRDiffService>().createCombinedDiffProcessor(repository, pullRequest)
     }

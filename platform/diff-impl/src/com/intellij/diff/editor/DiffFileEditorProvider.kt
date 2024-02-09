@@ -27,7 +27,7 @@ internal class DiffFileEditorProvider : DefaultPlatformFileEditorProvider, Struc
   override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    val processor: DiffEditorViewer = (file as DiffViewerVirtualFile).createProcessor(project)
+    val processor: DiffEditorViewer = (file as DiffViewerVirtualFile).createViewer(project)
     val editor = when (processor) {
       is DiffRequestProcessor -> @Suppress("DEPRECATION") DiffRequestProcessorEditor(file, processor)
       else -> DiffEditorViewerFileEditor(file, processor)
