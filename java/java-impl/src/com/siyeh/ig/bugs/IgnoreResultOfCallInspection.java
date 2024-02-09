@@ -84,7 +84,8 @@ public final class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall(CommonClassNames.JAVA_TIME_ZONED_DATE_TIME, "parse"),
       CallMatcher.staticCall(CommonClassNames.JAVA_TIME_LOCAL_DATE, "parse"),
       CallMatcher.staticCall(CommonClassNames.JAVA_TIME_LOCAL_DATE_TIME, "parse"),
-      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_LOCAL_TIME, "parse")), "java.time.format.DateTimeParseException");
+      CallMatcher.staticCall(CommonClassNames.JAVA_TIME_LOCAL_TIME, "parse")), "java.time.format.DateTimeParseException")
+    .register(CallMatcher.staticCall("java.util.UUID", "fromString"), "java.lang.IllegalArgumentException");
   private static final CallMatcher MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS =
     CallMatcher.anyOf(
       CallMatcher.instanceCall("org.mockito.stubbing.Stubber", "when"),
