@@ -32,7 +32,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
-import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.model.MavenProjectProblem
@@ -40,7 +39,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -329,18 +327,6 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   }
 
   @Synchronized
-  private fun showError(keyPrefix: String, dependency: String) = doIfImportInProcess {
-    hasErrors = true
-    hasUnresolved = true
-    val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
-    val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
-    startTask(mySyncId, umbrellaString)
-    mySyncView.onEvent(mySyncId, MessageEventImpl(umbrellaString, MessageEvent.Kind.ERROR,
-                                                  SyncBundle.message("maven.sync.group.error"), errorString, errorString))
-    addText(mySyncId, errorString, false)
-  }
-
-  @Synchronized
   private fun showArtifactBuildIssue(keyPrefix: String, dependency: String, errorMessage: String?) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
@@ -445,70 +431,6 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
       }
       completeTask(downloadString, downloadArtifactString, FailureResultImpl(error))
     }
-  }
-
-  @Synchronized
-  fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
-    val bundledVersion = MavenDistributionsCache.resolveEmbeddedMavenHome().version
-    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-      override val title = SyncBundle.message("maven.sync.version.issue.title")
-      override val description: String = "${message}\n" +
-                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">" +
-                                         SyncBundle.message("maven.sync.version.open.settings") + "</a>\n" +
-                                         "- <a href=\"${UseBundledMavenQuickFix.ID}\">" +
-                                         SyncBundle.message("maven.sync.version.use.bundled", bundledVersion) + "</a>\n"
-
-      override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix(), UseBundledMavenQuickFix())
-      override fun getNavigatable(project: Project): Navigatable? = null
-    }, kind))
-  }
-
-
-  suspend fun <Result> runTask(@NlsSafe taskName: String, task: suspend () -> Result): Result {
-    startTask(mySyncId, taskName)
-    val startTime = System.currentTimeMillis()
-    try {
-      return task().also {
-        completeTask(mySyncId, taskName, SuccessResultImpl())
-      }
-    }
-    catch (e: Exception) {
-      MavenProjectsManager.getInstance(myProject).showServerException(e)
-      throw e
-    }
-    finally {
-      MavenLog.LOG.info("[maven import] $taskName took ${System.currentTimeMillis() - startTime}ms")
-    }
-  }
-
-  fun <Result> runTaskSync(@NlsSafe taskName: String, task: () -> Result): Result {
-    startTask(mySyncId, taskName)
-    val startTime = System.currentTimeMillis()
-    try {
-      return task().also {
-        completeTask(mySyncId, taskName, SuccessResultImpl())
-      }
-    }
-    catch (e: Exception) {
-      MavenProjectsManager.getInstance(myProject).showServerException(e)
-      throw e
-    }
-    finally {
-      MavenLog.LOG.info("[maven import] $taskName took ${System.currentTimeMillis() - startTime}ms")
-    }
-  }
-
-  @Synchronized
-  fun showQuickFixJDK(version: String) {
-    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-      override val title = SyncBundle.message("maven.sync.quickfixes.maven.jdk.version.title")
-      override val description: String = SyncBundle.message("maven.sync.quickfixes.upgrade.to.jdk7", version) + "\n" +
-                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">" +
-                                         SyncBundle.message("maven.sync.quickfixes.open.settings") +
-                                         "</a>\n"
-      override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix())
-      override fun getNavigatable(project: Project): Navigatable? = null
-    }, MessageEvent.Kind.ERROR))
   }
 
   private fun isJavadocOrSource(dependency: String): Boolean {
