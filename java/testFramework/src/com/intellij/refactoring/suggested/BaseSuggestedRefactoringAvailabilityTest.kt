@@ -47,11 +47,10 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
   
   protected fun doTest(
     initialText: String,
-    vararg editingActions: () -> Unit,
     expectedAvailability: Availability,
     expectedAvailabilityAfterResolve: Availability = expectedAvailability,
     expectedAvailabilityAfterBackgroundAmend: Availability = expectedAvailabilityAfterResolve,
-    wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true
+    editingActions: () -> Unit
   ) {
     myFixture.configureByText(fileType, initialText)
 
@@ -64,7 +63,7 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
     try {
       provider._amendStateInBackgroundEnabled = false
 
-      executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+      executeEditingActions(editingActions)
 
       checkAvailability(expectedAvailability, afterResolve = false)
       checkAvailability(expectedAvailabilityAfterResolve, afterResolve = true)

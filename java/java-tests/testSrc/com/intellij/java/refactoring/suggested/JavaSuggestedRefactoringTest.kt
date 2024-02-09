@@ -51,7 +51,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent(),
       "Inner",
       "InnerNew",
-      { myFixture.type("New") }
+      { type("New") }
     )
   }
 
@@ -81,7 +81,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent(),
       "foo",
       "fooNew",
-      { myFixture.type("New") }
+      { type("New") }
     )
   }
 
@@ -114,12 +114,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "field",
-      "newField",
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
-        myFixture.type("newField")
-      }
-    )
+      "newField"
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+      type("newField")
+    }
   }
 
   fun testRenameLocal() {
@@ -142,7 +141,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent(),
       "local",
       "localNew",
-      { myFixture.type("New") }
+      { type("New") }
     )
   }
 
@@ -168,7 +167,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent(),
       "Inner",
       "NewInner",
-      { myFixture.type("New") }
+      { type("New") }
     )
   }
 
@@ -196,10 +195,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      {
-        replaceTextAtCaret("void", "int")
-      }
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testAddParameter() {
@@ -256,7 +254,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "usages",
-      { myFixture.type(", I p") },
       expectedPresentation = """
         Old:
           'void'
@@ -297,7 +294,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           LineBreak(' ', true)
           'IOException'
       """.trimIndent()
-    )
+    ) {
+      type(", I p")
+    }
   }
 
   fun testRemoveParameter() {
@@ -331,10 +330,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "usages",
-      {
-        deleteTextBeforeCaret(", int i")
-      }
-    )
+    ) {
+      deleteTextBeforeCaret(", int i")
+    }
   }
 
   fun testReorderParameters() {
@@ -368,10 +366,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "usages",
-      { myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT) },
-      { myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT) },
-      wrapIntoCommandAndWriteAction = false
-    )
+    ) {
+      performAction(IdeActions.MOVE_ELEMENT_LEFT)
+      performAction(IdeActions.MOVE_ELEMENT_LEFT)
+    }
   }
 
   fun testChangeParameterType() {
@@ -405,13 +403,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      {
-        repeat("float".length) { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
-      },
-      {
-        myFixture.type("int")
-      }
-    )
+    ) {
+      repeat("float".length) { performAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+      type("int")
+    }
+
   }
 
   fun testChangeParameterTypeWithImportInsertion() {
@@ -458,13 +454,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      {
-        replaceTextAtCaret("float", "X")
-      },
-      {
-        addImport("xxx.X")
-      }
-    )
+    ) {
+      replaceTextAtCaret("float", "X")
+      addImport("xxx.X")
+    }
+
 
     assertEquals(
       """
@@ -524,15 +518,15 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      {
+    ) {
+      editAction {
         val offset = editor.caretModel.offset
         editor.document.replaceString(offset, offset + "X".length, "Y")
-      },
-      {
-        addImport("xxx.Y")
-        removeImport("xxx.X")
       }
-    )
+      addImport("xxx.Y")
+      removeImport("xxx.X")
+    }
+
 
     assertEquals(
       """
@@ -571,8 +565,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "usages",
-      { myFixture.type(", int p") }
-    )
+    ) {
+      type(", int p")
+    }
   }
 
   fun testAddParameterWithAnnotations() {
@@ -606,23 +601,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "usages",
-      {
-        myFixture.type("@NotNull")
-      },
-      {
-        addImport("annotations.NotNull")
-      },
-      {
-        myFixture.type(" @Language(\"JAVA\") @Nls @NonStandard(\"X\")")
-      },
-      {
-        addImport("annotations.Language")
-        addImport("org.jetbrains.annotations.Nls")
-        addImport("annotations.NonStandard")
-      },
-      {
-        myFixture.type(" String s")
-      },
       expectedPresentation = """
         Old:
           'void'
@@ -646,7 +624,15 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           LineBreak('', false)
           ')'
       """.trimIndent()
-    )
+    ) {
+      type("@NotNull")
+      addImport("annotations.NotNull")
+      type(" @Language(\"JAVA\") @Nls @NonStandard(\"X\")")
+      addImport("annotations.Language")
+      addImport("org.jetbrains.annotations.Nls")
+      addImport("annotations.NonStandard")
+      type(" String s")
+    }
 
     assertEquals(
       """
@@ -696,14 +682,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      {
-        val offset = editor.caretModel.offset
-        editor.document.replaceString(offset - "Nullable".length, offset, "NotNull")
-      },
-      {
-        addImport("annotations.NotNull")
-        removeImport("annotations.Nullable")
-      },
       expectedPresentation = """
                 Old:
                   'void'
@@ -734,7 +712,14 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   LineBreak('', false)
                   ')'
               """.trimIndent()
-    )
+    ) {
+      editAction {
+        val offset = editor.caretModel.offset
+        editor.document.replaceString(offset - "Nullable".length, offset, "NotNull")
+      }
+      addImport("annotations.NotNull")
+      removeImport("annotations.Nullable")
+    }
 
     assertEquals(
       """
@@ -783,14 +768,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-        myFixture.type("@NotNull")
-      },
-      {
-        addImport("annotations.NotNull")
-      }
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_ENTER)
+      type("@NotNull")
+      addImport("annotations.NotNull")
+    }
   }
 
   fun testAddThrowsList() {
@@ -819,8 +801,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      { myFixture.type(" throws IOException") },
-      { addImport("java.io.IOException") },
       expectedPresentation = """
         Old:
           'void'
@@ -842,7 +822,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             LineBreak(' ', true)
             'IOException'
       """.trimIndent()
-    )
+    ) {
+      type(" throws IOException")
+      addImport("java.io.IOException")
+    }
 
     assertEquals(
       """
@@ -885,9 +868,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      {
-        deleteTextBeforeCaret(" throws IOException")
-      },
       expectedPresentation = """
         Old:
           'void'
@@ -909,7 +889,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           LineBreak('', false)
           ')'
       """.trimIndent()
-    )
+    ) {
+      deleteTextBeforeCaret(" throws IOException")
+    }
   }
 
   fun testAddSecondException() {
@@ -941,7 +923,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "implementations",
-      { myFixture.type(", NumberFormatException") },
       expectedPresentation = """
         Old:
           'void'
@@ -969,7 +950,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           LineBreak(' ', true)
           'NumberFormatException' (added)
       """.trimIndent()
-    )
+    ) {
+      type(", NumberFormatException")
+    }
   }
 
   fun testFromUsageSimple() {
@@ -994,7 +977,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "declaration",
-      { myFixture.type("5,") },
       expectedPresentation = """
         Old:
           'void'
@@ -1039,7 +1021,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           LineBreak('', false)
           ')'
       """.trimIndent()
-    )
+    ) {
+      type("5,")
+    }
   }
 
   fun testFromUsageHasOtherUsages() {
@@ -1075,7 +1059,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "declaration",
-      { myFixture.type("5, \"hello\",") },
       expectedPresentation = """
         Old:
           'void'
@@ -1126,7 +1109,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           LineBreak('', false)
           ')'
       """.trimIndent()
-    )
+    ) {
+      type("5, \"hello\",")
+    }
   }
 
   fun testChangeVisibility1() {
@@ -1156,10 +1141,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           }
         """.trimIndent(),
         "implementations",
-        {
-          val offset = editor.caretModel.offset
-          editor.document.replaceString(offset, offset + "protected".length, "public")
-        },
         expectedPresentation = """
           Old:
             'protected' (modified)
@@ -1180,7 +1161,12 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             LineBreak('', false)
             ')'
         """.trimIndent()
-      )
+      ) {
+        editAction {
+          val offset = editor.caretModel.offset
+          editor.document.replaceString(offset, offset + "protected".length, "public")
+        }
+      }
     }
   }
 
@@ -1211,9 +1197,6 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
           }
         """.trimIndent(),
         "implementations",
-        {
-          myFixture.type("public ")
-        },
         expectedPresentation = """
           Old:
             'void'
@@ -1232,7 +1215,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             LineBreak('', false)
             ')'
         """.trimIndent()
-      )
+      ) {
+        type("public ")
+      }
     }
   }
 
@@ -1261,17 +1246,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent(),
       "xxx",
       "xxx1",
-      {
-        executeCommand(project) { myFixture.type("1") }
-      },
-      {
-        executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
-      },
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
-      },
-      wrapIntoCommandAndWriteAction = false
-    )
+    ) {
+      executeCommand(project) { type("1") }
+      executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
+      performAction(IdeActions.ACTION_UNDO)
+    }
   }
 
   fun testUndoChangeSignature() {
@@ -1298,17 +1277,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "usages",
-      {
-        executeCommand(project) { myFixture.type("int p") }
-      },
-      {
-        executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
-      },
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
-      },
-      wrapIntoCommandAndWriteAction = false
-    )
+    ) {
+      executeCommand(project) { type("int p") }
+      executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
+      performAction(IdeActions.ACTION_UNDO)
+    }
   }
 
   fun testUndoChangeSignature2() {
@@ -1335,20 +1308,12 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         }
       """.trimIndent(),
       "usages",
-      {
-        executeCommand(project) { myFixture.type("int p1") }
-      },
-      {
-        executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
-      },
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
-      },
-      {
-        executeCommand(project) { myFixture.type(", int p2") }
-      },
-      wrapIntoCommandAndWriteAction = false
-    )
+    ) {
+      executeCommand(project) { type("int p1") }
+      executeCommand(project) { suggestedRefactoringIntention()!!.invoke(project, editor, file) }
+      performAction(IdeActions.ACTION_UNDO)
+      executeCommand(project) { type(", int p2") }
+    }
   }
   
   private fun addFileWithAnnotations() {
@@ -1378,13 +1343,13 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     )
   }
 
-  private fun addImport(fqName: String) {
+  private fun addImport(fqName: String) = editAction {
     val psiClass = JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.allScope(project))!!
     val importStatement = PsiElementFactory.getInstance(project).createImportStatement(psiClass)
     (file as PsiJavaFile).importList!!.add(importStatement)
   }
 
-  private fun removeImport(fqName: String) {
+  private fun removeImport(fqName: String) = editAction {
     (file as PsiJavaFile).importList!!.findSingleClassImportStatement(fqName)!!.delete()
   }
 }

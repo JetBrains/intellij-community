@@ -17,11 +17,10 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo(int p<caret>);
         }
       """.trimIndent(),
-      {
-        myFixture.type(", ")
-      },
       expectedAvailability = Availability.Disabled
-    )
+    ) {
+      type(", ")
+    }
   }
 
   fun testInconsistentState1() {
@@ -31,14 +30,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo(int p<caret>);
         }
       """.trimIndent(),
-      {
-        myFixture.type(", char c")
-      },
-      {
-        myFixture.type("/*")
-      },
       expectedAvailability = Availability.Disabled
     )
+    {
+      type(", char c")
+      type("/*")
+    }
   }
 
   fun testInconsistentState2() {
@@ -48,16 +45,13 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             public <caret>void foo(int p) {}
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset - "public ".length)
-        replaceTextAtCaret("public", "p")
-        editor.caretModel.moveToOffset(editor.caretModel.offset + 2)
-      },
       expectedAvailability = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+      editor.caretModel.moveToOffset(editor.caretModel.offset - "public ".length)
+      replaceTextAtCaret("public", "p")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + 2)
+    }
   }
 
   fun testDuplicateParameter() {
@@ -67,11 +61,10 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo(int p<caret>);
         }
       """.trimIndent(),
-      {
-        myFixture.type(", int p")
-      },
       expectedAvailability = Availability.Disabled
-    )
+    ) {
+      type(", int p")
+    }
   }
 
   fun testChangeParameterTypeOfStaticMethod() {
@@ -82,12 +75,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("int", "long")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("int", "long")
+    }
   }
 
   fun testChangeReturnTypePrivate() {
@@ -98,12 +90,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testAddDeprecatedAnnotation() {
@@ -113,15 +104,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo();
         }
       """.trimIndent(),
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-      },
-      {
-        myFixture.type("@Deprecated")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
       expectedAvailabilityAfterResolve = Availability.NotAvailable
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_ENTER)
+      type("@Deprecated")
+    }
   }
 
   fun testConvertMethodToField() {
@@ -131,19 +119,14 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             <caret>abstract int foo(int p);
         }
       """.trimIndent(),
-      {
-        deleteTextAtCaret("abstract ")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset + "int foo(".length)
-        deleteTextAtCaret("int p")
-      },
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
-        deleteTextAtCaret("()")
-      },
       expectedAvailability = Availability.NotAvailable
-    )
+    ) {
+      deleteTextAtCaret("abstract ")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + "int foo(".length)
+      deleteTextAtCaret("int p")
+      performAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
+      deleteTextAtCaret("()")
+    }
   }
 
   fun testRemoveAnnotation() {
@@ -155,13 +138,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             String foo();
         }
       """.trimIndent(),
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
       expectedAvailabilityAfterResolve = Availability.NotAvailable
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION)
+      performAction(IdeActions.ACTION_EDITOR_DELETE)
+    }
   }
 
   fun testMakeMethodPrivate() {
@@ -172,12 +154,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("public", "private")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("public", "private")
+    }
   }
 
   fun testMakeMethodProtected() {
@@ -188,12 +169,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("public", "protected")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("public", "protected")
+    }
   }
 
   fun testChangeReturnType() {
@@ -204,12 +184,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testChangeReturnTypeOfPrivateMethod() {
@@ -220,12 +199,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testChangeReturnTypeOfStaticMethod() {
@@ -236,12 +214,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testChangeReturnTypeOfFinalMethod() {
@@ -252,12 +229,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testChangeReturnTypeOfMethodInFinalClass() {
@@ -268,12 +244,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
     )
+    {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testChangeReturnTypeNoOverride() {
@@ -287,12 +263,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo(int p) { }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testChangeReturnTypeWithOverride() {
@@ -309,11 +284,10 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo() { }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "overrides"))
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testSiblingInheritedMethod() {
@@ -330,11 +304,10 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
         class D extends C implements I {
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("void", "int")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations"))
-    )
+    ) {
+      replaceTextAtCaret("void", "int")
+    }
   }
 
   fun testChangeParameterTypeAndName() {
@@ -345,15 +318,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("int", "long")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
-        replaceTextAtCaret("p", "pNew")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    )
+    ) {
+      replaceTextAtCaret("int", "long")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
+      replaceTextAtCaret("p", "pNew")
+    }
   }
 
   fun testChangeParameterTypeAndNameInAbstractMethod() {
@@ -363,16 +333,13 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo(<caret>int p);
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("int", "long")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
-        replaceTextAtCaret("p", "pNew")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("int", "long")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + "long ".length)
+      replaceTextAtCaret("p", "pNew")
+    }
   }
 
   fun testChangeParameterTypeAndRenameAbstractMethod() {
@@ -382,15 +349,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void <caret>foo(int p);
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("foo", "bar")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
-        replaceTextAtCaret("int", "long")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    )
+    ) {
+      replaceTextAtCaret("foo", "bar")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
+      replaceTextAtCaret("int", "long")
+    }
   }
 
   fun testRenameTwoParameters() {
@@ -401,15 +365,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("p1", "p1New")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
-        replaceTextAtCaret("p2", "p2New")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    )
+    ) {
+      replaceTextAtCaret("p1", "p1New")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
+      replaceTextAtCaret("p2", "p2New")
+    }
   }
 
   fun testRenameTwoParametersInAbstractMethod() {
@@ -419,16 +380,13 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             public abstract void foo(int <caret>p1, int p2);
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("p1", "p1New")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
-        replaceTextAtCaret("p2", "p2New")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "implementations")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("p1", "p1New")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + "p1New, int ".length)
+      replaceTextAtCaret("p2", "p2New")
+    }
   }
 
   fun testRenameParameterAndAbstractMethod() {
@@ -438,15 +396,12 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             public abstract void <caret>foo(int p1, int p2);
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("foo", "bar")
-      },
-      {
-        editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
-        replaceTextAtCaret("int", "long")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages"))
-    )
+    ) {
+      replaceTextAtCaret("foo", "bar")
+      editor.caretModel.moveToOffset(editor.caretModel.offset + "bar(".length)
+      replaceTextAtCaret("int", "long")
+    }
   }
 
   fun testChangeConstructorParameterType() {
@@ -457,12 +412,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        replaceTextAtCaret("int", "long")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("C", "overrides")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      replaceTextAtCaret("int", "long")
+    }
   }
 
   fun testDuplicateField() {
@@ -472,14 +426,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             public static final int <caret>CONST1 = 1;
         }
       """.trimIndent(),
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-      },
-      {
-        replaceTextAtCaret("CONST1", "CONST2")
-      },
       expectedAvailability = Availability.NotAvailable
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+      replaceTextAtCaret("CONST1", "CONST2")
+    }
   }
 
   fun testDuplicateMethod() {
@@ -489,14 +440,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             public void <caret>foo(int p) { }
         }
       """.trimIndent(),
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE)
-      },
-      {
-        replaceTextAtCaret("foo", "bar")
-      },
       expectedAvailability = Availability.NotAvailable
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_DUPLICATE)
+      replaceTextAtCaret("foo", "bar")
+    }
   }
 
   fun testSyntaxError() {
@@ -506,11 +454,10 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             void foo(Runtime<caret>Exception x) { }
         }
       """.trimIndent(),
-      {
-        myFixture.type(" ")
-      },
       expectedAvailability = Availability.Disabled
-    )
+    ) {
+      type(" ")
+    }
   }
 
   fun testOverrideMethod() {
@@ -524,12 +471,11 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             public void foo(<caret>) { }
         }
       """.trimIndent(),
-      {
-        myFixture.type("String s")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
       expectedAvailabilityAfterResolve = Availability.NotAvailable
-    )
+    ) {
+      type("String s")
+    }
   }
 
   fun testPrivateMethod() {
@@ -540,11 +486,10 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
             }
         }
       """.trimIndent(),
-      {
-        myFixture.type("int p")
-      },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
-    )
+    ) {
+      type("int p")
+    }
   }
 }

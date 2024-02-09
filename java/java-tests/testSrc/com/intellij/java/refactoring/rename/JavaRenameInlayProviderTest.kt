@@ -8,10 +8,8 @@ import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
 import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
 
@@ -32,9 +30,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
         /*<# block [Rename usages of 'X' to 'Y'] #>*/
             public static final int Y = 1;
         }
-      """.trimIndent(),
-      { replaceTextAtCaret("X", "Y") }
-    )
+      """.trimIndent()
+    ) {
+      replaceTextAtCaret("X", "Y")
+    }
   }
 
   fun testRenameFieldBack() {
@@ -49,9 +48,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
             public static final int X = 1;
         }
       """.trimIndent(),
-      { replaceTextAtCaret("X", "Y") },
-      { replaceTextAtCaret("Y", "X") }
-    )
+    ) {
+      replaceTextAtCaret("X", "Y")
+      replaceTextAtCaret("Y", "X")
+    }
   }
 
   fun testRenameClassWithNameErased() {
@@ -67,9 +67,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
             public class Y {}
         }
       """.trimIndent(),
-      { deleteTextBeforeCaret("X") },
-      { myFixture.type("Y") }
-    )
+    ) {
+      deleteTextBeforeCaret("X")
+      type("Y")
+    }
   }
 
   fun testRenameMethodWithNameErased() {
@@ -85,9 +86,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
             void bar() {}
         }
       """.trimIndent(),
-      { deleteTextBeforeCaret("foo") },
-      { myFixture.type("bar") }
-    )
+    ) {
+      deleteTextBeforeCaret("foo")
+      type("bar")
+    }
   }
 
   fun testRenameLocalWithNameErased() {
@@ -109,9 +111,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
         }
       }
       """.trimIndent(),
-      { deleteTextBeforeCaret("local") },
-      { myFixture.type("xxx") },
-    )
+    ) {
+      deleteTextBeforeCaret("local")
+      type("xxx")
+    }
   }
 
   fun testRenameParameterWithNameErased1() {
@@ -129,9 +132,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
           }
         }
       """.trimIndent(),
-      { deleteTextBeforeCaret("x2") },
-      { myFixture.type("y") },
-    )
+    ) {
+      deleteTextBeforeCaret("x2")
+      type("y")
+    }
   }
 
   fun testRenameParameterWithNameErased2() {
@@ -149,9 +153,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
           }
         }
       """.trimIndent(),
-      { deleteTextBeforeCaret("x2") },
-      { myFixture.type("y") },
-    )
+    ) {
+      deleteTextBeforeCaret("x2")
+      type("y")
+    }
   }
 
   fun testNotDuplicateMethod() {
@@ -169,8 +174,9 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
             public void foo(int p) { }
         }
       """.trimIndent(),
-      { replaceTextAtCaret("foo", "bar") },
-    )
+    ) {
+      replaceTextAtCaret("foo", "bar")
+    }
   }
 
   fun testUnusedLocal() {
@@ -190,8 +196,9 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
             }
         }
       """.trimIndent(),
-      { myFixture.type("123") },
-    )
+    ) {
+      type("123")
+    }
   }
 
   fun testUndo() {
@@ -217,28 +224,13 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
             }
         }
       """.trimIndent(),
-      {
-        executeCommand(project) { myFixture.type("1") }
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-      },
-      {
-        myFixture.launchAction(myFixture.availableIntentions.first { it.familyName == "Suggested Refactoring" }!!)
-      },
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-      },
-      {
-        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-      },
-      {
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-        executeCommand(project) { myFixture.type("2") }
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-      },
-      wrapIntoCommandAndWriteAction = false
-    )
+    ) {
+      type("1")
+      myFixture.launchAction(myFixture.availableIntentions.first { it.familyName == "Suggested Refactoring" }!!)
+      performAction(IdeActions.ACTION_UNDO)
+      performAction(IdeActions.ACTION_UNDO)
+      type("2")
+    }
   }
 
   override fun setUp() {
@@ -252,10 +244,10 @@ class JavaRenameInlayProviderTest : BaseSuggestedRefactoringAvailabilityTest() {
     }
   }
 
-  fun doTest(before: String, after: String, vararg editingActions: () ->  Unit, wrapIntoCommandAndWriteAction: Boolean = true) {
+  fun doTest(before: String, after: String, editingActions: () ->  Unit) {
     myFixture.configureByText(fileType, before)
 
-    executeEditingActions(editingActions, wrapIntoCommandAndWriteAction)
+    executeEditingActions(editingActions)
     myFixture.availableIntentions
 
     project.service<CodeVisionHost>().calculateCodeVisionSync(editor, testRootDisposable)
