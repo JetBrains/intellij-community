@@ -85,7 +85,7 @@ open class ArtifactBridge(
   // and not supposed to be) and the name of the artifact is modified directly in diff. However, we assume that this case isn't possible.
   val artifactId: ArtifactId
     get() {
-      val symbolicId = (entityStorage.base.artifactsMap.getEntities(this@ArtifactBridge).singleOrNull() as? ArtifactEntity)?.symbolicId
+      val symbolicId = (entityStorage.base.artifactsMap.getFirstEntity(this@ArtifactBridge) as? ArtifactEntity)?.symbolicId
       if (symbolicId != null) {
         artifactIdRaw = symbolicId
       }
