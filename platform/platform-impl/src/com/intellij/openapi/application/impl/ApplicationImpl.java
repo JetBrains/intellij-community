@@ -658,14 +658,19 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private static void logErrorDuringExit(String message, Throwable err) {
+    // A special class to bypass problems with logging ControlFlowException.
+    class ApplicationExitException extends RuntimeException {
+      ApplicationExitException(Throwable cause) {
+        super(cause);
+      }
+    }
+
     if (err != null) {
       try {
-        getLogger().error(message, err);
+        getLogger().error(message, new ApplicationExitException(err));
       }
       catch (Throwable ignored) {
-        // Do nothing. The logger throws an uncatchable error during logging a control flow exception.
-        // A control flow exception is something that should not happen during exit,
-        // so it is worth logging despite recommendations.
+        // Do nothing.
       }
     }
   }
