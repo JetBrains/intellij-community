@@ -534,6 +534,19 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     }
   }
 
+  @ApiStatus.Experimental
+  @Synchronized
+  fun startTransaction() {
+    syncTransactionStarted = true
+  }
+
+  @ApiStatus.Experimental
+  @Synchronized
+  fun finishTransaction() {
+    syncTransactionStarted = false
+    finishImport()
+  }
+
   companion object {
     val EXIT_CODE_OK = 0
     val EXIT_CODE_SIGTERM = 143
@@ -548,25 +561,6 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
     private enum class OutputType {
       NORMAL, ERROR
-    }
-
-    @ApiStatus.Experimental
-    @JvmStatic
-    fun startTransaction(project: Project) {
-      val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
-      synchronized(syncConsole) {
-        syncConsole.syncTransactionStarted = true
-      }
-    }
-
-    @ApiStatus.Experimental
-    @JvmStatic
-    fun finishTransaction(project: Project) {
-      val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
-      synchronized(syncConsole) {
-        syncConsole.syncTransactionStarted = false
-        syncConsole.finishImport()
-      }
     }
 
     private fun debugLog(s: String, exception: Throwable? = null) {

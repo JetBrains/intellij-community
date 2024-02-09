@@ -34,7 +34,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
-import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
@@ -309,10 +308,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     logDebug("Start update ${project.name}, $spec ${myProject.name}")
     ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncStarted(myProject)
 
-    MavenSyncConsole.startTransaction(myProject)
+    val console = syncConsole
+    console.startTransaction()
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID)
     try {
-      val console = syncConsole
       console.startImport(spec.isExplicit)
       if (MavenUtil.enablePreimport()) {
         val result = MavenProjectStaticImporter.getInstance(myProject)
@@ -352,7 +351,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     finally {
       logDebug("Finish update ${project.name}, $spec ${myProject.name}")
-      MavenSyncConsole.finishTransaction(myProject)
+      console.finishTransaction()
       syncActivity.finished {
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
                ProjectImportCollector.SUBMODULES_COUNT.with(projectsTree.projects.count()))
