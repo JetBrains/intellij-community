@@ -12,6 +12,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
 
@@ -120,6 +121,18 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
       myMatcher.reset(name);
     }
     return myMatcher;
+  }
+
+  public static ClassFilter @NotNull [] deepCopyOf(ClassFilter @NotNull [] original) {
+    if (original.length == 0) {
+      return EMPTY_ARRAY;
+    }
+
+    final ClassFilter[] copy = new ClassFilter[original.length];
+    for (int i = 0; i < copy.length; i++) {
+      copy[i] = original[i].clone();
+    }
+    return copy;
   }
 
 }

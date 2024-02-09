@@ -106,11 +106,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   // transient - custom serialization
   @Transient
   public ClassFilter[] getSteppingFilters() {
-    final ClassFilter[] rv = new ClassFilter[mySteppingFilters.length];
-    for (int idx = 0; idx < rv.length; idx++) {
-      rv[idx] = mySteppingFilters[idx].clone();
-    }
-    return rv;
+    return ClassFilter.deepCopyOf(mySteppingFilters);
   }
 
   public static DebuggerSettings getInstance() {
@@ -195,10 +191,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       for (Map.Entry<String, ContentState> entry : myContentStates.entrySet()) {
         cloned.myContentStates.put(entry.getKey(), entry.getValue().clone());
       }
-      cloned.mySteppingFilters = new ClassFilter[mySteppingFilters.length];
-      for (int idx = 0; idx < mySteppingFilters.length; idx++) {
-        cloned.mySteppingFilters[idx] = mySteppingFilters[idx].clone();
-      }
+      cloned.mySteppingFilters = ClassFilter.deepCopyOf(mySteppingFilters);
       cloned.myCapturePoints = cloneCapturePoints();
       return cloned;
     }
