@@ -27,10 +27,10 @@ def test_sample(first, second):
 
     first.bit_length()  #
     first.format()#
-    first.__xor__(  )#
+    first.__xor__()#
     second.bit_length() #
     second.format()#
-    second.__xor__( )#
+    second.__xor__()#
 
 
 def test_type(first, second:set):
