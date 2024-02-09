@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -356,6 +356,7 @@ public class LabelPainter {
   /**
    * If set to true, painter paints all the pixels, including background pixels, so that the components underneath are not visible.
    * If set to false, the background is not painted.
+   *
    * @param isOpaque true if all the pixels, including the background, should be painted
    */
   public void setOpaque(boolean isOpaque) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.project.Project;
@@ -240,7 +240,8 @@ public abstract class VcsLogUserFilterTest {
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
-  private static @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<? extends VcsCommitMetadata> metadata) {
+  private static @NotNull List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter,
+                                                         @NotNull List<? extends VcsCommitMetadata> metadata) {
     return ContainerUtil.map(ContainerUtil.filter(metadata, filter::matches), metadata1 -> metadata1.getId().asString());
   }
 
@@ -250,7 +251,8 @@ public abstract class VcsLogUserFilterTest {
     for (VcsUser user : commits.keySet()) {
       for (String commit : commits.get(user)) {
         result.add(myObjectsFactory.createCommitMetadata(HashImpl.build(commit), emptyList(), System.currentTimeMillis(),
-                                                         PlatformTestUtil.getOrCreateProjectBaseDir(myProject), "subject " + Math.random(), user.getName(),
+                                                         PlatformTestUtil.getOrCreateProjectBaseDir(myProject), "subject " + Math.random(),
+                                                         user.getName(),
                                                          user.getEmail(), "message " + Math.random(), user.getName(), user.getEmail(),
                                                          System.currentTimeMillis()));
       }

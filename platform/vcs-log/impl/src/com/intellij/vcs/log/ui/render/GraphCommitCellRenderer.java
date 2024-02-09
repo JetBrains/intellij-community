@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -273,7 +273,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     private int calculateRowContentHeight() {
-      return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + JBUI.scale(JBUI.CurrentTheme.VersionControl.Log.verticalPadding()));
+      return Math.max(myReferencePainter.getSize().height,
+                      getFontMetrics(myFont).getHeight() + JBUI.scale(JBUI.CurrentTheme.VersionControl.Log.verticalPadding()));
     }
 
     public int getPreferredHeight() {

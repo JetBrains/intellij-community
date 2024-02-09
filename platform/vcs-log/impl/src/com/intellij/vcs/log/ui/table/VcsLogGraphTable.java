@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -411,7 +411,8 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       int width = fixedWidth.getFunction().invoke(this);
       if (width >= 0) {
         return width;
-      } else {
+      }
+      else {
         // negative values are returned because of the migration
         // from com.intellij.vcs.log.ui.table.VcsLogCellRenderer.getPreferredWidth(javax.swing.JTable)
         return column.getPreferredWidth();

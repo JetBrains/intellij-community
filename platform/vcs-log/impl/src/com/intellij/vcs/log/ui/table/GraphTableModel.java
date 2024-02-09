@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -124,7 +124,7 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
 
   /**
    * @deprecated get cached commit details by commit id ({@link VcsLogCommitListModel#getId(int)})
-   *             from {@link VcsLogDataProvider#getFullCommitDetailsCache()}.
+   * from {@link VcsLogDataProvider#getFullCommitDetailsCache()}.
    */
   @Deprecated
   public @NotNull VcsFullCommitDetails getFullDetails(int row) {

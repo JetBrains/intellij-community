@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ide.IdeTooltip;
@@ -73,7 +73,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
         IdeTooltipManager.getInstance().hideCurrent(e);
       }
     }
-    return  new MouseMoveResult(cursor, cursor != null && cursor.getType() == Cursor.DEFAULT_CURSOR);
+    return new MouseMoveResult(cursor, cursor != null && cursor.getType() == Cursor.DEFAULT_CURSOR);
   }
 
   @Override
@@ -86,7 +86,9 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     return myGraphCellPainter.getElementUnderCursor(printElements, pointInCell.x, pointInCell.y);
   }
 
-  private @Nullable Cursor performGraphAction(@Nullable PrintElement printElement, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
+  private @Nullable Cursor performGraphAction(@Nullable PrintElement printElement,
+                                              @NotNull MouseEvent e,
+                                              @NotNull GraphAction.Type actionType) {
     boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
     if (isClickOnGraphElement) {
       triggerElementClick(printElement);

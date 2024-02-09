@@ -65,7 +65,8 @@ public final class VcsLogUtil {
     return root1.getPresentableUrl().compareTo(root2.getPresentableUrl());
   }
 
-  private static @NotNull Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files, @NotNull Set<? extends VirtualFile> roots) {
+  private static @NotNull Set<VirtualFile> collectRoots(@NotNull Collection<? extends FilePath> files,
+                                                        @NotNull Set<? extends VirtualFile> roots) {
     Set<VirtualFile> selectedRoots = new HashSet<>();
 
     List<VirtualFile> sortedRoots = ContainerUtil.sorted(roots, Comparator.comparing(VirtualFile::getPath));
@@ -143,7 +144,8 @@ public final class VcsLogUtil {
   // if a root is visible as a whole returns empty set
   // same if root is invisible as a whole
   // so check that before calling this method
-  public static @NotNull Set<FilePath> getFilteredFilesForRoot(final @NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
+  public static @NotNull Set<FilePath> getFilteredFilesForRoot(final @NotNull VirtualFile root,
+                                                               @NotNull VcsLogFilterCollection filterCollection) {
     VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
     if (structureFilter == null) return Collections.emptySet();
     Collection<FilePath> files = structureFilter.getFiles();
@@ -193,7 +195,8 @@ public final class VcsLogUtil {
     return result;
   }
 
-  public static @NotNull CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail, boolean withChanges) {
+  public static @NotNull CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail,
+                                                                                  boolean withChanges) {
     return new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
                                               VcsUserUtil.getShortPresentation(detail.getCommitter()),
                                               new Date(detail.getCommitTime()),
@@ -330,7 +333,8 @@ public final class VcsLogUtil {
     return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]";
   }
 
-  public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project, @NotNull Collection<? extends VcsLogProvider> logProviders) {
+  public static @NotNull @Nls String getVcsDisplayName(@NotNull Project project,
+                                                       @NotNull Collection<? extends VcsLogProvider> logProviders) {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
     if (vcs.size() != 1) return VcsLogBundle.message("vcs");

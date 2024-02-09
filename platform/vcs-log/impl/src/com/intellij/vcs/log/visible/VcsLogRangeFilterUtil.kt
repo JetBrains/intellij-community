@@ -67,7 +67,7 @@ private fun resolveCommits(vcsLogStorage: VcsLogStorage,
     return null
   }
   val to = resolveCommit(vcsLogStorage, dataPack, root, range.inclusiveRef) ?: run {
-    LOG.debug { "Can not resolve ${range.inclusiveRef} in $root for range $range"}
+    LOG.debug { "Can not resolve ${range.inclusiveRef} in $root for range $range" }
     return null
   }
   return from to to

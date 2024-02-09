@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -371,7 +371,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
       byte[] relativePathBytes = key.getRelativePath().getBytes(UTF_8);
       int rootIndex = myRootsReversed.getInt(root);
-      return new KnownSizeRecordWriter(){
+      return new KnownSizeRecordWriter() {
         @Override
         public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
           return data.putInt(rootIndex)

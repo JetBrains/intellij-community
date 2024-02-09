@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -139,7 +139,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
         if (oldFull == null) return full;
         return oldFull || full;
       });
-    } else {
+    }
+    else {
       doScheduleIndex(full);
     }
   }
@@ -320,7 +321,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
 
     MySingleTaskController(@NotNull Disposable parent) {
-      super("index", parent, unused -> {});
+      super("index", parent, unused -> {
+      });
     }
 
     @Override
