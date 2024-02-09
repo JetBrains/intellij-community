@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.CompletableFuture
 
@@ -18,6 +19,7 @@ class TrustProjectQuickFix : BuildIssueQuickFix {
       try {
         val result = MavenUtil.isProjectTrustedEnoughToImport(project)
         if (result) {
+          MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
           MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
         }
         future.complete(null)
@@ -43,6 +45,7 @@ class RestartMavenEmbeddersQuickFix : BuildIssueQuickFix {
     val future = CompletableFuture<Void>()
     ApplicationManager.getApplication().executeOnPooledThread {
       MavenProjectsManager.getInstance(project).embeddersManager.reset()
+      MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
       MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
       future.complete(null)
     }

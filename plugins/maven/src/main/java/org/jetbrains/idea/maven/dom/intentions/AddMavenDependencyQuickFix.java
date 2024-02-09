@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.List;
 import java.util.Map;
@@ -126,6 +127,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     });
 
     FileDocumentManager.getInstance().saveAllDocuments();
+    MavenLog.LOG.info("AddMavenDependencyQuickFix forceUpdateAllProjectsOrFindAllAvailablePomFiles");
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles();
   }
 

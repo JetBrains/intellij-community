@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.maven
 import com.intellij.openapi.GitSilentFileAdderProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -87,6 +88,7 @@ class MavenKotlinModuleBuilderHelper(
             manager.addManagedFilesOrUnignoreNoUpdate(listOf(pom))
         }
 
+        LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
         MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
         // execute when current dialog is closed (e.g. Project Structure)
@@ -142,4 +144,9 @@ class MavenKotlinModuleBuilderHelper(
             return false
         }
     }
+
+    companion object {
+        private val LOG = Logger.getInstance(MavenKotlinModuleBuilderHelper::class.java)
+    }
+
 }

@@ -76,6 +76,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
 
       override fun actionPerformed(e: AnActionEvent) {
         e.project?.let {
+          MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
           MavenProjectsManager.getInstance(it).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
         }
       }

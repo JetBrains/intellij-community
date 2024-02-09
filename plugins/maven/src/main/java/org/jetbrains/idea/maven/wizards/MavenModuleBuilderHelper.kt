@@ -99,6 +99,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
       }
     }
 
+    MavenLog.LOG.info("${this.javaClass.simpleName} forceUpdateAllProjectsOrFindAllAvailablePomFiles")
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)

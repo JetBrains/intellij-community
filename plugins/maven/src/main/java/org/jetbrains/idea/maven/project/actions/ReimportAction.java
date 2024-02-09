@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSyste
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -20,6 +21,7 @@ public class ReimportAction extends MavenProjectsManagerAction {
   protected void perform(@NotNull MavenProjectsManager manager) {
     ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(manager.getProject(), MavenUtil.SYSTEM_ID);
     FileDocumentManager.getInstance().saveAllDocuments();
+    MavenLog.LOG.info("ReimportAction forceUpdateAllProjectsOrFindAllAvailablePomFiles");
     manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles();
   }
 }

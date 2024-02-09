@@ -95,6 +95,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
       override fun onProjectTrustedFromNotification(project: Project) {
         val manager = MavenProjectsManager.getInstance(project)
         if (manager.isMavenizedProject) {
+          MavenLog.LOG.info("onProjectTrustedFromNotification forceUpdateAllProjectsOrFindAllAvailablePomFiles")
           manager.forceUpdateAllProjectsOrFindAllAvailablePomFiles()
         }
       }
