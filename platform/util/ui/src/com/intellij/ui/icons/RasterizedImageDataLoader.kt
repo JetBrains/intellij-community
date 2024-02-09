@@ -26,10 +26,10 @@ import javax.swing.Icon
 @ApiStatus.Internal
 fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int, toolTip: Supplier<String?>?): Icon {
   assert(!path.startsWith('/'))
-  return CachedImageIcon(resolver = RasterizedImageDataLoader(path = path,
-                                                              classLoaderRef = WeakReference(classLoader),
-                                                              cacheKey = cacheKey,
-                                                              flags = flags),
+  return CachedImageIcon(loader = RasterizedImageDataLoader(path = path,
+                                                            classLoaderRef = WeakReference(classLoader),
+                                                            cacheKey = cacheKey,
+                                                            flags = flags),
                          toolTip = toolTip)
 }
 
@@ -108,11 +108,11 @@ private class RasterizedImageDataLoader(override val path: String,
 
       if (isReflectivePath(patched.first) && patched.second != null) {
         (getReflectiveIcon(patched.first, patched.second!!) as? CachedImageIcon)?.let {
-          val resolver = it.resolver
-          if (resolver is RasterizedImageDataLoader) {
-            return PatchedRasterizedImageDataLoader(path = resolver.path, classLoaderRef = effectiveClassLoaderRef, flags = resolver.flags)
+          val loader = it.loader
+          if (loader is RasterizedImageDataLoader) {
+            return PatchedRasterizedImageDataLoader(path = loader.path, classLoaderRef = effectiveClassLoaderRef, flags = loader.flags)
           }
-          return resolver
+          return loader
         }
       }
       return PatchedRasterizedImageDataLoader(path = patched.first, classLoaderRef = effectiveClassLoaderRef, flags = flags)

@@ -66,9 +66,9 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                             path: String,
                             classLoader: ClassLoader,
                             toolTip: Supplier<String?>? = null): CachedImageIcon {
-      val loader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
-      val resolver = if (patched == null) loader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = loader)
-      return CachedImageIcon(resolver = resolver, toolTip = toolTip, originalResolver = resolver.original ?: resolver)
+      val originalLoader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
+      val loader = if (patched == null) originalLoader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = originalLoader)
+      return CachedImageIcon(loader = loader, toolTip = toolTip, originalLoader = loader.original ?: loader)
     }
 
     private fun doPatch(originalLoader: ImageDataByPathLoader,
