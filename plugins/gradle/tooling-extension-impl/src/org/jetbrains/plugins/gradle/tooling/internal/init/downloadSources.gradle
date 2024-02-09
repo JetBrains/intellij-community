@@ -56,7 +56,11 @@ gradle.projectsEvaluated {
 
 afterProject {
   if (it.name == rootProject.name) {
+    def objects = it.objects
     Configuration configuration = it.configurations.create('downloadSources_' + UUID.randomUUID())
+    configuration.attributes {
+      attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL))
+    }
     configuration.transitive = false
     it.dependencies.add(configuration.name, Properties.dependencyNotation)
     def lazyArtifacts = configuration.incoming.files
