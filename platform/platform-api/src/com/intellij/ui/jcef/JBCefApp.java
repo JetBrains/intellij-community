@@ -46,9 +46,9 @@ public final class JBCefApp {
   private static final boolean SKIP_VERSION_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_version_check");
   private static final boolean SKIP_MODULE_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_module_check");
 
-  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 104;
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
-  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 12;
+  private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 13;
 
   private final @NotNull CefApp myCefApp;
 
