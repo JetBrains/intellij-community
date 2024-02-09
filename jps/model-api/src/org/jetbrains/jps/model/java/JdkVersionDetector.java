@@ -27,6 +27,7 @@ public abstract class JdkVersionDetector {
     Semeru("semeru", "IBM Semeru"),
     Corretto("corretto", "Amazon Corretto"),
     GraalVM("graalvm", "GraalVM"),
+    GraalVMCE("graalvm-ce", "GraalVM CE"),
     IBM("ibm", "IBM JDK"),
     JBR("jbr", "JetBrains Runtime"),
     Liberica("liberica", "BellSoft Liberica"),

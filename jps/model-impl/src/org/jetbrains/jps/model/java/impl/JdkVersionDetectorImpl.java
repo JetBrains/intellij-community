@@ -168,7 +168,12 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         String variant = unquoteProperty(p, "JVM_VARIANT");
         return "OpenJ9".equalsIgnoreCase(variant) ? Variant.AdoptOpenJdk_J9 : Variant.AdoptOpenJdk_HS;
       }
-      if (implementor.startsWith("GraalVM")) return Variant.GraalVM;
+
+      if (p.getProperty("GRAALVM_VERSION") != null) {
+        if (implementor.startsWith("GraalVM")) return Variant.GraalVMCE;
+        return Variant.GraalVM;
+      }
+
       return detectVendor(implementor);
     }
 
