@@ -1,5 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
@@ -22,7 +24,8 @@ class StopDebugProcessCommand(text: String, line: Int) : AbstractCallbackBasedCo
     }
 
     WriteAction.runAndWait<IOException> {
-      debugSessions[0].stop()
+      val selectedContent = RunContentManager.getInstance(context.project).getSelectedContent()
+      ExecutionManagerImpl.stopProcess(selectedContent)
       callback.setDone()
     }
   }
