@@ -11,9 +11,6 @@ final class FileStatusCleaner implements DynamicPluginListener {
   @Override
   public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
     PluginId pluginId = pluginDescriptor.getPluginId();
-    FileStatusFactory factory = FileStatusFactory.getInstance();
-    if (factory instanceof FileStatusFactoryImpl) {
-      ((FileStatusFactoryImpl)factory).onPluginUnload(pluginId);
-    }
+    FileStatusFactory.getInstance().onPluginUnload(pluginId);
   }
 }
