@@ -64,6 +64,10 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
     }
   }
 
+  init {
+    templatePresentation.isApplicationScope = true
+  }
+
   override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
 
   override fun actionPerformed(e: AnActionEvent) {

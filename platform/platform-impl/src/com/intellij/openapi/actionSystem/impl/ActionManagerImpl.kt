@@ -1147,11 +1147,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
       return
     }
-    val container = when (action.actionPerformScope) {
-      ActionPerformScope.APPLICATION -> ApplicationManager.getApplication()
-      ActionPerformScope.PROJECT -> project ?: ApplicationManager.getApplication()
-      ActionPerformScope.GUESS -> ApplicationManager.getApplication() // TODO
-    }
+    val container =
+      if (event.presentation.isApplicationScope) ApplicationManager.getApplication()
+      else project ?: ApplicationManager.getApplication()
     val cs = (container as ComponentManagerImpl)
       .pluginCoroutineScope(action.javaClass.classLoader)
     val coroutineName = CoroutineName("${action.javaClass.name}#actionPerformed@${event.place}")

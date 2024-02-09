@@ -15,6 +15,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
  * @author Konstantin Bulenkov
  */
 abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+  init {
+    templatePresentation.isApplicationScope = true
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val currentProject = e.getRequiredData(CommonDataKeys.PROJECT)
     ProjectManager.getInstance().openProjects

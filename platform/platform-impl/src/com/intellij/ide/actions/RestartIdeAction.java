@@ -13,6 +13,11 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 public class RestartIdeAction extends AnAction implements DumbAware {
+
+  public RestartIdeAction() {
+    getTemplatePresentation().setApplicationScope(true);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
 

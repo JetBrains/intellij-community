@@ -35,7 +35,8 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   public ReopenProjectAction(@NotNull @SystemIndependent String projectPath,
                              @NlsSafe String projectName,
                              @NlsSafe String displayName) {
-    super(IdeBundle.message("action.ReopenProject.reopen.project.text"));
+    getTemplatePresentation().setText(IdeBundle.message("action.ReopenProject.reopen.project.text"));
+    getTemplatePresentation().setApplicationScope(true);
     myProjectPath = projectPath;
     myProjectName = projectName;
     myDisplayName = displayName;

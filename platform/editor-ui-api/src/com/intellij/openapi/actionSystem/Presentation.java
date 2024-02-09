@@ -66,6 +66,7 @@ public final class Presentation implements Cloneable {
   private static final int IS_PERFORM_GROUP = 0x20;
   private static final int IS_HIDE_GROUP_IF_EMPTY = 0x40;
   private static final int IS_DISABLE_GROUP_IF_EMPTY = 0x80;
+  private static final int IS_APPLICATION_SCOPE = 0x100;
   private static final int IS_TEMPLATE = 0x1000;
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
@@ -427,6 +428,20 @@ public final class Presentation implements Cloneable {
    */
   public void setDisableGroupIfEmpty(boolean disable) {
     myFlags = BitUtil.set(myFlags, IS_DISABLE_GROUP_IF_EMPTY, disable);
+  }
+
+  /** @see Presentation#setApplicationScope(boolean)  */
+  public boolean isApplicationScope() {
+    return BitUtil.isSet(myFlags, IS_APPLICATION_SCOPE);
+  }
+
+  /**
+   * For an action presentation sets whether the action is to be performed in the application scope.
+   * In the application scope, action activities can outlast a project where the action is performed.
+   * The default is {@code false}.
+   */
+  public void setApplicationScope(boolean applicationScope) {
+    myFlags = BitUtil.set(myFlags, IS_APPLICATION_SCOPE, applicationScope);
   }
 
   /**

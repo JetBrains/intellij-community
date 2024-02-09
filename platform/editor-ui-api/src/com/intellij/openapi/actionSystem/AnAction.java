@@ -198,12 +198,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return ActionUpdateThreadAware.super.getActionUpdateThread();
   }
 
-  @ApiStatus.Experimental
-  public @NotNull ActionPerformScope getActionPerformScope() {
-    // TODO change default to ActionPerformScope.GUESS once supported
-    return ActionPerformScope.APPLICATION;
-  }
-
   /** Returns the set of shortcuts associated with this action. */
   public final @NotNull ShortcutSet getShortcutSet() {
     return myShortcutSet;
