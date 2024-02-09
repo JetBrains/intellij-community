@@ -12,6 +12,7 @@ class PythonCorrectnessChecker : CorrectnessCheckerBase(listOf(
   PyArgumentListSemanticChecker,
   PyRedeclarationSemanticChecker,
   PyAssignmentToLibraryScopeSemanticChecker,
+  PyKeywordArgumentSemanticChecker,
 )) {
   override fun buildPsiForSemanticChecks(
     file: PsiFile,

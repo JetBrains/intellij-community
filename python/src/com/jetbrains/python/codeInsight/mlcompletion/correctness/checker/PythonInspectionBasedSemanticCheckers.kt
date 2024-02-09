@@ -3,25 +3,27 @@ package com.jetbrains.python.codeInsight.mlcompletion.correctness.checker
 
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporter
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporter
+import com.intellij.platform.ml.impl.correctness.checker.CorrectnessError
+import com.intellij.platform.ml.impl.correctness.checker.InspectionBasedSemanticChecker
+import com.intellij.platform.ml.impl.correctness.checker.Severity
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.startOffset
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.mlcompletion.PyMlCompletionHelpers
+import com.jetbrains.python.codeInsight.mlcompletion.correctness.PythonMLCompletionCorrectnessSupporter
 import com.jetbrains.python.inspections.PyArgumentListInspection
 import com.jetbrains.python.inspections.PyCallingNonCallableInspection
+import com.jetbrains.python.inspections.PyCompatibilityInspection
 import com.jetbrains.python.inspections.PyRedeclarationInspection
+import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyImportStatementBase
-import com.intellij.platform.ml.impl.correctness.checker.CorrectnessError
-import com.intellij.platform.ml.impl.correctness.checker.InspectionBasedSemanticChecker
-import com.intellij.platform.ml.impl.correctness.checker.Severity
-import com.jetbrains.python.codeInsight.mlcompletion.correctness.PythonMLCompletionCorrectnessSupporter
 
 object PyUnresolvedReferencesSemanticChecker : InspectionBasedSemanticChecker(PyUnresolvedReferencesInspection()) {
   override fun convertInspectionsResults(originalPsi: PsiFile,
@@ -113,5 +115,24 @@ object PyRedeclarationSemanticChecker : InspectionBasedSemanticChecker(PyRedecla
     problemDescriptors.mapNotNull { problemDescriptor ->
       val location = getLocationInSuggestion(problemDescriptor, offset, prefix, suggestion) ?: return@mapNotNull null
       CorrectnessError(location, Severity.CRITICAL, javaClass.getSimpleName())
+  }
+}
+
+object PyKeywordArgumentSemanticChecker : InspectionBasedSemanticChecker(PyCompatibilityInspection()) {
+  override fun convertInspectionsResults(
+    originalPsi: PsiFile,
+    problemDescriptors: List<ProblemDescriptor>,
+    offset: Int,
+    prefix: String,
+    suggestion: String
+  ) : List<CorrectnessError> {
+    return problemDescriptors.mapNotNull { problemDescriptor ->
+      if (problemDescriptor.fixes?.singleOrNull() is PyRemoveArgumentQuickFix) {
+        getLocationInSuggestion(problemDescriptor, offset, prefix, suggestion)?.let { location ->
+          CorrectnessError(location, Severity.CRITICAL, javaClass.getSimpleName())
+        }
+      }
+      else null
+    }
   }
 }
