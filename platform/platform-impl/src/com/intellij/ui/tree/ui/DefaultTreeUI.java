@@ -2,6 +2,7 @@
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
@@ -157,7 +158,15 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
 
   private static boolean isAutoExpandAllowed(@NotNull JTree tree, @NotNull Object node) {
     Function<Object, Boolean> filter = ClientProperty.get(tree, AUTO_EXPAND_FILTER);
-    return filter == null || !filter.apply(node);
+    if (filter != null) {
+      return !filter.apply(node);
+    }
+    else if (node instanceof AbstractTreeNode<?> treeNode) {
+      return treeNode.isAutoExpandAllowed();
+    }
+    else {
+      return true;
+    }
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
