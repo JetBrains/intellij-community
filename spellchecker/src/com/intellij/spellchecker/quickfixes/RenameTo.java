@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNamedElementWithCustomPresentation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -29,7 +30,7 @@ public class RenameTo extends PsiUpdateModCommandQuickFix implements Iconable {
   protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull ModPsiUpdater updater) {
     PsiNamedElement named = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiNamedElement.class);
     if (named == null) return;
-    String name = named.getName();
+    String name = named instanceof PsiNamedElementWithCustomPresentation custom ? custom.getPresentationName() : named.getName();
     if (name == null) return;
     List<String> names = SpellCheckerManager.getInstance(project).getSuggestions(name)
       .stream()
