@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
@@ -35,47 +34,6 @@ public final class FileStatusFactoryImpl extends FileStatusFactory {
 
   private synchronized void onPluginUnload(@NotNull PluginId pluginId) {
     myStatuses.remove(pluginId);
-  }
-
-  /**
-   * author: lesya
-   */
-  private static final class FileStatusImpl implements FileStatus {
-    private final String myStatus;
-    private final ColorKey myColorKey;
-    private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTextSupplier;
-
-    FileStatusImpl(@NotNull String status,
-                   @NotNull ColorKey key,
-                   @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> textSupplier) {
-      myStatus = status;
-      myColorKey = key;
-      myTextSupplier = textSupplier;
-    }
-
-    public @NonNls String toString() {
-      return myStatus;
-    }
-
-    @Override
-    public String getText() {
-      return myTextSupplier.get();
-    }
-
-    @Override
-    public Color getColor() {
-      return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(getColorKey());
-    }
-
-    @Override
-    public @NotNull ColorKey getColorKey() {
-      return myColorKey;
-    }
-
-    @Override
-    public @NotNull String getId() {
-      return myStatus;
-    }
   }
 
   static final class PluginListener implements DynamicPluginListener {
