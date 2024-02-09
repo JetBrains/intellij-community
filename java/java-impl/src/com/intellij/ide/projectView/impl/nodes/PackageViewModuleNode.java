@@ -20,6 +20,11 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true; // to avoid retrieving and validating all children (SLOW!) just to figure out if it's a leaf
+  }
+
+  @Override
   @NotNull
   public Collection<AbstractTreeNode<?>> getChildren() {
     Module module = getValue();
