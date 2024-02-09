@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.impl
 
@@ -19,7 +19,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -54,9 +53,11 @@ import kotlin.io.path.useLines
  * bundled plugins' JARs (in [distAll][BuildPaths.distAllDir]/plugins directory) and zip archives with
  * non-bundled plugins (in [artifacts][BuildPaths.artifactDir]/plugins directory).
  */
-internal suspend fun buildDistribution(state: DistributionBuilderState,
-                                       context: BuildContext,
-                                       isUpdateFromSources: Boolean = false): List<DistributionFileEntry> = coroutineScope {
+internal suspend fun buildDistribution(
+  state: DistributionBuilderState,
+  context: BuildContext,
+  isUpdateFromSources: Boolean = false,
+): List<DistributionFileEntry> = coroutineScope {
   validateModuleStructure(state.platform, context)
   context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)
@@ -75,8 +76,10 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
       buildSearchableOptions(ideClassPath = flatIdeClassPath, context = context)
     }
 
-    val pluginLayouts = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.bundledPluginModules,
-                                                         productLayout = context.productProperties.productLayout)
+    val pluginLayouts = getPluginLayoutsByJpsModuleNames(
+      modules = context.productProperties.productLayout.bundledPluginModules,
+      productLayout = context.productProperties.productLayout,
+    )
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext) {
       spanBuilder("build platform lib").useWithScope {
@@ -88,7 +91,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
         val distAllDir = context.paths.distAllDir
         val libDir = distAllDir.resolve("lib")
         context.bootClassPathJarNames = if (context.useModularLoader) {
-          persistentListOf(PLATFORM_LOADER_JAR)
+          java.util.List.of(PLATFORM_LOADER_JAR)
         }
         else {
           generateClasspath(homeDir = distAllDir, libDir = libDir)
@@ -100,14 +103,31 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
     listOfNotNull(
       buildPlatformJob,
       async {
-        buildBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context)
+        buildBundledPlugins(
+          state = state,
+          plugins = pluginLayouts,
+          isUpdateFromSources = isUpdateFromSources,
+          buildPlatformJob = buildPlatformJob,
+          context = context,
+        )
       },
       async {
-        buildOsSpecificBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context)
+        buildOsSpecificBundledPlugins(
+          state = state,
+          plugins = pluginLayouts,
+          isUpdateFromSources = isUpdateFromSources,
+          buildPlatformJob = buildPlatformJob,
+          context = context,
+        )
       },
       async {
-        val compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles
-        buildNonBundledPlugins(state.pluginsToPublish, compressPluginArchive, buildPlatformJob, state, context)
+        buildNonBundledPlugins(
+          pluginsToPublish = state.pluginsToPublish,
+          compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
+          buildPlatformLibJob = buildPlatformJob,
+          state = state,
+          context = context,
+        )
       },
     )
   }.flatMap { it.getCompleted() }
@@ -173,15 +193,19 @@ private fun getPluginDirectories(context: BuildContext, isUpdateFromSources: Boo
     mapOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
   }
   else {
-    SUPPORTED_DISTRIBUTIONS.associateWith { getOsAndArchSpecificDistDirectory(it.os, it.arch, context).resolve(PLUGINS_DIRECTORY) }
+    SUPPORTED_DISTRIBUTIONS.associateWith {
+      getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context).resolve(PLUGINS_DIRECTORY)
+    }
   }
 }
 
-suspend fun buildBundledPlugins(state: DistributionBuilderState,
-                                plugins: Collection<PluginLayout>,
-                                isUpdateFromSources: Boolean,
-                                buildPlatformJob: Job?,
-                                context: BuildContext): List<DistributionFileEntry> {
+suspend fun buildBundledPlugins(
+  state: DistributionBuilderState,
+  plugins: Collection<PluginLayout>,
+  isUpdateFromSources: Boolean,
+  buildPlatformJob: Job?,
+  context: BuildContext,
+): List<DistributionFileEntry> {
   return spanBuilder("build bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
@@ -194,27 +218,32 @@ suspend fun buildBundledPlugins(state: DistributionBuilderState,
       // doesn't make sense to require passing here a list with a stable order (unnecessary complication, sorting by main module is enough)
       pluginsToBundle.sortWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
       val targetDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-      val entries = buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
-                                 plugins = pluginsToBundle,
-                                 targetDir = targetDir,
-                                 state = state,
-                                 context = context,
-                                 buildPlatformJob = buildPlatformJob)
+      val entries = buildPlugins(
+        moduleOutputPatcher = ModuleOutputPatcher(),
+        plugins = pluginsToBundle,
+        targetDir = targetDir,
+        state = state,
+        context = context,
+        buildPlatformJob = buildPlatformJob,
+      )
 
       buildPlatformSpecificPluginResources(
-        pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
-        getPluginDirectories(context, isUpdateFromSources),
-        context)
+        plugins = pluginsToBundle.filter { it.platformResourceGenerators.isNotEmpty() },
+        targetDirs = getPluginDirectories(context, isUpdateFromSources),
+        context = context,
+      )
 
       entries
     }
 }
 
-private suspend fun buildOsSpecificBundledPlugins(state: DistributionBuilderState,
-                                                  plugins: Set<PluginLayout>,
-                                                  isUpdateFromSources: Boolean,
-                                                  buildPlatformJob: Job?,
-                                                  context: BuildContext): List<DistributionFileEntry> {
+private suspend fun buildOsSpecificBundledPlugins(
+  state: DistributionBuilderState,
+  plugins: Set<PluginLayout>,
+  isUpdateFromSources: Boolean,
+  buildPlatformJob: Job?,
+  context: BuildContext,
+): List<DistributionFileEntry> {
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
@@ -226,7 +255,9 @@ private suspend fun buildOsSpecificBundledPlugins(state: DistributionBuilderStat
             return@mapNotNull null
           }
 
-          val osSpecificPlugins = plugins.filter { satisfiesBundlingRequirements(it, os, arch, context) }
+          val osSpecificPlugins = plugins.filter {
+            satisfiesBundlingRequirements(plugin = it, osFamily = os, arch = arch, context = context)
+          }
           if (osSpecificPlugins.isEmpty()) {
             return@mapNotNull null
           }
@@ -238,12 +269,14 @@ private suspend fun buildOsSpecificBundledPlugins(state: DistributionBuilderStat
               .setAttribute("count", osSpecificPlugins.size.toLong())
               .setAttribute("outDir", targetDir.toString())
               .useWithScope {
-                buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
-                             plugins = osSpecificPlugins,
-                             targetDir = targetDir,
-                             state = state,
-                             context = context,
-                             buildPlatformJob = buildPlatformJob)
+                buildPlugins(
+                  moduleOutputPatcher = ModuleOutputPatcher(),
+                  plugins = osSpecificPlugins,
+                  targetDir = targetDir,
+                  state = state,
+                  context = context,
+                  buildPlatformJob = buildPlatformJob,
+                )
               }
           }
         }
@@ -268,7 +301,7 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
     val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
     val autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
     coroutineScope {
-      val buildKeymapPluginsTask = async { buildKeymapPlugins(autoUploadingDir, context) }
+      val buildKeymapPluginsTask = async { buildKeymapPlugins(targetDir = autoUploadingDir, context = context) }
       val moduleOutputPatcher = ModuleOutputPatcher()
       val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
       NioFiles.deleteRecursively(stageDir)
@@ -286,12 +319,14 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
       val prepareCustomPluginRepository = context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins &&
                                           !context.isStepSkipped(BuildOptions.ARCHIVE_PLUGINS)
       // we don't simplify the layout for non-bundled plugins, because PluginInstaller not ready for this (see rootEntryName)
-      val mappings = buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
-                                  plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
-                                  targetDir = stageDir,
-                                  state = state,
-                                  context = context,
-                                  buildPlatformJob = buildPlatformLibJob) { plugin, pluginDirOrFile ->
+      val mappings = buildPlugins(
+        moduleOutputPatcher = moduleOutputPatcher,
+        plugins = pluginsToPublish.sortedWith(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE),
+        targetDir = stageDir,
+        state = state,
+        context = context,
+        buildPlatformJob = buildPlatformLibJob,
+      ) { plugin, pluginDirOrFile ->
         val targetDirectory = if (autoPublishPluginChecker.test(plugin)) autoUploadingDir else nonBundledPluginsArtifacts
         val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
         val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
@@ -311,12 +346,14 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
 
       val helpPlugin = buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)
       if (helpPlugin != null) {
-        val spec = buildHelpPlugin(helpPlugin = helpPlugin,
-                                   pluginsToPublishDir = stageDir,
-                                   targetDir = autoUploadingDir,
-                                   moduleOutputPatcher = moduleOutputPatcher,
-                                   state = state,
-                                   context = context)
+        val spec = buildHelpPlugin(
+          helpPlugin = helpPlugin,
+          pluginsToPublishDir = stageDir,
+          targetDir = autoUploadingDir,
+          moduleOutputPatcher = moduleOutputPatcher,
+          state = state,
+          context = context,
+        )
         pluginSpecs.add(spec)
       }
 
@@ -333,7 +370,7 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
       if (!context.isStepSkipped(BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED)) {
         for (plugin in pluginSpecs) {
           launch {
-            validatePlugin(plugin.pluginZip, context)
+            validatePlugin(path = plugin.pluginZip, context = context)
           }
         }
       }
@@ -374,16 +411,18 @@ private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
   val directory = helpPlugin.directoryName
   val destFile = targetDir.resolve("$directory.zip")
   spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
-    buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
-                 plugins = listOf(helpPlugin),
-                 targetDir = pluginsToPublishDir.resolve(directory),
-                 state = state,
-                 context = context,
-                 buildPlatformJob = null)
+    buildPlugins(
+      moduleOutputPatcher = moduleOutputPatcher,
+      plugins = listOf(helpPlugin),
+      targetDir = pluginsToPublishDir.resolve(directory),
+      state = state,
+      context = context,
+      buildPlatformJob = null,
+    )
     zipWithCompression(targetFile = destFile, dirs = mapOf(pluginsToPublishDir.resolve(directory) to ""))
     null
   }
-  return PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
+  return PluginRepositorySpec(pluginZip = destFile, pluginXml = moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
 }
 
 internal suspend fun generateProjectStructureMapping(
@@ -393,40 +432,48 @@ internal suspend fun generateProjectStructureMapping(
   return coroutineScope {
     val moduleOutputPatcher = ModuleOutputPatcher()
     val libDirLayout = async {
-      layoutPlatformDistribution(moduleOutputPatcher = moduleOutputPatcher,
-                                 targetDirectory = context.paths.distAllDir,
-                                 platform = platformLayout,
-                                 context = context,
-                                 copyFiles = false)
+      layoutPlatformDistribution(
+        moduleOutputPatcher = moduleOutputPatcher,
+        targetDirectory = context.paths.distAllDir,
+        platform = platformLayout,
+        context = context,
+        copyFiles = false,
+      )
     }
 
-    val allPlugins = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.bundledPluginModules,
-                                                      productLayout = context.productProperties.productLayout)
+    val allPlugins = getPluginLayoutsByJpsModuleNames(
+      modules = context.productProperties.productLayout.bundledPluginModules,
+      productLayout = context.productProperties.productLayout,
+    )
     val entries = mutableListOf<DistributionFileEntry>()
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
-        entries.addAll(layoutDistribution(layout = plugin,
-                                          platformLayout = platformLayout,
-                                          targetDirectory = targetDirectory,
-                                          copyFiles = false,
-                                          moduleOutputPatcher = moduleOutputPatcher,
-                                          includedModules = plugin.includedModules,
-                                          moduleWithSearchableOptions = emptySet(),
-                                          context = context).first)
+        entries.addAll(layoutDistribution(
+          layout = plugin,
+          platformLayout = platformLayout,
+          targetDirectory = targetDirectory,
+          copyFiles = false,
+          moduleOutputPatcher = moduleOutputPatcher,
+          includedModules = plugin.includedModules,
+          moduleWithSearchableOptions = emptySet(),
+          context = context,
+        ).first)
       }
     }
     libDirLayout.await() to entries
   }
 }
 
-private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
-                                 plugins: Collection<PluginLayout>,
-                                 targetDir: Path,
-                                 state: DistributionBuilderState,
-                                 context: BuildContext,
-                                 buildPlatformJob: Job?,
-                                 pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null): List<DistributionFileEntry> {
+private suspend fun buildPlugins(
+  moduleOutputPatcher: ModuleOutputPatcher,
+  plugins: Collection<PluginLayout>,
+  targetDir: Path,
+  state: DistributionBuilderState,
+  context: BuildContext,
+  buildPlatformJob: Job?,
+  pluginBuilt: ((PluginLayout, pluginDirOrFile: Path) -> Unit)? = null,
+): List<DistributionFileEntry> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool
   val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
@@ -438,30 +485,36 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
   val entries: List<DistributionFileEntry> = coroutineScope {
     plugins.map { plugin ->
       if (plugin.mainModule != "intellij.platform.builtInHelp") {
-        checkOutputOfPluginModules(mainPluginModule = plugin.mainModule,
-                                   includedModules = plugin.includedModules,
-                                   moduleExcludes = plugin.moduleExcludes,
-                                   context = context)
-        patchPluginXml(moduleOutputPatcher = moduleOutputPatcher,
-                       plugin = plugin,
-                       releaseDate = context.applicationInfo.majorReleaseDate,
-                       releaseVersion = context.applicationInfo.releaseVersionForLicensing,
-                       pluginsToPublish = state.pluginsToPublish,
-                       context = context)
+        checkOutputOfPluginModules(
+          mainPluginModule = plugin.mainModule,
+          includedModules = plugin.includedModules,
+          moduleExcludes = plugin.moduleExcludes,
+          context = context,
+        )
+        patchPluginXml(
+          moduleOutputPatcher = moduleOutputPatcher,
+          plugin = plugin,
+          releaseDate = context.applicationInfo.majorReleaseDate,
+          releaseVersion = context.applicationInfo.releaseVersionForLicensing,
+          pluginsToPublish = state.pluginsToPublish,
+          context = context,
+        )
       }
 
       val directoryName = plugin.directoryName
       val pluginDir = targetDir.resolve(directoryName)
       val task = async {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope {
-          val (entries, file) = layoutDistribution(layout = plugin,
-                                                   platformLayout = state.platform,
-                                                   targetDirectory = pluginDir,
-                                                   copyFiles = true,
-                                                   moduleOutputPatcher = moduleOutputPatcher,
-                                                   includedModules = plugin.includedModules,
-                                                   moduleWithSearchableOptions = moduleWithSearchableOptions,
-                                                   context = context)
+          val (entries, file) = layoutDistribution(
+            layout = plugin,
+            platformLayout = state.platform,
+            targetDirectory = pluginDir,
+            copyFiles = true,
+            moduleOutputPatcher = moduleOutputPatcher,
+            includedModules = plugin.includedModules,
+            moduleWithSearchableOptions = moduleWithSearchableOptions,
+            context = context,
+          )
           pluginBuilt?.invoke(plugin, file)
           entries
         }
@@ -496,10 +549,12 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
     coroutineScope {
       for (scrambleTask in scrambleTasks) {
         launch {
-          scrambleTool.scramblePlugin(context = context,
-                                      pluginLayout = scrambleTask.plugin,
-                                      targetDir = scrambleTask.pluginDir,
-                                      additionalPluginsDir = scrambleTask.targetDir)
+          scrambleTool.scramblePlugin(
+            context = context,
+            pluginLayout = scrambleTask.plugin,
+            targetDir = scrambleTask.pluginDir,
+            additionalPluginsDir = scrambleTask.targetDir,
+          )
         }
       }
     }
