@@ -352,6 +352,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public void setPluginUpdatesService(@NotNull PluginUpdatesService service) {
     myPluginUpdatesService = service;
+    myPluginUpdatesService.setFilter(this::isEnabled);
   }
 
   public PluginUpdatesService getPluginUpdatesService() {
@@ -911,6 +912,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     enableRows(descriptors, action);
     updateAfterEnableDisable();
     runInvalidFixCallback();
+    if (myPluginUpdatesService != null) {
+      myPluginUpdatesService.reapplyFilter();
+    }
     return true;
   }
 
