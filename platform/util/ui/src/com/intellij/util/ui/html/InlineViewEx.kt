@@ -28,7 +28,7 @@ class InlineViewEx(elem: Element) : InlineView(elem) {
 
   private lateinit var padding: JBInsets
   private lateinit var margin: JBInsets
-  private lateinit var insets: JBInsets
+  private var insets: JBInsets = JBInsets.emptyInsets()
 
   // With private fields Java clone doesn't work well
   @Suppress("ProtectedInFinal")
