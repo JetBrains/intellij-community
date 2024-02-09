@@ -176,7 +176,7 @@ internal fun warn(message: String) {
 
 @OptIn(IntellijInternalApi::class)
 internal fun registerCreationStacktrace(component: JComponent) {
-  if (ApplicationManager.getApplication().isInternal && UiInspectorAction.isSaveStacktraces()) {
+  if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorAction.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }
