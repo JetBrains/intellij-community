@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
+import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.plugins.DescriptorListLoadingContext
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -15,18 +16,22 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.JDOMUtil
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import org.jdom.Element
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 import javax.swing.Icon
 import kotlin.io.path.*
@@ -41,8 +46,35 @@ data class JbProductInfo(override val version: String,
 ) : Product {
   private val descriptors = CopyOnWriteArrayList<Pair<IdeaPluginDescriptorImpl, Boolean>>()
   private var descriptors2ProcessCnt: Int = 0
+  private var keymapRef: AtomicReference<String> = AtomicReference()
+  val activeKeymap: String?
+    get() = keymapRef.get()
 
-  internal fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
+
+  internal fun prefetchData(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
+    prefetchPluginDescriptors(coroutineScope, context)
+    prefetchKeymap(coroutineScope)
+  }
+
+  private fun prefetchKeymap(coroutineScope: CoroutineScope) {
+    coroutineScope.async {
+      val keymapFilePath = configDirPath / PathManager.OPTIONS_DIRECTORY /
+                           getPerOsSettingsStorageFolderName() / KeymapManagerImpl.KEYMAP_STORAGE
+      if (keymapFilePath.exists()) {
+        val element = JDOMUtil.load(keymapFilePath)
+        val children = element.getChildren("component")
+        for (child in children) {
+          if (child.getAttributeValue("name") == KeymapManagerImpl.KEYMAP_MANAGER_COMPONENT_NAME) {
+            val activeKeymap: Element = child.getChild(KeymapManagerImpl.KEYMAP_FIELD) ?: return@async
+            val keymapName = activeKeymap.getAttributeValue("name") ?: return@async
+            keymapRef.set(keymapName)
+          }
+        }
+      }
+    }
+  }
+
+  private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
     JbImportServiceImpl.LOG.debug("Prefetching plugin descriptors from $pluginsDirPath")
     val descriptorDeferreds = loadCustomDescriptorsFromDir(coroutineScope, pluginsDirPath, context, null)
     descriptors2ProcessCnt = descriptorDeferreds.size
@@ -85,7 +117,7 @@ data class JbProductInfo(override val version: String,
         continue
       if (!PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId)) {
         JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
-                                      "because of the missing required dependency: ${dependency.pluginId}")
+                                     "because of the missing required dependency: ${dependency.pluginId}")
         return false
       }
     }
@@ -99,6 +131,7 @@ data class JbProductInfo(override val version: String,
     }
     return retval.filter { it.second }.map { it.first }
   }
+
 
   private val _lastUsage = LocalDate.ofInstant(lastUsageTime.toInstant(), ZoneId.systemDefault())
   override val lastUsage: LocalDate = _lastUsage
@@ -226,7 +259,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       val fullNameWithVersion = "$fullName $ideVersion"
       val jbProductInfo = JbProductInfo(ideVersion, lastModified, dirName, fullNameWithVersion, ideName,
                                         confDir, pluginsDir)
-      jbProductInfo.prefetchPluginDescriptors(coroutineScope, context)
+      jbProductInfo.prefetchData(coroutineScope, context)
       retval[dirName] = jbProductInfo
     }
     return retval
@@ -249,8 +282,18 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                            plugins
                                                          )
     )
+    val activeKeymap = productInfo.activeKeymap
+    val activeKeymapComment = if (activeKeymap == null) {
+      null
+    } else {
+      ImportSettingsBundle.message("settings.category.keymap.description", activeKeymap)
+    }
+    val keymapsCategory = JbSettingsCategory(SettingsCategory.KEYMAP,
+                                                      StartupImportIcons.Icons.Keyboard,
+                                                      ImportSettingsBundle.message("settings.category.keymap.name"),
+                                                      activeKeymapComment)
     return listOf(UI_CATEGORY,
-                  KEYMAP_CATEGORY,
+                  keymapsCategory,
                   CODE_CATEGORY,
                   pluginsCategory,
                   TOOLS_CATEGORY,
@@ -364,10 +407,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                  ImportSettingsBundle.message("settings.category.ui.name"),
                                                  ImportSettingsBundle.message("settings.category.ui.description")
     )
-    private val KEYMAP_CATEGORY = JbSettingsCategory(SettingsCategory.KEYMAP, StartupImportIcons.Icons.Keyboard,
-                                                     ImportSettingsBundle.message("settings.category.keymap.name"),
-                                                     ImportSettingsBundle.message("settings.category.keymap.description")
-    )
     private val CODE_CATEGORY = JbSettingsCategory(SettingsCategory.CODE, StartupImportIcons.Icons.Json,
                                                    ImportSettingsBundle.message("settings.category.code.name"),
                                                    ImportSettingsBundle.message("settings.category.code.description")
@@ -382,7 +421,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     )
     val DEFAULT_SETTINGS_CATEGORIES = mapOf(
       SettingsCategory.UI.name to UI_CATEGORY,
-      SettingsCategory.KEYMAP.name to KEYMAP_CATEGORY,
       SettingsCategory.CODE.name to CODE_CATEGORY,
       SettingsCategory.TOOLS.name to TOOLS_CATEGORY,
       SettingsCategory.SYSTEM.name to SYSTEM_CATEGORY
