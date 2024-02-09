@@ -717,28 +717,4 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/VarArgs.kt"));
         }
     }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/asJava/lightClasses/lightClassByFqName/withTestCompilerPluginEnabled")
-    public static class WithTestCompilerPluginEnabled extends AbstractIdeLightClassesByFqNameTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @Override
-        protected void setUp() {
-            compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/withTestCompilerPluginEnabled");
-            super.setUp();
-        }
-
-        @TestMetadata("allOpen.kt")
-        public void testAllOpen() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/withTestCompilerPluginEnabled/allOpen.kt"));
-        }
-
-        @TestMetadata("companionWithFoo_companionTypeUsedInJava_ReferenceFromKotlin.kt")
-        public void testCompanionWithFoo_companionTypeUsedInJava_ReferenceFromKotlin() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/withTestCompilerPluginEnabled/companionWithFoo_companionTypeUsedInJava_ReferenceFromKotlin.kt"));
-        }
-    }
 }
