@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SpockVariableDescriptor {
+public final class SpockVariableDescriptor {
 
   private final String myName;
 
@@ -63,8 +63,7 @@ public class SpockVariableDescriptor {
   }
 
   @VisibleForTesting
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiManager manager = myNavigationElement.getManager();
     PsiType type = RecursionManager.doPreventingRecursion(this, true, () -> {
       PsiType res = null;

@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.highlighting;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonLanguage;
@@ -15,7 +14,6 @@ import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
@@ -25,8 +23,8 @@ import static com.intellij.json.highlighting.JsonSyntaxHighlighterFactory.*;
 /**
  * @author Mikhail Golubev
  */
-public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable {
-  private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = ImmutableMap.of("propertyKey", JSON_PROPERTY_KEY);
+public final class JsonColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable {
+  private static final Map<String, TextAttributesKey> ourAdditionalHighlighting = Map.of("propertyKey", JSON_PROPERTY_KEY);
 
   private static final AttributesDescriptor[] ourAttributeDescriptors = new AttributesDescriptor[]{
     new AttributesDescriptor(JsonBundle.messagePointer("color.page.attribute.property.key"), JSON_PROPERTY_KEY),
@@ -46,7 +44,7 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   };
 
   @Override
-  public @Nullable Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.FileTypes.Json;
   }
 
@@ -76,7 +74,7 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   }
 
   @Override
-  public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @NotNull Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ourAdditionalHighlighting;
   }
 
@@ -111,7 +109,7 @@ public class JsonColorsPage implements RainbowColorSettingsPage, DisplayPriority
   }
 
   @Override
-  public @Nullable Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JsonLanguage.INSTANCE;
   }
 }

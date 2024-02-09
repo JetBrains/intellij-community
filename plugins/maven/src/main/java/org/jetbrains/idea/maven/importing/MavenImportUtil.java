@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -44,26 +43,24 @@ public final class MavenImportUtil {
   public static final String TEST_SUFFIX = ".test";
   public static final String MAIN_SUFFIX = ".main";
 
-  private static final Map<String, LanguageLevel> MAVEN_IDEA_PLUGIN_LEVELS = ImmutableMap.of(
+  private static final Map<String, LanguageLevel> MAVEN_IDEA_PLUGIN_LEVELS = Map.of(
     "JDK_1_3", LanguageLevel.JDK_1_3,
     "JDK_1_4", LanguageLevel.JDK_1_4,
     "JDK_1_5", LanguageLevel.JDK_1_5,
     "JDK_1_6", LanguageLevel.JDK_1_6,
     "JDK_1_7", LanguageLevel.JDK_1_7);
 
-  @NotNull
-  public static String getArtifactUrlForClassifierAndExtension(@NotNull MavenArtifact artifact,
-                                                               @Nullable String classifier,
-                                                               @Nullable String extension) {
+  public static @NotNull String getArtifactUrlForClassifierAndExtension(@NotNull MavenArtifact artifact,
+                                                                        @Nullable String classifier,
+                                                                        @Nullable String extension) {
 
     String newPath = artifact.getPathForExtraArtifact(classifier, extension);
     return VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, newPath) + JarFileSystem.JAR_SEPARATOR;
   }
 
-  @NotNull
-  public static String getArtifactUrl(@NotNull MavenArtifact artifact,
-                                      @NotNull MavenExtraArtifactType artifactType,
-                                      @NotNull MavenProject project) {
+  public static @NotNull String getArtifactUrl(@NotNull MavenArtifact artifact,
+                                               @NotNull MavenExtraArtifactType artifactType,
+                                               @NotNull MavenProject project) {
 
     Pair<String, String> result = project.getClassifierAndExtension(artifact, artifactType);
     String classifier = result.first;
@@ -90,7 +87,8 @@ public final class MavenImportUtil {
 
     Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
     if (cfg != null) {
-      level = MAVEN_IDEA_PLUGIN_LEVELS.get(cfg.getChildTextTrim("jdkLevel"));
+      String key = cfg.getChildTextTrim("jdkLevel");
+      level = key == null ? null : MAVEN_IDEA_PLUGIN_LEVELS.get(key);
     }
 
     if (level == null) {
@@ -109,8 +107,7 @@ public final class MavenImportUtil {
     return level;
   }
 
-  @NotNull
-  public static MavenJavaVersionHolder getMavenJavaVersions(@NotNull MavenProject mavenProject) {
+  public static @NotNull MavenJavaVersionHolder getMavenJavaVersions(@NotNull MavenProject mavenProject) {
     boolean useReleaseCompilerProp = isReleaseCompilerProp(mavenProject);
     LanguageLevel sourceVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, false);
     LanguageLevel sourceTestVersion = getMavenLanguageLevel(mavenProject, useReleaseCompilerProp, true, true);
@@ -119,11 +116,10 @@ public final class MavenImportUtil {
     return new MavenJavaVersionHolder(sourceVersion, targetVersion, sourceTestVersion, targetTestVersion);
   }
 
-    @Nullable
-  private static LanguageLevel getMavenLanguageLevel(@NotNull MavenProject mavenProject,
-                                                boolean useReleaseCompilerProp,
-                                                boolean isSource,
-                                                boolean isTest) {
+    private static @Nullable LanguageLevel getMavenLanguageLevel(@NotNull MavenProject mavenProject,
+                                                                 boolean useReleaseCompilerProp,
+                                                                 boolean isSource,
+                                                                 boolean isTest) {
     String mavenProjectReleaseLevel = useReleaseCompilerProp
                                       ? isTest ? mavenProject.getTestReleaseLevel() : mavenProject.getReleaseLevel()
                                       : null;
@@ -138,8 +134,7 @@ public final class MavenImportUtil {
       return level;
     }
 
-  @NotNull
-  public static LanguageLevel adjustLevelAndNotify(@NotNull Project project, @NotNull LanguageLevel level) {
+  public static @NotNull LanguageLevel adjustLevelAndNotify(@NotNull Project project, @NotNull LanguageLevel level) {
     if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(level)) {
       LanguageLevel highestAcceptedLevel = AcceptedLanguageLevelsSettings.getHighestAcceptedLevel();
       if (highestAcceptedLevel.isLessThan(level)) {
@@ -160,8 +155,7 @@ public final class MavenImportUtil {
     }
   }
 
-  @NotNull
-  public static LanguageLevel getDefaultLevel(MavenProject mavenProject) {
+  public static @NotNull LanguageLevel getDefaultLevel(MavenProject mavenProject) {
     MavenPlugin plugin = mavenProject.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin");
     if (plugin != null && plugin.getVersion() != null) {
       //https://github.com/apache/maven-compiler-plugin/blob/master/src/main/java/org/apache/maven/plugin/compiler/AbstractCompilerMojo.java
@@ -226,8 +220,7 @@ public final class MavenImportUtil {
     return moduleName.length() > 5 && moduleName.endsWith(TEST_SUFFIX);
   }
 
-  @NotNull
-  public static String getParentModuleName(@NotNull String moduleName) {
+  public static @NotNull String getParentModuleName(@NotNull String moduleName) {
     if (isMainModule(moduleName)) {
       return StringUtil.trimEnd(moduleName, MAIN_SUFFIX);
     }
