@@ -60,8 +60,7 @@ internal data class JbProductInfo(
 
   private fun prefetchKeymap(coroutineScope: CoroutineScope) {
     coroutineScope.async {
-      val keymapFilePath = configDirPath / PathManager.OPTIONS_DIRECTORY /
-                           getPerOsSettingsStorageFolderName() / KeymapManagerImpl.KEYMAP_STORAGE
+      val keymapFilePath = configDir.resolve("${PathManager.OPTIONS_DIRECTORY}/${getPerOsSettingsStorageFolderName()}/${KeymapManagerImpl.KEYMAP_STORAGE}")
       if (keymapFilePath.exists()) {
         val element = JDOMUtil.load(keymapFilePath)
         val children = element.getChildren("component")
