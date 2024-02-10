@@ -79,6 +79,8 @@ interface BuildContext : CompilationContext {
    */
   var builtinModule: BuiltinModulesFileData?
 
+  val appInfoXml: String
+
   /**
    * Add file to be copied into application.
    */

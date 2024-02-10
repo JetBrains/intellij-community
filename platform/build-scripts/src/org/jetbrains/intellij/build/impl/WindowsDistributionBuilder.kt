@@ -335,7 +335,11 @@ private suspend fun buildWinLauncher(winDistPath: Path,
     val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\\\lib\\\\${it}" }
     val envVarBaseName = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
     val icoFilesDirectory = context.paths.tempDir.resolve("win-launcher-ico-${arch.dirName}")
-    val appInfoForLauncher = generateApplicationInfoForLauncher(context.applicationInfo.appInfoXml, icoFilesDirectory, icoFile)
+    val appInfoForLauncher = generateApplicationInfoForLauncher(
+      appInfo = context.appInfoXml,
+      icoFilesDirectory = icoFilesDirectory,
+      icoFile = icoFile,
+    )
     @Suppress("SpellCheckingInspection")
     Files.writeString(launcherPropertiesPath, """
         IDS_JDK_ONLY=${context.productProperties.toolsJarRequired}

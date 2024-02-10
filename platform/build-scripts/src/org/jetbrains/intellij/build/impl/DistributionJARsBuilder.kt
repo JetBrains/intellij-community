@@ -691,7 +691,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
         spanBuilder("write patched app info").use {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
-          val result = injectAppInfo(inFile = moduleOutDir.resolve(relativePath), newFieldValue = context.applicationInfo.appInfoXml)
+          val result = injectAppInfo(inFile = moduleOutDir.resolve(relativePath), newFieldValue = context.appInfoXml)
           moduleOutputPatcher.patchModuleOutput("intellij.platform.core", relativePath, result)
         }
       }
@@ -701,14 +701,16 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
   return spanBuilder("layout lib")
     .setAttribute("path", targetDirectory.toString())
     .useWithScope {
-      layoutDistribution(layout = platform,
-                         platformLayout = platform,
-                         targetDirectory = targetDirectory,
-                         copyFiles = copyFiles,
-                         moduleOutputPatcher = moduleOutputPatcher,
-                         includedModules = platform.includedModules,
-                         moduleWithSearchableOptions = if (copyFiles) getModuleWithSearchableOptions(context) else emptySet(),
-                         context = context).first
+      layoutDistribution(
+        layout = platform,
+        platformLayout = platform,
+        targetDirectory = targetDirectory,
+        copyFiles = copyFiles,
+        moduleOutputPatcher = moduleOutputPatcher,
+        includedModules = platform.includedModules,
+        moduleWithSearchableOptions = if (copyFiles) getModuleWithSearchableOptions(context) else emptySet(),
+        context = context,
+      ).first
     }
 }
 

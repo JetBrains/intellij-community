@@ -191,11 +191,11 @@ class CompilationContextImpl private constructor(
         logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       }
 
-      val isCompilationRequired = CompiledClasses.isCompilationRequired(options)
-
-      val model = loadProject(projectHome = projectHome,
-                              kotlinBinaries = KotlinBinaries(communityHome),
-                              isCompilationRequired = isCompilationRequired)
+      val model = loadProject(
+        projectHome = projectHome,
+        kotlinBinaries = KotlinBinaries(communityHome),
+        isCompilationRequired = CompiledClasses.isCompilationRequired(options),
+      )
 
       val buildPaths = computeBuildPaths(
         project = model.project,

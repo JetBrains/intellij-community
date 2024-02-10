@@ -37,6 +37,11 @@ class BuildContextImpl(
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
   override val macDistributionCustomizer: MacDistributionCustomizer?,
   override val proprietaryBuildTools: ProprietaryBuildTools,
+  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(
+    project = compilationContext.project,
+    productProperties = productProperties,
+    buildOptions = compilationContext.options,
+  ),
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
@@ -63,8 +68,7 @@ class BuildContextImpl(
 
   override val generateRuntimeModuleRepository: Boolean
     get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
-  
-  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(context = this)
+
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   internal val jarCacheManager: JarCacheManager by lazy {
@@ -114,20 +118,29 @@ class BuildContextImpl(
                            proprietaryBuildTools = proprietaryBuildTools)
     }
 
-    fun createContext(compilationContext: CompilationContextImpl,
-                      projectHome: Path,
-                      productProperties: ProductProperties,
-                      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY): BuildContextImpl {
+    fun createContext(
+      compilationContext: CompilationContextImpl,
+      projectHome: Path,
+      productProperties: ProductProperties,
+      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+    ): BuildContextImpl {
       val projectHomeAsString = FileUtilRt.toSystemIndependentName(projectHome.toString())
       val windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString)
       val linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString)
       val macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString)
-      return BuildContextImpl(compilationContext = compilationContext,
-                              productProperties = productProperties,
-                              windowsDistributionCustomizer = windowsDistributionCustomizer,
-                              linuxDistributionCustomizer = linuxDistributionCustomizer,
-                              macDistributionCustomizer = macDistributionCustomizer,
-                              proprietaryBuildTools = proprietaryBuildTools)
+      return BuildContextImpl(
+        compilationContext = compilationContext,
+        productProperties = productProperties,
+        windowsDistributionCustomizer = windowsDistributionCustomizer,
+        linuxDistributionCustomizer = linuxDistributionCustomizer,
+        macDistributionCustomizer = macDistributionCustomizer,
+        proprietaryBuildTools = proprietaryBuildTools,
+        applicationInfo = ApplicationInfoPropertiesImpl(
+          project = compilationContext.project,
+          productProperties = productProperties,
+          buildOptions = compilationContext.options,
+        ),
+      )
     }
   }
 
@@ -221,6 +234,9 @@ class BuildContextImpl(
     options.buildStepsToSkip = sourceOptions.buildStepsToSkip
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs
+
+    val newAppInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = options)
+
     val compilationContextCopy = compilationContext.createCopy(
       messages = messages,
       options = options,
@@ -237,7 +253,7 @@ class BuildContextImpl(
         artifactPathSupplier = if (prepareForBuild) {
           {
             @Suppress("DEPRECATION")
-            paths.artifactDir.resolve(productProperties.productCode ?: applicationInfo.productCode)
+            paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode)
           }
         }
         else {
@@ -252,6 +268,7 @@ class BuildContextImpl(
       linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
+      applicationInfo = newAppInfo,
     )
     if (prepareForBuild) {
       copy.compilationContext.prepareForBuild()
@@ -345,6 +362,10 @@ class BuildContextImpl(
         }
       },
     )
+  }
+
+  override val appInfoXml by lazy {
+    return@lazy computeAppInfoXml(context = this, appInfo = applicationInfo)
   }
 }
 
