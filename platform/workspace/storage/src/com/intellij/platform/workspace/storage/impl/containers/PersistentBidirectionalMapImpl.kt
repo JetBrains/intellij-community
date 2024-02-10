@@ -16,7 +16,7 @@ import kotlinx.collections.immutable.*
 internal interface PersistentBidirectionalMap<K, V> {
   val size: Int
 
-  fun getKeysByValue(value: V): ImmutableSet<K>?
+  fun getKeysByValue(value: V): ImmutableList<K>?
 
   operator fun get(key: K): V?
   operator fun contains(key: K): Boolean
@@ -38,12 +38,12 @@ internal interface PersistentBidirectionalMap<K, V> {
 
 internal class PersistentBidirectionalMapImpl<K, V>(
   private val keyToValueMap: PersistentMap<K, V>,
-  private val valueToKeysMap: PersistentMap<V, PersistentSet<K>>,
+  private val valueToKeysMap: PersistentMap<V, PersistentList<K>>,
 ) : Immutable<K, V> {
 
   constructor(): this(persistentHashMapOf(), persistentHashMapOf())
 
-  override fun getKeysByValue(value: V): ImmutableSet<K>? {
+  override fun getKeysByValue(value: V): ImmutableList<K>? {
     return valueToKeysMap[value]
   }
 
@@ -68,7 +68,7 @@ internal class PersistentBidirectionalMapImpl<K, V>(
 
   class Builder<K, V>(
     private val keyToValueMap: PersistentMap.Builder<K, V>,
-    private val valueToKeysMap: PersistentMap.Builder<V, PersistentSet<K>>,
+    private val valueToKeysMap: PersistentMap.Builder<V, PersistentList<K>>,
   ): PersistentBidirectionalMap.Builder<K, V> {
     override fun put(key: K, value: V): V? {
       val prevValue = keyToValueMap.put(key, value)
@@ -88,7 +88,7 @@ internal class PersistentBidirectionalMapImpl<K, V>(
       }
 
       val existingKeys = valueToKeysMap[value]
-      val newKeys = existingKeys?.add(key) ?: persistentHashSetOf(key)
+      val newKeys = existingKeys?.add(key) ?: persistentListOf(key)
       valueToKeysMap[value] = newKeys
       return prevValue
     }
@@ -124,6 +124,6 @@ internal class PersistentBidirectionalMapImpl<K, V>(
     override fun contains(key: K): Boolean = keyToValueMap.containsKey(key)
     override fun forEach(action: (K, V) -> Unit) = keyToValueMap.forEach(action)
     override fun get(key: K): V? = keyToValueMap[key]
-    override fun getKeysByValue(value: V): ImmutableSet<K>? = valueToKeysMap[value]
+    override fun getKeysByValue(value: V): ImmutableList<K>? = valueToKeysMap[value]
   }
 }
