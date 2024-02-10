@@ -409,8 +409,6 @@
 
     <refactoring.invertBoolean implementation="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanDelegate"/>
 
-    <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
-
     <!--folding-->
     <codeFoldingOptionsProvider instance="com.jetbrains.python.PythonFoldingOptionsProvider"/>
     <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
