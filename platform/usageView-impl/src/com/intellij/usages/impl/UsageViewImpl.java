@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -12,7 +12,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -304,6 +303,10 @@ public class UsageViewImpl implements UsageViewEx {
   @IntellijInternalApi
   public int getId() {
     return myUniqueIdentifier;
+  }
+  
+  public JTree getTree() {
+    return myTree;
   }
 
   private void initInEDT() {
@@ -1631,13 +1634,13 @@ public class UsageViewImpl implements UsageViewEx {
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
         if (isDisposed()) return;
+        if (getUsageViewSettings().isExpanded() && myUsageNodes.size() < 10000) {
+          expandAll();
+        }
         if (userHasSelectedNode()) return;
         Node nodeToSelect = ObjectUtils.coalesce(myAutoSelectedGroupNode, myModel.getFirstUsageNode());
         if (nodeToSelect == null) return;
         showNode(nodeToSelect);
-        if (getUsageViewSettings().isExpanded() && myUsageNodes.size() < 10000) {
-          expandAll();
-        }
       });
     }
   }
