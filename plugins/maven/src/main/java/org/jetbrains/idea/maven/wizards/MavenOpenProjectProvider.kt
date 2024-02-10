@@ -55,7 +55,12 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
 
   @ApiStatus.Internal
   suspend fun forceLinkToExistingProjectAsync(projectFilePath: String, project: Project) {
-    doLinkToExistingProjectAsync(getProjectFile(projectFilePath), project, true)
+    forceLinkToExistingProjectAsync(getProjectFile(projectFilePath), project)
+  }
+
+  @ApiStatus.Internal
+  suspend fun forceLinkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    doLinkToExistingProjectAsync(projectFile, project, true)
   }
 
   private suspend fun doLinkToExistingProjectAsync(projectFile: VirtualFile, project: Project, syncProject: Boolean) {
