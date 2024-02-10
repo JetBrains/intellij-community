@@ -367,9 +367,7 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
-    val res = mutableListOf<Class<out WorkspaceEntity>>()
-    res.add(ModuleEntity::class.java)
-    return res
+    return listOf(ModuleEntity::class.java)
   }
 
   override fun equals(other: Any?): Boolean {
