@@ -371,7 +371,7 @@
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitStageAcceptTheirsAction"/>
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitStageAcceptYoursAction"/>
-    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction"/>
+    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction" icon="AllIcons.Vcs.Merge"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
     <action id="Git.Stage.ToggleCommitAll" class="git4idea.index.actions.GitToggleCommitAllAction">
@@ -388,7 +388,7 @@
     <action id="Git.Stage.Stash.Files" class="git4idea.index.actions.GitStageStashFilesAction"/>
 
     <group id="Git.ChangesView.Conflicts">
-      <action id="Git.ChangesView.Merge" class="git4idea.merge.GitMergeConflictAction"/>
+      <action id="Git.ChangesView.Merge" class="git4idea.merge.GitMergeConflictAction" icon="AllIcons.Vcs.Merge"/>
       <action id="Git.ChangesView.AcceptTheirs" class="git4idea.merge.GitAcceptTheirsAction"/>
       <action id="Git.ChangesView.AcceptYours" class="git4idea.merge.GitAcceptYoursAction"/>
       <separator/>
