@@ -8,7 +8,6 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.openapi.util.NlsSafe
 import java.net.URL
 import com.intellij.openapi.util.Key
-import com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy.PY_STRING_SPELLCHECK_IGNORE_KEY
 
 val HUGGING_FACE_ENTITY_NAME_KEY = Key.create<Boolean>("HUGGING_FACE_ENTITY_NAME_KEY")
 
@@ -19,7 +18,6 @@ abstract class HuggingFaceEntityPsiElement(
   private val getEntityLink: (String) -> URL
 ) : FakePsiElement() {
   init {
-    parent.putUserData(PY_STRING_SPELLCHECK_IGNORE_KEY, true)
     parent.putUserData(HUGGING_FACE_ENTITY_NAME_KEY, true)
   }
 
