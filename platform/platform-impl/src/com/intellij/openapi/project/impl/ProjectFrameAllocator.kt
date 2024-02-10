@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -20,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -366,6 +368,7 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
 
     val (editorComponent, editorState) = fileEditorManager.init()
     if (editorState == null) {
+      service<StartUpPerformanceService>().editorRestoringTillHighlighted()
       return@coroutineScope
     }
 
