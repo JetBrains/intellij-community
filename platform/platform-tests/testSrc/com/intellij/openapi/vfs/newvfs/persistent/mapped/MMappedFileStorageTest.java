@@ -217,19 +217,20 @@ public class MMappedFileStorageTest {
   //============ MMappedFileStorage_Factory tests: ===========================================================================
 
   @Test
-  public void mappedStorage_Factory_FailsOpenStorage_IfStorageParentDirectoryNotExist(@TempDir Path tempDir) {
+  public void mappedStorage_Factory_FailsOpenStorage_IfStorageParentDirectoryNotExist(@TempDir Path tempDir) throws IOException {
     Path nonExistentDir = tempDir.resolve("subdir");
     Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
-    try {
-      var storage = MMappedFileStorageFactory.withDefaults()
-        .createParentDirectories(false)
-        .pageSize(PAGE_SIZE)
-        .open(storagePath);
-      storage.closeAndClean();
+    try (var storage = MMappedFileStorageFactory.withDefaults()
+      .createParentDirectories(false)
+      .pageSize(PAGE_SIZE)
+      .open(storagePath)) {
       fail("Storage must fail to open file in non-existing directory");
     }
     catch (IOException e) {
       //ok
+    }
+    finally {
+      storage.closeAndClean();
     }
   }
 
@@ -237,7 +238,16 @@ public class MMappedFileStorageTest {
   public void mappedStorage_Factory_CreatesParentDirectory_IfConfiguredTo(@TempDir Path tempDir) throws IOException {
     Path nonExistentDir = tempDir.resolve("subdir");
     Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
-    try (var storage = MMappedFileStorageFactory.withDefaults().open(storagePath)) {
+    try (var storage = MMappedFileStorageFactory.withDefaults().createParentDirectories(true).open(storagePath)) {
+      storage.closeAndClean();
+    }
+  }
+
+  @Test
+  public void mappedStorage_Factory_CreatesParentDirectory_EvenIfParentIsRelative_IfConfiguredTo(@TempDir Path tempDir) throws IOException {
+    Path nonExistentDir = tempDir.resolve("subdir");
+    Path storagePath = nonExistentDir.resolve("storage.file");
+    try (var storage = MMappedFileStorageFactory.withDefaults().createParentDirectories(true).open(storagePath)) {
       storage.closeAndClean();
     }
   }
@@ -246,7 +256,7 @@ public class MMappedFileStorageTest {
   public void mappedStorage_Factory_FailsOpenStorage_IfFileSize_IsNotPageAligned(@TempDir Path tempDir) throws IOException {
     Path storagePath = tempDir.resolve("storage.file").toAbsolutePath();
     //page un-aligned size:
-    Files.write(storagePath, new byte[PAGE_SIZE + 1]);
+    Files.write(storagePath, new byte[3 * PAGE_SIZE + 1]);
     try {
       var storage = MMappedFileStorageFactory.withDefaults()
         .pageSize(PAGE_SIZE)
@@ -257,6 +267,24 @@ public class MMappedFileStorageTest {
     }
     catch (IOException e) {
       //ok
+    }
+  }
+
+  @Test
+  public void mappedStorage_Factory_CanExpandStorageFileIfAskedTo_IfFileSize_IsNotPageAligned(@TempDir Path tempDir) throws IOException {
+    Path storagePath = tempDir.resolve("storage.file").toAbsolutePath();
+    //page un-aligned size:
+    Files.write(storagePath, new byte[3 * PAGE_SIZE + 1]);
+    try (var storage = MMappedFileStorageFactory.withDefaults()
+      .pageSize(PAGE_SIZE)
+      .expandFileIfNotPageAligned(true)
+      .open(storagePath)) {
+      assertEquals(Files.size(storagePath),
+                   4 * PAGE_SIZE,
+                   "Storage file should be expanded to page-aligned size");
+    }
+    finally {
+      storage.closeAndClean();
     }
   }
 

@@ -80,48 +80,66 @@ public class MMappedFileStorageFactory implements StorageFactory<MMappedFileStor
 
   @Override
   public @NotNull MMappedFileStorage open(@NotNull Path storagePath) throws IOException {
-    Path parentDir = storagePath.getParent().toAbsolutePath();
-    if (!Files.exists(parentDir)) {
-      if (createParentDirectoriesIfNotExist) {
-        Files.createDirectories(parentDir);
-      }
-      else {
-        throw new NoSuchFileException(
-          "Parent directory of [" + storagePath.toAbsolutePath() + "] is not exist, and .createDirectoriesIfNotExist=false");
-      }
-    }
+    Path absoluteStoragePath = storagePath.toAbsolutePath();
 
-    RegionAllocationAtomicityLock regionAllocationLock = RegionAllocationAtomicityLock.defaultLock(storagePath);
+    boolean storageFileExists = Files.exists(absoluteStoragePath);
 
-    long fileSize = Files.exists(storagePath) ? Files.size(storagePath) : 0;
+    if (!storageFileExists) {
+      checkParentDirectories(absoluteStoragePath);
+    }//if storage file does exist => parentDir definitely does exist also
+
+    RegionAllocationAtomicityLock regionAllocationLock = RegionAllocationAtomicityLock.defaultLock(absoluteStoragePath);
+
+    long fileSize = storageFileExists ? Files.size(absoluteStoragePath) : 0;
+
     if (fileSize % pageSize != 0) {
-      //file size is not page-aligned: suspicious
-
-      //Maybe there was a file expansion interrupted by app crash/kill?
-      long startOfSuspiciousRegion = (fileSize / pageSize) * pageSize;
-      Region region = regionAllocationLock.region(startOfSuspiciousRegion, pageSize);
-      if (!region.isUnfinished()) {
-        // It is generally an error to have file un-aligned with page size, so fail if not explicitly asked to ignore:
-        if (!expandFileIfNotPageAligned) {
-          throw new IOException("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned");
-        }
-
-        //else: expand (zeroes) file up to the next page.
-
-        //This branch is useful for something like backward compatibility: e.g. increase pageSize is a safe change for many
-        // storages -- there is no migration needed, except to align the file size to the new pageSize.
-        long fileSizeRoundedUpToPageSize = (fileSize / pageSize) + 1;
-        try (FileChannel channel = FileChannel.open(storagePath, WRITE)) {
-          IOUtil.allocateFileRegion(channel, fileSizeRoundedUpToPageSize);
-        }
-      }
-      else {
-        //There is 'unfinished' region -- i.e. file expansion and zeroing started, but was interrupted by app crash/kill.
-        // MMappedFileStorage will deal with it, no need to do anything here
-      }
+      dealWithPageUnAlignedFileSize(absoluteStoragePath, fileSize, regionAllocationLock);
     }
 
-    return new MMappedFileStorage(storagePath, pageSize, regionAllocationLock);
+    return new MMappedFileStorage(absoluteStoragePath, pageSize, regionAllocationLock);
+  }
+
+  private void dealWithPageUnAlignedFileSize(Path storagePath,
+                                             long fileSize,
+                                             RegionAllocationAtomicityLock regionAllocationLock) throws IOException {
+    // It is generally an error to have file un-aligned with page size.
+    //    One exception is if next-page-expansion wasn't finished because of app crash -> check for it.
+    //    Another exception: we're explicitly asked to ignore that and just expand the file to page-aligned size
+    //    Otherwise: fail
+
+    //Maybe there was a file expansion interrupted by app crash/kill?
+    long startOfSuspiciousRegion = (fileSize / pageSize) * pageSize;
+    Region region = regionAllocationLock.region(startOfSuspiciousRegion, pageSize);
+    if (region.isUnfinished()) {
+      //There is an 'unfinished' region -- i.e. file expansion and zeroing started, but was interrupted by app crash/kill.
+      // MMappedFileStorage will deal with it, no need to do anything here
+      return;
+    }
+
+    if (expandFileIfNotPageAligned) {
+      //expand (zeroes) file up to the next page:
+      long fileSizeRoundedUpToPageSize = ((fileSize / pageSize) + 1) * pageSize;
+      try (FileChannel channel = FileChannel.open(storagePath, WRITE)) {
+        IOUtil.allocateFileRegion(channel, fileSizeRoundedUpToPageSize);
+      }
+      return;
+    }
+
+    throw new IOException("[" + storagePath + "]: fileSize(=" + fileSize + " b) is not page(=" + pageSize + " b)-aligned");
+  }
+
+  private void checkParentDirectories(@NotNull Path storagePath) throws IOException {
+    Path parentDir = storagePath.getParent();
+    if (Files.exists(parentDir)) {
+      return;
+    }
+
+    if (createParentDirectoriesIfNotExist) {
+      Files.createDirectories(parentDir);
+      return;
+    }
+
+    throw new NoSuchFileException("Parent directory of [" + storagePath + "] is not exist, and .createDirectoriesIfNotExist=false");
   }
 
   @Override
