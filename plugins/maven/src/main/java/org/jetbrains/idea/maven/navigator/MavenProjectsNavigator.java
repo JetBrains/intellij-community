@@ -421,8 +421,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     if (toolWindow == null) return;
 
     MavenUtil.invokeLater(myProject, () -> {
-      boolean hasMavenProjects = !MavenProjectsManager.getInstance(myProject).getProjects().isEmpty();
+      List<String> files = MavenProjectsManager.getInstance(myProject).getState().originalFiles;
+      boolean hasMavenProjects = files != null && !files.isEmpty();
       if (toolWindow.isAvailable() != hasMavenProjects) {
+        MavenLog.LOG.info("Set MavenToolWindow availability: " + hasMavenProjects);
         toolWindow.setAvailable(hasMavenProjects);
         if (hasMavenProjects
             && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null) {

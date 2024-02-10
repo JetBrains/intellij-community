@@ -76,6 +76,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   private final AtomicBoolean isInitialized = new AtomicBoolean();
   private final AtomicBoolean isActivated = new AtomicBoolean();
 
+  @NotNull
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
 
   private final MavenEmbeddersManager myEmbeddersManager;
@@ -115,6 +116,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
+  @NotNull
   public MavenProjectsManagerState getState() {
     if (isInitialized()) {
       applyTreeToState();
