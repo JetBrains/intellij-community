@@ -22,7 +22,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
   private val sessionHolder = ThreadLocal<Session>()
 
   private val appServices: MutableMap<Class<*>, Any> = ConcurrentHashMap()
-  private val projectServices: MutableMap<ProjectRef, MutableMap<Class<*>, Any>> = ConcurrentHashMap()
+  private val projectServices: MutableMap<ProjectServiceId, Any> = ConcurrentHashMap()
   private val utils: MutableMap<Class<*>, Any> = ConcurrentHashMap()
 
   override val isConnected: Boolean
@@ -61,8 +61,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
 
   @Suppress("UNCHECKED_CAST")
   override fun <T : Any> service(clazz: KClass<T>, project: ProjectRef): T {
-    val projectServices = projectServices.computeIfAbsent(project) { ConcurrentHashMap() }
-    return projectServices.computeIfAbsent(clazz.java) { serviceBridge(clazz.java, project) } as T
+    val id = ProjectServiceId((project as RefWrapper).getRef().identityHashCode, clazz.java)
+    return projectServices.computeIfAbsent(id) { serviceBridge(clazz.java, project) } as T
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -382,3 +382,5 @@ interface Invoker : AutoCloseable {
 }
 
 class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)
+
+private data class ProjectServiceId(val projectId: Int, val serviceClass: Class<*>)
