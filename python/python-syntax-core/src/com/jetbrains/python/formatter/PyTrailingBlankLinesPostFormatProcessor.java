@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -87,7 +87,7 @@ public final class PyTrailingBlankLinesPostFormatProcessor implements PostFormat
 
     // Do not add extra blank line in an empty file
     if (!realWhitespace.equals(desiredWhitespace) && (whitespaceRange.getStartOffset() != 0 || desiredWhitespace.isEmpty())) {
-      TextRange updatedRange = PyUtil.updateDocumentUnblockedAndCommitted(pyFile, document -> {
+      TextRange updatedRange = PyUtilCore.updateDocumentUnblockedAndCommitted(pyFile, document -> {
         document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), desiredWhitespace);
         return TextRange.from(whitespaceRange.getStartOffset(), desiredWhitespace.length());
       });
