@@ -12,5 +12,6 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyListSelectionHandler"/>
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyCommaSelectionHandler"/>
     <basicWordSelectionFilter implementation="com.jetbrains.python.editor.selectWord.PyBasicWordSelectionFilter"/>
+    <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
   </extensions>
 </idea-plugin>

@@ -46,7 +46,7 @@ public final class PyKeywordTypedHandler extends TypedHandlerDelegate {
           return res;
         }
       }
-      PyUnindentingInsertHandler.unindentAsNeeded(project, editor, file);
+      PyUnindentUtil.unindentAsNeeded(project, editor, file);
     }
     return Result.CONTINUE; // the default
   }
