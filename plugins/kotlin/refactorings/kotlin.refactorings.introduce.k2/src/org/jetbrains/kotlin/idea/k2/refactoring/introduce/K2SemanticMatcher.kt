@@ -467,6 +467,8 @@ object K2SemanticMatcher {
         patternExpression: KtExpression,
         context: MatchingContext,
     ): Boolean {
+        if (areNonCallsMatchingByResolve(targetExpression, patternExpression, context)) return true
+
         val targetCallInfo = targetExpression.resolveCall() ?: return false
         val patternCallInfo = patternExpression.resolveCall() ?: return false
 
@@ -504,6 +506,20 @@ object K2SemanticMatcher {
         }
 
         return true
+    }
+
+    context(KtAnalysisSession)
+    private fun areNonCallsMatchingByResolve(
+        targetExpression: KtExpression,
+        patternExpression: KtExpression,
+        context: MatchingContext
+    ): Boolean {
+        if (targetExpression !is KtNameReferenceExpression || patternExpression !is KtNameReferenceExpression) return false
+
+        val targetSymbol = targetExpression.mainReference.resolveToSymbol().takeUnless { it is KtCallableSymbol } ?: return false
+        val patternSymbol = patternExpression.mainReference.resolveToSymbol().takeUnless { it is KtCallableSymbol } ?: return false
+
+        return context.areSymbolsEqualOrAssociated(targetSymbol, patternSymbol)
     }
 
     context(KtAnalysisSession)

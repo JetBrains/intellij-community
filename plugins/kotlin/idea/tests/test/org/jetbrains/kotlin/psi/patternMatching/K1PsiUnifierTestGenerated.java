@@ -663,6 +663,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/const.kt");
                 }
 
+                @TestMetadata("object.kt")
+                public void testObject() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/object.kt");
+                }
+
                 @TestMetadata("qualifiedName.kt")
                 public void testQualifiedName() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/qualifiedName.kt");
