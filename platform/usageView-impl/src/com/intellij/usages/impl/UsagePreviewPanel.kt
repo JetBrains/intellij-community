@@ -70,6 +70,8 @@ import java.awt.BorderLayout
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Point
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import java.util.regex.Pattern
@@ -339,6 +341,17 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     override fun recalculateLocation(balloon: Balloon): RelativePoint {
       val startOffset = myRange.startOffset
       val endOffset = myRange.endOffset
+      if (!component.isDisplayable) {
+        balloon.hide()
+        component.addHierarchyListener(object : HierarchyListener {
+          override fun hierarchyChanged(e: HierarchyEvent?) {
+            if (component.isDisplayable) {
+              showBalloon(myProject, myEditor, myRange, myFindModel)
+              component.removeHierarchyListener(this)
+            }
+          }
+        })
+      }
       if (!insideVisibleArea(myEditor, myRange)) {
         if (!balloon.isDisposed) {
           Disposer.dispose(balloon)
@@ -514,7 +527,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         return UsageViewBundle.message("select.the.usage.to.preview")
       }
       var psiFile: PsiFile? = null
-      for (info in infos!!) {
+      for (info in infos) {
         val file = info.file
         if (psiFile == null) {
           psiFile = file
