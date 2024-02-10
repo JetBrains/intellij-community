@@ -126,8 +126,6 @@
     <applicationService serviceInterface="com.jetbrains.python.sdk.flavors.WinRegistryService"
                         serviceImplementation="com.jetbrains.python.sdk.flavors.WinRegistryServiceImpl"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
-    <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
-
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
     <todoIndexer filetype="Python" implementationClass="com.jetbrains.python.PyTodoIndexer"/>

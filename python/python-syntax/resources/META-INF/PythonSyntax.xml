@@ -13,5 +13,6 @@
     <extendWordSelectionHandler implementation="com.jetbrains.python.editor.selectWord.PyCommaSelectionHandler"/>
     <basicWordSelectionFilter implementation="com.jetbrains.python.editor.selectWord.PyBasicWordSelectionFilter"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
+    <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
   </extensions>
 </idea-plugin>
