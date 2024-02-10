@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.io.FileUtilRt
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import java.nio.file.Path
 
@@ -11,6 +10,9 @@ import java.nio.file.Path
 class BuildPaths(
   val communityHomeDirRoot: BuildDependenciesCommunityRoot,
 
+  /**
+   * Path to a directory where build script will store temporary and resulting files
+   */
   val buildOutputDir: Path,
   /**
    * All log and debug files should be written to this directory. It will be automatically published to TeamCity artifacts
@@ -29,12 +31,6 @@ class BuildPaths(
    * Path to a directory where idea/community Git repository is checked out
    */
   val communityHomeDir: Path = communityHomeDirRoot.communityRoot
-  val communityHome: String = FileUtilRt.toSystemIndependentName(communityHomeDir.toString())
-
-  /**
-   * Path to a directory where build script will store temporary and resulting files
-   */
-  val buildOutputRoot: String = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
 
   /**
    * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems

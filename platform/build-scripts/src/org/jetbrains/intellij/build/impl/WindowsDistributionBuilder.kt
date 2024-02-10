@@ -353,8 +353,8 @@ private suspend fun buildWinLauncher(winDistPath: Path,
         IDS_MAIN_CLASS=${context.ideMainClassName.replace('.', '/')}
         """.trimIndent().trim())
 
-    val communityHome = context.paths.communityHome
-    val inputPath = "${communityHome}/platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe"
+    val communityHome = context.paths.communityHomeDir
+    val inputPath = communityHome.resolve("platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe")
     val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
     val classpath = ArrayList<String>()
 
@@ -378,7 +378,7 @@ private suspend fun buildWinLauncher(winDistPath: Path,
       context = context,
       mainClass = "com.pme.launcher.LauncherGeneratorMain",
       args = listOf(
-        inputPath,
+        inputPath.toString(),
         appInfoForLauncher.toString(),
         "$communityHome/native/WinLauncher/resource.h",
         launcherPropertiesPath.toString(),

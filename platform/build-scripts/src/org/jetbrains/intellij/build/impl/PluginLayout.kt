@@ -356,7 +356,7 @@ class PluginLayout private constructor(
     }
 
     /**
-     * Specifies a relative to [org.jetbrains.intellij.build.BuildPaths.communityHome] path to a zkm script stub file.
+     * Specifies a relative to [org.jetbrains.intellij.build.BuildPaths.communityHomeDir] path to a zkm script stub file.
      * If scramble tool is not defined, scramble toot will expect to find the script stub file at "[org.jetbrains.intellij.build.BuildPaths.projectHome]/plugins/`pluginName`/build/script.zkm.stub".
      * Project home cannot be used since it is not constant (for example, for Rider).
      *

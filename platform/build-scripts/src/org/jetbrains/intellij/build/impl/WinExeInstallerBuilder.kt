@@ -69,7 +69,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     }
 
     // Log final nsi directory to make debugging easier
-    val logDir = Path.of(context.paths.buildOutputRoot, "log")
+    val logDir = context.paths.buildOutputDir.resolve("log")
     val nsiLogDir = logDir.resolve("nsi$suffix")
     deleteDir(nsiLogDir)
     copyDir(nsiConfDir, nsiLogDir)
