@@ -15,11 +15,21 @@
  */
 package com.jetbrains.python.ast;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.StringLiteralExpression;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -62,5 +72,50 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
     pyVisitor.visitPyStringLiteralExpression(this);
+  }
+
+  @NotNull
+  default List<ASTNode> getStringNodes() {
+    final TokenSet stringNodeTypes = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.FSTRING_NODE));
+    return Arrays.asList(getNode().getChildren(stringNodeTypes));
+  }
+
+  /**
+   * Returns a list of implicitly concatenated string elements composing this literal expression.
+   */
+  @NotNull
+  default List<? extends PyAstStringElement> getStringElements() {
+    return StreamEx.of(getStringNodes())
+      .map(ASTNode::getPsi)
+      .select(PyAstStringElement.class)
+      .toList();
+  }
+
+  /**
+   * Returns value ranges for all nodes that form this string literal expression <i>relative to its start offset</i>.
+   * Such range doesn't include neither node's prefix like "ur", nor its quotes.
+   * <p>
+   * For example, for the next "glued" string literal:
+   * <pre>{@code
+   * u"\u0066\x6F\157" ur'' '''\t'''
+   * }</pre>
+   * <p>
+   * this method returns:
+   * <p>
+   * <code><pre>
+   * [
+   *   [2,16),
+   *   [21,21),
+   *   [26,28),
+   * ]
+   * </code></pre>
+   */
+  @NotNull
+  default List<TextRange> getStringValueTextRanges() {
+    final int elementStart = getTextRange().getStartOffset();
+    return ContainerUtil.map(getStringElements(), node -> {
+      final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
+      return node.getContentRange().shiftRight(nodeRelativeOffset);
+    });
   }
 }

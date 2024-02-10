@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -56,12 +57,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public List<TextRange> getStringValueTextRanges() {
     List<TextRange> result = myValueTextRanges;
     if (result == null) {
-      final int elementStart = getTextRange().getStartOffset();
-      final List<TextRange> ranges = ContainerUtil.map(getStringElements(), node -> {
-          final int nodeRelativeOffset = node.getTextRange().getStartOffset() - elementStart;
-          return node.getContentRange().shiftRight(nodeRelativeOffset);
-        });
-      myValueTextRanges = result = ranges;
+      myValueTextRanges = result = PyStringLiteralExpression.super.getStringValueTextRanges();
     }
     return result;
   }
@@ -95,22 +91,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return StreamEx.of(getStringElements())
       .select(PyFormattedStringElement.class)
       .anyMatch(element -> !element.getFragments().isEmpty());
-  }
-
-  @Override
-  @NotNull
-  public List<ASTNode> getStringNodes() {
-    final TokenSet stringNodeTypes = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.FSTRING_NODE));
-    return Arrays.asList(getNode().getChildren(stringNodeTypes));
-  }
-
-  @NotNull
-  @Override
-  public List<PyStringElement> getStringElements() {
-    return StreamEx.of(getStringNodes())
-      .map(ASTNode::getPsi)
-      .select(PyStringElement.class)
-      .toList();
   }
 
   @NotNull

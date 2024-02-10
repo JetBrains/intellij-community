@@ -51,14 +51,15 @@ import java.util.List;
  * @see PyFormattedStringElement
  */
 public interface PyStringLiteralExpression extends PyAstStringLiteralExpression, PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
-  @NotNull
-  List<ASTNode> getStringNodes();
-
   /**
-   * Returns a list of implicitly concatenated string elements composing this literal expression.  
+   * Returns a list of implicitly concatenated string elements composing this literal expression.
    */
   @NotNull
-  List<PyStringElement> getStringElements();
+  @Override
+  default List<PyStringElement> getStringElements() {
+    //noinspection unchecked
+    return (List<PyStringElement>)PyAstStringLiteralExpression.super.getStringElements();
+  }
 
   int valueOffsetToTextOffset(int valueOffset);
 
@@ -90,28 +91,6 @@ public interface PyStringLiteralExpression extends PyAstStringLiteralExpression,
    */
   @NotNull
   List<Pair<TextRange, String>> getDecodedFragments();
-
-  /**
-   * Returns value ranges for all nodes that form this string literal expression <i>relative to its start offset</i>.
-   * Such range doesn't include neither node's prefix like "ur", nor its quotes.
-   * <p>
-   * For example, for the next "glued" string literal:
-   * <pre>{@code
-   * u"\u0066\x6F\157" ur'' '''\t'''
-   * }</pre>
-   * <p>
-   * this method returns:
-   * <p>
-   * <code><pre>
-   * [
-   *   [2,16),
-   *   [21,21),
-   *   [26,28),
-   * ]
-   * </code></pre>
-   */
-  @NotNull
-  List<TextRange> getStringValueTextRanges();
 
   /**
    * @return true if this element has single string node and its type is {@link com.jetbrains.python.PyTokenTypes#DOCSTRING}

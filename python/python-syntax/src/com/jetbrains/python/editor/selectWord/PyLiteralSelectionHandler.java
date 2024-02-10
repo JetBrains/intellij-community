@@ -9,8 +9,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.lexer.PyStringLiteralLexer;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public final class PyLiteralSelectionHandler extends ExtendWordSelectionHandlerB
 
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
-    final PyStringLiteralExpression literal = PsiTreeUtil.getParentOfType(e, PyStringLiteralExpression.class);
+    final PyAstStringLiteralExpression literal = PsiTreeUtil.getParentOfType(e, PyAstStringLiteralExpression.class);
     if (literal != null) {
       List<TextRange> ranges = literal.getStringValueTextRanges();
       List<ASTNode> nodes = literal.getStringNodes();

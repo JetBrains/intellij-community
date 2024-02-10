@@ -6,10 +6,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.ast.PyAstCallExpression;
+import com.jetbrains.python.ast.PyAstStatement;
+import com.jetbrains.python.ast.PyAstStatementList;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,8 +19,8 @@ import java.util.List;
 public final class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull final PsiElement e) {
-    return e instanceof PyStringLiteralExpression || e instanceof PyCallExpression || e instanceof PyStatement ||
-           e instanceof PyStatementList;
+    return e instanceof PyAstStringLiteralExpression || e instanceof PyAstCallExpression || e instanceof PyAstStatement ||
+           e instanceof PyAstStatementList;
   }
 
   @Override

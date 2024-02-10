@@ -21,9 +21,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyListLiteralExpression;
-import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.ast.PyAstArgumentList;
+import com.jetbrains.python.ast.PyAstListLiteralExpression;
+import com.jetbrains.python.ast.PyAstParameterList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -37,7 +37,7 @@ import java.util.List;
 public final class PyListSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    return e instanceof PyListLiteralExpression || e instanceof PyParameterList || e instanceof PyArgumentList;
+    return e instanceof PyAstListLiteralExpression || e instanceof PyAstParameterList || e instanceof PyAstArgumentList;
   }
 
   @Override
