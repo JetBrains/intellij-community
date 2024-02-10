@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.FindManager;
@@ -365,7 +365,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
       return;
     }
 
-    myReplacementBalloon = UsagePreviewPanel.buildReplacementPreviewBalloon(replacementPreviewText);
+    myReplacementBalloon = UsagePreviewPanel.createPreviewBalloon(UsagePreviewPanel.createPreviewHtml(replacementPreviewText));
     EditorUtil.disposeWithEditor(editor, myReplacementBalloon);
     myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.below);
   }

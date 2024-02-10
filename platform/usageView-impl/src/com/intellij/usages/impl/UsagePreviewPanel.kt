@@ -325,19 +325,24 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
   }
 
-  private class ReplacementView(replacement: @NlsSafe String) : JPanel() {
+  private class TextView(html: @NlsSafe String) : JPanel() {
     override fun paintComponent(graphics: Graphics) {}
 
     init {
-      add(buildReplacementPreviewLabel(replacement))
+      add(createLabel(html))
+    }
+
+    private fun createLabel(html: @NlsSafe String): JLabel {
+      val label: JLabel = JBLabel(html).setAllowAutoWrapping(true)
+      label.foreground = JBColor(Gray._240, Gray._200)
+      return label
     }
   }
 
-  private class ReplacementBalloonPositionTracker(private val myProject: Project,
-                                                  private val myEditor: Editor,
-                                                  private val myRange: TextRange,
-                                                  private val myFindModel: FindModel) : PositionTracker<Balloon?>(
-    myEditor.contentComponent) {
+  private class BalloonPositionTracker(private val myProject: Project,
+                                       private val myEditor: Editor,
+                                       private val myRange: TextRange,
+                                       private val myBalloonText: String) : PositionTracker<Balloon?>(myEditor.contentComponent) {
     override fun recalculateLocation(balloon: Balloon): RelativePoint {
       val startOffset = myRange.startOffset
       val endOffset = myRange.endOffset
@@ -346,26 +351,22 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         component.addHierarchyListener(object : HierarchyListener {
           override fun hierarchyChanged(e: HierarchyEvent?) {
             if (component.isDisplayable) {
-              showBalloon(myProject, myEditor, myRange, myFindModel)
+              showBalloon(myProject, myEditor, myRange, myBalloonText)
               component.removeHierarchyListener(this)
             }
           }
         })
       }
       if (!insideVisibleArea(myEditor, myRange)) {
-        if (!balloon.isDisposed) {
-          Disposer.dispose(balloon)
-        }
-        val visibleAreaListener: VisibleAreaListener = object : VisibleAreaListener {
+        balloon.hide()
+        myEditor.scrollingModel.addVisibleAreaListener(object : VisibleAreaListener {
           override fun visibleAreaChanged(e: VisibleAreaEvent) {
             if (insideVisibleArea(myEditor, myRange)) {
-              showBalloon(myProject, myEditor, myRange, myFindModel)
-              val visibleAreaListener: VisibleAreaListener = this
-              myEditor.scrollingModel.removeVisibleAreaListener(visibleAreaListener)
+              showBalloon(myProject, myEditor, myRange, myBalloonText)
+              myEditor.scrollingModel.removeVisibleAreaListener(this)
             }
           }
-        }
-        myEditor.scrollingModel.addVisibleAreaListener(visibleAreaListener)
+        })
       }
       val startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset))
       val endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset))
@@ -403,13 +404,13 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
           highlighter.dispose()
         }
       }
-      val balloon = editor.getUserData(REPLACEMENT_BALLOON_KEY)
+      val balloon = editor.getUserData(PREVIEW_BALLOON_KEY)
       if (balloon != null && !balloon.isDisposed) {
         Disposer.dispose(balloon)
-        editor.putUserData(REPLACEMENT_BALLOON_KEY, null)
+        editor.putUserData(PREVIEW_BALLOON_KEY, null)
       }
-      val findModel = getReplacementModel(editor)
-      for (i in infos.indices.reversed()) { // finish with the first usage so that caret end up there
+      val findModel = getFindModel(editor)
+      for (i in infos.indices.reversed()) { // finish with the first usage so that caret ends up there
         val info = infos[i]
         val psiElement = info.element
         if (psiElement == null || !psiElement.isValid) continue
@@ -439,8 +440,24 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         else {
           editor.caretModel.moveToOffset(rangeToHighlight.endOffset)
         }
-        if (findModel != null && infos.size == 1 && infoRange != null && infoRange == rangeToHighlight) {
-          showBalloon(project, editor, infoRange, findModel)
+        if (infos.size == 1 && infoRange != null) {
+          val balloonText : String?
+          if (findModel != null) {
+            val replacementText =
+              FindManager.getInstance(project).getStringToReplace(editor.document.getText(rangeToHighlight), findModel, 
+                                                                  rangeToHighlight.startOffset, editor.document.text) ?: return
+            val previewText = createPreviewHtml(replacementText)
+            if (previewText != findModel.stringToReplace || Registry.`is`("ide.find.show.replacement.hint.for.simple.regexp")) {
+              balloonText = previewText
+            }
+            else {
+              balloonText = null
+            }
+          }
+          else {
+            balloonText = info.tooltipText
+          }
+          if (!balloonText.isNullOrEmpty()) showBalloon(project, editor, rangeToHighlight, balloonText)
         }
       }
       editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
@@ -475,27 +492,21 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       else elementRange.cutOut(infoRange)
     }
 
-    private val REPLACEMENT_BALLOON_KEY = Key.create<Balloon>("REPLACEMENT_BALLOON_KEY")
-    private fun showBalloon(project: Project, editor: Editor, range: TextRange, findModel: FindModel) {
+    private val PREVIEW_BALLOON_KEY = Key.create<Balloon>("PREVIEW_BALLOON_KEY")
+    private fun showBalloon(project: Project, editor: Editor, range: TextRange, balloonText: String) {
       ThreadingAssertions.assertEventDispatchThread()
       try {
-        val replacementPreviewText = FindManager.getInstance(project)
-                                       .getStringToReplace(editor.document.getText(range), findModel, range.startOffset,
-                                                           editor.document.text) ?: return
-        if (!Registry.`is`("ide.find.show.replacement.hint.for.simple.regexp") && replacementPreviewText == findModel.stringToReplace) {
-          return
-        }
-        val balloon = buildReplacementPreviewBalloon(replacementPreviewText)
+        val balloon = createPreviewBalloon(balloonText)
         EditorUtil.disposeWithEditor(editor, balloon)
-        balloon.show(ReplacementBalloonPositionTracker(project, editor, range, findModel), Balloon.Position.below)
-        editor.putUserData(REPLACEMENT_BALLOON_KEY, balloon)
+        balloon.show(BalloonPositionTracker(project, editor, range, balloonText), Balloon.Position.below)
+        editor.putUserData(PREVIEW_BALLOON_KEY, balloon)
       }
       catch (e: MalformedReplacementStringException) {
         //Not a problem, just don't show balloon in this case
       }
     }
 
-    private fun getReplacementModel(editor: Editor): FindModel? {
+    private fun getFindModel(editor: Editor): FindModel? {
       val panel = editor.getUserData(PREVIEW_EDITOR_FLAG)
       var searchPattern: Pattern? = null
       var replaceString: String? = null
@@ -551,8 +562,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
 
     @JvmStatic
-    fun buildReplacementPreviewBalloon(replacement: @NlsSafe String): Balloon {
-      return JBPopupFactory.getInstance().createBalloonBuilder(ReplacementView(replacement))
+    fun createPreviewBalloon(html: @NlsSafe String): Balloon {
+      return JBPopupFactory.getInstance().createBalloonBuilder(TextView(html))
         .setFadeoutTime(0)
         .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
         .setBorderColor(IdeTooltipManager.GRAPHITE_COLOR)
@@ -560,29 +571,28 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         .setHideOnClickOutside(false)
         .setHideOnKeyOutside(false)
         .setHideOnAction(false)
-        .setCloseButtonEnabled(true)
+        .setCloseButtonEnabled(false)
         .setHideOnFrameResize(false)
         .createBalloon()
     }
 
-    private fun buildReplacementPreviewLabel(replacement: @NlsSafe String): JLabel {
+    @JvmStatic
+    fun createPreviewHtml(text: @NlsSafe String): @NlsSafe String {
       val htmlToShow: String
-      if (replacement.isEmpty()) {
+      if (text.isEmpty()) {
         htmlToShow = HtmlBuilder()
           .append("<" + FindBundle.message("live.preview.empty.string") + ">")
           .wrapWithHtmlBody()
           .toString()
       }
       else {
-        val shortened = StringUtil.shortenTextWithEllipsis(replacement, 500, 0, true)
+        val shortened = StringUtil.shortenTextWithEllipsis(text, 500, 0, true)
         htmlToShow = HtmlBuilder()
           .append(shortened.replace("\t", "    "))
           .wrapWith("code").wrapWith("pre").wrapWith("body").wrapWith("html")
           .toString()
       }
-      val label: JLabel = JBLabel(htmlToShow).setAllowAutoWrapping(true)
-      label.foreground = JBColor(Gray._240, Gray._200)
-      return label
+      return htmlToShow
     }
 
     private fun insideVisibleArea(e: Editor, r: TextRange): Boolean {
