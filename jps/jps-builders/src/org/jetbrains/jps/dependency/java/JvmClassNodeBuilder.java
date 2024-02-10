@@ -8,7 +8,6 @@ import com.intellij.util.SmartList;
 import kotlinx.metadata.Attributes;
 import kotlinx.metadata.KmDeclarationContainer;
 import kotlinx.metadata.KmFunction;
-import kotlinx.metadata.KmValueParameter;
 import kotlinx.metadata.jvm.JvmExtensionsKt;
 import kotlinx.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
@@ -600,41 +599,29 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-          if (kmFunction != null) {
-            if (Attributes.isNullable(kmFunction.getReturnType())) {
-              annotations.add(KotlinMeta.KOTLIN_NULLABLE);
+          if (kmFunction != null && Attributes.isInline(kmFunction)) {
+            // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
+            try {
+              MessageDigest digest = MessageDigest.getInstance("MD5");
+              for (Object o : printer.getText()) {
+                digest.update(String.valueOf(o).getBytes(StandardCharsets.UTF_8));
+              }
+              byte[] digestBytes = digest.digest();
+              long[] hash = new long[digestBytes.length / 8];
+              for (int hi = 0; hi < hash.length; hi++) {
+                for (int i = 0; i < 8; i++) {
+                  hash[hi] = (hash[hi] << 8) | (digestBytes[hi * 8 + i] & 0xFF);
+                }
+              }
+              defaultValue.set(hash);
             }
-            int paramIndex = 0;
-            for (KmValueParameter parameter : kmFunction.getValueParameters()) {
-              if (Attributes.isNullable(parameter.getType())) {
-                paramAnnotations.add(new ParamAnnotation(paramIndex, KotlinMeta.KOTLIN_NULLABLE));
+            catch (NoSuchAlgorithmException e) {
+              LOG.info(e);
+              int hash = 0; // fallback logic
+              for (Object o : printer.getText()) {
+                hash = 31 * hash + o.hashCode();
               }
-              paramIndex++;
-            }
-            if (Attributes.isInline(kmFunction)) {
-              // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
-              try {
-                MessageDigest digest = MessageDigest.getInstance("MD5");
-                for (Object o : printer.getText()) {
-                  digest.update(String.valueOf(o).getBytes(StandardCharsets.UTF_8));
-                }
-                byte[] digestBytes = digest.digest();
-                long[] hash = new long[digestBytes.length / 8];
-                for (int hi = 0; hi < hash.length; hi++) {
-                  for (int i = 0; i < 8; i++) {
-                    hash[hi] = (hash[hi] << 8) | (digestBytes[hi * 8 + i] & 0xFF);
-                  }
-                }
-                defaultValue.set(hash);
-              }
-              catch (NoSuchAlgorithmException e) {
-                LOG.info(e);
-                int hash = 0; // fallback logic
-                for (Object o : printer.getText()) {
-                  hash = 31 * hash + o.hashCode();
-                }
-                defaultValue.set(hash);
-              }
+              defaultValue.set(hash);
             }
           }
           myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));

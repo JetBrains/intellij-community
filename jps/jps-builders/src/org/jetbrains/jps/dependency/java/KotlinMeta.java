@@ -1,7 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
-import kotlinx.metadata.KmDeclarationContainer;
+import kotlinx.metadata.*;
+import kotlinx.metadata.jvm.JvmExtensionsKt;
 import kotlinx.metadata.jvm.KotlinClassHeader;
 import kotlinx.metadata.jvm.KotlinClassMetadata;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,7 @@ import org.jetbrains.jps.dependency.impl.RW;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -21,8 +23,6 @@ import java.util.Objects;
  * The created annotation instance can be further introspected with <a href="https://github.com/JetBrains/kotlin/tree/master/libraries/kotlinx-metadata/jvm">kotlinx-metadata-jvm</a> library
  */
 public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff> {
-
-  public static final TypeRepr.ClassType KOTLIN_NULLABLE = new TypeRepr.ClassType("org/jetbrains/annotations/depgraph/KotlinNullable");
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
   private static final int[] EMPTY_INT_ARRAY = new int[0];
 
@@ -138,6 +138,16 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return myCachedMeta[0];
   }
 
+  public Iterable<KmProperty> getKmProperties() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container != null? container.getProperties() : Collections.emptyList();
+  }
+
+  public Iterable<KmFunction> getKmFunctions() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container != null? container.getFunctions() : Collections.emptyList();
+  }
+
   @Nullable
   public KmDeclarationContainer getDeclarationContainer() {
     KotlinClassMetadata clsMeta = getClassMetadata();
@@ -163,7 +173,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !dataChanged() && !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged();
+      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !functions().unchanged() && !properties().unchanged()/*&& !dataChanged()*/;
     }
 
     public boolean kindChanged() {
@@ -174,9 +184,9 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return !Arrays.equals(myPast.myVersion, myVersion);
     }
 
-    public boolean dataChanged() {
-      return !Arrays.equals(myPast.myData1, myData1) || !Arrays.equals(myPast.myData2, myData2);
-    }
+    //public boolean dataChanged() {
+    //  return !Arrays.equals(myPast.myData1, myData1) || !Arrays.equals(myPast.myData2, myData2);
+    //}
 
     public boolean packageChanged() {
       return !Objects.equals(myPast.myPackageName, myPackageName);
@@ -185,5 +195,79 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     public boolean extraChanged() {
       return myPast.myExtraInt != myExtraInt || !Objects.equals(myPast.myExtraString, myExtraString);
     }
+
+    public Specifier<KmFunction, KmFunctionsDiff> functions() {
+      return Difference.deepDiff(myPast.getKmFunctions(), getKmFunctions(),
+        (f1, f2) -> Objects.equals(JvmExtensionsKt.getSignature(f1), JvmExtensionsKt.getSignature(f2)),
+        f -> Objects.hashCode(JvmExtensionsKt.getSignature(f)),
+        KmFunctionsDiff::new
+      );
+    }
+
+    public Specifier<KmProperty, KmPropertiesDiff> properties() {
+      return Difference.deepDiff(myPast.getKmProperties(), getKmProperties(),
+        (p1, p2) -> Objects.equals(p1.getName(), p2.getName()),
+        p -> Objects.hashCode(p.getName()),
+        KmPropertiesDiff::new
+      );
+    }
+  }
+
+  public static final class KmFunctionsDiff implements Difference {
+    private final KmFunction past;
+    private final KmFunction now;
+
+    public KmFunctionsDiff(KmFunction past, KmFunction now) {
+      this.past = past;
+      this.now = now;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !becameNullable() && !argsBecameNotNull();
+    }
+
+    public boolean becameNullable() {
+      return !Attributes.isNullable(past.getReturnType()) && Attributes.isNullable(now.getReturnType());
+    }
+
+    public boolean argsBecameNotNull() {
+      var nowIt = now.getValueParameters().iterator();
+      for (KmValueParameter pastParam : past.getValueParameters()) {
+        KmValueParameter nowParam = nowIt.next();
+        if (Attributes.isNullable(pastParam.getType()) && !Attributes.isNullable(nowParam.getType())) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+
+  public static final class KmPropertiesDiff implements Difference {
+    private final KmProperty past;
+    private final KmProperty now;
+
+    public KmPropertiesDiff(KmProperty past, KmProperty now) {
+      this.past = past;
+      this.now = now;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !nullabilityChanged();
+    }
+
+    public boolean nullabilityChanged() {
+      return !Objects.equals(past.getReturnType(), now.getReturnType());
+    }
+
+    public boolean becameNullable() {
+      return !Attributes.isNullable(past.getReturnType()) && Attributes.isNullable(now.getReturnType());
+    }
+
+    public boolean becameNotNull() {
+      return Attributes.isNullable(past.getReturnType()) && !Attributes.isNullable(now.getReturnType());
+    }
+
   }
 }

@@ -124,6 +124,40 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
     }
 
+    for (Difference.Change<KotlinMeta, KotlinMeta.Diff> metaChange : diff.metadata(KotlinMeta.class).changed()) {
+      KotlinMeta.Diff metaDiff = metaChange.getDiff();
+
+      for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
+        JvmMethod changedMethod = getJvmMethod(changedClass, JvmExtensionsKt.getSignature(funChange.getPast()));
+        if (changedMethod != null && !changedMethod.getFlags().isPrivate()) {
+          KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
+          if (funDiff.becameNullable() || funDiff.argsBecameNotNull()) {
+             debug("One of method's parameters or method's return value has become non-nullable; affecting method usages ", changedMethod);
+             affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), changedMethod));
+          }
+        }
+      }
+
+      for (Difference.Change<KmProperty, KotlinMeta.KmPropertiesDiff> propChange : metaDiff.properties().changed()) {
+        KmProperty prop = propChange.getPast();
+        KotlinMeta.KmPropertiesDiff propDiff = propChange.getDiff();
+        if (propDiff.becameNullable()) {
+          JvmMethod getter = getJvmMethod(changedClass, JvmExtensionsKt.getGetterSignature(prop));
+          if (getter != null && !getter.getFlags().isPrivate()) {
+            debug("A property has become nullable; affecting getter usages ", getter);
+            affectMemberUsages(context, changedClass.getReferenceID(), getter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), getter));
+          }
+        }
+        else if (propDiff.becameNotNull()) {
+          JvmMethod setter = getJvmMethod(changedClass, JvmExtensionsKt.getSetterSignature(prop));
+          if (setter != null && !setter.getFlags().isPrivate()) {
+            debug("A property has become not-null; affecting setter usages ", setter);
+            affectMemberUsages(context, changedClass.getReferenceID(), setter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), setter));
+          }
+        }
+      }
+    }
+
     return true;
   }
 
@@ -156,19 +190,9 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     JvmMethod changedMethod = methodChange.getPast();
     JvmNodeReferenceID clsId = changedClass.getReferenceID();
 
-    Iterable<JvmNodeReferenceID> propagated = lazy(() -> future.collectSubclassesWithoutMethod(clsId, changedMethod));
-
-    if (
-      find(methodChange.getDiff().paramAnnotations().removed(), annot -> KotlinMeta.KOTLIN_NULLABLE.equals(annot.type)) != null ||
-      find(methodChange.getDiff().annotations().added(), annot -> KotlinMeta.KOTLIN_NULLABLE.equals(annot)) != null) {
-
-      debug("One of method's parameters or method's return value has become non-nullable; affecting method usages ", changedMethod);
-      affectMemberUsages(context, clsId, changedMethod, propagated);
-    }
-
     if (isKotlinNode(changedClass) && methodChange.getDiff().valueChanged()) {
       debug("Method was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", changedMethod);
-      affectMemberUsages(context, clsId, changedMethod, propagated);
+      affectMemberUsages(context, clsId, changedMethod, future.collectSubclassesWithoutMethod(clsId, changedMethod));
     }
 
     return true;
@@ -277,9 +301,13 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return find(allKmFunctions(cls), f -> methodSignature.equals(JvmExtensionsKt.getSignature(f)));
   }
 
+  private static @Nullable JvmMethod getJvmMethod(JvmClass cls, JvmMethodSignature sig) {
+    return sig != null? find(cls.getMethods(), m -> Objects.equals(m.getName(), sig.getName()) && Objects.equals(m.getDescriptor(), sig.getDescriptor())) : null;
+  }
+
   private static Iterable<KmFunction> allKmFunctions(Node<?, ?> node) {
-    KmDeclarationContainer container = getDeclarationContainer(node);
-    return container != null? container.getFunctions() : Collections.emptyList();
+    KotlinMeta meta = getKotlinMeta(node);
+    return meta != null? meta.getKmFunctions() : Collections.emptyList();
   }
 
   private static KmDeclarationContainer getDeclarationContainer(Node<?, ?> node) {

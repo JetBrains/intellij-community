@@ -1,10 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.diff;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.impl.Containers;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
@@ -119,6 +123,47 @@ public interface Difference {
     };
   }
 
+  static <T, D extends Difference> Specifier<T, D> deepDiff(@Nullable Iterable<T> past, @Nullable Iterable<T> now, BiPredicate<? super T, ? super T> isSameImpl, Function<? super T, Integer> diffHashImpl, BiFunction<? super T, ? super T, ? extends D> diffImpl) {
+    Iterators.Function<T, DiffCapable.Adapter<T, D>> mapper = obj -> DiffCapable.wrap(obj, isSameImpl, diffHashImpl, diffImpl);
+    Specifier<DiffCapable.Adapter<T, D>, D> adapterDiff = deepDiff(map(past, mapper), map(now, mapper));
+    return new Specifier<>() {
+      @Override
+      public Iterable<T> added() {
+        return map(adapterDiff.added(), DiffCapable.Adapter::getValue);
+      }
+
+      @Override
+      public Iterable<T> removed() {
+        return map(adapterDiff.removed(), DiffCapable.Adapter::getValue);
+      }
+
+      @Override
+      public Iterable<Change<T, D>> changed() {
+        return map(adapterDiff.changed(), ch -> new Change<T, D>() {
+          @Override
+          public T getPast() {
+            return ch.getPast().getValue();
+          }
+
+          @Override
+          public T getNow() {
+            return ch.getNow().getValue();
+          }
+
+          @Override
+          public D getDiff() {
+            return ch.getDiff();
+          }
+        });
+      }
+
+      @Override
+      public boolean unchanged() {
+        return adapterDiff.unchanged();
+      }
+    };
+  }
+  
   static <T extends DiffCapable<T, D>, D extends Difference> Specifier<T, D> deepDiff(@Nullable Iterable<T> past, @Nullable Iterable<T> now) {
     if (isEmpty(past)) {
       if (isEmpty(now)) {
