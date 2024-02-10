@@ -31,6 +31,7 @@ import org.gradle.language.java.artifact.JavadocArtifact;
 import org.gradle.util.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.FileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.*;
@@ -38,13 +39,17 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.ModuleComponentIdentifierImpl;
+import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
 
 /**
  * @author Vladislav.Soroka
@@ -288,13 +293,13 @@ public final class DependencyResolverImpl implements DependencyResolver {
           libraryDependency.setFile(artifactFile);
           ComponentArtifactsResult artifactsResult = auxiliaryArtifactsMap.get(artifact.getId().getComponentIdentifier());
           if (artifactsResult != null) {
-            Set<ArtifactResult> sourceArtifactResults = artifactsResult.getArtifacts(SourcesArtifact.class);
-            File sourceFile = findArtifactComponentFile(artifact, sourceArtifactResults);
-            if (sourceFile != null) {
-              libraryDependency.setSource(sourceFile);
+            Set<File> sourcesArtifactFiles = getAuxiliaryArtifactFiles(artifactsResult, SourcesArtifact.class);
+            File sourcesFile = chooseAuxiliaryArtifactFile(artifactFile, sourcesArtifactFiles);
+            if (sourcesFile != null) {
+              libraryDependency.setSource(sourcesFile);
             }
-            Set<ArtifactResult> javadocArtifactResults = artifactsResult.getArtifacts(JavadocArtifact.class);
-            File javadocFile = findArtifactComponentFile(artifact, javadocArtifactResults);
+            Set<File> javadocArtifactFiles = getAuxiliaryArtifactFiles(artifactsResult, JavadocArtifact.class);
+            File javadocFile = chooseAuxiliaryArtifactFile(artifactFile, javadocArtifactFiles);
             if (javadocFile != null) {
               libraryDependency.setJavadoc(javadocFile);
             }
@@ -516,47 +521,72 @@ public final class DependencyResolverImpl implements DependencyResolver {
     }
   }
 
-  private static @Nullable File findArtifactComponentFile(@NotNull ResolvedArtifact artifact,
-                                                          @NotNull Set<ArtifactResult> artifactResults) {
-    File fallback = null;
-    String exactArtifactName = artifact.getName();
-    for (ArtifactResult artifactResult : artifactResults) {
-      if (!(artifactResult instanceof ResolvedArtifactResult)) {
-        continue;
-      }
-      ResolvedArtifactResult resolvedArtifactResult = (ResolvedArtifactResult)artifactResult;
-      if (isArtifactComponent(exactArtifactName, resolvedArtifactResult)) {
-        return resolvedArtifactResult.getFile();
-      }
-      fallback = resolvedArtifactResult.getFile();
-    }
-    return fallback;
+  private static @NotNull Set<File> getAuxiliaryArtifactFiles(@NotNull ComponentArtifactsResult artifactsResult,
+                                                              @NotNull Class<? extends Artifact> artifactType) {
+    return artifactsResult.getArtifacts(artifactType).stream()
+      .filter(ResolvedArtifactResult.class::isInstance)
+      .map(ResolvedArtifactResult.class::cast)
+      .map(ResolvedArtifactResult::getFile)
+      .collect(toSet());
   }
 
-  private static boolean isArtifactComponent(@NotNull String exactArtifactName, @NotNull ResolvedArtifactResult artifactResult) {
-    File artifactFile = artifactResult.getFile();
-    String artifactResultFile = artifactFile.getName();
-    if (exactArtifactName.equals(getFilenameWithoutExtensionAndClassifier(artifactResultFile))) {
-      return true;
+  @VisibleForTesting
+  static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
+    Iterator<File> auxiliariesIterator = auxiliaries.iterator();
+    if (!auxiliariesIterator.hasNext()) {
+      return null;
     }
-    String displayName = artifactResult.getId()
-      .getComponentIdentifier()
-      .getDisplayName();
-    if (displayName.contains(":")) {
-      String[] mayBeArtifactCoordinates = displayName.split(":");
-      if (mayBeArtifactCoordinates.length == 3) {
-        return exactArtifactName.equals(mayBeArtifactCoordinates[1]);
+
+    File firstAuxiliary = auxiliariesIterator.next();
+    if (!auxiliariesIterator.hasNext()) {
+      return firstAuxiliary;
+    }
+
+    // If there are multiple auxiliary artifacts for the same `ComponentIdentifier`, we have to choose the "best match" based on file names.
+    // For context, see: https://youtrack.jetbrains.com/issue/IDEA-332969
+    // 1. Find the common suffix of every auxiliary artifact (e.g. "-sources.jar" or ".src.jar") and ignore it going forward
+    // 2. Find the common suffix of the main artifact with the auxiliary artifacts (e.g. ".jar") and ignore it going forward
+    // 3. Filter the auxiliary artifacts, keeping only those that have the longest common prefix with the main artifact (not counting any
+    //    punctuation or whitespace at the end of the common prefix)
+    // 4. Deterministically choose from the remaining auxiliary artifacts, preferring the shortest overall file name (the longer ones likely
+    //    belong to some different main artifact that also has a longer file name)
+
+    String mainName = main.getName();
+    String firstAuxiliaryName = firstAuxiliary.getName();
+
+    int commonSuffixOfAuxiliaries = firstAuxiliaryName.length();
+    do {
+      File nextAuxiliary = auxiliariesIterator.next();
+      int commonSuffix = StringUtils.commonSuffixLength(firstAuxiliaryName, nextAuxiliary.getName());
+      if (commonSuffix < commonSuffixOfAuxiliaries) {
+        commonSuffixOfAuxiliaries = commonSuffix;
+      }
+    } while (auxiliariesIterator.hasNext());
+
+    int commonSuffixOfMainAndAuxiliaries =
+      Math.min(commonSuffixOfAuxiliaries, StringUtils.commonSuffixLength(mainName, firstAuxiliaryName));
+    String mainSuffixlessName = mainName.substring(0, mainName.length() - commonSuffixOfMainAndAuxiliaries);
+
+    Pattern commonPrefixExcessPattern = Pattern.compile("[\\p{Punct}\\s]+$");
+    int commonPrefixOfMainAndShortlistedAuxiliaries = 0;
+    TreeMap<String, File> shortlistedAuxiliariesBySuffixlessName =
+      new TreeMap<>(Comparator.comparingInt(String::length).thenComparing(String::compareTo));
+    for (File auxiliary : auxiliaries) {
+      String auxiliaryName = auxiliary.getName();
+      String auxiliarySuffixlessName = auxiliaryName.substring(0, auxiliaryName.length() - commonSuffixOfAuxiliaries);
+      int commonPrefixNaive = StringUtils.commonPrefixLength(mainSuffixlessName, auxiliarySuffixlessName);
+      Matcher commonPrefixExcessMatcher = commonPrefixExcessPattern.matcher(auxiliarySuffixlessName).region(0, commonPrefixNaive);
+      int commonPrefix = commonPrefixExcessMatcher.find() ? commonPrefixExcessMatcher.start() : commonPrefixNaive;
+      if (commonPrefix >= commonPrefixOfMainAndShortlistedAuxiliaries) {
+        if (commonPrefix > commonPrefixOfMainAndShortlistedAuxiliaries) {
+          commonPrefixOfMainAndShortlistedAuxiliaries = commonPrefix;
+          shortlistedAuxiliariesBySuffixlessName.clear();
+        }
+        shortlistedAuxiliariesBySuffixlessName.put(auxiliarySuffixlessName, auxiliary);
       }
     }
-    return false;
-  }
 
-  private static @NotNull String getFilenameWithoutExtensionAndClassifier(@NotNull String fileWithExtensionAndClassifier) {
-    String[] particles = fileWithExtensionAndClassifier.split("\\.");
-    if (particles.length > 0) {
-      return particles[0];
-    }
-    return fileWithExtensionAndClassifier;
+    return shortlistedAuxiliariesBySuffixlessName.firstEntry().getValue();
   }
 
   private void addAdditionalProvidedDependencies(@NotNull SourceSet sourceSet, @NotNull Collection<ExternalDependency> result) {
