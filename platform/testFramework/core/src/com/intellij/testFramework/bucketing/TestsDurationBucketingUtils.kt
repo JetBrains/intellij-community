@@ -224,9 +224,11 @@ internal object TestsDurationBucketingUtils {
 
   private fun getGroupsToLoad(filter: TestCaseLoader.TestClassesFilterArgs): List<String>? {
     if (!filter.patterns.isNullOrEmpty()) return null
-    if (filter.testGroupNames.contains("ALL")) return null
-    if (filter.testGroupNames.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED)) return null
-    return filter.testGroupNames
+    val testGroupNames = filter.testGroupNames
+    if (testGroupNames == null) return null
+    if (testGroupNames.contains("ALL")) return null
+    if (testGroupNames.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED)) return null
+    return testGroupNames
   }
 
   private fun <V> Map.Entry<String, V>.packageName(): String {
