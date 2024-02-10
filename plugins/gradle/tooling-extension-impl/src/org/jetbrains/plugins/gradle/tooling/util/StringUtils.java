@@ -49,4 +49,32 @@ public final class StringUtils {
       }
     }
   }
+
+  /**
+   * Same functionality as `com.intellij.openapi.util.text.StringUtil#commonPrefixLength`
+   */
+  public static int commonPrefixLength(CharSequence s1, CharSequence s2) {
+    int maxCommonLength = Math.min(s1.length(), s2.length());
+    for (int i = 0; i < maxCommonLength; ++i) {
+      if (s1.charAt(i) != s2.charAt(i)) {
+        return i;
+      }
+    }
+    return maxCommonLength;
+  }
+
+  /**
+   * Same functionality as `com.intellij.openapi.util.text.StringUtil#commonSuffixLength`
+   */
+  public static int commonSuffixLength(CharSequence s1, CharSequence s2) {
+    int s1Length = s1.length();
+    int s2Length = s2.length();
+    int maxCommonLength = Math.min(s1Length, s2Length);
+    for (int i = 0; i < maxCommonLength; ++i) {
+      if (s1.charAt(s1Length - 1 - i) != s2.charAt(s2Length - 1 - i)) {
+        return i;
+      }
+    }
+    return maxCommonLength;
+  }
 }
