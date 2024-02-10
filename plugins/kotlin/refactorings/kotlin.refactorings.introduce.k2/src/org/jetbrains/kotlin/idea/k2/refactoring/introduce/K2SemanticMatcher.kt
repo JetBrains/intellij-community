@@ -488,6 +488,10 @@ object K2SemanticMatcher {
 
             if (!context.areSymbolsEqualOrAssociated(targetCall.symbol, patternCall.symbol)) return false
 
+            for ((targetTypeArgument, patternTypeArgument) in targetCall.getTypeArguments().zipWithNulls(patternCall.getTypeArguments())) {
+                if (!context.areTypesEqualOrAssociated(targetTypeArgument, patternTypeArgument)) return false
+            }
+
             if (!areReceiversMatching(targetAppliedSymbol.dispatchReceiver, patternAppliedSymbol.dispatchReceiver, context)) return false
             if (!areReceiversMatching(targetAppliedSymbol.extensionReceiver, patternAppliedSymbol.extensionReceiver, context)) return false
         }
@@ -573,6 +577,9 @@ object K2SemanticMatcher {
 
         null -> patternReceiver == null
     }
+
+    context(KtAnalysisSession)
+    private fun KtCallableMemberCall<*, *>.getTypeArguments(): List<KtType?> = symbol.typeParameters.map { typeArgumentsMapping[it] }
 
     context(KtAnalysisSession)
     private fun KtExplicitReceiverValue.getSymbolForThisExpressionOrNull(): KtSymbol? =

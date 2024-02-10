@@ -335,6 +335,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     runTest("testData/unifier/equivalence/expressions/calls/implicitThis.kt");
                 }
 
+                @TestMetadata("implicitTypeArguments.kt")
+                public void testImplicitTypeArguments() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/calls/implicitTypeArguments.kt");
+                }
+
                 @TestMetadata("missingArguments.kt")
                 public void testMissingArguments() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/calls/missingArguments.kt");

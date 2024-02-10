@@ -335,6 +335,11 @@ public abstract class K2PsiUnifierTestGenerated extends AbstractK2PsiUnifierTest
                     runTest("../../idea/tests/testData/unifier/equivalence/expressions/calls/implicitThis.kt");
                 }
 
+                @TestMetadata("implicitTypeArguments.kt")
+                public void testImplicitTypeArguments() throws Exception {
+                    runTest("../../idea/tests/testData/unifier/equivalence/expressions/calls/implicitTypeArguments.kt");
+                }
+
                 @TestMetadata("missingArguments.kt")
                 public void testMissingArguments() throws Exception {
                     runTest("../../idea/tests/testData/unifier/equivalence/expressions/calls/missingArguments.kt");
