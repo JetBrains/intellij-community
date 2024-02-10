@@ -10,5 +10,6 @@
                         serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl"/>
 
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
+    <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
   </extensions>
 </idea-plugin>

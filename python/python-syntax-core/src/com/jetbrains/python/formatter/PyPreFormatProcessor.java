@@ -11,10 +11,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstRecursiveElementVisitor;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyRecursiveElementVisitor;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.PyAstElementGenerator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public final class PyPreFormatProcessor implements PreFormatProcessor {
 
     if (!psiElement.getLanguage().is(PythonLanguage.getInstance())) return range;
 
-    PyPsiUtils.assertValid(psiElement);
+    PyPsiUtilsCore.assertValid(psiElement);
 
     PsiFile file = psiElement.isValid() ? psiElement.getContainingFile() : null;
     if (file == null) return range;
@@ -37,7 +37,7 @@ public final class PyPreFormatProcessor implements PreFormatProcessor {
     return new PyCommentFormatter(file).process(psiElement, range);
   }
 
-  public static class PyCommentFormatter extends PyRecursiveElementVisitor {
+  public static class PyCommentFormatter extends PyAstRecursiveElementVisitor {
     private final Project myProject;
     private final PyCodeStyleSettings myPyCodeStyleSettings;
     private final List<Couple<PsiComment>> myCommentReplacements = new ArrayList<>();
@@ -94,7 +94,7 @@ public final class PyPreFormatProcessor implements PreFormatProcessor {
         }
         if (!newText.equals(origText)) {
           myDelta += newText.length() - origText.length();
-          final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
+          final PyAstElementGenerator elementGenerator = PyAstElementGenerator.getInstance(myProject);
           final PsiComment newComment = elementGenerator.createFromText(LanguageLevel.forElement(comment), PsiComment.class, newText);
           myCommentReplacements.add(Couple.of(comment, newComment));
         }
