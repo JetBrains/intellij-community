@@ -2,6 +2,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.JavaUiBundle;
@@ -24,10 +25,7 @@ import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -89,6 +87,7 @@ public final class JarRepositoryManager {
   static final ExecutorService DOWNLOADER_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor("RemoteLibraryDownloader",
                                                                                                           ProcessIOExecutorService.INSTANCE,
                                                                                                           4);
+  private static final Map<Object, Promise> PENDING_DOWNLOADER_JOBS = ConcurrentCollectionFactory.createConcurrentMap();
 
   // used in integration tests
   private static final boolean DO_REFRESH = SystemProperties.getBooleanProperty("idea.do.refresh.after.jps.library.downloaded", true);
@@ -258,7 +257,8 @@ public final class JarRepositoryManager {
                                                                @Nullable List<RemoteRepositoryDescription> repos,
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = selectRemoteRepositories(project, desc, repos);
-    return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
+    return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo),
+                               Trinity.create(desc, artifactKinds, effectiveRepos));
   }
 
   @Nullable
@@ -348,7 +348,7 @@ public final class JarRepositoryManager {
                                                                  @NotNull RepositoryLibraryDescription libraryDescription,
                                                                  @NotNull List<RemoteRepositoryDescription> repositories) {
     List<RemoteRepositoryDescription> repos = selectRemoteRepositories(project, null, repositories).stream().toList();
-    return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos));
+    return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos), libraryDescription);
   }
 
   @Nullable
@@ -507,31 +507,43 @@ public final class JarRepositoryManager {
   }
 
   @NotNull
-  public static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job) {
-    ModalityState startModality = ModalityState.defaultModalityState();
-    AsyncPromise<T> promise = new AsyncPromise<>();
-    DOWNLOADER_EXECUTOR.execute(() -> {
-      if (promise.isCancelled()) {
-        return;
-      }
+  public static <T> Promise<T> submitBackgroundJob(@NotNull Function<? super ProgressIndicator, ? extends T> job, @NotNull Object equality) {
+    Promise promise = PENDING_DOWNLOADER_JOBS.computeIfAbsent(equality, equality1 -> {
+      ModalityState startModality = ModalityState.defaultModalityState();
+      AsyncPromise<T> promise1 = new AsyncPromise<>();
+      DOWNLOADER_EXECUTOR.execute(() -> {
+        try {
+          if (promise1.isCancelled()) {
+            return;
+          }
 
-      try {
-        ourTasksInProgress.incrementAndGet();
-        final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
-        T result = ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
-        promise.setResult(result);
-      }
-      catch (ProcessCanceledException ignored) {
-        promise.cancel();
-      }
-      catch (Throwable e) {
-        LOG.info(e);
-        promise.setError(e);
-      }
-      finally {
-        ourTasksInProgress.decrementAndGet();
-      }
+          try {
+            ourTasksInProgress.incrementAndGet();
+            final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
+            T result = ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
+            promise1.setResult(result);
+          }
+          catch (ProcessCanceledException ignored) {
+            promise1.cancel();
+          }
+          catch (Throwable e) {
+            LOG.info(e);
+            promise1.setError(e);
+          }
+          finally {
+            ourTasksInProgress.decrementAndGet();
+          }
+        }
+        finally {
+          PENDING_DOWNLOADER_JOBS.remove(equality1);
+        }
+      });
+      return promise1;
     });
+    if (promise.isSucceeded()) {
+      PENDING_DOWNLOADER_JOBS.remove(equality, promise);
+    }
+    //noinspection unchecked
     return promise;
   }
 
