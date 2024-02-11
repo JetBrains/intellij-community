@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -368,7 +367,7 @@ private suspend fun restoreEditors(project: Project, fileEditorManager: FileEdit
 
     val (editorComponent, editorState) = fileEditorManager.init()
     if (editorState == null) {
-      service<StartUpPerformanceService>().editorRestoringTillHighlighted()
+      serviceAsync<StartUpPerformanceService>().editorRestoringTillHighlighted()
       return@coroutineScope
     }
 
