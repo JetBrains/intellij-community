@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.lsWidget.impl
+package com.intellij.platform.lang.lsWidget.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
@@ -13,9 +13,9 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
-import com.intellij.platform.lsWidget.LanguageServicePopupSection.ForCurrentFile
-import com.intellij.platform.lsWidget.LanguageServiceWidgetContext
-import com.intellij.platform.lsWidget.LanguageServiceWidgetItemsProvider
+import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
+import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetContext
+import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
 import com.intellij.ui.LayeredIcon
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon

@@ -1387,7 +1387,7 @@
     <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory"
                             order="after InsertOverwrite"/>
     <statusBarWidgetFactory id="LanguageServiceStatusBarWidget"
-                            implementation="com.intellij.platform.lsWidget.impl.LanguageServiceWidgetFactory"
+                            implementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetFactory"
                             order="after CodeStyleStatusBarWidget, before ReadOnlyAttribute"/>
     <registryKey key="language.service.status.bar.widget"
                  description="Show Language Services status bar widget"
