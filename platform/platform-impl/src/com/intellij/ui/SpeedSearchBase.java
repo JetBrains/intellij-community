@@ -27,6 +27,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchActivator;
+import com.intellij.ui.speedSearch.SpeedSearchInputMethodRequests;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -218,93 +219,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return true;
   }
 
-  private class MyInputMethodRequests implements InputMethodRequests {
-    private void ensurePopupIsShown() {
-      if (mySearchPopup == null) {
-        showPopup();
-      }
-    }
-
-    private InputMethodRequests getDelegate() {
-      JTextField field = getSearchField();
-      if (field == null) {
-        return null;
-      } else {
-        return field.getInputMethodRequests();
-      }
-    }
-
-    @Override
-    public Rectangle getTextLocation(TextHitInfo offset) {
-      InputMethodRequests delegate = getDelegate();
-      if (delegate == null) {
-        return new Rectangle();
-      } else {
-        return delegate.getTextLocation(offset);
-      }
-    }
-
-    @Nullable
-    @Override
-    public TextHitInfo getLocationOffset(int x, int y) {
-      InputMethodRequests delegate = getDelegate();
-      if (delegate == null) {
-        return null;
-      } else {
-        return delegate.getLocationOffset(x, y);
-      }
-    }
-
-    @Override
-    public int getInsertPositionOffset() {
-      InputMethodRequests delegate = getDelegate();
-      if (delegate == null) {
-        return 0;
-      } else {
-        return delegate.getInsertPositionOffset();
-      }
-    }
-
-    @Override
-    public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
-      ensurePopupIsShown();
-      InputMethodRequests delegate = getDelegate();
-      assert delegate != null;
-      return delegate.getCommittedText(beginIndex, endIndex, attributes);
-    }
-
-    @Override
-    public int getCommittedTextLength() {
-      ensurePopupIsShown();
-      InputMethodRequests delegate = getDelegate();
-      assert delegate != null;
-      return getDelegate().getCommittedTextLength();
-    }
-
-    @Nullable
-    @Override
-    public AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
-      InputMethodRequests delegate = getDelegate();
-      if (delegate == null) {
-        return null;
-      } else {
-        return delegate.cancelLatestCommittedText(attributes);
-      }
-    }
-
-    @Nullable
-    @Override
-    public AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
-      InputMethodRequests delegate = getDelegate();
-      if (delegate == null) {
-        return null;
-      } else {
-        return delegate.getSelectedText(attributes);
-      }
-    }
-  }
-
-  private MyInputMethodRequests myInputMethodRequests;
+  private InputMethodRequests myInputMethodRequests;
 
   @Override
   public InputMethodRequests getInputMethodRequests() {
@@ -313,7 +228,24 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     if (myInputMethodRequests == null) {
-      myInputMethodRequests = new MyInputMethodRequests();
+      myInputMethodRequests = new SpeedSearchInputMethodRequests() {
+        @Override
+        protected void ensurePopupIsShown() {
+          if (mySearchPopup == null) {
+            showPopup();
+          }
+        }
+
+        @Override
+        protected InputMethodRequests getDelegate() {
+          JTextField field = getSearchField();
+          if (field == null) {
+            return null;
+          } else {
+            return field.getInputMethodRequests();
+          }
+        }
+      };
     }
 
     return myInputMethodRequests;

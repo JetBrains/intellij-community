@@ -16,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.List;
 
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
@@ -94,7 +91,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
       }
     }
 
-    if (e instanceof KeyEvent || e instanceof MouseEvent) {
+    if (e instanceof KeyEvent || e instanceof MouseEvent || e instanceof InputMethodEvent) {
       for (int i = myDispatchStack.size() - 1; i >= 0 && i < myDispatchStack.size(); i--) {
         final boolean dispatched = myDispatchStack.get(i).dispatch(e);
         if (dispatched) return true;

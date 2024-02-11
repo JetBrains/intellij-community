@@ -44,6 +44,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
+import java.awt.im.InputMethodRequests;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
@@ -263,6 +264,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
     myList = new MyList();
     myList.setVisibleRowCount(DEFAULT_MAX_ROW_COUNT);
+    getSpeedSearch().installSupplyTo(myList, false);
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
