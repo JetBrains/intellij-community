@@ -48,7 +48,12 @@ cwd = os.getcwd()
 run_xml = os.getenv('PYCHARM_RUN_COVERAGE_XML')
 argv = ["xml", "-o", coverage_file + ".xml", "--ignore-errors"]
 combine_argv = ["combine"]
-rcfiles = [cwd + "/.coveragerc", cwd + "/pyproject.toml", cwd + "/setup.cfg"]
+rcfiles = [
+    cwd + "/.coveragerc",
+    cwd + "/setup.cfg",
+    cwd + "/tox.ini",
+    cwd + "/pyproject.toml",
+]
 for rcfile in rcfiles:
     if os.path.exists(rcfile):
         print("Loading rcfile: %s\n" % rcfile)
