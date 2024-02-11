@@ -6,13 +6,23 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.psi.PsiCodeBlock
+import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiJavaToken
 import com.intellij.util.ProcessingContext
 
 class JavaLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
-           psiElement().inside(psiElement(PsiCodeBlock::class.java)),
+           psiElement()
+             .withSuperParent(2, PsiExpressionStatement::class.java)
+             .afterLeaf(StandardPatterns.or(
+               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.SEMICOLON),
+               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.COLON),
+               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.LBRACE),
+               psiElement(PsiJavaToken::class.java).withElementType(JavaTokenType.ARROW),
+             )),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val module = ModuleUtil.findModuleForFile(parameters.originalFile)
