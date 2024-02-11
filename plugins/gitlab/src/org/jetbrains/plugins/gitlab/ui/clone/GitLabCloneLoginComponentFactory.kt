@@ -50,7 +50,7 @@ internal object GitLabCloneLoginComponentFactory {
       cs,
       serverFieldDisabled = false,
       tokenNote = CollaborationToolsBundle.message("clone.dialog.insufficient.scopes", GitLabSecurityUtil.MASTER_SCOPES),
-      errorPresenter = GitLabLoginErrorStatusPresenter(),
+      errorPresenter = GitLabLoginErrorStatusPresenter(cs, loginModel),
       footer = {
         row("") {
           cell(loginButton)

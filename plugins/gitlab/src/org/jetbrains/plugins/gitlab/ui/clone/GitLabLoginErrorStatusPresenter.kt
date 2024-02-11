@@ -5,11 +5,18 @@ import com.intellij.collaboration.auth.ui.login.LoginException
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
+import com.intellij.collaboration.ui.util.swingAction
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.net.ConnectException
 import javax.swing.Action
 
-internal class GitLabLoginErrorStatusPresenter : ErrorStatusPresenter<Throwable> {
+internal class GitLabLoginErrorStatusPresenter(
+  private val cs: CoroutineScope,
+  private val model: GitLabTokenLoginPanelModel,
+) : ErrorStatusPresenter<Throwable> {
   override fun getErrorTitle(error: Throwable): String = CollaborationToolsBundle.message("clone.dialog.login.failed")
 
   override fun getErrorDescription(error: Throwable): String = when (error) {
@@ -23,5 +30,13 @@ internal class GitLabLoginErrorStatusPresenter : ErrorStatusPresenter<Throwable>
     else -> ExceptionUtil.getPresentableMessage(error)
   }
 
-  override fun getErrorAction(error: Throwable): Action? = null
+  override fun getErrorAction(error: Throwable): Action? = when (error) {
+    is LoginException.UnsupportedServerVersion,
+    is LoginException.InvalidTokenOrUnsupportedServerVersion -> swingAction(CollaborationToolsBundle.message("login.via.git")) {
+      cs.launch {
+        model.tryGitAuthorization()
+      }
+    }
+    else -> null
+  }
 }

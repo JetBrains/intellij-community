@@ -11,6 +11,7 @@ import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.asSafely
 import com.intellij.util.ui.UIUtil
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
+import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.GitLabMergeRequestCreateComponentFactory
@@ -121,14 +123,14 @@ internal class GitLabReviewTabComponentFactory(
           if (account == null) {
             val (newAccount, token) = GitLabLoginUtil.logInViaToken(project, selectors, req.repo.repository.serverPath) { server, name ->
               GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
-            } ?: return@collect
+            }.asSafely<LoginResult.Success>() ?: return@collect
             req.login(newAccount, token)
           }
           else {
-            val token = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
+            val loginResult = GitLabLoginUtil.updateToken(project, selectors, account) { server, name ->
               GitLabLoginUtil.isAccountUnique(req.accounts, server, name)
-            } ?: return@collect
-            req.login(account, token)
+            }.asSafely<LoginResult.Success>() ?: return@collect
+            req.login(account, loginResult.token)
           }
         }
       }

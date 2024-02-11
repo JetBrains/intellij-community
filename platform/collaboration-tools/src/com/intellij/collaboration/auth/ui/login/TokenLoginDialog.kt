@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -20,6 +21,7 @@ class TokenLoginDialog @JvmOverloads constructor(
   project: Project?, parent: Component?,
   private val model: LoginModel,
   @NlsContexts.DialogTitle title: String = CollaborationToolsBundle.message("login.dialog.title"),
+  private val userCustomExitSignal: Flow<Unit>? = null,
   private val centerPanelSupplier: CoroutineScope.() -> DialogPanel
 ) : DialogWrapper(project, parent, false, IdeModalityType.IDE) {
 
@@ -37,6 +39,12 @@ class TokenLoginDialog @JvmOverloads constructor(
         if (state is LoginModel.LoginState.Failed) startTrackingValidation()
 
         if (state is LoginModel.LoginState.Connected) close(OK_EXIT_CODE)
+      }
+    }
+
+    uiScope.launch {
+      userCustomExitSignal?.collectLatest {
+        close(NEXT_USER_EXIT_CODE)
       }
     }
   }
