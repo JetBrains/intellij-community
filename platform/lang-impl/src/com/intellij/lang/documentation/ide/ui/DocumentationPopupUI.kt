@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.emitAll
 import java.awt.BorderLayout
 import java.util.function.Supplier
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal class DocumentationPopupUI(
   private val project: Project,
@@ -42,8 +43,6 @@ internal class DocumentationPopupUI(
   private var _ui: DocumentationUI? = ui
   private val ui: DocumentationUI get() = requireNotNull(_ui) { "already detached" }
   val browser: DocumentationBrowser get() = ui.browser
-
-  private val corner: JComponent
 
   val component: JComponent
   val preferableFocusComponent: JComponent get() = ui.editorPane
@@ -78,14 +77,18 @@ internal class DocumentationPopupUI(
     gearActions.addSeparator()
     gearActions.addAll(primaryActions)
 
-    corner = toolbarComponent(DefaultActionGroup(editSourceAction, gearActions), editorPane).apply {
-      border = JBUI.Borders.emptyBottom(5)
-      isOpaque = false
+    val toolbar = toolbarComponent(DefaultActionGroup(editSourceAction, gearActions), editorPane).apply {
+      border = JBUI.Borders.empty()
     }
-    component = DocumentationPopupPane(ui.scrollPane).also {
-      it.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
+    val bottomPanel = JPanel(BorderLayout()).apply {
+      add(ui.locationLabel, BorderLayout.CENTER)
+      add(toolbar, BorderLayout.EAST)
     }
-    ui.switcherToolbarComponent?.let { component.add(ui.switcherToolbarComponent, BorderLayout.NORTH) }
+    component = DocumentationPopupPane(ui.scrollPane).apply {
+      add(ui.scrollPane, BorderLayout.CENTER)
+      add(bottomPanel, BorderLayout.SOUTH)
+      ui.switcherToolbarComponent?.let { add(ui.switcherToolbarComponent, BorderLayout.NORTH) }
+    }
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
     coroutineScope.launch {

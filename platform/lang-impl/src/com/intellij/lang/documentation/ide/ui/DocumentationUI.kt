@@ -44,10 +44,7 @@ import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
-import javax.swing.BoundedRangeModel
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JScrollPane
+import javax.swing.*
 
 internal class DocumentationUI(
   project: Project,
@@ -56,10 +53,9 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
+  val locationLabel: JLabel
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
   val switcherToolbarComponent: JComponent?
-
-  private val icons = mutableMapOf<String, Icon>()
 
   @Volatile
   private var documentationDownloader: DocumentationDownloader? = null
@@ -73,9 +69,9 @@ internal class DocumentationUI(
 
   init {
     scrollPane = DocumentationScrollPane()
-    editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
+    editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane)) {
       imageResolver?.resolveImage(it)
-    }, { icons[it] })
+    }
     Disposer.register(this, editorPane)
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
@@ -83,6 +79,10 @@ internal class DocumentationUI(
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
     switcherToolbarComponent = createSwitcherIfNeeded()?.createToolbar()?.component?.apply {
       border = JBUI.Borders.emptyTop(5)
+    }
+    locationLabel = JLabel().apply {
+      iconTextGap = 6
+      border = JBUI.Borders.empty(0, 10, 5, 0)
     }
 
     browser.ui = this
@@ -153,7 +153,6 @@ internal class DocumentationUI(
   }
 
   private fun clearImages() {
-    icons.clear()
     imageResolver = null
   }
 
@@ -197,9 +196,8 @@ internal class DocumentationUI(
       }
     }
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
-    val locationChunk = getDefaultLocationChunk(presentation)
-    val decorated = decorate(content.html, locationChunk, linkChunk, downloadSourcesLink)
-    if (!updateContent(decorated)) {
+    val decorated = decorate(content.html, null, linkChunk, downloadSourcesLink)
+    if (!updateContent(decorated, presentation)) {
       return
     }
     val uiState = pageContent.uiState
@@ -209,31 +207,12 @@ internal class DocumentationUI(
     }
   }
 
-  private fun getDefaultLocationChunk(presentation: TargetPresentation): HtmlChunk? {
-    return presentation.locationText?.let { locationText ->
-      presentation.locationIcon?.let { locationIcon ->
-        val iconKey = registerIcon(locationIcon)
-        HtmlChunk.fragment(
-          HtmlChunk.tag("icon").attr("src", iconKey),
-          HtmlChunk.nbsp(),
-          HtmlChunk.text(locationText)
-        )
-      } ?: HtmlChunk.text(locationText)
-    }
-  }
-
-  private fun registerIcon(icon: Icon): String {
-    val key = icons.size.toString()
-    icons[key] = icon
-    return key
-  }
-
   private fun fetchingMessage() {
-    updateContent(message(CodeInsightBundle.message("javadoc.fetching.progress")))
+    updateContent(message(CodeInsightBundle.message("javadoc.fetching.progress")), null)
   }
 
   private fun noDocumentationMessage() {
-    updateContent(message(CodeInsightBundle.message("no.documentation.found")))
+    updateContent(message(CodeInsightBundle.message("no.documentation.found")), null)
   }
 
   private fun message(message: @Nls String): @Nls String {
@@ -245,12 +224,16 @@ internal class DocumentationUI(
       .toString()
   }
 
-  private fun updateContent(text: @Nls String): Boolean {
+  private fun updateContent(text: @Nls String, presentation: TargetPresentation?): Boolean {
     EDT.assertIsEdt()
-    if (editorPane.text == text) {
+    if (editorPane.text == text &&
+        locationLabel.text == presentation?.locationText &&
+        locationLabel.icon == presentation?.icon) {
       return false
     }
     editorPane.text = text
+    locationLabel.text = presentation?.locationText
+    locationLabel.icon = presentation?.locationIcon
     check(myContentUpdates.tryEmit(Unit))
     return true
   }
