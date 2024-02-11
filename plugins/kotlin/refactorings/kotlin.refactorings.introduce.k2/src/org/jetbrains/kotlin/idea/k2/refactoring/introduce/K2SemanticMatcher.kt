@@ -184,7 +184,6 @@ object K2SemanticMatcher {
                 }
             }
 
-            // TODO: move and check if tests are failing
             with(analysisSession) {
                 context.getAndAssociateSymbolsForDeclarations(dcl, patternDcl)
             }
@@ -602,7 +601,7 @@ object K2SemanticMatcher {
     ): Boolean = when (targetReceiver) {
         is KtImplicitReceiverValue -> {
             when (patternReceiver) {
-                is KtImplicitReceiverValue -> targetReceiver.symbol == patternReceiver.symbol // TODO: test
+                is KtImplicitReceiverValue -> context.areSymbolsEqualOrAssociated(targetReceiver.symbol, patternReceiver.symbol)
                 is KtExplicitReceiverValue -> {
                     val patternSymbol = patternReceiver.getSymbolForThisExpressionOrNull()
                     patternSymbol != null && context.areSymbolsEqualOrAssociated(targetReceiver.symbol, patternSymbol)

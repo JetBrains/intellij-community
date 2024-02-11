@@ -240,6 +240,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                     public void testPropertyDeclaration() throws Exception {
                         runTest("testData/unifier/equivalence/declarations/localCallables/propertyDeclaration.kt");
                     }
+
+                    @TestMetadata("recursiveFunction.kt")
+                    public void testRecursiveFunction() throws Exception {
+                        runTest("testData/unifier/equivalence/declarations/localCallables/recursiveFunction.kt");
+                    }
                 }
             }
 
