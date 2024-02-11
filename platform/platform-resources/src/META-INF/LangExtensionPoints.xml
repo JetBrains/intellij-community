@@ -685,5 +685,7 @@
                     interface="com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingRangeReducer"/>
     <extensionPoint qualifiedName="com.intellij.platform.ijent.ijentExecFileProvider" dynamic="true"
                     interface="com.intellij.platform.ijent.IjentExecFileProvider"/>
+    <extensionPoint qualifiedName="com.intellij.platform.lsWidget.itemsProvider" dynamic="true"
+                    interface="com.intellij.platform.lsWidget.LanguageServiceWidgetItemsProvider"/>
   </extensionPoints>
 </idea-plugin>
