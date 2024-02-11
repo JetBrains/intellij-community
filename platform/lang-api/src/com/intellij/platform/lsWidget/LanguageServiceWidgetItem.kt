@@ -16,10 +16,30 @@ import javax.swing.Icon
 @ApiStatus.Experimental
 abstract class LanguageServiceWidgetItem(val context: LanguageServiceWidgetContext) {
 
+  /**
+   * The default label for the widget in the status bar is generic: "Language Services".
+   * But if this item is the only one in the `For Current File` popup section
+   * (according to the [widgetActionLocation] property value) then the widget label is set to the service-specific one:
+   * the [statusBarText] property value.
+   *
+   * If this item is not the only one in the `For Current File` popup section,
+   * or it is not in the `For Current File` popup section at all,
+   * then the [statusBarText] property is ignored.
+   */
   abstract val statusBarText: String
 
+  /**
+   * A tooltip for the status bar widget label.
+   * Used only if this item appears to be the only one in the `For Current File` popup section.
+   * Otherwise, it's ignored.
+   * @see statusBarText
+   */
   open val statusBarTooltip: String? = null
 
+  /**
+   * If `true` then the Platform will add the error mark to the icon in the status bar,
+   * and to the action returned by the [createWidgetMainAction] function.
+   */
   open val isError: Boolean = false
 
   abstract val widgetActionLocation: LanguageServicePopupSection
