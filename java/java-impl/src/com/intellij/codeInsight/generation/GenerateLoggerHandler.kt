@@ -12,13 +12,14 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
-import com.intellij.psi.util.parentsOfType
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.introduce.PsiIntroduceTarget
 import com.intellij.refactoring.suggested.endOffset
@@ -33,9 +34,9 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     val currentElement = file.findElementAt(editor.caretModel.offset) ?: return
 
     val module = ModuleUtil.findModuleForFile(file)
-    val availableLoggers = findSuitableLoggers(module)
+    val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module)
 
-    val places = getPossiblePlacesForLogger(currentElement, availableLoggers)
+    val places = GenerateLoggerUtil.getPossiblePlacesForLogger(currentElement, availableLoggers)
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
     when (places.size) {
@@ -131,20 +132,6 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   }
 
   override fun startInWriteAction(): Boolean = false
-
-  companion object {
-    fun findSuitableLoggers(module: Module?): List<JvmLogger> = JvmLogger.getAllLoggers(false).filter { it.isAvailable(module) }
-
-    fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = element.parentsOfType(
-      PsiClass::class.java, true)
-      .filter { clazz -> clazz !is PsiAnonymousClass && clazz !is PsiImplicitClass && isPossibleToPlaceLogger(clazz, loggerList) }
-      .toList()
-      .reversed()
-
-    private fun isPossibleToPlaceLogger(psiClass: PsiClass, loggerList: List<JvmLogger>): Boolean = loggerList.all {
-      it.isPossibleToPlaceLoggerAtClass(psiClass)
-    }
-  }
 }
 
 private class PsiTargetClassInfo(clazz: PsiClass) : PsiIntroduceTarget<PsiClass>(clazz) {

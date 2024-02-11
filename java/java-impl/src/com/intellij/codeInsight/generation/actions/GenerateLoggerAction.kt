@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation.actions
 
 import com.intellij.codeInsight.generation.GenerateLoggerHandler
+import com.intellij.codeInsight.generation.GenerateLoggerUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
@@ -12,7 +13,7 @@ class GenerateLoggerAction : BaseGenerateAction(GenerateLoggerHandler()) {
   override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean {
     val element = file.findElementAt(editor.caretModel.offset) ?: return false
     val module = ModuleUtil.findModuleForFile(file)
-    val availableLoggers = GenerateLoggerHandler.findSuitableLoggers(module)
-    return availableLoggers.isNotEmpty() && GenerateLoggerHandler.getPossiblePlacesForLogger(element, availableLoggers).isNotEmpty()
+    val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module)
+    return availableLoggers.isNotEmpty() && GenerateLoggerUtil.getPossiblePlacesForLogger(element, availableLoggers).isNotEmpty()
   }
 }
