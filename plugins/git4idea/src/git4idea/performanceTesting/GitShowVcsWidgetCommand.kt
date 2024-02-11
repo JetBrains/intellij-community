@@ -2,6 +2,7 @@
 package git4idea.performanceTesting
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.jetbrains.performancePlugin.PerformanceTestSpan
@@ -24,8 +25,9 @@ class GitShowVcsWidgetCommand(text: String, line: Int) : PerformanceCommandCorou
     withContext(Dispatchers.EDT) {
       val treePopup = (GitBranchesTreePopup.create(context.project, repository) as GitBranchesTreePopup)
       treePopup.showCenteredInCurrentWindow(context.project)
-      PerformanceTestSpan.TRACER.spanBuilder(NAME).use {
+      PerformanceTestSpan.TRACER.spanBuilder(NAME).use { span->
         treePopup.waitTreeExpand(3.minutes)
+        span.setAttribute("expandedPaths",treePopup.getExpandedPathsSize().toLong())
       }
     }
   }

@@ -796,4 +796,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     TreeUtil.promiseExpandAll(tree).waitForPromise(timeout)
   }
 
+  @TestOnly
+  fun getExpandedPathsSize(): Int {
+    return tree.expandedPaths.size
+  }
+
 }
