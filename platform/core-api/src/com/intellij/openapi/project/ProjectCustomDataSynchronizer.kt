@@ -20,7 +20,7 @@ interface ProjectCustomDataSynchronizer<TData : Any> {
       ExtensionPointName.create("com.intellij.projectCustomDataSynchronizer")
   }
 
-  val id: String get() = javaClass.name
+  val id: String
 
   val dataType: KType
 

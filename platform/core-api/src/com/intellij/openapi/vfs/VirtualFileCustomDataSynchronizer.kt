@@ -13,7 +13,7 @@ import kotlin.reflect.KType
  */
 @ApiStatus.Experimental
 interface VirtualFileCustomDataSynchronizer<TData : Any> {
-  val id: String get() = javaClass.name
+  val id: String
 
   val dataType: KType
 }
