@@ -19,6 +19,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDI
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
 import java.awt.Font
+import kotlin.math.max
 
 class TerminalOutputController(
   project: Project,
@@ -121,8 +122,8 @@ class TerminalOutputController(
       // remove the line with empty prompt
       if (lastLineText.isBlank()) {
         // remove also the line break if it is not the first block
-        val removeOffset = lastLineStart - if (lastLineStart > 0) 1 else 0
-        document.deleteString(removeOffset, block.endOffset)
+        val startRemoveOffset = max(block.outputStartOffset, lastLineStart - if (lastLineStart > 0) 1 else 0)
+        document.deleteString(startRemoveOffset, block.endOffset)
         outputModel.getHighlightings(block)?.let { current ->
           val updated = current.filter { it.endOffset <= block.endOffset }
           outputModel.putHighlightings(block, updated)
