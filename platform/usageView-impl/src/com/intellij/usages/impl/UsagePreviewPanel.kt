@@ -95,6 +95,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   private var myToolbarWithSimilarUsagesLink: UsagePreviewToolbarWithSimilarUsagesLink? = null
   private var myMostCommonUsagePatternsComponent: MostCommonUsagePatternsComponent? = null
   private val cs = UsageViewCoroutineScopeProvider.getInstance(project).coroutineScope.childScope()
+  private var myShowTooltipBalloon = Registry.`is`("ide.find.show.tooltip.in.preview")
 
   override fun getData(dataId: @NonNls String): Any? {
     if (myEditor == null) return null
@@ -107,6 +108,10 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       return DataProvider { slowId: String -> getSlowData(slowId, myProject, file, position) }
     }
     return null
+  }
+  
+  fun setShowTooltipBalloon(showTooltipBalloon: Boolean) {
+    myShowTooltipBalloon = showTooltipBalloon;
   }
 
   class Provider : UsageContextPanel.Provider {
@@ -154,7 +159,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         if (infos != myCachedSelectedUsageInfos // avoid moving viewport
             || !UsageViewPresentation.arePatternsEqual(myCachedSearchPattern, myPresentation.searchPattern)
             || myCachedReplaceString != myPresentation.replaceString || myCachedCaseSensitive != myPresentation.isCaseSensitive) {
-          highlight(infos, myEditor!!, myProject, true, HighlighterLayer.ADDITIONAL_SYNTAX)
+          highlight(infos, myEditor!!, myProject, myShowTooltipBalloon, HighlighterLayer.ADDITIONAL_SYNTAX)
           myCachedSelectedUsageInfos = infos
           myCachedSearchPattern = myPresentation.searchPattern
           myCachedCaseSensitive = myPresentation.isCaseSensitive
@@ -394,7 +399,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     fun highlight(infos: List<UsageInfo>,
                   editor: Editor,
                   project: Project,
-                  highlightOnlyNameElements: Boolean,
+                  showTooltipBalloon: Boolean,
                   highlightLayer: Int) {
       ThreadingAssertions.assertEventDispatchThread()
       LOG.assertTrue(PsiDocumentManager.getInstance(project).isCommitted(editor.document))
@@ -416,7 +421,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         if (psiElement == null || !psiElement.isValid) continue
         val infoRange = info.rangeInElement
         var rangeToHighlight = calculateHighlightingRangeForUsage(psiElement, infoRange)
-        if (highlightOnlyNameElements && psiElement is PsiNamedElement && psiElement !is PsiFile) {
+        if (psiElement is PsiNamedElement && psiElement !is PsiFile) {
           rangeToHighlight = getNameElementTextRange(psiElement)
         }
         // highlight injected element in host document text range
@@ -441,7 +446,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
           editor.caretModel.moveToOffset(rangeToHighlight.endOffset)
         }
         if (infos.size == 1 && infoRange != null) {
-          val balloonText : String?
+          var balloonText : String? = null
           if (findModel != null) {
             val replacementText =
               FindManager.getInstance(project).getStringToReplace(editor.document.getText(rangeToHighlight), findModel, 
@@ -450,11 +455,8 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
             if (previewText != findModel.stringToReplace || Registry.`is`("ide.find.show.replacement.hint.for.simple.regexp")) {
               balloonText = previewText
             }
-            else {
-              balloonText = null
-            }
           }
-          else {
+          else if (showTooltipBalloon) {
             balloonText = info.tooltipText
           }
           if (!balloonText.isNullOrEmpty()) showBalloon(project, editor, rangeToHighlight, balloonText)

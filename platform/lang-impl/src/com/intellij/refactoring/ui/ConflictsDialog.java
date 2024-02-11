@@ -197,6 +197,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, true));
 
       UsagePreviewPanel usagePreviewPanel = new UsagePreviewPanel(myProject, presentation);
+      usagePreviewPanel.setShowTooltipBalloon(true);
       Disposer.register(getDisposable(), usagePreviewPanel);
       myTree.addTreeSelectionListener(e -> previewNode(e.getNewLeadSelectionPath(), usagePreviewPanel));
       splitter.setSecondComponent(usagePreviewPanel);
