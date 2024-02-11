@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.generation.GenerateLoggerHandler
+import com.intellij.codeInsight.generation.GenerateLoggerUtil
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.openapi.module.ModuleUtil
@@ -26,10 +26,15 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val module = ModuleUtil.findModuleForFile(parameters.originalFile)
-               val availableLoggers = GenerateLoggerHandler.findSuitableLoggers(module)
+               val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module)
 
                val element = parameters.originalPosition ?: return
-               val place = GenerateLoggerHandler.getPossiblePlacesForLogger(element, availableLoggers).firstOrNull() ?: return
+               val allPlaces = GenerateLoggerUtil.getAllNestedClasses(element).toList()
+               val possiblePlaces = GenerateLoggerUtil.getPossiblePlacesForLogger(element, availableLoggers)
+
+               if (allPlaces.size != possiblePlaces.size) return
+
+               val place = possiblePlaces.firstOrNull() ?: return
 
                for (logger in availableLoggers) {
                  result.addElement(
