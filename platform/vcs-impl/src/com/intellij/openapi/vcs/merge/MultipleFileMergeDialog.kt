@@ -373,8 +373,17 @@ open class MultipleFileMergeDialog(
       doCancelAction()
     }
     else {
+      val expandedPathsStr = TreeUtil.collectExpandedPaths(table.tree)
+        .map { it.toString() }
+
       var selIndex = table.selectionModel.minSelectionIndex
       updateTree()
+
+      TreeUtil.collapseAll(table.tree, true, -1)
+
+      val previouslyExpandedTreeNodes = TreeUtil.findPaths(table.tree, expandedPathsStr)
+      TreeUtil.restoreExpandedPaths(table.tree, previouslyExpandedTreeNodes)
+
       if (selIndex >= table.rowCount) {
         selIndex = table.rowCount - 1
       }

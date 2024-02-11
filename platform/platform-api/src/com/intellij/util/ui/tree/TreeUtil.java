@@ -21,6 +21,7 @@ import com.intellij.ui.tree.DelegatingEdtBgtTreeVisitor;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
@@ -68,6 +69,34 @@ public final class TreeUtil {
   private static final Key<Function<TreePath, Navigatable>> NAVIGATABLE_PROVIDER = Key.create("TreeUtil: convert TreePath to Navigatable");
 
   private TreeUtil() {}
+
+  public static @NotNull List<TreePath> findPaths(@Nullable TreeTableTree tree,
+                                                  @NotNull List<String> pathsToSearch) {
+    List<TreePath> treePaths = new ArrayList<>();
+    if (tree != null) {
+      TreePath root = tree.getPathForRow(0);
+      if (root != null) {
+        findPaths(tree, root, pathsToSearch, treePaths);
+      }
+    }
+    return treePaths;
+  }
+
+  private static void findPaths(@NotNull TreeTableTree tree,
+                                @NotNull TreePath path,
+                                @NotNull List<String> pathsToSearch,
+                                @NotNull List<TreePath> treePaths) {
+    if (pathsToSearch.contains(path.toString())) {
+      treePaths.add(path);
+    }
+
+    for (int i = 0; i < tree.getModel().getChildCount(path.getLastPathComponent()); i++) {
+      Object childNode = tree.getModel().getChild(path.getLastPathComponent(), i);
+      TreePath childNodePath = path.pathByAddingChild(childNode);
+
+      findPaths(tree, childNodePath, pathsToSearch, treePaths);
+    }
+  }
 
   /**
    * @return a navigatable object that corresponds to the specified path,  or {@code null} otherwise
