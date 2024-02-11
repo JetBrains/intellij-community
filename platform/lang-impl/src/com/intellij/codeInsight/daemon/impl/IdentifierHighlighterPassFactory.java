@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -23,7 +24,7 @@ public final class IdentifierHighlighterPassFactory {
   public IdentifierHighlighterPass createHighlightingPass(@NotNull PsiFile file,
                                                           @NotNull Editor editor,
                                                           @NotNull TextRange visibleRange) {
-    if (!editor.isOneLineMode() &&
+    if ((!editor.isOneLineMode() || !((EditorEx) editor).isEmbeddedIntoDialogWrapper()) &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
         !DumbService.isDumb(file.getProject()) &&
         isEnabled() &&
