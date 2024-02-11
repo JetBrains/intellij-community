@@ -579,9 +579,9 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         val uFile = myFixture.file.toUElement()!!
         val abstractAlarm = uFile.findElementByTextFromPsi<UClass>("AbstractAlarm", strict = false)
-            .orFail("cant find AbstractAlarm")
+            .orFail("can't find AbstractAlarm")
         val builder = abstractAlarm.innerClasses.find { it.name == "Builder" }
-            .orFail("cant find AbstractAlarm.Builder")
+            .orFail("can't find AbstractAlarm.Builder")
         TestCase.assertEquals(2, builder.javaPsi.typeParameters.size)
         val self = builder.javaPsi.typeParameters[0]
         TestCase.assertEquals(
@@ -616,7 +616,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         val uFile = myFixture.file.toUElement()!!
         val klass = uFile.findElementByTextFromPsi<UClass>("class DisconnectReason", strict = false)
-            .orFail("cant convert to UClass")
+            .orFail("can't convert to UClass")
         val lc = klass.uAnnotations.single().javaPsi!!
         val intValues = (lc.findAttributeValue("value") as? PsiArrayInitializerMemberValue)?.initializers
         TestCase.assertEquals(
@@ -628,6 +628,31 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         val flagValue = (lc.findAttributeValue("flag") as? PsiLiteralExpression)?.value
         TestCase.assertEquals("false", flagValue?.toString())
+    }
+
+    fun checkAnnotationParameterReference(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt",
+            """
+                @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.FIELD)
+                @Retention(AnnotationRetention.SOURCE)
+                annotation class NamedAnno(val name: String)
+                
+                class User {
+                    @NamedAnno(name = "aName") lateinit var fullName: String
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val lc = uFile.findElementByTextFromPsi<UClass>("class User", strict = false)
+            .orFail("can't convert to UClass").javaPsi
+        val fullNameProperty = lc.findFieldByName("fullName", false) ?: error("unable to look up property `fullName`")
+        val annotation = fullNameProperty.modifierList?.annotations?.singleOrNull()
+            ?: error("expected the only one annotation")
+        val annotationMemberValue = annotation.findDeclaredAttributeValue("name") as? PsiLiteralValue ?: error("expected PsiLiteralValue annotation")
+        TestCase.assertEquals("aName", annotationMemberValue.value)
+        TestCase.assertTrue(annotationMemberValue.references.isNotEmpty())
     }
 
 }

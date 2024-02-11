@@ -80,4 +80,8 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testDefaultValueOfAnnotation() {
         checkDefaultValueOfAnnotation(myFixture)
     }
+
+    fun testAnnotationParameterReference() {
+        checkAnnotationParameterReference(myFixture)
+    }
 }
