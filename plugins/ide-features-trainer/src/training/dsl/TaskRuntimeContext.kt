@@ -65,6 +65,7 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
       TemplateManagerImpl.getTemplateState(editor)?.gotoEnd()
       (editor as? EditorEx)?.isViewer = false
       editor.caretModel.removeSecondaryCarets()
+      editor.selectionModel.removeSelection(true)
       setDocumentCode(sample.text)
       if (setCaret) setCaret(sample.getPosition(0))
     }
