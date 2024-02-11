@@ -33,6 +33,7 @@ import com.intellij.platform.util.coroutines.flow.collectLatestUndispatched
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -80,9 +81,17 @@ internal class DocumentationUI(
     switcherToolbarComponent = createSwitcherIfNeeded()?.createToolbar()?.component?.apply {
       border = JBUI.Borders.emptyTop(5)
     }
-    locationLabel = JLabel().apply {
+    val textTrimmer = SwingTextTrimmer.createCenterTrimmer(0.8f)
+    locationLabel = object: JLabel() {
+      override fun getToolTipText(): String? {
+        return if (textTrimmer.isTrimmed)
+          text else
+            null;
+      }
+    }.apply {
       iconTextGap = 6
       border = JBUI.Borders.empty(0, 10, 5, 0)
+      putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
     }
 
     browser.ui = this
@@ -233,6 +242,7 @@ internal class DocumentationUI(
     }
     editorPane.text = text
     locationLabel.text = presentation?.locationText
+    locationLabel.toolTipText = presentation?.locationText
     locationLabel.icon = presentation?.locationIcon
     check(myContentUpdates.tryEmit(Unit))
     return true

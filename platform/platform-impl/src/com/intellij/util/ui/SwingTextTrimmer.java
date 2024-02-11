@@ -9,33 +9,54 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.SwingConstants;
 import java.awt.FontMetrics;
 
-public enum SwingTextTrimmer {
-  ELLIPSIS_AT_LEFT(StringUtil.ELLIPSIS, SwingConstants.LEFT),
-  ELLIPSIS_AT_RIGHT(StringUtil.ELLIPSIS, SwingConstants.RIGHT),
-  ELLIPSIS_IN_CENTER(StringUtil.ELLIPSIS, SwingConstants.CENTER),
-  THREE_DOTS_AT_LEFT(StringUtil.THREE_DOTS, SwingConstants.LEFT),
-  THREE_DOTS_AT_RIGHT(StringUtil.THREE_DOTS, SwingConstants.RIGHT),
-  THREE_DOTS_IN_CENTER(StringUtil.THREE_DOTS, SwingConstants.CENTER);
+public class SwingTextTrimmer {
+  public static final SwingTextTrimmer ELLIPSIS_AT_LEFT = new SwingTextTrimmer(StringUtil.ELLIPSIS, SwingConstants.LEFT);
+  public static final SwingTextTrimmer ELLIPSIS_AT_RIGHT = new SwingTextTrimmer(StringUtil.ELLIPSIS, SwingConstants.RIGHT);
+  public static final SwingTextTrimmer ELLIPSIS_IN_CENTER = new SwingTextTrimmer(StringUtil.ELLIPSIS, SwingConstants.CENTER);
+  public static final SwingTextTrimmer THREE_DOTS_AT_LEFT = new SwingTextTrimmer(StringUtil.THREE_DOTS, SwingConstants.LEFT);
+  public static final SwingTextTrimmer THREE_DOTS_AT_RIGHT = new SwingTextTrimmer(StringUtil.THREE_DOTS, SwingConstants.RIGHT);
+  public static final SwingTextTrimmer THREE_DOTS_IN_CENTER = new SwingTextTrimmer(StringUtil.THREE_DOTS, SwingConstants.CENTER);
 
   public static final Key<SwingTextTrimmer> KEY = Key.create(SwingTextTrimmer.class.getSimpleName());
+
+  public static SwingTextTrimmer createCenterTrimmer(float ratio) {
+    return new SwingTextTrimmer(StringUtil.ELLIPSIS, SwingConstants.CENTER, ratio);
+  }
+
   private final String ellipsis;
   private final int alignment;
+  private final float ratio;
+  private boolean trimmed;
 
   SwingTextTrimmer(@NotNull String ellipsis, int alignment) {
+    this(ellipsis, alignment, 0.5f);
+  }
+
+  SwingTextTrimmer(@NotNull String ellipsis, int alignment, float ratio) {
     this.ellipsis = ellipsis;
     this.alignment = alignment;
+    this.ratio = ratio;
   }
 
   public @NotNull String trim(@Nullable String text, @NotNull FontMetrics metrics, int availableWidth) {
     if (text == null || availableWidth <= 0) return "";
-    if (isFit(text, metrics, availableWidth)) return text;
+    trimmed = !isFit(text, metrics, availableWidth);
+    if (!trimmed) return text;
     int ellipsisWidth = metrics.stringWidth(ellipsis);
     if (availableWidth <= ellipsisWidth) return ellipsis;
     int width = availableWidth - ellipsisWidth;
     if (alignment == SwingConstants.LEFT) return ellipsis + trimLeft(text, metrics, width);
     if (alignment == SwingConstants.RIGHT) return trimRight(text, metrics, width) + ellipsis;
-    String postfix = trimRight(text, metrics, width / 2) + ellipsis;
+    String postfix = trimRight(text, metrics, (int)(width * ratio)) + ellipsis;
     return postfix + trimLeft(text, metrics, availableWidth - metrics.stringWidth(postfix));
+  }
+
+  public boolean isTrimmed() {
+    return trimmed;
+  }
+
+  public void setTrimmed(boolean trimmed) {
+    this.trimmed = trimmed;
   }
 
   private static boolean isFit(@NotNull String text, @NotNull FontMetrics metrics, int width) {
