@@ -336,9 +336,32 @@ object K2SemanticMatcher {
             return findRelevantLoopForExpression(expression) == findRelevantLoopForExpression(patternExpression)
         }
 
-        override fun visitIfExpression(expression: KtIfExpression, data: KtElement): Boolean = false // TODO
+        override fun visitIfExpression(expression: KtIfExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtIfExpression ?: return false
 
-        override fun visitWhenExpression(expression: KtWhenExpression, data: KtElement): Boolean = false // TODO
+            if (!elementsMatchOrBothAreNull(expression.condition, patternExpression.condition)) return false
+            if (!elementsMatchOrBothAreNull(expression.then, patternExpression.then)) return false
+            if (!elementsMatchOrBothAreNull(expression.`else`, patternExpression.`else`)) return false
+
+            return true
+        }
+
+        override fun visitWhenExpression(expression: KtWhenExpression, data: KtElement): Boolean {
+            val patternExpression = data.deparenthesized() as? KtWhenExpression ?: return false
+
+            if (expression.entries.size != patternExpression.entries.size) return false
+            if (!elementsMatchOrBothAreNull(expression.subjectExpression, patternExpression.subjectExpression)) return false
+
+            for ((targetEntry, patternEntry) in expression.entries.zip(patternExpression.entries)) {
+                if (targetEntry.conditions.size != patternEntry.conditions.size) return false
+                for ((targetCondition, patternCondition) in targetEntry.conditions.zip(patternEntry.conditions)) {
+                    if (!elementsMatchOrBothAreNull(targetCondition, patternCondition)) return false
+                }
+                if (!elementsMatchOrBothAreNull(targetEntry.expression, patternEntry.expression)) return false
+            }
+
+            return true
+        }
 
         override fun visitCollectionLiteralExpression(expression: KtCollectionLiteralExpression, data: KtElement): Boolean = false // TODO()
 
@@ -362,6 +385,7 @@ object K2SemanticMatcher {
 
         override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression, data: KtElement): Boolean = false // TODO()
 
+        // TODO: single-statement-blocks can semantically match non-block-expressions, e.g. in if, when
         override fun visitBlockExpression(expression: KtBlockExpression, data: KtElement): Boolean {
             val patternExpression = data as? KtBlockExpression ?: return false
             if (expression.statements.size != patternExpression.statements.size) return false
@@ -459,6 +483,15 @@ object K2SemanticMatcher {
 
             return true
         }
+
+        override fun visitWhenConditionInRange(condition: KtWhenConditionInRange, data: KtElement): Boolean = false // TODO()
+
+        override fun visitWhenConditionIsPattern(condition: KtWhenConditionIsPattern, data: KtElement): Boolean = false // TODO()
+
+        override fun visitWhenConditionWithExpression(condition: KtWhenConditionWithExpression, data: KtElement): Boolean {
+            val patternCondition = data as? KtWhenConditionWithExpression ?: return false
+            return elementsMatchOrBothAreNull(condition.expression, patternCondition.expression)
+        }
     }
 
     context(KtAnalysisSession)
@@ -534,7 +567,9 @@ object K2SemanticMatcher {
             .sortedWith(compareBy({ (_, parameterIndex) -> parameterIndex }, { (argument, _) -> argument.startOffset }))
             .map { (argument, _) -> argument }
 
-        return sortedMappedArguments + allArguments.filterNot { it in mappedArguments }
+        // `mappedArguments` obtained from `argumentMapping` differ from argument expressions from `KtValueArgumentList` in case of
+        // parenthesized expressions; TODO: check if it should be fixed from Analysis API side;
+        return sortedMappedArguments + allArguments.filterNot { it?.safeDeparenthesize() in mappedArguments }
     }
 
     context(KtAnalysisSession)

@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun foo(a: Int, b: Int) {
     if ((a) + b > 0) {
         println(a*b)
@@ -21,6 +20,13 @@ fun foo(a: Int, b: Int) {
         println(a*b)
     }
     else {
-        println((a + b))
+        println(((a + b)))
     }</selection>
+
+    if (a + (b) > 1) {
+        println(a*b)
+    }
+    else {
+        println((a + b))
+    }
 }
