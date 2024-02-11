@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage
 
 import com.intellij.openapi.vfs.newvfs.persistent.App
@@ -13,11 +13,10 @@ import kotlin.io.path.writeBytes
 class FileChannelStorageApp: App {
   class FileChannelStorage: Storage {
     val path = Path.of("fc.data")
-    val stateSize = Storage.stateSize
 
     init {
       if (!path.exists()) {
-        path.writeBytes(ByteArray(stateSize), WRITE, CREATE)
+        path.writeBytes(ByteArray(maxCapacity()), WRITE, CREATE)
       }
     }
 
