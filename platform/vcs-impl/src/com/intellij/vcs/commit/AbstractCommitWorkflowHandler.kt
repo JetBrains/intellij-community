@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -100,7 +101,8 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
     getBeforeOptions(workflow.commitHandlers),
     // TODO Potential leak here for non-modal
-    getAfterOptions(workflow.commitHandlers, this)
+    getAfterOptions(workflow.commitHandlers, this),
+    CommitOptionsDialogExtension.EP_NAME.extensionList.flatMap { it.getOptions(project) }
   )
 
   abstract fun updateDefaultCommitActionName()

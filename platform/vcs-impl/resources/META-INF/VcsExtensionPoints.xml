@@ -184,6 +184,9 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
                     interface="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.commitOptionsDialogExtension"
+                    interface="com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
                     interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
                     dynamic="true"/>
