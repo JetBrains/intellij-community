@@ -42,13 +42,15 @@ open class ArtifactBridge(
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun beforeChanged(event: VersionedStorageChange) = beforeChangedMs.addMeasuredTime {
-        event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
-          if (it.entity.symbolicId != artifactId) return@forEach
+        event.getChanges(ArtifactEntity::class.java).asSequence().filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
+          val resolvedArtifactId = artifactId
+
+          if (it.entity.symbolicId != resolvedArtifactId) return@forEach
 
           // Artifact may be "re-added" with the same id
           // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
           // We should make sure that we "disable" removed artifact bridge
-          if (artifactId in event.storageAfter
+          if (resolvedArtifactId in event.storageAfter
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != this@ArtifactBridge
               && event.storageBefore.artifactsMap.getDataByEntity(it.entity) != originalArtifact) {
             return@forEach
@@ -57,7 +59,7 @@ open class ArtifactBridge(
           // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
           // If case of storage here, the new bridges will be added to the store.
           entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
-          assert(artifactId in entityStorage.base) { "Cannot resolve artifact $artifactId." }
+          assert(resolvedArtifactId in entityStorage.base) { "Cannot resolve artifact $resolvedArtifactId." }
         }
       }
     })
