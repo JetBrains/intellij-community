@@ -2,25 +2,20 @@
 
 package com.intellij.facet;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.NonExtendable
 public abstract class FacetModificationTrackingService {
-  public static FacetModificationTrackingService getInstance(@NotNull Facet<?> facet) {
-    return facet.getModule().getProject().getService(FacetModificationTrackingService.class);
+  public static FacetModificationTrackingService getInstance(@NotNull Project project) {
+    return project.getService(FacetModificationTrackingService.class);
   }
 
   public abstract @NotNull ModificationTracker getFacetModificationTracker(@NotNull Facet<?> facet);
 
-  @ApiStatus.Internal
   public abstract void incFacetModificationTracker(@NotNull Facet<?> facet);
 
-  public static void incFacetModificationTrackerLazily(@NotNull Facet<?> facet) {
-    FacetModificationTrackingService service = facet.getModule().getProject().getServiceIfCreated(FacetModificationTrackingService.class);
-    if (service != null) {
-      service.incFacetModificationTracker(facet);
-    }
-  }
+  public abstract void incFacetModificationTracker();
 }

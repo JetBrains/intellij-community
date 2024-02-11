@@ -8,11 +8,9 @@ import com.intellij.facet.FacetModificationTrackingService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.ModificationTrackerListener;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +27,15 @@ final class FacetModificationTrackingServiceImpl extends FacetModificationTracki
   @Override
   public @NotNull ModificationTracker getFacetModificationTracker(@NotNull Facet<?> facet) {
     return getFacetInfo(facet).first;
+  }
+
+  @Override
+  public void incFacetModificationTracker() {
+    myModificationsTrackers.forEach((facet, pair) -> {
+      pair.first.incModificationCount();
+      //noinspection unchecked
+      pair.second.getMulticaster().modificationCountChanged(facet);
+    });
   }
 
   private Pair<SimpleModificationTracker, EventDispatcher<ModificationTrackerListener>> getFacetInfo(final Facet<?> facet) {
