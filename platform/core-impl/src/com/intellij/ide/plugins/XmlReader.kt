@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlInterner
@@ -125,9 +124,7 @@ fun readModuleDescriptorForTest(input: ByteArray): RawPluginDescriptor {
     },
     pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
     dataLoader = object : DataLoader {
-      override val pool: ZipFilePool? = null
-
-      override fun load(path: String) = throw UnsupportedOperationException()
+      override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
 
       override fun toString() = ""
     },
@@ -883,7 +880,10 @@ private fun readInclude(reader: XMLStreamReader2,
     false
   }
   if (read) {
-    (readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(readInto, PluginXmlPathResolver.toLoadPath(path, includeBase))
+    (readContext as? DescriptorListLoadingContext)?.debugData?.recordIncludedPath(
+      rawPluginDescriptor = readInto,
+      path = PluginXmlPathResolver.toLoadPath(relativePath = path, base = includeBase),
+    )
   }
 
   if (read || isOptional) {

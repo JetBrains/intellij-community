@@ -95,7 +95,11 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       loadDescriptorFromJar(
         file = mainResourceRoot,
         descriptorRelativePath = PluginManagerCore.PLUGIN_XML_PATH,
-        pathResolver = ModuleBasedPluginXmlPathResolver(allResourceRoots.toList(), includedModules),
+        pathResolver = ModuleBasedPluginXmlPathResolver(
+          allResourceRoots = allResourceRoots.toList(),
+          includedModules = includedModules,
+          pool = zipFilePool,
+        ),
         parentContext = context,
         isBundled = true,
         isEssential = false,

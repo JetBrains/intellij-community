@@ -443,32 +443,37 @@ class JarPackager private constructor(private val outDir: Path,
       val library = context.findRequiredModule(item.moduleName).libraryCollection.libraries
                       .find { getLibraryFileName(it) == item.libraryName }
                     ?: throw IllegalArgumentException("Cannot find library ${item.libraryName} in \'${item.moduleName}\' module")
-      var fileName = nameToJarFileName(item.libraryName)
       var relativePath = item.relativeOutputPath
       if (relativePath.endsWith(".jar")) {
-        val index = relativePath.lastIndexOf('/')
-        if (index == -1) {
-          fileName = relativePath
+        val targetFile = outDir.resolve(relativePath)
+        if (!relativePath.contains('/')) {
           relativePath = ""
         }
-        else {
-          fileName = relativePath.substring(index + 1)
-          relativePath = relativePath.substring(0, index)
-        }
-      }
 
-      val targetFile = if (relativePath.isEmpty()) {
-        outDir.resolve(fileName)
+        addLibrary(
+          library = library,
+          targetFile = targetFile,
+          relativeOutputFile = relativePath,
+          files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true, targetFile = targetFile)
+        )
       }
       else {
-        outDir.resolve(relativePath).resolve(fileName)
+        val fileName = nameToJarFileName(item.libraryName)
+        val targetFile: Path
+        if (relativePath.isEmpty()) {
+          targetFile = outDir.resolve(fileName)
+        }
+        else {
+          targetFile = outDir.resolve(relativePath).resolve(fileName)
+          relativePath += "/$fileName"
+        }
+        addLibrary(
+          library = library,
+          targetFile = targetFile,
+          relativeOutputFile = relativePath,
+          files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true, targetFile = targetFile)
+        )
       }
-      addLibrary(
-        library = library,
-        targetFile = targetFile,
-        relativeOutputFile = relativePath,
-        files = getLibraryFiles(library = library, copiedFiles = copiedFiles, isModuleLevel = true, targetFile = targetFile)
-      )
     }
   }
 
@@ -533,7 +538,7 @@ class JarPackager private constructor(private val outDir: Path,
       else {
         var libOutputDir = outDir
         if (outPath != null) {
-          libOutputDir = if (outPath.endsWith(".jar")) {
+          if (outPath.endsWith(".jar")) {
             filesToSourceWithMapping(
               asset = getJarAsset(targetFile = outDir.resolve(outPath), relativeOutputFile = outPath, metaInfDir = null),
               files = files,
@@ -542,15 +547,16 @@ class JarPackager private constructor(private val outDir: Path,
             )
             continue
           }
-          else {
-            outDir.resolve(outPath)
-          }
+
+          libOutputDir = outDir.resolve(outPath)
         }
+
         if (packMode == LibraryPackMode.STANDALONE_MERGED) {
+          val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
           addLibrary(
             library = library,
-            targetFile = libOutputDir.resolve(nameToJarFileName(libName)),
-            relativeOutputFile = "",
+            targetFile = targetFile,
+            relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString,
             files = files,
           )
         }
@@ -560,7 +566,13 @@ class JarPackager private constructor(private val outDir: Path,
             if (packMode == LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
               fileName = removeVersionFromJar(fileName)
             }
-            addLibrary(library = library, targetFile = libOutputDir.resolve(fileName), relativeOutputFile = "", files = listOf(file))
+            val targetFile = libOutputDir.resolve(fileName)
+            addLibrary(
+              library = library,
+              targetFile = targetFile,
+              relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString,
+              files = listOf(file),
+            )
           }
         }
       }

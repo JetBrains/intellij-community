@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.lang.ZipFilePool.EntryResolver
 import java.io.InputStream
 import java.nio.file.Path
 
-internal class ImmutableZipFileDataLoader(private val resolver: EntryResolver,
-                                          private val zipPath: Path,
-                                          override val pool: ZipFilePool) : DataLoader {
-  override fun load(path: String): InputStream? {
+internal class ImmutableZipFileDataLoader(private val resolver: EntryResolver, private val zipPath: Path) : DataLoader {
+  override fun load(path: String, pluginDescriptorSourceOnly: Boolean): InputStream? {
     // well, the path maybe specified as `/META-INF/*` in plugin descriptor, and
     // it is our responsibility to normalize the path for ImmutableZipFile API
     // do not use kotlin stdlib here

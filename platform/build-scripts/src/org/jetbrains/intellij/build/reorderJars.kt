@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
@@ -45,7 +47,7 @@ private val sourceToNames: Map<String, MutableList<String>> by lazy {
 }
 
 fun reorderJar(relativePath: String, file: Path) {
-  val orderedNames = sourceToNames[relativePath] ?: return
+  val orderedNames = sourceToNames.get(relativePath) ?: return
   spanBuilder("reorder jar")
     .setAttribute("relativePath", relativePath)
     .setAttribute("file", file.toString())
@@ -168,7 +170,16 @@ fun generatePluginClassPath(
     val files = entries.asSequence()
       .filter {
         val relativeOutputFile = it.relativeOutputFile
-        relativeOutputFile == null || !relativeOutputFile.contains('/')
+        if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
+          return@filter false
+        }
+
+        // assert that relativeOutputFile is correctly specified
+        check(!it.path.startsWith(pluginAsset.dir) || pluginAsset.dir.relativize(it.path).nameCount == 2) {
+          "relativeOutputFile is not specified correctly for $it"
+        }
+
+        true
       }
       .map { it.path }
       .distinct()

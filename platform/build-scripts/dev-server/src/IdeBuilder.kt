@@ -161,7 +161,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
     launch(Dispatchers.IO) {
       val s = generatePluginClassPath(pluginEntries = pluginDistributionEntriesDeferred.await())
-      Files.writeString(runDir.resolve("plugins").resolve("plugin-classpath.txt"), s)
+      Files.writeString(runDir.resolve("plugins").resolve("plugin-classpath.txt"), "jarOnly=${!isUnpackedDist}\n$s")
     }
 
     if (context.generateRuntimeModuleRepository) {

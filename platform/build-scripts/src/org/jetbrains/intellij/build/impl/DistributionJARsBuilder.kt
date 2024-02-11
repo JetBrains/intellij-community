@@ -137,7 +137,7 @@ internal suspend fun buildDistribution(
 
     for ((_, pluginDir) in getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)) {
       Files.createDirectories(pluginDir)
-      Files.writeString(pluginDir.resolve("plugin-classpath.txt"), pluginClassPath)
+      Files.writeString(pluginDir.resolve("plugin-classpath.txt"), "jarOnly=true\n$pluginClassPath")
     }
 
     buildPlatformJob.await().asSequence() + lists.flatMap { list -> list.flatMap { it.second } }
