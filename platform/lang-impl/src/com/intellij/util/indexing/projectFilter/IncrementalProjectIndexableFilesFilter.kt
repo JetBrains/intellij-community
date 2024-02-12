@@ -1,12 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.projectFilter
 
-import com.intellij.util.containers.ConcurrentBitSet
+import com.intellij.openapi.project.Project
 
-internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFilter(true) {
-  private val fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
+internal class IncrementalProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory {
+  override fun create(project: Project): ProjectIndexableFilesFilter {
+    return IncrementalProjectIndexableFilesFilter()
+  }
+}
 
-  override fun containsFileId(fileId: Int): Boolean = fileIds.get(fileId)
+internal open class IncrementalProjectIndexableFilesFilter(protected val fileIds: ConcurrentFileIds = ConcurrentFileIds()) : ProjectIndexableFilesFilter(true) {
+
+  override fun containsFileId(fileId: Int): Boolean = fileIds[fileId]
 
   @Suppress("LocalVariableName")
   override fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean {
@@ -14,11 +19,11 @@ internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFil
 
     return runUpdate {
       val _fileIds = fileIds
-      if (_fileIds.get(fileId)) {
+      if (_fileIds[fileId]) {
         true
       }
       else if (add()) {
-        _fileIds.set(fileId)
+        _fileIds[fileId] = true
         true
       }
       else false
@@ -28,7 +33,7 @@ internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFil
   override fun removeFileId(fileId: Int) {
     assert(fileId > 0)
     runUpdate {
-      fileIds.clear(fileId)
+      fileIds[fileId] = false
     }
   }
 
@@ -37,6 +42,6 @@ internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFil
   }
 
   override fun getFileStatuses(): Sequence<Pair<Int, Boolean>> {
-    return (0 until fileIds.size()).asSequence().map { it to fileIds[it] }
+    return (0 until fileIds.size).asSequence().map { it to fileIds[it] }
   }
 }

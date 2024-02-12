@@ -26,7 +26,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     this(new int[Math.max(32, estimatedSize/BITS_PER_WORD)]);
   }
   // for serialization only
-  private ConcurrentBitSetImpl(int @NotNull [] words) {
+  ConcurrentBitSetImpl(int @NotNull [] words) {
     synchronized (this) {
       array = words;
     }
@@ -276,10 +276,15 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
 
   public void writeTo(@NotNull File file) throws IOException {
     try (DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
-      int[] words = toIntArray();
-      for (int word : words) {
-        bitSetStorage.writeInt(word);
-      }
+      writeTo(bitSetStorage);
+    }
+  }
+
+  @Override
+  public void writeTo(@NotNull DataOutputStream outputStream) throws IOException {
+    int[] words = toIntArray();
+    for (int word : words) {
+      outputStream.writeInt(word);
     }
   }
 
@@ -289,12 +294,7 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
       return ConcurrentBitSet.create();
     }
     try (DataInputStream bitSetStorage = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
-      long length = file.length();
-      int[] words = new int[(int)(length / 8)];
-      for (int i = 0; i < words.length; i++) {
-        words[i] = bitSetStorage.readInt();
-      }
-      return new ConcurrentBitSetImpl(words);
+      return ConcurrentBitSet.readFrom(bitSetStorage);
     }
   }
 }

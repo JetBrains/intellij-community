@@ -14,6 +14,10 @@ import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesServic
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
+internal interface ProjectIndexableFilesFilterFactory {
+  fun create(project: Project): ProjectIndexableFilesFilter
+}
+
 internal abstract class ProjectIndexableFilesFilter(private val checkAllExpectedIndexableFilesDuringHealthcheck: Boolean) : IdFilter() {
   private val parallelUpdatesCounter = AtomicVersionedCounter()
 
@@ -22,6 +26,7 @@ internal abstract class ProjectIndexableFilesFilter(private val checkAllExpected
   abstract fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean
   abstract fun removeFileId(fileId: Int)
   abstract fun resetFileIds()
+  open fun onProjectClosing(project: Project) = Unit
 
   protected fun <T> runUpdate(action: () -> T): T {
     parallelUpdatesCounter.update(1)

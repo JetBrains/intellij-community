@@ -7,6 +7,12 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowe
 import com.intellij.util.containers.ConcurrentThreeStateBitSet
 import com.intellij.util.indexing.IndexableFilesIndex
 
+internal class CachingProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory {
+  override fun create(project: Project): ProjectIndexableFilesFilter {
+    return CachingProjectIndexableFilesFilter(project)
+  }
+}
+
 internal class CachingProjectIndexableFilesFilter(private val project: Project) : ProjectIndexableFilesFilter(false) {
   private val fileIds: ConcurrentThreeStateBitSet = ConcurrentThreeStateBitSet.create()
 

@@ -18,6 +18,9 @@ import java.util.concurrent.ConcurrentMap
 @JvmField
 val USE_CACHING_FILTER = SystemProperties.getBooleanProperty("idea.index.use.caching.indexable.files.filter", false)
 
+@JvmField
+val USE_PERSISTENT_FILTER = SystemProperties.getBooleanProperty("idea.index.use.persistent.indexable.files.filter", false)
+
 internal sealed interface ProjectIndexableFilesFilterHolder {
   fun getProjectIndexableFiles(project: Project): IdFilter?
 
@@ -39,13 +42,23 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
   fun runHealthCheck()
 
   fun onProjectClosing(project: Project)
+
+  fun onProjectOpened(project: Project)
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder {
   private val myProjectFilters: ConcurrentMap<Project, ProjectIndexableFilesFilter> = ConcurrentHashMap()
 
   override fun onProjectClosing(project: Project) {
-    myProjectFilters.remove(project)
+    myProjectFilters.remove(project)?.onProjectClosing(project)
+  }
+
+  override fun onProjectOpened(project: Project) {
+    val factory = if (USE_PERSISTENT_FILTER) PersistentProjectIndexableFilesFilterFactory()
+    else if (USE_CACHING_FILTER) CachingProjectIndexableFilesFilterFactory()
+    else IncrementalProjectIndexableFilesFilterFactory()
+
+    myProjectFilters[project] = factory.create(project)
   }
 
   override fun getProjectIndexableFiles(project: Project): IdFilter? {
@@ -61,11 +74,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     getFilter(project)?.resetFileIds()
   }
 
-  private fun getFilter(project: Project) = myProjectFilters.computeIfAbsent(project) {
-    if (it.isDisposed) null
-    else if (USE_CACHING_FILTER) CachingProjectIndexableFilesFilter(project)
-    else IncrementalProjectIndexableFilesFilter()
-  }
+  private fun getFilter(project: Project) = myProjectFilters[project]
 
   override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): List<Project> {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }

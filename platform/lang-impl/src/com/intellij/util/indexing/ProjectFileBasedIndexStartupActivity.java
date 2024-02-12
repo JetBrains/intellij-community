@@ -42,6 +42,8 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     fileBasedIndex.loadIndexes();
     fileBasedIndex.waitUntilIndicesAreInitialized();
 
+    fileBasedIndex.getIndexableFilesFilterHolder().onProjectOpened(project);
+
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
     UnindexedFilesScanner.scanAndIndexProjectAfterOpen(project, suspended, "On project open");

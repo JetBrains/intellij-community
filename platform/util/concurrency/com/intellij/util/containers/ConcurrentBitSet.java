@@ -1,8 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 /**
  * Thread-safe version of the {@code java.util.BitSet}
@@ -112,4 +118,15 @@ public interface ConcurrentBitSet {
    * @return number of bits set
    */
   int cardinality();
+
+  void writeTo(@NotNull DataOutputStream outputStream) throws IOException;
+
+  @NotNull
+  static ConcurrentBitSet readFrom(@NotNull DataInputStream inputStream) throws IOException {
+    IntList list = new IntArrayList();
+    while (inputStream.available() > 0) {
+      list.add(inputStream.readInt());
+    }
+    return new ConcurrentBitSetImpl(list.toIntArray());
+  }
 }
