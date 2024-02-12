@@ -1,10 +1,10 @@
 # K2/K1 feature parity report
 
 
-Generated on Fri Feb 02 14:56:50 CET 2024
+Generated on Mon Feb 12 11:28:02 CET 2024
 
 ## Shared cases
-shared 10056 files out of 711 cases
+shared 10098 files out of 712 cases
 
 | Status | Case name | Success rate, % | K2 files | K1 files | Total files |
 | -- | -- | --  | -- | -- | -- |
@@ -198,7 +198,7 @@ shared 10056 files out of 711 cases
  | :white_check_mark: | K2IndyLambdaKotlinSteppingTestGenerated$StepIntoOnly | 100 | 25 | 25 | 25 | 
  | :white_check_mark: | K2IndyLambdaKotlinSteppingTestGenerated$StepOut | 100 | 10 | 10 | 10 | 
  | :white_check_mark: | K2IndyLambdaKotlinSteppingTestGenerated$StepOver | 100 | 118 | 118 | 118 | 
- | :x: | [K2IntentionTestGenerated] | 32 | 660 | 2054 | 2067 | 
+ | :x: | [K2IntentionTestGenerated] | 35 | 728 | 2092 | 2105 | 
  | :x: | K2IntentionTestGenerated$AddAnnotationUseSiteTarget | 0 | 0 | 5 | 5 | 
  | :x: | K2IntentionTestGenerated$AddForLoopIndices | 0 | 0 | 14 | 14 | 
  | :x: | K2IntentionTestGenerated$AddJvmOverloads | 0 | 0 | 8 | 8 | 
@@ -261,7 +261,6 @@ shared 10056 files out of 711 cases
  | :x: | K2IntentionTestGenerated$IterateExpression | 0 | 0 | 13 | 13 | 
  | :x: | K2IntentionTestGenerated$IterationOverMap | 0 | 0 | 40 | 40 | 
  | :x: | K2IntentionTestGenerated$JoinDeclarationAndAssignment | 0 | 0 | 48 | 48 | 
- | :x: | K2IntentionTestGenerated$LambdaToAnonymousFunction | 0 | 0 | 30 | 30 | 
  | :x: | K2IntentionTestGenerated$MergeElseIf | 0 | 0 | 5 | 5 | 
  | :x: | K2IntentionTestGenerated$MoveDeclarationToSeparateFile | 0 | 0 | 2 | 2 | 
  | :x: | K2IntentionTestGenerated$MoveLambdaInsideParentheses | 0 | 0 | 19 | 19 | 
@@ -321,9 +320,11 @@ shared 10056 files out of 711 cases
  | :white_check_mark: | K2IntentionTestGenerated$InvertIfCondition | 100 | 58 | 58 | 58 | 
  | :white_check_mark: | K2IntentionTestGenerated$JoinArgumentList | 100 | 14 | 14 | 14 | 
  | :white_check_mark: | K2IntentionTestGenerated$JoinParameterList | 100 | 9 | 9 | 9 | 
+ | :white_check_mark: | K2IntentionTestGenerated$LambdaToAnonymousFunction | 100 | 31 | 31 | 31 | 
  | :white_check_mark: | K2IntentionTestGenerated$MergeIfs | 100 | 11 | 11 | 11 | 
  | :white_check_mark: | K2IntentionTestGenerated$MovePropertyToConstructor | 100 | 18 | 18 | 18 | 
  | :white_check_mark: | K2IntentionTestGenerated$RemoveAllArgumentNames | 100 | 16 | 16 | 16 | 
+ | :white_check_mark: | K2IntentionTestGenerated$RemoveExplicitTypeArguments | 100 | 37 | 37 | 37 | 
  | :white_check_mark: | K2IntentionTestGenerated$RemoveSingleArgumentName | 100 | 17 | 17 | 17 | 
  | :white_check_mark: | K2IntentionTestGenerated$ReplaceUnderscoreWithTypeArgument | 100 | 27 | 27 | 27 | 
  | :white_check_mark: | K2IntentionTestGenerated$ToRawStringLiteral | 100 | 16 | 16 | 16 | 
@@ -342,7 +343,7 @@ shared 10056 files out of 711 cases
  | :x: | FirJvmOptimizeImportsTestGenerated$Jvm | 43 | 20 | 47 | 47 | 
  | :white_check_mark: | FirJvmOptimizeImportsTestGenerated$Common | 89 | 64 | 72 | 72 | 
  | :x: | K2AddImportActionTestGenerated | 57 | 20 | 35 | 35 | 
- | :x: | K2MoveTestGenerated | 58 | 95 | 165 | 166 | 
+ | :x: | K2MoveTestGenerated | 58 | 96 | 166 | 167 | 
  | :x: | K2AutoImportTestGenerated | 64 | 18 | 28 | 28 | 
  | :x: | HighLevelQuickFixMultiFileTestGenerated$Uncategorized | 65 | 87 | 134 | 135 | 
  | :x: | SharedK2MultiFileQuickFixTestGenerated | 67 | 2 | 3 | 3 | 
@@ -367,9 +368,9 @@ shared 10056 files out of 711 cases
  | :white_check_mark: | K2CompletionCharFilterTestGenerated | 89 | 31 | 35 | 35 | 
  | :white_check_mark: | HighLevelMultiFileJvmBasicCompletionTestGenerated | 90 | 80 | 89 | 94 | 
  | :white_check_mark: | FirKeywordCompletionTestGenerated$Keywords | 91 | 127 | 139 | 139 | 
- | :white_check_mark: | [K2IdeK2CodeKotlinEvaluateExpressionTestGenerated] | 92 | 322 | 350 | 350 | 
+ | :white_check_mark: | [K2IdeK2CodeKotlinEvaluateExpressionTestGenerated] | 91 | 322 | 352 | 352 | 
+ | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$SingleBreakpoint | 91 | 289 | 316 | 316 | 
  | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$MultipleBreakpoints | 92 | 33 | 36 | 36 | 
- | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$SingleBreakpoint | 92 | 289 | 314 | 314 | 
  | :white_check_mark: | K2KDocCompletionTestGenerated | 93 | 28 | 30 | 30 | 
  | :white_check_mark: | [K2SelectExpressionForDebuggerTestGenerated] | 99 | 68 | 69 | 69 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$DisallowMethodCalls | 95 | 20 | 21 | 21 | 
@@ -377,7 +378,7 @@ shared 10056 files out of 711 cases
  | :white_check_mark: | KotlinFirInlineTestGenerated$InlineVariableOrProperty | 97 | 32 | 33 | 33 | 
  | :white_check_mark: | FirRenameTestGenerated | 98 | 273 | 278 | 278 | 
  | :white_check_mark: | [FirLegacyUastValuesTestGenerated] | 100 | 79 | 79 | 79 | 
- | :white_check_mark: | [FirUastDeclarationTestGenerated] | 100 | 29 | 29 | 29 | 
+ | :white_check_mark: | [FirUastDeclarationTestGenerated] | 100 | 30 | 30 | 30 | 
  | :white_check_mark: | [FirUastTypesTestGenerated] | 100 | 14 | 14 | 14 | 
  | :white_check_mark: | [FirUastValuesTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [K2BytecodeToolWindowTestGenerated] | 100 | 19 | 19 | 19 | 
@@ -437,7 +438,7 @@ shared 10056 files out of 711 cases
  | :white_check_mark: | [KotlinFirSurroundWithTestGenerated] | 100 | 74 | 74 | 74 | 
  | :white_check_mark: | [KotlinFirUnwrapRemoveTestGenerated] | 100 | 63 | 63 | 63 | 
  | :white_check_mark: | [ParcelizeK2QuickFixTestGenerated] | 100 | 18 | 18 | 18 | 
- | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Uncategorized | 108 | 125 | 116 | 127 | 
+ | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Uncategorized | 109 | 126 | 116 | 127 | 
  | :white_check_mark: | K2InplaceRenameTestGenerated | 121 | 121 | 100 | 126 | 
  | :white_check_mark: | [K2HighlightingMetaInfoTestGenerated] | 106 | 56 | 53 | 56 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Diagnostics | 100 | 3 | 3 | 3 | 
@@ -453,8 +454,8 @@ kt, test, before.Main.kt, kts, main.java, main.kt, option1.kt, kt.kt, java, 0.kt
 
 ---
 ## Total 
- * K1: 9944 rate: 99 % of 10056 files
- * K2: 6821 rate: 68 % of 10056 files
+ * K1: 9986 rate: 99 % of 10098 files
+ * K2: 6892 rate: 68 % of 10098 files
 ---
 
 ## Build cases for K1
@@ -1843,7 +1844,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * fir/tests/testData/resolve/anchors/anchorInSameModuleJavaDependency
 ## K1 only cases
 
-556 K1 only cases (7580 files):
+554 K1 only cases (7542 files):
 
  * org.jetbrains.kotlin.DataFlowValueRenderingTestGenerated
  * org.jetbrains.kotlin.addImport.AddImportTestGenerated
@@ -1852,7 +1853,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.asJava.classes.IdeCompiledLightClassesByFqNameTestGenerated$Facades
  * org.jetbrains.kotlin.asJava.classes.IdeCompiledLightClassesByFqNameTestGenerated$NullabilityAnnotations
  * org.jetbrains.kotlin.asJava.classes.IdeCompiledLightClassesByFqNameTestGenerated$Uncategorized
- * org.jetbrains.kotlin.asJava.classes.IdeCompiledLightClassesByFqNameTestGenerated$WithTestCompilerPluginEnabled
  * org.jetbrains.kotlin.asJava.classes.IdeLightClassesByFqNameTestGenerated$CompilationErrors
  * org.jetbrains.kotlin.asJava.classes.IdeLightClassesByFqNameTestGenerated$IdeRegression
  * org.jetbrains.kotlin.asJava.classes.IdeLightClassesByFqNameTestGenerated$Script
@@ -2174,7 +2174,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTest2Generated$TakeWhile
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTest2Generated$ToCollection
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTest2Generated$Uncategorized
- * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$RemoveExplicitTypeArguments
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$RemoveExplicitTypeWithApiMode
  * org.jetbrains.kotlin.idea.intentions.K1IntentionTestGenerated$SpecifyTypeExplicitlyInDestructuringAssignment
  * org.jetbrains.kotlin.idea.intentions.MultiFileIntentionTestGenerated
