@@ -14,8 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Experimental
-abstract class LanguageServiceWidgetItem(val context: LanguageServiceWidgetContext) {
-
+abstract class LanguageServiceWidgetItem {
   /**
    * The default label for the widget in the status bar is generic: "Language Services".
    * But if this item is the only one in the `For Current File` popup section

@@ -15,9 +15,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
-import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetContext
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
 import com.intellij.ui.LayeredIcon
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
@@ -28,10 +28,14 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
 
   override fun createInstance(project: Project): StatusBarWidget = LanguageServiceWidget(project, scope)
 
+  override fun registerCustomListeners(connection: MessageBusConnection) {
+    LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.forEach { it.registerWidgetUpdaters(project, connection, ::update) }
+  }
+
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     if (!Registry.`is`("language.service.status.bar.widget")) return WidgetState.HIDDEN
 
-    val allItems = getAllWidgetItems(LanguageServiceWidgetContext(project, file, ::update, this))
+    val allItems = getAllWidgetItems(project, file)
     if (allItems.isEmpty()) return WidgetState.HIDDEN
 
     val fileSpecificItems = file?.let { allItems.filter { it.widgetActionLocation == ForCurrentFile } } ?: emptyList()
@@ -58,7 +62,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
 
   private fun createActionGroup(dataContext: DataContext): ActionGroup {
     val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
-    val allItems = getAllWidgetItems(LanguageServiceWidgetContext(project, file, ::update, this))
+    val allItems = getAllWidgetItems(project, file)
     val fileSpecificItems = file?.let { allItems.filter { it.widgetActionLocation == ForCurrentFile } } ?: emptyList()
     val otherItems = allItems - fileSpecificItems.toSet()
     // The '---Other---' separator doesn't look great if it's the only separator in the popup, so check only `fileSpecificStates.isNotEmpty()`
@@ -76,9 +80,9 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   }
 
   private companion object {
-    private fun getAllWidgetItems(context: LanguageServiceWidgetContext) =
+    private fun getAllWidgetItems(project: Project, currentFile: VirtualFile?) =
       LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.flatMap {
-        it.getWidgetItems(context)
+        it.getWidgetItems(project, currentFile)
       }
 
     private val normalIcon: Icon = AllIcons.Json.Object
