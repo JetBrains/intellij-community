@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
@@ -39,7 +37,7 @@ open class DirectoryBasedStorage(
     return StateMap.fromMap(elementMap)
   }
 
-  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -94,11 +92,10 @@ open class DirectoryBasedStorage(
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? {
-    return if (checkIsSavingDisabled()) null else MySaveSessionProducer(storage = this, getStorageData())
-  }
+  override fun createSaveSessionProducer(): SaveSessionProducer? =
+    if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
 
-  private class MySaveSessionProducer(
+  private class DirectorySaveSessionProducer(
     private val storage: DirectoryBasedStorage,
     private val originalStates: StateMap
   ) : SaveSessionProducerBase(), SaveSession, DirectoryBasedSaveSessionProducer {
