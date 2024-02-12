@@ -479,20 +479,20 @@ public class HintManagerImpl extends HintManager {
     Point location;
     JComponent externalComponent = getExternalComponent(editor);
     JComponent internalComponent = editor.getContentComponent();
+    Point p;
     if (constraint == RIGHT_UNDER) {
-      Point p = new Point(point2);
+      p = new Point(point2);
       if (!showByBalloon) {
         p.y += editor.getLineHeight();
       }
-      location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
     else {
-      Point p = new Point(point1);
+      p = new Point(point1);
       if (constraint == UNDER) {
         p.y += editor.getLineHeight();
       }
-      location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
+    location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
 
     if (constraint == ABOVE && !showByBalloon) {
       location.y -= hintSize.height;
