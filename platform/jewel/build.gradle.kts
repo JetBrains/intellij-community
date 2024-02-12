@@ -9,6 +9,8 @@ dependencies {
     sarif(projects.ideLafBridge)
     sarif(projects.intUi.intUiDecoratedWindow)
     sarif(projects.intUi.intUiStandalone)
+    sarif(projects.markdown.core)
+    sarif(projects.markdown.extensionGfmAlerts)
     sarif(projects.samples.idePlugin)
     sarif(projects.samples.standalone)
     sarif(projects.ui)

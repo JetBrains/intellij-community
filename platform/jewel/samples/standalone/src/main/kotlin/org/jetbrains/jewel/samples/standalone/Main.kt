@@ -55,7 +55,7 @@ fun main() {
         ) {
             DecoratedWindow(
                 onCloseRequest = { exitApplication() },
-                title = "Jewel component catalog",
+                title = "Jewel standalone sample",
                 icon = icon,
             ) {
                 TitleBarView()

@@ -1,5 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.jetbrains.jewel.buildlogic.apivalidation.ApiValidationExtension
+
 plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
     id("dev.drewhamilton.poko")
@@ -23,12 +25,19 @@ kotlin {
     explicitApi()
 }
 
+val extension = project.extensions.create("publicApiValidation", ApiValidationExtension::class.java)
+
+with(extension) {
+    excludedClassRegexes.convention(emptySet())
+}
+
 tasks {
     val validatePublicApi =
         register<ValidatePublicApiTask>("validatePublicApi") {
             include { it.file.extension == "api" }
             source(project.fileTree("api"))
             dependsOn(named("apiCheck"))
+            excludedClassRegexes = project.the<ApiValidationExtension>().excludedClassRegexes.get()
         }
 
     named("check") { dependsOn(validatePublicApi) }

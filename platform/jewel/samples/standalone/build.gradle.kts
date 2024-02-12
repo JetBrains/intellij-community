@@ -9,8 +9,12 @@ plugins {
 
 dependencies {
     implementation(libs.kotlin.reflect)
+    implementation(libs.filePicker)
     implementation(projects.intUi.intUiStandalone)
     implementation(projects.intUi.intUiDecoratedWindow)
+    implementation(projects.markdown.core)
+    implementation(projects.markdown.extensionGfmAlerts)
+
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
     }

@@ -1,4 +1,5 @@
 [versions]
+commonmark = "0.21.0"
 composeDesktop = "1.6.0-dev1397"
 detekt = "1.23.4"
 dokka = "1.8.20"
@@ -14,6 +15,10 @@ kotlinxBinaryCompat = "0.14.0"
 poko = "0.13.1"
 
 [libraries]
+commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+
+filePicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" }
+
 kotlinSarif = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "kotlinSarif" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
