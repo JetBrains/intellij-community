@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -85,21 +84,6 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
             is ChangesRequest.SelectChange -> {
               updateChanges(changes.commitsByChange[request.change], request.change)
             }
-            is ChangesRequest.SelectCommitAndFile -> {
-              val changeSet = changes.getChangeList(request.commitSha)
-              val change = changeSet.changes.find {
-                it.filePathAfter == request.filePath || it.filePathBefore == request.filePath
-              }
-              updateChanges(request.commitSha, change)
-            }
-            is ChangesRequest.SelectFile -> {
-              val commit = _selectedCommit.value
-              val changeSet = changes.getChangeList(commit)
-              val change = changeSet.changes.find {
-                it.filePathAfter == request.filePath || it.filePathBefore == request.filePath
-              }
-              updateChanges(commit, change)
-            }
           }
         }
       }
@@ -135,18 +119,6 @@ class CodeReviewChangesViewModelDelegate<T : CodeReviewChangeListViewModelBase>(
     }
   }
 
-  fun selectChange(commitSha: String?, filePath: FilePath) {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.SelectCommitAndFile(commitSha, filePath))
-    }
-  }
-
-  fun selectFile(filePath: FilePath) {
-    cs.launchNow {
-      selectionRequests.emit(ChangesRequest.SelectFile(filePath))
-    }
-  }
-
   private fun CodeReviewChangesContainer.getChangeList(commit: String?): CodeReviewChangeList =
     if (commit == null) {
       CodeReviewChangeList(null, summaryChanges)
@@ -162,8 +134,6 @@ private sealed interface ChangesRequest {
   data object NextCommit : ChangesRequest
   data object PrevCommit : ChangesRequest
   data class SelectChange(val change: RefComparisonChange) : ChangesRequest
-  data class SelectCommitAndFile(val commitSha: String?, val filePath: FilePath) : ChangesRequest
-  data class SelectFile(val filePath: FilePath) : ChangesRequest
 }
 
 class CodeReviewChangesContainer(val summaryChanges: List<RefComparisonChange>,

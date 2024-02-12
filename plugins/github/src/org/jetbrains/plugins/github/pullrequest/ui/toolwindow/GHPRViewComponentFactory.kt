@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
@@ -98,7 +97,7 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
       bindContentIn(cs, changesVm.changeListVm) { res ->
         res.result?.let {
           it.fold(onSuccess = {
-            createChangesPanel(changesVm, it)
+            createChangesPanel(it)
           }, onFailure = {
             createChangesErrorComponent(changesVm, it)
           })
@@ -107,12 +106,10 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     }
   }
 
-  private fun CoroutineScope.createChangesPanel(changesVm: GHPRChangesViewModel,
-                                                changeListVm: GHPRChangeListViewModel): JComponent {
+  private fun CoroutineScope.createChangesPanel(changeListVm: GHPRChangeListViewModel): JComponent {
     val progressModel = CodeReviewProgressTreeModelFromDetails(this, changeListVm)
     val tree = CodeReviewChangeListComponentFactory.createIn(this, changeListVm, progressModel,
                                                              GithubBundle.message("pull.request.does.not.contain.changes"))
-    ClientProperty.put(tree, GHPRCommitBrowserComponentController.KEY, changesVm)
 
     val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
     val stripe = CollaborationToolsUIUtil.wrapWithProgressStripe(this, changeListVm.isUpdating, scrollPane)

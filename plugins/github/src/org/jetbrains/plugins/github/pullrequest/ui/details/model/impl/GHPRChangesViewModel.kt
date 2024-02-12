@@ -10,7 +10,6 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineScope
@@ -26,13 +25,13 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModelImpl
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitBrowserComponentController
 
 @ApiStatus.Experimental
-interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit>, GHPRCommitBrowserComponentController {
+interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit> {
   val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModel>>
   val changesLoadingErrorHandler: GHApiLoadingErrorHandler
 
+  fun selectCommit(sha: String)
   fun selectChange(change: RefComparisonChange)
 }
 
@@ -135,14 +134,8 @@ internal class GHPRChangesViewModelImpl(
     delegate.selectPreviousCommit()
   }
 
-  override fun selectCommit(oid: String) {
-    delegate.selectCommit(oid)
-  }
-
-  override fun selectChange(oid: String?, filePath: String) {
-    val repo = dataContext.repositoryDataService.remoteCoordinates.repository
-    val path = VcsContextFactory.getInstance().createFilePath(repo.root, filePath, false)
-    delegate.selectChange(oid, path)
+  override fun selectCommit(sha: String) {
+    delegate.selectCommit(sha)
   }
 
   override fun selectChange(change: RefComparisonChange) {

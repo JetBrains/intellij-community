@@ -43,10 +43,6 @@ sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
       infoVm.detailsVm.value.result?.getOrNull()?.changesVm?.selectCommit(oid)
     }
 
-    fun selectChange(oid: String?, filePath: String) {
-      infoVm.detailsVm.value.result?.getOrNull()?.changesVm?.selectChange(oid, filePath)
-    }
-
     override fun dispose() {
       cs.cancel()
     }
