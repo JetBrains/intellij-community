@@ -18,6 +18,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
+import com.intellij.util.ui.JBInsets;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -200,13 +201,17 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   @NotNull
   @Override
   public Rectangle getVisibleWindowBounds() {
-    return getBounds();
+    var result = getBounds();
+    JBInsets.removeFrom(result, ToolWindowExternalDecoratorKt.getInvisibleInsets(this));
+    return result;
   }
 
   @Override
   public void setVisibleWindowBounds(@NotNull Rectangle r) {
     myBoundsHelper.setBounds(r);
-    super.setBounds(r);
+    var newBounds = new Rectangle(r);
+    JBInsets.addTo(newBounds, ToolWindowExternalDecoratorKt.getInvisibleInsets(this));
+    super.setBounds(newBounds);
   }
 
   @NotNull

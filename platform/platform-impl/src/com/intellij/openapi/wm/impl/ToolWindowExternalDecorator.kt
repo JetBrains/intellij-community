@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.WindowInfo
 import java.awt.Component
+import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Window
 
@@ -32,3 +33,7 @@ internal interface ToolWindowExternalDecorator {
   }
 
 }
+
+internal val Window.invisibleInsets: Insets
+  // guesswork: the top inset is typically visible (window header), others are typically invisible drag zones
+  get() = insets.apply { top = 0 }

@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator.Companion.DECORATOR_PROPERTY
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
+import com.intellij.util.ui.JBInsets
 import java.awt.Component
 import java.awt.Rectangle
 import java.awt.Window
@@ -71,10 +72,16 @@ internal class WindowedDecorator(
   }
 
   override var visibleWindowBounds: Rectangle
-    get() = getFrame().bounds
+    get() {
+      val result = getFrame().bounds
+      JBInsets.removeFrom(result, getFrame().invisibleInsets)
+      return result
+    }
     set(value) {
       boundsHelper.bounds = value
-      getFrame().bounds = value
+      val newBounds = Rectangle(value)
+      JBInsets.addTo(newBounds, getFrame().invisibleInsets)
+      getFrame().bounds = newBounds
     }
 
   override fun log(): Logger = LOG
