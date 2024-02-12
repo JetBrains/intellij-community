@@ -372,56 +372,77 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
     val startTime = System.currentTimeMillis()
     coroutineScope.async(modalityState.asContextElement()) {
-      if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
-        LOG.info("Started importing all...")
-        progressIndicator.text2 = "Migrating options"
-        //TODO support plugin list customization for raw import
-        //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
-        importer.importRaw()
-        LOG.info("Imported all completed in ${System.currentTimeMillis() - startTime} ms. ")
-        LOG.info("Calling restart...")
-        withContext(Dispatchers.EDT) {
-          ApplicationManager.getApplication().invokeLater({
-                                                            ApplicationManagerEx.getApplicationEx().restart(true)
-                                                          }, modalityState)
+      suspend fun performImport(): Boolean {
+        if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
+          LOG.info("Started importing all...")
+          progressIndicator.text2 = "Migrating options"
+          //TODO support plugin list customization for raw import
+          //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
+          importer.importRaw()
+          LOG.info("Imported all completed in ${System.currentTimeMillis() - startTime} ms. ")
+          LOG.info("Calling restart...")
+          return true
         }
-      }
-      else {
-        progressIndicator.text2 = "Migrating options"
-        LOG.info("Starting migration...")
-        var restartRequired = false
-        if (!plugins2import.isNullOrEmpty()) {
-          LOG.info("Started importing plugins...")
-          importer.installPlugins(progressIndicator, plugins2import)
-          restartRequired = true
-        }
-        if (progressIndicator.isCanceled()) {
-          return@async
-        }
-        try {
-          if (importer.importOptions(progressIndicator, filteredCategories)) {
+        else {
+          progressIndicator.text2 = "Migrating options"
+          LOG.info("Starting migration...")
+          var restartRequired = false
+          if (!plugins2import.isNullOrEmpty()) {
+            LOG.info("Started importing plugins...")
+            importer.installPlugins(progressIndicator, plugins2import)
             restartRequired = true
           }
-        }
-        catch (pce: ProcessCanceledException) {
-          LOG.info("Import process cancelled. Proceeding to normal IDE start")
-          return@async
-        }
-        LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
-        progressIndicator.fraction = 0.1
-        storeImportConfig(productInfo.configDir, filteredCategories, plugins2import)
-        LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
-        LOG.info("Calling restart...")
-        // restart if we install plugins
-        withContext(Dispatchers.EDT) {
-          if (restartRequired) {
-            ApplicationManager.getApplication().invokeLater({
-                                                              ApplicationManagerEx.getApplicationEx().restart(true)
-                                                            }, modalityState)
+          if (progressIndicator.isCanceled()) {
+            LOG.info("Import cancelled after importing the plugins.")
+            return false
           }
-          else {
-            SettingsService.getInstance().doClose.fire(Unit)
+          try {
+            if (importer.importOptions(progressIndicator, filteredCategories)) {
+              restartRequired = true
+            }
           }
+          catch (pce: ProcessCanceledException) {
+            LOG.info("Import process cancelled. Proceeding to normal IDE start")
+            return false
+          }
+          LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
+          progressIndicator.fraction = 0.99
+          storeImportConfig(productInfo.configDir, filteredCategories, plugins2import)
+          LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
+          LOG.info("Calling restart...")
+          // restart if we install plugins
+          return restartRequired
+        }
+      }
+
+      fun restartIde() {
+        ApplicationManager.getApplication().invokeLater({
+                                                          ApplicationManagerEx.getApplicationEx().restart(true)
+                                                        }, modalityState)
+      }
+
+      fun closeImportDialog() {
+        SettingsService.getInstance().doClose.fire(Unit)
+      }
+
+      var shouldRestart = false
+      try {
+        shouldRestart = performImport()
+      } catch (e: Throwable) {
+        if (e is CancellationException || e is ProcessCanceledException) {
+          LOG.info("Import cancellation detected. Proceeding normally without restart.")
+        } else {
+          LOG.error("Import error. Proceeding normally without restart.", e)
+        }
+      }
+
+      LOG.info("Finishing the import process, shouldRestart=$shouldRestart")
+      withContext(Dispatchers.EDT) {
+        if (shouldRestart) {
+          restartIde()
+        }
+        else {
+          closeImportDialog()
         }
       }
     }

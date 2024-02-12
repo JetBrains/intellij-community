@@ -133,97 +133,91 @@ class JbSettingsImporter(private val configDirPath: Path,
   suspend fun importOptions(progressIndicator: ProgressIndicator, categories: Set<SettingsCategory>): Boolean {
     // load all components
     // import all, except schema managers
-    try {
-      progressIndicator.checkCanceled()
-      val allFiles = mutableSetOf<String>()
-      val notLoadedComponents = arrayListOf<String>()
-      val unknownStorage = arrayListOf<String>()
-      val storageManager = componentStore.storageManager as StateStorageManagerImpl
-      val cachedFileStorages = storageManager.getCachedFileStorages()
-        .mapNotNull { (it as? FileBasedStorage)?.file?.name }
-      val (components, files) = findComponentsAndFiles()
-      notLoadedComponents.addAll(components)
-      notLoadedComponents.removeAll(componentStore.getComponentNames())
-      allFiles.addAll(files)
-      unknownStorage.addAll(files)
-      unknownStorage.removeAll(cachedFileStorages.toSet())
+    progressIndicator.checkCanceled()
+    val allFiles = mutableSetOf<String>()
+    val notLoadedComponents = arrayListOf<String>()
+    val unknownStorage = arrayListOf<String>()
+    val storageManager = componentStore.storageManager as StateStorageManagerImpl
+    val cachedFileStorages = storageManager.getCachedFileStorages()
+      .mapNotNull { (it as? FileBasedStorage)?.file?.name }
+    val (components, files) = findComponentsAndFiles()
+    notLoadedComponents.addAll(components)
+    notLoadedComponents.removeAll(componentStore.getComponentNames())
+    allFiles.addAll(files)
+    unknownStorage.addAll(files)
+    unknownStorage.removeAll(cachedFileStorages.toSet())
 
 
-      //TODO: remove later, now keep for logging purposes
-      LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
-      LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
-      progressIndicator.checkCanceled()
-      val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
-      val defaultProject = ProjectManager.getInstance().defaultProject
-      val defaultProjectStore = (defaultProject as ComponentManager).stateStore as ComponentStoreImpl
-      val defaultProjectStorage = defaultProjectStore.storageManager.getStateStorage(FileStorageAnnotation("", false))
+    //TODO: remove later, now keep for logging purposes
+    LOG.info("NOT loaded components(${notLoadedComponents.size}):\n${notLoadedComponents.joinToString()}")
+    LOG.info("NOT loaded storages(${unknownStorage.size}):\n${unknownStorage.joinToString()}")
+    progressIndicator.checkCanceled()
+    val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
+    val defaultProject = ProjectManager.getInstance().defaultProject
+    val defaultProjectStore = (defaultProject as ComponentManager).stateStore as ComponentStoreImpl
+    val defaultProjectStorage = defaultProjectStore.storageManager.getStateStorage(FileStorageAnnotation("", false))
 
-      val loadNotLoadedComponents = loadNotLoadedComponents(progressIndicator, componentManagerImpl, notLoadedComponents, null)
-      notLoadedComponents.removeAll(loadNotLoadedComponents)
+    val loadNotLoadedComponents = loadNotLoadedComponents(progressIndicator, componentManagerImpl, notLoadedComponents, null)
+    notLoadedComponents.removeAll(loadNotLoadedComponents)
 
-      val projectDefaultComponentNames = loadProjectDefaultComponentNames()
-      if (projectDefaultComponentNames.isNotEmpty()) {
-        loadNotLoadedComponents(progressIndicator, defaultProject.actualComponentManager as ComponentManagerImpl,
-                                projectDefaultComponentNames, null)
-      }
-
-      for (component in notLoadedComponents) {
-        LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
-      }
-
-      // load code style scheme manager
-      CodeStyleSchemes.getInstance()
-      ApplicationInspectionProfileManager.getInstanceImpl()
-      val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
-      schemeManagerFactory.process {
-        progressIndicator.checkCanceled()
-        if ((configDirPath / it.fileSpec).isDirectory()) {
-          allFiles.addAll(filesFromFolder(configDirPath / it.fileSpec, it.fileSpec))
-        }
-      }
-      for (entry in additionalSchemeDirs) {
-        if ((configDirPath / entry.key).isDirectory()) {
-          allFiles.addAll(filesFromFolder(configDirPath / entry.key, entry.key))
-        }
-      }
-
-      LOG.info("Detected ${allFiles.size} files that could be imported: ${allFiles.joinToString()}")
-      val componentAndFilesMap = filterComponents(allFiles, categories)
-      val componentFiles = componentAndFilesMap.values.toSet()
-      LOG.info("After filtering we have ${componentFiles.size} component files to import: ${componentFiles.joinToString()}")
-      val schemeFiles = filterSchemes(allFiles, categories)
-      LOG.info("After filtering we have ${schemeFiles.size} scheme files to import: ${schemeFiles.joinToString()}")
-
-      // setting dummy valueChangeListener, so effects won't affect the UI, etc.
-      Registry.setValueChangeListener(object : RegistryValueListener {
-        // do nothing
-      })
-      // copy scheme files first:
-      schemeFiles.forEach {
-        (configDirPath / it).copy(PathManager.getConfigDir() / it)
-      }
-
-      // we use LinkedHashSet, because we need ordering here
-      val appComponentNames: LinkedHashSet<String> = toposortComponentNames(componentAndFilesMap.keys)
-
-      withExternalStreamProvider(arrayOf(storageManager, defaultProjectStore.storageManager)) {
-        progressIndicator.checkCanceled()
-        componentStore.reloadComponents(changedFileSpecs = componentFiles + schemeFiles,
-                                        deletedFileSpecs = emptyList(),
-                                        componentNames2reload = appComponentNames,
-                                        forceReloadNonReloadable = true)
-        defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
-      }
-      RegistryManager.getInstanceAsync().resetValueChangeListener()
-
-      // there's currently only one reason to restart after reading configs
-      // plugins are handled separately
-      return Registry.getInstance().isRestartNeeded
+    val projectDefaultComponentNames = loadProjectDefaultComponentNames()
+    if (projectDefaultComponentNames.isNotEmpty()) {
+      loadNotLoadedComponents(progressIndicator, defaultProject.actualComponentManager as ComponentManagerImpl,
+                              projectDefaultComponentNames, null)
     }
-    catch (th: Throwable) {
-      LOG.error(th)
-      return false
+
+    for (component in notLoadedComponents) {
+      LOG.info("Component $component was not found and loaded. Its settings will not be migrated")
     }
+
+    // load code style scheme manager
+    CodeStyleSchemes.getInstance()
+    ApplicationInspectionProfileManager.getInstanceImpl()
+    val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
+    schemeManagerFactory.process {
+      progressIndicator.checkCanceled()
+      if ((configDirPath / it.fileSpec).isDirectory()) {
+        allFiles.addAll(filesFromFolder(configDirPath / it.fileSpec, it.fileSpec))
+      }
+    }
+    for (entry in additionalSchemeDirs) {
+      if ((configDirPath / entry.key).isDirectory()) {
+        allFiles.addAll(filesFromFolder(configDirPath / entry.key, entry.key))
+      }
+    }
+
+    LOG.info("Detected ${allFiles.size} files that could be imported: ${allFiles.joinToString()}")
+    val componentAndFilesMap = filterComponents(allFiles, categories)
+    val componentFiles = componentAndFilesMap.values.toSet()
+    LOG.info("After filtering we have ${componentFiles.size} component files to import: ${componentFiles.joinToString()}")
+    val schemeFiles = filterSchemes(allFiles, categories)
+    LOG.info("After filtering we have ${schemeFiles.size} scheme files to import: ${schemeFiles.joinToString()}")
+
+    // setting dummy valueChangeListener, so effects won't affect the UI, etc.
+    Registry.setValueChangeListener(object : RegistryValueListener {
+      // do nothing
+    })
+    // copy scheme files first:
+    schemeFiles.forEach {
+      (configDirPath / it).copy(PathManager.getConfigDir() / it)
+    }
+
+    // we use LinkedHashSet, because we need ordering here
+    val appComponentNames: LinkedHashSet<String> = toposortComponentNames(componentAndFilesMap.keys)
+
+    withExternalStreamProvider(arrayOf(storageManager, defaultProjectStore.storageManager)) {
+      progressIndicator.checkCanceled()
+      componentStore.reloadComponents(changedFileSpecs = componentFiles + schemeFiles,
+                                      deletedFileSpecs = emptyList(),
+                                      componentNames2reload = appComponentNames,
+                                      forceReloadNonReloadable = true)
+      defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
+    }
+    RegistryManager.getInstanceAsync().resetValueChangeListener()
+
+    // there's currently only one reason to restart after reading configs
+    // plugins are handled separately
+    return Registry.getInstance().isRestartNeeded
   }
 
   // very basic and primitive toposort. Doesn't traverse, doesn't support transitive deps, etc.
