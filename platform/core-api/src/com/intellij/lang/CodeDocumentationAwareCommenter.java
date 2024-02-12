@@ -4,7 +4,11 @@ package com.intellij.lang;
 
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Defines support for "Enter within comments" actions in a custom language.
@@ -21,6 +25,10 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
    */
   @Nullable
   IElementType getLineCommentTokenType();
+
+  default @NotNull List<IElementType> getLineCommentTokenTypes() {
+    return ContainerUtil.createMaybeSingletonList(getLineCommentTokenType());
+  }
 
   /**
    * Returns the type of the block comment in the language,
