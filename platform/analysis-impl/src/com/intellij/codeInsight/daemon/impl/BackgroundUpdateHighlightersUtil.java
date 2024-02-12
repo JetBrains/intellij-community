@@ -242,10 +242,6 @@ public final class BackgroundUpdateHighlightersUtil {
       List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
       List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
       SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
-        //if (info.isFromAnnotator()) {
-        //  // annotator infos are handled by HighlightInfoUpdater separately
-        //  return true;
-        //}
         if (!atStart) {
           return true;
         }
