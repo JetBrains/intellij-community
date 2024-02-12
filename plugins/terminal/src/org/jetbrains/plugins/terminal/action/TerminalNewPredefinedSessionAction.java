@@ -89,7 +89,7 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     }
     group.add(new TerminalSettingsAction());
     return JBPopupFactory.getInstance().createActionGroupPopup(null, group, dataContext,
-                                                               false, true, true, null, -1, null);
+                                                               false, true, false, null, -1, null);
   }
 
   private static @NotNull List<OpenShellAction> listOpenWslShellActions() {
