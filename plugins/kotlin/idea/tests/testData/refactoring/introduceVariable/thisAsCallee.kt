@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun (String.() -> String).foo(x : String) {
     x.<selection>this</selection>()
     x.this@foo()

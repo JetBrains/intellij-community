@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableContext
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
@@ -208,7 +209,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
         val isInplaceAvailable = editor != null
 
-        val allOccurrences = listOf(expression) // TODO: KTIJ-27861
+        val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(containers.occurrenceContainer)
+
         val callback = Pass.create { replaceChoice: OccurrencesChooser.ReplaceChoice ->
             val allReplaces = when (replaceChoice) {
                 OccurrencesChooser.ReplaceChoice.ALL -> allOccurrences
@@ -344,6 +346,19 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             callback.accept(OccurrencesChooser.ReplaceChoice.ALL)
         }
     }
+
+    override fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression> =
+        analyzeInModalWindow(contextElement = this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            K2SemanticMatcher.findMatches(patternElement = this@findOccurrences, scopeElement = occurrenceContainer)
+                .filterNot { it.isAssignmentLHS() }
+                .mapNotNull { match ->
+                    when (match) {
+                        is KtExpression -> match
+                        is KtStringTemplateEntryWithExpression -> match.expression
+                        else -> errorWithAttachment("Unexpected candidate element ${match::class.java}") { withPsiEntry("match", match) }
+                    }
+                }
+        }.ifEmpty { listOf(this) }
 
     private fun areTypeArgumentsNeededForCorrectTypeInference(expression: KtExpression): Boolean {
         val call = expression.getPossiblyQualifiedCallExpression() ?: return false

@@ -20,7 +20,7 @@ interface KotlinIntroduceVariableService {
     ): PsiElement?
 
     fun getContainersForExpression(expression: KtExpression): List<KotlinIntroduceVariableHelper.Containers>
-    fun findOccurrences(expression: KtExpression, occurrenceContainer: PsiElement): List<KtExpression>
+    fun findOccurrences(expression: KtExpression, occurrenceContainer: KtElement): List<KtExpression>
 
     fun doRefactoringWithContainer(
         editor: Editor?,

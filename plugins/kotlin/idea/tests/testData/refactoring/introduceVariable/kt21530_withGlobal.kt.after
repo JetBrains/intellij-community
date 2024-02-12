@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun test() = "123"
 
 val test = test()

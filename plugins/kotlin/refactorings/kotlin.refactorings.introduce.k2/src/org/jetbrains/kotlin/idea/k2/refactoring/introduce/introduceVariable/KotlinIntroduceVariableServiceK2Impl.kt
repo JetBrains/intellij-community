@@ -45,8 +45,10 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
 
     override fun findOccurrences(
         expression: KtExpression,
-        occurrenceContainer: PsiElement
-    ): List<KtExpression> = listOf(expression)
+        occurrenceContainer: KtElement,
+    ): List<KtExpression> = with(K2IntroduceVariableHandler) {
+        expression.findOccurrences(occurrenceContainer)
+    }
 
     override fun doRefactoringWithContainer(
         editor: Editor?,

@@ -58,7 +58,7 @@ internal class KotlinIntroduceVariableServiceK1Impl(private val project: Project
 
     override fun findOccurrences(
         expression: KtExpression,
-        occurrenceContainer: PsiElement
+        occurrenceContainer: KtElement
     ): List<KtExpression> = with(K1IntroduceVariableHandler) {
         expression.findOccurrences(occurrenceContainer)
     }
