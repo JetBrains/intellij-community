@@ -1,10 +1,10 @@
 {
     "modules": [
-        { "name": "common", "platform": "common", "dependencies": [] },
-        { "name": "intermediate", "platform": "common", "dependencies": [{ "kind": "refinement", "name": "common" }] },
-        { "name": "jvm", "platform": "jvm", "dependencies": [{ "kind": "refinement", "name": "intermediate" }] },
-        { "name": "native", "platform": "native", "dependencies": [{ "kind": "refinement", "name": "intermediate" }] },
-        { "name": "js", "platform": "js", "dependencies": [{ "kind": "refinement", "name": "common" }] }
+        { "name": "common", "platform": "common" },
+        { "name": "intermediate", "platform": "common", "refinement_dependencies": ["common"] },
+        { "name": "jvm", "platform": "jvm", "refinement_dependencies": ["intermediate"] },
+        { "name": "native", "platform": "native", "refinement_dependencies": ["intermediate"] },
+        { "name": "js", "platform": "js", "refinement_dependencies": ["common"] }
     ],
     "targets": [
         { "module": "common", "file": "class.common.kt" },

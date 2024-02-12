@@ -60,10 +60,10 @@ object TestProjectLibraryParser {
 data class TestProjectModule(val name: String, val targetPlatform: TargetPlatform, val dependencies: List<Dependency>)
 data class Dependency(val name: String, val kind: DependencyKind)
 
-enum class DependencyKind(val jsonName: String) {
-    REGULAR("regular"),
-    FRIEND("friend"),
-    REFINEMENT("refinement")
+enum class DependencyKind {
+    REGULAR,
+    FRIEND,
+    REFINEMENT
 }
 
 /**
@@ -81,32 +81,26 @@ enum class TestPlatform(val jsonName: String, val targetPlatform: TargetPlatform
 
 object TestProjectModuleParser {
     private const val DEPENDENCIES_FIELD = "dependencies"
+    private const val REFINEMENT_DEPENDENCIES_FIELD = "refinement_dependencies"
+    private const val FRIEND_DEPENDENCIES_FIELD = "friend_dependencies"
     private const val MODULE_NAME_FIELD = "name"
-    private const val DEPENDENCY_NAME_FIELD = "name"
-    private const val DEPENDENCY_KIND_FIELD = "kind"
     private const val PLATFORM_FIELD = "platform"
 
     fun parse(json: JsonElement): TestProjectModule {
         require(json is JsonObject)
-        val dependencies = json.getAsJsonArray(DEPENDENCIES_FIELD)?.map(::parseDependency).orEmpty()
+
         val platform = json.getNullableString(PLATFORM_FIELD)?.let(::parsePlatform) ?: JvmPlatforms.defaultJvmPlatform
+        val dependencies = buildList {
+            addAll(parseDependencies(json, DEPENDENCIES_FIELD, DependencyKind.REGULAR))
+            addAll(parseDependencies(json, REFINEMENT_DEPENDENCIES_FIELD, DependencyKind.REFINEMENT))
+            addAll(parseDependencies(json, FRIEND_DEPENDENCIES_FIELD, DependencyKind.FRIEND))
+        }
+
         return TestProjectModule(
             json.getString(MODULE_NAME_FIELD),
             platform,
             dependencies,
         )
-    }
-
-    /**
-     * String: only the name, interpreted as a regular dependency.
-     * JSON: [DEPENDENCY_NAME_FIELD] defines module name (or library name, if such exists, for regular dependencies);
-     * [DEPENDENCY_KIND_FIELD] defines the dependency kind, one of [DependencyKind].
-     */
-    private fun parseDependency(dependencyStringOrObject: JsonElement): Dependency {
-        return when {
-            dependencyStringOrObject.isJsonObject -> parseDependencyObject(dependencyStringOrObject.asJsonObject)
-            else -> Dependency(dependencyStringOrObject.asString, DependencyKind.REGULAR)
-        }
     }
 
     /**
@@ -119,16 +113,8 @@ object TestProjectModuleParser {
     }
 
     /**
-     * The name is mandatory, the kind is optional.
-     * If the kind is absent, the dependency is considered regular.
+     * Parses a list of dependencies from [json]; an array of name strings is expected.
      */
-    private fun parseDependencyObject(dependencyObject: JsonObject): Dependency {
-        val name = dependencyObject.getString(DEPENDENCY_NAME_FIELD)
-        val kind = dependencyObject.getNullableString(DEPENDENCY_KIND_FIELD)?.let { kind ->
-            DependencyKind.entries.firstOrNull { it.jsonName == kind }
-                ?: error("Unexpected kind '$kind'. Expected one of the following: " +
-                                 DependencyKind.entries.joinToString { it.jsonName })
-        } ?: DependencyKind.REGULAR
-        return Dependency(name, kind)
-    }
+    private fun parseDependencies(json: JsonObject, jsonField: String, dependencyKind: DependencyKind): List<Dependency> =
+        json.getAsStringList(jsonField).orEmpty().map { name -> Dependency(name, dependencyKind) }
 }
