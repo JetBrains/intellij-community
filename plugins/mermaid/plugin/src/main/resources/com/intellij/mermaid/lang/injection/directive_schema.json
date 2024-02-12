@@ -824,6 +824,9 @@
             "rotateCommitLabel": {
               "type": "boolean"
             },
+            "parallelCommits": {
+              "type": "boolean"
+            },
             "arrowMarkerAbsolute": {
               "type": "boolean"
             }
