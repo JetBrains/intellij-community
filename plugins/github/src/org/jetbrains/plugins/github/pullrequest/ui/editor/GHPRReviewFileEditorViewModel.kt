@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.*
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diagnostic.logger
@@ -30,6 +31,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 interface GHPRReviewFileEditorViewModel {
   val originalContent: StateFlow<ComputedResult<CharSequence>?>
   val changedRanges: List<Range>
+
+  fun getBaseContent(lines: LineRange): String?
 
   val canComment: Boolean
   val commentableRanges: List<Range>
@@ -73,6 +76,11 @@ internal class GHPRReviewFileEditorViewModelImpl(
     }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val changedRanges: List<Range> = diffData.patch.hunks.withoutContext().toList()
+
+  override fun getBaseContent(lines: LineRange): String? {
+    if (lines.start == lines.end) return ""
+    return PatchHunkUtil.getLinesLeft(diffData.patch, lines)
+  }
 
   override val canComment: Boolean = dataProvider.reviewData.canComment()
   override val commentableRanges: List<Range> = diffData.patch.ranges

@@ -9,8 +9,10 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.withoutContext
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -30,8 +32,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestEditorCo
 import org.jetbrains.plugins.gitlab.mergerequest.util.toLines
 
 interface GitLabMergeRequestEditorReviewFileViewModel {
-  val originalContent: StateFlow<ComputedResult<CharSequence>?>
+  val headContent: StateFlow<ComputedResult<CharSequence>?>
   val changedRanges: List<Range>
+
+  fun getBaseContent(lines: LineRange): String?
 
   val discussions: StateFlow<Collection<GitLabMergeRequestEditorDiscussionViewModel>>
   val draftNotes: StateFlow<Collection<GitLabMergeRequestEditorDraftNoteViewModel>>
@@ -60,7 +64,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
 ) : GitLabMergeRequestEditorReviewFileViewModel {
   private val cs = parentCs.childScope(classAsCoroutineName())
 
-  override val originalContent: StateFlow<ComputedResult<String>?> = flow {
+  override val headContent: StateFlow<ComputedResult<String>?> = flow {
     ComputedResult.compute {
       coroutineToIndicator {
         change.createVcsChange(project).afterRevision?.content ?: ""
@@ -73,6 +77,11 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
   override val changedRanges: List<Range> = diffData.patch.hunks.withoutContext().toList()
+
+  override fun getBaseContent(lines: LineRange): String? {
+    if (lines.start == lines.end) return ""
+    return PatchHunkUtil.getLinesLeft(diffData.patch, lines)
+  }
 
   override val discussions: StateFlow<Collection<GitLabMergeRequestEditorDiscussionViewModel>> =
     discussionsContainer.discussions.map {

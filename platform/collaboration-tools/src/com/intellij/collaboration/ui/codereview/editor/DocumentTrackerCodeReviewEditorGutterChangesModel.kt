@@ -5,19 +5,15 @@ import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ex.DocumentTracker
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
 import com.intellij.openapi.vcs.ex.LstRange
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -97,18 +93,6 @@ class DocumentTrackerCodeReviewEditorGutterChangesModel(
     }
   }
 
-  @RequiresEdt
-  fun getReviewHeadContent(lines: LineRange): String? {
-    if (!initialized) return null
-    return try {
-      DiffUtil.getLines(reviewHeadDocument, lines.start, lines.end).joinToString { it }
-    }
-    catch (e: Exception) {
-      LOG.warn("Couldn't get head content", e)
-      return null
-    }
-  }
-
   private inner class MyTrackerHandler(private val reviewRanges: List<Range>) : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
       updateTrackerRanges(reviewRanges)
@@ -121,7 +105,5 @@ class DocumentTrackerCodeReviewEditorGutterChangesModel(
     }
   }
 }
-
-private val LOG = logger<DocumentTrackerCodeReviewEditorGutterChangesModel>()
 
 private fun Range.asLst(): LstRange = LstRange(start2, end2, start1, end1)

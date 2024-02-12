@@ -74,7 +74,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
-  override fun getOriginalContent(lines: LineRange): String? = changesModel.getReviewHeadContent(lines)
+  override fun getBaseContent(lines: LineRange): String? = fileVm.getBaseContent(lines)
 
   override fun showDiff(lineIdx: Int?) {
     val ranges = changesModel.postReviewRanges.value ?: return

@@ -36,7 +36,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     Disposable {
 
   private val changesModel = DocumentTrackerCodeReviewEditorGutterChangesModel(cs, document,
-                                                                               fileVm.originalContent.map { it?.getOrNull() },
+                                                                               fileVm.headContent.map { it?.getOrNull() },
                                                                                flowOf(fileVm.changedRanges))
   override val reviewRanges: StateFlow<List<LstRange>?> = changesModel.reviewRanges
   override fun isValid(): Boolean = changesModel.isValid()
@@ -87,7 +87,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
     fileVm.cancelNewDiscussion(originalLine)
   }
 
-  override fun getOriginalContent(lines: LineRange): String? = changesModel.getReviewHeadContent(lines)
+  override fun getBaseContent(lines: LineRange): String? = fileVm.getBaseContent(lines)
 
   override fun showDiff(lineIdx: Int?) {
     val ranges = changesModel.postReviewRanges.value ?: return

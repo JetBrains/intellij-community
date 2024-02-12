@@ -62,7 +62,7 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
                                 range: Range,
                                 mousePosition: Point?,
                                 disposable: Disposable): LineStatusMarkerPopupPanel {
-    val vcsContent = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))?.removeSuffix("\n")
+    val vcsContent = model.getBaseContent(LineRange(range.vcsLine1, range.vcsLine2))?.removeSuffix("\n")
 
     val editorComponent = if (!vcsContent.isNullOrEmpty()) {
       val popupEditor = createPopupEditor(project, editor, vcsContent, disposable)
@@ -199,7 +199,7 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
     : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, IdeActions.ACTION_COPY), LightEditCompatible {
     override fun isEnabled(editor: Editor, range: Range): Boolean = range.hasVcsLines()
     override fun actionPerformed(editor: Editor, range: Range) {
-      val content = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))
+      val content = model.getBaseContent(LineRange(range.vcsLine1, range.vcsLine2))
       CopyPasteManager.getInstance().setContents(StringSelection(content))
     }
   }

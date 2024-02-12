@@ -18,7 +18,7 @@ interface CodeReviewEditorGutterActionableChangesModel : CodeReviewEditorGutterC
   var shouldHighlightDiffRanges: Boolean
 
   @RequiresEdt
-  fun getOriginalContent(lines: LineRange): String?
+  fun getBaseContent(lines: LineRange): String?
 
   @RequiresEdt
   fun showDiff(lineIdx: Int?)

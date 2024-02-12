@@ -207,6 +207,30 @@ object PatchHunkUtil {
     }
     return result
   }
+
+  fun getLinesLeft(patch: TextFilePatch, lines: LineRange): String? =
+    patch.hunks.find {
+      it.startLineBefore <= lines.start && it.endLineBefore >= lines.end
+    }?.let { hunk ->
+      val builder = StringBuilder()
+      var lineCounter = hunk.startLineBefore
+      for (line in hunk.lines) {
+        if (line.type == PatchLine.Type.CONTEXT) {
+          lineCounter++
+        }
+        if (line.type == PatchLine.Type.REMOVE) {
+          if (lineCounter >= lines.start) {
+            builder.append(line.text)
+            if (!line.isSuppressNewLine) {
+              builder.append("\n")
+            }
+          }
+          lineCounter++
+        }
+        if (lineCounter >= lines.end) break
+      }
+      builder.toString()
+    }
 }
 
 fun Collection<PatchHunk>.withoutContext(): Sequence<Range> =
