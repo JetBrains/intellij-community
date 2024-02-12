@@ -233,7 +233,7 @@ private constructor(cs: CoroutineScope,
       val yHeight: Int
       if (line != null && line > 0) {
         yStart = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
-        yHeight = editor.lineHeight
+        yHeight = editor.lineHeight * 2
       }
       else {
         yStart = 0
