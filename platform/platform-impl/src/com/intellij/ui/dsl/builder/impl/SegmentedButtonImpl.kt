@@ -86,6 +86,7 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig, pare
 
   init {
     comboBox.isSwingPopup = false
+    comboBox.setMinLength(Int.MAX_VALUE)
     comboBox.renderer = object : SimpleListCellRenderer<T>(), SelectableItem {
 
       private var enabled = true

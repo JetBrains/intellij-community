@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nls
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
+import java.awt.Dimension
+import java.awt.image.BufferedImage
 import javax.swing.JComboBox
 import javax.swing.JLabel
 import kotlin.test.assertEquals
@@ -183,5 +185,33 @@ class SegmentedButtonTest {
 
     val comboBox = UIUtil.findComponentOfType(panel, JComboBox::class.java) ?: fail()
     assertEquals(comboBox, label.labelFor)
+  }
+
+  @Test
+  fun testIdea345782() {
+    fun item(i: Int) = "Item".repeat(6) + i
+
+    lateinit var segmentedButton: SegmentedButton<String>
+    val panel = panel {
+      row {
+        segmentedButton = segmentedButton((1..5).map { item(it) }) {
+          text = it
+        }
+      }
+    }
+    panel.size = Dimension(200, 100)
+    panel.doLayout()
+
+    val item2 = item(2)
+    segmentedButton.selectedItem = item2
+    assertEquals(segmentedButton.selectedItem, item2)
+
+    val g = BufferedImage(panel.width, panel.height, BufferedImage.TYPE_INT_RGB).createGraphics()
+    panel.paint(g)
+
+    segmentedButton.maxButtonsCount(4)
+    panel.doLayout()
+    assertEquals(segmentedButton.selectedItem, item2)
+    panel.paint(g)
   }
 }
