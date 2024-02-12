@@ -17,6 +17,7 @@ import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurren
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetContext
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
 import com.intellij.ui.LayeredIcon
+import com.intellij.util.ui.JBDimension
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
@@ -42,11 +43,15 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   }
 
   override fun createPopup(context: DataContext): ListPopup =
-    JBPopupFactory.getInstance().createActionGroupPopup(LangBundle.message("language.services.widget"),
-                                                        createActionGroup(context),
-                                                        context,
-                                                        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-                                                        true)
+    JBPopupFactory.getInstance().createActionGroupPopup(
+      LangBundle.message("language.services.widget"),
+      createActionGroup(context),
+      context,
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+      true
+    ).apply {
+      setMinimumSize(JBDimension(250, 1))
+    }
 
   private fun createActionGroup(dataContext: DataContext): ActionGroup {
     val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
