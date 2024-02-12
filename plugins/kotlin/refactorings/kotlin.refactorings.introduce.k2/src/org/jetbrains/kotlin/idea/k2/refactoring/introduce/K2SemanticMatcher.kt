@@ -52,7 +52,7 @@ object K2SemanticMatcher {
     fun KtElement.isSemanticMatch(
         patternElement: KtElement,
         context: MatchingContext = MatchingContext(analysisSession.token),
-    ): Boolean = accept(VisitingMatcher(this@KtAnalysisSession, context), patternElement)
+    ): Boolean = this == patternElement || accept(VisitingMatcher(this@KtAnalysisSession, context), patternElement)
 
     data class MatchingContext(
         override val token: KtLifetimeToken,
