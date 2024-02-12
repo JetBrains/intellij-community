@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Set;
 
 /**
@@ -184,13 +185,12 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   private @Nullable InputStream getDescriptionStream() {
     Application app = ApplicationManager.getApplication();
+    Path path = Path.of(INSPECTION_DESCRIPTIONS_FOLDER).resolve(getDescriptionFileName());
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return LocalizationUtil.Companion.getResourceAsStream(getDescriptionContextClass().getClassLoader(), INSPECTION_DESCRIPTIONS_FOLDER,
-                                                            getDescriptionFileName());
+      return LocalizationUtil.Companion.getResourceAsStream(getDescriptionContextClass().getClassLoader(), path);
     }
 
-    return LocalizationUtil.Companion.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), INSPECTION_DESCRIPTIONS_FOLDER,
-                                                          getDescriptionFileName());
+    return LocalizationUtil.Companion.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), path);
   }
 
   private @NotNull String getDescriptionFileName() {

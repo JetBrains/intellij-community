@@ -24,6 +24,8 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
@@ -74,16 +76,17 @@ public class DynamicBundle extends AbstractBundle {
     @NotNull Function<? super @NotNull ClassLoader, ? extends @NotNull ResourceBundle> bundleResolver,
     @NotNull String defaultPath
   ) {
-    String bundlePath = defaultPath.replaceAll("\\.", "/");
+    Path bundlePath = FileSystems.getDefault().getPath(defaultPath.replaceAll("\\.", "/"));
     ClassLoader pluginClassLoader = languagePluginClassLoader(bundleClassLoader);
-    List<String> paths = LocalizationUtil.Companion.getLocalizedPaths(bundlePath);
-    Map<Integer, ResourceBundle> orderToBundle = new HashMap<>();
+    List<Path> paths = LocalizationUtil.Companion.getLocalizedPaths(bundlePath);
+    Map<BundleOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
-      resolveBundleOrder(pluginClassLoader, true, bundlePath, paths, orderToBundle, bundleResolver);
+      resolveBundleOrder(pluginClassLoader, true, bundlePath, paths, bundleOrderMap, bundleResolver);
     }
-    resolveBundleOrder(baseLoader, false, bundlePath, paths, orderToBundle, bundleResolver);
-    reorderParents(orderToBundle);
-    Optional<Map.Entry<Integer, ResourceBundle>> resourceBundleEntry = orderToBundle.entrySet().stream().min(Map.Entry.comparingByKey());
+    resolveBundleOrder(baseLoader, false, bundlePath, paths, bundleOrderMap, bundleResolver);
+    reorderParents(bundleOrderMap);
+    Optional<Map.Entry<BundleOrder, ResourceBundle>> resourceBundleEntry =
+      bundleOrderMap.entrySet().stream().min(Map.Entry.comparingByKey());
     if (!resourceBundleEntry.isPresent()) {
       throw new RuntimeException("No such resource bundle: " + bundlePath);
     }
@@ -93,13 +96,12 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   @ApiStatus.Internal
-  private static List<ResourceBundle> getBundlesFromLocalizationFolder(String pathToBundle, ClassLoader loader) {
-    String bundlePath = pathToBundle.replaceAll("\\.", "/");
-    List<String> paths = LocalizationUtil.Companion.getFolderLocalizedPaths(bundlePath);
+  private static List<ResourceBundle> getBundlesFromLocalizationFolder(Path pathToBundle, ClassLoader loader) {
+    List<Path> paths = LocalizationUtil.Companion.getFolderLocalizedPaths(pathToBundle);
     List<ResourceBundle> resourceBundles = new ArrayList<>();
-    for (String path : paths) {
+    for (Path path : paths) {
       try {
-        ResourceBundle resourceBundle = bundleResolver(path).apply(loader);
+        ResourceBundle resourceBundle = bundleResolver(path.toString().replace('\\', '/')).apply(loader);
         resourceBundles.add(resourceBundle);
       }
       catch (MissingResourceException e) {
@@ -129,28 +131,16 @@ public class DynamicBundle extends AbstractBundle {
     return null;
   }
 
-  /**
-   * 0 - localization folder with region (plugin) - localization/zh/CN/
-   * 1 - localization folder with region (platform) - localization/zh/CN/
-   * 2 - localization suffix with region (plugin) - name_zh_CN.properties
-   * 3 - localization suffix with region (platform) - name_zh_CN.properties
-   * 4 - localization folder (plugin) - localization/zh/
-   * 5 - localization folder (platform) - localization/zh/
-   * 6 - localization suffix (plugin) - name_zh.properties
-   * 7 - localization suffix (platform) - name_zh.properties
-   * 8 - default (plugin) - name.properties
-   * 9 - default (platform) - name.properties
-   **/
   private static void resolveBundleOrder(ClassLoader loader,
                                          Boolean isPluginClassLoader,
-                                         String pathToBundle,
-                                         List<String> orderedPaths,
-                                         Map<Integer, ResourceBundle> bundleOrder,
+                                         Path pathToBundle,
+                                         List<Path> orderedPaths,
+                                         Map<BundleOrder, ResourceBundle> bundleOrderMap,
                                          @NotNull Function<? super @NotNull ClassLoader, ? extends @NotNull ResourceBundle> bundleResolver) {
     ResourceBundle bundle = bundleResolver.apply(loader);
     try {
       while (bundle != null) {
-        putBundleOrder(bundle, bundleOrder, orderedPaths, isPluginClassLoader);
+        putBundleOrder(bundle, bundleOrderMap, orderedPaths, isPluginClassLoader);
         bundle = getParent(bundle);
       }
     }
@@ -158,30 +148,35 @@ public class DynamicBundle extends AbstractBundle {
       LOG.info(throwable);
     }
     for (ResourceBundle localizedBundle : getBundlesFromLocalizationFolder(pathToBundle, loader)) {
-      putBundleOrder(localizedBundle, bundleOrder, orderedPaths, isPluginClassLoader);
+      putBundleOrder(localizedBundle, bundleOrderMap, orderedPaths, isPluginClassLoader);
     }
   }
 
   private static void putBundleOrder(ResourceBundle bundle,
-                                     Map<Integer, ResourceBundle> bundleOrder,
-                                     List<String> orderedPaths,
+                                     Map<BundleOrder, ResourceBundle> bundleOrderMap,
+                                     List<Path> orderedPaths,
                                      Boolean isPluginClassLoader) {
-
     String bundlePath = bundle.getBaseBundleName().replaceAll("\\.", "/");
     if (!bundle.getLocale().toString().isEmpty()) {
       bundlePath += "_" + bundle.getLocale().toString();
     }
-    int order = orderedPaths.indexOf(bundlePath);
-    bundleOrder.put(isPluginClassLoader ? order * 2 : order * 2 + 1, bundle);
+    Path path = FileSystems.getDefault().getPath(bundlePath);
+    BundleOrder bundleOrder = BundleOrder.getBundleOrder(orderedPaths, path, isPluginClassLoader);
+    if (bundleOrder == null) {
+      LOG.debug("Order cannot be defined for the bundle: " + path +
+                "; Current locale: " + getLocale() +
+                "; Paths for locale: " + orderedPaths);
+      return;
+    }
+    bundleOrderMap.put(bundleOrder, bundle);
   }
 
-  private static void reorderParents(Map<Integer, ResourceBundle> bundlesWithPriority) {
-    int currentValue = 9;
-    ResourceBundle parentBundle = null;
-    while (currentValue >= 0) {
-      ResourceBundle resourceBundle = bundlesWithPriority.get(currentValue);
-      if (resourceBundle != null && resourceBundle != parentBundle) {
-        if (parentBundle != null) {
+  private static void reorderParents(Map<BundleOrder, ResourceBundle> bundleOrderMap) {
+    ResourceBundle resourceBundle = null;
+    for (BundleOrder bundleOrder : BundleOrder.values()) {
+      ResourceBundle parentBundle = bundleOrderMap.get(bundleOrder);
+      if (parentBundle != null && parentBundle != resourceBundle) {
+        if (resourceBundle != null) {
           if (DynamicBundleInternal.SET_PARENT != null) {
             try {
               DynamicBundleInternal.SET_PARENT.bindTo(resourceBundle).invoke(parentBundle);
@@ -191,9 +186,8 @@ public class DynamicBundle extends AbstractBundle {
             }
           }
         }
-        parentBundle = resourceBundle;
+        resourceBundle = parentBundle;
       }
-      currentValue--;
     }
   }
 
@@ -348,5 +342,41 @@ public class DynamicBundle extends AbstractBundle {
 
   public static @NotNull Locale getLocale() {
     return Locale.forLanguageTag(ourLangTag);
+  }
+
+  private enum BundleOrder {
+    FOLDER_REGION_LEVEL_PLUGIN(0), //localization/zh/CN/
+    FOLDER_REGION_LEVEL_PLATFORM(1),
+    SUFFIX_REGION_LEVEL_PLUGIN(2), //name_zh_CN.properties
+    SUFFIX_REGION_LEVEL_PLATFORM(3),
+    FOLDER_LANGUAGE_LEVEL_PLUGIN(4), //localization/zh/
+    FOLDER_LANGUAGE_LEVEL_PLATFORM(5),
+    SUFFIX_LANGUAGE_LEVEL_PLUGIN(6), //name_zh.properties
+    SUFFIX_LANGUAGE_LEVEL_PLATFORM(7),
+    DEFAULT_PLUGIN(8), //name.properties
+    DEFAULT_PLATFORM(9);
+
+    private final int index;
+
+    BundleOrder(int index) {
+      this.index = index;
+    }
+
+    @Nullable
+    private static BundleOrder getBundleOrderByIndex(int ind) {
+      for (BundleOrder bundleOrder : values()) {
+        if (bundleOrder.index == ind) {
+          return bundleOrder;
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    public static BundleOrder getBundleOrder(List<Path> orderedPaths, Path bundlePath, Boolean isPluginClassLoader) {
+      int order = orderedPaths.indexOf(bundlePath);
+      order = isPluginClassLoader ? order * 2 : order * 2 + 1;
+      return getBundleOrderByIndex(order);
+    }
   }
 }

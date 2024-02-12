@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Objects;
 
 final class ResourceTextDescriptor implements TextDescriptor {
@@ -37,7 +38,7 @@ final class ResourceTextDescriptor implements TextDescriptor {
 
   @Override
   public @NotNull String getText() throws IOException {
-    InputStream inputStream = LocalizationUtil.Companion.getResourceAsStream(myLoader, myResourcePath);
+    InputStream inputStream = LocalizationUtil.Companion.getResourceAsStream(myLoader, Path.of(myResourcePath));
     if (inputStream != null) {
       try (inputStream) {
         return ResourceUtil.loadText(inputStream); //NON-NLS
