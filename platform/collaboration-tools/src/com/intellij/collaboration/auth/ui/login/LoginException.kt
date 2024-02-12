@@ -2,6 +2,6 @@
 package com.intellij.collaboration.auth.ui.login
 
 sealed class LoginException : Exception() {
-  class UnsupportedServerVersion(val version: String, val earliestSupportedVersion: String) : LoginException()
+  class UnsupportedServerVersion(val earliestSupportedVersion: String) : LoginException()
   class InvalidTokenOrUnsupportedServerVersion(val earliestSupportedVersion: String) : LoginException()
 }

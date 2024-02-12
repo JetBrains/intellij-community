@@ -38,7 +38,7 @@ class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
       throw LoginException.InvalidTokenOrUnsupportedServerVersion(earliestSupportedVersion.toString())
     }
     if (version < earliestSupportedVersion) {
-      throw LoginException.UnsupportedServerVersion(version.toString(), earliestSupportedVersion.toString())
+      throw LoginException.UnsupportedServerVersion(earliestSupportedVersion.toString())
     }
 
     val user = withContext(Dispatchers.IO) {

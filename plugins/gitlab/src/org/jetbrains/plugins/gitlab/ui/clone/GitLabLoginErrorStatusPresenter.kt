@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.collaboration.auth.ui.login.LoginException
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
@@ -16,18 +18,19 @@ import javax.swing.Action
 internal class GitLabLoginErrorStatusPresenter(
   private val cs: CoroutineScope,
   private val model: GitLabTokenLoginPanelModel,
-) : ErrorStatusPresenter.Text<Throwable> {
-  override fun getErrorTitle(error: Throwable): String = CollaborationToolsBundle.message("clone.dialog.login.failed")
+) : ErrorStatusPresenter.HTML<Throwable> {
+  override fun getErrorTitle(error: Throwable): String = ""
 
-  override fun getErrorDescription(error: Throwable): String = when (error) {
-    is ConnectException -> CollaborationToolsBundle.message("clone.dialog.login.error.server")
-    is LoginException.UnsupportedServerVersion -> {
-      GitLabBundle.message("server.version.unsupported", error.version, error.earliestSupportedVersion)
+  override fun getHTMLBody(error: Throwable): @NlsSafe String {
+    val builder = HtmlBuilder()
+    when (error) {
+      is ConnectException -> builder.append(CollaborationToolsBundle.message("clone.dialog.login.error.server"))
+      is LoginException.UnsupportedServerVersion -> builder.customizeUnsupportedVersionError(error)
+      is LoginException.InvalidTokenOrUnsupportedServerVersion -> builder.customizeInvalidTokenOrUnsupportedServerVersionError(error)
+      else -> {}
     }
-    is LoginException.InvalidTokenOrUnsupportedServerVersion -> {
-      GitLabBundle.message("invalid.token.or.server.version.unsupported", error.earliestSupportedVersion)
-    }
-    else -> ExceptionUtil.getPresentableMessage(error)
+
+    return builder.wrapWithHtmlBody().toString()
   }
 
   override fun getErrorAction(error: Throwable): Action? = when (error) {
@@ -38,5 +41,34 @@ internal class GitLabLoginErrorStatusPresenter(
       }
     }
     else -> null
+  }
+
+  private fun HtmlBuilder.customizeUnsupportedVersionError(
+    error: LoginException.UnsupportedServerVersion
+  ): HtmlBuilder {
+    val builder = this
+    val text = GitLabBundle.message("server.version.unsupported", error.earliestSupportedVersion)
+    val link = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, CollaborationToolsBundle.message("login.via.git"))
+
+    return builder
+      .append(text).nbsp()
+      .append(link)
+  }
+
+  private fun HtmlBuilder.customizeInvalidTokenOrUnsupportedServerVersionError(
+    error: LoginException.InvalidTokenOrUnsupportedServerVersion
+  ): HtmlBuilder {
+    val builder = this
+    val text = GitLabBundle.message("invalid.token.or.server.version.unsupported", error.earliestSupportedVersion)
+    val linkAction = HtmlChunk.link(ErrorStatusPresenter.ERROR_ACTION_HREF, CollaborationToolsBundle.message("login.via.git"))
+    val linkAdditionalText = GitLabBundle.message("invalid.token.or.server.version.unsupported.additional.text", error.earliestSupportedVersion)
+
+    val linkBuilder = HtmlBuilder()
+      .append(linkAction).nbsp()
+      .append(linkAdditionalText)
+
+    return builder
+      .append(text)
+      .append(HtmlChunk.p().attr("align", "left").child(linkBuilder.toFragment()))
   }
 }
