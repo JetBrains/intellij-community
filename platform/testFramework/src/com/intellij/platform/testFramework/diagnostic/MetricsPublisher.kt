@@ -3,14 +3,18 @@
 
 package com.intellij.platform.testFramework.diagnostic
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.*
+import kotlin.io.path.writer
 
 interface MetricsPublisher {
-  suspend fun publish(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector)
+  suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector)
 
   fun publishSync(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {
     runBlocking {
@@ -20,12 +24,15 @@ interface MetricsPublisher {
 
   companion object {
     fun getInstance(): MetricsPublisher = instance.value
+
+    fun getIdeTestLogFile(): Path = PathManager.getSystemDir().resolve("testlog").resolve("idea.log")
+    fun truncateTestLog(): Unit = run { getIdeTestLogFile().writer(options = arrayOf(StandardOpenOption.TRUNCATE_EXISTING)).write("") }
   }
 }
 
 /** Dummy that always "works successfully" */
 class NoopMetricsPublisher : MetricsPublisher {
-  override suspend fun publish(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {}
+  override suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector) {}
 }
 
 private val instance: SynchronizedClearableLazy<MetricsPublisher> = SynchronizedClearableLazy {

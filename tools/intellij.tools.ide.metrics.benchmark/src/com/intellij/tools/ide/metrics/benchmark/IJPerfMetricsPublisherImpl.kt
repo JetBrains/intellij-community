@@ -58,6 +58,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       val mergedMetrics = metrics.plus(additionalMetrics)
 
       teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = uniqueTestIdentifier)
+      teamCityClient.publishTeamCityArtifacts(source = MetricsPublisher.getIdeTestLogFile(), artifactPath = uniqueTestIdentifier)
 
       val buildInfo = CIServerBuildInfo(
         buildId = teamCityClient.buildId,
@@ -84,8 +85,8 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
     }
   }
 
-  override suspend fun publish(fullQualifiedTestMethodName: String, vararg metricsCollectors: TelemetryMetricsCollector) {
-    val metricsDto = prepareMetricsForPublishing(fullQualifiedTestMethodName, *metricsCollectors)
+  override suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector) {
+    val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
 
     withContext(Dispatchers.IO) {
       val artifactName = "metrics.performance.json"
@@ -96,12 +97,12 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       // https://youtrack.jetbrains.com/issue/AT-644/Performance-tests-do-not-check-anything#focus=Comments-27-8578186.0-0
       // https://youtrack.jetbrains.com/issue/AT-726
       if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-        println("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(fullQualifiedTestMethodName).toUri()})")
+        println("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(uniqueTestIdentifier).toUri()})")
         println(metricsDto.metrics.joinToString(separator = System.lineSeparator()) { String.format("%-60s %6s", it.n, it.v) })
       }
 
       teamCityClient.publishTeamCityArtifacts(source = reportFile,
-                                              artifactPath = fullQualifiedTestMethodName,
+                                              artifactPath = uniqueTestIdentifier,
                                               artifactName = "metrics.performance.json",
                                               zipContent = false)
     }

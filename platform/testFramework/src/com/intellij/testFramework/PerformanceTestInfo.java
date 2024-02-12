@@ -99,6 +99,9 @@ public class PerformanceTestInfo {
       // it's at least what we can do to minimize interference of the same meter on different tests
       TelemetryManager.getInstance().forceFlushMetricsBlocking();
 
+      // remove content of the previous tests from the idea.log
+      MetricsPublisher.Companion.truncateTestLog();
+
       var csvFilesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) -> it.toString().endsWith(".csv")).toList();
       for (Path file : csvFilesWithMetrics) {
         Files.deleteIfExists(file);
