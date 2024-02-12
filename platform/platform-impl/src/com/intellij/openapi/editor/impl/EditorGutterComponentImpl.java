@@ -779,7 +779,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           if (lineToDisplay != null) {
             int y = visLinesIterator.getY();
             if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line number
-              y = viewportStartY;
+              if (!myEditor.isStickyLinePainting()) { // suppress shifting line number of wrapped line on sticky lines panel IDEA-345706
+                y = viewportStartY;
+              }
             }
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
