@@ -20,9 +20,7 @@ import org.gradle.api.tasks.bundling.Jar;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
-import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
-import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
+import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
@@ -360,6 +358,92 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       String className = cause.getClass().getCanonicalName();
       project.getLogger().info("Unable to resolve task source path: {} ({})", msg, className);
       return object;
+    }
+  }
+
+  static void addUnprocessedIdeaSourceDirs(
+    @NotNull Map<String, DefaultExternalSourceSet> externalSourceSets, // mutable
+    @NotNull SourceSetContainer sourceSets,
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext,
+    @NotNull String sourceSetName
+  ) {
+    Collection<File> ideaSourceDirs = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSetName)
+                                      ? sourceSetResolutionContext.ideaTestSourceDirs
+                                      : sourceSetResolutionContext.ideaSourceDirs;
+    ExternalSystemSourceType sourceType = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSetName)
+                                          ? ExternalSystemSourceType.TEST
+                                          : ExternalSystemSourceType.SOURCE;
+
+    SourceSet sourceSet = sourceSets.findByName(sourceSetName);
+    if (sourceSet == null) return;
+    DefaultExternalSourceSet externalSourceSet = externalSourceSets.get(sourceSetName);
+    if (externalSourceSet == null) return;
+    ExternalSourceDirectorySet sourceDirectorySet = externalSourceSet.getSources().get(sourceType);
+    if (sourceDirectorySet == null) return;
+
+    Set<File> sourceDirs = new LinkedHashSet<>(ideaSourceDirs);
+    sourceDirs.removeAll(sourceSet.getResources().getSrcDirs());
+    sourceDirs.removeAll(sourceSetResolutionContext.ideaGeneratedSourceDirs);
+    sourceDirectorySet.getSrcDirs().addAll(sourceDirs);
+  }
+
+  static void addUnprocessedIdeaResourceDirs(
+    @NotNull Map<String, DefaultExternalSourceSet> externalSourceSets, // mutable
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext,
+    @NotNull String sourceSetName
+  ) {
+    Collection<File> ideaResourceDirs = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSetName)
+                                        ? sourceSetResolutionContext.ideaTestResourceDirs
+                                        : sourceSetResolutionContext.ideaResourceDirs;
+    ExternalSystemSourceType resourceType = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSetName)
+                                            ? ExternalSystemSourceType.TEST_RESOURCE
+                                            : ExternalSystemSourceType.RESOURCE;
+
+    DefaultExternalSourceSet externalSourceSet = externalSourceSets.get(sourceSetName);
+    if (externalSourceSet == null) return;
+    ExternalSourceDirectorySet resourceDirectorySet = externalSourceSet.getSources().get(resourceType);
+    if (resourceDirectorySet == null) return;
+
+    resourceDirectorySet.getSrcDirs().addAll(ideaResourceDirs);
+  }
+
+  static void addUnprocessedIdeaGeneratedSourcesDirs(
+    @NotNull Map<String, DefaultExternalSourceSet> externalSourceSets, // mutable
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext,
+    @NotNull String sourceSetName
+  ) {
+    Collection<File> ideaSourceDirs = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSetName)
+                                      ? sourceSetResolutionContext.ideaTestSourceDirs
+                                      : sourceSetResolutionContext.ideaSourceDirs;
+    ExternalSystemSourceType sourceType = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSetName)
+                                          ? ExternalSystemSourceType.TEST
+                                          : ExternalSystemSourceType.SOURCE;
+    ExternalSystemSourceType generatedSourceType = SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSetName)
+                                                   ? ExternalSystemSourceType.TEST_GENERATED
+                                                   : ExternalSystemSourceType.SOURCE_GENERATED;
+
+    DefaultExternalSourceSet externalSourceSet = externalSourceSets.get(sourceSetName);
+    if (externalSourceSet == null) return;
+
+    Collection<File> generatedSourceDirs = new LinkedHashSet<>(sourceSetResolutionContext.unprocessedIdeaGeneratedSourceDirs);
+    generatedSourceDirs.retainAll(ideaSourceDirs);
+    if (!generatedSourceDirs.isEmpty()) {
+      ExternalSourceDirectorySet generatedSourceDirectorySet = externalSourceSet.getSources().get(generatedSourceType);
+      if (generatedSourceDirectorySet != null) {
+        generatedSourceDirectorySet.getSrcDirs().addAll(generatedSourceDirs);
+      }
+      else {
+        DefaultExternalSourceDirectorySet generatedDirectorySet = new DefaultExternalSourceDirectorySet();
+        generatedDirectorySet.setName("generated " + externalSourceSet.getName());
+        generatedDirectorySet.getSrcDirs().addAll(generatedSourceDirs);
+        ExternalSourceDirectorySet sourceDirectorySet = externalSourceSet.getSources().get(sourceType);
+        if (sourceDirectorySet != null) {
+          generatedDirectorySet.addGradleOutputDir(sourceDirectorySet.getOutputDir());
+          generatedDirectorySet.setOutputDir(sourceDirectorySet.getOutputDir());
+          generatedDirectorySet.setInheritedCompilerOutput(sourceDirectorySet.isCompilerOutputPathInherited());
+        }
+        externalSourceSet.addSource(generatedSourceType, generatedDirectorySet);
+      }
     }
   }
 }

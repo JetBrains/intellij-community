@@ -42,11 +42,6 @@ class GradleSourceSetGroovyHelper {
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
     def ideaPluginOutDir = ideaPluginModule?.outputDir
     def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
-    def generatedSourceDirs = null
-    def ideaSourceDirs = null
-    def ideaResourceDirs = null
-    def ideaTestSourceDirs = null
-    def ideaTestResourceDirs = null
 
     def testSourceSets = []
 
@@ -65,13 +60,7 @@ class GradleSourceSetGroovyHelper {
       testSourceSets = project.testing.suites.collect { it.getSources() }
     }
 
-    if (ideaPluginModule != null) {
-      generatedSourceDirs = GradleIdeaPluginUtil.getGeneratedSourceDirectories(ideaPluginModule)
-      ideaSourceDirs = GradleIdeaPluginUtil.getSourceDirectories(ideaPluginModule)
-      ideaResourceDirs = GradleIdeaPluginUtil.getResourceDirectories(ideaPluginModule)
-      ideaTestSourceDirs = GradleIdeaPluginUtil.getTestSourceDirectories(ideaPluginModule)
-      ideaTestResourceDirs = GradleIdeaPluginUtil.getTestResourceDirectories(ideaPluginModule)
-    }
+    def sourceSetResolutionContext = new GradleSourceSetResolutionContext(ideaPluginModule)
 
     def projectSourceCompatibility = JavaPluginUtil.getSourceCompatibility(project)
     def projectTargetCompatibility = JavaPluginUtil.getTargetCompatibility(project)
@@ -86,10 +75,6 @@ class GradleSourceSetGroovyHelper {
     def (testResourcesIncludes, testResourcesExcludes, testFilterReaders) = GradleResourceFilterModelBuilder.getFilters(project, context, 'processTestResources')
     //def (javaIncludes, javaExcludes) = GradleResourceFilterModelBuilder.getFilters(project, 'compileJava')
 
-    def additionalIdeaGenDirs = [] as Collection<File>
-    if (generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
-      additionalIdeaGenDirs.addAll(generatedSourceDirs)
-    }
     def testFixtures = sourceSets.findByName("testFixtures")
     if (testFixtures != null) {
       testSourceSets.add(testFixtures)
@@ -171,11 +156,11 @@ class GradleSourceSetGroovyHelper {
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
 
       DefaultExternalSourceDirectorySet generatedDirectorySet = null
-      def hasExplicitlyDefinedGeneratedSources = generatedSourceDirs && !generatedSourceDirs.isEmpty()
+      def hasExplicitlyDefinedGeneratedSources = !sourceSetResolutionContext.ideaGeneratedSourceDirs.isEmpty()
       if (hasExplicitlyDefinedGeneratedSources) {
 
         def files = new HashSet<File>()
-        for (File file : generatedSourceDirs) {
+        for (File file : sourceSetResolutionContext.ideaGeneratedSourceDirs) {
           if (javaDirectorySet.srcDirs.contains(file)) {
             files.add(file)
           }
@@ -192,7 +177,7 @@ class GradleSourceSetGroovyHelper {
           generatedDirectorySet.outputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
-        additionalIdeaGenDirs.removeAll(files)
+        sourceSetResolutionContext.unprocessedIdeaGeneratedSourceDirs.removeAll(files)
       }
 
       if (SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
@@ -211,7 +196,7 @@ class GradleSourceSetGroovyHelper {
       }
       else {
         boolean isTestSourceSet = false
-        boolean explicitlyMarkedAsTests = ideaTestSourceDirs && (ideaTestSourceDirs as Collection).containsAll(javaDirectorySet.srcDirs)
+        boolean explicitlyMarkedAsTests = sourceSetResolutionContext.ideaTestSourceDirs.containsAll(javaDirectorySet.srcDirs)
         boolean knownTestingSourceSet = testSourceSets.contains(sourceSet)
         if (!inheritOutputDirs && resolveSourceSetDependencies && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name
           && (explicitlyMarkedAsTests || knownTestingSourceSet)) {
@@ -234,10 +219,10 @@ class GradleSourceSetGroovyHelper {
           sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
         }
 
-        if (!resolveSourceSetDependencies && ideaTestSourceDirs) {
-          def testDirs = javaDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
+        if (!resolveSourceSetDependencies) {
+          def testDirs = javaDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
           if (!testDirs.isEmpty()) {
-            javaDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+            javaDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
 
             def testDirectorySet = new DefaultExternalSourceDirectorySet()
             testDirectorySet.name = javaDirectorySet.name
@@ -248,9 +233,9 @@ class GradleSourceSetGroovyHelper {
             sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
           }
 
-          def testResourcesDirs = resourcesDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
+          def testResourcesDirs = resourcesDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
           if (!testResourcesDirs.isEmpty()) {
-            resourcesDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+            resourcesDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
 
             def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
             testResourcesDirectorySet.name = resourcesDirectorySet.name
@@ -264,10 +249,10 @@ class GradleSourceSetGroovyHelper {
 
         if (generatedDirectorySet) {
           sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
-          if (!resolveSourceSetDependencies && ideaTestSourceDirs) {
-            def testGeneratedDirs = generatedDirectorySet.srcDirs.intersect(ideaTestSourceDirs as Collection)
+          if (!resolveSourceSetDependencies) {
+            def testGeneratedDirs = generatedDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
             if (!testGeneratedDirs.isEmpty()) {
-              generatedDirectorySet.srcDirs.removeAll(ideaTestSourceDirs)
+              generatedDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
 
               def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
               testGeneratedDirectorySet.name = generatedDirectorySet.name
@@ -281,12 +266,12 @@ class GradleSourceSetGroovyHelper {
           }
         }
 
-        if (ideaPluginModule && SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name && SourceSet.TEST_SOURCE_SET_NAME != sourceSet.name) {
+        if (SourceSet.MAIN_SOURCE_SET_NAME != sourceSet.name && SourceSet.TEST_SOURCE_SET_NAME != sourceSet.name) {
           for (sourceDirectorySet in sources.values()) {
-            ideaSourceDirs.removeAll(sourceDirectorySet.srcDirs)
-            ideaResourceDirs.removeAll(sourceDirectorySet.srcDirs)
-            ideaTestSourceDirs.removeAll(sourceDirectorySet.srcDirs)
-            ideaTestResourceDirs.removeAll(sourceDirectorySet.srcDirs)
+            sourceSetResolutionContext.ideaSourceDirs.removeAll(sourceDirectorySet.srcDirs)
+            sourceSetResolutionContext.ideaResourceDirs.removeAll(sourceDirectorySet.srcDirs)
+            sourceSetResolutionContext.ideaTestSourceDirs.removeAll(sourceDirectorySet.srcDirs)
+            sourceSetResolutionContext.ideaTestResourceDirs.removeAll(sourceDirectorySet.srcDirs)
           }
         }
       }
@@ -301,69 +286,14 @@ class GradleSourceSetGroovyHelper {
       result[sourceSet.name] = externalSourceSet
     }
 
-    def mainSourceSet = result[SourceSet.MAIN_SOURCE_SET_NAME]
-    if (ideaPluginModule && mainSourceSet && ideaSourceDirs && !ideaSourceDirs.isEmpty()) {
-      def mainGradleSourceSet = sourceSets.findByName(SourceSet.MAIN_SOURCE_SET_NAME)
-      if (mainGradleSourceSet) {
-        def mainSourceDirectorySet = mainSourceSet.sources.get(ExternalSystemSourceType.SOURCE)
-        if (mainSourceDirectorySet) {
-          mainSourceDirectorySet.srcDirs.addAll(ideaSourceDirs - (mainGradleSourceSet.resources.srcDirs + generatedSourceDirs))
-        }
-        def mainResourceDirectorySet = mainSourceSet.sources.get(ExternalSystemSourceType.RESOURCE)
-        if (mainResourceDirectorySet) {
-          mainResourceDirectorySet.srcDirs.addAll(ideaResourceDirs)
-        }
+    GradleSourceSetModelBuilder.addUnprocessedIdeaSourceDirs(result, sourceSets, sourceSetResolutionContext, SourceSet.MAIN_SOURCE_SET_NAME)
+    GradleSourceSetModelBuilder.addUnprocessedIdeaResourceDirs(result, sourceSetResolutionContext, SourceSet.MAIN_SOURCE_SET_NAME)
+    GradleSourceSetModelBuilder.addUnprocessedIdeaGeneratedSourcesDirs(result, sourceSetResolutionContext, SourceSet.MAIN_SOURCE_SET_NAME)
 
-        if (!additionalIdeaGenDirs.isEmpty()) {
-          def mainAdditionalGenDirs = additionalIdeaGenDirs.intersect(ideaSourceDirs)
-          def mainGenSourceDirectorySet = mainSourceSet.sources.get(ExternalSystemSourceType.SOURCE_GENERATED)
-          if (mainGenSourceDirectorySet) {
-            mainGenSourceDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
-          }
-          else {
-            def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
-            generatedDirectorySet.name = "generated " + mainSourceSet.name
-            generatedDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
-            generatedDirectorySet.addGradleOutputDir(mainSourceDirectorySet.outputDir)
-            generatedDirectorySet.outputDir = mainSourceDirectorySet.outputDir
-            generatedDirectorySet.inheritedCompilerOutput = mainSourceDirectorySet.isCompilerOutputPathInherited()
-            mainSourceSet.sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
-          }
-        }
-      }
-    }
+    GradleSourceSetModelBuilder.addUnprocessedIdeaSourceDirs(result, sourceSets, sourceSetResolutionContext, SourceSet.TEST_SOURCE_SET_NAME)
+    GradleSourceSetModelBuilder.addUnprocessedIdeaResourceDirs(result, sourceSetResolutionContext, SourceSet.TEST_SOURCE_SET_NAME)
+    GradleSourceSetModelBuilder.addUnprocessedIdeaGeneratedSourcesDirs(result, sourceSetResolutionContext, SourceSet.TEST_SOURCE_SET_NAME)
 
-    def testSourceSet = result[SourceSet.TEST_SOURCE_SET_NAME]
-    if (ideaPluginModule && testSourceSet && ideaTestSourceDirs && !ideaTestSourceDirs.isEmpty()) {
-      def testGradleSourceSet = sourceSets.findByName(SourceSet.TEST_SOURCE_SET_NAME)
-      if (testGradleSourceSet) {
-        def testSourceDirectorySet = testSourceSet.sources.get(ExternalSystemSourceType.TEST)
-        if (testSourceDirectorySet) {
-          testSourceDirectorySet.srcDirs.addAll(ideaTestSourceDirs - (testGradleSourceSet.resources.srcDirs + generatedSourceDirs))
-        }
-        def testResourceDirectorySet = testSourceSet.sources.get(ExternalSystemSourceType.TEST_RESOURCE)
-        if (testResourceDirectorySet) {
-          testResourceDirectorySet.srcDirs.addAll(ideaTestResourceDirs)
-        }
-
-        if (!additionalIdeaGenDirs.isEmpty()) {
-          def testAdditionalGenDirs = additionalIdeaGenDirs.intersect(ideaTestSourceDirs)
-          def testGenSourceDirectorySet = testSourceSet.sources.get(ExternalSystemSourceType.TEST_GENERATED)
-          if (testGenSourceDirectorySet) {
-            testGenSourceDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
-          }
-          else {
-            def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
-            generatedDirectorySet.name = "generated " + testSourceSet.name
-            generatedDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
-            generatedDirectorySet.addGradleOutputDir(testSourceDirectorySet.outputDir)
-            generatedDirectorySet.outputDir = testSourceDirectorySet.outputDir
-            generatedDirectorySet.inheritedCompilerOutput = testSourceDirectorySet.isCompilerOutputPathInherited()
-            testSourceSet.sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
-          }
-        }
-      }
-    }
 
     GradleSourceSetModelBuilder.cleanupSharedSourceDirs(result, SourceSet.MAIN_SOURCE_SET_NAME, null)
     GradleSourceSetModelBuilder.cleanupSharedSourceDirs(result, SourceSet.TEST_SOURCE_SET_NAME, SourceSet.MAIN_SOURCE_SET_NAME)
