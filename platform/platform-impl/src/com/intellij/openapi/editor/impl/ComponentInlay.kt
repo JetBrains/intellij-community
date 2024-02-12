@@ -60,26 +60,29 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     private val INLAYS_CONTAINER = Key<ComponentInlaysContainer>("INLAYS_CONTAINER")
 
     fun addInlay(inlay: Inlay<ComponentInlayRenderer<*>>) {
+      if (AppMode.isRemoteDevHost())
+        return
       val editor = inlay.editor as EditorEx
+      if (editor.isDisposed)
+        return
       val inlaysContainer = editor.getUserData(INLAYS_CONTAINER) ?: ComponentInlaysContainer(editor).also { container ->
         editor.putUserData(INLAYS_CONTAINER, container)
         editor.contentComponent.add(container)
-        EditorUtil.disposeWithEditor(editor, container)
         container.whenDisposed {
           editor.contentComponent.remove(container)
           editor.removeUserData(INLAYS_CONTAINER)
         }
+        EditorUtil.disposeWithEditor(editor, container)
       }
-      if (!AppMode.isRemoteDevHost()) {
-        inlaysContainer.add(inlay)
-      }
-      Disposer.register(inlaysContainer, inlay)
+
+      inlaysContainer.add(inlay)
       inlay.whenDisposed {
         // auto-dispose container when last inlay removed
         if (inlaysContainer.remove(inlay) && inlaysContainer.inlays.isEmpty()) {
           Disposer.dispose(inlaysContainer)
         }
       }
+      Disposer.register(inlaysContainer, inlay)
     }
   }
 
