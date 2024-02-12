@@ -32,7 +32,7 @@ open class DirectoryBasedStorage(
     get() = null
 
   public override fun loadData(): StateMap {
-    val (elementMap, separatorMap) = ComponentStorageUtil.load(dir, pathMacroSubstitutor)
+    val (elementMap, separatorMap) = loadComponentsAndDetectLineSeparator(dir = dir, pathMacroSubstitutor = pathMacroSubstitutor)
     nameToLineSeparatorMap = separatorMap
     return StateMap.fromMap(elementMap)
   }

@@ -1,25 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.fasterxml.aalto.UncheckedStreamException
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
+import com.intellij.openapi.components.impl.stores.loadComponents
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SafeStAXStreamBuilder
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.xml.dom.createXmlStreamReader
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Attribute
 import org.jdom.Element
+import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Writer
+import javax.xml.stream.XMLStreamException
 import kotlin.math.min
 
 abstract class XmlElementStorage protected constructor(
@@ -38,8 +44,9 @@ abstract class XmlElementStorage protected constructor(
 
   protected abstract fun loadLocalData(): Element?
 
-  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? =
-    storageData.getState(componentName, archive)
+  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
+    return storageData.getState(componentName, archive)
+  }
 
   final override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)
@@ -89,15 +96,30 @@ abstract class XmlElementStorage protected constructor(
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(ComponentStorageUtil.load(element, pathMacroSubstitutor))
+    return StateMap.fromMap(loadComponents(rootElement = element, pathMacroSubstitutor = pathMacroSubstitutor))
   }
 
-  open fun loadFromStreamProvider(inputStream: InputStream): Element? {
-    return JDOMUtil.load(inputStream)
+  open fun loadFromStreamProvider(stream: InputStream): Element? {
+    try {
+      val xmlStreamReader = createXmlStreamReader(stream)
+      try {
+        return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
+      }
+      finally {
+        xmlStreamReader.close()
+      }
+    }
+    catch (e: XMLStreamException) {
+      throw JDOMException(e.message, e)
+    }
+    catch (e: UncheckedStreamException) {
+      throw JDOMException(e.message, e)
+    }
   }
 
-  final override fun createSaveSessionProducer(): SaveSessionProducer? =
-    if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
+  final override fun createSaveSessionProducer(): SaveSessionProducer? {
+    return if (checkIsSavingDisabled()) null else createSaveSession(getStorageData())
+  }
 
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
@@ -147,12 +169,24 @@ abstract class XmlElementStorage protected constructor(
       val writer = if (elements == null) null else {
         val rootAttributes = LinkedHashMap<String, String>()
         storage.beforeElementSaved(elements, rootAttributes)
-        val macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
-        XmlDataWriter(storage.rootElementName, elements, rootAttributes, macroManager, storage.toString())
+        val macroManager = if (storage.pathMacroSubstitutor == null) {
+          null
+        }
+        else {
+          (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
+        }
+        XmlDataWriter(
+          rootElementName = storage.rootElementName,
+          elements = elements,
+          rootAttributes = rootAttributes,
+          macroManager = macroManager,
+          storageFilePathForDebugPurposes = storage.toString(),
+        )
       }
 
-      // during beforeElementSaved() elements can be modified and so, even if our save() never returns empty list, at this point, elements can be an empty list
-      return XmlSaveSession(elements, writer, stateMap)
+      // during beforeElementSaved() elements can be modified and so,
+      // even if our save() never returns empty list, at this point, elements can be an empty list
+      return XmlSaveSession(elements = elements, writer = writer, stateMap = stateMap)
     }
 
     private fun save(states: StateMap, newLiveStates: Map<String, Element>): MutableList<Element>? {

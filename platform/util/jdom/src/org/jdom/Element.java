@@ -1626,7 +1626,7 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   @Override
-  public Element detach() {
+  public @NotNull Element detach() {
     return (Element)super.detach();
   }
 

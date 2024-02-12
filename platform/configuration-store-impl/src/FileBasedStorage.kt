@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
+import com.intellij.application.options.PathMacrosCollector
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -8,12 +11,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.loadDataAndDetectLineSeparator
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
+import com.intellij.openapi.components.impl.stores.getComponentNameIfValid
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.SafeStAXStreamBuilder
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.settings.SettingsController
@@ -22,10 +28,11 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
+import java.io.StringReader
+import java.nio.charset.StandardCharsets
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.deleteIfExists
@@ -260,11 +267,15 @@ internal fun writeFile(
   val file = if (cachedFile == null || virtualFile?.isValid == true) virtualFile!! else getOrCreateVirtualFile(cachedFile, requestor)
 
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(file.length)) {
-    fun isEqualContent(file: VirtualFile, lineSeparator: LineSeparator, content: BufferExposingByteArrayOutputStream, prependXmlProlog: Boolean): Boolean {
+    fun isEqualContent(file: VirtualFile,
+                       lineSeparator: LineSeparator,
+                       content: BufferExposingByteArrayOutputStream,
+                       prependXmlProlog: Boolean): Boolean {
       val headerLength = if (!prependXmlProlog) 0 else XML_PROLOG.size + lineSeparator.separatorBytes.size
       if (file.length.toInt() == headerLength + content.size()) {
         val oldContent = file.contentsToByteArray()
-        if (!prependXmlProlog || ArrayUtil.startsWith(oldContent, XML_PROLOG) && ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes)) {
+        if (!prependXmlProlog || (ArrayUtil.startsWith(oldContent, XML_PROLOG) &&
+                                  ArrayUtil.startsWith(oldContent, XML_PROLOG.size, lineSeparator.separatorBytes))) {
           return (headerLength until oldContent.size).all { oldContent[it] == content.internalBuffer[it - headerLength] }
         }
       }
@@ -272,7 +283,7 @@ internal fun writeFile(
     }
 
     val content = dataWriter.toBufferExposingByteArray(lineSeparator)
-    if (isEqualContent(file, lineSeparator, content, prependXmlProlog)) {
+    if (isEqualContent(file = file, lineSeparator = lineSeparator, content = content, prependXmlProlog = prependXmlProlog)) {
       val contentString = content.toByteArray().toString(Charsets.UTF_8)
       val message = "Content equals, but it must be handled not at this level: file ${file.name}, content:\n${contentString}"
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -287,7 +298,13 @@ internal fun writeFile(
     }
   }
 
-  fun doWrite(requestor: StorageManagerFileWriteRequestor, file: VirtualFile, dataWriterOrByteArray: Any, lineSeparator: LineSeparator, prependXmlProlog: Boolean) {
+  fun doWrite(
+    requestor: StorageManagerFileWriteRequestor,
+    file: VirtualFile,
+    dataWriterOrByteArray: Any,
+    lineSeparator: LineSeparator,
+    prependXmlProlog: Boolean,
+  ) {
     LOG.debug { "Save ${file.presentableUrl}" }
 
     if (!file.isWritable) {
@@ -319,7 +336,13 @@ internal fun writeFile(
     }
   }
 
-  doWrite(requestor, file, dataWriter, lineSeparator, prependXmlProlog)
+  doWrite(
+    requestor = requestor,
+    file = file,
+    dataWriterOrByteArray = dataWriter,
+    lineSeparator = lineSeparator,
+    prependXmlProlog = prependXmlProlog,
+  )
 
   return file
 }
@@ -333,12 +356,114 @@ internal fun writeFile(
 ) {
   LOG.debug { "Save $file" }
   try {
-    dataWriter.writeTo(file, requestor, lineSeparator, prependXmlProlog)
+    dataWriter.writeTo(file = file, requestor = requestor, lineSeparator = lineSeparator, useXmlProlog = prependXmlProlog)
   }
-  catch (e: ReadOnlyModificationException) { throw e }
+  catch (e: ReadOnlyModificationException) {
+    throw e
+  }
   catch (e: Throwable) {
     throw RuntimeException("Cannot write $file", e)
   }
 }
 
-internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")
+internal class ReadOnlyModificationException(
+  @JvmField val file: VirtualFile,
+  @JvmField val session: SaveSession?,
+) : RuntimeException("File is read-only: $file")
+
+@Internal
+fun loadDataAndDetectLineSeparator(data: ByteArray): Pair<Element, LineSeparator?> {
+  val offset = CharsetToolkit.getBOMLength(data, StandardCharsets.UTF_8)
+  val text = String(data, offset, data.size - offset, StandardCharsets.UTF_8)
+  val xmlStreamReader = createXmlStreamReader(StringReader(text))
+  val element = try {
+    SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
+  }
+  finally {
+    xmlStreamReader.close()
+  }
+
+  return Pair(element, detectLineSeparator(text))
+}
+
+private fun detectLineSeparator(chars: CharSequence): LineSeparator? {
+  for (element in chars) {
+    if (element == '\r') {
+      return LineSeparator.CRLF
+    }
+    // if we are here, there was no '\r' before
+    if (element == '\n') {
+      return LineSeparator.LF
+    }
+  }
+  return null
+}
+
+@Internal
+fun loadComponentsAndDetectLineSeparator(
+  dir: Path,
+  pathMacroSubstitutor: PathMacroSubstitutor?
+): Pair<Map<String, Element>, Map<String, LineSeparator?>> {
+  try {
+    Files.newDirectoryStream(dir).use { files ->
+      val fileToState = HashMap<String, Element>()
+      val fileToSeparator = HashMap<String, LineSeparator?>()
+
+      for (file in files) {
+        // ignore system files like .DS_Store on Mac
+        if (!file.toString().endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
+          continue
+        }
+
+        try {
+          val elementLineSeparatorPair = loadDataAndDetectLineSeparator(Files.readAllBytes(file))
+          val element = elementLineSeparatorPair.first
+          val componentName = getComponentNameIfValid(element) ?: continue
+          if (element.name != ComponentStorageUtil.COMPONENT) {
+            LOG.error("Incorrect root tag name (${element.name}) in $file")
+            continue
+          }
+
+          val elementChildren = element.children
+          if (elementChildren.isEmpty()) {
+            continue
+          }
+
+          val state = elementChildren.get(0).detach()
+          if (state.isEmpty) {
+            continue
+          }
+
+          if (pathMacroSubstitutor != null) {
+            pathMacroSubstitutor.expandPaths(state)
+            if (pathMacroSubstitutor is TrackingPathMacroSubstitutor) {
+              pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state))
+            }
+          }
+
+          val name = file.fileName.toString()
+          fileToState.put(name, state)
+          fileToSeparator.put(name, elementLineSeparatorPair.second)
+        }
+        catch (e: Throwable) {
+          if (e.message!!.startsWith("Unexpected End-of-input in prolog")) {
+            LOG.warn("Ignore empty file $file")
+          }
+          else {
+            LOG.warn("Unable to load state from $file", e)
+          }
+        }
+      }
+      return Pair(fileToState, fileToSeparator)
+    }
+  }
+  catch (e: DirectoryIteratorException) {
+    throw e.cause!!
+  }
+  catch (ignore: NoSuchFileException) {
+    return Pair(java.util.Map.of(), java.util.Map.of())
+  }
+  catch (ignore: NotDirectoryException) {
+    return Pair(java.util.Map.of(), java.util.Map.of())
+  }
+}

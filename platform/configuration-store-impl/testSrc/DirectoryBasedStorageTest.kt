@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.MainConfigurationStateSplitter
-import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
@@ -30,7 +29,7 @@ class DirectoryBasedStorageTest {
     val dir = tempDirManager.newPath(refreshVfs = true)
     Files.createDirectories(dir)
     Files.write(dir.resolve("empty.xml"), ByteArray(0))
-    ComponentStorageUtil.load(dir, null)
+    loadComponentsAndDetectLineSeparator(dir = dir, pathMacroSubstitutor = null)
   }
 
   @Test
