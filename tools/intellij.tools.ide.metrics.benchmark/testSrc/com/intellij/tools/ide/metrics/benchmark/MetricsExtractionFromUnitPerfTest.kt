@@ -3,6 +3,7 @@ package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.testFramework.PerformanceTestInfo
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
@@ -120,25 +121,34 @@ class MetricsExtractionFromUnitPerfTest {
   @Test
   fun flushingTelemetryMetricsShouldNotFailTheTest() {
     val spanName = "simple perf test"
-    PlatformTestUtil.newPerformanceTest(spanName) {
+    val uniqueTestName = PlatformTestUtil.newPerformanceTest(spanName) {
       runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
-    }.start()
-    checkMetricsAreFlushedToTelemetryFile(spanName)
+    }.run {
+      start()
+      uniqueTestName
+    }
+    checkMetricsAreFlushedToTelemetryFile(uniqueTestName)
   }
 
   @Test
   fun throwingExceptionWillNotAffectMetricsPublishing() {
     val spanName = "perf test throwing exception"
+    var perfTest: PerformanceTestInfo? = null
+
     try {
-      PlatformTestUtil.newPerformanceTest(spanName) {
+      perfTest = PlatformTestUtil.newPerformanceTest(spanName) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
         throw RuntimeException("Exception text")
-      }.warmupIterations(0).start()
+      }
+      perfTest.apply {
+        warmupIterations(0)
+        start()
+      }
     }
     catch (t: Throwable) {
       //
     }
 
-    checkMetricsAreFlushedToTelemetryFile(spanName, withWarmup = false)
+    checkMetricsAreFlushedToTelemetryFile(perfTest!!.uniqueTestName, withWarmup = false)
   }
 }

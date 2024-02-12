@@ -47,6 +47,7 @@ public class PerformanceTestInfo {
   private int maxMeasurementAttempts = 3;               // number of retries
   private final String launchName;                      // to print on fail
   private int warmupIterations = 1;                      // default warmup iterations should be positive
+  private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
   private final IJTracer tracer;
   private OpenTelemetryMeterCollector meterCollector = null;
@@ -147,6 +148,10 @@ public class PerformanceTestInfo {
   public PerformanceTestInfo warmupIterations(int iterations) {
     warmupIterations = iterations;
     return this;
+  }
+
+  public String getUniqueTestName() {
+    return uniqueTestName;
   }
 
   private static Method filterMethodFromStackTrace(Function<Method, Boolean> methodFilter) {
@@ -283,6 +288,8 @@ public class PerformanceTestInfo {
    *                       Sometimes additional suffixes might be added like here {@link PerformanceTestInfo#startAsSubtest(String)}
    */
   private void start(IterationMode iterationType, String uniqueTestName) {
+    this.uniqueTestName = uniqueTestName;
+
     if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
     System.out.printf("Starting performance test \"%s\" in mode: %s%n", uniqueTestName, iterationType);
 
