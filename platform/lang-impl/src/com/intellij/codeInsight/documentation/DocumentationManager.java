@@ -108,6 +108,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
 /**
  * Replaced by {@link com.intellij.lang.documentation.ide.impl.DocumentationManager}
+ *
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
 @Deprecated(forRemoval = true)
@@ -1920,11 +1921,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         hasContent = true;
       }
       else if (!containsIgnoreQuotesType(text, SECTIONS_START)) {
-        text = replaceIgnoreQuotesType(text, DEFINITION_START, "<div class='definition-only'><pre>");
+        text = replaceIgnoreQuotesType(text, DEFINITION_START, "<div class='" + CLASS_DEFINITION_ONLY + "'><pre>");
       }
     }
     if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
-      text = replaceIgnoreQuotesType(text, "class='content'", "class='content-only'");
+      text = replaceIgnoreQuotesType(text, "class='" + CLASS_CONTENT + "'", "class='" + CLASS_CONTENT_ONLY + "'");
     }
     if (downloadDocumentationActionLink != null) {
       text += HtmlChunk.div()
@@ -1933,7 +1934,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           HtmlChunk.nbsp(),
           HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
         )
-        .setClass("download-documentation");
+        .setClass(CLASS_DOWNLOAD_DOCUMENTATION);
     }
     if (location != null) {
       text += getBottom(hasContent).child(location);
@@ -2080,7 +2081,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   private static @NotNull HtmlChunk.Element getBottom(boolean hasContent) {
-    return HtmlChunk.div().setClass(hasContent ? "bottom" : "bottom-no-content");
+    return HtmlChunk.div().setClass(hasContent ? CLASS_BOTTOM : CLASS_BOTTOM_NO_CONTENT);
   }
 
   private static final Pattern EXTERNAL_LINK_PATTERN = Pattern.compile("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)");

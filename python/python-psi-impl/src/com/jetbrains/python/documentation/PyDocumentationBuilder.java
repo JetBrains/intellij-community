@@ -43,6 +43,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_BOTTOM;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyDocumentationBuilder {
@@ -385,7 +386,7 @@ public class PyDocumentationBuilder {
         final HtmlChunk linkToModule = getLinkToModule((PyFile)containing);
         if (linkToModule != null) {
           myProlog.append(HtmlChunk.div()
-                            .setClass("bottom")
+                            .setClass(CLASS_BOTTOM)
                             .children(
                               HtmlChunk.icon("AllIcons.Nodes.Package", AllIcons.Nodes.Package),
                               HtmlChunk.nbsp(),
@@ -420,7 +421,7 @@ public class PyDocumentationBuilder {
         final HtmlChunk link = getLinkToClass(pyClass, true);
         if (link != null) {
           myProlog.append(HtmlChunk.div()
-                            .setClass("bottom")
+                            .setClass(CLASS_BOTTOM)
                             .children(
                               HtmlChunk.icon("AllIcons.Nodes.Class", AllIcons.Nodes.Class),
                               HtmlChunk.nbsp(),

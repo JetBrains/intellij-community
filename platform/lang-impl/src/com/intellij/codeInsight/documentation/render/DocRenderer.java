@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES;
 
 @ApiStatus.Internal
@@ -370,9 +371,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "pre {white-space: pre-wrap}" +  // supported by JetBrains Runtime
         "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
-        ".sections {border-spacing: 0}" +
-        ".section {padding-right: 5; white-space: nowrap}" +
-        ".content {padding: 2 0 2 0}" +
+        "." + CLASS_SECTIONS + " {border-spacing: 0}" +
+        "." + CLASS_SECTION + " {padding-right: 5; white-space: nowrap}" +
+        "." + CLASS_CONTENT + " {padding: 2 0 2 0}" +
         (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
         StringUtil.join(QuickDocHighlightingHelper.getDefaultDocCodeStyles(
           colorsScheme, colorsScheme.getDefaultBackground()), "\n") +
@@ -408,7 +409,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     private final ImageObserver myImageObserver = new ImageObserver() {
       @Override
       public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
-        if ((infoflags & (ImageObserver.WIDTH | ImageObserver.HEIGHT)) != 0) {
+        if ((infoflags & (WIDTH | HEIGHT)) != 0) {
           scheduleUpdate();
           return false;
         }
@@ -522,7 +523,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         update |= image.getWidth(myImageObserver) >= 0 || image.getHeight(myImageObserver) >= 0;
       }
       if (update) {
-        myImageObserver.imageUpdate(null, ImageObserver.WIDTH | ImageObserver.HEIGHT, 0, 0, 0, 0);
+        myImageObserver.imageUpdate(null, WIDTH | HEIGHT, 0, 0, 0, 0);
       }
     }
 

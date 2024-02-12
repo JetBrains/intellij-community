@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.documentation
 
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTION
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import com.intellij.markdown.utils.convertMarkdownToHtml
@@ -41,10 +43,10 @@ class HuggingFaceMarkdownToHtmlConverter {
     val tdRegex = Regex("<td>(.*?)</td>", RegexOption.DOT_MATCHES_ALL)
 
     return htmlNoIntellijRowEven.replace(tableRegex) { tableMatch ->
-      val formattedTable = "<table class='sections'>${tableMatch.groupValues[1]}</table>"
+      val formattedTable = "<table class='$CLASS_SECTIONS'>${tableMatch.groupValues[1]}</table>"
 
       formattedTable.replace(tdRegex) { tdMatch ->
-        "<td valign='top' class='section'>${tdMatch.groupValues[1]}</td>"
+        "<td valign='top' class='$CLASS_SECTION'>${tdMatch.groupValues[1]}</td>"
       }
     }
   }

@@ -22,9 +22,11 @@ import java.util.List;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationComponent.SECTION_COLOR;
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
 @Internal
 public final class DocumentationHtmlUtil {
+
 
   private DocumentationHtmlUtil() {
   }
@@ -54,26 +56,26 @@ public final class DocumentationHtmlUtil {
       "body { padding: 0px; margin: 0px }",
       "pre  {white-space: pre-wrap}",  // supported by JetBrains Runtime
       "a { color: " + linkColor + "; text-decoration: none;}",
-      ".definition { padding: 0px 17px 8px " + leftPadding + "px;" +
-      "              margin-bottom: 2px;"+
+      "." + CLASS_DEFINITION + " { padding: 0px 17px 8px " + leftPadding + "px;" +
+      "              margin-bottom: 2px;" +
       "              border-bottom: thin solid " + borderColor + "; }",
-      ".definition pre { margin: 0px; padding: 0px; }",
-      ".definition-only { padding: 0px 10px 0 " + leftPadding + "px; }",
-      ".definition-only pre { margin: 0px; padding: 0px }",
-      ".content { padding: 5px 16px 0 " + leftPadding + "px; max-width: 100% }",
-      ".content-separated { padding: 5px 16px 5px " + leftPadding + "px; max-width: 100%;" +
+      "." + CLASS_DEFINITION + " pre { margin: 0px; padding: 0px; }",
+      "." + CLASS_DEFINITION_ONLY + " { padding: 0px 10px 0 " + leftPadding + "px; }",
+      "." + CLASS_DEFINITION_ONLY + " pre { margin: 0px; padding: 0px }",
+      "." + CLASS_CONTENT + " { padding: 5px 16px 0 " + leftPadding + "px; max-width: 100% }",
+      "." + CLASS_CONTENT_SEPARATED + " { padding: 5px 16px 5px " + leftPadding + "px; max-width: 100%;" +
       "                     border-bottom: thin solid " + borderColor + "; }",
-      ".content-only { padding: 0px 16px 0 " + leftPadding + "px; max-width: 100% }",
-      ".separated { padding: 0 0 4px 0; margin: 0; max-width: 100%;" +
+      "." + CLASS_CONTENT_ONLY + " { padding: 0px 16px 0 " + leftPadding + "px; max-width: 100% }",
+      "." + CLASS_SEPARATED + " { padding: 0 0 4px 0; margin: 0; max-width: 100%;" +
       "             border-bottom: thin solid " + borderColor + "; }",
-      ".bottom { padding: 3px 16px 0 " + leftPadding + "px; }",
-      ".download-documentation { padding: 0px 0px 18px; }",
-      ".bottom-no-content { padding: 5px 16px 0 " + leftPadding + "px; }",
-      ".grayed { color: #909090; display: inline;}",
+      "." + CLASS_BOTTOM + " { padding: 3px 16px 0 " + leftPadding + "px; }",
+      "." + CLASS_DOWNLOAD_DOCUMENTATION + " { padding: 0px 0px 18px; }",
+      "." + CLASS_BOTTOM_NO_CONTENT + " { padding: 5px 16px 0 " + leftPadding + "px; }",
+      "." + CLASS_GREYED + " { color: #909090; display: inline;}",
 
       // sections table
-      ".sections { padding: 0 16px 0 " + leftPadding + "px; border-spacing: 0; }",
-      ".section { color: " + sectionColor + "; padding-right: 4px; white-space:nowrap;}"
+      "." + CLASS_SECTIONS + " { padding: 0 16px 0 " + leftPadding + "px; border-spacing: 0; }",
+      "." + CLASS_SECTION + " { color: " + sectionColor + "; padding-right: 4px; white-space:nowrap;}"
     );
 
     // Styled code
@@ -82,5 +84,4 @@ public final class DocumentationHtmlUtil {
     result.addAll(QuickDocHighlightingHelper.getDefaultFormattingStyles());
     return result;
   }
-
 }

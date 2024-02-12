@@ -3,6 +3,7 @@ package com.intellij.lang.documentation
 
 import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting
 import com.intellij.lang.Language
+import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -292,7 +293,7 @@ object QuickDocHighlightingHelper {
       "td { margin: 4px 0 0 0; padding: 2 0 2 0; }",
       "td p { padding-top: 0 }",
       "td pre { padding: 1px 0 0 0; margin: 0 0 0 0 }",
-      ".centered { text-align: center}",
+      ".$CLASS_CENTERED { text-align: center}",
     )
   }
 
@@ -303,8 +304,8 @@ object QuickDocHighlightingHelper {
     editorPaneBackgroundColor: Color,
   ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
     colorScheme, editorPaneBackgroundColor,
-    listOf(".content", ".content-separated", ".content-only div:not(.bottom)", ".sections"),
-    listOf(".definition code", ".definition pre", ".definition-only code", ".definition-only pre"),
+    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT_ONLY div:not(.$CLASS_BOTTOM)", ".$CLASS_SECTIONS"),
+    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_ONLY code", ".$CLASS_DEFINITION_ONLY pre"),
     DocumentationSettings.isCodeBackgroundEnabled()
     && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
     DocumentationSettings.isCodeBackgroundEnabled()

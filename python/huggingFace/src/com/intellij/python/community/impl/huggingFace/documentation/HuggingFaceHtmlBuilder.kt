@@ -2,6 +2,7 @@
 package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
@@ -27,7 +28,7 @@ class HuggingFaceHtmlBuilder(
     val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter().convert(modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
-      .setClass("content")
+      .setClass(CLASS_CONTENT)
       .child(HtmlChunk.raw(convertedHtml))
 
     val bodyChunk = HtmlChunk.tag("body")
@@ -88,7 +89,7 @@ class HuggingFaceHtmlBuilder(
       .child(linkRow)
 
     val headerContainer = HtmlChunk.div()
-      .setClass("content")
+      .setClass(CLASS_CONTENT)
       .children(
         modelNameWithIconRow,
         modelInfoRowDiv,

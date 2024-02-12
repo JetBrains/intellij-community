@@ -3,31 +3,47 @@ package com.intellij.lang.documentation;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * HTML building blocks for content layout in {@link DocumentationProvider#generateDoc}.
  */
 public interface DocumentationMarkup {
-  @NlsSafe String DEFINITION_START = "<div class='definition'><pre>";
+
+  @ApiStatus.Internal String CLASS_DEFINITION = "definition";
+  @ApiStatus.Internal String CLASS_DEFINITION_ONLY = "definition-only";
+  @ApiStatus.Internal String CLASS_CONTENT = "content";
+  @ApiStatus.Internal String CLASS_CONTENT_ONLY = "content-only";
+  @ApiStatus.Internal String CLASS_CONTENT_SEPARATED = "content-separated";
+  @ApiStatus.Internal String CLASS_SEPARATED = "separated";
+  @ApiStatus.Internal String CLASS_SECTIONS = "sections";
+  @ApiStatus.Internal String CLASS_SECTION = "section";
+  @ApiStatus.Internal String CLASS_GREYED = "greyed";
+  @ApiStatus.Internal String CLASS_CENTERED = "centered";
+  @ApiStatus.Internal String CLASS_BOTTOM = "bottom";
+  @ApiStatus.Internal String CLASS_BOTTOM_NO_CONTENT = "bottom-no-content";
+  @ApiStatus.Internal String CLASS_DOWNLOAD_DOCUMENTATION = "download-documentation";
+
+  @NlsSafe String DEFINITION_START = "<div class='" + CLASS_DEFINITION + "'><pre>";
   @NlsSafe String DEFINITION_END = "</pre></div>";
-  @NlsSafe String CONTENT_START = "<div class='content'>";
+  @NlsSafe String CONTENT_START = "<div class='" + CLASS_CONTENT + "'>";
   @NlsSafe String CONTENT_END = "</div>";
-  @NlsSafe String SECTIONS_START = "<table class='sections'>";
+  @NlsSafe String SECTIONS_START = "<table class='" + CLASS_SECTIONS + "'>";
   @NlsSafe String SECTIONS_END = "</table>";
-  @NlsSafe String SECTION_HEADER_START = "<tr><td valign='top' class='section'><p>";
+  @NlsSafe String SECTION_HEADER_START = "<tr><td valign='top' class='" + CLASS_SECTION + "'><p>";
   @NlsSafe String SECTION_SEPARATOR = "</td><td valign='top'>";
   @NlsSafe String SECTION_START = "<td valign='top'>";
   @NlsSafe String SECTION_END = "</td>";
-  @NlsSafe String GRAYED_START = "<span class='grayed'>";
+  @NlsSafe String GRAYED_START = "<span class='" + CLASS_GREYED + "'>";
   @NlsSafe String GRAYED_END = "</span>";
 
   HtmlChunk.Element SECTION_CONTENT_CELL = HtmlChunk.tag("td").attr("valign", "top");
-  HtmlChunk.Element SECTION_HEADER_CELL = HtmlChunk.tag("td").attr("valign", "top").setClass("section");
-  HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").setClass("sections");
-  HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().setClass("content");
-  HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().setClass("definition");
-  HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass("grayed");
-  HtmlChunk.Element CENTERED_ELEMENT = HtmlChunk.p().setClass("centered");
+  HtmlChunk.Element SECTION_HEADER_CELL = HtmlChunk.tag("td").attr("valign", "top").setClass(CLASS_SECTION);
+  HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").setClass(CLASS_SECTIONS);
+  HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().setClass(CLASS_CONTENT);
+  HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().setClass(CLASS_DEFINITION);
+  HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass(CLASS_GREYED);
+  HtmlChunk.Element CENTERED_ELEMENT = HtmlChunk.p().setClass(CLASS_CENTERED);
   HtmlChunk.Element EXTERNAL_LINK_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow");
   HtmlChunk.Element INFORMATION_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.General.Information");
 }

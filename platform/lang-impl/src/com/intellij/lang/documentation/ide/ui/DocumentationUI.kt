@@ -13,6 +13,7 @@ import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.hint.DefinitionSwitcher
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT_ONLY
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
@@ -227,7 +228,7 @@ internal class DocumentationUI(
 
   private fun message(message: @Nls String): @Nls String {
     return HtmlChunk.div()
-      .setClass("content-only")
+      .setClass(CLASS_CONTENT_ONLY)
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")

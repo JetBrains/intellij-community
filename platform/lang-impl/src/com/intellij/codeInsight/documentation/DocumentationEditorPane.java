@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneDefaultCssRules;
+import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 import static com.intellij.util.ui.html.UtilsKt.getCssMargin;
 import static com.intellij.util.ui.html.UtilsKt.getCssPadding;
@@ -172,10 +173,10 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   }
 
   private int definitionPreferredWidth() {
-    int preferredDefinitionWidth = Math.max(getPreferredSectionWidth("definition"),
-                                            getPreferredSectionWidth("definition-only"));
-    int preferredLocationWidth = Math.max(getPreferredSectionWidth("bottom-no-content"),
-                                          getPreferredSectionWidth("bottom"));
+    int preferredDefinitionWidth = Math.max(getPreferredSectionWidth(CLASS_DEFINITION),
+                                            getPreferredSectionWidth(CLASS_DEFINITION_ONLY));
+    int preferredLocationWidth = Math.max(getPreferredSectionWidth(CLASS_BOTTOM_NO_CONTENT),
+                                          getPreferredSectionWidth(CLASS_BOTTOM));
     if (preferredDefinitionWidth < 0) {
       return -1;
     }
