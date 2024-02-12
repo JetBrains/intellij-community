@@ -1374,6 +1374,12 @@
     <statusBarWidgetFactory id="VfsRefresh" implementation="com.intellij.openapi.wm.impl.status.VfsRefreshIndicatorWidgetFactory"
                             order="first"/>
     <statusBarWidgetFactory id="Position" implementation="com.intellij.openapi.wm.impl.status.PositionPanelWidgetFactory"/>
+    <statusBarWidgetFactory id="LanguageServiceStatusBarWidget"
+                            implementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetFactory"
+                            order="after Position, after AIAssistant, before LineSeparator"/>
+    <registryKey key="language.service.status.bar.widget"
+                 description="Show Language Services status bar widget"
+                 defaultValue="false"/>
     <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
                             order="after Position"/>
     <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory"
@@ -1386,12 +1392,6 @@
                             order="after largeFileEncodingWidget"/>
     <statusBarWidgetFactory id="CodeStyleStatusBarWidget" implementation="com.intellij.psi.codeStyle.statusbar.CodeStyleStatusBarWidgetFactory"
                             order="after InsertOverwrite"/>
-    <statusBarWidgetFactory id="LanguageServiceStatusBarWidget"
-                            implementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetFactory"
-                            order="after CodeStyleStatusBarWidget, before ReadOnlyAttribute"/>
-    <registryKey key="language.service.status.bar.widget"
-                 description="Show Language Services status bar widget"
-                 defaultValue="false"/>
     <statusBarWidgetFactory id="ReadOnlyAttribute" implementation="com.intellij.openapi.wm.impl.status.ReadOnlyAttributeWidgetFactory"
                             order="after CodeStyleStatusBarWidget"/>
     <statusBarWidgetFactory id="inspectionProfileWidget" implementation="com.intellij.openapi.wm.impl.status.InspectionProfileWidgetFactory"
