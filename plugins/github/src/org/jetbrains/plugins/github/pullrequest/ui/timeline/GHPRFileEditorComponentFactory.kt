@@ -217,7 +217,7 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
       .toString()
   }
 
-  private inner class ErrorPresenter : ErrorStatusPresenter<Throwable> {
+  private inner class ErrorPresenter : ErrorStatusPresenter.Text<Throwable> {
     override fun getErrorTitle(error: Throwable): String = GithubBundle.message("pull.request.timeline.cannot.load")
 
     override fun getErrorDescription(error: Throwable): String =

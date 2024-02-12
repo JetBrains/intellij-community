@@ -8,7 +8,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestT
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.Action
 
-class GitLabMergeRequestTimelineErrorStatusPresenter(private val mr: GitLabMergeRequestTimelineViewModel) : ErrorStatusPresenter<Throwable> {
+class GitLabMergeRequestTimelineErrorStatusPresenter(
+  private val mr: GitLabMergeRequestTimelineViewModel
+) : ErrorStatusPresenter.Text<Throwable> {
   override fun getErrorTitle(error: Throwable): @Nls String = GitLabBundle.message("merge.request.timeline.error")
 
   override fun getErrorDescription(error: Throwable): @Nls String? =

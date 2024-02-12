@@ -82,7 +82,7 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
   }
 
   private fun CoroutineScope.createInfoErrorComponent(error: Throwable): JComponent {
-    val errorPresenter = object : ErrorStatusPresenter<Throwable> {
+    val errorPresenter = object : ErrorStatusPresenter.Text<Throwable> {
       override fun getErrorTitle(error: Throwable): String = GithubBundle.message("cannot.load.details")
       override fun getErrorDescription(error: Throwable): String? = error.localizedMessage
       override fun getErrorAction(error: Throwable): Action = vm.detailsLoadingErrorHandler.getActionForError(error)
@@ -133,7 +133,7 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
   }
 
   private fun CoroutineScope.createChangesErrorComponent(changesVm: GHPRChangesViewModel, error: Throwable): JComponent {
-    val errorPresenter = object : ErrorStatusPresenter<Throwable> {
+    val errorPresenter = object : ErrorStatusPresenter.Text<Throwable> {
       override fun getErrorTitle(error: Throwable): String = GithubBundle.message("cannot.load.changes")
       override fun getErrorDescription(error: Throwable): String? = error.localizedMessage
       override fun getErrorAction(error: Throwable): Action = changesVm.changesLoadingErrorHandler.getActionForError(error)

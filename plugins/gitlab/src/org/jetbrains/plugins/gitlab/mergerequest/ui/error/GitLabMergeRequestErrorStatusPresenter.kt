@@ -18,7 +18,7 @@ import javax.swing.Action
 internal class GitLabMergeRequestErrorStatusPresenter(
   private val accountVm: GitLabAccountViewModel,
   private val reloadAction: Action?,
-) : ErrorStatusPresenter<Throwable> {
+) : ErrorStatusPresenter.Text<Throwable> {
   override fun getErrorTitle(error: Throwable): @Nls String = GitLabBundle.message("merge.request.list.error")
 
   override fun getErrorDescription(error: Throwable): @Nls String {

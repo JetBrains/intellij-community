@@ -87,22 +87,24 @@ object ErrorStatusPanelFactory {
         return
       }
 
-      val errorTextBuilder = HtmlBuilder().apply {
-        appendP(errorPresenter.getErrorTitle(error))
-        val errorTitle = errorPresenter.getErrorDescription(error)
-        if (errorTitle != null) {
-          appendP(errorTitle)
+      if (errorPresenter is ErrorStatusPresenter.Text) {
+        val errorTextBuilder = HtmlBuilder().apply {
+          appendP(errorPresenter.getErrorTitle(error))
+          val errorTitle = errorPresenter.getErrorDescription(error)
+          if (errorTitle != null) {
+            appendP(errorTitle)
+          }
         }
-      }
 
-      val errorAction = errorPresenter.getErrorAction(error)
-      if (errorAction != null) {
-        action = errorAction
-        errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.name.orEmpty()))
-      }
+        val errorAction = errorPresenter.getErrorAction(error)
+        if (errorAction != null) {
+          action = errorAction
+          errorTextBuilder.appendP(HtmlChunk.link(ERROR_ACTION_HREF, errorAction.name.orEmpty()))
+        }
 
-      htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()
-      htmlEditorPane.isVisible = true
+        htmlEditorPane.text = errorTextBuilder.wrapWithHtmlBody().toString()
+        htmlEditorPane.isVisible = true
+      }
     }
 
     private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", alignment.htmlValue).child(chunk))

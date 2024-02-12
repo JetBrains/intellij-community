@@ -10,7 +10,7 @@ import javax.swing.Action
 
 internal class GitLabMergeRequestFilterErrorPresenter(
   private val filterVm: GitLabMergeRequestsFiltersViewModel
-) : ErrorStatusPresenter<Throwable> {
+) : ErrorStatusPresenter.Text<Throwable> {
   override fun getErrorTitle(error: Throwable): @Nls String = GitLabBundle.message("merge.request.list.filter.error")
 
   override fun getErrorDescription(error: Throwable): @Nls String? = null

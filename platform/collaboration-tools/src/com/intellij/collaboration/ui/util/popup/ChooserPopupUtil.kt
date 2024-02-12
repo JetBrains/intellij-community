@@ -173,7 +173,7 @@ data class PopupConfig(
   val isMovable: Boolean = true,
   val isResizable: Boolean = true,
   val showDirection: ShowDirection = ShowDirection.BELOW,
-  val errorPresenter: ErrorStatusPresenter<Throwable>? = null
+  val errorPresenter: ErrorStatusPresenter.Text<Throwable>? = null
 ) {
   companion object {
     val DEFAULT = PopupConfig()
@@ -221,7 +221,7 @@ private class ListLoadingListener<T : Any>(
   private val itemsFlow: Flow<Result<List<T>>>,
   private val list: JBList<*>,
   private val listModel: CollectionListModel<T>,
-  private val errorPresenter: ErrorStatusPresenter<Throwable>?
+  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?
 ) : AbstractListLoadingListener<T>(parentScope, itemsFlow, list) {
   override fun onSuccess(items: List<T>) {
     val selected = list.selectedIndex
@@ -245,7 +245,7 @@ private class SelectableListLoadingListener<T : Any>(
   private val list: JBList<*>,
   private val listModel: CollectionListModel<SelectableWrapper<T>>,
   private val isOriginallySelected: (T) -> Boolean,
-  private val errorPresenter: ErrorStatusPresenter<Throwable>?
+  private val errorPresenter: ErrorStatusPresenter.Text<Throwable>?
 ) : AbstractListLoadingListener<T>(parentScope, itemsFlow, list) {
   override fun onSuccess(items: List<T>) {
     val newList = items.map { item -> SelectableWrapper(item, isOriginallySelected(item)) }
@@ -261,7 +261,7 @@ private class SelectableListLoadingListener<T : Any>(
   }
 }
 
-private fun showErrorOnPopupFailure(e: Throwable, errorPresenter: ErrorStatusPresenter<Throwable>?, list: JBList<*>) {
+private fun showErrorOnPopupFailure(e: Throwable, errorPresenter: ErrorStatusPresenter.Text<Throwable>?, list: JBList<*>) {
   if (errorPresenter == null) {
     val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("popup.data.loading.error")
     list.emptyText.setText(errorMessage, SimpleTextAttributes.ERROR_ATTRIBUTES)

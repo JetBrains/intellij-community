@@ -16,7 +16,7 @@ import javax.swing.Action
 internal class GitLabLoginErrorStatusPresenter(
   private val cs: CoroutineScope,
   private val model: GitLabTokenLoginPanelModel,
-) : ErrorStatusPresenter<Throwable> {
+) : ErrorStatusPresenter.Text<Throwable> {
   override fun getErrorTitle(error: Throwable): String = CollaborationToolsBundle.message("clone.dialog.login.failed")
 
   override fun getErrorDescription(error: Throwable): String = when (error) {

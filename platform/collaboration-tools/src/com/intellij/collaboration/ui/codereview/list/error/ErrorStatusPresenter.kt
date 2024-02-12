@@ -4,10 +4,20 @@ package com.intellij.collaboration.ui.codereview.list.error
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
 
-interface ErrorStatusPresenter<T> {
+sealed interface ErrorStatusPresenter<T> {
+  @Deprecated(
+    "Moved to ErrorStatusPresenter.Text",
+    ReplaceWith(
+      expression = "ErrorStatusPresenter.TextErrorStatusPresenter.getErrorTitle",
+      imports = ["com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter.Text"]
+    )
+  )
   fun getErrorTitle(error: T): @Nls String
 
-  fun getErrorDescription(error: T): @Nls String?
-
   fun getErrorAction(error: T): Action?
+
+  interface Text<T> : ErrorStatusPresenter<T> {
+    override fun getErrorTitle(error: T): @Nls String
+    fun getErrorDescription(error: T): @Nls String?
+  }
 }
