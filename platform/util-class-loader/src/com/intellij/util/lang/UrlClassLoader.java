@@ -73,7 +73,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   /**
-   * See com.intellij.TestAll#getClassRoots()
+   * @see com.intellij.TestAll#getClassRoots()
    */
   public final @NotNull List<Path> getBaseUrls() {
     return classPath.getBaseUrls();

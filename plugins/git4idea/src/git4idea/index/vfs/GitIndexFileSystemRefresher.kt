@@ -312,7 +312,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private data class Key(val root: VirtualFile, val filePath: FilePath)
 
   /**
-   * See com.intellij.lang.properties.Native2AsciiListener
+   * @see com.intellij.lang.properties.Native2AsciiListener
    */
   private inner class MyEncodingManagerListener : EncodingManagerListener {
     override fun propertyChanged(eventDocument: Document?, propertyName: String, oldValue: Any?, newValue: Any?) {

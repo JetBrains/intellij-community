@@ -1555,7 +1555,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
    * This method is intended to be used in non-localized contexts (primarily in log output).
-   * See com.intellij.ide.nls.NlsMessages for localized output.
+   * @see com.intellij.ide.nls.NlsMessages NlsMessages for localized output.
    */
   @Contract(pure = true)
   public static @NotNull @NonNls String formatDuration(long duration) {
