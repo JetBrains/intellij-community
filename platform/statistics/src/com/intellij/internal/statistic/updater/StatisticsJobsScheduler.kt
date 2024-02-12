@@ -12,16 +12,21 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @InternalIgnoreDependencyViolation
 private class StatisticsJobsScheduler : ApplicationInitializedListener {
+  private val sendJobs = ConcurrentHashMap<String, Job>()
+
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()
@@ -45,6 +50,54 @@ private class StatisticsJobsScheduler : ApplicationInitializedListener {
         runValidationRulesUpdate()
       }
     }
+
+    if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(StatisticsEventLoggerProvider.EP_NAME)) {
+      StatisticsEventLoggerProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<StatisticsEventLoggerProvider> {
+        override fun extensionAdded(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
+          asyncScope.launch {
+            launchStatisticsSendJob(extension, this)
+
+            if (extension.isLoggingEnabled()) {
+              blockingContext {
+                IntellijSensitiveDataValidator.getInstance(extension.recorderId).update()
+              }
+            }
+          }
+        }
+
+        override fun extensionRemoved(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
+          sendJobs.remove(extension.recorderId)?.cancel()
+        }
+      })
+    }
+
+  }
+
+  private suspend fun runEventLogStatisticsService() {
+    delay(1.minutes)
+
+    val providers = getEventLogProviders()
+    coroutineScope {
+      for (provider in providers) {
+        launchStatisticsSendJob(provider, this)
+      }
+    }
+  }
+
+  private suspend fun launchStatisticsSendJob(provider: StatisticsEventLoggerProvider, coroutineScope: CoroutineScope) {
+    if (!provider.isSendEnabled()) return
+
+    val job = coroutineScope.launch {
+      delay((5 * 60).seconds)
+
+      while (isActive) {
+        blockingContext {
+          StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId).send()
+        }
+        delay(provider.sendFrequencyMs.milliseconds)
+      }
+    }
+    sendJobs[provider.recorderId] = job
   }
 }
 
@@ -78,30 +131,6 @@ private suspend fun checkPreviousExternalUploadResult() {
   EventLogExternalUploader.logPreviousExternalUploadResult(providers)
 }
 
-private suspend fun runEventLogStatisticsService() {
-  delay(1.minutes)
-
-  val providers = getEventLogProviders()
-  coroutineScope {
-    for (provider in providers) {
-      if (!provider.isSendEnabled()) {
-        continue
-      }
-
-      val statisticsService = blockingContext {
-        StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId)
-      }
-      launch {
-        delay((5 * 60).seconds)
-
-        while (true) {
-          statisticsService.send()
-          delay(provider.sendFrequencyMs.milliseconds)
-        }
-      }
-    }
-  }
-}
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
