@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -320,6 +321,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     Sdk sdk = IdeaTestUtil.getMockJdk18();
     WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(getModule(), sdk);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     PsiClass aClass = myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference");
     PsiFile file = aClass.getContainingFile();

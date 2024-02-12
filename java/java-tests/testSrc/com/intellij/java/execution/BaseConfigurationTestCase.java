@@ -86,6 +86,7 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
     ModuleRootModificationUtil.setModuleSdk(module, ModuleRootManager.getInstance(myModule).getSdk());
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     if ("JUnit4".equals(junitLibName)) {
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
       assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass(JUnitUtil.TEST_CASE_CLASS, scope));
     }
     Module missingModule = createTempModule();
