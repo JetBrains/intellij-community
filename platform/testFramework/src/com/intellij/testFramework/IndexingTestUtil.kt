@@ -77,7 +77,7 @@ class IndexingTestUtil(private val project: Project) {
     if (!isRunning()) {
       return // TODO: CodeInsightTestFixtureImpl.configureInner via GroovyHighlightUsagesTest
     } else {
-      thisLogger().warn("waitNow will be waiting, thread=${Thread.currentThread()}", Throwable())
+      thisLogger().info("waitNow will be waiting, thread=${Thread.currentThread()}", Throwable())
     }
 
     if (ApplicationManager.getApplication().isWriteIntentLockAcquired) {
@@ -109,7 +109,7 @@ class IndexingTestUtil(private val project: Project) {
     if (!isRunning()) {
       return
     } else {
-      thisLogger().warn("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}", Throwable())
+      thisLogger().info("suspendUntilIndexesAreReady will be waiting, thread=${Thread.currentThread()}", Throwable())
     }
     UnindexedFilesScannerExecutor.getInstance(project).waitUntilFinished()
     DumbServiceImpl.getInstance(project).waitUntilFinished()
