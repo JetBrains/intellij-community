@@ -48,7 +48,7 @@ import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.EditorGutterHoverEvent;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLineMouseEvent;
+import com.intellij.openapi.editor.impl.stickyLines.StickyLineComponent;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
@@ -647,6 +647,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private void paintFoldingTree(@NotNull Graphics g, @NotNull Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+    if (myEditor.isStickyLinePainting()) {
+      // suppress folding icons on sticky lines panel
+      return;
+    }
     if (isFoldingOutlineShown()) {
       doPaintFoldingTree((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
     }
@@ -2561,7 +2565,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void invokePopup(MouseEvent e) {
     int logicalLineAtCursor = EditorUtil.yPositionToLogicalLine(myEditor, e);
     Point point = e.getPoint();
-    PointInfo info = e instanceof StickyLineMouseEvent ? null : getPointInfo(point);
+    PointInfo info = e instanceof StickyLineComponent.MyMouseEvent ? null : getPointInfo(point);
     if (info != null) {
       logGutterIconClick(info.renderer);
     }
@@ -2840,7 +2844,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  void onHover(boolean hovered) {
+  private void onHover(boolean hovered) {
     if (ExperimentalUI.isNewUI()) {
       myHovered = hovered;
       updateFoldingOutlineVisibility();

@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import java.awt.Component
 import java.awt.Graphics
 import java.awt.event.*
 import java.awt.image.BufferedImage
@@ -151,7 +152,19 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     return "${debugText ?: ""}(primary=$primaryVisualLine, scope=$scopeVisualLine, onClick=$offsetOnClick)"
   }
 
-  inner class StickyMouseListener : MouseListener, MouseMotionListener, MouseWheelListener {
+  internal class MyMouseEvent(e: MouseEvent, source: Component, y: Int) : MouseEvent(
+    source,
+    e.id,
+    e.`when`,
+    UIUtil.getAllModifiers(e),
+    e.x,
+    y,
+    e.clickCount,
+    e.isPopupTrigger,
+    e.button,
+  )
+
+  private inner class StickyMouseListener : MouseListener, MouseMotionListener, MouseWheelListener {
     private val popMenu: JPopupMenu
     private var isPopup = false
     private var isGutterHovered = false
@@ -236,7 +249,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     private fun onGutterHover(hovered: Boolean) {
       if (hovered != isGutterHovered) {
         isGutterHovered = hovered
-        (editor as EditorImpl).onGutterHover(hovered)
+        //(editor as EditorImpl).onGutterHover(hovered)
         repaint()
       }
     }
@@ -245,6 +258,10 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       if (event.id == MouseEvent.MOUSE_PRESSED || (event.id == MouseEvent.MOUSE_RELEASED && event.isPopupTrigger)) {
         val converted = convert(event)
         val mouseListener = (editor as EditorImpl).mouseListener
+        if (!event.isPopupTrigger) {
+          event.consume()
+          return
+        }
         if (event.id == MouseEvent.MOUSE_PRESSED) {
           mouseListener.mousePressed(converted)
         } else {
@@ -298,13 +315,13 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
 
     private fun convert(event: MouseEvent): MouseEvent {
       val y = if (event.isPopupTrigger) {
-        val point = event.getLocationOnScreen()
+        val point = event.locationOnScreen
         SwingUtilities.convertPointFromScreen(point, editor.gutterComponentEx)
         point.y
       } else {
         editor.visualLineToY(primaryVisualLine) + event.y
       }
-      return StickyLineMouseEvent(event, editor.gutterComponentEx, y)
+      return MyMouseEvent(event, editor.gutterComponentEx, y)
     }
 
     private fun throwUnhandledEvent(event: MouseEvent) {

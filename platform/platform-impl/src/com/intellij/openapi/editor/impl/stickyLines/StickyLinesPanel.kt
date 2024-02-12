@@ -79,11 +79,6 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
     repaintLinesImpl()
   }
 
-  fun repaintLines() {
-    if (clearPanelIfDisabled()) return
-    repaintLinesImpl()
-  }
-
   fun suppressHintForLine(logicalLine: Int): Boolean {
     for (lineComp: StickyLineComponent in stickyLinesComp) {
       if (lineComp.isEmpty()) {
