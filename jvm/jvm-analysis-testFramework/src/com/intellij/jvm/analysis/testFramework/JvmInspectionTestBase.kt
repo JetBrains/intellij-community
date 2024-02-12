@@ -9,6 +9,9 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
+/**
+ * A base class for testing JVM inspections.
+ */
 abstract class JvmInspectionTestBase : LightJvmCodeInsightFixtureTestCase() {
   abstract val inspection: InspectionProfileEntry
 

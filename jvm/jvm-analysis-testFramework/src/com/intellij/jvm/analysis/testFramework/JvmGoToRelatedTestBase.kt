@@ -4,6 +4,9 @@ import com.intellij.ide.actions.GotoRelatedSymbolAction
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
+/**
+ * A test base for testing [com.intellij.navigation.GotoRelatedProvider] implementations in all JVM languages.
+ */
 abstract class JvmGoToRelatedTestBase : LightJvmCodeInsightFixtureTestCase() {
   protected fun JavaCodeInsightTestFixture.testGoToRelatedAction(
     lang: JvmLanguage,

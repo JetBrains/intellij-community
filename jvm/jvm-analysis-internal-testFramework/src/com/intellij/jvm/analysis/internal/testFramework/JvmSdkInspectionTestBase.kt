@@ -7,13 +7,21 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
+/**
+ * A base test class that allows setting language level and mock SDK.
+ */
 abstract class JvmSdkInspectionTestBase : JvmInspectionTestBase() {
-  open val languageLevel: LanguageLevel = LanguageLevel.HIGHEST
-
+  /**
+   * The mock JDK to use.
+   * When the mock JDK for this language level is not available, the mock SDK will be chosen according to [IdeaTestUtil.getMockJdk].
+   */
   open val sdkLevel: LanguageLevel = LanguageLevel.HIGHEST
 
   override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptor(sdkLevel)
 
+  /**
+   * Sets the current project and module language level to [languageLevel].
+   */
   protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
     LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
