@@ -68,7 +68,12 @@ public interface WorkspaceModel {
   /**
    * Subscription to the changes of the workspace model.
    *
-   * [subscriber] function returns the initial storage and the flow of updates starting from this state.
+   * [subscriber] function receives a current storage and the flow of updates starting from this state.
+   *
+   * This function can be used in two ways:
+   * - Perform incremental computation. Calculate information based on the initial storage and update this info according to the flow
+   *     of updates.
+   * - Receive events of the workspace model updates. For this only the flow of updates can be used.
    *
    * Keep in mind that since this listener is asynchronous, there is no guarantee that file index or jps bridges will be updated.
    *
