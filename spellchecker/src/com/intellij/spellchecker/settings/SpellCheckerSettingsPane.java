@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
@@ -254,8 +254,7 @@ public final class SpellCheckerSettingsPane implements Disposable {
       myListModel.removeAllElements();
     }
 
-    @NotNull
-    public List<String> getWords() {
+    public @NotNull List<String> getWords() {
       Object[] pairs = getListItems();
       if (pairs == null) {
         return new ArrayList<>();

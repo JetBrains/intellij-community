@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -53,8 +53,7 @@ public class SpellcheckingStrategy {
   /**
    * @return {@link #EMPTY_TOKENIZER} to skip spellchecking, {@link #TEXT_TOKENIZER} for full element text or custom Tokenizer implementation.
    */
-  @NotNull
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       return EMPTY_TOKENIZER;
     }

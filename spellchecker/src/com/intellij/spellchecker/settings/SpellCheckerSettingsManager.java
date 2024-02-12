@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.extensions.BaseExtensionPointName;
@@ -27,20 +27,17 @@ public class SpellCheckerSettingsManager implements SearchableConfigurable, Conf
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return SpellCheckerBundle.message("spelling");
   }
 
   @Override
-  @NonNls
-  public @NotNull String getHelpTopic() {
+  public @NonNls @NotNull String getHelpTopic() {
     return "reference.settings.ide.settings.spelling";
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 

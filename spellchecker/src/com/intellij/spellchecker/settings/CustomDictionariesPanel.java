@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -31,7 +31,7 @@ import static java.util.Arrays.asList;
 
 public final class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
-  @NotNull private final SpellCheckerManager myManager;
+  private final @NotNull SpellCheckerManager myManager;
   private final CustomDictionariesTableView myCustomDictionariesTableView;
   private final List<String> removedDictionaries = new ArrayList<>();
   private final List<String> defaultDictionaries;
@@ -199,9 +199,8 @@ public final class CustomDictionariesPanel extends JPanel {
             return info;
           }
 
-          @Nullable
           @Override
-          public TableCellRenderer getRenderer(String s) {
+          public @Nullable TableCellRenderer getRenderer(String s) {
             return myTypeRenderer;
           }
         }

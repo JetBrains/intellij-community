@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
@@ -47,14 +47,12 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return SpellCheckerBundle.message("save.0.to.1", myWord != null ? SpellCheckerBundle.message("0.in.quotes", myWord) : "");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     final String dictionary = myLevel != DictionaryLevel.NOT_SPECIFIED ? myLevel.getName() + DICTIONARY : DOTS;
     return SpellCheckerBundle.message("save.0.to.1", "", dictionary);
   }

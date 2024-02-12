@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,8 +45,7 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
   private boolean mySettingsTransferred;
 
-  @NlsSafe
-  public String getDictionaryToSave() {
+  public @NlsSafe String getDictionaryToSave() {
     //This is NLS safe since dictionary names are NLS
     return myDictionaryToSave;
   }
@@ -133,7 +132,7 @@ public final class SpellCheckerSettings implements PersistentStateComponent<Elem
 
 
   @Override
-  public void loadState(@NotNull final Element element) {
+  public void loadState(final @NotNull Element element) {
     myRuntimeDisabledDictionariesNames.clear();
     myCustomDictionariesPaths.clear();
     myOldDictionaryFoldersPaths.clear();

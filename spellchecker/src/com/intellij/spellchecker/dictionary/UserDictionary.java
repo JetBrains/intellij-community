@@ -26,8 +26,7 @@ public final class UserDictionary implements EditableDictionary {
   @Override
   public @Nullable Boolean contains(@NotNull String word) {
     boolean contains = words.contains(word);
-    if (contains) return true;
-    return null;
+    return contains ? true : null;
   }
 
   @Override

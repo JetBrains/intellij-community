@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeInspection.*;
@@ -63,15 +63,12 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return SPELL_CHECKING_INSPECTION_TOOL_NAME;
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     if (!Registry.is("spellchecker.inspection.enabled", true)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -79,7 +76,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
 
     return new PsiElementVisitor() {
       @Override
-      public void visitElement(@NotNull final PsiElement element) {
+      public void visitElement(final @NotNull PsiElement element) {
         if (holder.getResultCount() > 1000) return;
 
         final ASTNode node = element.getNode();
@@ -126,7 +123,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
    * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
-  public static void tokenize(@NotNull final PsiElement element, @NotNull final Language language, TokenConsumer consumer) {
+  public static void tokenize(final @NotNull PsiElement element, final @NotNull Language language, TokenConsumer consumer) {
     SpellcheckingStrategy factoryByLanguage = getSpellcheckingStrategy(element, language);
     if (factoryByLanguage == null) {
       return;
