@@ -37,6 +37,7 @@ import java.awt.event.MouseEvent
 
 private val PREVIEW_PROBLEMS_KEY = Key.create<Set<Problem>>("preview.problems.key")
 private const val ID = "java.RelatedProblems"
+private const val GROUP_ID = -5
 
 internal fun isCodeVisionEnabled(ignored: Project): Boolean {
   val settings = CodeVisionSettings.getInstance()
@@ -121,7 +122,7 @@ internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
       {
         val fileTextLength = editor.document.textLength
         val colorsScheme = editor.colorsScheme
-        UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength, highlighters, colorsScheme, -1)
+        UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength, highlighters, colorsScheme, GROUP_ID)
       },
       ModalityState.nonModal(),
       project.disposed,
