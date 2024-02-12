@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
@@ -21,7 +22,7 @@ import java.util.function.Predicate;
  * Implementations of this interface need to be registered as extensions in order
  * to be picked up by {@link JavaPsiFacade}.
  */
-public abstract class PsiElementFinder {
+public abstract class PsiElementFinder implements PossiblyDumbAware {
   public static final ProjectExtensionPointName<PsiElementFinder> EP = new ProjectExtensionPointName<>("com.intellij.java.elementFinder");
 
   /**
