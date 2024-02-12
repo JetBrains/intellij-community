@@ -24,4 +24,13 @@ class PersistentDirtyFilesQueueTest {
     Assert.assertEquals(IntList.of(1, 2, 3), PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion))
     Assert.assertEquals(IntList.of(), PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion + 1))
   }
+
+  @Test
+  fun `test unversioned file is read correctly`() {
+    val file = tempDir.newDirectoryPath().resolve("test-PersistentDirtyFilesQueue")
+    val vfsVersion = 987L
+    PersistentDirtyFilesQueue.storeIndexingQueue(file, IntList.of(1, 2, 3), vfsVersion, 0)
+
+    Assert.assertEquals(IntList.of(1, 2, 3), PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion))
+  }
 }

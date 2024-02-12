@@ -21,6 +21,8 @@ object PersistentDirtyFilesQueue {
   private val isUnittestMode: Boolean
     get() = application.isUnitTestMode
 
+  val currentVersion = 1L
+
   @JvmStatic
   fun getQueuesDir(): Path = PathManager.getIndexRoot() / "dirty-file-queues"
 
@@ -44,7 +46,13 @@ object PersistentDirtyFilesQueue {
     val result = IntArrayList()
     try {
       DataInputStream(queueFile.inputStream().buffered()).use {
-        val storedVfsVersion = it.readLong()
+        val version = it.readLong()
+        val storedVfsVersion = if (version < 10L) {
+          // we can assume that small numbers are dirty files queue version and not vfs version
+          // because vfs version is vfs creation timestamp that is System.currentTimeMillis()
+          it.readLong()
+        }
+        else version
         if (storedVfsVersion == currentVfsVersion) {
           while (it.available() > -1) {
             result.add(it.readInt())
@@ -67,12 +75,18 @@ object PersistentDirtyFilesQueue {
 
   @JvmStatic
   fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, vfsVersion: Long) {
+    storeIndexingQueue(queueFile, fileIds, vfsVersion, currentVersion)
+  }
+
+  @JvmStatic
+  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, vfsVersion: Long, version: Long) {
     try {
       if (fileIds.isEmpty()) {
         queueFile.deleteIfExists()
       }
       queueFile.parent.createDirectories()
       DataOutputStream(queueFile.outputStream().buffered()).use {
+        if (version > 0) it.writeLong(version)
         it.writeLong(vfsVersion)
         fileIds.forEach { fileId ->
           it.writeInt(fileId)
