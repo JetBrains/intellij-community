@@ -16,6 +16,7 @@ import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
@@ -40,7 +41,7 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
       add(JLabel(ImportSettingsBundle.message("import.settings.title")).apply {
-        font = Font(font.fontName, Font.PLAIN, JBUIScale.scaleFontSize(24f))
+        font = JBFont.h1()
         horizontalAlignment = SwingConstants.CENTER
       })
 
