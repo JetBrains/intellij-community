@@ -16,9 +16,11 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -158,10 +160,17 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
       }
 
       @Override
+      public boolean startInWriteAction() {
+        return action.startInWriteAction();
+      }
+
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
+        final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
+        Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        final Editor editor = selectedTextEditor != null ? selectedTextEditor : new LazyEditor(psiFile);
         try {
-          action.invoke(project, new LazyEditor(psiFile), psiFile);
+          action.invoke(project, editor, psiFile);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
