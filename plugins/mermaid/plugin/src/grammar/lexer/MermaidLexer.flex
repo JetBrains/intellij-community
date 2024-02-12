@@ -46,12 +46,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %state acc_title_value
 %state acc_descr_value
 %state acc_descr_multiline_value
+%states title, title_value
 
 %xstates frontmatter
 
 %states pie, pie_title, pie_title_value, value
 
-%states journey, title,title_value,section_task, section, section_title
+%states journey,section_task, journey_section, journey_section_title
 
 %states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, class_def, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val, quoted_id
 
@@ -63,7 +64,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states entity_relationship, entity_attributes, relationship_description
 
-%states gantt, gantt_task_data, gantt_value, gantt_today_marker_value
+%states gantt, gantt_task_data, gantt_value, gantt_today_marker_value, gantt_title, gantt_title_value, gantt_section, gantt_section_title, gantt_title, gantt_title_value
 
 %states requirement_diagram, requirement, requirement_value, requirement_constant_value, req_element
 
@@ -157,7 +158,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <journey> {
   "title" { yypushstate(title); return TITLE; }
-  "section" { yypushstate(section); return SECTION; }
+  "section" { yypushstate(journey_section); return SECTION; }
   ":" { yypushstate(section_task); return COLON; }
   [^\s#:;]+ { return TASK_NAME; }
 }
@@ -210,10 +211,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s#;]+ { return TITLE_VALUE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
-<section> {
-  [^\S\n\r]+ { yybegin(section_title); return WHITE_SPACE; }
+<journey_section> {
+  [^\S\n\r]+ { yybegin(journey_section_title); return WHITE_SPACE; }
 }
-<section_title> {
+<journey_section_title> {
   \s?(#[^\n\r]*)/[\n\r]? { return IGNORED; }
   [\n\r] { yypopstate(); return EOL; }
   [^\s#:;]+ { return SECTION_TITLE; }
@@ -745,7 +746,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 //---gantt------------------------------------------------------------------------
 <gantt> {
-  "title" { yypushstate(title); return TITLE; }
+  "title" { yypushstate(gantt_title); return TITLE; }
   "dateFormat" { yybegin(gantt_value); return Gantt.DATE_FORMAT; }
   "inclusiveEndDates" { return Gantt.INCLUSIVE_END_DATES; }
   "topAxis" { return Gantt.TOP_AXIS; }
@@ -754,7 +755,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "excludes" { yybegin(gantt_value); return Gantt.EXCLUDES; }
   "todayMarker" { yybegin(gantt_today_marker_value); return Gantt.TODAY_MARKER; }
   "tickInterval" { yybegin(gantt_value); return Gantt.TICK_INTERVAL; }
-  "section" { yypushstate(section); return SECTION; }
+  "section" { yypushstate(gantt_section); return SECTION; }
   
   "weekday" { return Gantt.WEEKDAY; }
   "monday"  { return Gantt.MONDAY; }
@@ -765,7 +766,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "saturday" { return Gantt.SATURDAY; }
   "sunday" { return Gantt.SUNDAY; }
   
-  [^\s#:;]+ { return TASK_NAME; }
+  [^\s:]+ { return TASK_NAME; }
   ":" { yybegin(gantt_task_data); return COLON; }
 }
 <gantt_task_data, gantt_value, gantt_today_marker_value> {
@@ -782,6 +783,22 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <gantt_today_marker_value> {
   [^\s;]+ { return Gantt.GANTT_VALUE; }
+}
+<gantt_section> {
+  [^\S\n\r]+ { yybegin(gantt_section_title); return WHITE_SPACE; }
+}
+<gantt_section_title> {
+  [\n\r] { yypopstate(); return EOL; }
+  [^\s:]+ { return SECTION_TITLE; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
+}
+<gantt_title> {
+  [^\S\n\r]+ { yybegin(gantt_title_value); return WHITE_SPACE; }
+}
+<gantt_title_value> {
+  [\n\r] { yypopstate(); return EOL; }
+  [^\s]+ { return TITLE_VALUE; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
 }
 
 //---requirement------------------------------------------------------------------
@@ -989,7 +1006,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //---timeline---------------------------------------------------------------------
 <timeline> {
   "title" { yypushstate(title); return TITLE; }
-  "section" { yypushstate(section); return SECTION; }
+  "section" { yypushstate(journey_section); return SECTION; }
   ":" { yypushstate(section_task); return COLON; }
   [^\s#:;]+ { return TASK_NAME; }
   (#[^\n\r]*)/[\n\r]? { return IGNORED; }
