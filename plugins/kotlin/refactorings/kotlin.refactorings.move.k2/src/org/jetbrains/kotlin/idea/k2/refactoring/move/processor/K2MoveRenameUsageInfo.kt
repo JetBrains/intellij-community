@@ -37,6 +37,16 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
+/**
+ * A usage from the K2 move refactoring. Move refactoring usages can be split into two types of usages; internal and external usages.
+ * Internal usages are the usages that will be moved during the refactoring (see [K2MoveRenameUsageInfo.isInternal]). These usages are
+ * always Kotlin usages but can reference non-Kotlin declarations.
+ *
+ * External usages are the usages from references to moved declarations. These usages can both be Kotlin and non-Kotlin usages but always
+ * reference Kotlin declarations.
+ *
+ * A reference can both be internal and external when the reference is moved but the referenced declarations is moved at the same time.
+ */
 sealed class K2MoveRenameUsageInfo(
   element: PsiElement,
   reference: PsiReference,
