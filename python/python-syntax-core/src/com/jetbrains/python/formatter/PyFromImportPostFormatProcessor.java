@@ -13,8 +13,11 @@ import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstFromImportStatement;
+import com.jetbrains.python.ast.PyAstImportElement;
+import com.jetbrains.python.ast.PyAstRecursiveElementVisitor;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,9 +37,9 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     return new Visitor(settings).processTextRange(source, rangeToReformat);
   }
 
-  private static class Visitor extends PyRecursiveElementVisitor {
+  private static class Visitor extends PyAstRecursiveElementVisitor {
     private final PostFormatProcessorHelper myHelper;
-    private final List<PyFromImportStatement> myImportStatements = new ArrayList<>();
+    private final List<PyAstFromImportStatement> myImportStatements = new ArrayList<>();
     private PsiElement myRootElement;
 
     Visitor(@NotNull CodeStyleSettings settings) {
@@ -44,18 +47,18 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     }
 
     @Override
-    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyAstFromImportStatement node) {
       if (myHelper.isElementFullyInRange(node)) {
         // If non-parenthesized "from" import ends with one or more of trailing commas, the array returned by getImportElements()
         // contains empty import elements at the end
-        final List<PyImportElement> importedNames = ContainerUtil.filter(node.getImportElements(), elem -> elem.getTextLength() != 0);
+        final List<PyAstImportElement> importedNames = ContainerUtil.filter(node.getImportElements(), elem -> elem.getTextLength() != 0);
         if (importedNames.size() > 1) {
 
           final PyCodeStyleSettings pySettings = myHelper.getSettings().getRootSettings().getCustomSettings(PyCodeStyleSettings.class);
           final boolean forcedParens = pySettings.FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(node);
           final boolean forcedComma = pySettings.FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(node);
-          final PyImportElement lastImportedName = importedNames.get(importedNames.size() - 1);
-          final PsiElement afterLastName = PyPsiUtils.getNextNonCommentSibling(lastImportedName, true);
+          final PyAstImportElement lastImportedName = importedNames.get(importedNames.size() - 1);
+          final PsiElement afterLastName = PyPsiUtilsCore.getNextNonCommentSibling(lastImportedName, true);
           final PsiElement openingParen = node.getLeftParen();
           final boolean missingComma = afterLastName == null || afterLastName.getNode().getElementType() != PyTokenTypes.COMMA;
           // Trailing comma is allowed only in "from" imports wrapped in parentheses
@@ -86,8 +89,8 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
       if (element.getLanguage().isKindOf(PythonLanguage.INSTANCE)) {
         element.accept(this);
         Collections.reverse(myImportStatements);
-        for (PyFromImportStatement statement : myImportStatements) {
-          final PyFromImportStatement newStatement = replaceFromImport(statement);
+        for (PyAstFromImportStatement statement : myImportStatements) {
+          final PyAstFromImportStatement newStatement = replaceFromImport(statement);
           if (myRootElement == statement) {
             myRootElement = newStatement;
           }
@@ -96,10 +99,10 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     }
 
     @NotNull
-    private PyFromImportStatement replaceFromImport(@NotNull PyFromImportStatement fromImport) {
-      final PyImportElement[] allNames = fromImport.getImportElements();
-      final PyImportElement firstName = allNames[0];
-      final PyElementGenerator generator = PyElementGenerator.getInstance(fromImport.getProject());
+    private PyAstFromImportStatement replaceFromImport(@NotNull PyAstFromImportStatement fromImport) {
+      final PyAstImportElement[] allNames = fromImport.getImportElements();
+      final PyAstImportElement firstName = allNames[0];
+      final PyAstElementGenerator generator = PyAstElementGenerator.getInstance(fromImport.getProject());
       final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(fromImport.getProject());
 
       if (fromImport.getLeftParen() == null) {
@@ -116,7 +119,7 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
           else {
             newStatementText.append(cur.getText());
           }
-          if (cur instanceof PyImportElement && cur.getTextLength() != 0) {
+          if (cur instanceof PyAstImportElement && cur.getTextLength() != 0) {
             lastVisibleNameCommaOffset = newStatementText.length();
           }
           else if (lastVisibleNameCommaOffset != -1 && cur.getNode().getElementType() == PyTokenTypes.COMMA) {
@@ -134,9 +137,9 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
         newStatementText.append(")");
 
         final LanguageLevel level = LanguageLevel.forElement(fromImport);
-        PyFromImportStatement newFromImport = generator.createFromText(level, PyFromImportStatement.class, newStatementText.toString());
-        newFromImport = (PyFromImportStatement)fromImport.replace(newFromImport);
-        newFromImport = (PyFromImportStatement)codeStyleManager.reformat(newFromImport, true);
+        PyAstFromImportStatement newFromImport = generator.createFromText(level, PyAstFromImportStatement.class, newStatementText.toString());
+        newFromImport = (PyAstFromImportStatement)fromImport.replace(newFromImport);
+        newFromImport = (PyAstFromImportStatement)codeStyleManager.reformat(newFromImport, true);
         myHelper.updateResultRange(fromImport.getTextLength(), newFromImport.getTextLength());
         return newFromImport;
       }

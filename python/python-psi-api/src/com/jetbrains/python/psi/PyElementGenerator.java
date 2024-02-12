@@ -44,8 +44,6 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
 
   public abstract PyListLiteralExpression createListLiteral();
 
-  public abstract ASTNode createComma();
-
   public abstract ASTNode createDot();
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);

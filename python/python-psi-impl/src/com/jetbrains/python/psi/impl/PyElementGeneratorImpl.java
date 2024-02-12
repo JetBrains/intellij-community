@@ -147,14 +147,6 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public ASTNode createComma() {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "[0,]");
-    final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
-    ASTNode zero = expressionStatement.getFirstChild().getNode().getFirstChildNode().getTreeNext();
-    return zero.getTreeNext().copyElement();
-  }
-
-  @Override
   public ASTNode createDot() {
     final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "a.b");
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();

@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -110,6 +111,13 @@ public class PyAstElementGenerator {
     final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
     assert psiFile != null;
     return psiFile;
+  }
+
+  public ASTNode createComma() {
+    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), "[0,]");
+    final PyAstExpressionStatement expressionStatement = (PyAstExpressionStatement)dummyFile.getFirstChild();
+    ASTNode zero = expressionStatement.getFirstChild().getNode().getFirstChildNode().getTreeNext();
+    return zero.getTreeNext().copyElement();
   }
 
   public PyAstExpressionStatement createDocstring(String content) {
