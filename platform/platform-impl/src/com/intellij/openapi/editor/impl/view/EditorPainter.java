@@ -552,7 +552,8 @@ public final class EditorPainter implements TextDrawingCallback {
                                                               int y,
                                                               VisualPosition selectionStartPosition,
                                                               VisualPosition selectionEndPosition) {
-      if (selectionStartPosition.equals(selectionEndPosition) ||
+      if (myEditor.isStickyLinePainting() || // suppress selection after line end on sticky lines panel IDEA-345708
+          selectionStartPosition.equals(selectionEndPosition) ||
           visualLine < selectionStartPosition.line ||
           visualLine > selectionEndPosition.line ||
           visualLine == selectionEndPosition.line && selectionEndPosition.column <= columnStart) {
