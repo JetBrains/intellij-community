@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.TerminalCommandHandlerOptions;
 import org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction;
-import org.jetbrains.plugins.terminal.action.TerminalAdvancedSettingToggleAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 
 public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
@@ -32,9 +31,7 @@ public final class TerminalToolWindowFactory implements ToolWindowFactory, DumbA
     TerminalCommandHandlerOptions options = new TerminalCommandHandlerOptions(project);
     toolWindow.setAdditionalGearActions(new DefaultActionGroup(
       new EnableBlockTerminalUiAction(),
-      new SmartCommandExecutionToggleAction(options),
-      new TerminalAdvancedSettingToggleAction("terminal.use.1.0.line.spacing.for.alternative.screen.buffer"),
-      new TerminalAdvancedSettingToggleAction("terminal.fill.character.background.including.line.spacing")
+      new SmartCommandExecutionToggleAction(options)
     ));
 
     TerminalArrangementManager terminalArrangementManager = TerminalArrangementManager.getInstance(project);
