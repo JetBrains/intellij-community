@@ -70,7 +70,7 @@ internal class WindowedDecorator(
     boundsHelper.bounds = getFrame().bounds
   }
 
-  override var bounds: Rectangle
+  override var visibleWindowBounds: Rectangle
     get() = getFrame().bounds
     set(value) {
       boundsHelper.bounds = value

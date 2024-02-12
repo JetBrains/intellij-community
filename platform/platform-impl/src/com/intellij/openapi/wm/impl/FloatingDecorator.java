@@ -197,8 +197,14 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     myBoundsHelper.setBounds(getBounds());
   }
 
+  @NotNull
   @Override
-  public void setBounds(@NotNull Rectangle r) {
+  public Rectangle getVisibleWindowBounds() {
+    return getBounds();
+  }
+
+  @Override
+  public void setVisibleWindowBounds(@NotNull Rectangle r) {
     myBoundsHelper.setBounds(r);
     super.setBounds(r);
   }
@@ -224,7 +230,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       if (LOG.isDebugEnabled()) {
         LOG.debug("Applying floating tool window " + info.getId() + " bounds from window info: " + bounds);
       }
-      setBounds(bounds);
+      setVisibleWindowBounds(bounds);
     }
     else {
       if (LOG.isDebugEnabled()) {

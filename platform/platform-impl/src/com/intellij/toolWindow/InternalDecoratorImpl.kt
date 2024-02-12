@@ -465,7 +465,7 @@ class InternalDecoratorImpl internal constructor(
     }
   }
 
-  private fun getExternalDecorator(type: ToolWindowType): ToolWindowExternalDecorator? {
+  internal fun getExternalDecorator(type: ToolWindowType): ToolWindowExternalDecorator? {
     var result: ToolWindowExternalDecorator? = null
     var component: Component? = this
     while (component != null) {

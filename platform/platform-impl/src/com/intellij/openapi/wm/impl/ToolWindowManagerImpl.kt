@@ -1272,7 +1272,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   private fun saveFloatingOrWindowedState(entry: ToolWindowEntry, info: WindowInfoImpl) {
     entry.floatingDecorator?.let {
-      info.floatingBounds = it.bounds
+      info.floatingBounds = it.visibleWindowBounds
       info.isActiveOnStart = it.isActive
       return
     }
@@ -1280,7 +1280,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     entry.windowedDecorator?.let { windowedDecorator ->
       info.isActiveOnStart = windowedDecorator.isActive
       val frame = windowedDecorator.getFrame()
-      if (frame.isShowing) {
+      val externalDecorator = entry.externalDecorator
+      if (frame.isShowing && externalDecorator != null) {
         val maximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
         if (maximized) {
           frame.extendedState = Frame.NORMAL
@@ -1288,7 +1289,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           frame.revalidate()
         }
 
-        info.floatingBounds = frame.bounds
+        info.floatingBounds = externalDecorator.visibleWindowBounds
         info.isMaximized = maximized
       }
       return
@@ -2212,17 +2213,17 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
         size = preferredSize
       }
-      bounds = Rectangle(externalDecorator.bounds.location, size)
+      bounds = Rectangle(externalDecorator.visibleWindowBounds.location, size)
       if (LOG.isDebugEnabled) {
         LOG.debug("Computed the bounds using the default location: $bounds")
       }
       needToCenter = true
     }
-    externalDecorator.bounds = bounds
+    externalDecorator.visibleWindowBounds = bounds
     if (needToCenter) {
       externalDecorator.setLocationRelativeTo(parentFrame)
       if (LOG.isDebugEnabled) {
-        LOG.debug("Centered the bounds relative to the IDE frame: ${externalDecorator.bounds}")
+        LOG.debug("Centered the bounds relative to the IDE frame: ${externalDecorator.visibleWindowBounds}")
       }
     }
   }
@@ -2312,10 +2313,11 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     val toolWindow = source.toolWindow
     val info = getRegisteredMutableInfoOrLogError(toolWindow.id)
+    val externalDecorator = source.getExternalDecorator(info.type)
+    val externalFloatingBounds = externalDecorator?.visibleWindowBounds
     if (info.type == ToolWindowType.FLOATING) {
-      val owner = SwingUtilities.getWindowAncestor(source)
-      if (owner != null) {
-        info.floatingBounds = owner.bounds
+      if (externalFloatingBounds != null) {
+        info.floatingBounds = externalFloatingBounds
         if (LOG.isDebugEnabled) {
           LOG.debug("Floating tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}")
         }
@@ -2327,8 +2329,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       if (frame == null || !frame.isShowing) {
         return
       }
-      info.floatingBounds = (frame as JFrame).bounds
-      info.isMaximized = frame.extendedState == Frame.MAXIMIZED_BOTH
+      info.floatingBounds = externalFloatingBounds
+      info.isMaximized = (frame as JFrame).extendedState == Frame.MAXIMIZED_BOTH
       if (LOG.isDebugEnabled) {
         LOG.debug("Windowed tool window ${toolWindow.id} bounds updated: ${info.floatingBounds}, maximized=${info.isMaximized}")
       }

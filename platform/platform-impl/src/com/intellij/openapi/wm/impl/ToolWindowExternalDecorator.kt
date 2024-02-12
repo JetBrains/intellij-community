@@ -23,7 +23,7 @@ internal interface ToolWindowExternalDecorator {
 
   fun setLocationRelativeTo(parentFrame: Component?)
 
-  var bounds: Rectangle
+  var visibleWindowBounds: Rectangle
 
   fun log(): Logger
 
