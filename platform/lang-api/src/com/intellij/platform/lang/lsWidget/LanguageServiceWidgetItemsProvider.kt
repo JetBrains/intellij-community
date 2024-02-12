@@ -17,10 +17,19 @@ abstract class LanguageServiceWidgetItemsProvider {
   abstract fun getWidgetItems(project: Project, currentFile: VirtualFile?): List<LanguageServiceWidgetItem>
 
   /**
-   * Example:
+   * [LanguageServiceWidgetItemsProvider] implementations should ask the Platform to update the 'Language Services' widget
+   * when the state of some language service changes.
+   * Typically, they register some technology-specific service state listener,
+   * and call [updateWidget] function on service state change.
+   * Once the [updateWidget] function is called, the Platform rebuilds the widget from scratch,
+   * which means that it collects the up-to-date information by calling [getWidgetItems].
+   *
+   * Make sure to use the [widgetDisposable] to unregister technology-specific listeners, otherwise they will leak.
+   *
+   * Implementation example:
    *
    *    FooManager.getInstance(project).addServiceStateListener(
-   *      object : ServiceStateListener {
+   *      listener = object : ServiceStateListener {
    *        override fun serviceStateChanged() = updateWidget()
    *      },
    *      parentDisposable = widgetDisposable,
