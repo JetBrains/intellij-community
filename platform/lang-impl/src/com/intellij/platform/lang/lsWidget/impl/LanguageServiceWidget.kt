@@ -4,7 +4,6 @@ package com.intellij.platform.lang.lsWidget.impl
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
@@ -15,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
 import com.intellij.platform.lang.lsWidget.LanguageServicePopupSection.ForCurrentFile
+import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.messages.MessageBusConnection
@@ -23,6 +23,13 @@ import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
 internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : EditorBasedStatusBarPopup(project, false, scope) {
+  /**
+   * This cache helps to perform some calculations in BGT (in [getWidgetState])
+   * and then to use the cached result in EDT (in [createActionGroup]).
+   * Specifically, implementing [LanguageServiceWidgetItem.widgetActionLocation] as `by lazy {...}`
+   * helps to avoid running costly calculations in EDT.
+   */
+  private var cachedWidgetItems: List<LanguageServiceWidgetItem> = emptyList()
 
   override fun ID(): String = LanguageServiceWidgetFactory.ID
 
@@ -35,14 +42,15 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     if (!Registry.`is`("language.service.status.bar.widget")) return WidgetState.HIDDEN
 
-    val allItems = getAllWidgetItems(project, file)
+    val allItems = LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.flatMap { it.getWidgetItems(project, file) }
+    cachedWidgetItems = allItems
     if (allItems.isEmpty()) return WidgetState.HIDDEN
 
     val fileSpecificItems = file?.let { allItems.filter { it.widgetActionLocation == ForCurrentFile } } ?: emptyList()
     val singleFileSpecificItem = fileSpecificItems.singleOrNull()
     val text = singleFileSpecificItem?.statusBarText ?: LangBundle.message("language.services.widget")
     val tooltip = singleFileSpecificItem?.statusBarTooltip
-    val isError = fileSpecificItems.any { it.isError } // or maybe `singleFileSpecificItem?.isError ?: allItems.any { it.isError }`?
+    val isError = fileSpecificItems.any { it.isError } // or maybe `allItems.any { it.isError }`?
 
     return WidgetState(tooltip, text, true).apply {
       icon = if (isError) errorIcon else normalIcon
@@ -52,7 +60,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   override fun createPopup(context: DataContext): ListPopup =
     JBPopupFactory.getInstance().createActionGroupPopup(
       LangBundle.message("language.services.widget"),
-      createActionGroup(context),
+      createActionGroup(),
       context,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       true
@@ -60,10 +68,9 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
       setMinimumSize(JBDimension(250, 1))
     }
 
-  private fun createActionGroup(dataContext: DataContext): ActionGroup {
-    val file = dataContext.getData(CommonDataKeys.VIRTUAL_FILE)
-    val allItems = getAllWidgetItems(project, file)
-    val fileSpecificItems = file?.let { allItems.filter { it.widgetActionLocation == ForCurrentFile } } ?: emptyList()
+  private fun createActionGroup(): ActionGroup {
+    val allItems = cachedWidgetItems
+    val fileSpecificItems = allItems.filter { it.widgetActionLocation == ForCurrentFile }
     val otherItems = allItems - fileSpecificItems.toSet()
     // The '---Other---' separator doesn't look great if it's the only separator in the popup, so check only `fileSpecificStates.isNotEmpty()`
     val needSeparators = fileSpecificItems.isNotEmpty()
@@ -80,11 +87,6 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   }
 
   private companion object {
-    private fun getAllWidgetItems(project: Project, currentFile: VirtualFile?) =
-      LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.flatMap {
-        it.getWidgetItems(project, currentFile)
-      }
-
     private val normalIcon: Icon = AllIcons.Json.Object
     private val errorIcon: Icon = LayeredIcon.layeredIcon { arrayOf(AllIcons.Json.Object, AllIcons.Nodes.ErrorMark) }
   }
