@@ -64,6 +64,7 @@
     <gitFetchHandler implementation="org.jetbrains.plugins.github.extensions.GHProtectedBranchRulesLoader"/>
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.github.pullrequest.ui.review.GHPROnCurrentBranchService$BranchPresenter"/>
+    <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.github.notification.GHPushNotificationCustomizer"/>
   </extensions>
 
   <actions>
@@ -217,12 +218,6 @@
     </group>
   </actions>
 
-  <projectListeners>
-    <listener class="org.jetbrains.plugins.github.notification.GHPushNotificationListener"
-              topic="git4idea.push.GitPushListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"/>
-  </projectListeners>
   <applicationListeners>
     <listener class="org.jetbrains.plugins.github.GHRegistryValueListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>

@@ -37,7 +37,7 @@ class GHPullRequest(id: String,
                     baseRef: BaseRef?,
                     val headRefName: String,
                     val headRefOid: String,
-                    val headRepository: HeadRepository?,
+                    val headRepository: Repository?,
                     override val reactions: GHReactable.ReactionConnection)
   : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt, isReadByViewer,
                        assignees, labels, reviewRequests, reviewThreads,
@@ -46,13 +46,14 @@ class GHPullRequest(id: String,
   @JsonIgnore
   val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule
 
-  open class Repository(val owner: Owner, val isFork: Boolean)
-
-  class HeadRepository(owner: Owner, isFork: Boolean,
-                       val nameWithOwner: @NlsSafe String,
-                       val url: @NlsSafe String,
-                       val sshUrl: @NlsSafe String)
-    : Repository(owner, isFork)
+  @GraphQLFragment("/graphql/fragment/repository.graphql")
+  data class Repository(
+    val owner: Owner,
+    val isFork: Boolean,
+    val nameWithOwner: @NlsSafe String,
+    val url: @NlsSafe String,
+    val sshUrl: @NlsSafe String
+  )
 
   data class BaseRef(val refUpdateRule: GHRefUpdateRule?)
 

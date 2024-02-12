@@ -1,0 +1,9 @@
+fragment repository on Repository {
+  owner {
+    login
+  }
+  nameWithOwner
+  isFork
+  url
+  sshUrl
+}

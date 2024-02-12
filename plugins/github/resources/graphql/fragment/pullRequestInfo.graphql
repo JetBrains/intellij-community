@@ -10,30 +10,20 @@ fragment pullRequestInfo on PullRequest {
 
   reviewDecision
 
-  baseRefName
-  baseRefOid
-  baseRepository {
-    owner {
-      login
-    }
-    isFork
-  }
-
   baseRef {
     refUpdateRule {
       ...refUpdateRule
     }
   }
+  baseRefName
+  baseRefOid
+  baseRepository {
+    ...repository
+  }
 
   headRefName
   headRefOid
   headRepository {
-    owner {
-      login
-    }
-    nameWithOwner
-    isFork
-    url
-    sshUrl
+    ...repository
   }
 }
