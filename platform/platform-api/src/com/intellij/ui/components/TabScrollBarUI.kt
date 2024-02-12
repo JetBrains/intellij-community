@@ -16,7 +16,7 @@ internal class TabScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin: I
 
   private val hoveredColorProducer: MixedColorProducer = MixedColorProducer(
     ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_BACKGROUND),
-    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.THUMB_HOVERED_BACKGROUND))
+    ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_THUMB_HOVERED_BACKGROUND))
 
   override fun createThumbPainter(): ScrollBarPainter.Thumb {
     return object : ScrollBarPainter.ThinScrollBarThumb({ myScrollBar }, false) {
