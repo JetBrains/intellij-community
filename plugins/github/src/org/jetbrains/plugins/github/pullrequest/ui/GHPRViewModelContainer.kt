@@ -46,7 +46,9 @@ internal class GHPRViewModelContainer(
   private val diffSelectionRequests = MutableSharedFlow<ChangesSelection>(1)
 
   private val lazyInfoVm = lazy {
-    GHPRInfoViewModel(project, cs, dataContext, dataProvider)
+    GHPRInfoViewModel(project, cs, dataContext, dataProvider).apply {
+      setup()
+    }
   }
   val infoVm: GHPRInfoViewModel by lazyInfoVm
 
@@ -81,17 +83,19 @@ internal class GHPRViewModelContainer(
 
   init {
     cs.launchNow {
-      infoVm.detailsVm.flatMapLatest { detailsVmResult ->
+      dataProvider.stateData.stateChangeSignal.collectLatest {
+        projectVm.refreshPrOnCurrentBranch()
+      }
+    }
+  }
+
+  private fun GHPRInfoViewModel.setup() {
+    cs.launchNow {
+      detailsVm.flatMapLatest { detailsVmResult ->
         detailsVmResult.getOrNull()?.changesVm?.changeListVm?.flatMapLatest {
           it.getOrNull()?.changesSelection ?: flowOf(null)
         } ?: flowOf(null)
       }.filterNotNull().collect(diffSelectionRequests)
-    }
-
-    cs.launchNow {
-      dataProvider.stateData.stateChangeSignal.collectLatest {
-        projectVm.refreshPrOnCurrentBranch()
-      }
     }
   }
 
