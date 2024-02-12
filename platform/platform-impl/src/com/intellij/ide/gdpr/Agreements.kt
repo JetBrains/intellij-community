@@ -20,7 +20,7 @@ import kotlin.system.exitProcess
 
 fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
   val isPrivacyPolicy = agreement.isPrivacyPolicy
-  val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.AgreementsBundle")
+  val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.AgreementsBundle", Locale.getDefault())
   showAgreementUi {
     htmlText = agreement.text
     title = if (isPrivacyPolicy) {
