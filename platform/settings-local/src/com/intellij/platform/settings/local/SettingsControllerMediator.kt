@@ -40,8 +40,12 @@ class SettingsControllerMediator(
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
     for (controller in controllers) {
-      if (controller.setItem(key = key, value = value)) {
+      val result = controller.setItem(key = key, value = value)
+      if (result == SetResult.STOP) {
         return
+      }
+      else if (result == SetResult.FORBID) {
+        throw ReadOnlySettingException(key)
       }
     }
   }

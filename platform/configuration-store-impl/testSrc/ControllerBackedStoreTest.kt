@@ -9,10 +9,7 @@ import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.platform.settings.DelegatedSettingsController
-import com.intellij.platform.settings.GetResult
-import com.intellij.platform.settings.SettingDescriptor
-import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.*
 import com.intellij.platform.settings.local.SettingsControllerMediator
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.ApplicationRule
@@ -63,9 +60,7 @@ class ControllerBackedStoreTest {
             return GetResult.inapplicable()
           }
 
-          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean {
-            return true
-          }
+          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.STOP
         }),
         isPersistenceStateComponentProxy = true,
       ),

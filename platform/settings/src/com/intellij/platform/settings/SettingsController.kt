@@ -60,24 +60,19 @@ value class GetResult<out T : Any?> @PublishedApi internal constructor(@Publishe
   private object Inapplicable
 }
 
+@Internal
+enum class SetResult {
+  INAPPLICABLE, STOP, FORBID
+}
+
 /**
  * Caveat: do not touch telemetry API during init, it is not ready yet.
  */
 @Internal
 interface DelegatedSettingsController {
-  /**
-   * `null` if not applicable.
-   *
-   */
   fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?>
 
-  /**
-   * Return `true` to continue calling of `setItem` on other settings controllers or `false` to stop.
-   *
-   * Throw [ReadOnlySettingException] if setting must be not modified.
-   */
-  @Throws(ReadOnlySettingException::class)
-  fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): Boolean
+  fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult
 
   fun close() {
   }
