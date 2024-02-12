@@ -22,6 +22,7 @@ public final class AppMode {
   public static final String SPLIT_MODE_COMMAND = "splitMode";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
   public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
+  public static final String REMOTE_DEV_MODE_COMMAND = "remoteMode";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   static final String HELP_OPTION = "--help";
@@ -80,6 +81,7 @@ public final class AppMode {
     isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
                       CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
                       REMOTE_DEV_HOST_COMMAND.equals(args.get(0)) ||
+                      REMOTE_DEV_MODE_COMMAND.equals(args.get(0)) ||
                       SPLIT_MODE_COMMAND.equals(args.get(0));
 
     for (String arg : args) {
