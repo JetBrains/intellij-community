@@ -61,6 +61,8 @@ class ActionMenuItem internal constructor(action: AnAction,
   private var isToggled = false
   var isKeepMenuOpen: Boolean = false
     private set
+  var secondaryIcon: Icon? = null
+    private set
 
   init {
     addActionListener(ActionListener { e -> performAction(e.modifiers) })
@@ -118,6 +120,9 @@ class ActionMenuItem internal constructor(action: AnAction,
     mnemonic = presentation.getMnemonic()
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon(presentation)
+    if (UISettings.getInstance().showIconsInMenus) {
+      secondaryIcon = presentation.getClientProperty(ActionMenu.SECONDARY_ICON)
+    }
     description = presentation.description
     isKeepMenuOpen = isKeepMenuOpen || presentation.isMultiChoice || actionRef.getAction() is KeepingPopupOpenAction
     if (screenMenuItemPeer != null) {

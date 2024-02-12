@@ -112,6 +112,10 @@ class ActionMenu constructor(private val context: DataContext?,
     @JvmField
     val KEYBOARD_SHORTCUT_SUFFIX: Key<@NlsSafe String> = Key.create("keyboardShortcutTextSuffix");
 
+    /** The icon that will be placed after the text */
+    @JvmField
+    val SECONDARY_ICON: Key<Icon> = Key.create("SECONDARY_ICON")
+
     @JvmStatic
     fun shouldConvertIconToDarkVariant(): Boolean {
       return JBColor.isBright() && ColorUtil.isDark(JBColor.namedColor("MenuItem.background", 0xffffff))

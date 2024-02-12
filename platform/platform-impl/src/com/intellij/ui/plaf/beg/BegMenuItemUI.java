@@ -44,6 +44,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle ourAcceleratorRect = new Rectangle();  // the shortcut rect
   private static final Rectangle ourCheckIconRect = new Rectangle();
   private static final Rectangle ourIconRect = new Rectangle();
+  private static final Rectangle ourSecondaryIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
 
   private int myMaxGutterIconWidth;
@@ -98,6 +99,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     JMenuItem menuItem = (JMenuItem)comp;
     ButtonModel buttonModel = menuItem.getModel();
     Icon icon = getIcon();
+    Icon secondaryIcon = getSecondaryIcon();
     Icon checkIcon = getCheckIcon();
     checkEmptyIcon(comp);
     int menuWidth = menuItem.getWidth();
@@ -111,10 +113,10 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     FontMetrics fontMetrics = g.getFontMetrics(font);
     FontMetrics keyStrokeMetrics = g.getFontMetrics(acceleratorFont);
     String keyStrokeText = getKeyStrokeText(menuItem);
-    String text = layoutMenuItem(fontMetrics, menuItem.getText(), keyStrokeMetrics, keyStrokeText, icon, checkIcon, arrowIcon,
+    String text = layoutMenuItem(fontMetrics, menuItem.getText(), keyStrokeMetrics, keyStrokeText, icon, secondaryIcon, checkIcon, arrowIcon,
                                  menuItem.getVerticalAlignment(), menuItem.getHorizontalAlignment(), menuItem.getVerticalTextPosition(),
                                  menuItem.getHorizontalTextPosition(),
-                                 ourViewRect, ourIconRect, ourTextRect, ourAcceleratorRect, ourCheckIconRect, ourArrowIconRect,
+                                 ourViewRect, ourIconRect, ourSecondaryIconRect, ourTextRect, ourAcceleratorRect, ourCheckIconRect, ourArrowIconRect,
                                  menuItem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color oldColor = g.getColor();
     if (comp.isOpaque()) {
@@ -182,6 +184,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
                                                        (ourTextRect.y + fontMetrics.getAscent()) - 1);
         }
       }
+    }
+    if (secondaryIcon != null) {
+      IconUtil.paintSelectionAwareIcon(secondaryIcon, menuItem, g, ourSecondaryIconRect.x, ourSecondaryIconRect.y, isSelected(menuItem));
     }
     if (keyStrokeText != null && !keyStrokeText.isEmpty()) {
       g.setFont(acceleratorFont);
@@ -303,6 +308,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     FontMetrics keyStrokeMetrics,
     @NlsContexts.Label String keyStrokeText,
     Icon icon,
+    Icon secondaryIcon,
     Icon checkIcon,
     Icon arrowIcon,
     int verticalAlignment,
@@ -311,6 +317,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     int horizontalTextPosition,
     Rectangle viewRect,
     Rectangle iconRect,
+    Rectangle secondaryIconRect,
     Rectangle textRect,
     Rectangle acceleratorRect,
     Rectangle checkIconRect,
@@ -353,13 +360,19 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     iconRect.x += menuItemGap;
     Rectangle labelRect = iconRect.union(textRect);
 
-    // Position the Accelerator text rect
+    // Position the secondary icon
+    if (secondaryIcon != null) {
+      secondaryIconRect.width = secondaryIcon.getIconWidth();
+      secondaryIconRect.height = secondaryIcon.getIconHeight();
+      secondaryIconRect.x = labelRect.x + labelRect.width + menuItemGap;
+      secondaryIconRect.y = (labelRect.y + labelRect.height / 2) - secondaryIcon.getIconHeight() / 2;
+    }
 
+    // Position the Accelerator (shortcut) text rect
     acceleratorRect.x = viewRect.x + viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons
-
     if (useCheckAndArrow()){
       arrowIconRect.x = viewRect.x + viewRect.width - arrowIconRect.width;
       arrowIconRect.y = (labelRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
@@ -387,6 +400,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     checkArrowIcon();
     JMenuItem menuItem = (JMenuItem)comp;
     Icon icon = getIcon();
+    Icon secondaryIcon = getSecondaryIcon();
     Icon checkIcon = getCheckIcon();
     checkEmptyIcon(comp);
     String text = menuItem.getText();
@@ -394,9 +408,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     FontMetrics fontMetrics = comp.getFontMetrics(menuItem.getFont());
     FontMetrics keyStrokeMetrics = comp.getFontMetrics(acceleratorFont);
     initBounds();
-    layoutMenuItem(fontMetrics, text, keyStrokeMetrics, keyStrokeText, icon, checkIcon, arrowIcon, menuItem.getVerticalAlignment(),
+    layoutMenuItem(fontMetrics, text, keyStrokeMetrics, keyStrokeText, icon, secondaryIcon, checkIcon, arrowIcon, menuItem.getVerticalAlignment(),
                    menuItem.getHorizontalAlignment(), menuItem.getVerticalTextPosition(), menuItem.getHorizontalTextPosition(),
-                   ourViewRect, ourIconRect, ourTextRect, ourAcceleratorRect, ourCheckIconRect, ourArrowIconRect,
+                   ourViewRect, ourIconRect, ourSecondaryIconRect, ourTextRect, ourAcceleratorRect, ourCheckIconRect, ourArrowIconRect,
                    text != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Rectangle rect = new Rectangle();
     rect.setBounds(ourTextRect);
@@ -404,6 +418,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     if (!(keyStrokeText == null || keyStrokeText.isEmpty())){
       rect.width += ourAcceleratorRect.width;
       rect.width += 7 * defaultTextIconGap;
+    }
+    if (secondaryIcon != null) {
+      rect.width += ourSecondaryIconRect.width + 2 * defaultTextIconGap;
     }
     if (useCheckAndArrow()){
       rect.width += myMaxGutterIconWidth;
@@ -429,6 +446,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   private static void initBounds() {
     ourIconRect.setBounds(ourEmptyRect);
+    ourSecondaryIconRect.setBounds(ourEmptyRect);
     ourTextRect.setBounds(ourEmptyRect);
     ourAcceleratorRect.setBounds(ourEmptyRect);
     ourCheckIconRect.setBounds(ourEmptyRect);
@@ -442,6 +460,10 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       icon = null;
     }
     return icon;
+  }
+
+  private Icon getSecondaryIcon() {
+    return menuItem instanceof ActionMenuItem actionMenuItem ? actionMenuItem.getSecondaryIcon() : null;
   }
 
   @Override
