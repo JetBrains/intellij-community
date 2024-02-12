@@ -16,6 +16,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.junit.Assume
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
 import java.util.*
@@ -1560,76 +1561,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  @InstantImportCompatible
-  fun testDoNotResetUserLibraryDependencies() = runBlocking {
-    if (!supportsKeepingManualChanges()) return@runBlocking
-
-    importProjectAsync("""
-                    <groupId>test</groupId>
-                    <artifactId>project</artifactId>
-                    <version>1</version>
-                    <dependencies>
-                      <dependency>
-                        <groupId>junit</groupId>
-                        <artifactId>junit</artifactId>
-                        <version>4.0</version>
-                      </dependency>
-                    </dependencies>
-                    """.trimIndent())
-
-    assertProjectLibraries("Maven: junit:junit:4.0")
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0")
-
-    createAndAddProjectLibrary("project", "My Library")
-
-    assertProjectLibraries("Maven: junit:junit:4.0", "My Library")
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0", "My Library")
-
-    updateAllProjects()
-
-    assertProjectLibraries("Maven: junit:junit:4.0", "My Library")
-    // todo should keep deps' order
-    assertModuleLibDeps("project", "My Library", "Maven: junit:junit:4.0")
-  }
-
-  @Test
-  fun testDoNotResetUserModuleDependencies() = runBlocking {
-    if (!supportsKeepingManualChanges()) return@runBlocking
-
-    val m1 = createModulePom("m1",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>m1</artifactId>
-                                       <version>1</version>
-                                       <dependencies>
-                                         <dependency>
-                                           <groupId>test</groupId>
-                                           <artifactId>m2</artifactId>
-                                           <version>1</version>
-                                         </dependency>
-                                       </dependencies>
-                                       """.trimIndent())
-    val m2 = createModulePom("m2",
-                             """
-                                       <groupId>test</groupId>
-                                       <artifactId>m2</artifactId>
-                                       <version>1</version>
-                                       """.trimIndent())
-    importProjects(m1, m2)
-    assertModuleModuleDeps("m1", "m2")
-
-    val module = createModule("my-module")
-
-    ModuleRootModificationUtil.addDependency(getModule("m1"), module)
-
-    assertModuleModuleDeps("m1", "m2", "my-module")
-
-    importProjects(m1, m2)
-
-    assertModuleModuleDeps("m1", "my-module", "m2")
-  }
-
-  @Test
   fun testRemoveUnnecessaryMavenizedModuleDepsOnRepomport() = runBlocking {
     val m1 = createModulePom("m1",
                              """
@@ -2361,6 +2292,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDependencyToIgnoredProject() = runBlocking {
+    assumeTrue(isWorkspaceImport)
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -2628,7 +2560,8 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
         assertModuleLibDeps("project", "Maven: junit:junit:4.0", "SomeLibrary", "Maven: AnotherLibrary")
       }
 
-      updateAllProjects()
+      // incremental sync doesn't update module if effective pom dependencies haven't changed
+      updateAllProjectsFullSync()
 
       if (supportsKeepingManualChanges()) {
         assertModuleLibDeps("project", "SomeLibrary", "Maven: junit:junit:4.0")

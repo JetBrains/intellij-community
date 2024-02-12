@@ -304,7 +304,8 @@ class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
     }
     assertGeneratedSources("project")
 
-    updateAllProjects()
+    // incremental sync doesn't update module if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
     assertGeneratedSources("project", "target/generated-sources/xxx")
   }
 

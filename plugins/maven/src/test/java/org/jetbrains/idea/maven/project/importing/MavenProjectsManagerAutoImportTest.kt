@@ -451,7 +451,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     // relying on transitive dependencies is not a good practice
     // transitive dependency updating is not fully supported by incremental sync
     // run full sync to pick up transitive dependency
-    updateAllProjects()
+    updateAllProjectsFullSync()
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
   }
 
@@ -544,7 +544,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     // relying on transitive dependencies is not a good practice
     // transitive dependency updating is not fully supported by incremental sync
     // run full sync to pick up transitive dependency changes
-    updateAllProjects()
+    updateAllProjectsFullSync()
     assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 

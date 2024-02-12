@@ -123,7 +123,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       assertSources("project", "userSourceFolder")
     }
     assertExcludes("project", "target", "userExcludedFolder")
-    updateAllProjects()
+
+    // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
     if (supportsImportOfNonExistingFolders()) {
       assertSources("project", "src/main/java")
     }
@@ -1676,7 +1678,9 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
       }
     }
     testAssertions.accept(true)
-    updateAllProjects()
+
+    // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
     testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())
     resolveFoldersAndImport()
     testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport())

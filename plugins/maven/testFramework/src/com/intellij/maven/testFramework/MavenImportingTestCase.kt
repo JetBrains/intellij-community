@@ -505,7 +505,19 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun updateAllProjects() {
-    projectsManager.updateAllMavenProjects(MavenSyncSpec.full("MavenImportingTestCase"))
+    projectsManager.updateAllMavenProjects(MavenSyncSpec.incremental("MavenImportingTestCase incremental sync"))
+  }
+
+  /**
+   * Use updateAllProjects()
+   *
+   * This method runs full sync.
+   * However, in most cases, incremental sync should be sufficient.
+   * If it is not, consider improving incremental sync instead of using full sync.
+   */
+  @Obsolete
+  protected suspend fun updateAllProjectsFullSync() {
+    projectsManager.updateAllMavenProjects(MavenSyncSpec.full("MavenImportingTestCase full sync"))
   }
 
   protected suspend fun downloadArtifacts() {

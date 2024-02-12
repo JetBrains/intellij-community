@@ -30,7 +30,8 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
     renameModule("project", "group.prefix.project")
     assertModules("group.prefix.project", "project.main", "project.test")
 
-    updateAllProjects()
+    // incremental sync doesn't update module if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
     assertModules("group.prefix.project", "group.prefix.project.main", "group.prefix.project.test")
   }
 
@@ -55,7 +56,8 @@ class MavenProjectsManagerRenameTest : MavenMultiVersionImportingTestCase() {
     renameModule("project.test", "project.verytest")
     assertModules("project", "project.verymain", "project.verytest")
 
-    updateAllProjects()
+    // incremental sync doesn't update module if effective pom dependencies haven't changed
+    updateAllProjectsFullSync()
     val moduleNames = WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java).map { it.name }.toSet()
     assertSameElements(moduleNames, "project", "project.main", "project.test")
     assertModules("project", "project.main", "project.test")

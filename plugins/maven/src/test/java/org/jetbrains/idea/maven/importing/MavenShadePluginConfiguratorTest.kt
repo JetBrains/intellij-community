@@ -59,7 +59,8 @@ class MavenShadePluginConfiguratorTest : MavenMultiVersionImportingTestCase() {
                        "jar://$uberJarPath!/")
 
     Registry.get("maven.shade.plugin.generate.uber.jar").setValue("true", testRootDisposable)
-    updateAllProjects()
+    // incremental sync doesn't support uber jar generation
+    updateAllProjectsFullSync()
     assertTrue(Files.exists(Path.of(uberJarPath)));
   }
 }
