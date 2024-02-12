@@ -31,6 +31,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
         }
 
+        @TestMetadata("dataClassFromLibrary.kt")
+        public void testDataClassFromLibrary() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/dataClassFromLibrary.kt");
+        }
+
         @TestMetadata("javaCodeInKotlinFile1.kt")
         public void testJavaCodeInKotlinFile1() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/javaCodeInKotlinFile1.kt");

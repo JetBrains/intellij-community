@@ -32,3 +32,7 @@ class ClassWithImplicitConstructorAndCompanion {
 
     }
 }
+
+data class MyDataClass(val c: Int) {
+    val a: String get() = ""
+}
