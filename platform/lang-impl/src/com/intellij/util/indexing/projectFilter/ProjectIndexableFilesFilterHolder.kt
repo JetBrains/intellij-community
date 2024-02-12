@@ -18,30 +18,30 @@ import java.util.concurrent.ConcurrentMap
 @JvmField
 val USE_CACHING_FILTER = SystemProperties.getBooleanProperty("idea.index.use.caching.indexable.files.filter", false)
 
-internal sealed class ProjectIndexableFilesFilterHolder {
-  abstract fun getProjectIndexableFiles(project: Project): IdFilter?
+internal sealed interface ProjectIndexableFilesFilterHolder {
+  fun getProjectIndexableFiles(project: Project): IdFilter?
 
   /**
    * @returns true if fileId already contained in or was added to one of project filters
    */
-  abstract fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): List<Project>
+  fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): List<Project>
 
-  abstract fun addFileId(fileId: Int, project: Project)
+  fun addFileId(fileId: Int, project: Project)
 
-  abstract fun entireProjectUpdateStarted(project: Project)
+  fun entireProjectUpdateStarted(project: Project)
 
-  abstract fun removeFile(fileId: Int)
+  fun removeFile(fileId: Int)
 
-  abstract fun findProjectForFile(fileId: Int): Project?
+  fun findProjectForFile(fileId: Int): Project?
 
-  abstract fun findProjectsForFile(fileId: Int): Set<Project>
+  fun findProjectsForFile(fileId: Int): Set<Project>
 
-  abstract fun runHealthCheck()
+  fun runHealthCheck()
 
-  abstract fun onProjectClosing(project: Project)
+  fun onProjectClosing(project: Project)
 }
 
-internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
+internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder {
   private val myProjectFilters: ConcurrentMap<Project, ProjectIndexableFilesFilter> = ConcurrentHashMap()
 
   override fun onProjectClosing(project: Project) {
