@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
@@ -45,6 +46,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
@@ -69,9 +71,9 @@ class JavaToKotlinAction : AnAction() {
             var converterResult: FilesResult? = null
 
             fun convertWithStatistics() {
-                val isNewJ2K = !forceUsingOldJ2k && NewJ2k.isEnabled
-                val converter = J2kConverterExtension.extension(isNewJ2K).createJavaToKotlinConverter(project, module, settings)
-                val postProcessor = J2kConverterExtension.extension(isNewJ2K).createPostProcessor()
+                val j2kKind = getJ2kKind(forceUsingOldJ2k)
+                val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
+                val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
                 val progressIndicator = ProgressManager.getInstance().progressIndicator!!
 
                 val conversionTime = measureTimeMillis {
@@ -80,7 +82,9 @@ class JavaToKotlinAction : AnAction() {
                 val linesCount = runReadAction {
                     javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
                 }
-                J2KFusCollector.log(ConversionType.FILES, isNewJ2K, conversionTime, linesCount, javaFiles.size)
+
+                // TODO: Support K2 J2K in FUS
+                J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
@@ -215,7 +219,8 @@ class JavaToKotlinAction : AnAction() {
             showNothingToConvertErrorMessage(project)
             return
         }
-        if (!J2kConverterExtension.extension(NewJ2k.isEnabled).doCheckBeforeConversion(project, module)) return
+        val j2kKind = getJ2kKind()
+        if (!J2kConverterExtension.extension(j2kKind).doCheckBeforeConversion(project, module)) return
         if (shouldSkipConversionOfErroneousCode(javaFiles, project)) return
         Handler.convertFiles(javaFiles, project, module)
     }
@@ -293,4 +298,10 @@ class JavaToKotlinAction : AnAction() {
 
         return files.any(::isWritableJavaFile)
     }
+}
+
+private fun getJ2kKind(forceUsingOldJ2k: Boolean = false): J2kConverterExtension.Kind = when {
+    KotlinPluginModeProvider.isK2Mode() -> K2
+    forceUsingOldJ2k || !NewJ2k.isEnabled -> K1_OLD
+    else -> K1_NEW
 }

@@ -11,6 +11,8 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.quickfix.KotlinK2QuickFixRegistrar"/>
+
+    <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.K2J2KConverterExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

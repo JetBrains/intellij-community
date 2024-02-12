@@ -11,7 +11,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class J2kConverterExtension {
-    abstract val isNewJ2k: Boolean
+    enum class Kind { K1_OLD, K1_NEW, K2 }
+
+    abstract val kind: Kind
 
     abstract fun createJavaToKotlinConverter(
         project: Project,
@@ -33,6 +35,6 @@ abstract class J2kConverterExtension {
     companion object {
         val EP_NAME = ExtensionPointName<J2kConverterExtension>("org.jetbrains.kotlin.j2kConverterExtension")
 
-        fun extension(useNewJ2k: Boolean): J2kConverterExtension = EP_NAME.extensionList.first { it.isNewJ2k == useNewJ2k }
+        fun extension(kind: Kind): J2kConverterExtension = EP_NAME.extensionList.first { it.kind == kind }
     }
 }

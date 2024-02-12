@@ -111,6 +111,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.k1.old" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.old.post-processing" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.post-processing" exported="" />
+    <orderEntry type="module" module-name="kotlin.j2k.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" exported="" />

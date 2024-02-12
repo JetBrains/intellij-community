@@ -49,6 +49,9 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.inspections" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.j2k.k1.new" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.j2k.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.migration" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="RUNTIME" />
