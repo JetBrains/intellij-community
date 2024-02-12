@@ -90,6 +90,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
           for ((inlay, controller) in inlays) {
             controller.onViewportChange()
 
+            // ToDo we should not call updateUI on any scroll event. This caused multiple calls to synchronizeBoundsWithInlay.
             // Many UI instances has overridden getPreferredSize relying on editor dimensions.
             inlay.renderer?.asSafely<JComponent>()?.updateUI()
           }

@@ -6,7 +6,6 @@ package org.jetbrains.plugins.notebooks.visualization.r.inlays.components
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -231,13 +230,12 @@ class InlayOutputText(parent: Disposable, editor: Editor, clearAction: () -> Uni
     Disposer.register(parent, console)
     toolbarPane.dataComponent = console.component
 
-    initOutputTextConsole(editor, parent, console, scrollPaneTopBorderHeight)
+    val consoleEditor = console.editor as EditorEx
+    initOutputTextConsole(editor, parent, consoleEditor, scrollPaneTopBorderHeight)
     ApplicationManager.getApplication().messageBus.connect(console)
       .subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-        (console.editor as EditorEx).apply {
-          updateOutputTextConsoleUI(console, editor)
-          component.repaint()
-        }
+        updateOutputTextConsoleUI(consoleEditor, editor)
+        consoleEditor.component.repaint()
       })
   }
 
@@ -324,43 +322,39 @@ object EmptySoftWrapPainter : SoftWrapPainter {
   override fun reinit() {}
 }
 
-fun initOutputTextConsole(
-  editor: Editor,
-  parent: Disposable,
-  console: ConsoleViewImpl,
-  scrollPaneTopBorderHeight: Int,
-) {
-  updateOutputTextConsoleUI(console, editor)
-  (console.editor as EditorEx).apply {
+fun initOutputTextConsole(editor: Editor,
+                          parent: Disposable,
+                          consoleEditor: EditorEx,
+                          scrollPaneTopBorderHeight: Int) {
+  updateOutputTextConsoleUI(consoleEditor, editor)
+  consoleEditor.apply {
     isRendererMode = true
-    scrollPane.border = IdeBorderFactory.createEmptyBorder(JBUI.insets(scrollPaneTopBorderHeight, 0, 0, 0))
+    scrollPane.border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(scrollPaneTopBorderHeight))
     MouseWheelUtils.wrapMouseWheelListeners(scrollPane, parent)
+    contentComponent.putClientProperty("AuxEditorComponent", true)
   }
-
-  console.editor.contentComponent.putClientProperty("AuxEditorComponent", true)
 
   @NonNls
   val actionNameSelect = VisualizationBundle.message("action.name.output.select.all")
   val actionSelect = object : AbstractAction(actionNameSelect) {
     override fun actionPerformed(e: ActionEvent) {
-      (console.editor as EditorImpl).selectionModel.setSelection(0, console.text.length)
+      consoleEditor.selectionModel.setSelection(0, consoleEditor.document.text.length)
     }
   }
-  console.editor.contentComponent.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK),
-                                               actionNameSelect)
-  console.editor.contentComponent.actionMap.put(actionNameSelect, actionSelect)
+  consoleEditor.contentComponent.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK),
+                                              actionNameSelect)
+  consoleEditor.contentComponent.actionMap.put(actionNameSelect, actionSelect)
 
-  console.editor.settings.isUseSoftWraps = true
+  consoleEditor.settings.isUseSoftWraps = true
 }
 
 /**
- * [editor] is a main notebook editor, not the editor inside [console].
+ * Changes the color scheme of consoleEditor to the color scheme of the main editor, if required.
+ * [editor] is a main notebook editor, [consoleEditor] editor of particular console output.
  */
-fun updateOutputTextConsoleUI(console: ConsoleViewImpl, editor: Editor) {
-  (console.editor as EditorEx).also {
-    if (it.colorsScheme != editor.colorsScheme) {
-      it.colorsScheme = editor.colorsScheme
-    }
+fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
+  if (consoleEditor.colorsScheme != editor.colorsScheme) {
+    consoleEditor.colorsScheme = editor.colorsScheme
   }
 }
 

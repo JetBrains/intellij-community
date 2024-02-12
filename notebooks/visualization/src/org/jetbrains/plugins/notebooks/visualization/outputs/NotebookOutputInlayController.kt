@@ -20,10 +20,12 @@ import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import org.jetbrains.plugins.notebooks.visualization.ui.addComponentInlay
 import org.jetbrains.plugins.notebooks.visualization.ui.yOffsetFromEditor
+import java.awt.Component
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.Toolkit
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 private const val DEFAULT_INLAY_HEIGHT = 200
 
@@ -76,7 +78,6 @@ class NotebookOutputInlayController private constructor(
     else {
       DEFAULT_INLAY_HEIGHT
     }
-
   }
 
   fun checkAndUpdateInlayPosition(): Inlay<*>? {
@@ -133,6 +134,18 @@ class NotebookOutputInlayController private constructor(
       }
     }
     g.clip = oldClip
+  }
+
+  // This method is called when editor is scrolled, and we are using it to update visibility-to-user of inlays
+  // to make it possible to have lazy initialization 'on first show'.
+  override fun onViewportChange() {
+    for (collapsingComponent in innerComponent.components) {
+      val component = (collapsingComponent as CollapsingComponent).mainComponent as? NotebookOutputInlayShowable ?: return
+      if (component !is Component) return
+
+      val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
+      component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
+    }
   }
 
   private fun rankCompatibility(outputDataKeys: List<NotebookOutputDataKey>): Int =
