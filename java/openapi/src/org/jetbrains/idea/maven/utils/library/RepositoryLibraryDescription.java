@@ -17,7 +17,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class RepositoryLibraryDescription {
   @NotNull @NonNls
@@ -152,27 +151,5 @@ public class RepositoryLibraryDescription {
 
   public @NlsSafe String getMavenCoordinates(String version) {
     return getGroupId() + ":" + getArtifactId() + ":" + version;
-  }
-
-  @Override
-  public final boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof RepositoryLibraryDescription that)) return false;
-
-    return sha256sumCheckEnabled == that.sha256sumCheckEnabled &&
-           Objects.equals(groupId, that.groupId) &&
-           Objects.equals(artifactId, that.artifactId) &&
-           Objects.equals(libraryName, that.libraryName) &&
-           Objects.equals(jarRemoteRepositoryId, that.jarRemoteRepositoryId);
-  }
-
-  @Override
-  public int hashCode() {
-    int result = Objects.hashCode(groupId);
-    result = 31 * result + Objects.hashCode(artifactId);
-    result = 31 * result + Objects.hashCode(libraryName);
-    result = 31 * result + Objects.hashCode(jarRemoteRepositoryId);
-    result = 31 * result + Boolean.hashCode(sha256sumCheckEnabled);
-    return result;
   }
 }
