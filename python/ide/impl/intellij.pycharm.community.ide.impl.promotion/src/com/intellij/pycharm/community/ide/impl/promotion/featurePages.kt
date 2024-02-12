@@ -19,10 +19,10 @@ private fun featurePage(@NlsContexts.Label title: String, items: List<PromoFeatu
     trialLabel = FeaturePromoBundle.message("free.trial.hint"),
     pluginId = null
   )
-  return PromoPages.build(
+  return PromoPages.buildWithTryUltimate(
     page = page,
     openLearnMore = createOpenLearnMorePageLambda(source, topic),
-    openDownloadLink = createOpenDownloadPageLambda(source, topic)
+    openDownloadLink = createOpenDownloadPageLambda(source, topic),
   )
 }
 

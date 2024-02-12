@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.tryUltimate
 import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 
@@ -23,7 +24,13 @@ internal abstract class ProPromoAction(private val topic: PromoTopic): AnAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    createOpenDownloadPageLambda(PromoEventSource.GO_TO_ACTION, topic).invoke()
+    tryUltimate(
+      null,
+      PluginAdvertiserService.pyCharmProfessional,
+      e.project,
+      null,
+      createOpenDownloadPageLambda(PromoEventSource.GO_TO_ACTION, topic)
+    ) 
   }
 }
 

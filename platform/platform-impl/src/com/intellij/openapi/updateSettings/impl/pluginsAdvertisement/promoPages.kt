@@ -30,7 +30,11 @@ class PromoFeatureListItem(
 )
 
 object PromoPages {
-  fun build(page: PromoFeaturePage, openLearnMore: (url: String) -> Unit, openDownloadLink: (DialogWrapper?) -> Unit): DialogPanel {
+  fun build(
+    page: PromoFeaturePage,
+    openLearnMore: (url: String) -> Unit,
+    openDownloadLink: (DialogWrapper?) -> Unit
+  ): DialogPanel {
     val panel = panel {
       row {
         icon(page.productIcon)
@@ -98,19 +102,21 @@ object PromoPages {
                  })
   }
 
-  fun buildWithTryUltimate(page: PromoFeaturePage, source: FUSEventSource = FUSEventSource.SETTINGS): DialogPanel {
+  fun buildWithTryUltimate(
+    page: PromoFeaturePage,
+    openLearnMore: ((url: String) -> Unit)? = null,
+    openDownloadLink: (() -> Unit)? = null,
+    source: FUSEventSource = FUSEventSource.SETTINGS,
+  ): DialogPanel {
     val pluginId = page.pluginId?.let(PluginId::getId)
     val project = ProjectManager.getInstance().openProjects.firstOrNull()
     
     return build(
       page = page,
-      openLearnMore = { source.learnMoreAndLog(project, it, pluginId) },
+      openLearnMore = { openLearnMore?.invoke(it) ?: source.learnMoreAndLog(project, it, pluginId) },
       openDownloadLink = { dialog ->
-        if (project != null) {
-          tryUltimate(pluginId, page.suggestedIde, project, source)
-          dialog?.close(DialogWrapper.CLOSE_EXIT_CODE)
-        }
-        else source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, pluginId)
+        tryUltimate(pluginId, page.suggestedIde, project, source, openDownloadLink)
+        dialog?.close(DialogWrapper.CLOSE_EXIT_CODE)
       }
     )
   }

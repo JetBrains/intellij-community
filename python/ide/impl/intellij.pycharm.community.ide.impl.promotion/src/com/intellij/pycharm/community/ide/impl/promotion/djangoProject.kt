@@ -9,10 +9,10 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatur
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.PythonPromoProjectGenerator
-import com.jetbrains.python.icons.PythonIcons
 import javax.swing.Icon
 import javax.swing.JPanel
 
@@ -29,7 +29,7 @@ internal class DjangoPromoProjectGenerator : PythonProjectGenerator<PyNewProject
   }
 
   override fun createPromoPanel(): JPanel {
-    return PromoPages.build(
+    return PromoPages.buildWithTryUltimate(
       PromoFeaturePage(
         PythonIcons.Python.Pycharm,
         PluginAdvertiserService.pyCharmProfessional,

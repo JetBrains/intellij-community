@@ -640,15 +640,16 @@ data class SuggestedIde(
 fun tryUltimate(
   pluginId: PluginId?,
   suggestedIde: SuggestedIde,
-  project: Project,
+  project: Project?,
   fusEventSource: FUSEventSource? = null,
+  fallback: (() -> Unit)? = null
 ) {
   val eventSource = fusEventSource ?: FUSEventSource.EDITOR
-  if (Registry.`is`("ide.try.ultimate.automatic.installation")) {
+  if (Registry.`is`("ide.try.ultimate.automatic.installation") && project != null) {
     eventSource.logTryUltimate(project, pluginId)
     project.service<UltimateInstallationService>().install(pluginId, suggestedIde)
   } else {
-    eventSource.openDownloadPageAndLog(project = project, url = suggestedIde.defaultDownloadUrl, pluginId = pluginId)
+    fallback?.invoke() ?: eventSource.openDownloadPageAndLog(project = project, url = suggestedIde.defaultDownloadUrl, pluginId = pluginId)
   }
 }
 
