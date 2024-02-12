@@ -104,8 +104,17 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
         if (frames.length > 1) {
           for (IdeFrame frame : frames) {
             if (!frame.isInFullScreen()) {
-              logger.info("=== FullScreenTabSupport: no fullscreen frame: " + ((ProjectFrameHelper)frame).getFrame() + " ===");
-              return;
+              IdeFrameImpl ideFrame = ((ProjectFrameHelper)frame).getFrame();
+              logger.info("=== FullScreenTabSupport: no fullscreen frame: " + ideFrame + " ===");
+              JRootPane pane = ideFrame.getRootPane();
+              if (pane == null) {
+                logger.info("=== FullScreenTabSupport: no root pane for frame: " + ideFrame + " ===");
+                return;
+              }
+              if (pane.getClientProperty(MacMainFrameDecorator.FULL_SCREEN) == null) {
+                return;
+              }
+              logger.info("=== FullScreenTabSupport: fullscreen in progress for frame: " + ideFrame + " ===");
             }
           }
 
