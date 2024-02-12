@@ -42,7 +42,6 @@ class PyCharmCommunityBuildTest {
     val communityHomePath = BuildDependenciesCommunityRoot(homePath.resolve("community"))
     runTestBuild(
       homePath = communityHomePath.communityRoot,
-      communityHomePath = communityHomePath,
       traceSpanName = testInfo.spanName,
       productProperties = PyCharmCommunityProperties(communityHomePath.communityRoot),
     ) {

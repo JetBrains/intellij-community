@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.junit.Test
 import java.nio.file.Files
@@ -66,9 +67,8 @@ class BundledRuntimeTest {
   private inline fun withCompilationContext(block: (CompilationContext) -> Unit) {
     val tempDir = Files.createTempDirectory("compilation-context-")
     try {
-      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
       val context = createCompilationContextBlocking(
-        projectHome = communityHome.communityRoot,
+        projectHome = COMMUNITY_ROOT.communityRoot,
         defaultOutputRoot = tempDir,
       )
       block(context)

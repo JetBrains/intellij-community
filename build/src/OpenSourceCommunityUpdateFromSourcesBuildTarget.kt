@@ -4,7 +4,7 @@ import com.intellij.util.SystemProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.createCommunityBuildContext
 import java.nio.file.Path
@@ -25,13 +25,12 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
       options.buildStepsToSkip.add(BuildOptions.NON_BUNDLED_PLUGINS_STEP)
     }
 
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val distOutputRelativePath = System.getProperty("distOutputRelativePath")!!
 
     // when IDEA CE is updated from IDEA, a UE sources project should be loaded from IDEA UE directory
-    val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: communityHome.communityRoot
+    val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: COMMUNITY_ROOT.communityRoot
     runBlocking(Dispatchers.Default) {
-      createBuildTasks(context = createCommunityBuildContext(communityHome = communityHome, options = options, projectHome = projectHome))
+      createBuildTasks(context = createCommunityBuildContext(options = options, projectHome = projectHome))
         .buildUnpackedDistribution(targetDirectory = options.outRootDir!!.resolve(distOutputRelativePath), includeBinAndRuntime = false)
     }
   }

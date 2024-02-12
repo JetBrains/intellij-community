@@ -19,7 +19,6 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.junit.jupiter.api.TestInfo
@@ -71,7 +70,6 @@ suspend inline fun createBuildContext(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  communityHomePath: BuildDependenciesCommunityRoot,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = createBuildOptionsForTest(productProperties)
@@ -106,7 +104,6 @@ fun runTestBuild(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String,
   isReproducibilityTestAllowed: Boolean = true,
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) },

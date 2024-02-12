@@ -7,6 +7,7 @@ import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import com.intellij.platform.buildScripts.testFramework.spanName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
@@ -15,12 +16,10 @@ class IdeaCommunityBuildTest {
   @Test
   fun build(testInfo: TestInfo) {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
-    val communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val productProperties = IdeaCommunityProperties(communityHomePath.communityRoot)
+    val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
     runTestBuild(
       homePath = homePath,
       traceSpanName = testInfo.spanName,
-      communityHomePath = communityHomePath,
       productProperties = productProperties,
     ) {
       it.classOutDir = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) ?: "$homePath/out/classes"
@@ -30,9 +29,8 @@ class IdeaCommunityBuildTest {
   @Test
   fun jpsStandalone(testInfo: TestInfo) {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runBlocking(Dispatchers.Default) {
-      val productProperties = IdeaCommunityProperties(communityHome.communityRoot)
+      val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
       val options = createBuildOptionsForTest(productProperties = productProperties, skipDependencySetup = true)
       val context = BuildContextImpl.createContext(
         projectHome = homePath,

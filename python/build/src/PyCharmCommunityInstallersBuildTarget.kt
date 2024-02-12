@@ -4,7 +4,7 @@
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.pycharm.PyCharmBuildUtils
@@ -29,10 +29,9 @@ object PyCharmCommunityInstallersBuildTarget {
           PyCharmBuildUtils.SKELETONS_COPY_STEP,
         ))
       }
-      val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(PyCharmCommunityInstallersBuildTarget::class.java)
       val context = BuildContextImpl.createContext(
-        projectHome = communityHome.communityRoot,
-        productProperties = PyCharmCommunityProperties(communityHome.communityRoot),
+        projectHome = COMMUNITY_ROOT.communityRoot,
+        productProperties = PyCharmCommunityProperties(COMMUNITY_ROOT.communityRoot),
         options = options,
       )
       createBuildTasks(context).buildDistributions()

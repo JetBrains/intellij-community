@@ -3,21 +3,19 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
-
 import java.nio.file.Path
 
 internal suspend fun createCommunityBuildContext(
-  communityHome: BuildDependenciesCommunityRoot,
   options: BuildOptions = BuildOptions(),
-  projectHome: Path = communityHome.communityRoot,
+  projectHome: Path = COMMUNITY_ROOT.communityRoot,
 ): BuildContext {
   return BuildContextImpl.createContext(projectHome = projectHome,
-                                        productProperties = IdeaCommunityProperties(communityHome.communityRoot),
+                                        productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
                                         setupTracer = true,
                                         options = options)
 }

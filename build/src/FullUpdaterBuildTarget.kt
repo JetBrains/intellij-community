@@ -2,7 +2,7 @@
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.createBuildTasks
 import org.jetbrains.intellij.build.createCommunityBuildContext
 
@@ -12,7 +12,7 @@ object FullUpdaterBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     runBlocking(Dispatchers.Default) {
-      val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
+      val context = createCommunityBuildContext()
       val tasks = createBuildTasks(context)
       tasks.compileModules(listOf(UPDATER_MODULE_NAME))
       tasks.buildFullUpdaterJar()
