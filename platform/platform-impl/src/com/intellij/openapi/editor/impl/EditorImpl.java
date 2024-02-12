@@ -572,7 +572,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.isEmbeddedIntoDialogWrapperPropertyName -> isEmbeddedIntoDialogWrapperChanged(event);
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
-        case EditorState.myBorderPropertyName -> borderChanged(event);
+        case EditorState.myBorderPropertyName -> borderChanged();
       }
     }, myDisposable);
   }
@@ -1372,7 +1372,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       EditorHighlighter oldHighlighter = myHighlighter;
       myHighlighter = highlighter;
-      myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_HIGHLIGHTER, oldHighlighter, highlighter);
+      myPropertyChangeSupport.firePropertyChange(PROP_HIGHLIGHTER, oldHighlighter, highlighter);
 
       if (myPanel != null) {
         reinitSettings();
@@ -2339,7 +2339,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.setMyBorder(border);
   }
 
-  private void borderChanged(ObservableStateListener.PropertyChangeEvent event) {
+  private void borderChanged() {
     myScrollPane.setBorder(myState.getMyBorder());
   }
 
@@ -3520,10 +3520,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ThreadingAssertions.assertEventDispatchThread();
   }
 
-  private static void assertReadAccess() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-  }
-
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
@@ -3565,7 +3561,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public boolean isMirrored() {
-    return myState.getVerticalScrollBarOrientation() != EditorEx.VERTICAL_SCROLLBAR_RIGHT;
+    return myState.getVerticalScrollBarOrientation() != VERTICAL_SCROLLBAR_RIGHT;
   }
 
   @NotNull
@@ -5382,7 +5378,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (group != null) return group;
         }
       }
-      return ContextMenuPopupHandler.getGroupForId(contextMenuGroupId);
+      return getGroupForId(contextMenuGroupId);
     }
   }
 
@@ -5522,7 +5518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final class TablessBorder extends SideBorder {
     private TablessBorder() {
-      super(JBColor.border(), SideBorder.ALL);
+      super(JBColor.border(), ALL);
     }
 
     @Override
