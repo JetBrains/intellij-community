@@ -581,6 +581,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
 
+      //noinspection ConstantValue
       if (isEditorPreview) {
         myEditorChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, true);
         Disposer.register(this, myEditorChangeProcessor);

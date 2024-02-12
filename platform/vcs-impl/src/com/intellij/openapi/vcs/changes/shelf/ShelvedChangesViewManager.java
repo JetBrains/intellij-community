@@ -773,6 +773,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
       if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
 
+      //noinspection ConstantValue
       if (isEditorPreview) {
         myEditorChangeProcessor = new MyShelvedPreviewProcessor(myProject, myTree, true);
         Disposer.register(this, myEditorChangeProcessor);
