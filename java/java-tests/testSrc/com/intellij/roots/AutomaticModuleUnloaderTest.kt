@@ -16,15 +16,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.TestProjectManager
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
-import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.rules.TempDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -64,210 +60,265 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
   @Test
   fun `unload simple module`() = runBlocking {
     val project = createProject()
-    createModule(project, "a")
-    createModule(project, "b")
-    withContext(Dispatchers.EDT) {
-      ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+    try {
+      createModule(project, "a")
+      createModule(project, "b")
+      withContext(Dispatchers.EDT) {
+        ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+      }
+      createModule(project, "c")
+
+      val moduleFiles = createNewModuleFiles(listOf("d")) {}
+
+      waitUntil {
+        runCatching {
+          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+        }.isSuccess
+      }
+
+      val newProject = reloadProjectWithNewModules(project, moduleFiles)
+
+      waitUntil {
+        runCatching {
+          assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
+        }.isSuccess
+      }
     }
-    createModule(project, "c")
-
-    val moduleFiles = createNewModuleFiles(listOf("d")) {}
-
-    waitUntil {
-      runCatching {
-        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
-      }.isSuccess
-    }
-
-    val newProject = reloadProjectWithNewModules(project, moduleFiles)
-
-    waitUntil {
-      runCatching {
-        assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
-      }.isSuccess
+    finally {
+      project.closeProjectAsync()
     }
   }
 
   @Test
   fun `check loaded modules state`() = runBlocking {
     val project = createProject()
-    createModule(project, "a")
-    createModule(project, "b")
-    withContext(Dispatchers.EDT) {
-      ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+    try {
+      createModule(project, "a")
+      createModule(project, "b")
+      withContext(Dispatchers.EDT) {
+        ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+      }
+      assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b")
+      createModule(project, "c")
+
+      waitUntil {
+        runCatching {
+          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+        }.isSuccess
+      }
+
+      createModule(project, "x")
+
+      waitUntil {
+        runCatching {
+          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c", "x")
+        }.isSuccess
+      }
     }
-    assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b")
-    createModule(project, "c")
-
-    waitUntil {
-      runCatching {
-        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
-      }.isSuccess
-    }
-
-    createModule(project, "x")
-
-    waitUntil {
-      runCatching {
-        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c", "x")
-      }.isSuccess
+    finally {
+      project.closeProjectAsync()
     }
   }
 
   @Test
   fun `loaded modules are empty if no modules are unloaded`() = timeoutRunBlocking {
     val project = createProject()
-    assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+    try {
+      assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
 
-    createModule(project, "a")
-    createModule(project, "b")
-    waitUntil {
-      runCatching {
-        assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
-      }.isSuccess
+      createModule(project, "a")
+      createModule(project, "b")
+      waitUntil {
+        runCatching {
+          assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+        }.isSuccess
+      }
+
+      createModule(project, "c")
+
+      waitUntil {
+        runCatching {
+          assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+        }.isSuccess
+      }
     }
-
-    createModule(project, "c")
-
-    waitUntil {
-      runCatching {
-        assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
-      }.isSuccess
+    finally {
+      project.closeProjectAsync()
     }
   }
 
   @Test
   fun `loaded modules list is updated when we set unloaded modules`() = timeoutRunBlocking {
     val project = createProject()
-    createModule(project, "a")
-    createModule(project, "b")
-    createModule(project, "c")
+    try {
+      createModule(project, "a")
+      createModule(project, "b")
+      createModule(project, "c")
 
-    assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+      assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
 
-    withContext(Dispatchers.EDT) {
-      ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+      withContext(Dispatchers.EDT) {
+        ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+      }
+
+      waitUntil {
+        runCatching {
+          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+        }.isSuccess
+      }
+
+      withContext(Dispatchers.EDT) {
+        ModuleManager.getInstance(project).setUnloadedModules(listOf("a", "b"))
+      }
+
+      waitUntil {
+        runCatching {
+          assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "c")
+        }.isSuccess
+      }
+
+      withContext(Dispatchers.EDT) {
+        ModuleManager.getInstance(project).setUnloadedModules(emptyList())
+      }
+
+      waitUntil {
+        runCatching {
+          assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+        }.isSuccess
+      }
     }
-
-    waitUntil {
-      runCatching {
-        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
-      }.isSuccess
-    }
-
-    withContext(Dispatchers.EDT) {
-      ModuleManager.getInstance(project).setUnloadedModules(listOf("a", "b"))
-    }
-
-    waitUntil {
-      runCatching {
-        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "c")
-      }.isSuccess
-    }
-
-    withContext(Dispatchers.EDT) {
-      ModuleManager.getInstance(project).setUnloadedModules(emptyList())
-    }
-
-    waitUntil {
-      runCatching {
-        assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
-      }.isSuccess
+    finally {
+      project.closeProjectAsync()
     }
   }
 
   @Test
   fun `unload modules with dependencies between them`() = runBlocking {
     val project = createProject()
-    createModule(project, "a")
-    createModule(project, "b")
-    doTest(project, "a", listOf("c", "d"), { modules ->
-      ModuleRootModificationUtil.updateModel(modules.getValue("c")) {
-        it.addModuleOrderEntry(modules.getValue("d"))
-      }
-    }, "a", "c", "d")
+    try {
+      createModule(project, "a")
+      createModule(project, "b")
+      doTest(project, "a", listOf("c", "d"), { modules ->
+        ModuleRootModificationUtil.updateModel(modules.getValue("c")) {
+          it.addModuleOrderEntry(modules.getValue("d"))
+        }
+      }, "a", "c", "d")
+    }
+    finally {
+      project.closeProjectAsync()
+    }
   }
 
   @Test
   fun `do not unload module if loaded module depends on it`() = runBlocking {
     val project = createProject()
-    createModule(project, "a")
-    val b = createModule(project, "b")
-    ModuleRootModificationUtil.updateModel(b) {
-      it.addInvalidModuleEntry("d")
+    try {
+      createModule(project, "a")
+      val b = createModule(project, "b")
+      ModuleRootModificationUtil.updateModel(b) {
+        it.addInvalidModuleEntry("d")
+      }
+      doTest(project, "a", listOf("d"), {}, "a")
     }
-    doTest(project, "a", listOf("d"), {}, "a")
+    finally {
+      project.closeProjectAsync()
+    }
   }
 
   @Test
   fun `unload module if only unloaded module depends on it`() = runBlocking {
     val project = createProject()
-    val a = createModule(project, "a")
-    createModule(project, "b")
-    ModuleRootModificationUtil.updateModel(a) {
-      it.addInvalidModuleEntry("d")
+    try {
+      val a = createModule(project, "a")
+      createModule(project, "b")
+      ModuleRootModificationUtil.updateModel(a) {
+        it.addInvalidModuleEntry("d")
+      }
+      doTest(project, "a", listOf("d"), {}, "a", "d")
     }
-    doTest(project, "a", listOf("d"), {}, "a", "d")
+    finally {
+      project.closeProjectAsync()
+    }
   }
 
   @Test
   fun `do not unload modules if loaded module depends on them transitively`() = runBlocking {
     val project = createProject()
-    createModule(project, "a")
-    val b = createModule(project, "b")
-    ModuleRootModificationUtil.updateModel(b) {
-      it.addInvalidModuleEntry("d")
-    }
-
-    doTest(project, "a", listOf("c", "d"), { modules ->
-      ModuleRootModificationUtil.updateModel(modules.getValue("d")) {
-        it.addModuleOrderEntry(modules.getValue("c"))
+    try {
+      createModule(project, "a")
+      val b = createModule(project, "b")
+      ModuleRootModificationUtil.updateModel(b) {
+        it.addInvalidModuleEntry("d")
       }
-    }, "a")
+
+      doTest(project, "a", listOf("c", "d"), { modules ->
+        ModuleRootModificationUtil.updateModel(modules.getValue("d")) {
+          it.addModuleOrderEntry(modules.getValue("c"))
+        }
+      }, "a")
+    }
+    finally {
+      project.closeProjectAsync()
+    }
   }
 
   @Test
   fun `unload module if loaded module transitively depends on it via previously unloaded module`() = runBlocking {
     val project = createProject()
-    val a = createModule(project, "a")
-    val b = createModule(project, "b")
-    ModuleRootModificationUtil.addDependency(a, b)
-    ModuleRootModificationUtil.updateModel(b) {
-      it.addInvalidModuleEntry("c")
+    try {
+      val a = createModule(project, "a")
+      val b = createModule(project, "b")
+      ModuleRootModificationUtil.addDependency(a, b)
+      ModuleRootModificationUtil.updateModel(b) {
+        it.addInvalidModuleEntry("c")
+      }
+      doTest(project, "b", listOf("c"), {}, "b", "c")
     }
-    doTest(project, "b", listOf("c"), {}, "b", "c")
+    finally {
+      project.closeProjectAsync()
+    }
   }
 
   @Test
   fun `load unloaded module back before adding new module`() = runBlocking {
     val project = createProject()
-    createModule(project, "root")
-    createModule(project, "a")
-    createModule(project, "b")
-    withContext(Dispatchers.EDT) {
-      ModuleManager.getInstance(project).setUnloadedModules(listOf("a", "b"))
+    try {
+      createModule(project, "root")
+      createModule(project, "a")
+      createModule(project, "b")
+      withContext(Dispatchers.EDT) {
+        ModuleManager.getInstance(project).setUnloadedModules(listOf("a", "b"))
+      }
+      doTest(project, "b", listOf("c"), {}, "b", "c")
     }
-    doTest(project, "b", listOf("c"), {}, "b", "c")
+    finally {
+      project.closeProjectAsync()
+    }
   }
 
   @Test
   fun `deleted iml file`() = runBlocking {
     val project = createProject()
-    createModule(project, "a")
-    createModule(project, "b")
-    val deletedIml = createModule(project, "deleted")
-    withContext(Dispatchers.EDT) {
-      ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
-    }
-    createModule(project, "c")
+    try {
+      createModule(project, "a")
+      createModule(project, "b")
+      val deletedIml = createModule(project, "deleted")
+      withContext(Dispatchers.EDT) {
+        ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+      }
+      createModule(project, "c")
 
-    val moduleFiles = createNewModuleFiles(listOf("d")) {}
-    val deletedImlFile = File(deletedIml.moduleFilePath)
-    val newProject = reloadProjectWithNewModules(project, moduleFiles) {
-      deletedImlFile.delete()
-    }
+      val moduleFiles = createNewModuleFiles(listOf("d")) {}
+      val deletedImlFile = File(deletedIml.moduleFilePath)
+      val newProject = reloadProjectWithNewModules(project, moduleFiles) {
+        deletedImlFile.delete()
+      }
 
-    assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
+      assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
+    }
+    finally {
+      project.closeProjectAsync()
+    }
   }
 
 
