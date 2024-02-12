@@ -10,7 +10,6 @@
                               language="Python"/>
     <platform.backend.documentation.psiTargetProvider id="HuggingFaceDocumentationProvider"
                                                       implementation="com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationTargetProvider"/>
-    <postStartupActivity implementation="com.intellij.python.community.impl.huggingFace.service.HuggingFaceProjectStartupActivity"/>
     <lang.inspectionSuppressor language="Python" implementationClass="com.intellij.python.community.impl.huggingFace.service.HuggingFaceTypoInspectionSuppressor"/>
   </extensions>
 </idea-plugin>

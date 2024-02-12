@@ -13,11 +13,13 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 abstract class HuggingFaceReferenceProvider : PsiReferenceProvider() {
 
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+    val pyStringLiteralExpression = element as? PyStringLiteralExpression ?: return PsiReference.EMPTY_ARRAY
+
     val project = element.project
     val service = project.getService(HuggingFaceImportedLibrariesManagerService::class.java)
     val manager = service.getManager()
     if (!manager.isLibraryImported()) return PsiReference.EMPTY_ARRAY
-    val pyStringLiteralExpression = element as? PyStringLiteralExpression ?: return PsiReference.EMPTY_ARRAY
+
     val text = pyStringLiteralExpression.stringValue
     if (!isValidReference(text)) return PsiReference.EMPTY_ARRAY
 

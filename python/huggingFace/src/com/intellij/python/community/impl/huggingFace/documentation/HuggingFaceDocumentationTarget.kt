@@ -13,6 +13,7 @@ import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceDatasetPsiElement
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceModelPsiElement
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasicApiData
+import com.intellij.python.community.impl.huggingFace.api.HuggingFaceHttpClient
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCacheEntry
@@ -97,8 +98,9 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
       val cached = HuggingFaceMdCardsCache.getData("markdown_$entityId")
       cached?.data
       ?: try {
-        val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind)
-        val rawData = mdUrl.readText()
+        val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind).toString()
+        val rawData = HuggingFaceHttpClient.downloadFile(mdUrl)
+                             ?: HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
         val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
         HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now()))
         cleanedData

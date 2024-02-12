@@ -13,16 +13,11 @@ import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
 import com.intellij.util.messages.MessageBusConnection
 
 
-interface HuggingFaceImportedLibrariesService {
-  fun getManager(): HuggingFaceImportedLibrariesManager
-}
-
-
 @Service(Service.Level.PROJECT)
-class HuggingFaceImportedLibrariesManagerService(project: Project) : HuggingFaceImportedLibrariesService {
+class HuggingFaceImportedLibrariesManagerService(project: Project) {
   private val manager = HuggingFaceImportedLibrariesManager(project)
 
-  override fun getManager(): HuggingFaceImportedLibrariesManager {
+  fun getManager(): HuggingFaceImportedLibrariesManager {
     return manager
   }
 }
@@ -70,6 +65,7 @@ class HuggingFaceImportedLibrariesManager(project: Project) {
       val isImported = HuggingFaceUtil.isAnyHFLibraryImportedInProject(project)
       if (isImported) {
         cachedResult = Result(true)
+        HuggingFaceUtil.triggerCacheFillIfNeeded(project)
       }
       cacheTimestamp = System.currentTimeMillis()
     }

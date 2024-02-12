@@ -12,21 +12,22 @@ import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImporte
 
 class HuggingFaceEntityNameAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-    val project = element.project
-    val service = project.getService(HuggingFaceImportedLibrariesManagerService::class.java)
-    val manager = service.getManager()
-    if (!manager.isLibraryImported()) return
     if (element !is PyStringLiteralExpression) return
 
     val userData = element.getUserData(HUGGING_FACE_ENTITY_NAME_KEY)
     if (userData == null || !userData) return
+
+    val project = element.project
+    val service = project.getService(HuggingFaceImportedLibrariesManagerService::class.java)
+    val manager = service.getManager()
+    if (!manager.isLibraryImported()) return
 
     val textRangeInElement = element.getTextRange()
     val startOffset = textRangeInElement.startOffset + 1
     val endOffset = textRangeInElement.endOffset - 1
     val modelRange = TextRange(startOffset, endOffset)
 
-    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+    holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES)
       .range(modelRange)
       .textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)
       .create()

@@ -8,10 +8,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceDatasetPsiElement
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceModelPsiElement
+import com.intellij.python.community.impl.huggingFace.api.HuggingFaceApi
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsCache
+import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceLastCacheRefresh
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.jetbrains.python.psi.*
+import java.time.Duration
 
 val huggingFaceRelevantLibraries = setOf(
   "diffusers", "transformers", "allennlp", "spacy",
@@ -93,5 +96,20 @@ object HuggingFaceUtil {
       }
       else -> Pair(null, null)
     }
+  }
+
+  fun triggerCacheFillIfNeeded(project: Project) {
+    val refreshState = project.getService(HuggingFaceLastCacheRefresh::class.java)
+    val currentTime = System.currentTimeMillis()
+    if (currentTime - refreshState.lastRefreshTime < Duration.ofDays(1).toMillis()) {
+      return
+    }
+
+    HuggingFaceApi.fillCacheWithBasicApiData(HuggingFaceEntityKind.MODEL,
+                                             HuggingFaceModelsCache,
+                                             HuggingFaceConstants.MAX_MODELS_IN_CACHE)
+    HuggingFaceApi.fillCacheWithBasicApiData(HuggingFaceEntityKind.DATASET,
+                                             HuggingFaceDatasetsCache,
+                                             HuggingFaceConstants.MAX_DATASETS_IN_CACHE)
   }
 }
