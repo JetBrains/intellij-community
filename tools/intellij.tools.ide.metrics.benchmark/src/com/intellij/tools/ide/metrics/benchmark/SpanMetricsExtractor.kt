@@ -26,7 +26,7 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
       extractOpenTelemetrySpanMetrics(spanName, forWarmup = true).plus(extractOpenTelemetrySpanMetrics(spanName, forWarmup = false))
     }
 
-    return requireNotNull(originalMetrics) { "Couldn't find metrics for '$spanName' in $telemetryJsonFile" }
+    return requireNotNull(originalMetrics) { "Unable to extract metrics for '$spanName' from $telemetryJsonFile" }
   }
 
   private fun getAttemptsSpansStatisticalMetrics(attempts: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {

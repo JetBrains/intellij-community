@@ -195,12 +195,15 @@ public class XmlParsingTest extends ParsingTestCase {
     transformAllChildren(file.getNode());
     LOG.debug("First parsing took " + (System.nanoTime() - start) + "ns");
 
-    PlatformTestUtil.newPerformanceTest("XML Parser Performance on " + fileName, () -> {
+    var perfTest = PlatformTestUtil.newPerformanceTest("XML Parser Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {
         PsiFile next = createPsiFile("test" + i, text);
         transformAllChildren(next.getNode());
       }
-    }).setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches()).startAsSubtest();
+    });
+
+    perfTest.setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
+      .startAsSubtest(this.getClass().getSimpleName() + " "  + perfTest.launchName);
 
     LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
     int count = 0;

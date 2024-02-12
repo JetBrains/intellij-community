@@ -45,7 +45,7 @@ public class PerformanceTestInfo {
   private final int expectedInputSize;                  // size of input the test is expected to process;
   private ThrowableRunnable<?> setup;                   // to run before each test
   private int maxMeasurementAttempts = 3;               // number of retries
-  private final String launchName;                      // to print on fail
+  public final String launchName;                      // to print on fail
   private int warmupIterations = 1;                      // default warmup iterations should be positive
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
@@ -216,7 +216,10 @@ public class PerformanceTestInfo {
    * Raw metrics are reported as TC artifacts and can be found on Artifacts tqb in dependency builds.<br/>
    * Human friendly metrics representation can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a>
    *
-   * @see PerformanceTestInfo#start(String)
+   * @see #start(String)
+   * @see #start(Method)
+   * @see #start(kotlin.reflect.KFunction)
+   * @see #startAsSubtest(String)
    **/
   public void start() {
     start(getCallingTestMethod(), launchName);

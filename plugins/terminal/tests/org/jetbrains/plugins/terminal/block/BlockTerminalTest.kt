@@ -76,7 +76,7 @@ class BlockTerminalTest(private val shellPath: Path) {
                        SimpleTextRepeater.Item("Done", false, true, 1))
     setTerminalBufferMaxLines(items.sumOf { it.count })
     val session = startBlockTerminalSession(TermSize(200, 100))
-    PlatformTestUtil.newPerformanceTest("large output is read") {
+    PlatformTestUtil.newPerformanceTest("$shellPath - large output is read") {
       val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
       session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommand(items))
       assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
