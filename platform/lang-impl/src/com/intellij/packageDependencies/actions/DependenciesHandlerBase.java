@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -112,7 +113,7 @@ public abstract class DependenciesHandlerBase {
   }
 
   protected void bgtPostAnalyze(DependencyAnalysisResult result) {
-    result.panelDisplayName = getPanelDisplayName(result.getBuilders().get(0).getScope());
+    result.panelDisplayName = ReadAction.compute(() -> getPanelDisplayName(result.getBuilders().get(0).getScope()));
   }
 
   private void onSuccess(final DependencyAnalysisResult result) {
