@@ -16,12 +16,12 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ExcludeFromCompletionLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(@NotNull LookupElement element, @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
-    Object o = element.getObject();
+  public void fillActions(@NotNull LookupElement lookupElement, @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
+    Object o = lookupElement.getObject();
     if (o instanceof PsiClassObjectAccessExpression) {
       o = PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)o).getOperand().getType());
     }
-    
+
     if (o instanceof PsiClass clazz) {
       addExcludes(consumer, clazz, clazz.getQualifiedName());
     } else if (o instanceof PsiMethod method) {
@@ -33,9 +33,13 @@ public final class ExcludeFromCompletionLookupActionProvider implements LookupAc
         addExcludes(consumer, field, PsiUtil.getMemberQualifiedName(field));
       }
     }
+
+    if (lookupElement instanceof LoggerLookupElement loggerLookupElement && o instanceof PsiElement element) {
+      addExcludes(consumer, element, loggerLookupElement.getLoggerTypeName());
+    }
   }
 
-  private static void addExcludes(Consumer<? super LookupElementAction> consumer, PsiMember element, @Nullable String qname) {
+  private static void addExcludes(Consumer<? super LookupElementAction> consumer, PsiElement element, @Nullable String qname) {
     if (qname == null) return;
     final Project project = element.getProject();
     for (final String s : AddImportAction.getAllExcludableStrings(qname)) {

@@ -13,7 +13,7 @@ object GenerateLoggerUtil {
   fun findSuitableLoggers(module: Module?, filterByImportExclusion : Boolean = false): List<JvmLogger> {
     val project = module?.project ?: return emptyList()
     return JvmLogger.getAllLoggers(false).filter {
-      it.isAvailable(module) && (!filterByImportExclusion || isLoggerExcluded(project, it))
+      it.isAvailable(module) && !(filterByImportExclusion && isLoggerExcluded(project, it))
     }
   }
 

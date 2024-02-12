@@ -2,12 +2,16 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.generation.GenerateLoggerUtil
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.lang.logging.JvmLogger
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiExpressionStatement
 import com.intellij.psi.PsiJavaToken
 import com.intellij.util.ProcessingContext
@@ -26,29 +30,37 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val module = ModuleUtil.findModuleForFile(parameters.originalFile) ?: return
+               val project = module.project
                val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module, true)
 
                val element = parameters.originalPosition ?: return
                val allPlaces = GenerateLoggerUtil.getAllNestedClasses(element).toList()
                val possiblePlaces = GenerateLoggerUtil.getPossiblePlacesForLogger(element, availableLoggers)
-
                if (allPlaces.size != possiblePlaces.size) return
 
                val place = possiblePlaces.firstOrNull() ?: return
 
                for (logger in availableLoggers) {
-                 result.addElement(
-                   LookupElementBuilder
-                     .create(logger, JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
-                     .withTailText(" ${logger.loggerTypeName}")
-                     .withTypeText(logger.toString())
-                     .withInsertHandler { insertionContext, _ ->
-                       val loggerText = logger.createLogger(insertionContext.project, place) ?: return@withInsertHandler
-                       logger.insertLoggerAtClass(insertionContext.project, place, loggerText)
-                     }
-                 )
+                 val lookupElement = buildLoggerElement(project, place, logger) ?: continue
+                 result.addElement(lookupElement)
                }
              }
            })
   }
+
+  private fun buildLoggerElement(project: Project, place: PsiClass, logger: JvmLogger): LookupElement? =
+    logger.createLogger(project, place)?.let {
+      LoggerLookupElement(
+        LookupElementBuilder
+          .create(it, JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
+          .withTailText(" ${logger.loggerTypeName}")
+          .withTypeText(logger.toString())
+          .withInsertHandler { insertionContext, lookupItem ->
+            lookupItem.psiElement?.let {
+              logger.insertLoggerAtClass(insertionContext.project, place, it)
+            }
+          },
+        logger.loggerTypeName
+      )
+    }
 }
