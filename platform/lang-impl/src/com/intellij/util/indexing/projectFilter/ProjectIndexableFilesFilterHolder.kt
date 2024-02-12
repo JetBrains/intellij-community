@@ -1,13 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.projectFilter
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
@@ -39,17 +37,15 @@ internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun findProjectsForFile(fileId: Int): Set<Project>
 
   abstract fun runHealthCheck()
+
+  abstract fun onProjectClosing(project: Project)
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
   private val myProjectFilters: ConcurrentMap<Project, ProjectIndexableFilesFilter> = ConcurrentHashMap()
 
-  init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosed(project: Project) {
-        myProjectFilters.remove(project)
-      }
-    })
+  override fun onProjectClosing(project: Project) {
+    myProjectFilters.remove(project)
   }
 
   override fun getProjectIndexableFiles(project: Project): IdFilter? {
