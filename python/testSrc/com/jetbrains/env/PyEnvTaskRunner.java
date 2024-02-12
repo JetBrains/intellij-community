@@ -212,7 +212,7 @@ public class PyEnvTaskRunner {
     return result;
   }
 
-  public static boolean isSuitableForTags(List<String> envTags, Set<String> taskTags) {
+  public static boolean isSuitableForTags(@NotNull List<String> envTags, Set<String> taskTags) {
     Set<String> necessaryTags = Sets.newHashSet(taskTags);
 
     for (String tag : envTags) {
