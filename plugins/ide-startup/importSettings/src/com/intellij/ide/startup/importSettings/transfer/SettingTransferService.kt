@@ -66,13 +66,14 @@ class SettingTransferService : ExternalService {
   private fun CoroutineScope.loadIdeVersionsAsync(): Deferred<Map<String, ThirdPartyProductInfo>> {
     ideVersions?.let { return it }
     logger.info("Refreshing the transfer settings data provider.")
+    val scope = this
     val versions = async {
       config.dataProvider.run {
         refresh()
         orderedIdeVersions
           .filterIsInstance<IdeVersion>()
           .map { version ->
-            ThirdPartyProductInfo(version, async { loadIdeVersionSettingsAsync(version) })
+            ThirdPartyProductInfo(version, scope.async { loadIdeVersionSettingsAsync(version) })
           }.associateBy { info -> info.product.id }
       }
     }
