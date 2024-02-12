@@ -171,11 +171,7 @@ class SavedPatchesTree(project: Project,
       return rendererComponent
     }
 
-    private fun getLabelComponent(tree: ChangesTree,
-                                  node: ChangesBrowserNode<*>,
-                                  row: Int,
-                                  selected: Boolean): JComponent? {
-      if (tree.expandableItemsHandler.expandedItems.contains(row)) return null
+    private fun getLabelComponent(tree: ChangesTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean): JComponent? {
       val patchObject = node.userObject as? SavedPatchesProvider.PatchObject<*> ?: return null
       return patchObject.getLabelComponent(tree, row, selected)
     }
