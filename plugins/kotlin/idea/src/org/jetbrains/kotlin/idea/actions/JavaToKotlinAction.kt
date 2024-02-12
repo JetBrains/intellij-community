@@ -69,12 +69,9 @@ class JavaToKotlinAction : AnAction() {
             var converterResult: FilesResult? = null
 
             fun convertWithStatistics() {
-                val converter =
-                    if (forceUsingOldJ2k) OldJavaToKotlinConverter(project, settings)
-                    else J2kConverterExtension.extension(NewJ2k.isEnabled).createJavaToKotlinConverter(project, module, settings)
-                val postProcessor =
-                    if (forceUsingOldJ2k) OldJ2kPostProcessor()
-                    else J2kConverterExtension.extension(NewJ2k.isEnabled).createPostProcessor()
+                val isNewJ2K = !forceUsingOldJ2k && NewJ2k.isEnabled
+                val converter = J2kConverterExtension.extension(isNewJ2K).createJavaToKotlinConverter(project, module, settings)
+                val postProcessor = J2kConverterExtension.extension(isNewJ2K).createPostProcessor()
                 val progressIndicator = ProgressManager.getInstance().progressIndicator!!
 
                 val conversionTime = measureTimeMillis {
@@ -83,7 +80,7 @@ class JavaToKotlinAction : AnAction() {
                 val linesCount = runReadAction {
                     javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
                 }
-                J2KFusCollector.log(ConversionType.FILES, NewJ2k.isEnabled, conversionTime, linesCount, javaFiles.size)
+                J2KFusCollector.log(ConversionType.FILES, isNewJ2K, conversionTime, linesCount, javaFiles.size)
             }
 
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
