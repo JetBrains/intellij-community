@@ -30,4 +30,16 @@ class MavenArtifactUtilTest : MavenTestCase() {
     TestCase.assertTrue(path.contains(artifactId))
     TestCase.assertTrue(path.contains(version))
   }
+
+  @Test
+  fun `test get artifact path with groupdId of dots`() = runBlocking {
+    val groupId = "mygroup.myid"
+    val artifactId = "artifact-id"
+    val version = "3.1.0"
+    val path = MavenArtifactUtil.getArtifactNioPath(dir, groupId, artifactId, version, "pom").toString()
+    TestCase.assertTrue(path.contains("mygroup"))
+    TestCase.assertTrue(path.contains("myid"))
+    TestCase.assertTrue(path.contains(artifactId))
+    TestCase.assertTrue(path.contains(version))
+  }
 }
