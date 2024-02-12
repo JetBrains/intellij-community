@@ -28,5 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="kotlin.base.code-insight.minimal" />
     <orderEntry type="module" module-name="kotlin.ide" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>
