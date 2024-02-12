@@ -39,7 +39,6 @@ import java.util.function.Consumer;
 
 final class AnnotatorRunner {
   private static final Logger LOG = Logger.getInstance(AnnotatorRunner.class);
-  private static final Annotator TOMB_STONE = (__, __1) -> { };
   private final Project myProject;
   private final PsiFile myPsiFile;
   private final HighlightInfoHolder myHighlightInfoHolder;
@@ -230,17 +229,6 @@ final class AnnotatorRunner {
     else {
       newInfos.add(info);
     }
-  }
-
-  private @NotNull List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
-    List<Annotator> result = new ArrayList<>(templates.size());
-    for (Annotator template : templates) {
-      Annotator annotator = cloneTemplate(template);
-      if (annotator == null) continue;
-      result.add(annotator);
-      myAnnotatorStatisticsCollector.reportNewAnnotatorCreated(annotator);
-    }
-    return result;
   }
 
   private static Annotator cloneTemplate(@NotNull Annotator template) {
