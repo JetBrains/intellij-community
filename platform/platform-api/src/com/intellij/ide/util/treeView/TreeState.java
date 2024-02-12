@@ -6,12 +6,14 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.CachingTreePath;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,10 +36,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -471,7 +470,18 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private Promise<List<TreePath>> expand(@NotNull JTree tree) {
-    return TreeUtil.promiseExpand(tree, myExpandedPaths.stream().map(elements -> new Visitor(elements)));
+    if (TreeUtil.isBulkExpandCollapseSupported(tree) && tree instanceof Tree jbTree && Registry.is("ide.tree.bulk.expand.tree.state", false)) {
+      var promise = new AsyncPromise<List<TreePath>>();
+      var bulkExpandVisitor = new BulkExpandVisitor(myExpandedPaths);
+      TreeUtil.promiseVisit(tree, bulkExpandVisitor).onProcessed(lastPathFound -> {
+        jbTree.expandPaths(bulkExpandVisitor.pathsFound);
+        promise.setResult(bulkExpandVisitor.pathsFound);
+      });
+      return promise;
+    }
+    else {
+      return TreeUtil.promiseExpand(tree, myExpandedPaths.stream().map(elements -> new Visitor(elements)));
+    }
   }
 
   private Promise<List<TreePath>> select(@NotNull JTree tree) {
@@ -482,7 +492,11 @@ public final class TreeState implements JDOMExternalizable {
     TreeModel model = tree.getModel();
     if (!(model instanceof TreeVisitor.Acceptor)) return false;
 
+    var started = System.currentTimeMillis();
     expand(tree, promise -> expand(tree).onProcessed(expanded -> {
+      if (LOG.isDebugEnabled() && expanded != null) {
+        LOG.debug("Expanded " + expanded.size() + " paths in " + (System.currentTimeMillis() - started) + " ms");
+      }
       if (isSelectionNeeded(expanded, tree, promise)) {
         select(tree).onProcessed(selected -> promise.setResult(null));
       }
@@ -508,6 +522,85 @@ public final class TreeState implements JDOMExternalizable {
       if (count > elements.length) return Action.SKIP_CHILDREN;
       boolean matches = elements[count - 1].isMatchTo(path.getLastPathComponent());
       return !matches ? Action.SKIP_CHILDREN : (count < elements.length ? Action.CONTINUE : Action.INTERRUPT);
+    }
+  }
+
+  private static final class BulkExpandVisitor implements TreeVisitor {
+
+    private static final class PathMatchState {
+
+      private final PathElement[] elements;
+      private @Nullable TreePath matchSoFar = null;
+
+      private PathMatchState(PathElement[] elements) { this.elements = elements; }
+
+      @NotNull PathMatch match(@NotNull TreePath path) {
+        if (Objects.equals(path.getParentPath(), matchSoFar)) {
+          int count = path.getPathCount();
+          boolean matches = elements[count - 1].isMatchTo(path.getLastPathComponent());
+          if (matches) {
+            if (count == elements.length) {
+              return PathMatch.FULL;
+            }
+            else {
+              matchSoFar = path;
+              return PathMatch.PARTIAL;
+            }
+          }
+          else {
+            return PathMatch.NONE;
+          }
+        }
+        else {
+          return PathMatch.NONE;
+        }
+      }
+    }
+
+    private enum PathMatch {
+      FULL,
+      PARTIAL,
+      NONE
+    }
+
+    private final List<PathMatchState> matchStates = new ArrayList<>();
+    private final List<TreePath> pathsFound = new ArrayList<>();
+
+    BulkExpandVisitor(List<PathElement[]> paths) {
+      for (PathElement[] path : paths) {
+        matchStates.add(new PathMatchState(path));
+      }
+    }
+
+    @Override
+    public @NotNull TreeVisitor.VisitThread visitThread() {
+      return VisitThread.BGT;
+    }
+
+    @Override
+    public @NotNull Action visit(@NotNull TreePath path) {
+      boolean foundPartialMatch = false;
+      for (Iterator<PathMatchState> iterator = matchStates.iterator(); iterator.hasNext(); ) {
+        PathMatchState state = iterator.next();
+        switch (state.match(path)) {
+          case FULL -> {
+            pathsFound.add(path);
+            iterator.remove();
+          }
+          case PARTIAL -> {
+            foundPartialMatch = true;
+          }
+        }
+      }
+      if (matchStates.isEmpty()) {
+        return Action.INTERRUPT;
+      }
+      else if (foundPartialMatch) {
+        return Action.CONTINUE;
+      }
+      else {
+        return Action.SKIP_CHILDREN;
+      }
     }
   }
 }
