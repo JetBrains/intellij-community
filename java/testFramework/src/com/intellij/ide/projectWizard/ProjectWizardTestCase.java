@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,6 +123,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     assertNotNull(myCreatedProject);
 
     UIUtil.dispatchAllInvocationEvents();
+    IndexingTestUtil.waitUntilIndexesAreReady(myCreatedProject);
 
     return myCreatedProject;
   }
