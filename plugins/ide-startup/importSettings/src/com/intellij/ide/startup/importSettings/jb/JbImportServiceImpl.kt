@@ -208,10 +208,14 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     if (old) {
       return products.filter {
         newProducts[it.codeName] != it.version
+      }.sortedByDescending {
+        it.lastUsageTime
       }
     }
     else {
-      return products.filter { newProducts[it.codeName] == it.version }
+      return products.filter { newProducts[it.codeName] == it.version }.sortedByDescending {
+        it.lastUsageTime
+      }
     }
   }
 
