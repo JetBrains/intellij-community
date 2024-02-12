@@ -2,7 +2,7 @@
   <id>com.intellij.turboComplete</id>
   <name>Turbo Complete</name>
   <vendor>JetBrains</vendor>
-  <category>AI-Powered</category>
+  <category>Local AI/ML Tools</category>
 
   <description><![CDATA[
     Experimental approach to speed up code completion.
