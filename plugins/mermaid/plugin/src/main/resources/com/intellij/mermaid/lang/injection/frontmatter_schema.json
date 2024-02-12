@@ -23,6 +23,9 @@
         "maxTextSize": {
           "type": "number"
         },
+        "maxEdges": {
+          "type": "number"
+        },
         "darkMode": {
           "type": "boolean"
         },
