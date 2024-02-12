@@ -711,21 +711,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private void editorColorSchemeChanged(@Nullable EditorColorsScheme scheme) {
     if (mySelectedScheme == null || scheme == null) return;
-    if (mySelectedScheme.getName().equals(scheme.getName())) return;
-
-    String selectedName = mySelectedScheme.getName();
-    if (selectedName.startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
-      selectedName = selectedName.substring(Scheme.EDITABLE_COPY_PREFIX.length());
-    }
-    else {
-      selectedName = Scheme.EDITABLE_COPY_PREFIX + selectedName;
-    }
-
-    if (selectedName.equals(scheme.getName())) return;
-
-    // Ensure the scheme is in the list and it's possible to select it
-    String baseName = Scheme.getBaseName(scheme.getName());
-    if (mySchemes.get(baseName) == null && mySchemes.get(Scheme.EDITABLE_COPY_PREFIX + baseName) == null) return;
+    if (mySelectedScheme.getName().equals(scheme.getName()) ||
+        Scheme.getBaseName(mySelectedScheme.getName()).equals(scheme.getName())) return;
 
     reset();
   }
