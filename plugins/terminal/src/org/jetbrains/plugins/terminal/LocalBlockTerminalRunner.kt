@@ -32,10 +32,17 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
     return super.createShellTerminalWidget(parent, startupOptions)
   }
 
+  open fun shouldShowPromotion(): Boolean {
+    return ExperimentalUI.isNewUI()
+           && Registry.`is`(BLOCK_TERMINAL_SHOW_PROMOTION, false)
+           && !Registry.`is`(BLOCK_TERMINAL_REGISTRY, false)
+  }
+
   companion object {
     const val BLOCK_TERMINAL_REGISTRY: String = "terminal.new.ui"
     const val BLOCK_TERMINAL_FISH_REGISTRY: String = "terminal.new.ui.fish"
     const val BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY: String = "terminal.new.ui.powershell.win11"
     const val BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY: String = "terminal.new.ui.powershell.win10"
+    private const val BLOCK_TERMINAL_SHOW_PROMOTION: String = "terminal.new.ui.show.promotion"
   }
 }

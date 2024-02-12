@@ -32,6 +32,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import net.miginfocom.layout.CC
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -45,6 +46,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
+@ApiStatus.Internal
 abstract class ToolWindowHeader internal constructor(
   private val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
@@ -343,8 +345,8 @@ abstract class ToolWindowHeader internal constructor(
     return Dimension(size.width, height)
   }
 
-  private inner class ShowOptionsAction : DumbAwareAction() {
-    val myPopupState = PopupState.forPopupMenu()
+  inner class ShowOptionsAction : DumbAwareAction() {
+    private val myPopupState = PopupState.forPopupMenu()
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

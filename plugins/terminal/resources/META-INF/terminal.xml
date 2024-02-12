@@ -28,6 +28,8 @@
                  description="Enable new terminal for PowerShell on Windows 11"/>
     <registryKey key="terminal.new.ui.powershell.win10" defaultValue="true"
                  description="Enable new terminal for PowerShell on Windows 10"/>
+    <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
+                 description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>

@@ -91,6 +91,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 }
 
+internal enum class TerminalPromotionEvent {
+  SHOWN, BUTTON_CLICKED, MENU_OPENED
+}
+
 private const val GROUP_ID = "terminalShell"
 
 private val KNOWN_SHELLS = setOf("unspecified",

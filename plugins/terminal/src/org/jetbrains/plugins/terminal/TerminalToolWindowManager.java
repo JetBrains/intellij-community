@@ -62,6 +62,7 @@ import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.exp.BlockTerminalPromotionService;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
@@ -339,7 +340,7 @@ public final class TerminalToolWindowManager implements Disposable {
       });
     }
     updateTabTitle(widget.getTerminalTitle(), toolWindow, content);
-    setupTerminalWidget(toolWindow, widget, content);
+    setupTerminalWidget(toolWindow, terminalRunner, widget, content);
 
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, widget);
@@ -357,6 +358,7 @@ public final class TerminalToolWindowManager implements Disposable {
   }
 
   private void setupTerminalWidget(@NotNull ToolWindow toolWindow,
+                                   @NotNull AbstractTerminalRunner<?> runner,
                                    @NotNull TerminalWidget widget,
                                    @NotNull Content content) {
     MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
@@ -380,7 +382,11 @@ public final class TerminalToolWindowManager implements Disposable {
       }
 
       @Override
-      public void onTerminalStarted() { }
+      public void onTerminalStarted() {
+        if (runner instanceof LocalBlockTerminalRunner blockRunner && blockRunner.shouldShowPromotion()) {
+          BlockTerminalPromotionService.INSTANCE.showPromotionOnce(myProject, widget);
+        }
+      }
 
       @Override
       public void onPreviousTabSelected() {
@@ -489,7 +495,7 @@ public final class TerminalToolWindowManager implements Disposable {
       String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       ShellStartupOptions startupOptions = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
       TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), startupOptions, true);
-      setupTerminalWidget(myToolWindow, newWidget, container.getContent());
+      setupTerminalWidget(myToolWindow, myTerminalRunner, newWidget, container.getContent());
       container.split(!vertically, newWidget);
     }
   }
