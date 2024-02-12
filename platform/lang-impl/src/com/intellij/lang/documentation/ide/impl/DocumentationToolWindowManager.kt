@@ -186,9 +186,6 @@ internal class DocumentationToolWindowManager(
       newUI.toggleAutoUpdate(state = true)
     }
     content.component = newUI.contentComponent
-    newUI.ui.trackDocumentationBackgroundChange(newUI) {
-      content.component.background = it
-    }
   }
 
   private fun makeVisible(content: Content) {

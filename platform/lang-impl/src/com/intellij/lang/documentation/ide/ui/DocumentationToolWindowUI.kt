@@ -2,8 +2,6 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
-import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentInnerPadding
-import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentOuterPadding
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -12,7 +10,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -32,10 +29,6 @@ internal class DocumentationToolWindowUI(
   val contentComponent: JComponent = JPanel(BorderLayout()).also { panel: JPanel ->
     panel.add(ui.scrollPane, BorderLayout.CENTER)
     ui.switcherToolbarComponent?.let { panel.add(it, BorderLayout.NORTH) }
-    panel.add(ui.locationLabel.also {
-      it.border = JBUI.Borders.empty(4, 2 + contentOuterPadding + contentInnerPadding,
-                                     2 + contentOuterPadding, contentOuterPadding)
-    }, BorderLayout.SOUTH)
   }
 
   val editorPane: DocumentationEditorPane get() = ui.editorPane

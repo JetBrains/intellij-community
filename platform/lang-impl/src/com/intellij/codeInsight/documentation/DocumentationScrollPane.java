@@ -37,9 +37,41 @@ public final class DocumentationScrollPane extends JBScrollPane {
     return getPreferredSize(minWidth, scale(getDocPopupMaxWidth()), scale(getDocPopupMaxHeight()));
   }
 
-  private @NotNull Dimension getPreferredSize(int minWidth, int maxWidth, int maxHeight) {
-    Dimension paneSize = ((DocumentationEditorPane)getViewport().getView()).getPackedSize(minWidth, maxWidth);
+  public void setViewportView(@NotNull DocumentationEditorPane editorPane,
+                              @NotNull JLabel locationLabel) {
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        Integer forcedWidth = UIUtil.getClientProperty(this, FORCED_WIDTH);
+        int minWidth = forcedWidth == null ? scale(getDocPopupMinWidth()) : forcedWidth;
+        Dimension editorPaneSize = editorPane.getPackedSize(minWidth, getDocPopupMaxWidth());
+        Dimension locationLabelSize = locationLabel.isVisible() ? locationLabel.getPreferredSize() : new Dimension();
+        return new Dimension(editorPaneSize.width, editorPaneSize.height + locationLabelSize.height);
+      }
+    };
+    panel.add(editorPane, BorderLayout.CENTER);
+    panel.add(locationLabel, BorderLayout.SOUTH);
+    panel.setOpaque(true);
+    locationLabel.setOpaque(true);
+    setViewportView(panel);
+  }
 
+  private @NotNull Dimension getPreferredSize(int minWidth, int maxWidth, int maxHeight) {
+    Component view = getViewport().getView();
+    Dimension paneSize;
+    if (view instanceof DocumentationEditorPane editorPane) {
+      paneSize = editorPane.getPackedSize(minWidth, maxWidth);
+    }
+    else if (view instanceof JPanel panel) {
+      Component[] components = panel.getComponents();
+      Dimension editorPaneSize = ((DocumentationEditorPane)components[0]).getPackedSize(minWidth, maxWidth);
+      Dimension locationLabelSize = components.length > 1 && panel.getComponents()[1].isVisible()
+                                    ? panel.getComponents()[1].getPreferredSize() : new Dimension();
+      paneSize = new Dimension(editorPaneSize.width, editorPaneSize.height + locationLabelSize.height);
+    }
+    else {
+      throw new IllegalStateException(view.getClass().getName());
+    }
     JScrollBar hBar = getHorizontalScrollBar();
     boolean hasHBar = paneSize.width > maxWidth && hBar.isOpaque();
     int hBarHeight = hasHBar ? hBar.getPreferredSize().height : 0;

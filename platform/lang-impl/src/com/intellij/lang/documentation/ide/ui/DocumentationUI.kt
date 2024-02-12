@@ -5,6 +5,7 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.DocumentationHintEditorPane
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
 import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
@@ -44,7 +45,10 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import java.beans.PropertyChangeEvent
-import javax.swing.*
+import javax.swing.BoundedRangeModel
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JScrollPane
 
 internal class DocumentationUI(
   val project: Project,
@@ -53,7 +57,7 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
-  val locationLabel: JLabel
+  private val locationLabel: JLabel
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
   val switcherToolbarComponent: JComponent?
 
@@ -73,8 +77,13 @@ internal class DocumentationUI(
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane)) {
       imageResolver?.resolveImage(it)
     }
+    editorBackground = MutableStateFlow(editorPane.background)
+    editorPane.addPropertyChangeListener { evt: PropertyChangeEvent ->
+      if (evt.propertyName.let { it == "background" || it == "UI" }) {
+        editorBackground.value = editorPane.background
+      }
+    }
     Disposer.register(this, editorPane)
-    scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
     emitDocContentsScrolledEvents(scrollPane, project)
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
@@ -82,19 +91,20 @@ internal class DocumentationUI(
       border = JBUI.Borders.emptyTop(5)
     }
     val textTrimmer = SwingTextTrimmer.createCenterTrimmer(0.8f)
-    locationLabel = object: JLabel() {
+    locationLabel = object : JLabel() {
       override fun getToolTipText(): String? =
         if (textTrimmer.isTrimmed) text else null
     }.apply {
       iconTextGap = 6
-      border = JBUI.Borders.empty()
+      border = JBUI.Borders.empty(
+        2, 2 + DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
+        2 + DocumentationHtmlUtil.contentOuterPadding, DocumentationHtmlUtil.contentOuterPadding)
       putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
     }
-    editorBackground = MutableStateFlow(editorPane.background)
-    editorPane.addPropertyChangeListener { evt: PropertyChangeEvent ->
-      if (evt.propertyName.let { it == "background" || it == "UI"}) {
-        editorBackground.value = editorPane.background
-      }
+    scrollPane.setViewportView(editorPane, locationLabel)
+    trackDocumentationBackgroundChange(this) {
+      scrollPane.viewport.background = editorPane.background
+      locationLabel.background = editorPane.background
     }
 
     browser.ui = this
@@ -258,9 +268,16 @@ internal class DocumentationUI(
       return false
     }
     editorPane.text = text
-    locationLabel.text = presentation?.locationText
-    locationLabel.toolTipText = presentation?.locationText
-    locationLabel.icon = presentation?.locationIcon
+    if (presentation?.locationText != null) {
+      locationLabel.text = presentation.locationText
+      locationLabel.toolTipText = presentation.locationText
+      locationLabel.icon = presentation.locationIcon
+      locationLabel.isVisible = true
+    }
+    else {
+      locationLabel.text = ""
+      locationLabel.isVisible = false
+    }
     check(myContentUpdates.tryEmit(Unit))
     return true
   }

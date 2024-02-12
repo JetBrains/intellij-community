@@ -2,7 +2,6 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentInnerPadding
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentOuterPadding
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.emitAll
 import java.awt.BorderLayout
 import java.util.function.Supplier
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal class DocumentationPopupUI(
   private val project: Project,
@@ -79,23 +77,15 @@ internal class DocumentationPopupUI(
     gearActions.addSeparator()
     gearActions.addAll(primaryActions)
 
-    val toolbar = toolbarComponent(DefaultActionGroup(editSourceAction, gearActions), editorPane).apply {
-      border = JBUI.Borders.empty()
-    }
-    val bottomPanel = JPanel(BorderLayout()).apply {
-      add(ui.locationLabel, BorderLayout.CENTER)
-      add(toolbar, BorderLayout.EAST)
-      border = JBUI.Borders.empty(2, 2 + contentOuterPadding + contentInnerPadding,
-                                  2 + contentOuterPadding, contentOuterPadding)
+    val corner = toolbarComponent(DefaultActionGroup(editSourceAction, gearActions), editorPane).apply {
+      border = JBUI.Borders.empty(0, 0, contentOuterPadding - 3, contentOuterPadding - 3)
     }
     ui.trackDocumentationBackgroundChange(this) {
-      bottomPanel.background = it
-      toolbar.background = it
+      corner.background = it
     }
-    component = DocumentationPopupPane(ui.scrollPane).apply {
-      add(ui.scrollPane, BorderLayout.CENTER)
-      add(bottomPanel, BorderLayout.SOUTH)
-      ui.switcherToolbarComponent?.let { add(ui.switcherToolbarComponent, BorderLayout.NORTH) }
+    component = DocumentationPopupPane(ui.scrollPane).also { pane ->
+      pane.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
+      ui.switcherToolbarComponent?.let { pane.add(ui.switcherToolbarComponent, BorderLayout.NORTH) }
     }
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
