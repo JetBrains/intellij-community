@@ -100,47 +100,25 @@ internal suspend fun buildDistribution(
       }
     }
 
-    val pluginTasks = listOfNotNull(
-      async {
-        doBuildBundledPlugins(
-          state = state,
-          plugins = pluginLayouts,
-          isUpdateFromSources = isUpdateFromSources,
-          buildPlatformJob = buildPlatformJob,
-          context = context,
-        )
-      },
-      async {
-        buildOsSpecificBundledPlugins(
-          state = state,
-          plugins = pluginLayouts,
-          isUpdateFromSources = isUpdateFromSources,
-          buildPlatformJob = buildPlatformJob,
-          context = context,
-        )
-      },
-      async {
-        buildNonBundledPlugins(
-          pluginsToPublish = state.pluginsToPublish,
-          compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
-          buildPlatformLibJob = buildPlatformJob,
-          state = state,
-          context = context,
-        )
-      },
-    )
-
-    val lists = pluginTasks.awaitAll()
-    val pluginClassPath = lists.map {
-      async { generatePluginClassPath(it) }
-    }.awaitAll().joinToString(separator = "\n")
-
-    for ((_, pluginDir) in getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)) {
-      Files.createDirectories(pluginDir)
-      Files.writeString(pluginDir.resolve("plugin-classpath.txt"), "jarOnly=true\n$pluginClassPath")
+    val buildNonBundledPlugins = async {
+      buildNonBundledPlugins(
+        pluginsToPublish = state.pluginsToPublish,
+        compressPluginArchive = !isUpdateFromSources && context.options.compressZipFiles,
+        buildPlatformLibJob = buildPlatformJob,
+        state = state,
+        context = context,
+      )
     }
 
-    buildPlatformJob.await().asSequence() + lists.flatMap { list -> list.flatMap { it.second } }
+    val bundledPluginItems = buildBundledPluginsForAllPlatforms(
+      state = state,
+      pluginLayouts = pluginLayouts,
+      isUpdateFromSources = isUpdateFromSources,
+      buildPlatformJob = buildPlatformJob,
+      context = context,
+    )
+
+    buildPlatformJob.await().asSequence() + bundledPluginItems + buildNonBundledPlugins.await()
   }.toList()
 
   // must be before reorderJars as these additional plugins maybe required for IDE start-up
@@ -178,6 +156,54 @@ internal suspend fun buildDistribution(
     }
   }
   entries
+}
+
+private suspend fun buildBundledPluginsForAllPlatforms(
+  state: DistributionBuilderState,
+  pluginLayouts: MutableSet<PluginLayout>,
+  isUpdateFromSources: Boolean,
+  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
+  context: BuildContext,
+): List<DistributionFileEntry> {
+  val bundledPluginItems = coroutineScope {
+    listOf(
+      async {
+        doBuildBundledPlugins(
+          state = state,
+          plugins = pluginLayouts,
+          isUpdateFromSources = isUpdateFromSources,
+          buildPlatformJob = buildPlatformJob,
+          context = context,
+        )
+      },
+      async {
+        buildOsSpecificBundledPlugins(
+          state = state,
+          plugins = pluginLayouts,
+          isUpdateFromSources = isUpdateFromSources,
+          buildPlatformJob = buildPlatformJob,
+          context = context,
+        )
+      },
+    )
+  }.map { it.getCompleted() }
+
+  val pluginClassPath = coroutineScope {
+    bundledPluginItems.map {
+      async {
+        generatePluginClassPath(it)
+      }
+    }
+  }.joinToString(separator = "\n") { it.getCompleted() }
+
+  for ((_, pluginDir) in getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)) {
+    withContext(Dispatchers.IO) {
+      Files.createDirectories(pluginDir)
+      Files.writeString(pluginDir.resolve("plugin-classpath.txt"), "jarOnly=true\n$pluginClassPath")
+    }
+  }
+
+  return bundledPluginItems.flatMap { list -> list.flatMap { it.second } }
 }
 
 /**
@@ -316,7 +342,7 @@ suspend fun buildNonBundledPlugins(
   buildPlatformLibJob: Job?,
   state: DistributionBuilderState,
   context: BuildContext,
-): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+): List<DistributionFileEntry> {
   return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope { span ->
     if (pluginsToPublish.isEmpty()) {
       return@useWithScope emptyList()
@@ -403,7 +429,7 @@ suspend fun buildNonBundledPlugins(
     }
 
     mappings
-  }
+  }.flatMap { it.second }
 }
 
 private suspend fun validatePlugin(path: Path, context: BuildContext) {
