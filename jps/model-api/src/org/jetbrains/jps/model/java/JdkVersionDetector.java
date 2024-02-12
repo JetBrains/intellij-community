@@ -70,7 +70,7 @@ public abstract class JdkVersionDetector {
     public @NotNull String displayVersionString() {
       String s = graalVersion == null
                  ? "version " + version
-                 : graalVersion + " (Java " + version + ")";
+                 : graalVersion + " - Java " + version;
       return variant.displayName != null ? variant.displayName + ' ' + s : s;
     }
 
