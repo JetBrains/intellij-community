@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -22,10 +23,36 @@ import javax.swing.Icon
 @ApiStatus.Internal
 object DocumentationHtmlUtil {
 
-  const val CONTENT_OUTER_PADDING = 10
+  @JvmStatic
+  val contentOuterPadding: Int get() = 10
+
   // Should be minimum 2 to compensate mandatory table border width of 2
-  const val CONTENT_INNER_PADDING = 2
-  const val CONTENT_SPACING = 8
+  @JvmStatic
+  val contentInnerPadding: Int get() = 2
+
+  @JvmStatic
+  val contentSpacing: Int get() = 8
+
+  @JvmStatic
+  val docPopupPreferredMinWidth: Int get() = 300
+
+  @JvmStatic
+  val docPopupPreferredMaxWidth: Int get() = 500
+
+  @JvmStatic
+  val docPopupMinWidth: Int get() = 300
+
+  @JvmStatic
+  val docPopupMaxWidth: Int get() = 900
+
+  @JvmStatic
+  val docPopupMaxHeight: Int get() = 500
+
+  @JvmStatic
+  val lookupDocPopupWidth: Int get() = 550
+
+  @JvmStatic
+  val lookupDocPopupMinHeight: Int get() = 300
 
   @JvmStatic
   fun getIconsExtension(iconResolver: Function<in String?, out Icon?>): ExtendableHTMLViewFactory.Extension {
@@ -51,38 +78,41 @@ object DocumentationHtmlUtil {
     @Language("CSS")
     val result = ContainerUtil.newLinkedList(
       """
-        html { padding: 10px 10px 0 10px; margin: 0 }
+        html { padding: ${contentOuterPadding.scaled()}px ${contentOuterPadding.scaled()}px 0 ${contentOuterPadding.scaled()}px; margin: 0 }
         body { padding: 0; margin: 0; }
         pre  { white-space: pre-wrap }
         a { color: $linkColor; text-decoration: none;}
         .$CLASS_DEFINITION, .$CLASS_DEFINITION_SEPARATED {    
-          padding: 0 ${CONTENT_INNER_PADDING}px ${CONTENT_SPACING}px ${CONTENT_INNER_PADDING}px;
+          padding: 0 ${contentInnerPadding.scaled()}px ${contentSpacing.scaled()}px ${contentInnerPadding.scaled()}px;
         }
         .$CLASS_DEFINITION pre, .$CLASS_DEFINITION_SEPARATED pre { 
           margin: 0; padding: 0;
         }
         .$CLASS_CONTENT, .$CLASS_CONTENT_SEPARATED {
-          padding: 0 ${CONTENT_INNER_PADDING}px 0px ${CONTENT_INNER_PADDING}px;
+          padding: 0 ${contentInnerPadding.scaled()}px 0px ${contentInnerPadding.scaled()}px;
           max-width: 100%;
         }
         .$CLASS_SEPARATED, .$CLASS_DEFINITION_SEPARATED, .$CLASS_CONTENT_SEPARATED {
-          margin-bottom: ${CONTENT_SPACING}px;
+          margin-bottom: ${contentSpacing.scaled()}px;
           border-bottom: thin solid $borderColor;
         }
         .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION { 
-          padding: 0 ${CONTENT_INNER_PADDING}px ${CONTENT_SPACING}px ${CONTENT_INNER_PADDING}px;
+          padding: 0 ${contentInnerPadding.scaled()}px ${contentSpacing.scaled()}px ${contentInnerPadding.scaled()}px;
         }
         .$CLASS_GRAYED { color: #909090; display: inline;}
         
-        .$CLASS_SECTIONS { padding: 0 ${CONTENT_INNER_PADDING - 2}px 0 ${CONTENT_INNER_PADDING - 2}px 0; border-spacing: 0; }
+        .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding.scaled() - 2}px 0 ${contentInnerPadding.scaled() - 2}px 0; border-spacing: 0; }
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }
       """.trimIndent()
     )
 
     // Styled code
     val globalScheme = EditorColorsManager.getInstance().globalScheme
-    result.addAll(getDefaultDocCodeStyles(globalScheme, background, CONTENT_SPACING))
-    result.addAll(getDefaultFormattingStyles(CONTENT_SPACING))
+    result.addAll(getDefaultDocCodeStyles(globalScheme, background, contentSpacing.scaled()))
+    result.addAll(getDefaultFormattingStyles(contentSpacing.scaled()))
     return result
   }
+
+  private fun Int.scaled() =
+    JBUIScale.scale(this)
 }

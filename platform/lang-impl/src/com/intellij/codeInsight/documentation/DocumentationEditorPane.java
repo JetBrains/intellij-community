@@ -33,7 +33,7 @@ import java.awt.event.KeyEvent;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneDefaultCssRules;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 import static com.intellij.util.ui.html.UtilsKt.getCssMargin;
@@ -204,15 +204,16 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     // These values were calculated based on experiments with varied content and manual resizing to comfortable width.
     final int contentLengthPreferredSize;
     if (textLength < 200) {
-      contentLengthPreferredSize = JBUIScale.scale(300);
+      contentLengthPreferredSize = getDocPopupPreferredMinWidth();
     }
     else if (textLength > 200 && textLength < 1000) {
-      contentLengthPreferredSize = JBUIScale.scale(300) + JBUIScale.scale(1) * (textLength - 200) * (500 - 300) / (1000 - 200);
+      contentLengthPreferredSize = getDocPopupPreferredMinWidth() +
+                                   (textLength - 200) * (getDocPopupPreferredMaxWidth() - getDocPopupPreferredMinWidth()) / (1000 - 200);
     }
     else {
-      contentLengthPreferredSize = JBUIScale.scale(500);
+      contentLengthPreferredSize = getDocPopupPreferredMaxWidth();
     }
-    return contentLengthPreferredSize;
+    return JBUIScale.scale(contentLengthPreferredSize);
   }
 
   private static @Nullable View findSection(@NotNull View view, @NotNull String sectionClassName) {

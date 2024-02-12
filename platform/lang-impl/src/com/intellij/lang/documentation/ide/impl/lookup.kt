@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.lookupDocPopupMinHeight
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.lookupDocPopupWidth
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
@@ -14,6 +16,7 @@ import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupPositionManager.Position
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.channels.BufferOverflow
@@ -27,9 +30,6 @@ import java.awt.Rectangle
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 import kotlin.math.min
-
-const val LOOKUP_DOCUMENTATION_POPUP_WIDTH = 550
-const val LOOKUP_DOCUMENTATION_POPUP_MIN_HEIGHT = 300
 
 internal fun lookupPopupContext(editor: Editor?): PopupContext? {
   val lookup = LookupManager.getActiveLookup(editor)
@@ -115,8 +115,8 @@ private class LookupPopupBoundsHandler(
   private val lookup: LookupEx,
 ) : BaseAdjustingPopupBoundsHandler(lookup.component) {
   override fun popupBounds(anchor: Component, size: Dimension): Rectangle {
-    val preferredSize = Dimension(LOOKUP_DOCUMENTATION_POPUP_WIDTH,
-                                  min(size.height, max(LOOKUP_DOCUMENTATION_POPUP_MIN_HEIGHT, anchor.height)))
+    val preferredSize = Dimension(scale(lookupDocPopupWidth),
+                                  min(size.height, max(scale(lookupDocPopupMinHeight), anchor.height)))
     val bounds = PositionAdjuster(anchor)
       .adjustBounds(preferredSize, arrayOf(Position.RIGHT, Position.LEFT))
       .applyIf(lookup.isPositionedAboveCaret) {

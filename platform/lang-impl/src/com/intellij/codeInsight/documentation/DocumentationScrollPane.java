@@ -17,9 +17,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.codeInsight.documentation.DocumentationComponent.MAX_DEFAULT;
-import static com.intellij.codeInsight.documentation.DocumentationComponent.MIN_DEFAULT;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
 import static com.intellij.lang.documentation.ide.ui.UiKt.FORCED_WIDTH;
+import static com.intellij.ui.scale.JBUIScale.scale;
 
 @Internal
 public final class DocumentationScrollPane extends JBScrollPane {
@@ -33,8 +33,8 @@ public final class DocumentationScrollPane extends JBScrollPane {
   @Override
   public Dimension getPreferredSize() {
     Integer forcedWidth = UIUtil.getClientProperty(this, FORCED_WIDTH);
-    int minWidth = forcedWidth == null ? MIN_DEFAULT.width() : forcedWidth;
-    return getPreferredSize(minWidth, MAX_DEFAULT.width(), MAX_DEFAULT.height());
+    int minWidth = forcedWidth == null ? scale(getDocPopupMinWidth()) : forcedWidth;
+    return getPreferredSize(minWidth, scale(getDocPopupMaxWidth()), scale(getDocPopupMaxHeight()));
   }
 
   private @NotNull Dimension getPreferredSize(int minWidth, int maxWidth, int maxHeight) {
