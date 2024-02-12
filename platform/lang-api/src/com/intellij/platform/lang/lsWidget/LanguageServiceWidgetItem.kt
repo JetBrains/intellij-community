@@ -9,6 +9,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.LayeredIcon.Companion.layeredIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -25,7 +26,7 @@ abstract class LanguageServiceWidgetItem {
    * or it is not in the `For Current File` popup section at all,
    * then the [statusBarText] property is ignored.
    */
-  abstract val statusBarText: String
+  abstract val statusBarText: @NlsContexts.StatusBarText String
 
   /**
    * A tooltip for the status bar widget label.
@@ -33,7 +34,7 @@ abstract class LanguageServiceWidgetItem {
    * Otherwise, it's ignored.
    * @see statusBarText
    */
-  open val statusBarTooltip: String? = null
+  open val statusBarTooltip: @NlsContexts.Tooltip String? = null
 
   /**
    * If `true` then the Platform will add the error mark to the icon in the status bar,
