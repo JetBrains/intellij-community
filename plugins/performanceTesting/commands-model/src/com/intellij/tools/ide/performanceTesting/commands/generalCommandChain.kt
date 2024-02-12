@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
-import com.intellij.tools.ide.performanceTesting.commands.arguments.MavenArchetypeInfo
+import com.google.gson.Gson
+import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path
@@ -14,6 +15,8 @@ private const val CMD_PREFIX = '%'
 
 const val WARMUP = "WARMUP"
 const val ENABLE_SYSTEM_METRICS = "ENABLE_SYSTEM_METRICS"
+
+val gson = Gson()
 
 fun <T : CommandChain> T.waitForSmartMode(): T = apply {
   addCommand("${CMD_PREFIX}waitForSmart")
@@ -576,16 +579,9 @@ fun <T : CommandChain> T.downloadMavenArtifacts(sources: Boolean = true, docs: B
   addCommand("${CMD_PREFIX}downloadMavenArtifacts $sources $docs")
 }
 
-fun <T : CommandChain> T.addMavenModule(projectName: String,
-                                        parentModuleName: String? = null,
-                                        archetypeInfo: MavenArchetypeInfo? = null): T = apply {
-  val command = mutableListOf("${CMD_PREFIX}addMavenModule")
-  command.add(projectName)
-  command.add(parentModuleName ?: "")
-  command.add(archetypeInfo?.groupId ?: "")
-  command.add(archetypeInfo?.artefactId ?: "")
-  command.add(archetypeInfo?.version ?: "")
-  addCommandWithSeparator("|", *command.toTypedArray())
+fun <T : CommandChain> T.createMavenProject(newMavenProjectDto: NewMavenProjectDto): T = apply {
+  val json = gson.toJson(newMavenProjectDto)
+  addCommand("${CMD_PREFIX}createMavenProject $json")
 }
 
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {
