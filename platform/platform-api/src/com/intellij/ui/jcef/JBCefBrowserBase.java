@@ -785,15 +785,20 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
-        myDevtoolsFrame.dispose();
+        if (myDevtoolsFrame != null) {
+          myDevtoolsFrame.dispose();
+          myDevtoolsFrame = null;
+        }
       }
     });
 
     myDevtoolsFrame.addWindowListener(new WindowAdapter() {
       @Override
       public void windowClosed(WindowEvent e) {
-        myDevtoolsFrame.dispose();
-        myDevtoolsFrame = null;
+        if (myDevtoolsFrame != null) {
+          myDevtoolsFrame.dispose();
+          myDevtoolsFrame = null;
+        }
       }
     });
 
