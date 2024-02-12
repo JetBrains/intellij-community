@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.platform.diagnostic.telemetry.IJNoopTracer;
+import com.google.gson.Gson;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.SpanBuilderWithSystemInfoAttributes;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PerformanceCommand extends AbstractCommand {
 
   private static final String PREFIX = "%";
+  private static final Gson gson = new Gson();
   private final Tracer tracer = isWarmupMode() ? PerformanceTestSpan.WARMUP_TRACER : PerformanceTestSpan.TRACER;
 
   public PerformanceCommand(@NotNull String text, int line) {
@@ -48,4 +49,7 @@ public abstract class PerformanceCommand extends AbstractCommand {
     return spanBuilder.startSpan();
   }
 
+  protected <T> T deserializeOptionsFromJson(String json, Class<T> clazz) {
+    return gson.fromJson(json, clazz);
+  }
 }
