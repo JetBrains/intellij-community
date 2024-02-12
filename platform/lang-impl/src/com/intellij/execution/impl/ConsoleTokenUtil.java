@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -98,6 +99,7 @@ public final class ConsoleTokenUtil {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
+  @Nullable
   public static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
     return m.getUserData(CONTENT_TYPE);
   }
