@@ -133,9 +133,9 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
 }
 
 interface ActivityModelListener : EventListener {
-  fun onItemsLoadingStarted()
-  fun onItemsLoadingStopped(data: ActivityData)
-  fun onDiffDataLoaded(diffData: ActivityDiffData?)
-  fun onFilteringStarted()
-  fun onFilteringStopped(result: Set<ActivityItem>?)
+  fun onItemsLoadingStarted() = Unit
+  fun onItemsLoadingStopped(data: ActivityData) = Unit
+  fun onDiffDataLoaded(diffData: ActivityDiffData?) = Unit
+  fun onFilteringStarted() = Unit
+  fun onFilteringStopped(result: Set<ActivityItem>?) = Unit
 }

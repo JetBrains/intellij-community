@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.find.SearchTextArea
@@ -11,9 +11,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
+import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
@@ -88,11 +90,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
         model.setSelection(selection)
       }
       override fun onEnter(): Boolean {
-        editorDiffPreview.performDiffAction()
+        showDiff()
         return true
       }
       override fun onDoubleClick(): Boolean {
-        editorDiffPreview.performDiffAction()
+        showDiff()
         return true
       }
     }, this)
@@ -175,6 +177,8 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return LocalHistoryBundle.message("activity.list.empty.text.in.scope", activityScope.presentableName)
   }
 
+  internal fun showDiff() = editorDiffPreview.performDiffAction()
+
   override fun dispose() {
     coroutineScope.cancel()
   }
@@ -189,6 +193,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       }
 
       val activityView = ActivityView(project, gateway, activityScope)
+      if (Registry.`is`("lvcs.open.diff.automatically") && !VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) {
+        activityView.openDiffWhenLoaded()
+      }
 
       val content = ContentFactory.getInstance().createContent(activityView, activityScope.presentableName, false)
       content.preferredFocusableComponent = activityView.preferredFocusedComponent
@@ -198,6 +205,23 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       ActivityToolWindow.onContentVisibilityChanged(project, content, activityView) { isVisible ->
         activityView.model.setVisible(isVisible)
       }
+    }
+
+    private fun ActivityView.openDiffWhenLoaded() {
+      val disposable = Disposer.newDisposable()
+      Disposer.register(this, disposable)
+      model.addListener(object : ActivityModelListener {
+        override fun onItemsLoadingStopped(data: ActivityData) {
+          if (data.items.isEmpty()) Disposer.dispose(disposable)
+        }
+
+        override fun onDiffDataLoaded(diffData: ActivityDiffData?) {
+          if (diffData != null) {
+            showDiff()
+            Disposer.dispose(disposable)
+          }
+        }
+      }, disposable)
     }
 
     @JvmStatic
