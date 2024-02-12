@@ -29,6 +29,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
   private val sessionStartTime: Long = System.currentTimeMillis()
   private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
   private val modelProviderWithCache: SearchEverywhereModelProvider = SearchEverywhereModelProvider()
+  private val featureCache = SearchEverywhereMlFeaturesCache()
 
   // context features are calculated once per Search Everywhere session
   val cachedContextInfo: SearchEverywhereMLContextInfo = SearchEverywhereMLContextInfo(project)
@@ -72,7 +73,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
       val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(prevState.tabId)
       logger.onSearchRestarted(
         project, sessionId, shouldLogFeatures,
-        itemIdProvider, cachedContextInfo, prevState,
+        itemIdProvider, cachedContextInfo, prevState, featureCache,
         prevTimeToResult, mixedListInfo, previousElementsProvider
       )
     }
@@ -97,7 +98,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
       val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
       logger.onItemSelected(
         project, sessionId, shouldLogFeatures, itemIdProvider,
-        state, indexes, selectedItems, closePopup,
+        state, featureCache, indexes, selectedItems, closePopup,
         performanceTracker.timeElapsed, mixedListInfo,
         elementsProvider
       )
@@ -116,7 +117,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
       val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
       logger.onSearchFinished(
         project, sessionId, shouldLogFeatures, itemIdProvider,
-        state, performanceTracker.timeElapsed, mixedListInfo,
+        state, featureCache, performanceTracker.timeElapsed, mixedListInfo,
         elementsProvider
       )
     }

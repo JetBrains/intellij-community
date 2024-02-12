@@ -27,7 +27,6 @@ private const val REPORTED_ITEMS_LIMIT = 50
 @IntellijInternalApi
 object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   private val contributorFeaturesProvider = SearchEverywhereContributorFeaturesProvider()
-  private val featuresCache = SearchEverywhereMlFeaturesCache()
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -36,6 +35,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                               shouldLogFeatures: Boolean,
                               elementIdProvider: SearchEverywhereMlItemIdProvider,
                               cache: SearchEverywhereMlSearchState,
+                              featureCache: SearchEverywhereMlFeaturesCache,
                               selectedIndices: IntArray,
                               selectedItems: List<Any>,
                               closePopup: Boolean,
@@ -53,6 +53,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       eventId = SESSION_FINISHED,
       seSessionId = seSessionId,
       cache = cache,
+      featureCache = featureCache,
       shouldLogFeatures = shouldLogFeatures,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
@@ -67,6 +68,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                 shouldLogFeatures: Boolean,
                                 elementIdProvider: SearchEverywhereMlItemIdProvider,
                                 cache: SearchEverywhereMlSearchState,
+                                featureCache: SearchEverywhereMlFeaturesCache,
                                 timeToFirstResult: Int,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
                                 elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
@@ -78,6 +80,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       eventId = SESSION_FINISHED,
       seSessionId = seSessionId,
       cache = cache,
+      featureCache = featureCache,
       shouldLogFeatures = shouldLogFeatures,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
@@ -92,6 +95,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                  elementIdProvider: SearchEverywhereMlItemIdProvider,
                                  context: SearchEverywhereMLContextInfo,
                                  cache: SearchEverywhereMlSearchState,
+                                 featureCache: SearchEverywhereMlFeaturesCache,
                                  timeToFirstResult: Int,
                                  mixedListInfo: SearchEverywhereMixedListInfo,
                                  elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
@@ -109,6 +113,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       eventId = SEARCH_RESTARTED,
       seSessionId = seSessionId,
       cache = cache,
+      featureCache = featureCache,
       shouldLogFeatures = shouldLogFeatures,
       timeToFirstResult = timeToFirstResult,
       mixedListInfo = mixedListInfo,
@@ -122,6 +127,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              eventId: VarargEventId,
                              seSessionId: Int,
                              cache: SearchEverywhereMlSearchState,
+                             featureCache: SearchEverywhereMlFeaturesCache,
                              shouldLogFeatures: Boolean,
                              timeToFirstResult: Int,
                              mixedListInfo: SearchEverywhereMixedListInfo,
@@ -149,7 +155,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       )
 
       addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
-      addAll(getElementsEvents(project, shouldLogFeatures, elements, mixedListInfo, elementIdProvider))
+      addAll(getElementsEvents(project, shouldLogFeatures, featureCache, elements, mixedListInfo, elementIdProvider))
     }
   }
 
@@ -162,6 +168,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   private fun getElementsEvents(project: Project?, shouldLogFeatures: Boolean,
+                                featureCache: SearchEverywhereMlFeaturesCache,
                                 elements: List<SearchEverywhereFoundElementInfoWithMl>,
                                 mixedListInfo: SearchEverywhereMixedListInfo,
                                 elementIdProvider: SearchEverywhereMlItemIdProvider): List<EventPair<*>> {
@@ -176,7 +183,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       }
     }
 
-    val updateEvents = featuresCache.getUpdateEventsAndCache(project, shouldLogFeatures, elements.take(REPORTED_ITEMS_LIMIT),
+    val updateEvents = featureCache.getUpdateEventsAndCache(project, shouldLogFeatures, elements.take(REPORTED_ITEMS_LIMIT),
                                                              contributorFeaturesProvider, elementIdProvider)
     val events = listOf(
       IS_PROJECT_DISPOSED_KEY.with(updateEvents == null)

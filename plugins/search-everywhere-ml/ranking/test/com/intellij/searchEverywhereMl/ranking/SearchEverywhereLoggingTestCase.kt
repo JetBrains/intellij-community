@@ -72,11 +72,12 @@ interface MockSearchEverywhereProvider {
 }
 
 
-fun underMaskedExtensionPoints(procedure: ExtensionPointMaskManager.() -> Unit) {
+fun <T> underMaskedExtensionPoints(procedure: ExtensionPointMaskManager.() -> T): T {
   val manager = ExtensionPointMaskManager()
   manager.maskExtensionPoint(SearchEverywhereMlContributorReplacement.EP_NAME, emptyList())
-  procedure.invoke(manager)
+  val result = procedure.invoke(manager)
   manager.dispose()
+  return result
 }
 
 class ExtensionPointMaskManager {

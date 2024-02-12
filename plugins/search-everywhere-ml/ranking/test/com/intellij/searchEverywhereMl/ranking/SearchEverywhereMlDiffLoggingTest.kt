@@ -22,31 +22,52 @@ import com.intellij.searchEverywhereMl.ranking.id.ElementKeyForIdProvider
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Assert
 import org.junit.Test
+import org.junit.jupiter.api.Assertions
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCase() {
-  private val mockRankingService by lazy { MockSearchEverywhereMlService() }
-
   @Test
   fun `checks with single element that only changed data is recorded`() {
-    underMaskedExtensionPoints {
-      SearchEverywhereMlService.EP_NAME maskedWith listOf(mockRankingService)
+    val events = underMaskedExtensionPoints {
+      SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
       ElementKeyForIdProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
 
-      val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
+      MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
         type("regist")
       }
-
-      val iterator = events.iterator()
-      iterator.next()  // SE opened event
-
-      checkItemFirstReport(iterator.next())
-      checkItemSecondReport(iterator.next())
-      checkItemThirdReport(iterator.next())
-      checkItemFourthReport(iterator.next())
     }
+
+    val iterator = events.iterator()
+    iterator.next()  // SE opened event
+
+    checkItemFirstReport(iterator.next())
+    checkItemSecondReport(iterator.next())
+    checkItemThirdReport(iterator.next())
+    checkItemFourthReport(iterator.next())
+  }
+
+  @Test
+  fun `check that no diff logging applies between two search everywhere runs`() {
+    // This test addresses IDEA-345677
+    val firstSERunEvents = underMaskedExtensionPoints {
+      SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
+      ElementKeyForIdProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
+
+      MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
+    }
+
+    val secondSERunEvents = underMaskedExtensionPoints {
+      SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
+      ElementKeyForIdProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
+
+      MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
+    }
+
+    // We expect both first reports to be exactly the same
+    Assertions.assertEquals(firstSERunEvents.firstEventWithCollectedItems().event.data[COLLECTED_RESULTS_DATA_KEY].first(),
+                            secondSERunEvents.firstEventWithCollectedItems().event.data[COLLECTED_RESULTS_DATA_KEY].first())
   }
 
   private fun checkItemFirstReport(event: LogEvent) {
