@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.codehaus.stax2.XMLStreamReader2;
@@ -64,6 +64,10 @@ public final class SafeStAXStreamBuilder {
       }
     }
     return document;
+  }
+
+  public static @NotNull Element buildNsUnawareAndClose(@NotNull XMLStreamReader2 stream) throws XMLStreamException {
+    return build(stream, true, false, FACTORY);
   }
 
   public static Element build(@NotNull XMLStreamReader2 stream,

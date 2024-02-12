@@ -40,7 +40,9 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
+@JvmField
 internal val LOG: Logger = logger<ComponentStoreImpl>()
+
 private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
 
 private val isUseLoadedStateAsExistingVmProperty = System.getProperty("use.loaded.state.as.existing", "true").toBoolean()
@@ -576,7 +578,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     try {
       val xmlStreamReader = createXmlStreamReader(data)
       val element = try {
-        SafeStAXStreamBuilder.build(xmlStreamReader, true, false, SafeStAXStreamBuilder.FACTORY)
+        SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
       }
       finally {
         xmlStreamReader.close()

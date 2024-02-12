@@ -214,7 +214,7 @@ private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controll
       val xmlData = item.get() ?: return GetResult.resolved(null)
       val xmlStreamReader = createXmlStreamReader(xmlData)
       try {
-        return GetResult.resolved(SafeStAXStreamBuilder.build(xmlStreamReader, true, false, SafeStAXStreamBuilder.FACTORY))
+        return GetResult.resolved(SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader))
       }
       finally {
         xmlStreamReader.close()

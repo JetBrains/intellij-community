@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
+import com.intellij.openapi.components.impl.stores.loadDataAndDetectLineSeparator
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.SafeStAXStreamBuilder
@@ -194,14 +194,14 @@ open class FileBasedStorage(
         lineSeparator = LineSeparator.LF
         val xmlStreamReader = createXmlStreamReader(Files.newInputStream(file))
         try {
-          return SafeStAXStreamBuilder.build(xmlStreamReader, true, false, SafeStAXStreamBuilder.FACTORY)
+          return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
         }
         finally {
           xmlStreamReader.close()
         }
       }
       else {
-        val (element, separator) = ComponentStorageUtil.load(Files.readAllBytes(file))
+        val (element, separator) = loadDataAndDetectLineSeparator(Files.readAllBytes(file))
         lineSeparator = separator ?: if (isUseXmlProlog) LineSeparator.getSystemLineSeparator() else LineSeparator.LF
         return element
       }
