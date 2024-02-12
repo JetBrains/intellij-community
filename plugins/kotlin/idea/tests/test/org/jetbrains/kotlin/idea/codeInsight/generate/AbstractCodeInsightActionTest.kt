@@ -35,10 +35,11 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
 
     }
 
-    protected open fun testAction(action: AnAction, forced: Boolean): Presentation {
+    protected open fun testAction(action: AnAction): Presentation {
         val e = TestActionEvent.createTestEvent(action)
-        if (ActionUtil.lastUpdateAndCheckDumb(action, e, true) || forced) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action,e)
+        ActionUtil.performDumbAwareUpdate(action, e, false)
+        if (e.presentation.isEnabled) {
+            ActionUtil.performActionDumbAwareWithCallbacks(action, e)
         }
         return e.presentation
     }
@@ -83,17 +84,14 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
             val action = createAction(fileText)
 
             val isApplicableExpected = !InTextDirectivesUtils.isDirectiveDefined(fileText, "// NOT_APPLICABLE")
-            val isForced = InTextDirectivesUtils.isDirectiveDefined(fileText, "// FORCED")
 
-            val presentation = testAction(action, isForced)
-            if (!isForced) {
-                TestCase.assertEquals(isApplicableExpected, presentation.isEnabled)
-            }
+            val presentation = testAction(action)
+            TestCase.assertEquals(isApplicableExpected, presentation.isEnabled)
 
             assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
 
-            if (isForced || isApplicableExpected) {
-                TestCase.assertTrue(afterFile.exists())
+            if (isApplicableExpected) {
+                assertTrue(afterFile.exists())
                 myFixture.checkResult(FileUtil.loadFile(afterFile, true))
                 checkExtra()
             }

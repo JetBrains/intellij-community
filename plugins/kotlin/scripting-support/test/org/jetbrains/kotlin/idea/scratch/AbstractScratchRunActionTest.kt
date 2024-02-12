@@ -275,8 +275,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     protected fun launchAction(action: AnAction) {
         val e = getActionEvent(action)
-        Assert.assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true))
-        Assert.assertTrue(e.presentation.isEnabled && e.presentation.isVisible)
+        ActionUtil.performDumbAwareUpdate(action, e, false)
+        Assert.assertTrue(e.presentation.isEnabledAndVisible)
         ActionUtil.performActionDumbAwareWithCallbacks(action, e)
     }
 

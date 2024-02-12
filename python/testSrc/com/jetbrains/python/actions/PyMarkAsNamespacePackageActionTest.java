@@ -3,9 +3,9 @@ package com.jetbrains.python.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.TestActionEvent;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonTestUtil;
@@ -113,14 +113,16 @@ public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
   }
 
   private @NotNull Presentation doLaunchAction(@NotNull VirtualFile directory) {
-    MapDataContext mapDataContext = new MapDataContext();
-    mapDataContext.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[] {directory});
-    mapDataContext.put(CommonDataKeys.PROJECT, myFixture.getProject());
-    mapDataContext.put(PlatformCoreDataKeys.MODULE, myFixture.getModule());
+    DataContext dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[] {directory})
+      .add(CommonDataKeys.PROJECT, myFixture.getProject())
+      .add(PlatformCoreDataKeys.MODULE, myFixture.getModule())
+      .build();
 
     AnAction action = new PyMarkAsNamespacePackageAction();
-    AnActionEvent e = TestActionEvent.createTestEvent(action, mapDataContext);
-    if (ActionUtil.lastUpdateAndCheckDumb(action, e, true)) {
+    AnActionEvent e = TestActionEvent.createTestEvent(action, dataContext);
+    ActionUtil.performDumbAwareUpdate(action, e, false);
+    if (e.getPresentation().isEnabledAndVisible()) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, e);
     }
 
