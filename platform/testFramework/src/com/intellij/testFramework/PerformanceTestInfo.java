@@ -138,6 +138,25 @@ public class PerformanceTestInfo {
     return this;
   }
 
+  /**
+   * Instruct to publish Telemetry meters (that is stored in .csv files)
+   * Eg:
+   * <pre>
+   *   {@code
+   *     val counter: AtomicLong = AtomicLong()
+   *     val counterMeter = TelemetryManager.getMeter(MY_SCOPE)
+   *       .counterBuilder("custom.counter")
+   *       .buildWithCallback { it.record(counter.get()) }
+   *
+   *     val meterCollector = OpenTelemetryMeterCollector(MetricsSelectionStrategy.SUM) { it.key.contains("custom") }
+   *
+   *     PlatformTestUtil.newPerformanceTest("my perf test") {
+   *       counter.incrementAndGet()
+   *     }
+   *       .withTelemetryMeters(meterCollector)
+   *       .start()}
+   * </pre>
+   */
   @Contract(pure = true) // to warn about not calling .start() in the end
   public PerformanceTestInfo withTelemetryMeters(OpenTelemetryMeterCollector meterCollector) {
     this.meterCollector = meterCollector;
@@ -206,10 +225,13 @@ public class PerformanceTestInfo {
    * Default pipeline:
    * <ul>
    *     <li>executes warmup phase - run the perf test {@link #warmupIterations} times before final measurements</li>
-   *     <li>executes final measurements {@link #maxMeasurementAttempts} times</li>
-   *     <li>artifacts(metrics, logs) can be found in ./system/teamcity-artifacts-for-publish/</li>
+   *     <li>executes perf test with final measurements {@link #maxMeasurementAttempts} times</li>
+   *     <li>publish metrics and artifacts(logs, etc.) in {@code ./system/teamcity-artifacts-for-publish/}</li>
    * </ul>
    * <br/>
+   * By default only OpenTelemetry spans will be published. (from the {@code ./system/test/log/opentelemtry.json} file).<br/>
+   * To enable publishing of meters (from the {@code ./system/test/log/open-telemetry-metrics.*.csv}) use {@link #withTelemetryMeters(OpenTelemetryMeterCollector)}.<br/>
+   * <p/>
    * Considering metrics: better to have a test that produces metrics in seconds, rather milliseconds.<br/>
    * This way degradation will be easier to detect and metric deviation from the baseline will be easier to notice.
    * <p/>
