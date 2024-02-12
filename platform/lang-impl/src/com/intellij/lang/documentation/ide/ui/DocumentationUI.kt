@@ -13,7 +13,7 @@ import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.hint.DefinitionSwitcher
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
-import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT_ONLY
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT
 import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
@@ -39,13 +39,11 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
+import java.beans.PropertyChangeEvent
 import javax.swing.*
 
 internal class DocumentationUI(
@@ -64,6 +62,7 @@ internal class DocumentationUI(
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
+  private val editorBackground: MutableStateFlow<Color>
   private val myContentUpdates = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val contentUpdates: SharedFlow<Unit> = myContentUpdates.asSharedFlow()
   private val myContentSizeUpdates = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -84,15 +83,18 @@ internal class DocumentationUI(
     }
     val textTrimmer = SwingTextTrimmer.createCenterTrimmer(0.8f)
     locationLabel = object: JLabel() {
-      override fun getToolTipText(): String? {
-        return if (textTrimmer.isTrimmed)
-          text else
-            null;
-      }
+      override fun getToolTipText(): String? =
+        if (textTrimmer.isTrimmed) text else null
     }.apply {
       iconTextGap = 6
-      border = JBUI.Borders.empty(0, 10, 5, 0)
+      border = JBUI.Borders.empty()
       putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
+    }
+    editorBackground = MutableStateFlow(editorPane.background)
+    editorPane.addPropertyChangeListener { evt: PropertyChangeEvent ->
+      if (evt.propertyName.let { it == "background" || it == "UI"}) {
+        editorBackground.value = editorPane.background
+      }
     }
 
     browser.ui = this
@@ -163,6 +165,19 @@ internal class DocumentationUI(
     }
   }
 
+  fun trackDocumentationBackgroundChange(disposable: Disposable, onChange: (Color) -> Unit) {
+    val job = cs.launch {
+      editorBackground.collectLatest {
+        withContext(Dispatchers.EDT) {
+          onChange(it)
+        }
+      }
+    }
+    Disposer.register(disposable) {
+      job.cancel()
+    }
+  }
+
   private fun clearImages() {
     imageResolver = null
   }
@@ -228,7 +243,7 @@ internal class DocumentationUI(
 
   private fun message(message: @Nls String): @Nls String {
     return HtmlChunk.div()
-      .setClass(CLASS_CONTENT_ONLY)
+      .setClass(CLASS_CONTENT)
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")

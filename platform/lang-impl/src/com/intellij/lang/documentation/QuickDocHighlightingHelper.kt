@@ -272,8 +272,8 @@ object QuickDocHighlightingHelper {
 
   @Internal
   @JvmStatic
-  fun getDefaultFormattingStyles(): List<String> {
-    val fontSize = StartupUiUtil.labelFont.getSize()
+  fun getDefaultFormattingStyles(spacing: Int): List<String> {
+    val fontSize = StartupUiUtil.labelFont.size
     return listOf(
       "h6 { font-size: ${fontSize + 2}}",
       "h5 { font-size: ${fontSize + 4}}",
@@ -281,17 +281,14 @@ object QuickDocHighlightingHelper {
       "h3 { font-size: ${fontSize + 8}}",
       "h2 { font-size: ${fontSize + 10}}",
       "h1 { font-size: ${fontSize + 12}}",
-      "h1, h2, h3, h4, h5, h6 {margin-top: 0; margin-bottom: 0; padding-top: 6}",
-      "p { padding: 6px 0 2px 0; }",
-      "ol { padding: 0px; margin-top: 6px; margin-bottom: 2px; }",
-      "ul { padding: 0px; margin-top: 6px; margin-bottom: 2px; }",
+      "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
+      "p, ol, ul { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
       "li { padding: 1px 0 2px 0; }",
-      "li p { padding-top: 0 }",
-      "table p { padding-bottom: 0}",
+      "li p { padding-top: 0; padding-bottom: 0; }",
       "th { text-align: left; }",
-      "tr { margin: 0 0 0 0; padding: 0 0 0 0; }",
-      "td { margin: 4px 0 0 0; padding: 2 0 2 0; }",
-      "td p { padding-top: 0 }",
+      "tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }",
+      "td { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
+      "td p { padding-top: 0; padding-bottom: 0; }",
       "td pre { padding: 1px 0 0 0; margin: 0 0 0 0 }",
       ".$CLASS_CENTERED { text-align: center}",
     )
@@ -302,14 +299,16 @@ object QuickDocHighlightingHelper {
   fun getDefaultDocCodeStyles(
     colorScheme: EditorColorsScheme,
     editorPaneBackgroundColor: Color,
+    spacing: Int,
   ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
     colorScheme, editorPaneBackgroundColor,
-    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT_ONLY div:not(.$CLASS_BOTTOM)", ".$CLASS_SECTIONS"),
-    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_ONLY code", ".$CLASS_DEFINITION_ONLY pre"),
+    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_SECTIONS"),
+    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code", ".$CLASS_DEFINITION_SEPARATED pre", ".$CLASS_BOTTOM code"),
     DocumentationSettings.isCodeBackgroundEnabled()
     && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
     DocumentationSettings.isCodeBackgroundEnabled()
     && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+    "0 0 ${spacing}px 0"
   )
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,

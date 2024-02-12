@@ -11,9 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 public interface DocumentationMarkup {
 
   @ApiStatus.Internal String CLASS_DEFINITION = "definition";
-  @ApiStatus.Internal String CLASS_DEFINITION_ONLY = "definition-only";
+  @ApiStatus.Internal String CLASS_DEFINITION_SEPARATED = "definition-separated";
   @ApiStatus.Internal String CLASS_CONTENT = "content";
-  @ApiStatus.Internal String CLASS_CONTENT_ONLY = "content-only";
   @ApiStatus.Internal String CLASS_CONTENT_SEPARATED = "content-separated";
   @ApiStatus.Internal String CLASS_SEPARATED = "separated";
   @ApiStatus.Internal String CLASS_SECTIONS = "sections";
@@ -21,7 +20,6 @@ public interface DocumentationMarkup {
   @ApiStatus.Internal String CLASS_GREYED = "greyed";
   @ApiStatus.Internal String CLASS_CENTERED = "centered";
   @ApiStatus.Internal String CLASS_BOTTOM = "bottom";
-  @ApiStatus.Internal String CLASS_BOTTOM_NO_CONTENT = "bottom-no-content";
   @ApiStatus.Internal String CLASS_DOWNLOAD_DOCUMENTATION = "download-documentation";
 
   @NlsSafe String DEFINITION_START = "<div class='" + CLASS_DEFINITION + "'><pre>";

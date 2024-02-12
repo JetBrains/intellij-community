@@ -2,6 +2,8 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.CONTENT_INNER_PADDING
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.CONTENT_OUTER_PADDING
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
@@ -83,6 +85,12 @@ internal class DocumentationPopupUI(
     val bottomPanel = JPanel(BorderLayout()).apply {
       add(ui.locationLabel, BorderLayout.CENTER)
       add(toolbar, BorderLayout.EAST)
+      border = JBUI.Borders.empty(2, 2 + CONTENT_OUTER_PADDING + CONTENT_INNER_PADDING,
+                                  2 + CONTENT_OUTER_PADDING, CONTENT_OUTER_PADDING)
+    }
+    ui.trackDocumentationBackgroundChange(this) {
+      bottomPanel.background = it
+      toolbar.background = it
     }
     component = DocumentationPopupPane(ui.scrollPane).apply {
       add(ui.scrollPane, BorderLayout.CENTER)

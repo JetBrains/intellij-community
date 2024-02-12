@@ -79,6 +79,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -1905,28 +1906,52 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
     text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
     text = replaceIgnoreQuotesType(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
-    boolean hasContent = containsIgnoreQuotesType(text, CONTENT_START);
-    if (!hasContent) {
-      if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
-        int bodyStart = findContentStart(text);
-        if (bodyStart > 0) {
-          text = text.substring(0, bodyStart) +
-                 CONTENT_START +
-                 text.substring(bodyStart) +
-                 CONTENT_END;
-        }
-        else {
-          text = CONTENT_START + text + CONTENT_END;
-        }
-        hasContent = true;
+
+    int definitionPos = indexOfIgnoreQuotesType(text, "class='" + CLASS_DEFINITION + "'");
+    int contentPos = indexOfIgnoreQuotesType(text, "class='" + CLASS_CONTENT + "'");
+    int sectionsPos = indexOfIgnoreQuotesType(text, "class='" + CLASS_SECTIONS + "'");
+    int bottomPos = indexOfIgnoreQuotesType(
+      text.substring(StreamEx.of(definitionPos, contentPos, sectionsPos).filter(it -> it >= 0).max(Integer::compareTo).orElse(0)),
+      "class='" + CLASS_BOTTOM);
+
+    boolean hasDefinition = definitionPos >= 0;
+    boolean hasContent = contentPos >= 0;
+    boolean hasSections = sectionsPos >= 0;
+    boolean hasDownloadsSection = downloadDocumentationActionLink != null;
+    boolean hasBottom = bottomPos >= 0 || location != null || links != null;
+
+    if (!hasContent && !hasDefinition && !hasSections) {
+      int bodyStart = findContentStart(text);
+      if (bodyStart > 0) {
+        text = text.substring(0, bodyStart) +
+               CONTENT_START +
+               text.substring(bodyStart) +
+               CONTENT_END;
       }
-      else if (!containsIgnoreQuotesType(text, SECTIONS_START)) {
-        text = replaceIgnoreQuotesType(text, DEFINITION_START, "<div class='" + CLASS_DEFINITION_ONLY + "'><pre>");
+      else {
+        text = CONTENT_START + text + CONTENT_END;
+      }
+      hasContent = true;
+    }
+    else if (hasContent) {
+      // Ensure content starts with <p> for proper padding
+      int nextChar = text.indexOf(">", contentPos) + 1;
+      if (nextChar > 0) {
+        while (nextChar < text.length() && Character.isWhitespace(text.charAt(nextChar))) {
+          nextChar++;
+        }
+        //noinspection HardCodedStringLiteral
+        if (!text.startsWith("<p", nextChar) && !text.startsWith("<div", nextChar)) {
+          text = text.substring(0, nextChar) + "<p>" + text.substring(nextChar);
+        }
       }
     }
-    if (!containsIgnoreQuotesType(text, DEFINITION_START)) {
-      text = replaceIgnoreQuotesType(text, "class='" + CLASS_CONTENT + "'", "class='" + CLASS_CONTENT_ONLY + "'");
+
+    if (hasDefinition && (hasContent || hasSections || hasDownloadsSection || hasBottom)) {
+      text = replaceIgnoreQuotesType(text, "class='" + CLASS_DEFINITION + "'",
+                                     "class='" + CLASS_DEFINITION_SEPARATED + "'");
     }
+
     if (downloadDocumentationActionLink != null) {
       text += HtmlChunk.div()
         .children(
@@ -1937,21 +1962,25 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         .setClass(CLASS_DOWNLOAD_DOCUMENTATION);
     }
     if (location != null) {
-      text += getBottom(hasContent).child(location);
+      text += getBottom().child(location);
     }
     if (links != null) {
-      text += getBottom(location != null).child(links);
+      text += getBottom().child(links);
     }
     //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
-    text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p))", "$1");
+    text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p|tr|td))", "$1");
     text = addExternalLinksIcon(text);
     return text;
   }
 
-  private static boolean containsIgnoreQuotesType(@NotNull String text, @NotNull String substring) {
-    return text.contains(substring)
-           || text.contains(substring.replace("\"", "'"))
-           || text.contains(substring.replace("'", "\""));
+  private static int indexOfIgnoreQuotesType(@NotNull String text, @NotNull String substring) {
+    return StreamEx.of(
+        text.indexOf(substring),
+        text.indexOf(substring.replace("\"", "'")),
+        text.indexOf(substring.replace("'", "\""))
+      ).filter(it -> it >= 0)
+      .min(Integer::compareTo)
+      .orElse(-1);
   }
 
   private static @NlsSafe @NotNull String replaceIgnoreQuotesType(@NotNull String text,
@@ -2080,8 +2109,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return -1;
   }
 
-  private static @NotNull HtmlChunk.Element getBottom(boolean hasContent) {
-    return HtmlChunk.div().setClass(hasContent ? CLASS_BOTTOM : CLASS_BOTTOM_NO_CONTENT);
+  private static @NotNull HtmlChunk.Element getBottom() {
+    return HtmlChunk.div().setClass(CLASS_BOTTOM);
   }
 
   private static final Pattern EXTERNAL_LINK_PATTERN = Pattern.compile("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)");

@@ -31,6 +31,7 @@ object StyleSheetRulesProviderForCodeHighlighting {
     largeCodeFontSizeSelectors: List<String>,
     enableInlineCodeBackground: Boolean,
     enableCodeBlocksBackground: Boolean,
+    codeBlockMargin: String,
     preferredBackgroundColor: Color? = null
   ): List<String> {
     val result = mutableListOf<String>()
@@ -82,7 +83,7 @@ object StyleSheetRulesProviderForCodeHighlighting {
     }
     if (enableCodeBlocksBackground) {
       result.add("div.styled-code $codeColorStyle")
-      result.add("div.styled-code {  margin: 5px 0px 5px 10px; padding: 6px; }")
+      result.add("div.styled-code {  margin: $codeBlockMargin; padding: 6px 6px 6px 10px; }")
       result.add("div.styled-code pre { padding: 0px; margin: 0px }")
     }
     return result

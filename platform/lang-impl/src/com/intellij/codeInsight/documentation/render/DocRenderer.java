@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationFontSize;
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
@@ -373,11 +374,11 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
         "." + CLASS_SECTIONS + " {border-spacing: 0}" +
         "." + CLASS_SECTION + " {padding-right: 5; white-space: nowrap}" +
-        "." + CLASS_CONTENT + " {padding: 2 0 2 0}" +
+        "." + CLASS_CONTENT + " {padding: 0 2px " + DocumentationHtmlUtil.CONTENT_SPACING + "px 0}" +
         (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
         StringUtil.join(QuickDocHighlightingHelper.getDefaultDocCodeStyles(
-          colorsScheme, colorsScheme.getDefaultBackground()), "\n") +
-        StringUtil.join(QuickDocHighlightingHelper.getDefaultFormattingStyles(), "\n");
+          colorsScheme, colorsScheme.getDefaultBackground(), DocumentationHtmlUtil.CONTENT_SPACING), "\n") +
+        StringUtil.join(QuickDocHighlightingHelper.getDefaultFormattingStyles(DocumentationHtmlUtil.CONTENT_SPACING), "\n");
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       if (!useTipsKit) {
         ourCachedStyleSheet = result;
