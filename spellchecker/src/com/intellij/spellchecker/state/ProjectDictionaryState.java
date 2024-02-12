@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -12,6 +12,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,22 +24,23 @@ import java.util.Set;
 public final class ProjectDictionaryState implements PersistentStateComponent<ProjectDictionaryState> {
   @Property(surroundWithTag = false)
   @XCollection(elementTypes = DictionaryState.class)
-  public List<DictionaryState> dictionaryStates = new ArrayList<>();
+  public @Unmodifiable List<DictionaryState> dictionaryStates = new ArrayList<>();
 
   private ProjectDictionary projectDictionary;
 
-  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher =
+  private final EventDispatcher<DictionaryStateListener> dictListenerEventDispatcher =
     EventDispatcher.create(DictionaryStateListener.class);
 
   @Transient
   public void setProjectDictionary(ProjectDictionary projectDictionary) {
-    dictionaryStates.clear();
+    List<DictionaryState> dictionaryStates = new ArrayList<>();
     Set<EditableDictionary> projectDictionaries = projectDictionary.getDictionaries();
     if (projectDictionaries != null) {
       for (EditableDictionary dic : projectDictionary.getDictionaries()) {
         dictionaryStates.add(new DictionaryState(dic));
       }
     }
+    this.dictionaryStates = dictionaryStates;
   }
 
   @Transient
@@ -66,6 +68,7 @@ public final class ProjectDictionaryState implements PersistentStateComponent<Pr
 
   private void retrieveProjectDictionaries() {
     Set<EditableDictionary> dictionaries = new HashSet<>();
+    List<DictionaryState> dictionaryStates = this.dictionaryStates;
     if (dictionaryStates != null) {
       for (DictionaryState dictionaryState : dictionaryStates) {
         dictionaryState.loadState(dictionaryState);
@@ -73,7 +76,7 @@ public final class ProjectDictionaryState implements PersistentStateComponent<Pr
       }
     }
     projectDictionary = new ProjectDictionary(dictionaries);
-    myDictListenerEventDispatcher.getMulticaster().dictChanged(projectDictionary);
+    dictListenerEventDispatcher.getMulticaster().dictChanged(projectDictionary);
   }
 
   @Override
@@ -82,6 +85,6 @@ public final class ProjectDictionaryState implements PersistentStateComponent<Pr
   }
 
   public void addProjectDictListener(DictionaryStateListener listener) {
-    myDictListenerEventDispatcher.addListener(listener);
+    dictListenerEventDispatcher.addListener(listener);
   }
 }

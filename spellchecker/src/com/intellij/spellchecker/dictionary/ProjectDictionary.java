@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.containers.CollectionFactory;
@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class ProjectDictionary implements EditableDictionary {
-  @NonNls private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
+  private static final @NonNls String DEFAULT_CURRENT_USER_NAME = "default.user";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
   private String activeName;
   private Set<EditableDictionary> dictionaries;
@@ -24,9 +24,8 @@ public final class ProjectDictionary implements EditableDictionary {
     this.dictionaries = dictionaries;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return DEFAULT_PROJECT_DICTIONARY_NAME;
   }
 
@@ -35,11 +34,12 @@ public final class ProjectDictionary implements EditableDictionary {
   }
 
   @Override
-  @Nullable
-  public Boolean contains(@NotNull String word) {
+  public @Nullable Boolean contains(@NotNull String word) {
     if (dictionaries == null) {
-      return null; // still ("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+      // still ("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+      return null;
     }
+
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
       Boolean contains = dictionary.contains(word);
@@ -50,7 +50,11 @@ public final class ProjectDictionary implements EditableDictionary {
         return true;
       }
     }
-    if (errors == dictionaries.size()) return null;//("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+
+    //("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
+    if (errors == dictionaries.size()) {
+      return null;
+    }
     return false;
   }
 
@@ -64,13 +68,11 @@ public final class ProjectDictionary implements EditableDictionary {
     getActiveDictionary().removeFromDictionary(word);
   }
 
-  @NotNull
-  private EditableDictionary getActiveDictionary() {
+  private @NotNull EditableDictionary getActiveDictionary() {
     return ensureCurrentUserDictionary();
   }
 
-  @NotNull
-  private EditableDictionary ensureCurrentUserDictionary() {
+  private @NotNull EditableDictionary ensureCurrentUserDictionary() {
     if (activeName == null) {
       activeName = DEFAULT_CURRENT_USER_NAME;
     }
@@ -85,8 +87,7 @@ public final class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
-  @Nullable
-  private EditableDictionary getDictionaryByName(@NotNull String name) {
+  private @Nullable EditableDictionary getDictionaryByName(@NotNull String name) {
     if (dictionaries == null) {
       return null;
     }
@@ -112,8 +113,7 @@ public final class ProjectDictionary implements EditableDictionary {
 
 
   @Override
-  @NotNull
-  public Set<String> getWords() {
+  public @NotNull Set<String> getWords() {
     if (dictionaries == null) {
       return Collections.emptySet();
     }
@@ -125,8 +125,7 @@ public final class ProjectDictionary implements EditableDictionary {
   }
 
   @Override
-  @NotNull
-  public Set<String> getEditableWords() {
+  public @NotNull Set<String> getEditableWords() {
     return getActiveDictionary().getWords();
   }
 
@@ -161,9 +160,8 @@ public final class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "ProjectDictionary{" + "activeName='" + activeName + '\'' + ", dictionaries=" + dictionaries + '}';
   }
 }
