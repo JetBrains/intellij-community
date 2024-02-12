@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.history.VcsCachingHistory
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.*
@@ -35,7 +34,7 @@ import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.findBranch
 import com.intellij.vcs.log.visible.*
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.*
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
@@ -79,15 +78,17 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                                     root: VirtualFile,
                                     filePath: FilePath,
                                     hash: Hash?,
+                                    filters: VcsLogFilterCollection,
                                     isInitial: Boolean): FileHistoryTask {
     val oldHistoryTask = fileHistoryTask
     if (oldHistoryTask != null && !oldHistoryTask.isCancelled && !isInitial &&
-        oldHistoryTask.filePath == filePath && oldHistoryTask.hash == hash) return oldHistoryTask
+        oldHistoryTask.filePath == filePath && oldHistoryTask.hash == hash &&
+        oldHistoryTask.filters == filters) return oldHistoryTask
 
     cancelLastTask(false)
 
     val newHistoryTask = FileHistoryTask(project, historyHandler, storage, vcsLogObjectsFactory, root,
-                                         filePath, hash, createProgressIndicator())
+                                         filePath, hash, filters, createProgressIndicator())
     fileHistoryTask = newHistoryTask
     return newHistoryTask
   }
@@ -146,6 +147,9 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         catch (e: VcsException) {
           return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
         }
+        catch (e: UnsupportedHistoryFiltersException) {
+          return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
+        }
       }
     }
 
@@ -162,21 +166,22 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       return true
     }
 
-    @Throws(VcsException::class)
+    @Throws(VcsException::class, UnsupportedHistoryFiltersException::class)
     private fun filterWithVcs(dataPack: DataPack,
                               sortType: PermanentGraph.SortType,
-                              filters: VcsLogFilterCollection,
+                              allFilters: VcsLogFilterCollection,
                               commitCount: CommitCountStage): VisiblePack {
+      val filters = allFilters.without(VcsLogFileHistoryFilter::class.java)
       val isFastStart = commitCount == CommitCountStage.INITIAL && fileHistoryHandler.isFastStartSupported
 
       val (revisions, isDone) = if (isFastStart) {
         cancelLastTask(false)
-        fileHistoryHandler.getHistoryFast(root, filePath, hash, commitCount.count).map {
+        fileHistoryHandler.getHistoryFast(root, filePath, hash, filters, commitCount.count).map {
           vcsLogObjectsFactory.createCommitMetadataWithPath(storage, it, root)
         } to false
       }
       else {
-        createFileHistoryTask(fileHistoryHandler, root, filePath, hash, commitCount == CommitCountStage.FIRST_STEP)
+        createFileHistoryTask(fileHistoryHandler, root, filePath, hash, filters, commitCount == CommitCountStage.FIRST_STEP)
           .waitForRevisions(100)
       }
 
@@ -198,7 +203,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]), storage, false)
       val visibleGraph = createVisibleGraph(fakeDataPack, sortType, null,
                                             null/*no need to filter here, since we do not have any extra commits in this pack*/)
-      return VisiblePack(fakeDataPack, visibleGraph, !isDone, filters)
+      return VisiblePack(fakeDataPack, visibleGraph, !isDone, allFilters)
         .withFileHistory(FileHistory(revisions.associate { Pair(it.commit, it.path) }))
         .apply {
           putUserData(VisiblePack.NO_GRAPH_INFORMATION, true)
@@ -359,7 +364,7 @@ private data class CommitMetadataWithPath(@JvmField val commit: Int, @JvmField v
 
 private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHandler, val storage: VcsLogStorage,
                               val factory: VcsLogObjectsFactory, val root: VirtualFile, val filePath: FilePath, val hash: Hash?,
-                              indicator: ProgressIndicator) :
+                              val filters: VcsLogFilterCollection, indicator: ProgressIndicator) :
   RevisionCollectorTask<CommitMetadataWithPath>(project, indicator) {
 
   @Throws(VcsException::class)
@@ -368,20 +373,8 @@ private class FileHistoryTask(project: Project, val handler: VcsLogFileHistoryHa
       span.setAttribute(VcsTelemetrySpanAttribute.VCS_NAME.key, VcsLogRepoSizeCollector.getVcsKeySafe(handler.supportedVcs))
       span.setAttribute("handlerClass", handler.javaClass.name)
 
-      try {
-        handler.collectHistory(root, filePath, hash) { revision ->
-          consumer(createCommitMetadataWithPath(revision))
-        }
-      }
-      catch (_: UnsupportedOperationException) {
-        val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else null
-        val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(root) ?: run {
-          @Suppress("HardCodedStringLiteral")
-          throw VcsException("Could not find vcs for $root")
-        }
-        VcsCachingHistory.collect(vcs, filePath, revisionNumber) { revision ->
-          consumer(createCommitMetadataWithPath(revision))
-        }
+      handler.collectHistory(root, filePath, hash, filters) { revision ->
+        consumer(createCommitMetadataWithPath(revision))
       }
 
       span.setAttribute("commitCount", revisionsCount.toString())

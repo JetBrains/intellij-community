@@ -12,32 +12,60 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogFileHistoryHandler
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.VcsLogFileHistoryHandler.Rename
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
+import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import com.intellij.vcs.log.visible.filters.keysToSet
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.GitRevisionNumber
-import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
+import git4idea.i18n.GitBundle
+import git4idea.log.GitLogProvider
+import git4idea.repo.GitRepositoryManager
 
 open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHandler {
 
   override val supportedVcs: VcsKey = GitVcs.getKey()
 
+  private val supportedFilters = setOf(VcsLogFilterCollection.BRANCH_FILTER, VcsLogFilterCollection.REVISION_FILTER)
+
+  override fun getSupportedFilters(root: VirtualFile, filePath: FilePath, hash: Hash?): Set<VcsLogFilterCollection.FilterKey<*>> {
+    if (hash != null) return emptySet()
+    return supportedFilters
+  }
+
+  protected fun getDefaultFilters(root: VirtualFile, hash: Hash?): VcsLogFilterCollection {
+    return VcsLogFilterObject.collection(hash?.let { VcsLogFilterObject.fromCommit(CommitId(it, root)) }
+                                         ?: VcsLogFilterObject.fromBranch(VcsLogUtil.HEAD))
+  }
+
+  @Throws(UnsupportedHistoryFiltersException::class)
+  private fun throwIfFiltersNotSupported(root: VirtualFile, hash: Hash?, filters: VcsLogFilterCollection) {
+    if (hash == null && filters.keysToSet.all { supportedFilters.contains(it) }) return
+    if (filters == getDefaultFilters(root, hash)) return
+
+    val presentation = filters.filters.joinToString { it.displayText }
+    val message = if (hash == null) GitBundle.message("history.filters.unsupported.error.message", presentation)
+    else GitBundle.message("history.for.revision.filters.unsupported.error.message", presentation)
+
+    throw UnsupportedHistoryFiltersException(message)
+  }
 
   @Throws(VcsException::class)
-  override fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, commitCount: Int): List<VcsFileRevisionEx> {
+  override fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, commitCount: Int): List<VcsFileRevisionEx> {
+    throwIfFiltersNotSupported(root, hash, filters)
+
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) ?: return emptyList()
     val parser = GitFileHistory.createLogParser(project)
     val handler = GitLineHandler(project, root, GitCommand.LOG)
     handler.setStdoutSuppressed(true)
-    handler.addParameters("--name-status", parser.pretty, "--encoding=UTF-8",
-                          hash?.asString() ?: GitRevisionNumber.HEAD.asString(),
-                          "--max-count=$commitCount")
+    handler.addParameters("--name-status", parser.pretty, "--encoding=UTF-8", "--max-count=$commitCount")
+    handler.addParameters(GitLogProvider.getBranchLikeFilterParameters(repository, filters, null))
     handler.endOptions()
     handler.addRelativePaths(filePath)
 
@@ -51,10 +79,15 @@ open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistor
   }
 
   @Throws(VcsException::class)
-  override fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, consumer: (VcsFileRevision) -> Unit) {
+  override fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, consumer: (VcsFileRevision) -> Unit) {
+    throwIfFiltersNotSupported(root, hash, filters)
+
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root) ?: return
     val args = GitHistoryProvider.getHistoryLimitArgs(project)
-    val revisionNumber = hash?.asString() ?: GitUtil.HEAD
-    GitFileHistory(project, root, filePath, listOf(revisionNumber), true).load(consumer, *args)
+    // filtered branches are passed to git as starting points,
+    // since it's not possible to pass a starting point separately from branch filters
+    val startingRevisions = GitLogProvider.getBranchLikeFilterParameters(repository, filters, null)
+    GitFileHistory(project, root, filePath, startingRevisions, true).load(consumer, *args)
   }
 
   @Throws(VcsException::class)

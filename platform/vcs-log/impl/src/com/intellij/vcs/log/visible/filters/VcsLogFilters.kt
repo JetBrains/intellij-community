@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
@@ -235,8 +235,10 @@ fun <T : VcsLogFilter> VcsLogFilterCollection.without(filterClass: Class<T>): Vc
 
 val VcsLogFilterCollection.keysToSet get() = this.filters.mapTo(mutableSetOf()) { it.key }
 
-fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
-  return this.keysToSet == filterKey.toSet()
+fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean = matches(filterKey.toSet())
+
+fun VcsLogFilterCollection.matches(filterKeys: Set<FilterKey<*>>): Boolean {
+  return this.keysToSet == filterKeys
 }
 
 @Nls

@@ -3,6 +3,7 @@ package com.intellij.vcs.log
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsKey
@@ -18,13 +19,15 @@ interface VcsLogFileHistoryHandler {
 
   val isFastStartSupported: Boolean get() = true
 
-  @Throws(VcsException::class)
-  fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, commitCount: Int): List<VcsFileRevisionEx>
-
-  @Throws(VcsException::class)
-  fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, consumer: (VcsFileRevision) -> Unit) {
-    throw UnsupportedOperationException("Not implemented")
+  fun getSupportedFilters(root: VirtualFile, filePath: FilePath, hash: Hash?): Set<VcsLogFilterCollection.FilterKey<*>> {
+    return emptySet()
   }
+
+  @Throws(VcsException::class, UnsupportedHistoryFiltersException::class)
+  fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, commitCount: Int): List<VcsFileRevisionEx>
+
+  @Throws(VcsException::class, UnsupportedHistoryFiltersException::class)
+  fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, filters: VcsLogFilterCollection, consumer: (VcsFileRevision) -> Unit)
 
   @Throws(VcsException::class)
   fun getRename(root: VirtualFile, filePath: FilePath, beforeHash: Hash, afterHash: Hash): Rename?
@@ -39,3 +42,6 @@ interface VcsLogFileHistoryHandler {
     fun getByVcs(project: Project, vcsKey: VcsKey) = EP_NAME.getExtensions(project).firstOrNull { it.supportedVcs == vcsKey }
   }
 }
+
+@ApiStatus.Experimental
+class UnsupportedHistoryFiltersException(message: @NlsContexts.StatusText String) : Exception(message)

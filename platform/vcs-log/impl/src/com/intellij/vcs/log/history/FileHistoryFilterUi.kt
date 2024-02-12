@@ -15,6 +15,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.filter.BranchFilterModel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
+import com.intellij.vcs.log.ui.filter.BranchFilters
 import com.intellij.vcs.log.ui.filter.VcsLogPopupComponentAction
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -27,7 +28,7 @@ class FileHistoryFilterUi(private val path: FilePath,
                           private val root: VirtualFile,
                           properties: FileHistoryUiProperties,
                           private val data: VcsLogData,
-                          initialFilters: VcsLogFilterCollection,
+                          private val initialFilters: VcsLogFilterCollection,
                           filterConsumer: Consumer<VcsLogFilterCollection>) : VcsLogFilterUi {
   private val propertiesWrapper = PropertiesWrapper(properties)
   private val branchFilterModel: BranchFilterModel
@@ -49,7 +50,15 @@ class FileHistoryFilterUi(private val path: FilePath,
   fun hasBranchFilter(): Boolean = branchFilterModel.getFilter()?.isEmpty() == false
 
   fun isBranchFilterEnabled(): Boolean {
-    return FileHistoryFilterer.canFilterWithIndex(data.index, root, visiblePack.dataPack)
+    if (FileHistoryFilterer.canFilterWithIndex(data.index, root, visiblePack.dataPack)) return true
+    val handler = data.logProviders[root]?.getFileHistoryHandler(data.project) ?: return false
+    val supportedFilters = handler.getSupportedFilters(root, path, hash)
+    return BranchFilterModel.branchFilterKeys.any { supportedFilters.contains(it) }
+  }
+
+  @RequiresEdt
+  fun resetFiltersToDefault() {
+    branchFilterModel.setFilter(BranchFilters.fromCollection(initialFilters))
   }
 
   @RequiresEdt

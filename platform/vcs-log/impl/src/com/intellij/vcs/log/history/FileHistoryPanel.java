@@ -25,6 +25,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.vcs.log.UnsupportedHistoryFiltersException;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -98,10 +99,16 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       @Override
       protected void updateEmptyText() {
         VisiblePack visiblePack = getModel().getVisiblePack();
-        if (visiblePack instanceof VisiblePack.ErrorVisiblePack) {
-          setErrorEmptyText(((VisiblePack.ErrorVisiblePack)visiblePack).getError(),
-                            VcsLogBundle.message("file.history.error.status"));
-          appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), () -> logUi.getRefresher().onRefresh());
+        if (visiblePack instanceof VisiblePack.ErrorVisiblePack errorVisiblePack) {
+          Throwable error = errorVisiblePack.getError();
+          setErrorEmptyText(error, VcsLogBundle.message("file.history.error.status"));
+          if (error instanceof UnsupportedHistoryFiltersException) {
+            appendActionToEmptyText(VcsLogBundle.message("file.history.reset.filters.status.action"),
+                                    () -> filterUi.resetFiltersToDefault());
+          }
+          else {
+            appendActionToEmptyText(VcsLogBundle.message("vcs.log.refresh.status.action"), () -> logUi.getRefresher().onRefresh());
+          }
         }
         else {
           getEmptyText().setText(VcsLogBundle.message("file.history.empty.status"));

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
@@ -43,6 +43,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -426,44 +427,11 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     List<String> configParameters = new ArrayList<>();
     List<String> filterParameters = new ArrayList<>();
 
-    VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
-    VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
-    if (branchFilter != null || revisionFilter != null || range != null) {
-      boolean atLeastOneBranchExists = false;
-
-      if (branchFilter != null) {
-        Collection<GitBranch> branches = ContainerUtil
-          .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
-        Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-        Collection<String> predefinedNames = Collections.singletonList(GitUtil.HEAD);
-
-        for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
-          if (branchFilter.matches(branchName)) {
-            filterParameters.add(branchName);
-            atLeastOneBranchExists = true;
-          }
-        }
-      }
-      if (revisionFilter != null) {
-        for (CommitId commit : revisionFilter.getHeads()) {
-          if (commit.getRoot().equals(root)) {
-            filterParameters.add(commit.getHash().asString());
-            atLeastOneBranchExists = true;
-          }
-        }
-      }
-
-      if (range != null) {
-        filterParameters.add(range.getExclusiveRef() + ".." + range.getInclusiveRef());
-      }
-
-      if (range == null && !atLeastOneBranchExists) { // no such branches in this repository => filter matches nothing
-        return Collections.emptyList();
-      }
+    List<String> branchLikeFilterParameters = getBranchLikeFilterParameters(repository, filterCollection, range);
+    if (branchLikeFilterParameters.isEmpty()) {
+      return Collections.emptyList(); // no such branches in this repository => filter matches nothing
     }
-    else {
-      filterParameters.addAll(GitLogUtil.LOG_ALL);
-    }
+    filterParameters.addAll(branchLikeFilterParameters);
 
     VcsLogDateFilter dateFilter = filterCollection.get(DATE_FILTER);
     if (dateFilter != null) {
@@ -521,6 +489,46 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     List<TimedVcsCommit> commits = new ArrayList<>();
     GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, null, null, new CollectConsumer<>(commits));
     return commits;
+  }
+
+  @ApiStatus.Internal
+  public static List<String> getBranchLikeFilterParameters(@NotNull GitRepository repository,
+                                                           @NotNull VcsLogFilterCollection filterCollection,
+                                                           @Nullable VcsLogRangeFilter.RefRange range) {
+    VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
+    VcsLogRevisionFilter revisionFilter = filterCollection.get(REVISION_FILTER);
+    if (branchFilter == null && revisionFilter == null && range == null) {
+      return GitLogUtil.LOG_ALL;
+    }
+
+    List<String> result = new ArrayList<>();
+
+    if (branchFilter != null) {
+      Collection<GitBranch> branches = ContainerUtil.newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(),
+                                                                                       repository.getBranches().getRemoteBranches()));
+      Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
+      Collection<String> predefinedNames = Collections.singletonList(GitUtil.HEAD);
+
+      for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
+        if (branchFilter.matches(branchName)) {
+          result.add(branchName);
+        }
+      }
+    }
+
+    if (revisionFilter != null) {
+      for (CommitId commit : revisionFilter.getHeads()) {
+        if (commit.getRoot().equals(repository.getRoot())) {
+          result.add(commit.getHash().asString());
+        }
+      }
+    }
+
+    if (range != null) {
+      result.add(range.getExclusiveRef() + ".." + range.getInclusiveRef());
+    }
+
+    return result;
   }
 
   public static void appendTextFilterParameters(@Nullable String text, boolean regexp, boolean caseSensitive,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters;
 
 import com.intellij.vcs.log.VcsLogFilter;
@@ -7,10 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @see VcsLogFilterObject#collection(VcsLogFilter...)
@@ -37,5 +34,17 @@ class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   @Override
   public @NonNls String toString() {
     return "filters: (" + myFilters + ")";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof VcsLogFilterCollectionImpl that)) return false;
+    return myFilters.equals(that.myFilters);
+  }
+
+  @Override
+  public int hashCode() {
+    return myFilters.hashCode();
   }
 }

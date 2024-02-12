@@ -167,6 +167,9 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
     private val LOG = Logger.getInstance(BranchFilterModel::class.java)
     private const val TWO_DOTS = ".."
 
+    internal val branchFilterKeys = setOf(VcsLogFilterCollection.BRANCH_FILTER, VcsLogFilterCollection.REVISION_FILTER,
+                                          VcsLogFilterCollection.RANGE_FILTER)
+
     private fun createRangeFilter(values: List<String>): VcsLogRangeFilter? {
       val ranges = values.mapNotNull { value: String ->
         val twoDots = value.indexOf(TWO_DOTS)
