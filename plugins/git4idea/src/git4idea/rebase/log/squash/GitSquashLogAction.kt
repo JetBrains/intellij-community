@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.log.squash
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -20,7 +20,7 @@ internal class GitSquashLogAction : GitMultipleCommitEditingAction() {
     val selectedCommitDetails = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val dialog = GitNewCommitMessageActionDialog(
       commitEditingData,
-      originMessage = selectedCommitDetails.joinToString("\n".repeat(3)) { it.fullMessage },
+      originMessage = selectedCommitDetails.map(VcsCommitMetadata::getFullMessage).toSet().joinToString("\n".repeat(3)),
       title = GitBundle.message("rebase.log.squash.new.message.dialog.title"),
       dialogLabel = GitBundle.message("rebase.log.squash.new.message.dialog.label")
     )
