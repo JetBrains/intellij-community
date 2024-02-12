@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchAdapter
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacement
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.internal.statistic.FUCollectorTestCase
-import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -20,35 +20,11 @@ import javax.swing.SwingUtilities
 
 
 abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
-  private val extensionPointMaskManager = ExtensionPointMaskManager()
-
-  private fun createSearchEverywhereUI(project: Project): SearchEverywhereUI = SearchEverywhereUI(project, listOf(
-    MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName) { pattern, progressIndicator, consumer ->
-      consumer.process("registry")
-    }
-  ))
-
-  fun runSearchEverywhereAndCollectLogEvents(testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
-    return runSearchEverywhereAndCollectLogEvents(::createSearchEverywhereUI, testProcedure)
-  }
-
-  fun runSearchEverywhereAndCollectLogEvents(searchEverywhereUIProvider: (Project) -> SearchEverywhereUI,
-                                             testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
-    maskContributorReplacementService()
-
-    extensionPointMaskManager.mask()
-    val result = performTest(searchEverywhereUIProvider, testProcedure)
-    extensionPointMaskManager.dispose()
-
-    return result.filter { it.event.id in listOf(SESSION_FINISHED.eventId, SEARCH_RESTARTED.eventId) }
-  }
-
-  private fun performTest(searchEverywhereUIProvider: (Project) -> SearchEverywhereUI,
-                          testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
+  fun MockSearchEverywhereProvider.runSearchAndCollectLogEvents(testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
     val emptyDisposable = Disposer.newDisposable()
 
     return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable) {
-      val searchEverywhereUI = searchEverywhereUIProvider.invoke(project)
+      val searchEverywhereUI = this.provide(project)
 
       PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
 
@@ -57,7 +33,7 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
       Disposer.dispose(searchEverywhereUI)  // Otherwise, the instance seems to be reused between different tests
     }.also {
       Disposer.dispose(emptyDisposable)
-    }
+    }.filter { it.event.id in listOf(SESSION_FINISHED.eventId, SEARCH_RESTARTED.eventId) }
   }
 
   fun SearchEverywhereUI.type(query: CharSequence) = also { searchEverywhereUI ->
@@ -77,36 +53,44 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
       PlatformTestUtil.waitForFuture(future)
     }
   }
+}
 
-  private fun maskContributorReplacementService() {
-    // Otherwise it will attempt to replace the mock contributor,
-    // for which we need the search provider id to be ActionsSearchEverywhereContributor
-    // to be replaced with SemanticActionSearchEverywhereContributor,
-    // that will fail, as it will try to cast the mock contributor to the action's one
-    SearchEverywhereMlContributorReplacement.EP_NAME.point.maskForSingleTest(emptyList())
+interface MockSearchEverywhereProvider {
+  fun provide(project: Project): SearchEverywhereUI
+
+  object SingleActionSearchEverywhere : MockSearchEverywhereProvider {
+    override fun provide(project: Project): SearchEverywhereUI {
+      val contributors = listOf(
+        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName) { _, _, consumer ->
+          consumer.process("registry")
+        }
+      )
+
+      return SearchEverywhereUI(project, contributors)
+    }
+  }
+}
+
+
+fun underMaskedExtensionPoints(procedure: ExtensionPointMaskManager.() -> Unit) {
+  val manager = ExtensionPointMaskManager()
+  manager.maskExtensionPoint(SearchEverywhereMlContributorReplacement.EP_NAME, emptyList())
+  procedure.invoke(manager)
+  manager.dispose()
+}
+
+class ExtensionPointMaskManager {
+  private val serviceMaskDisposable = Disposer.newDisposable()
+
+  infix fun <T : Any> ExtensionPointName<T>.maskedWith(extensions: List<T>) {
+    maskExtensionPoint(this, extensions)
   }
 
-  protected fun <V : Any> ExtensionPoint<V>.maskForSingleTest(newList: List<V>) {
-    extensionPointMaskManager.addServiceToMask(this, newList)
+  fun <T : Any> maskExtensionPoint(epName: ExtensionPointName<T>, extensions: List<T>) {
+    (epName.point as ExtensionPointImpl<T>).maskAll(extensions, serviceMaskDisposable, false)
   }
 
-  private class ExtensionPointMaskManager {
-    private val serviceMaskDisposable = Disposer.newDisposable()
-
-    private val servicesToMask = mutableListOf<() -> Unit>()
-
-    fun <T : Any> addServiceToMask(ep: ExtensionPoint<T>, maskWith: List<T>) {
-      val maskingFunction = { (ep as ExtensionPointImpl<T>).maskAll(maskWith, serviceMaskDisposable, false) }
-      servicesToMask.add(maskingFunction)
-    }
-
-    fun mask() {
-      servicesToMask.forEach { it.invoke() }
-    }
-
-    fun dispose() {
-      Disposer.dispose(serviceMaskDisposable)
-      servicesToMask.clear()
-    }
+  fun dispose() {
+    Disposer.dispose(serviceMaskDisposable)
   }
 }

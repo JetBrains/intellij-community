@@ -12,7 +12,7 @@ import org.junit.runners.JUnit4
 class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCase() {
   @Test
   fun `SE open and instant close results in only session finished event`() {
-    val events = runSearchEverywhereAndCollectLogEvents {
+    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       sendStatisticsAndClose()
     }
 
@@ -22,7 +22,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `search start event is reported`() {
-    val events = runSearchEverywhereAndCollectLogEvents {
+    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       // we need to type at least one character, otherwise opening and closing SE
       // will result in just a single session-finished event
       type("r")
@@ -35,7 +35,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `search finished event is reported`() {
-    val events = runSearchEverywhereAndCollectLogEvents {
+    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       type("reg")
       selectFirst()
     }
@@ -45,7 +45,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `the number of events is correct`() {
-    val events = runSearchEverywhereAndCollectLogEvents {
+    val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       type("reg")
       selectFirst()
     }

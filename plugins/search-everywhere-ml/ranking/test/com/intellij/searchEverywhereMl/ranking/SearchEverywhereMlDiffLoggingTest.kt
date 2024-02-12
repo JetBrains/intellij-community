@@ -31,20 +31,22 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
 
   @Test
   fun `checks with single element that only changed data is recorded`() {
-    SearchEverywhereMlService.EP_NAME.point.maskForSingleTest(listOf(mockRankingService))
-    ElementKeyForIdProvider.EP_NAME.point.maskForSingleTest(listOf(MockElementKeyForIdProvider()))
+    underMaskedExtensionPoints {
+      SearchEverywhereMlService.EP_NAME maskedWith listOf(mockRankingService)
+      ElementKeyForIdProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
 
-    val events = runSearchEverywhereAndCollectLogEvents {
-      type("regist")
+      val events = MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
+        type("regist")
+      }
+
+      val iterator = events.iterator()
+      iterator.next()  // SE opened event
+
+      checkItemFirstReport(iterator.next())
+      checkItemSecondReport(iterator.next())
+      checkItemThirdReport(iterator.next())
+      checkItemFourthReport(iterator.next())
     }
-
-    val iterator = events.iterator()
-    iterator.next()
-
-    checkItemFirstReport(iterator.next())
-    checkItemSecondReport(iterator.next())
-    checkItemThirdReport(iterator.next())
-    checkItemFourthReport(iterator.next())
   }
 
   private fun checkItemFirstReport(event: LogEvent) {
