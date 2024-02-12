@@ -9,6 +9,7 @@ import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.threading.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -249,7 +250,7 @@ class TestExternalService : ExternalService {
 
   override suspend fun hasDataToImport() = true
 
-  override suspend fun warmUp() {}
+  override fun warmUp(scope: CoroutineScope) {}
 
   override fun products(): List<Product> {
     return listOf(TestJbService.main2)

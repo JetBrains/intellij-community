@@ -24,7 +24,11 @@ import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.swing.proxyProperty
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.IPropertyView
+import com.jetbrains.rd.util.reactive.ISignal
+import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.Signal
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.time.LocalDate
@@ -157,7 +161,7 @@ interface SyncService : JbService {
 
 interface ExternalService : BaseService {
   suspend fun hasDataToImport(): Boolean
-  suspend fun warmUp()
+  fun warmUp(scope: CoroutineScope)
 }
 
 interface JbService : BaseService {

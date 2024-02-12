@@ -23,7 +23,7 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
     coroutineScope {
       // Fire-and-forget call to warm up the external settings transfer
       val settingsService = SettingsService.getInstance()
-      async { settingsService.getExternalService().warmUp() }
+      async { settingsService.getExternalService().warmUp(this) }
       async { settingsService.getJbService().warmUp() }
 
       if (!settingsService.shouldShowImport()) {

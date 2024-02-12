@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.nullize
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
@@ -30,7 +29,7 @@ import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 
 @Service
-class SettingTransferService : ExternalService {
+class SettingTransferService(private val internalScope: CoroutineScope) : ExternalService {
 
   companion object {
 
@@ -63,17 +62,16 @@ class SettingTransferService : ExternalService {
 
   @Volatile
   private var ideVersions: Deferred<Map<String, ThirdPartyProductInfo>>? = null
-  private fun CoroutineScope.loadIdeVersionsAsync(): Deferred<Map<String, ThirdPartyProductInfo>> {
+  private fun loadIdeVersionsAsync(scope: CoroutineScope): Deferred<Map<String, ThirdPartyProductInfo>> {
     ideVersions?.let { return it }
     logger.info("Refreshing the transfer settings data provider.")
-    val scope = this
-    val versions = async {
+    val versions = scope.async(Dispatchers.IO) {
       config.dataProvider.run {
         refresh()
         orderedIdeVersions
           .filterIsInstance<IdeVersion>()
           .map { version ->
-            ThirdPartyProductInfo(version, scope.async { loadIdeVersionSettingsAsync(version) })
+            ThirdPartyProductInfo(version, scope.async(Dispatchers.IO) { loadIdeVersionSettings(version) })
           }.associateBy { info -> info.product.id }
       }
     }
@@ -81,15 +79,11 @@ class SettingTransferService : ExternalService {
     return versions
   }
 
-  private suspend fun loadIdeVersionSettingsAsync(version: IdeVersion): Settings =
-    withSyncIOBackgroundContext {
-      version.settingsCache
-    }
+  private fun loadIdeVersionSettings(version: IdeVersion): Settings =
+    version.settingsCache
 
-  override suspend fun warmUp() {
-    coroutineScope {
-      loadIdeVersionsAsync()
-    }
+  override fun warmUp(scope: CoroutineScope) {
+    loadIdeVersionsAsync(scope)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -98,7 +92,7 @@ class SettingTransferService : ExternalService {
 
     @Suppress("RAW_RUN_BLOCKING")
     return runBlocking {
-      val ideVersions = loadIdeVersionsAsync()
+      val ideVersions = loadIdeVersionsAsync(internalScope)
 
       logger.warn("Started waiting for transfer provider initialization.")
       try {
@@ -114,7 +108,7 @@ class SettingTransferService : ExternalService {
 
   override suspend fun hasDataToImport() =
     coroutineScope {
-      loadIdeVersionsAsync().await().values.any()
+      loadIdeVersionsAsync(internalScope).await().values.any()
     }
 
   override fun products(): List<Product> {
