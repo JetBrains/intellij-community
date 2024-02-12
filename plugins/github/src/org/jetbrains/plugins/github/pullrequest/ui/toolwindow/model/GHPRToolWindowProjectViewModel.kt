@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.GitStandardRemoteBranch
 import git4idea.push.GitPushRepoResult
-import git4idea.remote.hosting.currentRemoteBranchFlow
+import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -53,7 +53,8 @@ class GHPRToolWindowProjectViewModel internal constructor(
   internal val dataContext: GHPRDataContext = connection.dataContext
   val defaultBranch: String? = dataContext.repositoryDataService.defaultBranchName
 
-  private val allRepos = project.service<GHHostedRepositoriesManager>().knownRepositories.map(GHGitRepositoryMapping::repository)
+  private val repoManager = project.service<GHHostedRepositoriesManager>()
+  private val allRepos = repoManager.knownRepositories.map(GHGitRepositoryMapping::repository)
   val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
   override val projectName: String = GHUIUtil.getRepositoryDisplayName(allRepos, repository)
 
@@ -139,14 +140,15 @@ class GHPRToolWindowProjectViewModel internal constructor(
     MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   val prOnCurrentBranch: StateFlow<ComputedResult<GHPRIdentifier?>?> =
-    connection.repo.remote.currentRemoteBranchFlow()
-      .combineTransform(prOnCurrentBranchRefreshSignal.withInitial(Unit)) { remoteBranch, _ ->
-        if (remoteBranch == null) {
+    repoManager.findHostedRemoteBranchTrackedByCurrent(connection.repo.gitRepository)
+      .combineTransform(prOnCurrentBranchRefreshSignal.withInitial(Unit)) { projectAndBranch, _ ->
+        if (projectAndBranch == null) {
           emit(ComputedResult.success(null))
         }
         else {
+          val (targetProject, remoteBranch) = projectAndBranch
           computeEmitting {
-            val targetRepository = connection.repo.repository.repositoryPath
+            val targetRepository = targetProject.repository.repositoryPath
             dataContext.creationService.findOpenPullRequest(null, targetRepository, remoteBranch)
           }?.onFailure {
             LOG.warn("Could not lookup a pull request for current branch", it)

@@ -14,7 +14,10 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.remote.GitRemoteUrlCoordinates
-import git4idea.repo.*
+import git4idea.repo.GitRepoInfo
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
+import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -74,15 +77,14 @@ private fun GitRepositoryManager.collectRemotes(): Set<GitRemoteUrlCoordinates> 
   }.toSet()
 }
 
-fun GitRemoteUrlCoordinates.currentRemoteBranchFlow(): Flow<GitRemoteBranch?> =
-  repository.infoFlow()
-    .map { it.findRemoteBranchTrackedByCurrent(remote) }
+fun GitRepository.currentRemoteBranchFlow(): Flow<GitRemoteBranch?> =
+  infoFlow()
+    .map { it.findFirstRemoteBranchTrackedByCurrent() }
     .distinctUntilChanged()
 
-fun GitRepoInfo.findRemoteBranchTrackedByCurrent(remote: GitRemote): GitRemoteBranch? {
+fun GitRepoInfo.findFirstRemoteBranchTrackedByCurrent(): GitRemoteBranch? {
   val currentBranch = currentBranch ?: return null
-  return branchTrackInfos.find { it.localBranch == currentBranch && it.remote == remote }
-    ?.remoteBranch
+  return branchTrackInfos.find { it.localBranch == currentBranch }?.remoteBranch
 }
 
 private typealias GitRemotesFlow = Flow<Collection<GitRemoteUrlCoordinates>>

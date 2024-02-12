@@ -15,7 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.remote.hosting.currentRemoteBranchFlow
+import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
@@ -134,12 +134,11 @@ private constructor(parentCs: CoroutineScope,
   private val mergeRequestCreatedSignal: MutableSharedFlow<Unit> = MutableSharedFlow()
 
   val mergeRequestOnCurrentBranch: Flow<String?> =
-    connection.repo.remote.currentRemoteBranchFlow()
-      .combine(mergeRequestCreatedSignal.withInitial(Unit)) { currentRemoteBranch, _ ->
-        currentRemoteBranch ?: return@combine null
+    projectsManager.findHostedRemoteBranchTrackedByCurrent(connection.repo.gitRepository)
+      .combine(mergeRequestCreatedSignal.withInitial(Unit)) { repoAndBranch, _ ->
+        val (targetRepo, branch) = repoAndBranch ?: return@combine null
         try {
-          val targetProjectPath = connection.repo.repository.projectPath.fullPath()
-          findOpenReviewIdByBranch(connection, currentRemoteBranch.nameForRemoteOperations, targetProjectPath)
+          findOpenReviewIdByBranch(connection, branch.nameForRemoteOperations, targetRepo.repository.projectPath.fullPath())
         }
         catch (ce: CancellationException) {
           null
