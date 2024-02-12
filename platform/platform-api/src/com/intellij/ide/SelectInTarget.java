@@ -3,15 +3,13 @@ package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public interface SelectInTarget extends PossiblyDumbAware {
   @ApiStatus.Internal
   ProjectExtensionPointName<SelectInTarget> EP_NAME = new ProjectExtensionPointName<>("com.intellij.selectInTarget");
 
+  @CalledInAny
   @Override
   @Nls
   String toString();
