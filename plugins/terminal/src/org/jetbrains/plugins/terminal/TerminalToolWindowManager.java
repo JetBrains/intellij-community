@@ -50,6 +50,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import kotlin.Unit;
@@ -383,9 +384,23 @@ public final class TerminalToolWindowManager implements Disposable {
 
       @Override
       public void onTerminalStarted() {
-        if (runner instanceof LocalBlockTerminalRunner blockRunner && blockRunner.shouldShowPromotion()) {
+        boolean shouldShowPromotion = runner instanceof LocalBlockTerminalRunner blockRunner && blockRunner.shouldShowPromotion();
+        boolean blockTerminalSupported = terminalWidget instanceof ShellTerminalWidget shellWidget &&
+                                         isBlockTerminalSupported(shellWidget.getStartupOptions());
+        // show the promotion only if the current runner allows it and block terminal can be used with the shell started now
+        if (shouldShowPromotion && blockTerminalSupported) {
           BlockTerminalPromotionService.INSTANCE.showPromotionOnce(myProject, widget);
         }
+      }
+
+      /** Checks whether new terminal can be used with the shell, started with the provided options */
+      private static boolean isBlockTerminalSupported(ShellStartupOptions options) {
+        if (options == null) return false;
+        List<String> command = options.getShellCommand();
+        String shellPath = ContainerUtil.getFirstItem(command);
+        if (shellPath == null) return false;
+        String shellName = PathUtil.getFileName(shellPath);
+        return LocalTerminalDirectRunner.isBlockTerminalSupported(shellName);
       }
 
       @Override

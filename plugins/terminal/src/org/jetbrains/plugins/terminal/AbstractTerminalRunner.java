@@ -202,6 +202,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       ShellStartupOptions configuredOptions = configureStartupOptions(baseOptions);
       ApplicationManager.getApplication().invokeLater(() -> {
         if (widgetDisposable.isDisposed()) return;
+        JBTerminalWidget jediTermWidget = JBTerminalWidget.asJediTermWidget(terminalWidget);
+        if (jediTermWidget instanceof ShellTerminalWidget shellWidget) {
+          shellWidget.setStartupOptions(configuredOptions);
+        }
         CompletableFuture<TermSize> initialTermSizeFuture = awaitTermSize(terminalWidget, configuredOptions);
         initialTermSizeFuture.whenComplete((initialTermSize, initialTermSizeError) -> {
           if (myProject.isDisposed() || widgetDisposable.isDisposed()) return;

@@ -443,13 +443,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     String shellName = PathUtil.getFileName(shellExe);
     String rcFilePath = findRCFile(shellName);
     if (rcFilePath != null) {
+      boolean isBlockTerminal = isBlockTerminalSupported(shellName);
       if (shellName.equals(BASH_NAME) || (SystemInfo.isMac && shellName.equals(SH_NAME))) {
         addRcFileArgument(envs, arguments, resultCommand, rcFilePath, "--rcfile");
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
         setCommandHistoryFile(options, envs);
-        integration = new ShellIntegration(ShellType.BASH, new CommandBlockIntegration());
+        integration = new ShellIntegration(ShellType.BASH, isBlockTerminal ? new CommandBlockIntegration() : null);
       }
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = envs.get(ZDOTDIR);
@@ -459,23 +460,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         String zshDir = PathUtil.getParentPath(rcFilePath);
         envs.put(ZDOTDIR, zshDir);
         envs.put(IJ_ZSH_DIR, zshDir);
-        integration = new ShellIntegration(ShellType.ZSH, new CommandBlockIntegration());
+        integration = new ShellIntegration(ShellType.ZSH, isBlockTerminal ? new CommandBlockIntegration() : null);
       }
       else if (shellName.equals(FISH_NAME)) {
         // `--init-command=COMMANDS` is available since Fish 2.7.0 (released November 23, 2017)
         // Multiple `--init-command=COMMANDS` are supported.
         resultCommand.add("--init-command=source " + CommandLineUtil.posixQuote(rcFilePath));
-        integration = new ShellIntegration(ShellType.FISH,
-                                           Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false) ? new CommandBlockIntegration() : null);
+        integration = new ShellIntegration(ShellType.FISH, isBlockTerminal ? new CommandBlockIntegration() : null);
       }
       else if (isPowerShell(shellName)) {
         resultCommand.addAll(arguments);
         arguments.clear();
         resultCommand.addAll(List.of("-NoExit", "-ExecutionPolicy", "Bypass", "-File", rcFilePath));
-        var isBlockTerminal = SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY, false) ||
-                              SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY, false);
-        integration = new ShellIntegration(ShellType.POWERSHELL,
-                                           isBlockTerminal ? new CommandBlockIntegration(true) : null);
+        integration = new ShellIntegration(ShellType.POWERSHELL, isBlockTerminal ? new CommandBlockIntegration(true) : null);
       }
     }
 
@@ -510,6 +507,21 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         widget.setCommandHistoryFilePath(commandHistoryFile.toString());
       }
     }
+  }
+
+  /**
+   * @return true if block terminal can be used with the provided shell name
+   */
+  @ApiStatus.Internal
+  public static boolean isBlockTerminalSupported(@NotNull String shellName) {
+    if (isPowerShell(shellName)) {
+      return SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN11_REGISTRY, false) ||
+             SystemInfo.isWin10OrNewer && !SystemInfo.isWin11OrNewer && Registry.is(BLOCK_TERMINAL_POWERSHELL_WIN10_REGISTRY, false);
+    }
+    return shellName.equals(BASH_NAME)
+           || SystemInfo.isMac && shellName.equals(SH_NAME)
+           || shellName.equals(ZSH_NAME)
+           || shellName.equals(FISH_NAME) && Registry.is(BLOCK_TERMINAL_FISH_REGISTRY, false);
   }
 
   private static boolean isLoginOptionAvailable(@NotNull String shellName) {
