@@ -1,14 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
+import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
+import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -19,7 +29,10 @@ import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.asSafely
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
@@ -66,8 +79,31 @@ object TerminalUiUtils {
       isWhitespacesShown = false
     }
 
-    editor.contextMenuGroupId = "Terminal.OutputContextMenu"
+    installPopupMenu(editor)
     return editor
+  }
+
+  private fun installPopupMenu(editor: EditorEx) {
+    editor.installPopupHandler(object : ContextMenuPopupHandler() {
+      override fun getActionGroup(event: EditorMouseEvent): ActionGroup = getPopupMenuGroup(editor, event)
+    })
+  }
+
+  private fun getPopupMenuGroup(editor: EditorEx, event: EditorMouseEvent): ActionGroup {
+    ThreadingAssertions.assertEventDispatchThread()
+    val info: HyperlinkInfo? = EditorHyperlinkSupport.get(editor).getHyperlinkInfoByEvent(event)
+    val customPopupMenuGroup = info.asSafely<HyperlinkWithPopupMenuInfo>()?.getPopupMenuGroup(event.mouseEvent)
+    val defaultPopupMenuGroup = ActionManager.getInstance().getAction(TERMINAL_OUTPUT_CONTEXT_MENU) as ActionGroup
+    return concatGroups(customPopupMenuGroup, defaultPopupMenuGroup)
+  }
+
+  private fun concatGroups(vararg groups: ActionGroup?): ActionGroup {
+    val actionsPerGroup = groups.mapNotNull {
+      it?.getChildren(null).orEmpty().toList().nullize()
+    }
+    return DefaultActionGroup(actionsPerGroup.flatMapIndexed { index, actions ->
+      if (index > 0) listOf(Separator.create()) + actions else actions
+    })
   }
 
   fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
@@ -168,4 +204,5 @@ object TerminalUiUtils {
 
   private val LOG = logger<TerminalUiUtils>()
   private const val TIMEOUT = 2000
+  private const val TERMINAL_OUTPUT_CONTEXT_MENU = "Terminal.OutputContextMenu"
 }
