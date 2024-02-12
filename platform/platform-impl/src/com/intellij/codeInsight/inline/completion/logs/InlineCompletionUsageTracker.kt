@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
@@ -20,7 +20,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 25)
+  private val GROUP = EventLogGroup("inline.completion", 26)
 
   const val INVOKED_EVENT_ID = "invoked"
   const val SHOWN_EVENT_ID = "shown"
