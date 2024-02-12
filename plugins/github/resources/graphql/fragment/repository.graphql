@@ -1,8 +1,18 @@
 fragment repository on Repository {
+  ...nodeInfo
   owner {
-    login
+    ...repositoryOwnerName
   }
   nameWithOwner
+  viewerPermission
+
+  mergeCommitAllowed
+  squashMergeAllowed
+  rebaseMergeAllowed
+
+  defaultBranchRef {
+    ...gitRefName
+  }
   isFork
   url
   sshUrl

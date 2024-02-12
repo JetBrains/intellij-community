@@ -33,11 +33,11 @@ class GHPullRequest(id: String,
                     @NlsSafe val body: String,
                     val baseRefName: String,
                     val baseRefOid: String,
-                    val baseRepository: Repository?,
+                    val baseRepository: GHRepository?,
                     baseRef: BaseRef?,
                     val headRefName: String,
                     val headRefOid: String,
-                    val headRepository: Repository?,
+                    val headRepository: GHRepository?,
                     override val reactions: GHReactable.ReactionConnection)
   : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt, isReadByViewer,
                        assignees, labels, reviewRequests, reviewThreads,
@@ -46,18 +46,7 @@ class GHPullRequest(id: String,
   @JsonIgnore
   val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule
 
-  @GraphQLFragment("/graphql/fragment/repository.graphql")
-  data class Repository(
-    val owner: Owner,
-    val isFork: Boolean,
-    val nameWithOwner: @NlsSafe String,
-    val url: @NlsSafe String,
-    val sshUrl: @NlsSafe String
-  )
-
   data class BaseRef(val refUpdateRule: GHRefUpdateRule?)
-
-  class Owner(val login: String)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
