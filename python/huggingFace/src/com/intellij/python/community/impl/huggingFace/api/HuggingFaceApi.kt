@@ -5,10 +5,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCache
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceSafeExecutor
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
 object HuggingFaceApi {
   fun fillCacheWithBasicApiData(endpoint: HuggingFaceEntityKind, cache: HuggingFaceCache, maxCount: Int) {
@@ -36,21 +35,20 @@ object HuggingFaceApi {
     endpointKind: HuggingFaceEntityKind,
     json: String
   ): Map<String, HuggingFaceEntityBasicApiData> {
-    val jsonArray: JsonArray = JsonParser.parseString(json).asJsonArray
+    val objectMapper = ObjectMapper().registerKotlinModule()
+    val jsonArray: JsonNode = objectMapper.readTree(json)
     val modelDataMap = mutableMapOf<String, HuggingFaceEntityBasicApiData>()
 
     jsonArray.forEach { element ->
-      val jsonObject: JsonObject = element.asJsonObject
-      jsonObject.get("id")?.asString?.let { id ->
+      val jsonObject: JsonNode = element
+      jsonObject.get("id")?.asText()?.let { id ->
         if (id.isNotEmpty()) {
           @NlsSafe val nlsSafeId = id
-          @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asString ?: "unknown"
-
-          val gated = jsonObject.get("gated")?.asString ?: "true"
-          val downloads = jsonObject.get("downloads")?.asInt ?: -1
-          val likes = jsonObject.get("likes")?.asInt ?: -1
-          val lastModified =
-            jsonObject.get("lastModified")?.asString ?: "1000-01-01T01:01:01.000Z"
+          @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asText() ?: "unknown"
+          val gated = jsonObject.get("gated")?.asText() ?: "true"
+          val downloads = jsonObject.get("downloads")?.asInt() ?: -1
+          val likes = jsonObject.get("likes")?.asInt() ?: -1
+          val lastModified = jsonObject.get("lastModified")?.asText() ?: "1000-01-01T01:01:01.000Z"
 
           val modelData = HuggingFaceEntityBasicApiData(
             endpointKind,
