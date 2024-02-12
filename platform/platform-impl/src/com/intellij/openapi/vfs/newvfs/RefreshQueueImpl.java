@@ -202,8 +202,8 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   }
 
   public static boolean isRefreshInProgress() {
-    var refreshQueue = (RefreshQueueImpl)RefreshQueue.getInstance();
-    return !refreshQueue.mySessions.isEmpty() || !((CoroutineDispatcherBackedExecutor)refreshQueue.myQueue).isEmpty();
+    var refreshQueue = (RefreshQueueImpl)getInstance();
+    return !refreshQueue.mySessions.isEmpty() || !refreshQueue.myQueue.isEmpty();
   }
 
   @TestOnly

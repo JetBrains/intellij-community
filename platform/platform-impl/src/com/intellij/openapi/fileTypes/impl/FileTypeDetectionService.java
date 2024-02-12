@@ -730,7 +730,7 @@ final class FileTypeDetectionService implements Disposable {
 
   @TestOnly
   void drainReDetectQueue() {
-    ((CoroutineDispatcherBackedExecutor)reDetectExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
+    reDetectExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
   }
 
   @TestOnly

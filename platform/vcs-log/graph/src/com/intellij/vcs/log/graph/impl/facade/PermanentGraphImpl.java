@@ -18,7 +18,10 @@ import com.intellij.vcs.log.graph.impl.permanent.*;
 import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory;
 import com.intellij.vcs.log.graph.linearBek.LinearBekController;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -202,7 +205,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
     PermanentCommitsInfoImpl<CommitId> permanentCommitsInfo = PermanentCommitsInfoImpl.newInstance(graphCommits,
                                                                                                    idsGenerator.getNotLoadedCommits());
 
-    GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (IntComparator)(nodeIndex1, nodeIndex2) -> {
+    GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (nodeIndex1, nodeIndex2) -> {
       CommitId commitId1 = permanentCommitsInfo.getCommitId(nodeIndex1);
       CommitId commitId2 = permanentCommitsInfo.getCommitId(nodeIndex2);
       return headCommitsComparator.compare(commitId1, commitId2);

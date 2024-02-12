@@ -45,7 +45,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     .build(
       new CacheLoader<>() {
         @Override
-        public String load(VirtualFile key) throws Exception {
+        public @NotNull String load(@NotNull VirtualFile key) {
           return readAttributeFromFile(key);
         }
       });
@@ -129,7 +129,7 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   @Override
   @Nullable
   public String findParameterType(@NotNull PyAstFunction function, @NotNull String name) {
-    final PySignature signature = findSignature((PyFunction)function);
+    final PySignature signature = findSignature(function);
     if (signature != null) {
       return signature.getArgTypeQualifiedName(name);
     }
