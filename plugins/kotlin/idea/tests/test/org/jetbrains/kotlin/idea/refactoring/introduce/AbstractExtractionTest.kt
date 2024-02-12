@@ -94,16 +94,19 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 DataManager.getInstance().getDataContext(fixture.editor.component)
             )
 
-            val inplaceVariableName = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// INPLACE_VARIABLE_NAME:")
+            val inplaceVariableNames = InTextDirectivesUtils.findListWithPrefixes(file.text, "// INPLACE_VARIABLE_NAME:")
+                .takeUnless { it.isEmpty() }
             val templateState = TemplateManagerImpl.getTemplateState(editor)
 
-            if (inplaceVariableName != null) {
+            if (inplaceVariableNames != null) {
                 templateState as TemplateState
 
                 WriteCommandAction.runWriteCommandAction(project) {
-                    val range = templateState.currentVariableRange ?: error("No variable range was found")
-                    templateState.editor.document.replaceString(range.startOffset, range.endOffset, inplaceVariableName)
-                    templateState.update()
+                    for (inplaceVariableName in inplaceVariableNames) {
+                        val range = templateState.currentVariableRange ?: error("No variable range was found")
+                        templateState.editor.document.replaceString(range.startOffset, range.endOffset, inplaceVariableName)
+                        templateState.nextTab()
+                    }
                 }
             }
 
