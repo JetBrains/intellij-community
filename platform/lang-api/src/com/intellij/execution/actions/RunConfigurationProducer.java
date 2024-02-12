@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -26,7 +27,7 @@ import java.util.List;
  * run configurations that can be created from context should extend the {@link com.intellij.execution.configurations.LocatableConfigurationBase} class.
  * If RunConfigurationProducer doesn't require indexes, please, implement the {@link com.intellij.openapi.project.DumbAware} interface.
  */
-public abstract class RunConfigurationProducer<T extends RunConfiguration> {
+public abstract class RunConfigurationProducer<T extends RunConfiguration> implements PossiblyDumbAware {
   public static final ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
   private static final Logger LOG = Logger.getInstance(RunConfigurationProducer.class);
 

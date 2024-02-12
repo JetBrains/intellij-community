@@ -10,6 +10,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,7 +26,7 @@ import java.util.function.Function;
  * Allows adding an editor gutter icon associated with a PSI element that can be run
  * (e.g., a test, a main method, an application, etc.).
  */
-public abstract class RunLineMarkerContributor {
+public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
   public static final Function<PsiElement, String> RUN_TEST_TOOLTIP_PROVIDER = it -> ExecutionBundle.message("run.text");
 
   static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");

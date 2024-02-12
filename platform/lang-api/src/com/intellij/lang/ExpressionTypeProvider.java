@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.util.List;
  *
  * @author gregsh
  */
-public abstract class ExpressionTypeProvider<T extends PsiElement> {
+public abstract class ExpressionTypeProvider<T extends PsiElement> implements PossiblyDumbAware {
   /**
    * Returns HTML string for type info hint.
    * @see com.intellij.openapi.util.text.StringUtil#escapeXmlEntities(String)

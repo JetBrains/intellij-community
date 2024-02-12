@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.parameterInfo;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ import java.awt.*;
  * ({@link #updateUI(Object, ParameterInfoUIContext)} and method to actually show the popup
  * ({@link #showParameterInfo(Object, CreateParameterInfoContext)});
  */
-public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
+public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> extends PossiblyDumbAware {
 
   /**
    * <p>Find psiElement for parameter info should also set ItemsToShow in context and may set highlighted element</p>

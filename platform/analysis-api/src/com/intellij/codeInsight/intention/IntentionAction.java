@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
  */
-public interface IntentionAction extends FileModifier, CommonIntentionAction {
+public interface IntentionAction extends FileModifier, CommonIntentionAction, PossiblyDumbAware {
 
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
 
