@@ -4,17 +4,17 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.classFilter.ClassFilterEditor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import static java.awt.GridBagConstraints.*;
 
@@ -26,6 +26,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   private JCheckBox myCbSkipClassLoaders;
   private ClassFilterEditor mySteppingFilterEditor;
   private JCheckBox myCbSkipSimpleGetters;
+  private JCheckBox myCbHideStackFramesUsingSteppingFilter;
   private JRadioButton myRbEvaluateFinallyAlways;
   private JRadioButton myRbEvaluateFinallyNever;
   private JRadioButton myRbEvaluateFinallyAsk;
@@ -43,7 +44,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     myCbStepInfoFiltersEnabled.setSelected(settings.TRACING_FILTERS_ENABLED);
 
     mySteppingFilterEditor.setFilters(settings.getSteppingFilters());
-    mySteppingFilterEditor.setEnabled(settings.TRACING_FILTERS_ENABLED);
+    setEnabledStepFilters();
 
     if (DebuggerSettings.EVALUATE_FINALLY_ALWAYS.equals(settings.EVALUATE_FINALLY_ON_POP_FRAME)) {
       myRbEvaluateFinallyAlways.setSelected(true);
@@ -55,12 +56,17 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
       myRbEvaluateFinallyAsk.setSelected(true);
     }
     myCbResumeOnlyCurrentThread.setSelected(settings.RESUME_ONLY_CURRENT_THREAD);
+    myCbHideStackFramesUsingSteppingFilter.setSelected(settings.HIDE_STACK_FRAMES_USING_STEPPING_FILTER);
   }
 
   @Override
   public void apply(@NotNull DebuggerSettings settings) {
     mySteppingFilterEditor.stopEditing();
     getSettingsTo(settings);
+
+    for (var project : ProjectManager.getInstance().getOpenProjects()) {
+      XDebuggerUtilImpl.rebuildAllSessionsViews(project);
+    }
   }
 
   private void getSettingsTo(DebuggerSettings settings) {
@@ -83,6 +89,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
 
     settings.RESUME_ONLY_CURRENT_THREAD = myCbResumeOnlyCurrentThread.isSelected();
     settings.setSteppingFilters(mySteppingFilterEditor.getFilters());
+    settings.HIDE_STACK_FRAMES_USING_STEPPING_FILTER = myCbHideStackFramesUsingSteppingFilter.isSelected();
   }
 
   @Override
@@ -102,6 +109,7 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     myCbSkipClassLoaders = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
     myCbSkipSimpleGetters = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
     myCbStepInfoFiltersEnabled = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
+    myCbHideStackFramesUsingSteppingFilter = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.hide.stack.frames.using.step.filter"));
     panel.add(myCbAlwaysSmartStep, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsTop(8), 0, 0));
     panel.add(myCbSkipConstructors, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBInsets.emptyInsets(), 0, 0));
@@ -111,13 +119,9 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
 
     mySteppingFilterEditor = new ClassFilterEditor(JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables(), null, "reference.viewBreakpoints.classFilters.newPattern");
     panel.add(mySteppingFilterEditor, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 1.0, CENTER, BOTH, JBUI.insetsLeft(5), 0, 0));
+    panel.add(myCbHideStackFramesUsingSteppingFilter, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsTop(8), 0, 0));
 
-    myCbStepInfoFiltersEnabled.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        mySteppingFilterEditor.setEnabled(myCbStepInfoFiltersEnabled.isSelected());
-      }
-    });
+    myCbStepInfoFiltersEnabled.addActionListener(e -> setEnabledStepFilters());
 
     myRbEvaluateFinallyAlways = new JRadioButton(JavaDebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.always"));
     myRbEvaluateFinallyNever = new JRadioButton(JavaDebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.never"));
@@ -152,5 +156,11 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     panel.add(myCbResumeOnlyCurrentThread, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, new Insets(0, 0, 0, 0), 0, 0));
 
     return panel;
+  }
+
+  private void setEnabledStepFilters() {
+    var isEnabled = myCbStepInfoFiltersEnabled.isSelected();
+    mySteppingFilterEditor.setEnabled(isEnabled);
+    myCbHideStackFramesUsingSteppingFilter.setEnabled(isEnabled);
   }
 }

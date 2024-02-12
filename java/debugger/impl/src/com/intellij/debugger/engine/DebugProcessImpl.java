@@ -484,6 +484,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return stream.filter(ClassFilter::isEnabled).toList();
   }
 
+  public static boolean shouldHideStackFramesUsingSteppingFilters() {
+    return DebuggerSettings.getInstance().HIDE_STACK_FRAMES_USING_STEPPING_FILTER;
+  }
+
   void deleteStepRequests(@Nullable final ThreadReference stepThread) {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
     for (StepRequest request : new ArrayList<>(requestManager.stepRequests())) { // need a copy here to avoid CME

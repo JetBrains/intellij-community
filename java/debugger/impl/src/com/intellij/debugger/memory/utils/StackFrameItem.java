@@ -274,7 +274,7 @@ public class StackFrameItem {
         DebuggerUtilsEx.isInLibraryContent(mySourcePosition != null ? mySourcePosition.getFile() : null, debugProcess.getProject());
 
       myShouldHide = myIsSynthetic || myIsInLibraryContent ||
-                     (Registry.is("debugger.hide.frames.including.stepping.filters") && DebugProcessImpl.isPositionFiltered(location));
+                     (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(location));
     }
 
     @Nullable

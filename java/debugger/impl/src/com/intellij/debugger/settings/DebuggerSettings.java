@@ -94,6 +94,11 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
    */
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
+  /**
+   * Whether we hide not only library frames in stack view, but also the frames from classes which are filtered from the stepping.
+   */
+  public boolean HIDE_STACK_FRAMES_USING_STEPPING_FILTER = true;
+
   private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
 
   public boolean INSTRUMENTING_AGENT = true;
@@ -176,6 +181,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SKIP_GETTERS == secondSettings.SKIP_GETTERS &&
       SHOW_TYPES == secondSettings.SHOW_TYPES &&
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
+      HIDE_STACK_FRAMES_USING_STEPPING_FILTER == secondSettings.HIDE_STACK_FRAMES_USING_STEPPING_FILTER &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE) &&

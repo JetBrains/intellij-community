@@ -233,7 +233,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public boolean shouldHide() {
     return isSynthetic() || isInLibraryContent() ||
-           (Registry.is("debugger.hide.frames.including.stepping.filters") && DebugProcessImpl.isPositionFiltered(getLocation()));
+           (DebugProcessImpl.shouldHideStackFramesUsingSteppingFilters() && DebugProcessImpl.isPositionFiltered(getLocation()));
   }
 
   @Nullable
