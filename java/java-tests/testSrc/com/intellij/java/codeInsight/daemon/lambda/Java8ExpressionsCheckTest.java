@@ -284,6 +284,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     for (CandidateInfo candidate : candidates) {
       if (candidate instanceof MethodCandidateInfo) {
         //try to cache top level session
+        //noinspection ResultOfMethodCallIgnored
         candidate.getSubstitutor();
       }
     }
