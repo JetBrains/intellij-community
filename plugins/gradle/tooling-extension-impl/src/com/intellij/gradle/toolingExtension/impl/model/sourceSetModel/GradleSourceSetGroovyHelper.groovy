@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
-import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.cleanupSharedSourceFolders
 import static com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder.containsAllSourceSetOutput
 import static com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil.getTaskArchiveFile
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
@@ -366,7 +365,8 @@ class GradleSourceSetGroovyHelper {
       }
     }
 
-    cleanupSharedSourceFolders(result)
+    GradleSourceSetModelBuilder.cleanupSharedSourceDirs(result, SourceSet.MAIN_SOURCE_SET_NAME, null)
+    GradleSourceSetModelBuilder.cleanupSharedSourceDirs(result, SourceSet.TEST_SOURCE_SET_NAME, SourceSet.MAIN_SOURCE_SET_NAME)
 
     result
   }

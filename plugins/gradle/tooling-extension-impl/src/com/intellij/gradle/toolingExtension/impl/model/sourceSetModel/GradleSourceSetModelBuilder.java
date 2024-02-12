@@ -19,6 +19,7 @@ import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.bundling.Jar;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.model.GradleSourceSetModel;
@@ -192,24 +193,23 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return configurationArtifacts;
   }
 
-  static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {
-    ExternalSourceSet mainSourceSet = map.get(SourceSet.MAIN_SOURCE_SET_NAME);
-    cleanupSharedSourceFolders(map, mainSourceSet, null);
-    cleanupSharedSourceFolders(map, map.get(SourceSet.TEST_SOURCE_SET_NAME), mainSourceSet);
-  }
-
-  static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> result, ExternalSourceSet sourceSet, ExternalSourceSet toIgnore) {
+  static void cleanupSharedSourceDirs(
+    @NotNull Map<String, ExternalSourceSet> externalSourceSets,
+    @NotNull String sourceSetName,
+    @Nullable String sourceSetNameToIgnore
+  ) {
+    ExternalSourceSet sourceSet = externalSourceSets.get(sourceSetName);
     if (sourceSet == null) return;
 
-    for (Map.Entry<String, ExternalSourceSet> sourceSetEntry : result.entrySet()) {
-      if (sourceSetEntry.getValue() == sourceSet) continue;
-      if (sourceSetEntry.getValue() == toIgnore) continue;
+    for (Map.Entry<String, ExternalSourceSet> sourceSetEntry : externalSourceSets.entrySet()) {
+      if (Objects.equals(sourceSetEntry.getKey(), sourceSetName)) continue;
+      if (Objects.equals(sourceSetEntry.getKey(), sourceSetNameToIgnore)) continue;
+
       ExternalSourceSet customSourceSet = sourceSetEntry.getValue();
       for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
         ExternalSourceDirectorySet customSourceDirectorySet = customSourceSet.getSources().get(sourceType);
         if (customSourceDirectorySet != null) {
-          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> sourceDirEntry : sourceSet.getSources()
-            .entrySet()) {
+          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> sourceDirEntry : sourceSet.getSources().entrySet()) {
             customSourceDirectorySet.getSrcDirs().removeAll(sourceDirEntry.getValue().getSrcDirs());
           }
         }
