@@ -4,10 +4,10 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.DownloadResult
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.InstallationResult
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstaller
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.runCommand
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.DownloadResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.InstallationResult
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstaller
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.runCommand
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstallationType.INSTALLER
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstallationType.ZIP
 import com.intellij.openapi.util.io.toNioPathOrNull

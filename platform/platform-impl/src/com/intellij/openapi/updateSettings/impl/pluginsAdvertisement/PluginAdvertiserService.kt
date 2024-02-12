@@ -23,7 +23,7 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.DEPENDENCY_SUPPORT_TYPE
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.EXECUTABLE_DEPENDENCY_KIND
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.ideaUltimate
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.UltimateInstallationService
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationService
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
