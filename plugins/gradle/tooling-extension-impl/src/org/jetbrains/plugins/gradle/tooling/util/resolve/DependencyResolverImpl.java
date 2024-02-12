@@ -58,6 +58,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
   private static final Logger LOG = LoggerFactory.getLogger(DependencyResolverImpl.class);
 
   private static final boolean IS_83_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("8.3");
+  private static final Pattern PUNCTUATION_IN_SUFFIX_PATTERN = Pattern.compile("[\\p{Punct}\\s]+$");
 
   private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;
@@ -293,12 +294,12 @@ public final class DependencyResolverImpl implements DependencyResolver {
           libraryDependency.setFile(artifactFile);
           ComponentArtifactsResult artifactsResult = auxiliaryArtifactsMap.get(artifact.getId().getComponentIdentifier());
           if (artifactsResult != null) {
-            Set<File> sourcesArtifactFiles = getAuxiliaryArtifactFiles(artifactsResult, SourcesArtifact.class);
+            Set<File> sourcesArtifactFiles = getResolvedAuxiliaryArtifactFiles(artifactsResult, SourcesArtifact.class);
             File sourcesFile = chooseAuxiliaryArtifactFile(artifactFile, sourcesArtifactFiles);
             if (sourcesFile != null) {
               libraryDependency.setSource(sourcesFile);
             }
-            Set<File> javadocArtifactFiles = getAuxiliaryArtifactFiles(artifactsResult, JavadocArtifact.class);
+            Set<File> javadocArtifactFiles = getResolvedAuxiliaryArtifactFiles(artifactsResult, JavadocArtifact.class);
             File javadocFile = chooseAuxiliaryArtifactFile(artifactFile, javadocArtifactFiles);
             if (javadocFile != null) {
               libraryDependency.setJavadoc(javadocFile);
@@ -521,8 +522,8 @@ public final class DependencyResolverImpl implements DependencyResolver {
     }
   }
 
-  private static @NotNull Set<File> getAuxiliaryArtifactFiles(@NotNull ComponentArtifactsResult artifactsResult,
-                                                              @NotNull Class<? extends Artifact> artifactType) {
+  private static @NotNull Set<File> getResolvedAuxiliaryArtifactFiles(@NotNull ComponentArtifactsResult artifactsResult,
+                                                                      @NotNull Class<? extends Artifact> artifactType) {
     return artifactsResult.getArtifacts(artifactType).stream()
       .filter(ResolvedArtifactResult.class::isInstance)
       .map(ResolvedArtifactResult.class::cast)
@@ -530,6 +531,20 @@ public final class DependencyResolverImpl implements DependencyResolver {
       .collect(toSet());
   }
 
+  /**
+   * If there are multiple auxiliary artifacts for the same `ComponentIdentifier`, we have to choose the "best match" based on file names.
+   * For context, see IDEA-332969
+   * 1. Find the common suffix of every auxiliary artifact (e.g. "-sources.jar" or ".src.jar") and ignore it going forward
+   * 2. Find the common suffix of the main artifact with the auxiliary artifacts (e.g. ".jar") and ignore it going forward
+   * 3. Filter the auxiliary artifacts, keeping only those that have the longest common prefix with the main artifact (not counting any
+   * punctuation or whitespace at the end of the common prefix)
+   * 4. Deterministically choose from the remaining auxiliary artifacts, preferring the shortest overall file name (the longer ones likely
+   * belong to some different main artifact that also has a longer file name)
+   *
+   * @param main        path to the dependency Jar file
+   * @param auxiliaries set of artifacts associated with this library
+   * @return best match, null otherwise
+   */
   @VisibleForTesting
   static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
     Iterator<File> auxiliariesIterator = auxiliaries.iterator();
@@ -541,15 +556,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
     if (!auxiliariesIterator.hasNext()) {
       return firstAuxiliary;
     }
-
-    // If there are multiple auxiliary artifacts for the same `ComponentIdentifier`, we have to choose the "best match" based on file names.
-    // For context, see: https://youtrack.jetbrains.com/issue/IDEA-332969
-    // 1. Find the common suffix of every auxiliary artifact (e.g. "-sources.jar" or ".src.jar") and ignore it going forward
-    // 2. Find the common suffix of the main artifact with the auxiliary artifacts (e.g. ".jar") and ignore it going forward
-    // 3. Filter the auxiliary artifacts, keeping only those that have the longest common prefix with the main artifact (not counting any
-    //    punctuation or whitespace at the end of the common prefix)
-    // 4. Deterministically choose from the remaining auxiliary artifacts, preferring the shortest overall file name (the longer ones likely
-    //    belong to some different main artifact that also has a longer file name)
 
     String mainName = main.getName();
     String firstAuxiliaryName = firstAuxiliary.getName();
@@ -567,7 +573,6 @@ public final class DependencyResolverImpl implements DependencyResolver {
       Math.min(commonSuffixOfAuxiliaries, StringUtils.commonSuffixLength(mainName, firstAuxiliaryName));
     String mainSuffixlessName = mainName.substring(0, mainName.length() - commonSuffixOfMainAndAuxiliaries);
 
-    Pattern commonPrefixExcessPattern = Pattern.compile("[\\p{Punct}\\s]+$");
     int commonPrefixOfMainAndShortlistedAuxiliaries = 0;
     TreeMap<String, File> shortlistedAuxiliariesBySuffixlessName =
       new TreeMap<>(Comparator.comparingInt(String::length).thenComparing(String::compareTo));
@@ -575,7 +580,7 @@ public final class DependencyResolverImpl implements DependencyResolver {
       String auxiliaryName = auxiliary.getName();
       String auxiliarySuffixlessName = auxiliaryName.substring(0, auxiliaryName.length() - commonSuffixOfAuxiliaries);
       int commonPrefixNaive = StringUtils.commonPrefixLength(mainSuffixlessName, auxiliarySuffixlessName);
-      Matcher commonPrefixExcessMatcher = commonPrefixExcessPattern.matcher(auxiliarySuffixlessName).region(0, commonPrefixNaive);
+      Matcher commonPrefixExcessMatcher = PUNCTUATION_IN_SUFFIX_PATTERN.matcher(auxiliarySuffixlessName).region(0, commonPrefixNaive);
       int commonPrefix = commonPrefixExcessMatcher.find() ? commonPrefixExcessMatcher.start() : commonPrefixNaive;
       if (commonPrefix >= commonPrefixOfMainAndShortlistedAuxiliaries) {
         if (commonPrefix > commonPrefixOfMainAndShortlistedAuxiliaries) {
