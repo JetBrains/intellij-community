@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.LocalizationUtil;
 import com.intellij.util.ResourceUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +28,6 @@ import java.util.Set;
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
   public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];
-  @ApiStatus.Internal
   public static final String INSPECTION_DESCRIPTIONS_FOLDER = "inspectionDescriptions";
 
   private static final Logger LOG = Logger.getInstance(InspectionToolWrapper.class);

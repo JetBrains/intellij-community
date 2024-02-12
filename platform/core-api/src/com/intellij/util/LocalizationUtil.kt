@@ -2,34 +2,32 @@
 package com.intellij.util
 
 import com.intellij.DynamicBundle
-import com.intellij.DynamicBundle.getLocale
 import com.intellij.openapi.util.text.Strings
-import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
-import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
-@ApiStatus.Internal
 class LocalizationUtil {
   companion object {
-
+    val locale: Locale? = DynamicBundle.findLanguageBundle()?.locale?.let { Locale.forLanguageTag(it) }
     val pluginClassLoader: ClassLoader? = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
-    private fun convertPathToLocalizationFolderUsage(path: Path, locale: Locale, withRegion: Boolean): String {
+    private fun convertPathToLocalizationFolderUsage(path: String, locale: Locale, withRegion: Boolean): String {
       val localizationFolderName = "localization"
-      var result = Path(localizationFolderName).resolve(locale.language)
+      var result = Path("$localizationFolderName/${locale.language}")
       if (withRegion && locale.country.isNotEmpty()) {
         result = result.resolve(locale.country)
       }
-      result = result.resolve(path)
+      val myPath = path.removeSuffix("/").removePrefix("/")
+      result = result.resolve(myPath)
       return result.pathString
     }
 
-    private fun convertPathToLocaleSuffixUsage(path: Path, locale: Locale?, withRegion: Boolean): String {
-      if (locale == null) return path.pathString
+    private fun convertPathToLocaleSuffixUsage(filePath: String, locale: Locale?, withRegion: Boolean): String {
+      if (locale == null) return filePath
+      val path = Path(filePath)
       val fileName = StringBuilder(path.nameWithoutExtension)
       val extension = path.extension
       val foldersPath = path.parent ?: Path("")
@@ -75,22 +73,23 @@ class LocalizationUtil {
     }
 
     private fun getLocalizedPaths(basePath: String, fileName: String): List<String> {
-      val path = Path(
-        Strings.trimStart(Strings.trimEnd(basePath, "/"), "/")).resolve(fileName)
+      val fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/")
       val result = mutableListOf<String>()
-      //localizations/zh/CN/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), true))
+      if (locale != null) {
+        //localizations/zh/CN/inspectionDescriptions/name.html
+        result.add(convertPathToLocalizationFolderUsage("$fixedPath/$fileName", locale, true))
 
-      //inspectionDescriptions/name_zh_CN.html
-      result.add(convertPathToLocaleSuffixUsage(path, getLocale(), true))
+        //inspectionDescriptions/name_zh_CN.html
+        result.add(convertPathToLocaleSuffixUsage("$fixedPath/$fileName", locale, true))
 
-      //localizations/zh/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), false))
+        //localizations/zh/inspectionDescriptions/name.html
+        result.add(convertPathToLocalizationFolderUsage("$fixedPath/$fileName", locale, false))
 
-      //inspectionDescriptions/name_zh.html
-      result.add(convertPathToLocaleSuffixUsage(path, getLocale(), false))
+        //inspectionDescriptions/name_zh.html
+        result.add(convertPathToLocaleSuffixUsage("$fixedPath/$fileName", locale, false))
+      }
       //inspectionDescriptions/name.html
-      result.add(path.pathString)
+      result.add("$fixedPath/$fileName")
       return result
     }
 
@@ -101,13 +100,15 @@ class LocalizationUtil {
     }
 
     private fun getFolderLocalizedPaths(basePath: String, fileName: String): List<String> {
-      val path = Path(Strings.trimStart (Strings.trimEnd(basePath, "/"), "/")).resolve(fileName)
+      val fixedPath = Strings.trimStart(Strings.trimEnd(basePath, "/"), "/")
       val result = mutableListOf<String>()
-      //localizations/zh/CN/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), true))
+      if (locale != null) {
+        //localizations/zh/CN/inspectionDescriptions/name.html
+        result.add(convertPathToLocalizationFolderUsage("$fixedPath/$fileName", locale, true))
 
-      //localizations/zh/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), false))
+        //localizations/zh/inspectionDescriptions/name.html
+        result.add(convertPathToLocalizationFolderUsage("$fixedPath/$fileName", locale, false))
+      }
       return result
     }
   }
