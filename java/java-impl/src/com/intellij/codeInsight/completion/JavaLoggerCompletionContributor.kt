@@ -25,8 +25,8 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
              )),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-               val module = ModuleUtil.findModuleForFile(parameters.originalFile)
-               val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module)
+               val module = ModuleUtil.findModuleForFile(parameters.originalFile) ?: return
+               val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module, true)
 
                val element = parameters.originalPosition ?: return
                val allPlaces = GenerateLoggerUtil.getAllNestedClasses(element).toList()
