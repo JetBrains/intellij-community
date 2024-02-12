@@ -1735,9 +1735,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private static final class SelectionInfo {
-    private final Object @NotNull [] elements;
+    private final @NotNull Object @NotNull [] elements;
 
-    private SelectionInfo(Object @NotNull [] elements) {
+    private SelectionInfo(@NotNull Object @NotNull [] elements) {
       this.elements = elements;
     }
 
@@ -1768,7 +1768,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         for (TreePath path : selectionPaths) {
           NodeDescriptor<?> descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
           if (descriptor != null) {
-            selectedElements.add(descriptor.getElement());
+            Object element = descriptor.getElement();
+            if (element != null) {
+              selectedElements.add(element);
+            }
           }
         }
       }
