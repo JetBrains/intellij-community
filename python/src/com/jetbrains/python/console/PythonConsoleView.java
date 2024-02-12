@@ -13,7 +13,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
@@ -731,9 +730,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void dispose() {
     super.dispose();
 
-    ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
-    if (communication != null) {
-      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
+    if (!getProject().isDisposed()) {
+      ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
+      if (communication != null) {
+        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
+      }
     }
 
     var editor = myCommandQueuePanel.getQueueEditor();
