@@ -498,7 +498,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     File fromFile = new File(testDataPath + "/" + sourcePath);
     if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
-      return myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
+      VirtualFile file = myTempDirFixture.copyAll(fromFile.getPath(), targetPath);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+      return file;
     }
 
     File targetFile = new File(getTempDirPath() + "/" + targetPath);
