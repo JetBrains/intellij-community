@@ -72,7 +72,7 @@ object DocumentationHtmlUtil {
         .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION { 
           padding: 0 ${CONTENT_INNER_PADDING}px ${CONTENT_SPACING}px ${CONTENT_INNER_PADDING}px;
         }
-        .$CLASS_GREYED { color: #909090; display: inline;}
+        .$CLASS_GRAYED { color: #909090; display: inline;}
         
         .$CLASS_SECTIONS { padding: 0 ${CONTENT_INNER_PADDING - 2}px 0 ${CONTENT_INNER_PADDING - 2}px 0; border-spacing: 0; }
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }

@@ -17,7 +17,7 @@ public interface DocumentationMarkup {
   @ApiStatus.Internal String CLASS_SEPARATED = "separated";
   @ApiStatus.Internal String CLASS_SECTIONS = "sections";
   @ApiStatus.Internal String CLASS_SECTION = "section";
-  @ApiStatus.Internal String CLASS_GREYED = "greyed";
+  @ApiStatus.Internal String CLASS_GRAYED = "grayed";
   @ApiStatus.Internal String CLASS_CENTERED = "centered";
   @ApiStatus.Internal String CLASS_BOTTOM = "bottom";
   @ApiStatus.Internal String CLASS_DOWNLOAD_DOCUMENTATION = "download-documentation";
@@ -32,7 +32,7 @@ public interface DocumentationMarkup {
   @NlsSafe String SECTION_SEPARATOR = "</td><td valign='top'>";
   @NlsSafe String SECTION_START = "<td valign='top'>";
   @NlsSafe String SECTION_END = "</td>";
-  @NlsSafe String GRAYED_START = "<span class='" + CLASS_GREYED + "'>";
+  @NlsSafe String GRAYED_START = "<span class='" + CLASS_GRAYED + "'>";
   @NlsSafe String GRAYED_END = "</span>";
 
   HtmlChunk.Element SECTION_CONTENT_CELL = HtmlChunk.tag("td").attr("valign", "top");
@@ -40,7 +40,7 @@ public interface DocumentationMarkup {
   HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").setClass(CLASS_SECTIONS);
   HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().setClass(CLASS_CONTENT);
   HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().setClass(CLASS_DEFINITION);
-  HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass(CLASS_GREYED);
+  HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass(CLASS_GRAYED);
   HtmlChunk.Element CENTERED_ELEMENT = HtmlChunk.p().setClass(CLASS_CENTERED);
   HtmlChunk.Element EXTERNAL_LINK_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow");
   HtmlChunk.Element INFORMATION_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.General.Information");
