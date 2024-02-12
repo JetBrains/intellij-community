@@ -206,7 +206,10 @@ class TestJbService private constructor(): JbService {
     OnboardingController.getInstance().startWizard(isModal = false)
   }
 
-  override fun hasDataToImport() = true
+  override suspend fun hasDataToImport() = true
+  override suspend fun warmUp() {
+    TODO("Not yet implemented")
+  }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
     LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
@@ -272,7 +275,10 @@ class TestSyncService : SyncService {
     private val LOG = logger<TestSyncService>()
   }
 
-  override fun hasDataToImport() = true
+  override suspend fun hasDataToImport() = true
+  override suspend fun warmUp() {
+    TODO("Not yet implemented")
+  }
 
   override fun baseProduct(id: String): Boolean {
     return id == TestJbService.main.id

@@ -161,7 +161,8 @@ interface ExternalService : BaseService {
 }
 
 interface JbService : BaseService {
-  fun hasDataToImport(): Boolean
+  suspend fun hasDataToImport(): Boolean
+  suspend fun warmUp()
   fun getOldProducts(): List<Product>
   fun importFromCustomFolder(folderPath: Path)
 }

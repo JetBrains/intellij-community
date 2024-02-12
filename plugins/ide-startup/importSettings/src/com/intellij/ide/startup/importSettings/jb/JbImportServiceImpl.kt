@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.plugins.DescriptorListLoadingContext
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
@@ -14,6 +15,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -21,21 +23,23 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jdom.Element
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 import javax.swing.Icon
+import kotlin.Result
 import kotlin.io.path.*
+import kotlin.time.Duration.Companion.seconds
 
 internal data class JbProductInfo(
   override val version: String,
@@ -166,10 +170,13 @@ class JbChildSetting(override val id: String,
 @Service
 class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbService {
 
-  override fun hasDataToImport() = products().any()
+  private val products: ConcurrentMap<String, JbProductInfo> = ConcurrentHashMap()
 
-  private val productsLazy: Lazy<Map<String, JbProductInfo>> = lazy {
-    doListProducts()
+  private val hasDataProcessed = CompletableDeferred<Boolean>()
+  private val warmUpComplete = CompletableDeferred<Boolean>()
+
+  override suspend fun hasDataToImport(): Boolean {
+    return hasDataProcessed.await()
   }
 
   override fun getOldProducts(): List<Product> {
@@ -191,11 +198,22 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   override fun products(): List<Product> {
-    return filterProducts(old = false)
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking {
+      try {
+        withTimeout(2.seconds) {
+          warmUpComplete.await()
+        }
+      }
+      catch (tce: TimeoutCancellationException) {
+        LOG.info("Timeout waiting for products warmUp. Will show what we have now: ${tce.message}")
+      }
+      filterProducts(old = false)
+    }
   }
 
   private fun filterProducts(old: Boolean): List<Product> {
-    val products = productsLazy.value.values.toList()
+    val products = products.values.toList()
     val newProducts = hashMapOf<String, String>()
     for (product in products) {
       if (ConfigImportHelper.isConfigOld(product.lastUsageTime))
@@ -219,16 +237,16 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     }
   }
 
-  private fun doListProducts(): Map<String, JbProductInfo> {
-    val retval = HashMap<String, JbProductInfo>()
+  override suspend fun warmUp() {
     val parentDir = Path.of(PathManager.getDefaultConfigPathFor(""))
     val context = DescriptorListLoadingContext(customDisabledPlugins = Collections.emptySet(),
                                                customBrokenPluginVersions = emptyMap(),
                                                productBuildNumber = { PluginManagerCore.buildNumber })
-    for (confDir in parentDir.listDirectoryEntries()) {
-      if (!confDir.isDirectory()) {
-        continue
-      }
+    val configDirectoriesCandidates = parentDir
+      .listDirectoryEntries()
+      .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
+      .sortedByDescending { it.getLastModifiedTime() }
+    for (confDir in configDirectoriesCandidates) {
       LOG.info("Found ${confDir.name} under ${parentDir.pathString}")
       val pluginsDir = Path.of(PathManager.getDefaultPluginPathFor(confDir.name))
       val dirName = confDir.name
@@ -242,16 +260,18 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         LOG.info("${confDir.name} doesn't contain options directory, skipping it")
         continue
       }
-      val optionsEntries = optionsDir.listDirectoryEntries("*.xml")
-      if (optionsEntries.isEmpty()) {
-        LOG.info("${confDir.name}/options has no xml files, skipping it")
-        continue
-      }
-      var lastModified = FileTime.fromMillis(0)
-      for (optionXml in optionsEntries) {
-        if (optionXml.getLastModifiedTime() > lastModified) {
+      var lastModified: FileTime? = null
+      for (fileName in DEFAULT_SETTINGS_FILES) {
+        val optionXml = (optionsDir / fileName)
+        if (!optionXml.isRegularFile())
+          continue
+        if (lastModified == null || optionXml.getLastModifiedTime() > lastModified) {
           lastModified = optionXml.getLastModifiedTime()
         }
+      }
+      if (lastModified == null) {
+        LOG.info("${confDir.name}/options has no xml files, skipping it")
+        continue
       }
 
       LOG.info("${optionsDir}' newest file is dated $lastModified")
@@ -265,14 +285,18 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       val jbProductInfo = JbProductInfo(ideVersion, lastModified, dirName, fullNameWithVersion, ideName,
                                         confDir, pluginsDir)
       jbProductInfo.prefetchData(coroutineScope, context)
-      retval[dirName] = jbProductInfo
+      products[dirName] = jbProductInfo
+      hasDataProcessed.completeWith(Result.success(true))
     }
-    return retval
+    warmUpComplete.completeWith(Result.success(true))
+    if (!hasDataProcessed.isCompleted) {
+      hasDataProcessed.completeWith(Result.success(products.isNotEmpty()))
+    }
   }
 
   override fun getSettings(itemId: String): List<JbSettingsCategory> {
     LOG.info("User has selected $itemId")
-    val productInfo = productsLazy.value[itemId] ?: error("Can't find product")
+    val productInfo = products[itemId] ?: error("Can't find product")
     val plugins = arrayListOf<ChildSetting>()
     val pluginNames = arrayListOf<String>()
     for (descriptor in productInfo.getPluginsDescriptors()) {
@@ -307,12 +331,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon? {
-    val productInfo = productsLazy.value[itemId] ?: error("Can't find product")
+    val productInfo = products[itemId] ?: error("Can't find product")
     return NameMappings.getIcon(productInfo.codeName, size)
   }
 
   override fun importSettings(productId: String, saveDataList: List<DataForSave>): DialogImportData {
-    val productInfo = productsLazy.value[productId] ?: error("Can't find product")
+    val productInfo = products[productId] ?: error("Can't find product")
     val filteredCategories = mutableSetOf<SettingsCategory>()
     var plugins2import: List<String>? = null
     var unselectedPlugins: List<String>? = null
@@ -407,6 +431,10 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   companion object {
     internal val LOG = logger<JbImportServiceImpl>()
     private val IDE_NAME_PATTERN = Pattern.compile("""([a-zA-Z]+)(20\d\d\.\d)""")
+    private val DEFAULT_SETTINGS_FILES = setOf(
+      GeneralSettings.IDE_GENERAL_XML,
+      StoragePathMacros.NON_ROAMABLE_FILE
+    )
     fun getInstance(): JbImportServiceImpl = service()
     private val UI_CATEGORY = JbSettingsCategory(SettingsCategory.UI, StartupImportIcons.Icons.ColorPicker,
                                                  ImportSettingsBundle.message("settings.category.ui.name"),

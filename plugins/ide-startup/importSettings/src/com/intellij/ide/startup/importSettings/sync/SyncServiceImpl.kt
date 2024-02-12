@@ -40,7 +40,10 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
     fun getInstance(): SyncServiceImpl = service()
   }
 
-  override fun hasDataToImport() = syncState.value == SyncService.SYNC_STATE.LOGGED
+  override suspend fun hasDataToImport() = syncState.value == SyncService.SYNC_STATE.LOGGED
+  override suspend fun warmUp() {
+    TODO("Not yet implemented")
+  }
 
   override val syncState = Property(SyncService.SYNC_STATE.UNLOGGED)
 
