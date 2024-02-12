@@ -16,7 +16,9 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
@@ -78,6 +80,7 @@ private constructor(cs: CoroutineScope,
   }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+    if (editor !is EditorImpl) return
     paintCommentIcons(editor, g, r)
     paintNewCommentIcon(editor, g, r)
   }
@@ -85,12 +88,12 @@ private constructor(cs: CoroutineScope,
   /**
    * Paint comment icons on each line containing discussion renderers
    */
-  private fun paintCommentIcons(editor: Editor, g: Graphics, r: Rectangle) {
+  private fun paintCommentIcons(editor: EditorImpl, g: Graphics, r: Rectangle) {
+    val icon = EditorUIUtil.scaleIcon(CollaborationToolsIcons.Comment, editor)
     (state ?: return).linesWithComments.forEach { lineIdx ->
       if (lineIdx in 0 until editor.document.lineCount) {
         val yRange = EditorUtil.logicalLineToYRange(editor, lineIdx).first
         val lineCenter = yRange.intervalStart() + editor.lineHeight / 2
-        val icon = CollaborationToolsIcons.Comment
         val y = lineCenter - icon.iconWidth / 2
         icon.paintIcon(null, g, r.x, y)
       }
@@ -100,7 +103,7 @@ private constructor(cs: CoroutineScope,
   /**
    * Paint a new comment icon on hovered line if line is not folded and if there's enough vertical space
    */
-  private fun paintNewCommentIcon(editor: Editor, g: Graphics, r: Rectangle) {
+  private fun paintNewCommentIcon(editor: EditorImpl, g: Graphics, r: Rectangle) {
     val lineData = hoverHandler.calcHoveredLineData() ?: return
     if (!lineData.commentable) return
 
@@ -108,7 +111,8 @@ private constructor(cs: CoroutineScope,
     // do not paint if there's not enough space
     if (yShift > 0 && lineData.yRangeWithInlays.last - lineData.yRangeWithInlays.first < yShift + editor.lineHeight) return
 
-    val icon = if (lineData.columnHovered) AllIcons.General.InlineAddHover else AllIcons.General.InlineAdd
+    val rawIcon = if (lineData.columnHovered) AllIcons.General.InlineAddHover else AllIcons.General.InlineAdd
+    val icon = EditorUIUtil.scaleIcon(rawIcon, editor)
     val y = lineData.yRangeWithInlays.first + yShift + (editor.lineHeight - icon.iconHeight) / 2
     icon.paintIcon(null, g, r.x, y)
   }
@@ -240,13 +244,14 @@ private constructor(cs: CoroutineScope,
 
     private fun getIconColumnXRange(editor: EditorEx): IntRange {
       val gutter = editor.gutterComponentEx
-      val iconStart = if (editor.getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) {
+      val iconAreaWidth = if (editor is EditorImpl) EditorUIUtil.scaleWidth(ICON_AREA_WIDTH, editor) else ICON_AREA_WIDTH
+      val iconStart = if (editor.verticalScrollbarOrientation == EditorEx.VERTICAL_SCROLLBAR_RIGHT) {
         gutter.lineMarkerAreaOffset
       }
       else {
-        gutter.width - gutter.lineMarkerAreaOffset - ICON_AREA_WIDTH
+        gutter.width - gutter.lineMarkerAreaOffset - iconAreaWidth
       }
-      val iconEnd = iconStart + ICON_AREA_WIDTH
+      val iconEnd = iconStart + iconAreaWidth
       return iconStart..iconEnd
     }
 
