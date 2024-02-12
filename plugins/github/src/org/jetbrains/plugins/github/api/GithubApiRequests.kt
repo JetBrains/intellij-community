@@ -5,6 +5,7 @@ import com.intellij.platform.templates.github.GithubTagInfo
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.request.*
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
@@ -357,6 +358,17 @@ object GithubApiRequests {
     object PullRequests : Entity("/pulls") {
 
       @JvmStatic
+      fun find(repository: GHRepositoryCoordinates,
+               state: GithubIssueState? = null,
+               baseRef: String? = null,
+               headRef: String? = null): GithubApiRequest<GithubResponsePage<GHPullRequestRestIdOnly>> =
+        Get.jsonPage<GHPullRequestRestIdOnly>(getUrl(repository, urlSuffix, buildQuery {
+          put("state", state?.toString())
+          put("base", baseRef)
+          put("head", headRef)
+        })).withOperationName("find pull requests")
+
+      @JvmStatic
       fun update(serverPath: GithubServerPath, username: String, repoName: String, number: Long,
                  title: String? = null,
                  body: String? = null,
@@ -473,7 +485,17 @@ object GithubApiRequests {
 
   fun getUrl(server: GithubServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
 
-  private fun getQuery(vararg queryParts: String): String {
+  private fun buildQuery(builder: MutableMap<String, String?>.() -> Unit): String {
+    val parts = mutableMapOf<String, String?>().apply(builder).mapNotNull { (key, value) ->
+      if (value != null) "${key}=${value}"
+      else null
+    }
+    return getQuery(parts)
+  }
+
+  private fun getQuery(vararg queryParts: String): String = getQuery(queryParts.toList())
+
+  private fun getQuery(queryParts: Iterable<String>): String {
     val builder = StringBuilder()
     for (part in queryParts) {
       if (part.isEmpty()) continue

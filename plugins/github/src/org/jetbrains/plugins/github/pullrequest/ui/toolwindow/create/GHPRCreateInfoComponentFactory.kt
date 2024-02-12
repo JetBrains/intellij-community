@@ -213,7 +213,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         val headBranch = findCurrentRemoteHead(directionModel)
         if (baseBranch == null || headRepo == null || headBranch == null) existenceCheckLoadingModel.reset()
         else existenceCheckLoadingModel.load(ProgressWrapper.wrap(existenceCheckProgressIndicator)) {
-          dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)?.prId
+          dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)
         }
       }
       update()

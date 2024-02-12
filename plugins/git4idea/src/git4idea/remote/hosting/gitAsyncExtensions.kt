@@ -16,7 +16,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose

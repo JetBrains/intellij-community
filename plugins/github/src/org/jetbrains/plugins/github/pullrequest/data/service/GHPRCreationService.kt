@@ -6,7 +6,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.GitRemoteBranch
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.api.GHRepositoryPath
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -27,7 +26,7 @@ interface GHPRCreationService {
   fun findPullRequest(progressIndicator: ProgressIndicator,
                       baseBranch: GitRemoteBranch,
                       headRepo: GHGitRepositoryMapping,
-                      headBranch: GitRemoteBranch): GHPullRequest?
+                      headBranch: GitRemoteBranch): GHPRIdentifier?
 
   suspend fun findOpenPullRequest(baseBranch: GitRemoteBranch?,
                                   headRepo: GHRepositoryPath,
