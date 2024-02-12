@@ -13,16 +13,19 @@ import org.jetbrains.annotations.CalledInAny
 
 internal const val VERSION_OPTION: String = "version"
 
+@JvmField
 internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
-internal fun isSpecialStorage(collapsedPath: String): Boolean =
-  collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
+internal fun isSpecialStorage(collapsedPath: String): Boolean {
+  return collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
+}
 
 @CalledInAny
-internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus =
-  withContext(Dispatchers.EDT) {
+internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus {
+  return withContext(Dispatchers.EDT) {
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
+}
 
 internal val useBackgroundSave: Boolean
   get() = Registry.`is`("ide.background.save.settings", false)

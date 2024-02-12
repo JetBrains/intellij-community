@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
@@ -10,23 +10,15 @@ import org.jetbrains.annotations.TestOnly
 
 @Internal
 internal interface ProjectIdManager {
-
   companion object {
-
     fun getInstance(project: Project): ProjectIdManager = project.service()
   }
 
   var id: @NonNls String?
 }
 
-@State(
-  name = "ProjectId",
-  storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))],
-  reportStatistic = false,
-)
-private class ProjectIdManagerImpl : SimplePersistentStateComponent<ProjectIdManagerImpl.State>(State()),
-                                     ProjectIdManager {
-
+@State(name = "ProjectId", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))], reportStatistic = false)
+private class ProjectIdManagerImpl : SimplePersistentStateComponent<ProjectIdManagerImpl.State>(State()), ProjectIdManager {
   override var id: @NonNls String?
     get() = state.id
     set(value) {
@@ -41,6 +33,5 @@ private class ProjectIdManagerImpl : SimplePersistentStateComponent<ProjectIdMan
 
 @TestOnly
 private class MockProjectIdManager : ProjectIdManager {
-
   override var id: String? = null
 }

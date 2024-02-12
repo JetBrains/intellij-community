@@ -250,7 +250,12 @@ private class StateGetterImpl<S : Any, T : Any>(
   override fun getState(mergeInto: S?): S? {
     LOG.assertTrue(serializedState == null)
 
-    serializedState = storage.getSerializedState(storageData, component, componentName, archive = false)
+    serializedState = storage.getSerializedState(
+      storageData = storageData,
+      component = component,
+      componentName = componentName,
+      archive = false,
+    )
     return deserializeStateWithController(
       stateElement = serializedState,
       stateClass = stateClass,

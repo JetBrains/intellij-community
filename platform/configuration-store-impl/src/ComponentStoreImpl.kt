@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.configurationStore
 
@@ -18,7 +18,7 @@ import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SafeStAXStreamBuilder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -27,6 +27,7 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
+import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -188,8 +189,10 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   final override fun initPersistencePlainComponent(component: Any, key: String) {
     val stateSpec = StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false))
-    registerComponent(name = stateSpec.name,
-                      info = createComponentInfo(PersistenceStateAdapter(component), stateSpec, serviceDescriptor = null))
+    registerComponent(
+      name = stateSpec.name,
+      info = createComponentInfo(component = PersistenceStateAdapter(component), stateSpec = stateSpec, serviceDescriptor = null),
+    )
   }
 
   override suspend fun save(forceSavingAllSettings: Boolean) {
@@ -296,7 +299,12 @@ abstract class ComponentStoreImpl : IComponentStore {
       VfsRootAccess.allowRootAccess(it, absolutePath)
       @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
-        commitComponent(saveManager, ComponentInfoImpl(component, stateSpec), componentName = null, modificationCountChanged = false)
+        commitComponent(
+          sessionManager = saveManager,
+          info = ComponentInfoImpl(component, stateSpec),
+          componentName = null,
+          modificationCountChanged = false,
+        )
         val saveResult = SaveResult()
         saveManager.save(saveResult)
         saveResult.rethrow()
@@ -363,7 +371,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       val sessionProducer = sessionManager.getProducer(storage) ?: continue
       if (resolution == Resolution.CLEAR ||
           (storageSpec.deprecated && storageSpecs.none { !it.deprecated && it.value == storageSpec.value })) {
-        sessionProducer.setState(component, effectiveComponentName, state = null)
+        sessionProducer.setState(component = component, componentName = effectiveComponentName, state = null)
       }
       else {
         if (!stateRequested) {
@@ -423,7 +431,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   protected fun initComponentWithoutStateSpec(component: PersistentStateComponent<Any>, configurationSchemaKey: String): Boolean {
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
-    val storage = getReadOnlyStorage(component.javaClass, stateClass, configurationSchemaKey)
+    val storage = getReadOnlyStorage(
+      componentClass = component.javaClass,
+      stateClass = stateClass,
+      configurationSchemaKey = configurationSchemaKey,
+    )
     val state = storage?.getState(component = component, componentName = "", stateClass = stateClass, mergeInto = null, reload = false)
     if (state == null) {
       component.noStateLoaded()
@@ -530,8 +542,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     return !storageSpec.deprecated && stateSpec.reportStatistic && storageSpec.value != StoragePathMacros.CACHE_FILE
   }
 
-  private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean =
-    changedStorages.contains(storage) || (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
+  private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
+    return changedStorages.contains(storage) ||
+           (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
+  }
 
   protected open fun doCreateStateGetter(reloadData: Boolean,
                                          storage: StateStorage,
@@ -560,7 +574,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     val classLoader = component.javaClass.classLoader
     val data = ResourceUtil.getResourceAsBytes("$componentName.xml", classLoader) ?: return null
     try {
-      val element = JDOMUtil.load(data)
+      val xmlStreamReader = createXmlStreamReader(data)
+      val element = try {
+        SafeStAXStreamBuilder.build(xmlStreamReader, true, false, SafeStAXStreamBuilder.FACTORY)
+      }
+      finally {
+        xmlStreamReader.close()
+      }
       getPathMacroManagerForDefaults()?.expandPaths(element)
       return deserializeState(stateElement = element, stateClass = stateClass)
     }
@@ -622,14 +642,14 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
-    reinitComponents(componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
+    reinitComponents(componentNames = componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
   }
 
   internal fun batchReloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
     publisher.onBatchUpdateStarted()
     try {
-      reinitComponents(componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
+      reinitComponents(componentNames = componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
     }
     finally {
       publisher.onBatchUpdateFinished()
@@ -640,7 +660,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
-      initComponent(info, emptySet(), ThreeState.YES)
+      initComponent(info = info, changedStorages = emptySet(), reloadData = ThreeState.YES)
     }
   }
 
@@ -767,7 +787,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     }
 
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
-    doNotify(macros, project, Collections.singletonMap(substitutor, store))
+    doNotify(macros = macros, project = project, substitutorToStore = Collections.singletonMap(substitutor, store))
   }
 }
 
