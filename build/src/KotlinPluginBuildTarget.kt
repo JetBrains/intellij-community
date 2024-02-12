@@ -11,8 +11,7 @@ internal object KotlinPluginBuildTarget {
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runBlocking(Dispatchers.Default) {
-      KotlinPluginBuilder.build(communityHome = communityHome,
-                                home = communityHome.communityRoot,
+      KotlinPluginBuilder.build(home = communityHome.communityRoot,
                                 properties = IdeaCommunityProperties(communityHome.communityRoot))
     }
   }

@@ -35,7 +35,6 @@ class IdeaCommunityBuildTest {
       val productProperties = IdeaCommunityProperties(communityHome.communityRoot)
       val options = createBuildOptionsForTest(productProperties = productProperties, skipDependencySetup = true)
       val context = BuildContextImpl.createContext(
-        communityHome = communityHome,
         projectHome = homePath,
         productProperties = productProperties,
         setupTracer = false,

@@ -20,7 +20,6 @@ object CommunityRunTestsBuildTarget {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runBlocking(Dispatchers.Default) {
       val context = createCompilationContext(
-        communityHome = communityHome,
         projectHome = communityHome.communityRoot,
         defaultOutputRoot = communityHome.communityRoot.resolve("out/tests")
       )

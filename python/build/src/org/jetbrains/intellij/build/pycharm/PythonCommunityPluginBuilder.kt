@@ -26,8 +26,7 @@ internal class PythonCommunityPluginBuilder(private val home: Path) {
     options.outRootDir = homeDir.resolve("out/pycharmCE")
 
     val communityRoot = BuildDependenciesCommunityRoot(homeDir)
-    val buildContext = BuildContextImpl.createContext(communityHome = communityRoot,
-                                                      projectHome = homeDir,
+    val buildContext = BuildContextImpl.createContext(projectHome = homeDir,
                                                       productProperties = IdeaCommunityProperties(communityRoot.communityRoot),
                                                       options = options)
     createBuildTasks(buildContext).buildNonBundledPlugins(listOf(

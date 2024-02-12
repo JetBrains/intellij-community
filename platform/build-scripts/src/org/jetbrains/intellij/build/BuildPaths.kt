@@ -27,6 +27,20 @@ class BuildPaths(
    */
   val artifactDir: Path = buildOutputDir.resolve("artifacts"),
 ) {
+  companion object {
+    @JvmStatic
+    val ULTIMATE_HOME: Path by lazy {
+      IdeaProjectLoaderUtil.guessUltimateHome(javaClass) ?: error(
+        "Could not detect ultimate home folder from class: ${BuildPaths.javaClass.name}")
+    }
+
+    @JvmStatic
+    val COMMUNITY_ROOT: BuildDependenciesCommunityRoot by lazy {
+      IdeaProjectLoaderUtil.guessCommunityHome(javaClass) ?: error(
+        "Could not detect community home folder from class: ${BuildPaths.javaClass.name}")
+    }
+  }
+
   /**
    * Path to a directory where idea/community Git repository is checked out
    */

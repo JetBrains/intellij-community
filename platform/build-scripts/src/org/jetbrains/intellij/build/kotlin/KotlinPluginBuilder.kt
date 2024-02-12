@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -427,12 +426,11 @@ object KotlinPluginBuilder {
     return result
   }
 
-  suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
+  suspend fun build(home: Path, properties: ProductProperties) {
     val context = BuildContextImpl.createContext(
-      communityHome = communityHome,
       setupTracer = true,
-      projectHome = home,
-      productProperties = properties,
+                                                      projectHome = home,
+                                                      productProperties = properties,
       options = BuildOptions(enableEmbeddedJetBrainsClient = false),
     )
     createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))

@@ -22,8 +22,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -52,44 +52,38 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
 
 @Obsolete
-fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRoot,
-                                     projectHome: Path,
+fun createCompilationContextBlocking(projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
   return runBlocking(Dispatchers.Default) {
-    createCompilationContext(communityHome = communityHome,
-                             projectHome = projectHome,
+    createCompilationContext(projectHome = projectHome,
                              defaultOutputRoot = defaultOutputRoot,
                              options = options)
   }
 }
 
-suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRoot,
-                                     projectHome: Path,
+suspend fun createCompilationContext(projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
   val logDir = options.logPath?.let { Path.of(it) }
                ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
-  return CompilationContextImpl.createCompilationContext(communityHome = communityHome,
-                                                         projectHome = projectHome,
+  return CompilationContextImpl.createCompilationContext(projectHome = projectHome,
                                                          setupTracer = false,
                                                          buildOutputRootEvaluator = { defaultOutputRoot },
                                                          options = options)
 }
 
-internal fun computeBuildPaths(
-  options: BuildOptions,
-  project: JpsProject,
-  communityHome: BuildDependenciesCommunityRoot,
-  buildOutputRootEvaluator: (JpsProject) -> Path,
+internal fun computeBuildPaths(options: BuildOptions,
+                              project: JpsProject,
+                              buildOutputRootEvaluator: (JpsProject) -> Path,
   artifactPathSupplier: (() -> Path)?,
   projectHome: Path,
 ): BuildPaths {
   val buildOut = options.outRootDir ?: buildOutputRootEvaluator(project)
   val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
   val result = BuildPaths(
-    communityHomeDirRoot = communityHome,
+    communityHomeDirRoot = COMMUNITY_ROOT,
     buildOutputDir = buildOut,
     logDir = logDir,
     projectHome = projectHome,
@@ -102,7 +96,6 @@ internal fun computeBuildPaths(
 @Internal
 class CompilationContextImpl private constructor(
   model: JpsModel,
-  private val communityHome: BuildDependenciesCommunityRoot,
   override val messages: BuildMessages,
   override val paths: BuildPaths,
   override val options: BuildOptions,
@@ -140,7 +133,7 @@ class CompilationContextImpl private constructor(
   override suspend fun getStableJdkHome(): Path {
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
-      jdkHome = JdkDownloader.getJdkHome(communityHome, Span.current()::addEvent)
+      jdkHome = JdkDownloader.getJdkHome(COMMUNITY_ROOT, Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     return jdkHome
@@ -150,7 +143,7 @@ class CompilationContextImpl private constructor(
     var jdkHome = cachedJdkHome
     if (jdkHome == null) {
       // blocking doesn't matter, getStableJdkHome is mostly always called before
-      jdkHome = JdkDownloader.blockingGetJdkHome(communityHome, Span.current()::addEvent)
+      jdkHome = JdkDownloader.blockingGetJdkHome(COMMUNITY_ROOT, Span.current()::addEvent)
       cachedJdkHome = jdkHome
     }
     JdkDownloader.getJavaExecutable(jdkHome)
@@ -165,7 +158,6 @@ class CompilationContextImpl private constructor(
 
   companion object {
     suspend fun createCompilationContext(
-      communityHome: BuildDependenciesCommunityRoot,
       projectHome: Path,
       buildOutputRootEvaluator: (JpsProject) -> Path,
       options: BuildOptions,
@@ -173,15 +165,15 @@ class CompilationContextImpl private constructor(
       enableCoroutinesDump: Boolean = true,
     ): CompilationContextImpl {
       check(sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").all {
-        Files.exists(communityHome.communityRoot.resolve(it))
+        Files.exists(COMMUNITY_ROOT.communityRoot.resolve(it))
       }) {
-        "communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources"
+        "communityHome ($COMMUNITY_ROOT) doesn\'t point to a directory containing IntelliJ Community sources"
       }
 
       val messages = BuildMessagesImpl.create()
       if (options.printEnvironmentInfo) {
         Span.current().addEvent("environment info", Attributes.of(
-          AttributeKey.stringKey("community home"), communityHome.communityRoot.toString(),
+          AttributeKey.stringKey("community home"), COMMUNITY_ROOT.communityRoot.toString(),
           AttributeKey.stringKey("project home"), projectHome.toString(),
         ))
         printEnvironmentDebugInfo()
@@ -193,16 +185,14 @@ class CompilationContextImpl private constructor(
 
       val model = loadProject(
         projectHome = projectHome,
-        kotlinBinaries = KotlinBinaries(communityHome),
+        kotlinBinaries = KotlinBinaries(COMMUNITY_ROOT),
         isCompilationRequired = CompiledClasses.isCompilationRequired(options),
       )
 
-      val buildPaths = computeBuildPaths(
-        project = model.project,
-        communityHome = communityHome,
-        options = options,
-        buildOutputRootEvaluator = buildOutputRootEvaluator,
-        projectHome = projectHome,
+      val buildPaths = computeBuildPaths(project = model.project,
+                                         options = options,
+                                         buildOutputRootEvaluator = buildOutputRootEvaluator,
+                                         projectHome = projectHome,
         artifactPathSupplier = null,
       )
 
@@ -213,7 +203,6 @@ class CompilationContextImpl private constructor(
       }
 
       val context = CompilationContextImpl(model = model,
-                                           communityHome = communityHome,
                                            messages = messages,
                                            paths = buildPaths,
                                            options = options)
@@ -247,7 +236,6 @@ class CompilationContextImpl private constructor(
   ): CompilationContextImpl {
     val copy = CompilationContextImpl(
       model = projectModel,
-      communityHome = paths.communityHomeDirRoot,
       messages = messages,
       paths = paths,
       options = options,

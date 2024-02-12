@@ -77,7 +77,6 @@ suspend inline fun createBuildContext(
   val options = createBuildOptionsForTest(productProperties)
   buildOptionsCustomizer(options)
   return BuildContextImpl.createContext(
-    communityHome = communityHomePath,
     projectHome = homePath,
     productProperties = productProperties,
     proprietaryBuildTools = buildTools,
@@ -119,7 +118,6 @@ fun runTestBuild(
     repeat(reproducibilityTest.iterations) { iterationNumber ->
       launch {
         val buildContext = BuildContextImpl.createContext(
-          communityHome = communityHomePath,
           projectHome = homePath,
           productProperties = productProperties,
           proprietaryBuildTools = buildTools,
@@ -144,7 +142,6 @@ fun runTestBuild(
   else {
     doRunTestBuild(
       context = BuildContextImpl.createContext(
-        communityHome = communityHomePath,
         projectHome = homePath,
         productProperties = productProperties,
         proprietaryBuildTools = buildTools,

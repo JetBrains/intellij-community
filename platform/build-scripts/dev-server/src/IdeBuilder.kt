@@ -21,7 +21,6 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
@@ -373,7 +372,6 @@ private suspend fun createBuildContext(
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
 
         CompilationContextImpl.createCompilationContext(
-          communityHome = getCommunityHomePath(request.homePath),
           projectHome = request.homePath,
           buildOutputRootEvaluator = { _ -> runDir },
           setupTracer = false,
@@ -442,7 +440,7 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
     catch (_: NoSuchMethodException) {
       lookup
         .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-        .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.homePath).communityRoot else request.homePath)
+        .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.homePath) else request.homePath)
     } as ProductProperties
   }
 }
@@ -512,14 +510,10 @@ fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String
   }
 }
 
-private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot {
-  var communityDotIdea = homePath.resolve("community/.idea")
-  // Handle Rider repository layout
-  if (Files.notExists(communityDotIdea)) {
-    val riderSpecificCommunityDotIdea = homePath.parent.resolve("ultimate/community/.idea")
-    if (Files.exists(riderSpecificCommunityDotIdea)) {
-      communityDotIdea = riderSpecificCommunityDotIdea
-    }
+private fun getCommunityHomePath(homePath: Path): Path {
+  return if (Files.isDirectory(homePath.resolve("community"))) {
+    homePath.resolve("community")
+  } else {
+    homePath
   }
-  return BuildDependenciesCommunityRoot(if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath)
 }

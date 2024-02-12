@@ -15,7 +15,7 @@ class PluginDistributionJARsBuilderTest {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     val productProperties = IdeaCommunityProperties(communityHome.communityRoot)
     runBlocking(Dispatchers.Default) {
-      val context = BuildContextImpl.createContext(communityHome, communityHome.communityRoot, productProperties)
+      val context = BuildContextImpl.createContext(communityHome.communityRoot, productProperties)
       val ideClasspath1 = createIdeClassPath(createPlatformLayout(pluginsToPublish = emptySet(), context = context), context)
       val ideClasspath2 = createIdeClassPath(createPlatformLayout(pluginsToPublish = emptySet(), context = context), context)
       assertThat(ideClasspath1).isEqualTo(ideClasspath2)

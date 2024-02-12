@@ -96,15 +96,13 @@ class BuildContextImpl(
 
   companion object {
     suspend fun createContext(
-      communityHome: BuildDependenciesCommunityRoot,
       projectHome: Path,
-      productProperties: ProductProperties,
-      setupTracer: Boolean = true,
-      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-      options: BuildOptions = BuildOptions(),
+                              productProperties: ProductProperties,
+                              setupTracer: Boolean = true,
+                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                              options: BuildOptions = BuildOptions(),
     ): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
-        communityHome = communityHome,
         projectHome = projectHome,
         setupTracer = setupTracer,
         buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome,
@@ -243,7 +241,6 @@ class BuildContextImpl(
       paths = computeBuildPaths(
         options = options,
         project = project,
-        communityHome = paths.communityHomeDirRoot,
         buildOutputRootEvaluator = createBuildOutputRootEvaluator(
           projectHome = paths.projectHome,
           productProperties = productProperties,
