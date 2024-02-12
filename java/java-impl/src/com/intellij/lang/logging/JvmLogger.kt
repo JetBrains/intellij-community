@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.logging
 
+import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.lang.logging.UnspecifiedLogger.Companion.UNSPECIFIED_LOGGER_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -36,7 +39,7 @@ interface JvmLogger {
   fun isOnlyOnStartup() = false
 
   /**
-   * Inner method for inserting the logger at the specified class. Should only be invoked inside WriteAction.
+   * Method for inserting the logger at the specified class. Should only be invoked inside WriteAction.
    * @param project the project context
    * @param clazz the class where the logger element will be inserted
    * @param logger PsiElement, corresponding to the logger to be inserted
@@ -49,7 +52,7 @@ interface JvmLogger {
    * @param project the project context
    * @return true if the logger is available, false otherwise
    */
-  fun isAvailable(project: Project?) : Boolean
+  fun isAvailable(project: Project?): Boolean
 
   /**
    * Determines if the logger is available for the given module. Should only be invoked inside ReadAction.
@@ -57,7 +60,15 @@ interface JvmLogger {
    * @param module the module context
    * @return true if the logger is available, false otherwise
    */
-  fun isAvailable(module: Module?) : Boolean
+  fun isAvailable(module: Module?): Boolean
+
+  /**
+   * Determines if the logger is excluded from import in the current project.
+   *
+   * @param project the project context
+   * @return true if the logger class is excluded for import in the project, false otherwise
+   */
+  fun isExcludedFromImport(project: Project?): Boolean
 
   /**
    * Determines if it is possible to place a logger at the specified class.
@@ -65,7 +76,7 @@ interface JvmLogger {
    * @param clazz the class where the logger will be placed
    * @return true if it is possible to place a logger, false otherwise
    */
-  fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass) : Boolean
+  fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean
 
   /**
    * Creates a logger element for inserting into a class.
@@ -90,6 +101,15 @@ interface JvmLogger {
     fun getLoggerByName(loggerName: String?): JvmLogger? {
       if (loggerName == UNSPECIFIED_LOGGER_NAME) return null
       return EP_NAME.extensionList.find { it.toString() == loggerName }
+    }
+
+    fun areLoggerTypesExcluded(project: Project?, loggerTypes: List<String>): Boolean {
+      if (project == null) return true
+      val facade = JavaPsiFacade.getInstance(project)
+      return loggerTypes.any { classFqn ->
+        val clazz = facade.findClass(classFqn, GlobalSearchScope.everythingScope(project)) ?: return true
+        JavaCompletionUtil.isInExcludedPackage(clazz, false)
+      }
     }
   }
 }

@@ -36,6 +36,9 @@ class JvmLoggerFieldDelegate(
 
   override fun isAvailable(module: Module?): Boolean = JavaLibraryUtil.hasLibraryClass(module, loggerTypeName)
 
+  override fun isExcludedFromImport(project: Project?): Boolean =
+    JvmLogger.areLoggerTypesExcluded(project, listOf(factoryName, loggerTypeName))
+
   override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz
     .fields.any { it.name == LOGGER_IDENTIFIER || it.type.canonicalText == loggerTypeName }.not()
 
