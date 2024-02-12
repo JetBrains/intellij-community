@@ -19,7 +19,6 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabChooseAccountDialog
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabTokenLoginPanelModel
-import org.jetbrains.plugins.gitlab.ui.clone.GitLabLoginErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Component
 import javax.swing.JComponent
