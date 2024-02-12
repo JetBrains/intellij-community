@@ -465,6 +465,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.introduceParameter.IntroduceParameterUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.JavaFormattingStyleCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInspection.deadCode.EntryPointsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.compiler.impl.BuildUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.statistics.DebuggerStatistics"/>
