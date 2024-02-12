@@ -116,7 +116,7 @@ object KotlinPluginBuilder {
     "kotlin.copyright",
     "kotlin.spellchecker",
     "kotlin.jvm-decompiler",
-    "kotlin.j2k.k1.shared",
+    "kotlin.j2k.shared",
     "kotlin.j2k.k1.new.post-processing",
     "kotlin.j2k.k1.old",
     "kotlin.j2k.k1.old.post-processing",
