@@ -118,6 +118,16 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     }
   }
 
+  private static void deleteDirtyFilesQueues() {
+    PersistentDirtyFilesQueue.removeCurrentFile(PersistentDirtyFilesQueue.getQueueFile());
+    File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
+    if (projectQueueFiles != null) {
+      for (File file : projectQueueFiles) {
+        PersistentDirtyFilesQueue.removeCurrentFile(file.toPath());
+      }
+    }
+  }
+
   @Override
   protected @NotNull Collection<ThrowableRunnable<?>> prepareTasks() {
     // PersistentFS lifecycle should contain FileBasedIndex lifecycle, so,
@@ -198,7 +208,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
       saveRegisteredIndicesAndDropUnregisteredOnes(myState.getIndexIDs());
-      PersistentDirtyFilesQueue.removeCurrentFile(PersistentDirtyFilesQueue.getQueueFile());
+      deleteDirtyFilesQueues();
     }
   }
 
