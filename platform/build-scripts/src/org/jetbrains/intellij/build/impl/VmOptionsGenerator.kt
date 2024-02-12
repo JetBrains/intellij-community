@@ -20,22 +20,21 @@ private fun addCommonVmOptions(is21: Boolean): List<String> {
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
-    "-Dkotlinx.coroutines.debug=off"
+    "-Dkotlinx.coroutines.debug=off",
+    "-XX:CICompilerCount=2",
+    "-XX:ReservedCodeCacheSize=512m",
   )
   if (is21) {
     return common + listOf(
-      "-XX:-TieredCompilation",
-      "-XX:+SegmentedCodeCache",
-      "-XX:ReservedCodeCacheSize=240m",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:TieredOldPercentage=100000",
     )
   }
   else {
     return common + listOf(
       // temporary workaround for crashes in С2 (JBR-4509)
       "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",
-      "-XX:CICompilerCount=2",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
-      "-XX:ReservedCodeCacheSize=512m",
     )
   }
 }

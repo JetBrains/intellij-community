@@ -54,12 +54,12 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
 
     val is17 = javaParameters.jdk?.versionString?.contains("17") == true
     if (!vmParametersAsList.any { it.contains("CICompilerCount") || it.contains("TieredCompilation") }) {
-      if (is17) {
-        vmParameters.addAll("-XX:CICompilerCount=2")
-      }
-      else {
-        vmParameters.addAll("-XX:-TieredCompilation")
-        vmParameters.addAll("-XX:+SegmentedCodeCache")
+      vmParameters.addAll("-XX:CICompilerCount=2")
+      if (!is17) {
+        //vmParameters.addAll("-XX:-TieredCompilation")
+        //vmParameters.addAll("-XX:+SegmentedCodeCache")
+        vmParameters.addAll("-XX:+UnlockDiagnosticVMOptions")
+        vmParameters.addAll("-XX:TieredOldPercentage=100000")
       }
     }
 
@@ -77,7 +77,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
     }
     if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
-      vmParameters.add("-XX:ReservedCodeCacheSize=${if (is17) 512 else 240}m")
+      vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
 
     if (!isDev) {
