@@ -4,7 +4,6 @@ package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
@@ -44,7 +43,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle d = new Rectangle();
   private int myMaxGutterIconWidth;
   private int myMaxGutterIconWidth2;
-  private int k;
   private static final Rectangle c = new Rectangle();
   private static final Rectangle h = new Rectangle();
   private static final Rectangle l = new Rectangle();
@@ -140,9 +138,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         IconUtil.paintSelectionAwareIcon(icon2, jmenuitem, g, h.x, h.y, isSelected(jmenuitem));
       }
       g.setColor(color2);
-      if (menuItem.isArmed()) {
-        drawIconBorder(g);
-      }
     }
     if (icon1 != null) {
       if (!buttonmodel.isEnabled()){
@@ -159,7 +154,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         IconUtil.paintSelectionAwareIcon(icon1, jmenuitem, g, l.x, l.y, isSelected(jmenuitem));
       }
     }
-    if (s1 != null && s1.length() > 0) {
+    if (s1 != null && !s1.isEmpty()) {
       if (buttonmodel.isEnabled()) {
         if (isSelected(jmenuitem)) {
           g.setColor(selectionForeground);
@@ -363,7 +358,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       if (checkIcon != null){
         checkIconRect.y = (labelRect.y + labelRect.height / 2) - checkIconRect.height / 2;
         checkIconRect.x += (viewRect.x + myMaxGutterIconWidth / 2) - checkIcon.getIconWidth() / 2;
-        k = viewRect.x + myMaxGutterIconWidth + 2;
       }
       else{
         checkIconRect.x = checkIconRect.y = 0;
@@ -421,21 +415,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     }
 
     return IdeaMenuUI.patchPreferredSize(comp, i.getSize());
-  }
-
-  private void drawIconBorder(Graphics g) {
-/*
-    int i1 = a - 1;
-    int j1 = e - 2;
-    int k1 = i1 + myMaxGutterIconWidth + 1;
-    int l1 = j1 + myMaxGutterIconWidth + 4;
-    g.setColor(BegResources.m);
-    g.drawLine(i1, j1, i1, l1);
-    g.drawLine(i1, j1, k1, j1);
-    g.setColor(BegResources.j);
-    g.drawLine(k1, j1, k1, l1);
-    g.drawLine(i1, l1, k1, l1);
-*/
   }
 
   private static void initBounds() {
