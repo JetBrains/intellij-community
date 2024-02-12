@@ -42,7 +42,7 @@ class MavenProjectAware(
     }
     if (context.hasUndefinedModifications) {
       manager.findAllAvailablePomFilesIfNotMavenized()
-      val spec = MavenSyncSpec.full("MavenProjectAware.reloadProject, undefined modifications", context.isExplicitReload)
+      val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, undefined modifications", context.isExplicitReload)
       manager.scheduleUpdateAllMavenProjects(spec)
     }
     else {
@@ -61,11 +61,10 @@ class MavenProjectAware(
       val deleted = settingsFilesContext.deleted
 
       if (updated.size == filesToUpdate.size && deleted.size == filesToDelete.size) {
-        val spec = MavenSyncSpec.full("MavenProjectAware.reloadProject, sync selected", context.isExplicitReload)
+        val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, sync selected", context.isExplicitReload)
         manager.scheduleUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
       else {
-        // IDEA-276087 if changed not project files(.mvn) then run full import
         manager.findAllAvailablePomFilesIfNotMavenized()
         val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, sync all", context.isExplicitReload)
         manager.scheduleUpdateAllMavenProjects(spec)
