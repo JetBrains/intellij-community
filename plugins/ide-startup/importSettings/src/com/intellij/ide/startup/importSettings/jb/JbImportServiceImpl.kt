@@ -384,34 +384,40 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
           return true
         }
         else {
-          progressIndicator.text2 = "Migrating options"
-          LOG.info("Starting migration...")
-          var restartRequired = false
-          if (!plugins2import.isNullOrEmpty()) {
-            LOG.info("Started importing plugins...")
-            importer.installPlugins(progressIndicator, plugins2import)
-            restartRequired = true
-          }
-          if (progressIndicator.isCanceled()) {
-            LOG.info("Import cancelled after importing the plugins.")
-            return false
-          }
           try {
-            if (importer.importOptions(progressIndicator, filteredCategories)) {
+            progressIndicator.text2 = "Migrating options"
+            LOG.info("Starting migration...")
+            var restartRequired = false
+            if (!plugins2import.isNullOrEmpty()) {
+              LOG.info("Started importing plugins...")
+              importer.installPlugins(progressIndicator, plugins2import)
               restartRequired = true
             }
+            if (progressIndicator.isCanceled()) {
+              LOG.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
+              return restartRequired
+            }
+            try {
+              if (importer.importOptions(progressIndicator, filteredCategories)) {
+                restartRequired = true
+              }
+            }
+            catch (pce: ProcessCanceledException) {
+              LOG.info("Import process cancelled. ${if (restartRequired) "Will now restart." else "Will proceed to the normal IDE startup."}")
+              return restartRequired
+            }
+            LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
+            progressIndicator.fraction = 0.99
+            storeImportConfig(productInfo.configDir, filteredCategories, plugins2import)
+            LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
+            LOG.info("Calling restart...")
+            // restart if we install plugins
+            return restartRequired
           }
-          catch (pce: ProcessCanceledException) {
-            LOG.info("Import process cancelled. Proceeding to normal IDE start")
-            return false
+          catch (th: Throwable) {
+            LOG.warn("An exception occurred during settings import", th)
+            return true
           }
-          LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
-          progressIndicator.fraction = 0.99
-          storeImportConfig(productInfo.configDir, filteredCategories, plugins2import)
-          LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
-          LOG.info("Calling restart...")
-          // restart if we install plugins
-          return restartRequired
         }
       }
 
