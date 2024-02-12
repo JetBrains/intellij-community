@@ -46,8 +46,10 @@ class LocalizationUtil {
       return result
     }
 
-    fun getResourceAsStream(defaultLoader: ClassLoader?, path: Path): InputStream? {
-      val localizedPaths = getLocalizedPaths(path)
+    @JvmOverloads
+    fun getResourceAsStream(defaultLoader: ClassLoader?, path: Path,  specialLocale: Locale? = null): InputStream? {
+      val locale = specialLocale ?: getLocale()
+      val localizedPaths = getLocalizedPaths(path, locale)
       for (localizedPath in localizedPaths) {
         val pathString = localizedPath.pathString.replace('\\', '/')
         getPluginClassLoader()?.getResourceAsStream(pathString)?.let { return it }
@@ -56,31 +58,35 @@ class LocalizationUtil {
       return null
     }
 
-    fun getLocalizedPaths(path: Path): List<Path> {
+    @JvmOverloads
+    fun getLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
+      val locale = specialLocale ?: getLocale()
       val result = mutableListOf<Path>()
       //localizations/zh/CN/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), true))
+      result.add(convertPathToLocalizationFolderUsage(path, locale, true))
 
       //inspectionDescriptions/name_zh_CN.html
-      result.add(convertPathToLocaleSuffixUsage(path, getLocale(), true))
+      result.add(convertPathToLocaleSuffixUsage(path, locale, true))
 
       //localizations/zh/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), false))
+      result.add(convertPathToLocalizationFolderUsage(path, locale, false))
 
       //inspectionDescriptions/name_zh.html
-      result.add(convertPathToLocaleSuffixUsage(path, getLocale(), false))
+      result.add(convertPathToLocaleSuffixUsage(path, locale, false))
       //inspectionDescriptions/name.html
       result.add(path)
       return result
     }
 
-    fun getFolderLocalizedPaths(path: Path): List<Path> {
+    @JvmOverloads
+    fun getFolderLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
+      val locale = specialLocale ?: getLocale()
       val result = mutableListOf<Path>()
       //localizations/zh/CN/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), true))
+      result.add(convertPathToLocalizationFolderUsage(path, locale, true))
 
       //localizations/zh/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, getLocale(), false))
+      result.add(convertPathToLocalizationFolderUsage(path, locale, false))
       return result
     }
   }
