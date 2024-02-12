@@ -829,8 +829,8 @@ public final class HighlightUtil {
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) &&
           !(parent instanceof PsiVariable var && var.isUnnamed())) {
         String text = JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES.isSufficient(languageLevel) ?
-                      JavaErrorBundle.message("underscore.identifier.error.unnamed")
-                                                                                             : JavaErrorBundle.message("underscore.identifier.error");
+                      JavaErrorBundle.message("underscore.identifier.error.unnamed") :
+                      JavaErrorBundle.message("underscore.identifier.error");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
       }
       else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
