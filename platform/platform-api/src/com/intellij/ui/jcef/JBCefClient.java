@@ -282,6 +282,11 @@ public final class JBCefClient implements JBCefDisposable {
         }
 
         @Override
+        public void onFullscreenModeChange(CefBrowser browser, boolean fullscreen) {
+          // Implement if needed
+        }
+
+        @Override
         public boolean onTooltip(CefBrowser browser, String text) {
           return myDisplayHandler.handleBoolean(browser, handler -> {
             return handler.onTooltip(browser, text);
