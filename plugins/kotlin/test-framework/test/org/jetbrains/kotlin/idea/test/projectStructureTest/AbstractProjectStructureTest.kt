@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.tooling.core.closure
 import org.jetbrains.kotlin.tooling.core.withClosure
 import java.io.File
 import java.nio.file.Path
@@ -84,7 +85,8 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
             dependenciesByKind[DependencyKind.REGULAR].orEmpty().let { regularDependencies ->
                 addRegularDependencies(module, regularDependencies, modulesByName, projectLibrariesByName)
             }
-            setupRefinementDependenciesAndPlatform(module, moduleData.targetPlatform, modulesByName, refinementMap)
+            val directFriendDependencies = dependenciesByKind[DependencyKind.FRIEND].orEmpty().map(Dependency::name)
+            setUpSpecialDependenciesAndPlatform(module, moduleData.targetPlatform, modulesByName, refinementMap, directFriendDependencies)
         }
 
         return Triple(testStructure, projectLibrariesByName, modulesByName)
@@ -158,24 +160,35 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
     }
 
     /**
-     * Setting refinement dependency includes two parts:
+     * Setting refinement and friend dependencies includes two parts:
      * - creating normal module dependencies (IJ workspace model);
-     * - writing transitive closure of the module names in the Kotlin Facet Settings.
+     * - writing information in the Kotlin Facet Settings.
      *
-     * Refinement dependencies allow all the usual things from regular dependencies + expect-actual matching + internals are visible.
+     * Friend dependencies allow everything the regular dependencies allow + internal declarations become visible.
+     * Refinement dependencies allow everything the regular dependencies allow + internals + expect-actual matching.
      */
-    private fun setupRefinementDependenciesAndPlatform(
+    private fun setUpSpecialDependenciesAndPlatform(
         module: Module,
         platform: TargetPlatform,
         modulesByName: Map<String, Module>,
         refinementMap: Map<String, List<String>>,
+        directFriendDependencies: List<String>,
     ) {
-        val refinementDependencyClosure = refinementMap.getValue(module.name).withClosure { refinementDependency: String ->
-            refinementMap.getValue(refinementDependency)
-        }
+        val refinementDependencyClosure = module.name.closure(refinementMap::getValue)
 
         refinementDependencyClosure.forEach { refinementDependencyModuleName ->
             module.addDependency(modulesByName.getValue(refinementDependencyModuleName))
+        }
+
+        // KGP provides friend modules as a flat list: a production source set + its dependsOn closure.
+        // E.g., friends of a jvmTest source set will be jvmMain and commonMain.
+        // To not write them all explicitly in test data, we calculate them here from direct friend modules.
+        val friendModulesClosure = directFriendDependencies.flatMap { moduleName ->
+            moduleName.withClosure(refinementMap::getValue)
+        }.toSet()
+
+        friendModulesClosure.forEach { friendModuleName ->
+            module.addDependency(modulesByName.getValue(friendModuleName))
         }
 
         module.createMultiplatformFacetM3(
@@ -183,6 +196,7 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
             useProjectSettings = true,
             dependsOnModuleNames = refinementDependencyClosure.toList(),
             pureKotlinSourceFolders = emptyList(),
+            additionalVisibleModuleNames = friendModulesClosure,
         )
     }
 

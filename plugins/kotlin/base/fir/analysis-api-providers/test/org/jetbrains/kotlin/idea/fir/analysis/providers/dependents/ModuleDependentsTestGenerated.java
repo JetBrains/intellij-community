@@ -62,4 +62,9 @@ public class ModuleDependentsTestGenerated extends AbstractModuleDependentsTest 
     public void testSingleRoot() throws Exception {
         runTest("testData/moduleDependents/singleRoot/");
     }
+
+    @TestMetadata("specialDependents")
+    public void testSpecialDependents() throws Exception {
+        runTest("testData/moduleDependents/specialDependents/");
+    }
 }
