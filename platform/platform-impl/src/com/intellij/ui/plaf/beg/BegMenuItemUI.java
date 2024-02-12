@@ -88,142 +88,140 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   private void checkEmptyIcon(JComponent comp) {
-    myMaxGutterIconWidth = getAllowedIcon() == null && IdeaPopupMenuUI.hideEmptyIcon(comp) ? 0 : myMaxGutterIconWidth2;
+    myMaxGutterIconWidth = getCheckIcon() == null && IdeaPopupMenuUI.hideEmptyIcon(comp) ? 0 : myMaxGutterIconWidth2;
   }
 
   @Override
   public void paint(Graphics g, JComponent comp) {
     checkArrowIcon();
     UISettings.setupAntialiasing(g);
-    JMenuItem jmenuitem = (JMenuItem)comp;
-    ButtonModel buttonmodel = jmenuitem.getModel();
-    int mnemonicIndex = jmenuitem.getDisplayedMnemonicIndex();
-    Icon icon1 = getIcon();
-    Icon icon2 = getAllowedIcon();
+    JMenuItem menuItem = (JMenuItem)comp;
+    ButtonModel buttonModel = menuItem.getModel();
+    Icon icon = getIcon();
+    Icon checkIcon = getCheckIcon();
     checkEmptyIcon(comp);
-    int j1 = jmenuitem.getWidth();
-    int k1 = jmenuitem.getHeight();
-    Insets insets = comp.getInsets();
+    int menuWidth = menuItem.getWidth();
+    int menuHeight = menuItem.getHeight();
     initBounds();
-    ourViewRect.setBounds(0, 0, j1, k1);
-    JBInsets.removeFrom(ourViewRect, insets);
-    Font font = g.getFont();
-    Font font1 = comp.getFont();
-    g.setFont(font1);
-    FontMetrics fontmetrics = g.getFontMetrics(font1);
-    FontMetrics fontmetrics1 = g.getFontMetrics(acceleratorFont);
-    String keyStrokeText = getKeyStrokeText(jmenuitem);
-    String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon,
-                               jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(),
-                               jmenuitem.getHorizontalTextPosition(),
-                               ourViewRect, ourIconRect, ourTextRect, ourAcceleratorRect, ourCheckIconRect, ourArrowIconRect,
-                               jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
-    Color color2 = g.getColor();
+    ourViewRect.setBounds(0, 0, menuWidth, menuHeight);
+    JBInsets.removeFrom(ourViewRect, comp.getInsets());
+    Font oldFont = g.getFont();
+    Font font = comp.getFont();
+    g.setFont(font);
+    FontMetrics fontMetrics = g.getFontMetrics(font);
+    FontMetrics keyStrokeMetrics = g.getFontMetrics(acceleratorFont);
+    String keyStrokeText = getKeyStrokeText(menuItem);
+    String text = layoutMenuItem(fontMetrics, menuItem.getText(), keyStrokeMetrics, keyStrokeText, icon, checkIcon, arrowIcon,
+                                 menuItem.getVerticalAlignment(), menuItem.getHorizontalAlignment(), menuItem.getVerticalTextPosition(),
+                                 menuItem.getHorizontalTextPosition(),
+                                 ourViewRect, ourIconRect, ourTextRect, ourAcceleratorRect, ourCheckIconRect, ourArrowIconRect,
+                                 menuItem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
+    Color oldColor = g.getColor();
     if (comp.isOpaque()) {
-      g.setColor(jmenuitem.getBackground());
-      g.fillRect(0, 0, j1, k1);
-      if (isSelected(jmenuitem)) {
+      g.setColor(menuItem.getBackground());
+      g.fillRect(0, 0, menuWidth, menuHeight);
+      if (isSelected(menuItem)) {
         g.setColor(selectionBackground);
         if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
-          IdeaMenuUI.paintRoundSelection(g, comp, j1, k1);
+          IdeaMenuUI.paintRoundSelection(g, comp, menuWidth, menuHeight);
         }
         else {
-          g.fillRect(0, 0, j1, k1);
+          g.fillRect(0, 0, menuWidth, menuHeight);
         }
       }
-      g.setColor(color2);
+      g.setColor(oldColor);
     }
-    if (icon2 != null){
-      if (isSelected(jmenuitem)) {
+    if (checkIcon != null) {
+      if (isSelected(menuItem)) {
         g.setColor(selectionForeground);
       }
       else {
-        g.setColor(jmenuitem.getForeground());
+        g.setColor(menuItem.getForeground());
       }
       if (useCheckAndArrow()) {
-        IconUtil.paintSelectionAwareIcon(icon2, jmenuitem, g, ourCheckIconRect.x, ourCheckIconRect.y, isSelected(jmenuitem));
+        IconUtil.paintSelectionAwareIcon(checkIcon, menuItem, g, ourCheckIconRect.x, ourCheckIconRect.y, isSelected(menuItem));
       }
-      g.setColor(color2);
+      g.setColor(oldColor);
     }
-    if (icon1 != null) {
-      if (!buttonmodel.isEnabled()){
-        icon1 = jmenuitem.getDisabledIcon();
+    if (icon != null) {
+      if (!buttonModel.isEnabled()) {
+        icon = menuItem.getDisabledIcon();
       }
-      else
-        if (buttonmodel.isPressed() && buttonmodel.isArmed()) {
-          icon1 = jmenuitem.getPressedIcon();
-          if (icon1 == null){
-            icon1 = jmenuitem.getIcon();
-          }
+      else if (buttonModel.isPressed() && buttonModel.isArmed()) {
+        icon = menuItem.getPressedIcon();
+        if (icon == null) {
+          icon = menuItem.getIcon();
         }
-      if (icon1 != null) {
-        IconUtil.paintSelectionAwareIcon(icon1, jmenuitem, g, ourIconRect.x, ourIconRect.y, isSelected(jmenuitem));
+      }
+      if (icon != null) {
+        IconUtil.paintSelectionAwareIcon(icon, menuItem, g, ourIconRect.x, ourIconRect.y, isSelected(menuItem));
       }
     }
-    if (s1 != null && !s1.isEmpty()) {
-      if (buttonmodel.isEnabled()) {
-        if (isSelected(jmenuitem)) {
+    if (text != null && !text.isEmpty()) {
+      int mnemonicIndex = menuItem.getDisplayedMnemonicIndex();
+      if (buttonModel.isEnabled()) {
+        if (isSelected(menuItem)) {
           g.setColor(selectionForeground);
         }
         else{
-          g.setColor(jmenuitem.getForeground());
+          g.setColor(menuItem.getForeground());
         }
-        BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontmetrics.getAscent());
+        BasicGraphicsUtils.drawStringUnderlineCharAt(g, text, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontMetrics.getAscent());
       }
       else {
         final Object disabledForeground = UIUtil.getMenuItemDisabledForegroundObject();
-        if (disabledForeground instanceof Color){
-          g.setColor((Color)disabledForeground);
-          BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontmetrics.getAscent());
+        if (disabledForeground instanceof Color disabledColor) {
+          g.setColor(disabledColor);
+          BasicGraphicsUtils.drawStringUnderlineCharAt(g, text, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontMetrics.getAscent());
         }
         else{
-          g.setColor(jmenuitem.getBackground().brighter());
-          BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontmetrics.getAscent());
-          g.setColor(jmenuitem.getBackground().darker());
-          BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, ourTextRect.x - 1,
-                                                       (ourTextRect.y + fontmetrics.getAscent()) - 1);
+          g.setColor(menuItem.getBackground().brighter());
+          BasicGraphicsUtils.drawStringUnderlineCharAt(g, text, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontMetrics.getAscent());
+          g.setColor(menuItem.getBackground().darker());
+          BasicGraphicsUtils.drawStringUnderlineCharAt(g, text, mnemonicIndex, ourTextRect.x - 1,
+                                                       (ourTextRect.y + fontMetrics.getAscent()) - 1);
         }
       }
     }
     if (keyStrokeText != null && !keyStrokeText.isEmpty()) {
       g.setFont(acceleratorFont);
-      if (buttonmodel.isEnabled()){
-        if (UIUtil.isUnderAquaBasedLookAndFeel() && isSelected(jmenuitem)) {
+      if (buttonModel.isEnabled()) {
+        if (UIUtil.isUnderAquaBasedLookAndFeel() && isSelected(menuItem)) {
           g.setColor(selectionForeground);
         }
         else {
-          if (isSelected(jmenuitem)) {
+          if (isSelected(menuItem)) {
             g.setColor(acceleratorSelectionForeground);
           }
           else {
             g.setColor(acceleratorForeground);
           }
         }
-        BasicGraphicsUtils.drawString(g, keyStrokeText, 0, ourAcceleratorRect.x, ourAcceleratorRect.y + fontmetrics1.getAscent());
+        BasicGraphicsUtils.drawString(g, keyStrokeText, 0, ourAcceleratorRect.x, ourAcceleratorRect.y + keyStrokeMetrics.getAscent());
       }
       else
         if (disabledForeground != null) {
           g.setColor(disabledForeground);
-          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, ourAcceleratorRect.x, ourAcceleratorRect.y + fontmetrics1.getAscent());
+          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, ourAcceleratorRect.x, ourAcceleratorRect.y + keyStrokeMetrics.getAscent());
         }
         else {
-          g.setColor(jmenuitem.getBackground().brighter());
-          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, ourAcceleratorRect.x, ourAcceleratorRect.y + fontmetrics1.getAscent());
-          g.setColor(jmenuitem.getBackground().darker());
+          g.setColor(menuItem.getBackground().brighter());
+          BasicGraphicsUtils.drawString(g, keyStrokeText, 0, ourAcceleratorRect.x, ourAcceleratorRect.y + keyStrokeMetrics.getAscent());
+          g.setColor(menuItem.getBackground().darker());
           BasicGraphicsUtils.drawString(g, keyStrokeText, 0, ourAcceleratorRect.x - 1,
-                                        (ourAcceleratorRect.y + fontmetrics1.getAscent()) - 1);
+                                        (ourAcceleratorRect.y + keyStrokeMetrics.getAscent()) - 1);
         }
     }
     if (arrowIcon != null) {
-      if (isSelected(jmenuitem)) {
+      if (isSelected(menuItem)) {
         g.setColor(selectionForeground);
       }
       if (useCheckAndArrow()){
-        IconUtil.paintSelectionAwareIcon(arrowIcon, comp, g, ourArrowIconRect.x, ourArrowIconRect.y, isSelected(jmenuitem));
+        IconUtil.paintSelectionAwareIcon(arrowIcon, comp, g, ourArrowIconRect.x, ourArrowIconRect.y, isSelected(menuItem));
       }
     }
-    g.setColor(color2);
-    g.setFont(font);
+    g.setColor(oldColor);
+    g.setFont(oldFont);
   }
 
   private static @NlsSafe String getKeyStrokeText(@NotNull JMenuItem item) {
@@ -300,9 +298,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   @SuppressWarnings("SameParameterValue")
   private String layoutMenuItem(
-    FontMetrics fontmetrics,
+    FontMetrics fontMetrics,
     @NlsContexts.Command String text,
-    FontMetrics fontmetrics1,
+    FontMetrics keyStrokeMetrics,
     @NlsContexts.Label String keyStrokeText,
     Icon icon,
     Icon checkIcon,
@@ -320,13 +318,14 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     int textIconGap,
     int menuItemGap
   ) {
-    SwingUtilities.layoutCompoundLabel(menuItem, fontmetrics, text, icon, verticalAlignment, horizontalAlignment, verticalTextPosition, horizontalTextPosition, viewRect, iconRect, textRect, textIconGap);
+    SwingUtilities.layoutCompoundLabel(menuItem, fontMetrics, text, icon, verticalAlignment, horizontalAlignment, verticalTextPosition,
+                                       horizontalTextPosition, viewRect, iconRect, textRect, textIconGap);
     if (keyStrokeText == null || keyStrokeText.isEmpty()){
       acceleratorRect.width = acceleratorRect.height = 0;
     }
     else{
-      acceleratorRect.width = SwingUtilities.computeStringWidth(fontmetrics1, keyStrokeText);
-      acceleratorRect.height = fontmetrics1.getHeight();
+      acceleratorRect.width = SwingUtilities.computeStringWidth(keyStrokeMetrics, keyStrokeText);
+      acceleratorRect.height = keyStrokeMetrics.getHeight();
     }
 
     /* Initialize the checkIcon bounds rectangle's width & height.
@@ -377,7 +376,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   private Icon getIcon() {
     Icon icon = menuItem.getIcon();
-    if (icon != null && getAllowedIcon() != null){
+    if (icon != null && getCheckIcon() != null) {
       icon = null;
     }
     return icon;
@@ -386,47 +385,46 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   @Override
   public Dimension getPreferredSize(JComponent comp) {
     checkArrowIcon();
-    JMenuItem jmenuitem = (JMenuItem)comp;
-    Icon icon1 = getIcon();
-    Icon icon2 = getAllowedIcon();
+    JMenuItem menuItem = (JMenuItem)comp;
+    Icon icon = getIcon();
+    Icon checkIcon = getCheckIcon();
     checkEmptyIcon(comp);
-    String text = jmenuitem.getText();
-    String keyStrokeText = getKeyStrokeText(jmenuitem);
-    Font font = jmenuitem.getFont();
-    FontMetrics fontmetrics = comp.getFontMetrics(font);
-    FontMetrics fontmetrics1 = comp.getFontMetrics(acceleratorFont);
+    String text = menuItem.getText();
+    String keyStrokeText = getKeyStrokeText(menuItem);
+    FontMetrics fontMetrics = comp.getFontMetrics(menuItem.getFont());
+    FontMetrics keyStrokeMetrics = comp.getFontMetrics(acceleratorFont);
     initBounds();
-    layoutMenuItem(fontmetrics, text, fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(),
-                   jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(),
+    layoutMenuItem(fontMetrics, text, keyStrokeMetrics, keyStrokeText, icon, checkIcon, arrowIcon, menuItem.getVerticalAlignment(),
+                   menuItem.getHorizontalAlignment(), menuItem.getVerticalTextPosition(), menuItem.getHorizontalTextPosition(),
                    ourViewRect, ourIconRect, ourTextRect, ourAcceleratorRect, ourCheckIconRect, ourArrowIconRect,
                    text != null ? defaultTextIconGap : 0, defaultTextIconGap);
-    Rectangle i = new Rectangle();
-    i.setBounds(ourTextRect);
-    SwingUtilities.computeUnion(ourIconRect.x, ourIconRect.y, ourIconRect.width, ourIconRect.height, i);
+    Rectangle rect = new Rectangle();
+    rect.setBounds(ourTextRect);
+    SwingUtilities.computeUnion(ourIconRect.x, ourIconRect.y, ourIconRect.width, ourIconRect.height, rect);
     if (!(keyStrokeText == null || keyStrokeText.isEmpty())){
-      i.width += ourAcceleratorRect.width;
-      i.width += 7 * defaultTextIconGap;
+      rect.width += ourAcceleratorRect.width;
+      rect.width += 7 * defaultTextIconGap;
     }
     if (useCheckAndArrow()){
-      i.width += myMaxGutterIconWidth;
-      i.width += defaultTextIconGap;
-      i.width += defaultTextIconGap;
-      i.width += ourArrowIconRect.width;
+      rect.width += myMaxGutterIconWidth;
+      rect.width += defaultTextIconGap;
+      rect.width += defaultTextIconGap;
+      rect.width += ourArrowIconRect.width;
     }
-    i.width += 2 * defaultTextIconGap;
-    Insets insets = jmenuitem.getInsets();
+    rect.width += 2 * defaultTextIconGap;
+    Insets insets = menuItem.getInsets();
     if (insets != null){
-      i.width += insets.left + insets.right;
-      i.height += insets.top + insets.bottom;
+      rect.width += insets.left + insets.right;
+      rect.height += insets.top + insets.bottom;
     }
-    if (i.width % 2 == 0){
-      i.width++;
+    if (rect.width % 2 == 0) {
+      rect.width++;
     }
-    if (i.height % 2 == 0){
-      i.height++;
+    if (rect.height % 2 == 0) {
+      rect.height++;
     }
 
-    return IdeaMenuUI.patchPreferredSize(comp, i.getSize());
+    return IdeaMenuUI.patchPreferredSize(comp, rect.getSize());
   }
 
   private static void initBounds() {
@@ -438,7 +436,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     ourViewRect.setBounds(0, 0, 32767, 32767);
   }
 
-  private Icon getAllowedIcon() {
+  private Icon getCheckIcon() {
     Icon icon = !menuItem.isEnabled() ? menuItem.getDisabledIcon() : isSelected(menuItem) ? menuItem.getSelectedIcon() : menuItem.getIcon();
     if (icon != null && icon.getIconWidth() > myMaxGutterIconWidth){
       icon = null;
