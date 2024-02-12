@@ -38,6 +38,7 @@ import com.intellij.usages.Usage
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
@@ -68,8 +69,10 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
                                         currentSelection: Boolean,
                                         usageView: Boolean,
                                         showEmptyScopes: Boolean): Promise<List<SearchScope>> {
-    val context = ScopeCollectionContext.collectContext(
-      project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+    val context = SlowOperations.knownIssue("IDEA-345912, EA-1076769").use {
+      ScopeCollectionContext.collectContext(
+        project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+    }
 
     val promise = AsyncPromise<List<SearchScope>>()
     ReadAction.nonBlocking<Collection<SearchScope>>()
