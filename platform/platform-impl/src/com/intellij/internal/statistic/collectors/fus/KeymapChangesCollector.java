@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class KeymapChangesCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 3);
 
   private static final BooleanEventField IMPORTED = EventFields.Boolean("imported");
 

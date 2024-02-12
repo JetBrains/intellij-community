@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference
  * This case is not handled by this collector.
  */
 object DumbModeBlockedFunctionalityCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 4)
+  private val GROUP = EventLogGroup("dumb.mode.blocked.functionality", 5)
 
   private val FUNCTIONALITY_SOURCE = EventFields.Enum("functionality", DumbModeBlockedFunctionality::class.java)
   private val EXECUTED_WHEN_SMART = EventFields.Boolean("executed_when_smart")
