@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
@@ -28,6 +29,8 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   override fun createInstance(project: Project): StatusBarWidget = LanguageServiceWidget(project, scope)
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
+    if (!Registry.`is`("language.service.status.bar.widget")) return WidgetState.HIDDEN
+
     val allItems = getAllWidgetItems(LanguageServiceWidgetContext(project, file, ::update, this))
     if (allItems.isEmpty()) return WidgetState.HIDDEN
 
