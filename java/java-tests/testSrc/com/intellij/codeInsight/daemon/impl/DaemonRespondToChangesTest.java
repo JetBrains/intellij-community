@@ -2632,4 +2632,17 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     assertEmpty(highlightErrors());
   }
+
+  public void testTypingErrorElementMustHighlightIt() {
+    ThreadingAssertions.assertEventDispatchThread();
+    configureByText(JavaFileType.INSTANCE, "class X { void f() { } }<caret>");
+    assertEmpty(highlightErrors());
+    makeEditorWindowVisible(new Point(0, 1000), myEditor);
+
+    type("/");
+    waitForDaemon(myProject, myEditor.getDocument());
+    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.ERROR, getProject());
+    assertNotEmpty(errors);
+    assertTrue(errors.toString().contains("'class' or 'interface' expected"));
+  }
 }

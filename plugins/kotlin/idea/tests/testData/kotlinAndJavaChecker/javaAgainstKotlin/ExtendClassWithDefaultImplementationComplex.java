@@ -1,6 +1,6 @@
 package test;
 
-public class ExtendClassWithDefaultImplementationComplext {
+class ExtendClassWithDefaultImplementationComplext {
     <error descr="Class 'Test1' must either be declared abstract or implement abstract method 'a()' in 'A'">public static class Test1 implements A</error> {
 
     }

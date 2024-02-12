@@ -22,7 +22,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -381,12 +384,6 @@ public final class JobLauncherImpl extends JobLauncher {
     return (T)TOMBSTONE;
   }
 
-  public interface QueueController<T> {
-    void enqueue(T element);
-    void dropEverythingAndPanic();
-    void finish();
-  }
-
   /**
    * Method for producing some elements (to process via {@code thingProcessor}), and scheduling their processing along with ongoing calculations.
    * It has three parts:
@@ -402,11 +399,12 @@ public final class JobLauncherImpl extends JobLauncher {
    * Guarantees all tasks are completed in the method end, or runtime exception is thrown, in which case some elements might be in-flight.
    * @return true if all processors returned true
    */
+  @Override
   @ApiStatus.Internal
   public <T> boolean procInOrderAsync(@NotNull ProgressIndicator progress,
                                       int maxQueueSize,
                                       @NotNull PairProcessor<? super T, ? super QueueController<? super T>> thingProcessor,
-                                      @NotNull Consumer<? super QueueController<? super T>> otherActions) throws ProcessCanceledException {
+                                      @NotNull Processor<? super QueueController<? super T>> otherActions) throws ProcessCanceledException {
     progress.checkCanceled(); // do not start up expensive threads if there's no need to
     // optimization: if we know the max number of elements in the queue, use the cheaper ABQ
     BlockingQueue<T> things = maxQueueSize < Integer.MAX_VALUE ?
@@ -536,7 +534,9 @@ public final class JobLauncherImpl extends JobLauncher {
 
     try {
       // execute other actions while we are processing enqueued elements
-      otherActions.accept(addToQueue);
+      if (!otherActions.process(addToQueue)) {
+        futureResult.set(false);
+      }
     }
     catch (Exception e) {
       // in case of exception in normal flow, terminate background tasks

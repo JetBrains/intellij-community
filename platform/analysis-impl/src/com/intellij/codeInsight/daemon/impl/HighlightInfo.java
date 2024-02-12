@@ -13,10 +13,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.ExternalAnnotator;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.lang.annotation.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -322,7 +319,7 @@ public class HighlightInfo implements Segment {
   }
 
   public @Nullable @NonNls String getInspectionToolId() {
-    return toolId instanceof String ? (String)toolId : null;
+    return toolId instanceof String inspectionToolShortName ? inspectionToolShortName : null;
   }
 
   private boolean isFlagSet(@FlagConstant byte mask) {
@@ -1073,5 +1070,8 @@ public class HighlightInfo implements Segment {
   }
   void setUnresolvedReferenceQuickFixesComputed() {
     setFlag(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK, true);
+  }
+  boolean isFromAnnotator() {
+    return toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c);
   }
 }

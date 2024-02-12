@@ -56,6 +56,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -75,12 +76,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   final @NotNull ProperTextRange myPriorityRange;
 
   final List<HighlightInfo> myHighlights = new ArrayList<>();
+  final List<HighlightInfo> myAnnotatorHighlights = Collections.synchronizedList(new ArrayList<>()); // have to store them separately to avoid double call setToEditor()
 
   protected volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
   private volatile boolean myErrorFound;
   final EditorColorsScheme myGlobalScheme;
   private volatile @NotNull Supplier<? extends @NotNull List<HighlightVisitor>> myHighlightVisitorProducer = this::cloneHighlightVisitors;
+  private boolean myRunAnnotators = true;
 
   GeneralHighlightingPass(@NotNull PsiFile file,
                           @NotNull Document document,
@@ -286,35 +289,47 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 
-    boolean success = analyzeByVisitors(visitors, holder, 0, () -> {
-      LongStack nestedRange = new LongStack();
-      Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
+    BooleanSupplier runnable = () -> {
+      boolean success = analyzeByVisitors(visitors, holder, 0, () -> {
+        LongStack nestedRange = new LongStack();
+        Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
 
-      try (var ignored = HIGHLIGHTING_PERFORMANCE_ASSERT.runPass()) {
-        runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
+        try (var ignored = HIGHLIGHTING_PERFORMANCE_ASSERT.runPass()) {
+          runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
+                      nestedRange, nestedInfos);
+        }
+
+        boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
+        if ((!elements1.isEmpty() || !insideResult.isEmpty()) || priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
+          myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
+        }
+        runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                     nestedRange, nestedInfos);
+      });
+      // there can be extra highlights generated in PostHighlightVisitor
+      List<HighlightInfo> postInfos;
+      synchronized (holder) {
+        postInfos = new ArrayList<>(holder.size());
+        for (int j = 0; j < holder.size(); j++) {
+          HighlightInfo info = holder.get(j);
+          postInfos.add(info);
+          insideResult.add(info);
+        }
       }
-
-      boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
-      if ((!elements1.isEmpty() || !insideResult.isEmpty()) || priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
-      }
-      runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
-                  nestedRange, nestedInfos);
-    });
-    // there can be extra highlights generated in PostHighlightVisitor
-    List<HighlightInfo> postInfos;
-    synchronized (holder) {
-      postInfos = new ArrayList<>(holder.size());
-      for (int j = 0; j < holder.size(); j++) {
-        HighlightInfo info = holder.get(j);
-        postInfos.add(info);
-        insideResult.add(info);
-      }
+      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
+                                                                      postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
+      return success;
+    };
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(getFile(), false, holder, myHighlightingSession) : null;
+    boolean result;
+    if (annotatorRunner == null) {
+      result = runnable.getAsBoolean();
     }
-    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
-                                                                    postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
-    return success;
+    else {
+      result = annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable);
+      outsideResult.addAll(annotatorRunner.getResults());
+    }
+    return result;
   }
 
   private boolean analyzeByVisitors(HighlightVisitor @NotNull [] visitors,
@@ -399,7 +414,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         // if this highlight info range is contained inside the current element range we are visiting
         // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
         // We also know that we can remove a syntax error element.
-        info.setVisitingTextRange(myFile, myDocument, elementRange);
+        info.setVisitingTextRange(getFile(), myDocument, elementRange);
         infosForThisRange.add(info);
       }
       holder.clear();
@@ -487,7 +502,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         synchronized (this) {
           added = super.add(info);
         }
-        if (info != null && added) {
+        // annotator infos are handled by HighlightInfoUpdater separately
+        if (info != null && added/* && !info.isFromAnnotator()*/) {
           queueInfoToUpdateIncrementally(info, info.getGroup() == 0 ? Pass.UPDATE_ALL : info.getGroup());
         }
         return added;
@@ -616,5 +632,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static @Nls String getPresentableNameText() {
     return AnalysisBundle.message("pass.syntax");
+  }
+  void setRunAnnotators(boolean run) {
+    myRunAnnotators = run;
   }
 }

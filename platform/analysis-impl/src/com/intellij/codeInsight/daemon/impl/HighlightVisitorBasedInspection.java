@@ -116,8 +116,9 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
       for (GeneralHighlightingPass gpass : gpasses) {
         gpass.setHighlightVisitorProducer(() -> {
           gpass.incVisitorUsageCount(1);
-          return List.of(new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true));
+          return List.of(new DefaultHighlightVisitor(project, highlightErrorElements, true));
         });
+        gpass.setRunAnnotators(runAnnotators);
       }
     }
 

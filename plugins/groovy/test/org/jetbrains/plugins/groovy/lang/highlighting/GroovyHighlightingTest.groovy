@@ -1274,7 +1274,7 @@ class B extends A {
 
   void testUnresolvedQualifierHighlighting() {
     doTestHighlighting('''\
-<error descr="Cannot resolve symbol 'Abc'">Abc</error>.Cde abc
+<error descr="Cannot resolve symbol 'Abc'">Abc</error>.<error descr="Cannot resolve symbol 'Cde'">Cde</error> abc
 ''')
   }
 
@@ -1422,7 +1422,7 @@ class X{}
 @A('ab')
 class Y{}
 
-<error descr="Duplicate modifier 'public'">public public</error> class Z {}
+public <error descr="Duplicate modifier 'public'">public</error> class Z {}
 ''')
   }
 

@@ -17,4 +17,4 @@ import groovy.transform.Field
 <error descr="Illegal combination of modifiers">@Field protected public</error> c
 <error descr="Illegal combination of modifiers 'volatile' and 'final'">@Field volatile final</error> g
 
-<error descr="Duplicate modifier 'public'">@Field public public</error> d
+@Field public <error descr="Duplicate modifier 'public'">public</error> d

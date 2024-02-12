@@ -44,11 +44,11 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
     Document document = session.getDocument();
     long modificationStamp = document.getModificationStamp();
     TextRange priorityIntersection = priorityRange.intersection(restrictRange);
-    TextEditorHighlightingPass showAutoImportPass = editor == null ? null : getOrCreateShowAutoImportPass(editor, psiFile, session.getProgressIndicator());
-    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     if (priorityIntersection != null) {
+      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
       BackgroundUpdateHighlightersUtil.setHighlightersInRange(priorityIntersection, new ArrayList<HighlightInfo>(infos), markupModel, groupId, session);
     }
+    TextEditorHighlightingPass showAutoImportPass = editor == null ? null : getOrCreateShowAutoImportPass(editor, psiFile, session.getProgressIndicator());
     ApplicationManager.getApplication().invokeLater(() -> {
       if (editor != null && !editor.isDisposed() && modificationStamp == document.getModificationStamp()) {
         // usability: show auto import popup as soon as possible
@@ -132,7 +132,7 @@ public final class DefaultHighlightInfoProcessor extends HighlightInfoProcessor 
                                                    @NotNull HighlightingSession session) {
     List<RangeHighlighterEx> toRemove = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range), existing -> {
-      if (existing.getGroup() == Pass.UPDATE_ALL && TextRangeScalarUtil.startOffset(range) == existing.getVisitingTextRange().getStartOffset() && TextRangeScalarUtil.endOffset(range) == existing.getVisitingTextRange().getEndOffset()) {
+      if (existing.getGroup() == Pass.UPDATE_ALL && !existing.isFromAnnotator() && TextRangeScalarUtil.startOffset(range) == existing.getVisitingTextRange().getStartOffset() && TextRangeScalarUtil.endOffset(range) == existing.getVisitingTextRange().getEndOffset()) {
         if (infos != null) {
           for (HighlightInfo created : infos) {
             if (existing.equalsByActualOffset(created)) return true;

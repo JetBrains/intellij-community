@@ -262,7 +262,6 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
-    checkDuplicateModifiers(myHolder, variableDeclaration.getModifierList(), null);
     if (variableDeclaration.isTuple()) {
       final GrModifierList list = variableDeclaration.getModifierList();
 
@@ -385,7 +384,10 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
     checkTypeDefinition(myHolder, typeDefinition);
 
-    checkImplementedMethodsOfClass(myHolder, typeDefinition);
+    // enum constants are not handled here because their getTextOffset() is crazy - outside their own getTextRange()
+    if (!(typeDefinition instanceof PsiEnumConstantInitializer)) {
+      checkImplementedMethodsOfClass(myHolder, typeDefinition);
+    }
     checkConstructors(myHolder, typeDefinition);
 
     checkAnnotationCollector(myHolder, typeDefinition);
@@ -993,6 +995,8 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       }
       else {
         checkVariableModifiers(myHolder, declaration);
+        GrVariable[] variables = declaration.getVariables();
+        checkDuplicateModifiers(myHolder, modifierList, variables.length == 0 ? null : variables[0]);
       }
     }
     else if (parent instanceof GrClassInitializer) {
@@ -1731,7 +1735,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
     final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
     String message = GroovyBundle.message("method.is.not.implemented", notImplementedMethodName);
-    AnnotationBuilder builder =
+   AnnotationBuilder builder =
       holder.newAnnotation(HighlightSeverity.ERROR, message)
         .range(range);
     registerImplementsMethodsFix(typeDefinition, abstractMethod, builder, message, range).create();
@@ -1944,8 +1948,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkDuplicateModifiers(AnnotationHolder holder, @NotNull GrModifierList list, PsiMember member) {
+  private static void checkDuplicateModifiers(AnnotationHolder holder, @NotNull GrModifierList list, PsiElement member) {
     final PsiElement[] modifiers = list.getModifiers();
+    if (modifiers.length <= 1) return;
     Set<String> set = new HashSet<>(modifiers.length);
     for (PsiElement modifier : modifiers) {
       if (modifier instanceof GrAnnotation) continue;
@@ -1953,10 +1958,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       if (set.contains(name)) {
         String message = GroovyBundle.message("duplicate.modifier", name);
         AnnotationBuilder builder =
-          holder.newAnnotation(HighlightSeverity.ERROR, message).range(list);
+          holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifier);
+        GrModifierFix fix = member instanceof PsiMember ? new GrModifierFix((PsiMember)member, name, false, false, GrModifierFix.MODIFIER_LIST) :
+                            member instanceof GrVariable ? new GrModifierFix((GrVariable)member, name, false, GrModifierFix.MODIFIER_LIST) :
+                            null;
         if (member != null) {
-          builder = registerLocalFix(builder, new GrModifierFix(member, name, false, false, GrModifierFix.MODIFIER_LIST), list, message,
-                           ProblemHighlightType.ERROR, list.getTextRange());
+          builder = registerLocalFix(builder, fix, list, message, ProblemHighlightType.ERROR, list.getTextRange());
         }
         builder.create();
       }

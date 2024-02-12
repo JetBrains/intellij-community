@@ -528,13 +528,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       }
       catch (Throwable e) {
         Throwable unwrapped = ExceptionUtilRt.unwrapException(e, ExecutionException.class);
+        LOG.debug("doRunPasses() thrown " + ExceptionUtil.getThrowableText(unwrapped));
         if (progress.isCanceled() && progress.isRunning()) {
           unwrapped.addSuppressed(new RuntimeException("Daemon progress was canceled unexpectedly: " + progress));
         }
         ExceptionUtil.rethrow(unwrapped);
       }
       finally {
-        progress.cancel();
+        if (!progress.isCanceled()) {
+          ((DaemonProgressIndicator)progress).cancel("Cancel after highlighting. threads:\n"+ThreadDumper.dumpThreadsToString());
+        }
         waitForTermination();
       }
       return null;

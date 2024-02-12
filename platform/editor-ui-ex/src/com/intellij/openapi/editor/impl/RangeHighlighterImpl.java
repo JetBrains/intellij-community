@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -12,6 +13,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -79,6 +81,13 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     myModel = model;
 
     registerInTree(start, end, greedyToLeft, greedyToRight, layer);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("create: " + this);
+      if (getTextRange().equals(new TextRange(16, 22))) {
+        //new RuntimeException().printStackTrace();
+        int i = 0;
+      }
+    }
   }
 
   private boolean isFlagSet(@Flag byte mask) {
@@ -443,8 +452,16 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     getMarkupModel().removeHighlighter(this);
   }
 
+  private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @Override
   public void dispose() {
+    if (LOG.isDebugEnabled()) {
+      if (getTextRange().equals(new TextRange(16, 22))) {
+        //new RuntimeException().printStackTrace();
+        int i = 0;
+      }
+      LOG.debug("dispose: "+this);
+    }
     super.dispose();
     GutterIconRenderer renderer = getGutterIconRenderer();
     if (renderer instanceof Disposable disposableRenderer) {

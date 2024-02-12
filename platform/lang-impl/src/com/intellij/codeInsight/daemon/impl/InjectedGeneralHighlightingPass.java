@@ -58,6 +58,13 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   }
 
   @Override
+  public @NotNull List<HighlightInfo> getInfos() {
+    synchronized (myHighlights) {
+      return ContainerUtil.concat(myHighlights, myAnnotatorHighlights);
+    }
+  }
+
+  @Override
   protected @NotNull String getPresentableName() {
     return IdeBundle.message("highlighting.pass.injected.presentable.name");
   }
@@ -92,10 +99,10 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
       }));
 
     synchronized (myHighlights) {
-      // all infos for the "injected fragment for the host which is inside" are indeed inside
+      // all infos for the "injected fragment for the host which is inside" are inside indeed,
       // but some infos for the "injected fragment for the host which is outside" can be still inside
       if (resultOutside.isEmpty()) {
-        // apply only result (by default apply command) and only within inside
+        // apply only the result inside
         myHighlights.addAll(resultInside);
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), myHighlights, myRestrictRange, myRestrictRange, getId());
       }
@@ -230,16 +237,23 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
 
     HighlightInfoHolder holder = createInfoHolder(injectedPsi, documentWindow, injectedLanguageManager, outInfos);
-    runHighlightVisitorsForInjected(injectedPsi, holder);
-    highlightInjectedSyntax(injectedPsi, places, outInfos);
+    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
 
-    if (!isDumbMode()) {
-      List<HighlightInfo> todos = new ArrayList<>();
-      highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), myPriorityRange, todos, todos);
-      for (HighlightInfo info : todos) {
-        addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, outInfos);
+    AnnotatorRunner annotatorRunner = new AnnotatorRunner(injectedPsi, false, holder, myHighlightingSession);
+    annotatorRunner.runAnnotatorsAsync(elements, List.of(), () -> {
+      runHighlightVisitorsForInjected(injectedPsi, holder, elements);
+      highlightInjectedSyntax(injectedPsi, places, outInfos);
+
+      if (!isDumbMode()) {
+        List<HighlightInfo> todos = new ArrayList<>();
+        highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), myPriorityRange, todos, todos);
+        for (HighlightInfo info : todos) {
+          addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, outInfos);
+        }
       }
-    }
+      return true;
+    });
+    myAnnotatorHighlights.addAll(annotatorRunner.getResults());
   }
 
   private static void addPatchedInfos(@NotNull HighlightInfo info,
@@ -285,10 +299,9 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder) {
+  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder, List<PsiElement> elements) {
     HighlightVisitor[] filtered = getHighlightVisitors(injectedPsi);
     try {
-      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(injectedPsi, 0, injectedPsi.getTextLength());
       for (HighlightVisitor visitor : filtered) {
         visitor.analyze(injectedPsi, true, holder, () -> {
           for (PsiElement element : elements) {

@@ -196,11 +196,16 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
 
   @Override
   public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @Nls String message) {
-    return new B(this, severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+    return createBuilder(severity, message, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
   }
   @Override
   public @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    return new B(this, severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+    return createBuilder(severity, null, myCurrentElement, ObjectUtils.chooseNotNull(myCurrentAnnotator, myExternalAnnotator));
+  }
+
+  @NotNull
+  protected B createBuilder(@NotNull HighlightSeverity severity, @Nls String message, PsiElement currentElement, Object currentAnnotator) {
+    return new B(this, severity, message, currentElement, currentAnnotator);
   }
 
   PsiElement myCurrentElement;

@@ -3,7 +3,9 @@ package com.intellij.core;
 
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,4 +36,5 @@ public class CoreJobLauncher extends JobLauncher {
     }
     return Job.nullJob();
   }
+
 }

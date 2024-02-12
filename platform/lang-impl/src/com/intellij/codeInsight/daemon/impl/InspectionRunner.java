@@ -179,7 +179,7 @@ class InspectionRunner {
         });
         return true;
       };
-      if (!((JobLauncherImpl)JobLauncher.getInstance()).procInOrderAsync(new SensitiveProgressWrapper(myProgress), initSize, contextProcessor, addToQueue -> {
+      if (!JobLauncher.getInstance().procInOrderAsync(new SensitiveProgressWrapper(myProgress), initSize, contextProcessor, addToQueue -> {
         // have to do all this even for empty elements, to perform correct cleanup/inspectionFinished
         if (init.isEmpty()) {
           addToQueue.finish();
@@ -189,15 +189,16 @@ class InspectionRunner {
             addToQueue.enqueue(context);
           }
         }
+        reportIdsOfInspectionsReportedAnyProblemToFUS(init);
 
         if (myInspectInjected && InjectionUtils.shouldInspectInjectedFiles(myPsiFile)) {
           // we don't run whole-file tools on injected fragments
           List<LocalInspectionToolWrapper> localTools = ContainerUtil.filter(toolWrappers, t -> !t.runForWholeFile());
-          inspectInjectedPsi(session, localTools, injectedContexts, applyIncrementallyCallback,
-                             contextFinishedCallback, enabledToolsPredicate, addToInjectedQueue ->
+          return inspectInjectedPsi(session, localTools, injectedContexts, applyIncrementallyCallback,
+                                    contextFinishedCallback, enabledToolsPredicate, addToInjectedQueue ->
               getInjectedWithHosts(ContainerUtil.concat(restrictedInside, restrictedOutside), addToInjectedQueue));
         }
-        reportIdsOfInspectionsReportedAnyProblemToFUS(init);
+        return true;
       })) {
         throw new ProcessCanceledException();
       }
@@ -418,7 +419,7 @@ class InspectionRunner {
                                      @NotNull ApplyIncrementallyCallback addDescriptorIncrementallyCallback,
                                      @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
                                      @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate,
-                                     @NotNull Consumer<? super JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>>> otherActions) {
+                                     @NotNull Processor<? super JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>>> otherActions) {
     PairProcessor<? super Pair<PsiFile, PsiElement>, JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>>> injectedProcessor = (pair,__) -> {
       executeInImpatientReadAction(() -> {
         PsiFile injectedPsi = pair.getFirst();
@@ -495,8 +496,8 @@ class InspectionRunner {
     }
   }
 
-  private void getInjectedWithHosts(@NotNull List<? extends PsiElement> elements,
-                                    @NotNull JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>> addToQueue) {
+  private boolean getInjectedWithHosts(@NotNull List<? extends PsiElement> elements,
+                                       @NotNull JobLauncherImpl.QueueController<? super Pair<PsiFile, PsiElement>> addToQueue) {
     Map<PsiFile, PsiElement> injectedToHost = createInjectedFileMap();
     Project project = myPsiFile.getProject();
     for (PsiElement element : elements) {
@@ -510,6 +511,7 @@ class InspectionRunner {
       });
     }
     addToQueue.finish(); // no more injections
+    return true;
   }
 
   interface ApplyIncrementallyCallback {

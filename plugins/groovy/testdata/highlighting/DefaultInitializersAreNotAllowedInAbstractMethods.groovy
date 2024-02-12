@@ -22,7 +22,7 @@ enum E {
   String bar(x = 2)
 }
 
-def a = new Runnable() {
+def a = new <error descr="Method 'foo' is not implemented">Runnable</error>() {
   void run() {}
   <error descr="Anonymous class cannot have abstract method">abstract</error> foo(x = 5);
 }

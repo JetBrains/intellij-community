@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -181,16 +182,15 @@ final class HighlightInfoUpdater {
                          @NotNull HighlightersRecycler invalidElementRecycler,
                          @NotNull HighlightingSession session) {
     List<? extends HighlightInfo> oldInfos = getInfosForVisitedPsi(psiFile, toolId, visitedPsiElement);
-    synchronized (oldInfos) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("psiElementVisited: " + visitedPsiElement+ " in "+psiFile+" injected in "+InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange())+
-                  "; tool:" + toolId + "; infos:" + newInfos+ "; oldInfos:" + oldInfos + "; document:" + hostDocument);
-      }
-
-      if (!oldInfos.isEmpty() || !newInfos.isEmpty()) {
-        MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
-        setHighlightersInRange(newInfos, oldInfos, markup, session, invalidElementRecycler);
-      }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("psiElementVisited: " + visitedPsiElement+ " in "+psiFile+
+                (psiFile.getViewProvider() instanceof InjectedFileViewProvider ?
+                 " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
+                "; tool:" + toolId + "; infos:" + newInfos + "; oldInfos:" + oldInfos + "; document:" + hostDocument);
+    }
+    if (!oldInfos.isEmpty() || !newInfos.isEmpty()) {
+      MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
+      setHighlightersInRange(newInfos, oldInfos, markup, session, invalidElementRecycler);
     }
     // store back only after markup model changes are applied to avoid PCE thrown in the middle leaving corrupted data behind
     putInfosForVisitedPsi(psiFile, toolId, visitedPsiElement, newInfos);
