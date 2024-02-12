@@ -55,10 +55,10 @@ public enum JavaFeature {
   ENHANCED_SWITCH(LanguageLevel.JDK_14, "feature.enhanced.switch"),
   SWITCH_EXPRESSION(LanguageLevel.JDK_14, "feature.switch.expressions"),
   SERIAL_ANNOTATION(LanguageLevel.JDK_14, "feature.serial.annotation"),
-  RECORDS(LanguageLevel.JDK_16, "feature.records"),
-  PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
   TEXT_BLOCK_ESCAPES(LanguageLevel.JDK_15, "feature.text.block.escape.sequences"),
   TEXT_BLOCKS(LanguageLevel.JDK_15, "feature.text.blocks"),
+  RECORDS(LanguageLevel.JDK_16, "feature.records"),
+  PATTERNS(LanguageLevel.JDK_16, "feature.patterns.instanceof"),
   LOCAL_INTERFACES(LanguageLevel.JDK_16, "feature.local.interfaces"),
   LOCAL_ENUMS(LanguageLevel.JDK_16, "feature.local.enums"),
   INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
@@ -70,17 +70,12 @@ public enum JavaFeature {
                      LanguageLevel.JDK_17_PREVIEW, LanguageLevel.JDK_18_PREVIEW, LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   PATTERN_GUARDS_AND_RECORD_PATTERNS(LanguageLevel.JDK_21, "feature.pattern.guard.and.record.patterns",
                                      LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
-  /**
-   * Was a preview feature in Java 20 Preview. 
-   * Keep the implementation, as it could reappear in the future.
-   */
-  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
-                              LanguageLevel.JDK_20_PREVIEW),
   VIRTUAL_THREADS(LanguageLevel.JDK_21, "feature.virtual.threads",
                   LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   FOREIGN_FUNCTIONS(LanguageLevel.JDK_21, "feature.foreign.functions",
                     LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
+  SEQUENCED_COLLECTIONS(LanguageLevel.JDK_21, "feature.sequenced.collections"),
   STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates"),
   UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_22, "feature.unnamed.vars") {
     @Override
@@ -91,10 +86,15 @@ public enum JavaFeature {
   IMPLICIT_CLASSES(LanguageLevel.JDK_21_PREVIEW, "feature.implicit.classes"),
   SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
   STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
-  SEQUENCED_COLLECTIONS(LanguageLevel.JDK_21, "feature.sequenced.collections"),
   CLASSFILE_API(LanguageLevel.JDK_22_PREVIEW, "feature.classfile.api"),
   STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
   STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super"),
+  /**
+   * Was a preview feature in Java 20 Preview. 
+   * Keep the implementation, as it could reappear in the future.
+   */
+  RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
+                              LanguageLevel.JDK_20_PREVIEW),
   ;
 
   private final @NotNull LanguageLevel myLevel;
