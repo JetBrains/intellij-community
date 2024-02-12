@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
@@ -62,13 +61,9 @@ public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<Psi
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-    invoke(element);
-  }
-
-  public static void invoke(@NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
-    PsiElement elementUnderCaret = file.findElementAt(editor.getCaretModel().getOffset());
-    if (elementUnderCaret == null) return;
-    invoke(elementUnderCaret);
+    PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false, PyExpression.class);
+    if (stringElement == null) return;
+    changeQuotesInString(stringElement);
   }
 
   public static boolean isAvailable(@NotNull Editor editor, @NotNull PsiFile file) {
@@ -90,9 +85,7 @@ public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<Psi
     return true;
   }
 
-  private static void invoke(@NotNull PsiElement element) {
-    PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false, PyExpression.class);
-    if (stringElement == null) return;
+  public static void changeQuotesInString(@NotNull PyStringElement stringElement) {
     PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
     if (stringLiteral == null) return;
 
