@@ -39,8 +39,9 @@ class GradleSourceSetGroovyHelper {
       externalSourceSet.name = sourceSet.name
       externalSourceSet.artifacts = GradleSourceSetModelBuilder.collectSourceSetArtifacts(project, context, sourceSet)
       GradleSourceSetModelBuilder.addJavaCompilerOptions(externalSourceSet, project, sourceSet, sourceSetResolutionContext)
-      externalSourceSet.sources = collectSourceDirs(project, sourceSet, sourceSetResolutionContext)
 
+      addSourceDirs(externalSourceSet, project, sourceSet, sourceSetResolutionContext)
+      addLegacyTestSourceDirs(externalSourceSet, project, sourceSetResolutionContext)
       cleanupSharedIdeaSourceDirs(externalSourceSet, sourceSetResolutionContext)
 
       if (resolveSourceSetDependencies) {
@@ -67,15 +68,13 @@ class GradleSourceSetGroovyHelper {
     return result
   }
 
-  @NotNull
-  private static Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> collectSourceDirs(
+  private static void addSourceDirs(
+    @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
     @NotNull Project project,
     @NotNull SourceSet sourceSet,
     @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext
   ) {
     def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
-
-    def sources = [:] as Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet>
 
     ExternalSourceDirectorySet sourceDirectorySet = new DefaultExternalSourceDirectorySet()
     sourceDirectorySet.name = sourceSet.allJava.name
@@ -130,10 +129,10 @@ class GradleSourceSetGroovyHelper {
       resourcesDirectorySet.includes = sourceSetResolutionContext.testResourcesIncludes + sourceSet.resources.includes
       resourcesDirectorySet.filters = sourceSetResolutionContext.testResourceFilters
 
-      sources.put(ExternalSystemSourceType.TEST, sourceDirectorySet)
-      sources.put(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
+      externalSourceSet.addSource(ExternalSystemSourceType.TEST, sourceDirectorySet)
+      externalSourceSet.addSource(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet)
       if (generatedSourceDirectorySet != null) {
-        sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedSourceDirectorySet)
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST_GENERATED, generatedSourceDirectorySet)
       }
     }
     else {
@@ -158,60 +157,73 @@ class GradleSourceSetGroovyHelper {
       resourcesDirectorySet.includes = sourceSetResolutionContext.resourcesIncludes + sourceSet.resources.includes
       resourcesDirectorySet.filters = sourceSetResolutionContext.resourceFilters
 
-      sources.put(ExternalSystemSourceType.SOURCE, sourceDirectorySet)
-      sources.put(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
+      externalSourceSet.addSource(ExternalSystemSourceType.SOURCE, sourceDirectorySet)
+      externalSourceSet.addSource(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet)
       if (generatedSourceDirectorySet != null) {
-        sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedSourceDirectorySet)
+        externalSourceSet.addSource(ExternalSystemSourceType.SOURCE_GENERATED, generatedSourceDirectorySet)
       }
+    }
+  }
 
-      if (!resolveSourceSetDependencies) {
-        def testSourceDirs = sourceDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
-        if (!testSourceDirs.isEmpty()) {
-          sourceDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
+  private static void addLegacyTestSourceDirs(
+    @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
+    @NotNull Project project,
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext
+  ) {
+    def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
+    if (resolveSourceSetDependencies) return
 
-          def testSourceDirectorySet = new DefaultExternalSourceDirectorySet()
-          testSourceDirectorySet.name = sourceDirectorySet.name
-          testSourceDirectorySet.srcDirs = testSourceDirs
-          testSourceDirectorySet.gradleOutputDirs = Collections.singleton(sourceDirectorySet.outputDir)
-          testSourceDirectorySet.outputDir = sourceSetResolutionContext.ideaTestOutputDir
-            ?: new File(project.projectDir, "out/test/classes")
-          testSourceDirectorySet.inheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited()
-          sources.put(ExternalSystemSourceType.TEST, testSourceDirectorySet)
-        }
+    def sourceDirectorySet = externalSourceSet.sources[ExternalSystemSourceType.SOURCE]
+    def resourcesDirectorySet = externalSourceSet.sources[ExternalSystemSourceType.RESOURCE]
+    def generatedSourceDirectorySet = externalSourceSet.sources[ExternalSystemSourceType.SOURCE_GENERATED]
 
-        def testResourceDirs = resourcesDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
-        if (!testResourceDirs.isEmpty()) {
-          resourcesDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
+    if (sourceDirectorySet != null) {
+      def testSourceDirs = sourceDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
+      if (!testSourceDirs.isEmpty()) {
+        sourceDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
 
-          def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
-          testResourcesDirectorySet.name = resourcesDirectorySet.name
-          testResourcesDirectorySet.srcDirs = testResourceDirs
-          testResourcesDirectorySet.gradleOutputDirs = Collections.singleton(resourcesDirectorySet.outputDir)
-          testResourcesDirectorySet.outputDir = sourceSetResolutionContext.ideaTestOutputDir
-            ?: new File(project.projectDir, "out/test/resources")
-          testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
-          sources.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
-        }
-
-        if (generatedSourceDirectorySet != null) {
-          def testGeneratedSourceDirs = generatedSourceDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
-          if (!testGeneratedSourceDirs.isEmpty()) {
-            generatedSourceDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
-
-            def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
-            testGeneratedDirectorySet.name = generatedSourceDirectorySet.name
-            testGeneratedDirectorySet.srcDirs = testGeneratedSourceDirs
-            testGeneratedDirectorySet.gradleOutputDirs = Collections.singleton(generatedSourceDirectorySet.outputDir)
-            testGeneratedDirectorySet.outputDir = generatedSourceDirectorySet.outputDir
-            testGeneratedDirectorySet.inheritedCompilerOutput = generatedSourceDirectorySet.isCompilerOutputPathInherited()
-
-            sources.put(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet)
-          }
-        }
+        def testSourceDirectorySet = new DefaultExternalSourceDirectorySet()
+        testSourceDirectorySet.name = sourceDirectorySet.name
+        testSourceDirectorySet.srcDirs = testSourceDirs
+        testSourceDirectorySet.gradleOutputDirs = Collections.singleton(sourceDirectorySet.outputDir)
+        testSourceDirectorySet.outputDir = sourceSetResolutionContext.ideaTestOutputDir
+          ?: new File(project.projectDir, "out/test/classes")
+        testSourceDirectorySet.inheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited()
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST, testSourceDirectorySet)
       }
     }
 
-    return sources
+    if (resourcesDirectorySet != null) {
+      def testResourceDirs = resourcesDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
+      if (!testResourceDirs.isEmpty()) {
+        resourcesDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
+
+        def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
+        testResourcesDirectorySet.name = resourcesDirectorySet.name
+        testResourcesDirectorySet.srcDirs = testResourceDirs
+        testResourcesDirectorySet.gradleOutputDirs = Collections.singleton(resourcesDirectorySet.outputDir)
+        testResourcesDirectorySet.outputDir = sourceSetResolutionContext.ideaTestOutputDir
+          ?: new File(project.projectDir, "out/test/resources")
+        testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
+      }
+    }
+
+    if (generatedSourceDirectorySet != null) {
+      def testGeneratedSourceDirs = generatedSourceDirectorySet.srcDirs.intersect(sourceSetResolutionContext.ideaTestSourceDirs)
+      if (!testGeneratedSourceDirs.isEmpty()) {
+        generatedSourceDirectorySet.srcDirs.removeAll(sourceSetResolutionContext.ideaTestSourceDirs)
+
+        def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
+        testGeneratedDirectorySet.name = generatedSourceDirectorySet.name
+        testGeneratedDirectorySet.srcDirs = testGeneratedSourceDirs
+        testGeneratedDirectorySet.gradleOutputDirs = Collections.singleton(generatedSourceDirectorySet.outputDir)
+        testGeneratedDirectorySet.outputDir = generatedSourceDirectorySet.outputDir
+        testGeneratedDirectorySet.inheritedCompilerOutput = generatedSourceDirectorySet.isCompilerOutputPathInherited()
+
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet)
+      }
+    }
   }
 
   private static void cleanupSharedIdeaSourceDirs(
