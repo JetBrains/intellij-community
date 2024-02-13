@@ -61,14 +61,14 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val filesVms: MutableMap<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> = mutableMapOf()
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> = run {
+  val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> by lazy {
     val repository = projectMapping.remote.repository
     _actualChangesState.map {
       (it as? ChangesState.Loaded)?.changes?.commits?.map { it.sha }
     }.distinctUntilChanged().transformLatest {
       if (it == null) emit(null)
       else flowOf(it).localCommitsSyncStatus(repository).collect(this)
-    }.stateIn(cs, SharingStarted.Lazily, null)
+    }.stateIn(cs, SharingStarted.Eagerly, null)
   }
 
   override val updateRequired: StateFlow<Boolean> = localRepositorySyncStatus.mapState {
