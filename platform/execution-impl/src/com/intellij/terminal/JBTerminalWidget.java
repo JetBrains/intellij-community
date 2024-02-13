@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.HyperlinkWithHoverInfo;
-import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo;
+import com.intellij.execution.filters.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -105,6 +102,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
         if (LOG.isDebugEnabled()) {
           LOG.debug("Skipping running filters on " + line, e);
         }
+        return null;
+      }
+      catch (CompositeFilter.ApplyFilterException applyFilterException) {
+        LOG.error(applyFilterException);
         return null;
       }
     }).executeSynchronously();
