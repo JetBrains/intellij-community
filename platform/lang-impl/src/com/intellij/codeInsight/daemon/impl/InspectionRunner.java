@@ -53,6 +53,7 @@ class InspectionRunner {
   private final boolean myIgnoreSuppressed;
   private final InspectionProfileWrapper myInspectionProfileWrapper;
   private final Map<String, Set<PsiElement>> mySuppressedElements;
+  private final List<PsiFile> myInjectedFragments = Collections.synchronizedList(new ArrayList<>());
 
   InspectionRunner(@NotNull PsiFile psiFile,
                    @NotNull TextRange restrictRange,
@@ -459,7 +460,7 @@ class InspectionRunner {
       return true;
     };
 
-    return ((JobLauncherImpl)JobLauncher.getInstance()).procInOrderAsync(new SensitiveProgressWrapper(myProgress), Integer.MAX_VALUE, injectedProcessor, otherActions);
+    return JobLauncher.getInstance().procInOrderAsync(new SensitiveProgressWrapper(myProgress), Integer.MAX_VALUE, injectedProcessor, otherActions);
   }
 
   private void applyInjectedDescriptor(@NotNull List<? extends ProblemDescriptor> descriptors,
@@ -511,6 +512,7 @@ class InspectionRunner {
       });
     }
     addToQueue.finish(); // no more injections
+    myInjectedFragments.addAll(injectedToHost.keySet());
     return true;
   }
 
@@ -616,5 +618,10 @@ class InspectionRunner {
     return highlightingLevelManager != null
            && highlightingLevelManager.shouldInspect(file)
            && !highlightingLevelManager.runEssentialHighlightingOnly(file);
+  }
+
+  @NotNull
+  List<PsiFile> getInjectedFragments() {
+    return myInjectedFragments;
   }
 }

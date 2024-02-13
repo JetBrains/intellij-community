@@ -28,6 +28,8 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -312,6 +314,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     }
   }
 
+  // highlight c-style comments
   public static class MyInfoAnnotator extends MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
@@ -393,6 +396,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     }
   }
 
+  // highlight //XXX comments
   public static class MyNewBuilderAnnotator extends MyRecordingAnnotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
@@ -762,6 +766,7 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     });
   }
 
+  // highlight all "xxx" comments
   static class MyComment1Annotator extends MyRecordingAnnotator {
     static final AtomicBoolean stall1 = new AtomicBoolean();
     static final String comment1Text = "comment1Text";
@@ -859,4 +864,37 @@ public class DaemonAnnotatorsRespondToChangesTest extends DaemonAnalyzerTestCase
     });
   }
 
+  // highlight "xxx" substring
+  public static class MyTextAnnotator extends MyRecordingAnnotator {
+    private static final String SWEARING = "xxx substring";
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        int i = element.getText().indexOf("xxx");
+        if (i != -1) {
+          holder.newAnnotation(HighlightSeverity.ERROR, SWEARING).range(new TextRange(i,i+3)).create();
+          iDidIt();
+        }
+      }
+      LOG.debug(getClass()+".annotate("+element+") = "+didIDoIt());
+    }
+  }
+  public void testCloseReopenDoesNotDuplicateWarnings() {
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new MyTextAnnotator()}, () -> {
+      configureByText(PlainTextFileType.INSTANCE, "sssxxxsss");
+      HighlightInfo info = assertOneElement(highlightErrors());
+      assertEquals(MyTextAnnotator.SWEARING, info.getDescription());
+
+      Document document = myFile.getFileDocument();
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      FileEditorManager.getInstance(myProject).closeFile(virtualFile);
+      UIUtil.dispatchAllInvocationEvents();
+
+      configureByExistingFile(virtualFile);
+      assertSame(document, getEditor().getDocument());
+      HighlightInfo info2 = assertOneElement(highlightErrors());
+      assertEquals(MyTextAnnotator.SWEARING, info2.getDescription());
+    });
+  }
 }

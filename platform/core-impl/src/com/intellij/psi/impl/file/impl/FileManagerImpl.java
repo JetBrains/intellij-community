@@ -4,6 +4,7 @@ package com.intellij.psi.impl.file.impl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class FileManagerImpl implements FileManager {
@@ -89,8 +91,8 @@ public final class FileManagerImpl implements FileManager {
     }
   }
 
-  @ApiStatus.Internal
-  public @NotNull ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
+  @NotNull
+  private ConcurrentMap<VirtualFile, FileViewProvider> getVFileToViewProviderMap() {
     ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
     if (map == null) {
       map = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, CollectionFactory.createConcurrentWeakValueMap());
@@ -104,6 +106,21 @@ public final class FileManagerImpl implements FileManager {
       map = ConcurrencyUtil.cacheOrGet(myVFileToPsiDirMap, ContainerUtil.createConcurrentSoftValueMap());
     }
     return map;
+  }
+
+  @TestOnly
+  public void assertNoInjectedFragmentsStoredInMaps() {
+    ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
+    for (Map.Entry<VirtualFile, FileViewProvider> entry : map.entrySet()) {
+      if (entry.getKey() instanceof VirtualFileWindow) {
+        throw new AssertionError(entry.getKey());
+      }
+      FileViewProvider provider = entry.getValue();
+      PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(myManager.getProject()).getInjectionHost(provider);
+      if (injectionHost != null) {
+        throw new AssertionError(injectionHost);
+      }
+    }
   }
 
   public static void clearPsiCaches(@NotNull FileViewProvider viewProvider) {
@@ -667,5 +684,18 @@ public final class FileManagerImpl implements FileManager {
       return null;
     }
     return ((AbstractFileViewProvider)viewProvider).getCachedPsi(viewProvider.getBaseLanguage());
+  }
+
+  @ApiStatus.Internal
+  public void forEachCachedDocument(@NotNull Consumer<? super @NotNull Document> consumer) {
+    ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
+    if (map != null) {
+      map.keySet().forEach(virtualFile -> {
+        Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+        if (document != null) {
+          consumer.accept(document);
+        }
+      });
+    }
   }
 }

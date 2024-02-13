@@ -26,6 +26,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
@@ -692,7 +693,9 @@ public class ExpectedHighlightingData {
       String severity = pair.first;
       HighlightInfo prev = i < list.size() - 1 ? list.get(i + 1).second : null;
 
-      sb.insert(0, text.substring(info.endOffset, endPos));
+      int start = MathUtil.clamp(info.endOffset, 0, text.length());
+      int end = MathUtil.clamp(endPos, start, text.length());
+      sb.insert(0, text.substring(start, end));
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {

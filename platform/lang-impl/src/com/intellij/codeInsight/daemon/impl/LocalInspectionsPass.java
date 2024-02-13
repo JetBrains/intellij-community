@@ -96,8 +96,10 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
       List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
       List<? extends InspectionRunner.InspectionContext> resultContexts;
+      List<PsiFile> injectedFragments;
       if (toolWrappers.isEmpty()) {
         resultContexts = List.of();
+        injectedFragments = List.of();
       }
       else {
         InspectionRunner.ApplyIncrementallyCallback applyIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) -> {
@@ -146,10 +148,11 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
                                         contextFinishedCallback,
                                         wrapper -> !wrapper.getTool().isSuppressedFor(getFile()));
         myInfos = fileInfos;
+        injectedFragments = runner.getInjectedFragments();
       }
       Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      highlightInfoUpdater.recycleHighlightsForObsoleteTools(getFile(), pairs, invalidElementsRecycler);
-      highlightInfoUpdater.removeWarningsInsideErrors(myHighlightingSession);  // must be the last
+      highlightInfoUpdater.recycleHighlightsForObsoleteTools(getFile(), injectedFragments, pairs, invalidElementsRecycler);
+      highlightInfoUpdater.removeWarningsInsideErrors(injectedFragments, myHighlightingSession);  // must be the last
     }
     finally {
       // incinerate range highlighters for invalid PSI elements even in the case of PCE, or otherwise these dangling range highlighters will stay onscreen forever
