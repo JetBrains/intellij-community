@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleSourceSetDependencyResolver;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
@@ -9,7 +10,6 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
 import com.intellij.gradle.toolingExtension.util.GradleReflectionUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
-import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -59,8 +59,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     sourceSetModel.setTargetCompatibility(JavaPluginUtil.getTargetCompatibility(project));
     sourceSetModel.setTaskArtifacts(collectProjectTaskArtifacts(project, context));
     sourceSetModel.setConfigurationArtifacts(collectProjectConfigurationArtifacts(project, context));
-    sourceSetModel.setSourceSets(GradleSourceSetGroovyHelper.getSourceSets(project, context));
     sourceSetModel.setAdditionalArtifacts(collectNonSourceSetArtifacts(project, context));
+    sourceSetModel.setSourceSets(collectSourceSets(project, context));
 
     GradleSourceSetCache.getInstance(context).setSourceSetModel(project, sourceSetModel);
 
@@ -205,7 +205,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return configurationArtifacts;
   }
 
-  static @NotNull Collection<File> collectSourceSetArtifacts(
+  private static @NotNull Collection<File> collectSourceSetArtifacts(
     @NotNull Project project,
     @NotNull ModelBuilderContext context,
     @NotNull SourceSet sourceSet
@@ -247,23 +247,23 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return sourceSetArtifacts;
   }
 
-  static void cleanupSharedSourceDirs(
-    @NotNull Map<String, ExternalSourceSet> externalSourceSets,
+  private static void cleanupSharedSourceDirs(
+    @NotNull Map<String, DefaultExternalSourceSet> externalSourceSets,
     @NotNull String sourceSetName,
     @Nullable String sourceSetNameToIgnore
   ) {
-    ExternalSourceSet sourceSet = externalSourceSets.get(sourceSetName);
+    DefaultExternalSourceSet sourceSet = externalSourceSets.get(sourceSetName);
     if (sourceSet == null) return;
 
-    for (Map.Entry<String, ExternalSourceSet> sourceSetEntry : externalSourceSets.entrySet()) {
+    for (Map.Entry<String, DefaultExternalSourceSet> sourceSetEntry : externalSourceSets.entrySet()) {
       if (Objects.equals(sourceSetEntry.getKey(), sourceSetName)) continue;
       if (Objects.equals(sourceSetEntry.getKey(), sourceSetNameToIgnore)) continue;
 
-      ExternalSourceSet customSourceSet = sourceSetEntry.getValue();
+      DefaultExternalSourceSet customSourceSet = sourceSetEntry.getValue();
       for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
-        ExternalSourceDirectorySet customSourceDirectorySet = customSourceSet.getSources().get(sourceType);
+        DefaultExternalSourceDirectorySet customSourceDirectorySet = customSourceSet.getSources().get(sourceType);
         if (customSourceDirectorySet != null) {
-          for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> sourceDirEntry : sourceSet.getSources().entrySet()) {
+          for (Map.Entry<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sourceDirEntry : sourceSet.getSources().entrySet()) {
             customSourceDirectorySet.getSrcDirs().removeAll(sourceDirEntry.getValue().getSrcDirs());
           }
         }
@@ -271,7 +271,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
   }
 
-  static void cleanupSharedIdeaSourceDirs(
+  private static void cleanupSharedIdeaSourceDirs(
     @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
     @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext
   ) {
@@ -327,7 +327,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return false;
   }
 
-  static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
+  private static boolean containsAllSourceSetOutput(@NotNull AbstractArchiveTask archiveTask, @NotNull SourceSet sourceSet) {
     Set<File> outputFiles = new HashSet<>(sourceSet.getOutput().getFiles());
     Project project = archiveTask.getProject();
 
@@ -484,7 +484,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return Collections.singleton(testFixtureSourceSet);
   }
 
-  static void addJavaCompilerOptions(
+  private static void addJavaCompilerOptions(
     @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
     @NotNull Project project,
     @NotNull SourceSet sourceSet,
@@ -535,7 +535,53 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     return null;
   }
 
-  static void addSourceDirs(
+  private static @NotNull Map<String, DefaultExternalSourceSet> collectSourceSets(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
+    GradleSourceSetResolutionContext sourceSetResolutionContext = new GradleSourceSetResolutionContext(project, context);
+
+    SourceSetContainer sourceSets = JavaPluginUtil.getSourceSetContainer(project);
+    if (sourceSets == null) {
+      return new LinkedHashMap<>();
+    }
+
+    Map<String, DefaultExternalSourceSet> result = new LinkedHashMap<>();
+    sourceSets.forEach(sourceSet -> {
+      DefaultExternalSourceSet externalSourceSet = new DefaultExternalSourceSet();
+      externalSourceSet.setName(sourceSet.getName());
+      externalSourceSet.setArtifacts(collectSourceSetArtifacts(project, context, sourceSet));
+
+      addJavaCompilerOptions(externalSourceSet, project, sourceSet, sourceSetResolutionContext);
+      addSourceDirs(externalSourceSet, project, sourceSet, sourceSetResolutionContext);
+      addLegacyTestSourceDirs(externalSourceSet, project, sourceSetResolutionContext);
+
+      cleanupSharedIdeaSourceDirs(externalSourceSet, sourceSetResolutionContext);
+
+      if (Boolean.getBoolean("idea.resolveSourceSetDependencies")) {
+        Collection<ExternalDependency> dependencies = new GradleSourceSetDependencyResolver(context, project)
+          .resolveDependencies(sourceSet);
+        externalSourceSet.setDependencies(dependencies);
+      }
+
+      result.put(externalSourceSet.getName(), externalSourceSet);
+    });
+
+    addUnprocessedIdeaSourceDirs(result, sourceSets, sourceSetResolutionContext, SourceSet.MAIN_SOURCE_SET_NAME);
+    addUnprocessedIdeaResourceDirs(result, sourceSetResolutionContext, SourceSet.MAIN_SOURCE_SET_NAME);
+    addUnprocessedIdeaGeneratedSourcesDirs(result, sourceSetResolutionContext, SourceSet.MAIN_SOURCE_SET_NAME);
+
+    addUnprocessedIdeaSourceDirs(result, sourceSets, sourceSetResolutionContext, SourceSet.TEST_SOURCE_SET_NAME);
+    addUnprocessedIdeaResourceDirs(result, sourceSetResolutionContext, SourceSet.TEST_SOURCE_SET_NAME);
+    addUnprocessedIdeaGeneratedSourcesDirs(result, sourceSetResolutionContext, SourceSet.TEST_SOURCE_SET_NAME);
+
+    cleanupSharedSourceDirs(result, SourceSet.MAIN_SOURCE_SET_NAME, null);
+    cleanupSharedSourceDirs(result, SourceSet.TEST_SOURCE_SET_NAME, SourceSet.MAIN_SOURCE_SET_NAME);
+
+    return result;
+  }
+
+  private static void addSourceDirs(
     @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
     @NotNull Project project,
     @NotNull SourceSet sourceSet,
@@ -710,7 +756,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
   }
 
-  static void addUnprocessedIdeaSourceDirs(
+  private static void addUnprocessedIdeaSourceDirs(
     @NotNull Map<String, DefaultExternalSourceSet> externalSourceSets, // mutable
     @NotNull SourceSetContainer sourceSets,
     @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext,
@@ -736,7 +782,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     sourceDirectorySet.getSrcDirs().addAll(sourceDirs);
   }
 
-  static void addUnprocessedIdeaResourceDirs(
+  private static void addUnprocessedIdeaResourceDirs(
     @NotNull Map<String, DefaultExternalSourceSet> externalSourceSets, // mutable
     @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext,
     @NotNull String sourceSetName
@@ -756,7 +802,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     resourceDirectorySet.getSrcDirs().addAll(ideaResourceDirs);
   }
 
-  static void addUnprocessedIdeaGeneratedSourcesDirs(
+  private static void addUnprocessedIdeaGeneratedSourcesDirs(
     @NotNull Map<String, DefaultExternalSourceSet> externalSourceSets, // mutable
     @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext,
     @NotNull String sourceSetName

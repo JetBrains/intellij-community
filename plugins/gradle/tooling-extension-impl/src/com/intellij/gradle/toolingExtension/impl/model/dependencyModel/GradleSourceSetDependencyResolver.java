@@ -47,7 +47,7 @@ public final class GradleSourceSetDependencyResolver {
     myProject = project;
   }
 
-  public @NotNull Collection<? extends ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet) {
+  public @NotNull Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet) {
     Collection<? extends ExternalDependency> compileDependencies = resolveSourceSetCompileDependencies(sourceSet);
     Collection<? extends ExternalDependency> runtimeDependencies = resolveSourceSetRuntimeDependencies(sourceSet);
     Collection<? extends ExternalDependency> dependencies = mergeResolvedDependencies(compileDependencies, runtimeDependencies);
