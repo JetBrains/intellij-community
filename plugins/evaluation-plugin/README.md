@@ -107,6 +107,7 @@ Here is an example of such file with description for possible options but the st
   },
   "actions": { // part of config about actions generation step
     "evaluationRoots": [], // list of string with paths to files/directories for evaluation
+    "ignoreFileNames": [] // list of file/directory names to be ignored inside evaluationRoots
   },
   "interpret": { // part of config about actions interpretation step
     "sessionProbability": 1.0, // probability that session won't be skipped

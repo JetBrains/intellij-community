@@ -75,7 +75,7 @@ internal class ContextCollectionEvaluationCommand: CompletionEvaluationStarter.E
           ) {
             override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
               val files = runReadAction {
-                FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, language)
+                FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, config.actions.ignoreFileNames, language)
               }.sortedBy { it.name }
               val strategy = config.strategy as CompletionContextCollectionStrategy
               val sampled = files.shuffled(Random(strategy.samplingSeed)).take(strategy.samplesCount).sortedBy { it.name }

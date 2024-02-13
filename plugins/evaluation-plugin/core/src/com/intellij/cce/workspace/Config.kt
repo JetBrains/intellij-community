@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace
 
 import com.intellij.cce.evaluable.EvaluationStrategy
@@ -10,6 +10,20 @@ import com.intellij.cce.workspace.filter.SessionsFilter
 import java.nio.file.Paths
 import kotlin.io.path.absolute
 
+
+/**
+ * Represents a configuration of the evaluation process.
+ *
+ * @property projectPath The path to the project that will be used for the evaluation.
+ * @property projectName The name of the project. It may differ from the root directory name.
+ * @property language The programming language whose files are used in the evaluation.
+ * @property outputDir The output directory for the evaluation results.
+ * @property strategy The evaluation strategy used.
+ * @property actions The configuration for actions generation step.
+ * @property interpret The configuration for actions interpretation step.
+ * @property reorder The configuration for element reordering step.
+ * @property reports The configuration for report generation step.
+ */
 data class Config private constructor(
   val projectPath: String,
   val projectName: String,
@@ -35,10 +49,32 @@ data class Config private constructor(
     }
   }
 
+  /**
+   * Represents the configuration for generating actions.
+   *
+   * @property evaluationRoots The list of evaluation roots. Directories and files with relative and absolute paths are allowed.
+   * @property ignoreFileNames The set of file names to ignore. Files and directories with these names inside [evaluationRoots] will be skipped.
+   */
   data class ActionsGeneration internal constructor(
-    val evaluationRoots: List<String>
+    val evaluationRoots: List<String>,
+    val ignoreFileNames: Set<String>,
   )
 
+  /**
+   * Represents the configuration for the interpretation of actions.
+   *
+   * @property experimentGroup The ID of A/B experiment group.
+   * @property sessionsLimit The limit of sessions in the evaluation.
+   * @property filesLimit The limit of files in the evaluation.
+   * @property sessionProbability The probability of a session being evaluated.
+   * @property sessionSeed The seed for the random session sampling.
+   * @property order The order of session interpretation.
+   * @property saveLogs Whether to save logs.
+   * @property saveFeatures Whether to save ML features for rendering them in reports.
+   * @property saveContent Whether to save the content of files.
+   * @property logLocationAndItemText Whether to log location and item text in detailed ranking logs.
+   * @property trainTestSplit The train test split for detailed ranking logs.
+   */
   data class ActionsInterpretation internal constructor(
     val experimentGroup: Int?,
     val sessionsLimit: Int?,
@@ -52,12 +88,27 @@ data class Config private constructor(
     val logLocationAndItemText: Boolean,
     val trainTestSplit: Int)
 
+  /**
+   * Represents the configuration for reordering elements step.
+   *
+   * @property useReordering Whether to use element reordering.
+   * @property title The title of the reordering in reports.
+   * @property features The list of ML features to be used for reordering.
+   */
   data class ReorderElements internal constructor(
     val useReordering: Boolean,
     val title: String,
     val features: List<String>
   )
 
+  /**
+   * Represents the configuration for generating reports step.
+   *
+   * @property evaluationTitle The title of the evaluation.
+   * @property defaultMetrics The list of default metrics rendered in the report.
+   * @property sessionsFilters The list of session filters. These filters allow computing metrics and render reports on a subset of sessions.
+   * @property comparisonFilters The list of comparison filters. These filters allow subsetting sessions based on multiple evaluations.
+   */
   data class ReportGeneration internal constructor(
     val evaluationTitle: String,
     val defaultMetrics: List<String>?,
@@ -66,6 +117,7 @@ data class Config private constructor(
 
   class Builder internal constructor(private val projectPath: String, private val language: String) {
     var evaluationRoots = mutableListOf<String>()
+    var ignoreFileNames = mutableSetOf<String>()
     var projectName = projectPath.split('/').last()
     var outputDir: String = Paths.get(projectPath, "completion-evaluation").toAbsolutePath().toString()
     var strategy: EvaluationStrategy = EvaluationStrategy.defaultStrategy
@@ -93,6 +145,7 @@ data class Config private constructor(
       outputDir = config.outputDir
       strategy = config.strategy
       evaluationRoots.addAll(config.actions.evaluationRoots)
+      ignoreFileNames.addAll(config.actions.ignoreFileNames)
       saveLogs = config.interpret.saveLogs
       saveFeatures = config.interpret.saveFeatures
       saveContent = config.interpret.saveContent
@@ -131,7 +184,8 @@ data class Config private constructor(
       outputDir,
       strategy,
       ActionsGeneration(
-        evaluationRoots
+        evaluationRoots,
+        ignoreFileNames,
       ),
       ActionsInterpretation(
         experimentGroup,
