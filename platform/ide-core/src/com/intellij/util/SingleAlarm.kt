@@ -17,6 +17,7 @@ class SingleAlarm @JvmOverloads constructor(
   threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
   private val modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null
 ) : Disposable {
+  private val impl = Alarm(threadToUse, parentDisposable)
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
     : this(task = task,
@@ -37,7 +38,14 @@ class SingleAlarm @JvmOverloads constructor(
     }
   }
 
-  private val impl = Alarm(threadToUse, parentDisposable)
+  companion object {
+    fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
+      return SingleAlarm(task = Runnable(task),
+                         delay = delay,
+                         threadToUse = ThreadToUse.POOLED_THREAD,
+                         parentDisposable = parentDisposable)
+    }
+  }
 
   override fun dispose() {
     Disposer.dispose(impl)
@@ -85,14 +93,5 @@ class SingleAlarm @JvmOverloads constructor(
 
   fun cancelAllRequests(): Int {
     return impl.cancelAllRequests()
-  }
-
-  companion object {
-    fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
-      return SingleAlarm(task = Runnable(task),
-                         delay = delay,
-                         threadToUse = ThreadToUse.POOLED_THREAD,
-                         parentDisposable = parentDisposable)
-    }
   }
 }

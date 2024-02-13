@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -43,6 +43,7 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.flow.MutableSharedFlow;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
@@ -58,6 +59,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static com.intellij.openapi.fileTypes.impl.AlarmAdapterKt.singleAlarm;
 
 @State(
   name = "FileTypeManager",
@@ -108,7 +111,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // maps pluginId -> duplicates for this plugin
   private final Map<PluginDescriptor, Set<FileTypeWithDescriptor>> myFileTypesPerPlugin = new ConcurrentHashMap<>();
-  private final Alarm myCheckDuplicatedAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+  private final MutableSharedFlow<Unit> checkDuplicatedAlarm;
 
   private @Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> myConflictResultConsumer;
 
@@ -199,6 +202,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Disposer.register(this, myDetectionService);
 
     EP_NAME.addExtensionPointListener(this, this);
+    checkDuplicatedAlarm = singleAlarm(400, coroutineScope, this::checkUnique);
   }
 
   public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
@@ -444,7 +448,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       PluginConflictReporter conflictReporter = application.getService(PluginConflictReporter.class);
       if (conflictReporter != null) {
         Set<PluginId> conflictingPlugins = new HashSet<>();
-        // assume core plugins are not stupid enough to register two file types with the same name and if they are, the tests are going to catch that
+        // assume core plugins are not foolish enough to register two file types with the same name,
+        // and if they are, the tests are going to catch that
         conflictingPlugins.add(bean.getPluginId());
         conflictingPlugins.add(otherBean.getPluginId());
         boolean hasConflictWithPlatform = PluginManagerCore.CORE_ID.equals(bean.getPluginId()) ||
@@ -1521,10 +1526,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       checkUnique();
     }
     else {
-      myCheckDuplicatedAlarm.cancelAllRequests();
-      myCheckDuplicatedAlarm.addRequest(() -> {
-        checkUnique();
-      }, 400);
+      checkDuplicatedAlarm.tryEmit(Unit.INSTANCE);
     }
   }
 
