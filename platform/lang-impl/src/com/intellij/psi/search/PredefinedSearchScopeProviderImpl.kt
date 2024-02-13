@@ -169,46 +169,7 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
                          showEmptyScopes: Boolean): ScopeCollectionContext {
         val result: MutableCollection<SearchScope> = LinkedHashSet()
 
-        result.add(GlobalSearchScope.everythingScope(project))
-        result.add(GlobalSearchScope.projectScope(project))
-
-        if (suggestSearchInLibs) {
-          result.add(GlobalSearchScope.allScope(project))
-        }
-
-        val adjustedContext = dataContext ?: SimpleDataContext.getProjectContext(project)
-        for (each in SearchScopeProvider.EP_NAME.extensions) {
-          result.addAll(each.getGeneralSearchScopes(project, adjustedContext))
-        }
-
-        if (ModuleUtil.hasTestSourceRoots(project)) {
-          result.add(GlobalSearchScopesCore.projectProductionScope(project))
-          result.add(GlobalSearchScopesCore.projectTestScope(project))
-        }
-
-        result.add(ScratchesSearchScope.getScratchesScope(project))
-
-        val recentFilesScope = recentFilesScope(project, false)
-        if (!SearchScope.isEmptyScope(recentFilesScope)) {
-          result.add(recentFilesScope)
-        }
-        else if (showEmptyScopes) {
-          result.add(LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()))
-        }
-
-        val recentModFilesScope = recentFilesScope(project, true)
-        ContainerUtil.addIfNotNull(
-          result, if (!SearchScope.isEmptyScope(recentModFilesScope)) recentModFilesScope
-        else if (showEmptyScopes) LocalSearchScope(
-          PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName())
-        else null)
-
-        val openFilesScope = GlobalSearchScopes.openFilesScope(project)
-        ContainerUtil.addIfNotNull(
-          result, if (openFilesScope !== GlobalSearchScope.EMPTY_SCOPE) openFilesScope
-        else if (showEmptyScopes) LocalSearchScope(
-          PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText())
-        else null)
+        addCommonScopes(result, project, suggestSearchInLibs, dataContext, showEmptyScopes)
 
         val selectedTextEditor = if (ApplicationManager.getApplication().isDispatchThread())
           FileEditorManager.getInstance(project).getSelectedTextEditor()
@@ -223,6 +184,87 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         val scopesFromUsageView = if (usageView) getScopesFromUsageView(project, prevSearchFiles) else emptyList()
 
         return ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result)
+      }
+
+      private fun addCommonScopes(
+        result: MutableCollection<SearchScope>,
+        project: Project,
+        suggestSearchInLibs: Boolean,
+        dataContext: DataContext?,
+        showEmptyScopes: Boolean,
+      ) {
+        addGlobalScopes(result, project, suggestSearchInLibs)
+        addExtensionScopes(dataContext, project, result)
+        addTestAndScratchesScopes(project, result)
+        addRecentFilesScope(project, result, showEmptyScopes)
+        addRecentlyModifiedFilesScope(project, result, showEmptyScopes)
+        addOpenFilesScope(project, result, showEmptyScopes)
+      }
+
+      private fun addGlobalScopes(
+        result: MutableCollection<SearchScope>,
+        project: Project,
+        suggestSearchInLibs: Boolean,
+      ) {
+        result.add(GlobalSearchScope.everythingScope(project))
+        result.add(GlobalSearchScope.projectScope(project))
+        if (suggestSearchInLibs) {
+          result.add(GlobalSearchScope.allScope(project))
+        }
+      }
+
+      private fun addExtensionScopes(
+        dataContext: DataContext?,
+        project: Project,
+        result: MutableCollection<SearchScope>,
+      ) {
+        val adjustedContext = dataContext ?: SimpleDataContext.getProjectContext(project)
+        for (each in SearchScopeProvider.EP_NAME.extensionList) {
+          result.addAll(each.getGeneralSearchScopes(project, adjustedContext))
+        }
+      }
+
+      private fun addTestAndScratchesScopes(project: Project,
+                                            result: MutableCollection<SearchScope>) {
+        if (ModuleUtil.hasTestSourceRoots(project)) {
+          result.add(GlobalSearchScopesCore.projectProductionScope(project))
+          result.add(GlobalSearchScopesCore.projectTestScope(project))
+        }
+        result.add(ScratchesSearchScope.getScratchesScope(project))
+      }
+
+      private fun addRecentFilesScope(project: Project,
+                                      result: MutableCollection<SearchScope>,
+                                      showEmptyScopes: Boolean) {
+        val recentFilesScope = recentFilesScope(project, false)
+        if (!SearchScope.isEmptyScope(recentFilesScope)) {
+          result.add(recentFilesScope)
+        }
+        else if (showEmptyScopes) {
+          result.add(LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()))
+        }
+      }
+
+      private fun addRecentlyModifiedFilesScope(project: Project,
+                                                result: MutableCollection<SearchScope>,
+                                                showEmptyScopes: Boolean) {
+        val recentModFilesScope = recentFilesScope(project, true)
+        ContainerUtil.addIfNotNull(
+          result, if (!SearchScope.isEmptyScope(recentModFilesScope)) recentModFilesScope
+        else if (showEmptyScopes) LocalSearchScope(
+          PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName())
+        else null)
+      }
+
+      private fun addOpenFilesScope(project: Project,
+                                    result: MutableCollection<SearchScope>,
+                                    showEmptyScopes: Boolean) {
+        val openFilesScope = GlobalSearchScopes.openFilesScope(project)
+        ContainerUtil.addIfNotNull(
+          result, if (openFilesScope !== GlobalSearchScope.EMPTY_SCOPE) openFilesScope
+        else if (showEmptyScopes) LocalSearchScope(
+          PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText())
+        else null)
       }
     }
   }
