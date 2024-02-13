@@ -34,7 +34,7 @@ class SavedPatchesChangesBrowser(project: Project,
   private var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
   private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
 
-  private var diffPreviewProcessor: SavedPatchesDiffPreview? = null
+  private var diffPreviewProcessor: SavedPatchesDiffProcessor? = null
   var editorTabPreview: EditorTabPreview? = null
     private set
 
@@ -122,9 +122,9 @@ class SavedPatchesChangesBrowser(project: Project,
     return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion)
   }
 
-  fun installDiffPreview(isInEditor: Boolean): SavedPatchesDiffPreview {
+  fun installDiffPreview(isInEditor: Boolean): SavedPatchesDiffProcessor {
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
+    val newProcessor = SavedPatchesDiffProcessor(myProject, viewer, isInEditor, this)
     diffPreviewProcessor = newProcessor
 
     editorTabPreview = if (isInEditor) {

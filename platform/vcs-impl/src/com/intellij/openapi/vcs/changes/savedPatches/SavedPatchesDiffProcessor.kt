@@ -14,10 +14,10 @@ import org.jetbrains.annotations.Nls
 import java.beans.PropertyChangeListener
 import javax.swing.JTree
 
-class SavedPatchesDiffPreview(project: Project,
-                              private val tree: ChangesTree,
-                              private val isInEditor: Boolean,
-                              parentDisposable: Disposable)
+class SavedPatchesDiffProcessor(project: Project,
+                                private val tree: ChangesTree,
+                                private val isInEditor: Boolean,
+                                parentDisposable: Disposable)
   : ChangeViewDiffRequestProcessor(project, SAVED_PATCHES_UI_PLACE) {
   private val disposableFlag = Disposer.newCheckedDisposable()
 
