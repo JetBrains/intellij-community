@@ -876,6 +876,7 @@ public class IdeTooltipManager implements Disposable {
     for (String rule : getHintPaneStyleSheetRules(editorPane.getBackground())) {
       newDefaultStyleSheet.addRule(rule);
     }
+    newDefaultStyleSheet.addRule("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}");
     editorStyleSheet.addStyleSheet(newDefaultStyleSheet);
     currentDefaultStyleSheet.set(newDefaultStyleSheet);
   }
