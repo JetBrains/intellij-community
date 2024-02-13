@@ -13,7 +13,7 @@ class Testing {
   private fun withSuspendLambda(l: suspend () -> Any) { }
 
   @RequiresReadLock
-  private fun foo1(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
+  private fun blockingContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     array.forEach {
       list.<warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
     }
@@ -29,7 +29,7 @@ class Testing {
     }
   }
   @RequiresReadLock
-  fun foo2(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
+  fun suspendingLambdaContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     withSuspendLambda {
       array.forEach {
         list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
@@ -48,7 +48,7 @@ class Testing {
   }
 
   @RequiresReadLock
-  suspend fun foo3(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
+  suspend fun suspendingFunctionContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     array.forEach {
       list.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
     }

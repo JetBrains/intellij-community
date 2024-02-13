@@ -13,7 +13,7 @@ class Testing {
   private fun withSuspendLambda(l: suspend () -> Any) { }
 
   @RequiresReadLock
-  private fun foo1(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
+  private fun blockingContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     array.<warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be the first statement in a loop body">forEach</warning> { doSomething() }
     array.<warning descr="Cancellation check 'com.intellij.openapi.progress.ProgressManager.checkCanceled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
@@ -35,7 +35,7 @@ class Testing {
   }
 
   @RequiresReadLock
-  fun foo2(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
+  fun suspendingLambdaContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     withSuspendLambda {
       array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
       array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
@@ -59,7 +59,7 @@ class Testing {
   }
 
   @RequiresReadLock
-  suspend fun foo3(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
+  suspend fun suspendingFunctionContext(array: Array<String>, list: List<String>, map: Map<String, String>, iterator: Iterator<String>, sequence: Sequence<String>) {
     array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEach</warning> { doSomething() }
     array.<warning descr="Cancellation check 'com.intellij.openapi.progress.checkCancelled' should be the first statement in a loop body">forEachIndexed</warning> { index, s -> doSomething() }
 
@@ -80,20 +80,17 @@ class Testing {
     }
   }
 
-  // no @RequiresReadLock
-  private fun foo4(array: Array<String>) {
+  private fun blockingContextNoRequiresReadLock(array: Array<String>) {
     array.forEach { doSomething() }
   }
 
-  // no @RequiresReadLock
-  fun foo5(list: List<String>) {
+  fun suspendingLambdaContextNoRequiresReadLock(list: List<String>) {
     withSuspendLambda {
       list.forEach { doSomething() }
     }
   }
 
-  // no @RequiresReadLock
-  suspend fun foo6(sequence: Sequence<String>) {
+  suspend fun suspendingFunctionContextNoRequiresReadLock(sequence: Sequence<String>) {
     sequence.forEachIndexed { index, s -> doSomething() }
   }
 
