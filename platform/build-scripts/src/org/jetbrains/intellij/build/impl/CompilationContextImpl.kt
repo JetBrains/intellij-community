@@ -476,6 +476,7 @@ internal fun CompilationContext.cleanOutput(keepCompilationState: Boolean = Comp
         NioFiles.deleteRecursively(path)
       }
     }
+    Files.createDirectories(paths.tempDir)
   }
 }
 
