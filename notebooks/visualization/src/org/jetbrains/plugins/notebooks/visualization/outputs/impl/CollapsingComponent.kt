@@ -25,7 +25,7 @@ internal class CollapsingComponent(
   internal val editor: EditorImpl,
   child: JComponent,
   internal val resizable: Boolean,
-  private val collapsedTextSupplier: () -> @NlsSafe String,
+  private val collapsedTextSupplier: () -> @NlsSafe String
 ) : JPanel(null) {
   private var customHeight: Int = -1
 

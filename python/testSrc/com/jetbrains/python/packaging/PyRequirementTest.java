@@ -2255,14 +2255,6 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(pkg, req.match(singletonList(pkg)));
   }
 
-  // PY-6438
-  public void testUnderscoreMatchesDash() {
-    final PyRequirement req = fromLine("pyramid_zcml");
-    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1");
-    assertNotNull(req);
-    assertEquals(pkg, req.match(singletonList(pkg)));
-  }
-
   // PY-20242
   public void testVersionInterpretedAsString() {
     final PyRequirement req = fromLine("foo===version");

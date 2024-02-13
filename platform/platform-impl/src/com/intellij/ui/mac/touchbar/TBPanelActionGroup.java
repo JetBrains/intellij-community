@@ -428,7 +428,7 @@ final class TBPanelActionGroup extends TBPanel {
     // but here we expand actions with current-focus-component (theoretically it can cause that some actions will be updated incorrectly)
     DataContext dataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent()));
     if (myLastUpdate != null) myLastUpdate.cancel();
-    myLastUpdate = Utils.expandActionGroupAsync(myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
+    myLastUpdate = Utils.expandActionGroupAsync(myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL, true, false);
     myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
     if (myStats != null) {
       myStats.incrementCounter(StatsCounters.totalUpdateDurationNs, System.nanoTime() - timeNs);

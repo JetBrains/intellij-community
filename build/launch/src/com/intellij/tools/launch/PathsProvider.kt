@@ -1,6 +1,5 @@
 package com.intellij.tools.launch
 
-import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper

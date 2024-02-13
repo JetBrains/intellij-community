@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PropertyName")
 
 package com.intellij.openapi.editor.colors.impl
@@ -8,6 +8,7 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.configurationStore.SchemeExtensionProvider
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManager
@@ -773,7 +774,14 @@ fun createLoadBundledSchemeRequests(additionalTextAttributes: MutableMap<String,
       }
 
       val resourcePath = editorSchemeId.removePrefix("/")
-      val data = ResourceUtil.getResourceAsBytes(resourcePath, pluginDescriptor.classLoader)!!
+      val data = ResourceUtil.getResourceAsBytes(resourcePath, pluginDescriptor.classLoader)
+                 // https://youtrack.jetbrains.com/issue/IDEA-341932
+                 ?: ResourceUtil.getResourceAsBytes("theme/$resourcePath", pluginDescriptor.classLoader)
+      if (data == null) {
+        LOG.error(PluginException("Cannot find $resourcePath", pluginDescriptor.pluginId))
+        continue
+      }
+
       val reader = createXmlStreamReader(data)
       val colorSchemeId = try {
         readEditorSchemeNameFromXml(reader)!!

@@ -33,7 +33,7 @@ class PyInstallPackageQuickFix(val packageName: String) : LocalQuickFix {
 
     project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
       val versionSpec = requirement.versionSpecs.firstOrNull()
-      val specification = manager.repositoryManager.createSpecification(requirement.name, versionSpec?.version, versionSpec?.relation)
+      val specification = manager.repositoryManager.createSpecification(requirement.name, versionSpec?.version, versionSpec?.relation) ?: return@launch
       manager.installPackage(specification)
       DaemonCodeAnalyzer.getInstance(project).restart(file)
     }

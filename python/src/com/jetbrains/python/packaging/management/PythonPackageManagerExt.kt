@@ -141,7 +141,7 @@ fun PythonPackageManager.isInstalled(name: String): Boolean {
 
 fun PythonRepositoryManager.createSpecification(name: String,
                                                 version: String? = null,
-                                                relation: PyRequirementRelation? = null): PythonPackageSpecification {
-  val repository = packagesByRepository().first { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }.first
-  return repository.createPackageSpecification(name, version, relation)
+                                                relation: PyRequirementRelation? = null): PythonPackageSpecification? {
+  val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> pkg.lowercase() == name.lowercase() } }?.first
+  return repository?.createPackageSpecification(name, version, relation)
 }

@@ -188,3 +188,10 @@ object VirtualFilePrefixTreeFactory : AbstractPrefixTreeFactory<VirtualFile, Str
     return CanonicalPathPrefixTreeFactory.convertToList(element.path)
   }
 }
+
+/**
+ * Resolves [VirtualFile] from absolute [absoluteOrRelativeFilePath] if found or by relative [absoluteOrRelativeFilePath] from [VirtualFile]
+ */
+fun VirtualFile.resolveFromRootOrRelative(absoluteOrRelativeFilePath: String): VirtualFile? {
+  return fileSystem.findFileByPath(absoluteOrRelativeFilePath) ?: findFileByRelativePath(absoluteOrRelativeFilePath)
+}

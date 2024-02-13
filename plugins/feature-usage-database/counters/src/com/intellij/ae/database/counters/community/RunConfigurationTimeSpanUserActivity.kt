@@ -37,7 +37,7 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
   private var lastBuildAt = 0L
   private var lastAttemptFromBuildListener: Boolean? = null
 
-  internal suspend fun writeBuildStart(id: Int, timeStart: Long, attemptFromBuildListener: Boolean) {
+  suspend fun writeBuildStart(id: Int, timeStart: Long, attemptFromBuildListener: Boolean) {
     /**
      * Sometimes [BuildProgressListener] reports events, sometimes [ExecutionListener].
      * Sometimes they both report build events. So if a build event happened within 300ms and other event is from different place, we will skip it
@@ -63,7 +63,7 @@ object RunConfigurationTimeSpanUserActivity : WritableDatabaseBackedTimeSpanUser
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.Start, data)
   }
 
-  internal suspend fun writeEnd(id: Int) {
+  suspend fun writeEnd(id: Int) {
     submitManual(id.toString(), TimeSpanUserActivityDatabaseManualKind.End, null)
   }
 

@@ -118,7 +118,14 @@ class ProjectStatus(private val debugName: String? = null) {
         EXTERNAL -> when (type2) {
           INTERNAL -> INTERNAL
           EXTERNAL -> EXTERNAL
+          HIDDEN -> EXTERNAL
           UNKNOWN -> EXTERNAL
+        }
+        HIDDEN -> when (type2) {
+          INTERNAL -> INTERNAL
+          EXTERNAL -> EXTERNAL
+          HIDDEN -> HIDDEN
+          UNKNOWN -> HIDDEN
         }
         UNKNOWN -> type2
       }

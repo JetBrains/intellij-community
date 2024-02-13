@@ -2,6 +2,8 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.HIDDEN
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
 import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
@@ -47,6 +49,9 @@ class MockProjectAware(
 
   private val ignoredSettingsFiles = LinkedHashMap<String, (ExternalSystemSettingsFilesModificationContext) -> Boolean>()
 
+  val modificationTypeAdjustingRule: AtomicReference<(String, ExternalSystemModificationType) -> ExternalSystemModificationType> =
+    AtomicReference { _, type -> type }
+
   fun resetAssertionCounters() {
     settingsAccessCounter.set(0)
     reloadCounter.set(0)
@@ -78,6 +83,11 @@ class MockProjectAware(
     else {
       return super.isIgnoredSettingsFileEvent(path, context)
     }
+  }
+
+  override fun adjustModificationType(path: String, modificationType: ExternalSystemModificationType): ExternalSystemModificationType {
+    val rule = modificationTypeAdjustingRule.get()
+    return rule(path, modificationType)
   }
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {

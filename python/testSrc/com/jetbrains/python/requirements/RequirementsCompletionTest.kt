@@ -30,10 +30,46 @@ class RequirementsCompletionTest : BasePlatformTestCase() {
     assertContainsElements(myFixture.lookupElementStrings!!, "mypy", "mypy-extensions")
   }
 
+  fun testPackageNameInProjectTablePyProjectToml() {
+    mockPackageNames(listOf("mypy", "mypy-extensions"))
+
+    myFixture.configureByFile("${getTestName(true)}/pyproject.toml")
+    myFixture.completeBasic()
+    assertNotEmpty(myFixture.lookupElementStrings)
+    assertContainsElements(myFixture.lookupElementStrings!!, "mypy", "mypy-extensions")
+  }
+
+  fun testPackageNameInBuildSystemTablePyProjectToml() {
+    mockPackageNames(listOf("mypy", "mypy-extensions"))
+
+    myFixture.configureByFile("${getTestName(true)}/pyproject.toml")
+    myFixture.completeBasic()
+    assertNotEmpty(myFixture.lookupElementStrings)
+    assertContainsElements(myFixture.lookupElementStrings!!, "mypy", "mypy-extensions")
+  }
+
   fun testVersionCompletion() {
     mockPackageDetails("mypy", listOf("1.7.0", "1.6.1", "1.6.0"))
 
     myFixture.configureByFile("requirements/${getTestName(true)}.txt")
+    myFixture.completeBasic()
+    assertNotEmpty(myFixture.lookupElementStrings)
+    assertContainsOrdered(myFixture.lookupElementStrings!!, "1.7.0", "1.6.1", "1.6.0")
+  }
+
+  fun testVersionInBuildSystemTablePyProjectToml() {
+    mockPackageDetails("mypy", listOf("1.7.0", "1.6.1", "1.6.0"))
+
+    myFixture.configureByFile("${getTestName(true)}/pyproject.toml")
+    myFixture.completeBasic()
+    assertNotEmpty(myFixture.lookupElementStrings)
+    assertContainsOrdered(myFixture.lookupElementStrings!!, "1.7.0", "1.6.1", "1.6.0")
+  }
+
+  fun testVersionInProjectTablePyProjectToml() {
+    mockPackageDetails("mypy", listOf("1.7.0", "1.6.1", "1.6.0"))
+
+    myFixture.configureByFile("${getTestName(true)}/pyproject.toml")
     myFixture.completeBasic()
     assertNotEmpty(myFixture.lookupElementStrings)
     assertContainsOrdered(myFixture.lookupElementStrings!!, "1.7.0", "1.6.1", "1.6.0")

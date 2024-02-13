@@ -191,7 +191,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       }.useProjectAsync(true) {
         // initial state: workspace import is disabled, has not been forced yet
         val mavenProjectsManager = MavenProjectsManager.getInstance(it)
-        mavenProjectsManager.state!!.workspaceImportForciblyTurnedOn = false
+        mavenProjectsManager.importingSettings.isWorkspaceImportForciblyTurnedOn = false
         mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
       }
 

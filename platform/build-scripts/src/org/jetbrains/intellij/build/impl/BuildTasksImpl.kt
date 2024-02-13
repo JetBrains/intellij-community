@@ -1235,6 +1235,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
           !relPath.startsWith("MacOS/") &&
           !relPath.startsWith("Resources/") &&
           !relPath.startsWith("Info.plist") &&
+          !relPath.startsWith("Helpers/") &&
           filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFileUniqueGuard)
         }, entryCustomizer = entryCustomizer)
       }

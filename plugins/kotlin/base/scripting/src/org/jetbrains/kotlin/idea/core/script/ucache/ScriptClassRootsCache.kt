@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.ide.caches.CachesInvalidator
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
@@ -81,12 +82,16 @@ class ScriptClassRootsCache(
         val lightScriptInfo = getLightScriptInfo(file) ?: return null
         val heavy0 = lightScriptInfo.heavyCache?.get()
         if (heavy0 != null) return heavy0
-        synchronized(lightScriptInfo) {
-            val heavy1 = lightScriptInfo.heavyCache?.get()
-            if (heavy1 != null) return heavy1
-            val heavy2 = computeHeavy(lightScriptInfo)
-            lightScriptInfo.heavyCache = SoftReference(heavy2)
-            return heavy2
+
+        return runReadAction {
+            // The lock ^ is needed to define the order of acquisition: (read, lightScriptInfo), thus preventing possible deadlock.
+            synchronized(lightScriptInfo) {
+                val heavy1 = lightScriptInfo.heavyCache?.get()
+                if (heavy1 != null) return@runReadAction heavy1
+                val heavy2 = computeHeavy(lightScriptInfo) // might require read-lock inside
+                lightScriptInfo.heavyCache = SoftReference(heavy2)
+                return@runReadAction heavy2
+            }
         }
     }
 

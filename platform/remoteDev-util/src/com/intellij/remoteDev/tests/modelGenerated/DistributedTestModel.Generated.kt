@@ -54,7 +54,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 5203196433846444594L
+        const val serializationHash = 6176834208377331615L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -214,14 +214,17 @@ class RdTestSession private constructor(
     val debugCategories: List<String>,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
-    private val _shutdown: RdSignal<Unit>,
+    private val _exitApp: RdSignal<Unit>,
     private val _showNotification: RdSignal<String>,
     private val _closeProject: RdCall<Unit, Boolean>,
     private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<String, String?>,
     private val _requestFocus: RdCall<String, Boolean>,
+    private val _visibleFrameNames: RdCall<Unit, List<String>>,
+    private val _projectsNames: RdCall<Unit, List<String>>,
     private val _makeScreenshot: RdCall<String, Boolean>,
-    private val _isResponding: RdCall<Unit, Boolean>
+    private val _isResponding: RdCall<Unit, Boolean>,
+    private val _projectsAreInitialised: RdCall<Unit, Boolean>
 ) : RdBindableBase() {
     //companion
     
@@ -238,15 +241,18 @@ class RdTestSession private constructor(
             val debugCategories = buffer.readList { buffer.readString() }
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
-            val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
+            val _exitApp = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
             val _showNotification = RdSignal.read(ctx, buffer, FrameworkMarshallers.String)
             val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.String, __StringNullableSerializer)
             val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
+            val _visibleFrameNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
+            val _projectsNames = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringListSerializer)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _shutdown, _showNotification, _closeProject, _closeProjectIfOpened, _runNextAction, _requestFocus, _makeScreenshot, _isResponding).withId(_id)
+            val _projectsAreInitialised = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _exitApp, _showNotification, _closeProject, _closeProjectIfOpened, _runNextAction, _requestFocus, _visibleFrameNames, _projectsNames, _makeScreenshot, _isResponding, _projectsAreInitialised).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -258,31 +264,38 @@ class RdTestSession private constructor(
             buffer.writeList(value.debugCategories) { v -> buffer.writeString(v) }
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
-            RdSignal.write(ctx, buffer, value._shutdown)
+            RdSignal.write(ctx, buffer, value._exitApp)
             RdSignal.write(ctx, buffer, value._showNotification)
             RdCall.write(ctx, buffer, value._closeProject)
             RdCall.write(ctx, buffer, value._closeProjectIfOpened)
             RdCall.write(ctx, buffer, value._runNextAction)
             RdCall.write(ctx, buffer, value._requestFocus)
+            RdCall.write(ctx, buffer, value._visibleFrameNames)
+            RdCall.write(ctx, buffer, value._projectsNames)
             RdCall.write(ctx, buffer, value._makeScreenshot)
             RdCall.write(ctx, buffer, value._isResponding)
+            RdCall.write(ctx, buffer, value._projectsAreInitialised)
         }
         
         private val __BoolNullableSerializer = FrameworkMarshallers.Bool.nullable()
         private val __StringNullableSerializer = FrameworkMarshallers.String.nullable()
+        private val __StringListSerializer = FrameworkMarshallers.String.list()
         
     }
     //fields
     val ready: IProperty<Boolean?> get() = _ready
     val sendException: IAsyncSignal<RdTestSessionException> get() = _sendException
-    val shutdown: IAsyncSignal<Unit> get() = _shutdown
+    val exitApp: IAsyncSignal<Unit> get() = _exitApp
     val showNotification: ISignal<String> get() = _showNotification
     val closeProject: RdCall<Unit, Boolean> get() = _closeProject
     val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
     val runNextAction: RdCall<String, String?> get() = _runNextAction
     val requestFocus: RdCall<String, Boolean> get() = _requestFocus
+    val visibleFrameNames: RdCall<Unit, List<String>> get() = _visibleFrameNames
+    val projectsNames: RdCall<Unit, List<String>> get() = _projectsNames
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
+    val projectsAreInitialised: RdCall<Unit, Boolean> get() = _projectsAreInitialised
     //methods
     //initializer
     init {
@@ -291,26 +304,32 @@ class RdTestSession private constructor(
     
     init {
         _sendException.async = true
-        _shutdown.async = true
+        _exitApp.async = true
         _closeProject.async = true
         _closeProjectIfOpened.async = true
         _runNextAction.async = true
         _requestFocus.async = true
+        _visibleFrameNames.async = true
+        _projectsNames.async = true
         _makeScreenshot.async = true
         _isResponding.async = true
+        _projectsAreInitialised.async = true
     }
     
     init {
         bindableChildren.add("ready" to _ready)
         bindableChildren.add("sendException" to _sendException)
-        bindableChildren.add("shutdown" to _shutdown)
+        bindableChildren.add("exitApp" to _exitApp)
         bindableChildren.add("showNotification" to _showNotification)
         bindableChildren.add("closeProject" to _closeProject)
         bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
         bindableChildren.add("runNextAction" to _runNextAction)
         bindableChildren.add("requestFocus" to _requestFocus)
+        bindableChildren.add("visibleFrameNames" to _visibleFrameNames)
+        bindableChildren.add("projectsNames" to _projectsNames)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
         bindableChildren.add("isResponding" to _isResponding)
+        bindableChildren.add("projectsAreInitialised" to _projectsAreInitialised)
     }
     
     //secondary constructor
@@ -334,7 +353,10 @@ class RdTestSession private constructor(
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<String, String?>(FrameworkMarshallers.String, __StringNullableSerializer),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
+        RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
+        RdCall<Unit, List<String>>(FrameworkMarshallers.Void, __StringListSerializer),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
+        RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
     )
     
@@ -351,14 +373,17 @@ class RdTestSession private constructor(
             print("debugCategories = "); debugCategories.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
-            print("shutdown = "); _shutdown.print(printer); println()
+            print("exitApp = "); _exitApp.print(printer); println()
             print("showNotification = "); _showNotification.print(printer); println()
             print("closeProject = "); _closeProject.print(printer); println()
             print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
             print("requestFocus = "); _requestFocus.print(printer); println()
+            print("visibleFrameNames = "); _visibleFrameNames.print(printer); println()
+            print("projectsNames = "); _projectsNames.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
+            print("projectsAreInitialised = "); _projectsAreInitialised.print(printer); println()
         }
         printer.print(")")
     }
@@ -372,14 +397,17 @@ class RdTestSession private constructor(
             debugCategories,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
-            _shutdown.deepClonePolymorphic(),
+            _exitApp.deepClonePolymorphic(),
             _showNotification.deepClonePolymorphic(),
             _closeProject.deepClonePolymorphic(),
             _closeProjectIfOpened.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
             _requestFocus.deepClonePolymorphic(),
+            _visibleFrameNames.deepClonePolymorphic(),
+            _projectsNames.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic(),
-            _isResponding.deepClonePolymorphic()
+            _isResponding.deepClonePolymorphic(),
+            _projectsAreInitialised.deepClonePolymorphic()
         )
     }
     //contexts

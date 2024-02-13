@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.util.io.Decompressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -35,9 +37,11 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
 
   if (context.isMacCodeSignEnabled) {
-    context.proprietaryBuildTools.signTool.signFiles(files = listOf(sitFile),
-                                                     context = context,
-                                                     options = signingOptions("application/x-mac-app-zip", context))
+    var options = signingOptions("application/x-mac-app-zip", context)
+    if (context.options.enableEmbeddedJetBrainsClient && context.productProperties.embeddedJetBrainsClientProperties != null) {
+      options = options.put("mac_codesign_deep", true.toString())
+    }
+    context.proprietaryBuildTools.signTool.signFiles(files = listOf(sitFile), context = context, options = options)
   }
 
   if (notarize) {
@@ -61,8 +65,10 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
   if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
     val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
     try {
-      withContext(Dispatchers.IO) {
-        runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit)
+      spanBuilder("extracting ${sitFile.name}").useWithScope(Dispatchers.IO) {
+        Decompressor.Zip(sitFile)
+          .withZipExtensions()
+          .extract(tempSit)
       }
       RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
     }

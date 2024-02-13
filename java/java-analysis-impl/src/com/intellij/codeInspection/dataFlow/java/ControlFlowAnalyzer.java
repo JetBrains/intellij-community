@@ -1074,7 +1074,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             ((DeferredOffset)targetOffset).setOffset(getInstructionCount());
             guard.accept(this);
             addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(guard)));
-            addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
+            addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
             endGuardOffset.setOffset(getInstructionCount());
           }
         }

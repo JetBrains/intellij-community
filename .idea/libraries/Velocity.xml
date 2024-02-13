@@ -11,6 +11,9 @@
         <dependency maven-id="org.slf4j:slf4j-api" />
       </exclude>
     </properties>
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/velocity" />
+    </ANNOTATIONS>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.jar!/" />
     </CLASSES>

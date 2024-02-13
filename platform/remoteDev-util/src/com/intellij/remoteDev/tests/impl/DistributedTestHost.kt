@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
 import com.intellij.openapi.ui.isFocusAncestor
@@ -23,6 +24,7 @@ import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
 import com.intellij.remoteDev.tests.modelGenerated.RdProductType
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
+import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
 import com.intellij.util.ui.ImageUtil
@@ -36,6 +38,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
+import java.awt.Frame
 import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
@@ -160,8 +163,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                     }
                   }
                 }
-
-                if (isCurrentThreadEdt() && !app.isHeadlessEnvironment && isNotRdHost) {
+                if (!app.isHeadlessEnvironment && isNotRdHost && (action.requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(actionTitle)
                 }
 
@@ -192,12 +194,30 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             }
           }
         }
-
-        session.isResponding.setSuspendPreserveClientId { _, _ ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.isResponding.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
           LOG.info("Answering for session is responding...")
           true
         }
 
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.visibleFrameNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          Window.getWindows().filter { it.isShowing }.filterIsInstance<Frame>().map { it.title }.also {
+            LOG.info("Visible frame names: ${it.joinToString(", ", "[", "]")}")
+          }
+        }
+
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.projectsNames.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          ProjectManagerEx.getOpenProjects().map { it.name }.also {
+            LOG.info("Projects: ${it.joinToString(", ", "[", "]")}")
+          }
+        }
+
+        // causes problems if not scheduled on ui thread
         session.closeProjectIfOpened.setSuspendPreserveClientId { _, _ ->
           runLogged("Close project if it is opened") {
             ProjectManagerEx.getOpenProjects().forEach {
@@ -208,22 +228,34 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             true
           }
         }
-
-        session.shutdown.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
+        /**
+         * Includes closing the project
+         */
+        session.exitApp.adviseOn(lifetime, Dispatchers.Default.asRdScheduler) {
           lifetime.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + NonCancellable) {
-            LOG.info("Shutting down the application...")
+            LOG.info("Exiting the application...")
             app.exit(true, true, false)
           }
         }
 
-        session.requestFocus.setSuspendPreserveClientId { _, actionTitle ->
-          withContext(Dispatchers.EDT) {
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.requestFocus.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, actionTitle ->
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             requestFocus(actionTitle)
           }
         }
 
-        session.makeScreenshot.setSuspendPreserveClientId { _, fileName ->
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.makeScreenshot.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, fileName ->
           makeScreenshot(fileName)
+        }
+
+        // actually doesn't really preserve clientId, not really important here
+        // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
+        session.projectsAreInitialised.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->
+          ProjectManagerEx.getOpenProjects().map { it.isInitialized }.all { true }
         }
 
         session.showNotification.advise(lifetime) { actionTitle ->
@@ -254,43 +286,48 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     }
 
     val currentProject = projects.singleOrNull()
-
-    val windowToFocus =
-      if (currentProject != null) {
-        val projectIdeFrame = WindowManager.getInstance().getFrame(currentProject)
-        if (projectIdeFrame == null) {
-          LOG.info("'$actionTitle': No frame yet, nothing to focus")
-          return false
-        }
-        else {
-          projectIdeFrame
-        }
-      }
-      else {
-        val windows = Window.getWindows()
-        if (windows.size != 1) {
-          LOG.info("'$actionTitle': Can't choose a frame to focus. All windows: ${windows.joinToString(", ")}")
-          return false
-        }
-        else {
-          windows.single()
-        }
-      }
-
-    val windowString = "window '${windowToFocus.name}'"
-    if (windowToFocus.isFocusAncestor()) {
-      LOG.info("'$actionTitle': window '$windowString' is already focused")
-      return true
+    return if (currentProject == null) {
+      requestFocusNoProject(actionTitle)
     }
     else {
-      LOG.info("'$actionTitle': Requesting project focus for '$windowString'")
-      ProjectUtil.focusProjectWindow(currentProject, true)
-      if (!windowToFocus.isFocusAncestor()) {
-        LOG.error("Failed to request the focus.")
-        return false
-      }
-      return true
+      requestFocusWithProject(currentProject, actionTitle)
     }
+  }
+
+  private fun requestFocusWithProject(project: Project, actionTitle: String): Boolean {
+    val projectIdeFrame = WindowManager.getInstance().getFrame(project)
+    if (projectIdeFrame == null) {
+      LOG.info("$actionTitle: No frame yet, nothing to focus")
+      return false
+    }
+    else {
+      val windowString = "window '${projectIdeFrame.name}'"
+      AppIcon.getInstance().requestFocus(projectIdeFrame)
+      if (projectIdeFrame.isFocusAncestor()) {
+        LOG.info("$actionTitle: Window '$windowString' is already focused")
+        return true
+      }
+      else {
+        LOG.info("$actionTitle: Requesting project focus for '$windowString'")
+        ProjectUtil.focusProjectWindow(project, true)
+        if (!projectIdeFrame.isFocusAncestor()) {
+          LOG.error("Failed to request the focus.")
+          return false
+        }
+        return true
+      }
+    }
+  }
+
+  private fun requestFocusNoProject(actionTitle: String): Boolean {
+    val visibleWindows = Window.getWindows().filter { it.isShowing }
+    if (visibleWindows.size != 1) {
+      LOG.info("$actionTitle: There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
+    }
+    visibleWindows.forEach {
+      AppIcon.getInstance().requestFocus(it)
+    }
+    return true
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {

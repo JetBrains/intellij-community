@@ -161,7 +161,7 @@ def analyze_boolean_column(column):
 def analyze_categorical_column(column):
     # Processing of unhashable types (lists, dicts, etc.).
     # In Polars these types are NESTED and can be processed separately, but in Pandas they are Objects
-    if not isinstance(column.iloc[0], typing.Hashable):
+    if len(column) == 0 or not isinstance(column.iloc[0], typing.Hashable):
         return None, "{}"
 
     value_counts = column.value_counts(dropna=False)

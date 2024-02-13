@@ -46,4 +46,17 @@ interface ExternalSystemProjectAware {
   @ApiStatus.Experimental
   fun isIgnoredSettingsFileEvent(path: String, context: ExternalSystemSettingsFilesModificationContext): Boolean =
     context.reloadStatus == JUST_FINISHED && context.event == CREATE
+
+  /**
+   * Experimental. Please see implementation limitations.
+   *
+   * This function allows adjusting modification type of the modified file. For example, Idea can change
+   * [ExternalSystemModificationType.INTERNAL] to [ExternalSystemModificationType.HIDDEN] to skip auto reloading.
+   *
+   * Note: This function will be called on EDT. Please make only trivial checks like:
+   * ```modificationType == INTERNAL && path.endsWith(".hidden")```
+   */
+  @ApiStatus.Experimental
+  fun adjustModificationType(path: String, modificationType: ExternalSystemModificationType): ExternalSystemModificationType =
+    modificationType
 }

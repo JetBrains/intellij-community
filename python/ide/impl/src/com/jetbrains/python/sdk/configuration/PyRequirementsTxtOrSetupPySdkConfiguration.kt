@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -31,6 +30,7 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvFromFilePanel
 import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.InputData
@@ -160,7 +160,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
   }
 
   private fun getCommandForPipInstall(requirementsTxtOrSetupPy: VirtualFile): List<String> {
-    return if (FileTypeRegistry.getInstance().isFileOfType(requirementsTxtOrSetupPy, PlainTextFileType.INSTANCE)) {
+    return if (FileTypeRegistry.getInstance().isFileOfType(requirementsTxtOrSetupPy, RequirementsFileType.INSTANCE)) {
       listOf("-r", getAbsPath(requirementsTxtOrSetupPy))
     }
     else {

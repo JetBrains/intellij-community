@@ -79,7 +79,7 @@ public abstract class ApplicationInfo {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  public abstract String getProductUrl();
+  public abstract @Nullable String getProductUrl();
 
   /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getYouTubeChannelUrl()} instead

@@ -11,12 +11,14 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
     private val LOG = logger<SettingsSyncDefaultAuthService>()
   }
 
-  @Volatile
-  private var invalidatedUserId: String? = null
+  private var invalidatedIdToken: String? = null
 
-  override fun isLoggedIn() : Boolean {
-    val userData = getAccountInfoService()?.userData
-    return userData != null && invalidatedUserId != userData.id
+  override fun isLoggedIn(): Boolean {
+    return isTokenValid(getAccountInfoService()?.idToken)
+  }
+
+  private fun isTokenValid(token: String?): Boolean {
+    return token != null && token != invalidatedIdToken
   }
 
   override fun getUserData(): JBAccountInfoService.JBAData? {
@@ -25,6 +27,13 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
     }
     return getAccountInfoService()?.userData
   }
+
+  override val idToken: String?
+    get() {
+      val token = getAccountInfoService()?.idToken
+      if (!isTokenValid(token)) return null
+      return token
+    }
 
   override fun login() {
     if (!isLoggedIn()) {
@@ -40,11 +49,13 @@ internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
 
   override fun isLoginAvailable(): Boolean = getAccountInfoService() != null
 
-  override fun invalidateJBA(userId: String) {
-    if (invalidatedUserId == userId) return
+  override fun invalidateJBA(idToken: String) {
+    // there's no synchronization on the 'invalidatedIdToken' field, although it can be accessed from multiple threads.
+    // thread safety is not guaranteed, but it doesn't really hurt in this case.
+    if (invalidatedIdToken == idToken) return
 
-    LOG.warn("Invalidating JBA")
-    invalidatedUserId = userId
+    LOG.warn("Invalidating JBA Token")
+    invalidatedIdToken = idToken
     SettingsSyncEvents.getInstance().fireLoginStateChanged()
   }
 

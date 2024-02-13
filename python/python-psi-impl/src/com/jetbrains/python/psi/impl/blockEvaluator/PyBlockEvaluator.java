@@ -82,7 +82,9 @@ public class PyBlockEvaluator {
     Object value = myEvaluationResult.myNamespace.get(nameBeingExtended);
     if (value instanceof List) {
       Object argValue = prepareEvaluator().evaluate(arg);
-      myEvaluationResult.myNamespace.put(nameBeingExtended, prepareEvaluator().applyPlus(value, argValue));
+      if (argValue != null) {
+        myEvaluationResult.myNamespace.put(nameBeingExtended, prepareEvaluator().applyPlus(value, argValue));
+      }
     }
 
     if (myDeclarationsToTrack.contains(nameBeingExtended)) {

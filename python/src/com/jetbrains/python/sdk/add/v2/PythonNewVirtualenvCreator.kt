@@ -53,13 +53,18 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   private var locationModified = false
   private var suggestedVenvName: String = ""
   private var suggestedLocation: Path = Path.of("")
-  private val pythonInVenvPath = Paths.get("bin", if (SystemInfo.isWindows) "python.exe" else "python")
+  private val pythonInVenvPath: Path
+    get() {
+      return when {
+        SystemInfo.isWindows && presenter.projectLocationContext !is WslContext -> Paths.get("Scripts", "python.exe")
+        else -> Paths.get("bin", "python")
+      }
+    }
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
       val newPath = suggestedLocation.resolve(suggestedVenvName)
       location.set(newPath.toString())
-      locationValidationFailed.set(false)
     }
     val secondFixLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
       val sdkPath = Paths.get(location.get()).resolve(pythonInVenvPath).toString()

@@ -82,7 +82,7 @@ enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
 
-internal fun setupBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
+internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
   val installed = installSdkIfNeeded(sdk, null, existingSdks)
   if (installed == null) {
     val notification = NotificationGroupManager.getInstance()
@@ -100,7 +100,7 @@ internal fun setupBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
       .showNotification(notification, IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project)
     return null
   }
-  return setupSdkIfDetected(installed, existingSdks)
+  return installed
 }
 
 internal fun setupSdkIfDetected(sdk: Sdk, existingSdks: List<Sdk>): Sdk = when (sdk) {

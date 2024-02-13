@@ -14,6 +14,9 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration
 
 @ApiStatus.Internal
+val coroutineDumpPrefix = "CoroutineDump:"
+
+@ApiStatus.Internal
 suspend fun <T> withTimeoutDumping(title: String,
                                    timeout: Duration,
                                    failMessageProducer: (() -> String)? = null,
@@ -36,7 +39,7 @@ suspend fun <T> withTimeoutDumping(title: String,
             append("$failMessage\n")
           }
           append("------------\n")
-          append("CoroutineDump:\n")
+          append("$coroutineDumpPrefix\n")
           append("$coroutinesDump\n")
           append("------------")
         })
