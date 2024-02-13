@@ -3,14 +3,12 @@ package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
 import com.intellij.platform.runtime.repository.IncludedRuntimeModule
-import java.nio.file.Path
 
 /**
  * Implementation of [PathResolver] which can load module descriptors not only from the main plugin JAR file, unlike [PluginXmlPathResolver]
  * which always loads them from the JAR file containing plugin.xml file.
  */
 internal class ModuleBasedPluginXmlPathResolver(
-  private val allResourceRoots: List<Path>,
   private val includedModules: List<IncludedRuntimeModule>,
   private val fallbackResolver: PathResolver,
 ) : PathResolver {
@@ -21,24 +19,22 @@ internal class ModuleBasedPluginXmlPathResolver(
     path: String,
     readInto: RawPluginDescriptor?,
   ): RawPluginDescriptor {
-    if (allResourceRoots.size > 1) {
-      // if there are multiple JARs,
-      // it may happen that module descriptor is located in other JARs (e.g., in case of 'com.intellij.java.frontend' plugin),
-      // so try loading it from the root of the corresponding module
-      val moduleName = path.removeSuffix(".xml")
-      val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
-      if (moduleDescriptor != null) {
-        val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
-        return readModuleDescriptor(
-          input = input,
-          readContext = readContext,
-          pathResolver = this,
-          dataLoader = dataLoader,
-          includeBase = null,
-          readInto = readInto,
-          locationSource = path,
-        )
-      }
+    // if there are multiple JARs,
+    // it may happen that module descriptor is located in other JARs (e.g., in case of 'com.intellij.java.frontend' plugin),
+    // so try loading it from the root of the corresponding module
+    val moduleName = path.removeSuffix(".xml")
+    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
+    if (moduleDescriptor != null) {
+      val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
+      return readModuleDescriptor(
+        input = input,
+        readContext = readContext,
+        pathResolver = this,
+        dataLoader = dataLoader,
+        includeBase = null,
+        readInto = readInto,
+        locationSource = path,
+      )
     }
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path, readInto = readInto)
   }

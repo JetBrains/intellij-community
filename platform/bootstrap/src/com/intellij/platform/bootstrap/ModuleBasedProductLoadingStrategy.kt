@@ -16,6 +16,7 @@ import kotlinx.coroutines.async
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.extension
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   @OptIn(ExperimentalStdlibApi::class)
@@ -167,6 +168,13 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
 
     val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
+    val requiredLibraries = collectRequiredLibraryModules(pluginModuleGroup)
+    if (requiredLibraries.isNotEmpty()) {
+      thisLogger().debug("Additional library modules will be added to classpath of $pluginModuleGroup: $requiredLibraries")
+      requiredLibraries.flatMapTo(allResourceRoots) { it.resourceRootPaths }
+    }
+    val allResourceRootsList = allResourceRoots.toList();
+    
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
         dir = mainResourceRoot,
@@ -174,33 +182,30 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         context = context,
         isBundled = true,
         pathResolver = ModuleBasedPluginXmlPathResolver(
-          allResourceRoots = allResourceRoots.toList(),
-          includedModules = includedModules, 
-          fallbackResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+          includedModules = includedModules,
+          fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool),
         )
       )
     }
     else {
-      val includedModulesRootsList = allResourceRoots.toList()
+      val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
+      val pathResolver = 
+        if (allResourceRootsList.size == 1) {
+          defaultResolver
+        }
+        else {
+          ModuleBasedPluginXmlPathResolver(includedModules = includedModules, fallbackResolver = defaultResolver)
+        }
       loadDescriptorFromJar(
         file = mainResourceRoot,
-        pathResolver = ModuleBasedPluginXmlPathResolver(
-          allResourceRoots = includedModulesRootsList,
-          includedModules = includedModules,
-          fallbackResolver = PluginXmlPathResolver(includedModulesRootsList, zipFilePool),
-        ),
+        pathResolver = pathResolver,
         parentContext = context,
         isBundled = true,
         pluginDir = mainResourceRoot.parent.parent,
         pool = zipFilePool,
       )
     }
-    val requiredLibraries = collectRequiredLibraryModules(pluginModuleGroup)
-    if (requiredLibraries.isNotEmpty()) {
-      thisLogger().debug("Additional library modules will be added to classpath of $pluginModuleGroup: $requiredLibraries")
-      requiredLibraries.flatMapTo(allResourceRoots) { it.resourceRootPaths }
-    }
-    descriptor?.jarFiles = allResourceRoots.toList()
+    descriptor?.jarFiles = allResourceRootsList
     return descriptor
   }
 
