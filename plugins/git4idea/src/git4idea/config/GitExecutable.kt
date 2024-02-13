@@ -211,7 +211,8 @@ private fun computeWslSupportedLocaleKey(distribution: WSLDistribution): Map<Str
   }
 
   try {
-    val locales = distribution.executeOnWsl(10_000, "locale", "-a").stdout
+    val wslCommandLineOptions = WSLCommandLineOptions().setExecuteCommandInLoginShell(false)
+    val locales = distribution.executeOnWsl(listOf("locale", "-a"), wslCommandLineOptions, 10_000, null).stdout
     val systemLocales = locales.lineSequence().map { it.trim() }.filter { it.isNotBlank() }
     for (locale in systemLocales) {
       val someLocale = VcsLocaleHelper.findMatchingLocale(locale, knownLocales)
