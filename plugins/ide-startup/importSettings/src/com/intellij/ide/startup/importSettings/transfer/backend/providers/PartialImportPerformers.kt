@@ -7,14 +7,18 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.StartupUiUtil
+import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Similar to ImportPerformer
@@ -222,7 +226,10 @@ class RecentProjectsImportPerformer : PartialImportPerformer {
   override fun performEdt(project: Project?, settings: Settings) {
     val recentProjectsManagerBase = RecentProjectsManagerBase.getInstanceEx()
     settings.recentProjects.sortedBy { (_, info) -> info.projectOpenTimestamp }.forEach { (path, info) ->
-      recentProjectsManagerBase.addRecentPath(path, info)
+      logger.runAndLogException {
+        val recentPath = Path(path).toCanonicalPath()
+        recentProjectsManagerBase.addRecentPath(recentPath, info)
+      }
     }
   }
 }
