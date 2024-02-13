@@ -45,9 +45,8 @@ object EventFields {
               ReplaceWith("StringEventField.StringValidatedByRegexpReference(name, regexpRef)"))
   @ScheduledForRemoval
   @JvmStatic
-  @JvmOverloads
-  fun StringValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String, @NonNls description: String? = null): StringEventField {
-    return StringEventField.ValidatedByRegexp(name, regexpRef, description)
+  fun StringValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String): StringEventField {
+    return StringEventField.ValidatedByRegexp(name, regexpRef, null)
   }
 
   /**
@@ -71,9 +70,13 @@ object EventFields {
    * @param enumRef reference to global enum, e.g. "os" for "{enum#os}".
    */
   @JvmStatic
-  @JvmOverloads
-  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String, @NonNls description: String? = null): StringEventField {
+  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String, @NonNls description: String?): StringEventField {
     return StringEventField.ValidatedByEnum(name, enumRef, description)
+  }
+
+  @JvmStatic
+  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringEventField {
+    return StringValidatedByEnum(name, enumRef, null)
   }
 
   /**
@@ -82,11 +85,15 @@ object EventFields {
    * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule],
    */
   @JvmStatic
-  @JvmOverloads
   fun StringValidatedByCustomRule(@NonNls @EventFieldName name: String,
                                   customValidationRule: Class<out CustomValidationRule>,
-                                  @NonNls description: String? = null): StringEventField =
+                                  @NonNls description: String?): StringEventField =
     StringEventField.ValidatedByCustomValidationRule(name, customValidationRule, description)
+
+  @JvmStatic
+  fun StringValidatedByCustomRule(@NonNls @EventFieldName name: String,
+                                  customValidationRule: Class<out CustomValidationRule>): StringEventField =
+    StringValidatedByCustomRule(name, customValidationRule, null)
 
   /**
    * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule].
@@ -102,13 +109,17 @@ object EventFields {
    * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
    */
   @JvmStatic
-  @JvmOverloads
-  fun String(@NonNls @EventFieldName name: String, allowedValues: List<String>, @NonNls description: String? = null): StringEventField =
+  fun String(@NonNls @EventFieldName name: String, allowedValues: List<String>, @NonNls description: String?): StringEventField =
     StringEventField.ValidatedByAllowedValues(name, allowedValues, description)
 
   @JvmStatic
-  @JvmOverloads
-  fun Int(@NonNls @EventFieldName name: String, @NonNls description: String? = null): IntEventField = IntEventField(name, description)
+  fun String(@NonNls @EventFieldName name: String, allowedValues: List<String>): StringEventField = String(name, allowedValues, null)
+
+  @JvmStatic
+  fun Int(@NonNls @EventFieldName name: String, @NonNls description: String?): IntEventField = IntEventField(name, description)
+
+  @JvmStatic
+  fun Int(@NonNls @EventFieldName name: String): IntEventField = Int(name, null)
 
   /**
    * Creates an int field that will be validated by regexp rule
@@ -129,8 +140,10 @@ object EventFields {
    * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
    */
   @JvmStatic
-  @JvmOverloads
-  fun RoundedInt(@NonNls @EventFieldName name: String, @NonNls description: String? = null): RoundedIntEventField = RoundedIntEventField(name, description)
+  fun RoundedInt(@NonNls @EventFieldName name: String, @NonNls description: String?): RoundedIntEventField = RoundedIntEventField(name, description)
+
+  @JvmStatic
+  fun RoundedInt(@NonNls @EventFieldName name: String): RoundedIntEventField = RoundedInt(name, null)
 
   /**
    * Rounds integer value to the upper bound from provided bounds.
@@ -142,8 +155,11 @@ object EventFields {
    * @throws InvalidParameterException if bounds parameter is empty or not sorted in ascending order or contains non-unique values
    */
   @JvmStatic
-  @JvmOverloads
-  fun BoundedInt(@NonNls @EventFieldName name: String, bounds: IntArray, @NonNls description: String? = null): PrimitiveEventField<Int> = BoundedIntEventField(name, bounds, description)
+  fun BoundedInt(@NonNls @EventFieldName name: String, bounds: IntArray, @NonNls description: String?): PrimitiveEventField<Int> =
+    BoundedIntEventField(name, bounds, description)
+
+  @JvmStatic
+  fun BoundedInt(@NonNls @EventFieldName name: String, bounds: IntArray): PrimitiveEventField<Int> = BoundedInt(name, bounds, null)
 
   /**
    * Reports values from range and lower or upper bound of range if reported value is out of range.
@@ -200,16 +216,22 @@ object EventFields {
   fun Float(@NonNls @EventFieldName name: String, @NonNls description: String? = null): FloatEventField = FloatEventField(name, description)
 
   @JvmStatic
-  @JvmOverloads
-  fun Double(@NonNls @EventFieldName name: String, @NonNls description: String? = null): DoubleEventField = DoubleEventField(name, description)
+  fun Double(@NonNls @EventFieldName name: String, @NonNls description: String?): DoubleEventField = DoubleEventField(name, description)
 
   @JvmStatic
-  @JvmOverloads
-  fun Boolean(@NonNls @EventFieldName name: String, @NonNls description: String? = null): BooleanEventField = BooleanEventField(name, description)
+  fun Double(@NonNls @EventFieldName name: String): DoubleEventField = Double(name, null)
 
   @JvmStatic
-  @JvmOverloads
-  fun Class(@NonNls @EventFieldName name: String, @NonNls description: String? = null): ClassEventField = ClassEventField(name, description)
+  fun Boolean(@NonNls @EventFieldName name: String, @NonNls description: String?): BooleanEventField = BooleanEventField(name, description)
+
+  @JvmStatic
+  fun Boolean(@NonNls @EventFieldName name: String): BooleanEventField = Boolean(name, null)
+
+  @JvmStatic
+  fun Class(@NonNls @EventFieldName name: String, @NonNls description: String?): ClassEventField = ClassEventField(name, description)
+
+  @JvmStatic
+  fun Class(@NonNls @EventFieldName name: String): ClassEventField = ClassEventField(name)
 
   @JvmOverloads
   fun ClassList(@NonNls @EventFieldName name: String, @NonNls description: String? = null): ClassListEventField = ClassListEventField(name, description)
@@ -326,9 +348,13 @@ object EventFields {
    * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
    */
   @JvmStatic
-  @JvmOverloads
-  fun StringList(@NonNls @EventFieldName name: String, allowedValues: List<String>, @NonNls description: String? = null): StringListEventField =
+  fun StringList(@NonNls @EventFieldName name: String, allowedValues: List<String>, @NonNls description: String?): StringListEventField =
     StringListEventField.ValidatedByAllowedValues(name, allowedValues, description)
+
+  @JvmStatic
+  fun StringList(@NonNls @EventFieldName name: String, allowedValues: List<String>): StringListEventField =
+    StringList(name, allowedValues, null)
+
 
   @JvmStatic
   @JvmOverloads
@@ -342,10 +368,14 @@ object EventFields {
    * Please choose regexp carefully to avoid reporting any sensitive data.
    */
   @JvmStatic
-  @JvmOverloads
   fun StringValidatedByInlineRegexp(@NonNls @EventFieldName name: String,
-                                    @InjectedLanguage("RegExp") @NonNls regexp: String, @NonNls description: String? = null): StringEventField =
+                                    @InjectedLanguage("RegExp") @NonNls regexp: String, @NonNls description: String?): StringEventField =
     StringEventField.ValidatedByInlineRegexp(name, regexp, description)
+
+  @JvmStatic
+  fun StringValidatedByInlineRegexp(@NonNls @EventFieldName name: String,
+                                    @InjectedLanguage("RegExp") @NonNls regexp: String): StringEventField =
+    StringValidatedByInlineRegexp(name, regexp, null)
 
   /**
    * Please choose regexp carefully to avoid reporting any sensitive data.

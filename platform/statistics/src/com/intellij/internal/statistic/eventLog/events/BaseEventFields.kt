@@ -48,14 +48,16 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
     }
   }
 
-  data class ValidatedByAllowedValues @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+  data class ValidatedByAllowedValues(@NonNls @EventFieldName override val name: String,
                                       val allowedValues: List<String>,
                                       @NonNls override val description: String? = null) : StringEventField(name) {
+    constructor(name: String, allowedValues: List<String>) : this(name, allowedValues, null)
+
     override val validationRule: List<String>
       get() = listOf("{enum:${allowedValues.joinToString("|")}}")
   }
 
-  data class ValidatedByEnum @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+  data class ValidatedByEnum(@NonNls @EventFieldName override val name: String,
                              @NonNls val enumRef: String,
                              @NonNls override val description: String? = null) : StringEventField(name) {
     override val validationRule: List<String>
@@ -90,7 +92,10 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
 
 // region Int fields
 
-data class IntEventField @JvmOverloads constructor(override val name: String, @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
+data class IntEventField(override val name: String, @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
+
+  constructor(name: String) : this(name, null)
+
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -110,8 +115,10 @@ data class RegexpIntEventField @JvmOverloads constructor(override val name: Stri
   }
 }
 
-data class RoundedIntEventField @JvmOverloads constructor(override val name: String,
-                                                          @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
+data class RoundedIntEventField(override val name: String,
+                                @NonNls override val description: String? = null) : PrimitiveEventField<Int>() {
+  constructor(name: String) : this(name, null)
+
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -174,8 +181,10 @@ internal data class LogarithmicIntEventField(override val name: String,
 
 // region Long fields
 
-data class LongEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+data class LongEventField(@NonNls @EventFieldName override val name: String,
                           @NonNls override val description: String? = null) : PrimitiveEventField<Long>() {
+  constructor(name: String) : this(name, null)
+
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")
 
@@ -236,8 +245,10 @@ data class FloatEventField @JvmOverloads constructor(override val name: String,
   }
 }
 
-data class DoubleEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+data class DoubleEventField(@NonNls @EventFieldName override val name: String,
                             @NonNls override val description: String? = null) : PrimitiveEventField<Double>() {
+  constructor(name: String) : this(name, null)
+
   override val validationRule: List<String>
     get() = listOf("{regexp#float}")
 
@@ -248,8 +259,10 @@ data class DoubleEventField @JvmOverloads constructor(@NonNls @EventFieldName ov
 
 // endregion Numeric fields
 
-data class BooleanEventField @JvmOverloads constructor(@NonNls @EventFieldName override val name: String,
+data class BooleanEventField(@NonNls @EventFieldName override val name: String,
                              @NonNls override val description: String? = null) : PrimitiveEventField<Boolean>() {
+  constructor(name: String) : this(name, null)
+
   override val validationRule: List<String>
     get() = listOf("{enum#boolean}")
 

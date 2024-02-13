@@ -12,10 +12,13 @@ import org.jetbrains.annotations.NonNls
  */
 
 
-class EventLogGroup @JvmOverloads constructor(@NonNls @EventIdName val id: String,
-                                              val version: Int,
-                                              val recorder: String = "FUS",
-                                              val description: String? = null) {
+class EventLogGroup(@NonNls @EventIdName val id: String,
+                    val version: Int,
+                    val recorder: String,
+                    val description: String?) {
+  constructor(@NonNls @EventIdName id: String, version: Int): this(id, version, "FUS", null)
+  constructor(@NonNls @EventIdName id: String, version: Int, recorder: String): this(id, version, recorder, null)
+
   private val registeredEventIds = mutableSetOf<String>()
   private val registeredEvents = mutableListOf<BaseEventId>()
 
