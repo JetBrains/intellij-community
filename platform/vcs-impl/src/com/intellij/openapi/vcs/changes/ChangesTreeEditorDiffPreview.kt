@@ -31,14 +31,14 @@ abstract class ChangesTreeEditorDiffPreview(
   }
 
   protected open fun isPreviewOnDoubleClick(): Boolean = true
-  protected open fun handleDoubleClick(e: MouseEvent): Boolean {
+  open fun handleDoubleClick(e: MouseEvent): Boolean {
     if (!isPreviewOnDoubleClick()) return false
     if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return false
     return performDiffAction()
   }
 
   protected open fun isPreviewOnEnter(): Boolean = true
-  protected open fun handleEnterKey(): Boolean {
+  open fun handleEnterKey(): Boolean {
     if (!isPreviewOnEnter()) return false
     return performDiffAction()
   }
