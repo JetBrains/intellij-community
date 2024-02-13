@@ -10,7 +10,6 @@ import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.codeInsight.documentation.DocumentationScrollPane
-import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.hint.DefinitionSwitcher
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
@@ -20,14 +19,12 @@ import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationPage
 import com.intellij.lang.documentation.ide.impl.DocumentationPageContent
-import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
@@ -45,7 +42,6 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import java.beans.PropertyChangeEvent
-import javax.swing.BoundedRangeModel
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JScrollPane
@@ -61,8 +57,6 @@ internal class DocumentationUI(
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
   val switcherToolbarComponent: JComponent
 
-  @Volatile
-  private var documentationDownloader: DocumentationDownloader? = null
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
@@ -147,7 +141,6 @@ internal class DocumentationUI(
   override fun dispose() {
     cs.cancel("DocumentationUI disposal")
     clearImages()
-    documentationDownloader = null
   }
 
   override fun getData(dataId: String): Any? {
@@ -227,16 +220,8 @@ internal class DocumentationUI(
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent.Content) {
     val content = pageContent.content
     imageResolver = content.imageResolver
-    val targetFile = pageContent.targetElement?.containingFile?.virtualFile
-    var downloadSourcesLink: String? = null
-    if (targetFile != null) {
-      documentationDownloader = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, targetFile) }
-      if (documentationDownloader != null) {
-        downloadSourcesLink = DocumentationDownloader.formatLink(targetFile)
-      }
-    }
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
-    val decorated = decorate(content.html, null, linkChunk, downloadSourcesLink)
+    val decorated = decorate(content.html, null, linkChunk, pageContent.downloadSourcesLink)
     if (!updateContent(decorated, presentation)) {
       return
     }
@@ -306,15 +291,6 @@ internal class DocumentationUI(
   private fun linkActivated(href: String) {
     if (href.startsWith("#")) {
       UIUtil.scrollToReference(editorPane, href.removePrefix("#"))
-    }
-    else if (href.startsWith(DocumentationDownloader.HREF_PREFIX) && documentationDownloader != null) {
-      val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
-      val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
-      if (file != null) {
-        cs.launch(Dispatchers.Default) {
-          documentationDownloader?.download(project, file)
-        }
-      }
     }
     else {
       browser.handleLink(href)

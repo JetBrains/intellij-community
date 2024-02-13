@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.InternalLinkResult
@@ -101,7 +103,7 @@ internal class DocumentationBrowser private constructor(
       else {
         myHistory.nextPage()
       }
-      DocumentationPage(listOf(request)).also {
+      DocumentationPage(listOf(request), project).also {
         this@DocumentationBrowser.page = it
       }
     }
@@ -109,6 +111,10 @@ internal class DocumentationBrowser private constructor(
   }
 
   private suspend fun handleLinkRequest(url: String) {
+    if (url.startsWith(DocumentationDownloader.HREF_PREFIX)) {
+      handleDownloadSourcesRequest(url)
+      return
+    }
     val targetPointer = this.targetPointer
     val internalResult = try {
       handleLink(project, targetPointer, url, page)
@@ -138,6 +144,16 @@ internal class DocumentationBrowser private constructor(
       }
       is InternalLinkResult.Updater -> {
         page.updatePage(internalResult.updater)
+      }
+    }
+  }
+
+  private suspend fun handleDownloadSourcesRequest(href: String) {
+    val filePath = href.replaceFirst(DocumentationDownloader.HREF_PREFIX, "")
+    val file = VirtualFileManager.getInstance().findFileByUrl(filePath)
+    if (file != null) {
+      cs.launch {
+        DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }?.download(project, file)
       }
     }
   }
@@ -182,7 +198,7 @@ internal class DocumentationBrowser private constructor(
   companion object {
 
     fun createBrowser(project: Project, requests: List<DocumentationRequest>): DocumentationBrowser {
-      val browser = DocumentationBrowser(project, DocumentationPage(requests))
+      val browser = DocumentationBrowser(project, DocumentationPage(requests, project))
       browser.reload() // init loading
       return browser
     }

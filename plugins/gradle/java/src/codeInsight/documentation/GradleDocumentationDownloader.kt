@@ -11,12 +11,9 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider
-import org.jetbrains.plugins.gradle.util.GradleBundle
 
 class GradleDocumentationDownloader : DocumentationDownloader {
 
@@ -48,14 +45,7 @@ class GradleDocumentationDownloader : DocumentationDownloader {
     if (action == null) {
       return
     }
-    withBackgroundProgress(project = project, title = GradleBundle.message("gradle.action.download.sources.busy.text")) {
-      suspendCancellableCoroutine<Nothing?> { continuation ->
-        val callback = action.perform(libraryEntries)
-        callback.doWhenProcessed {
-          continuation.resume(null) { }
-        }
-      }
-    }
+    action.perform(libraryEntries)
   }
 
   private fun findLibraryEntriesForFile(file: VirtualFile, project: Project): List<LibraryOrderEntry> {

@@ -3,11 +3,15 @@
 
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.lang.documentation.ide.ui.ExpandableDefinition
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.ide.ui.UIState
 import com.intellij.lang.documentation.ide.ui.createExpandableDefinition
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.documentation.ContentUpdater
 import com.intellij.platform.backend.documentation.DocumentationContentData
 import com.intellij.platform.backend.documentation.LinkData
@@ -17,7 +21,7 @@ import com.intellij.psi.PsiElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
-internal class DocumentationPage(val requests: List<DocumentationRequest>) {
+internal class DocumentationPage(val requests: List<DocumentationRequest>, val project: Project) {
 
   private val myContentFlow = MutableStateFlow<DocumentationPageContent?>(null)
   val request = requests.first()
@@ -64,8 +68,17 @@ internal class DocumentationPage(val requests: List<DocumentationRequest>) {
     }
   }
 
-  private fun prepareContent(content: DocumentationContentData, links: LinkData, uiState: UIState?): DocumentationPageContent.Content {
-    return DocumentationPageContent.Content(content, links, uiState, content.targetElement)
+  private suspend fun prepareContent(content: DocumentationContentData, links: LinkData, uiState: UIState?): DocumentationPageContent.Content {
+    var downloadSourcesLink: String? = null
+    if (content.targetElement != null) {
+      val targetFile = readAction { content.targetElement.getTargetFile() }
+      if (targetFile != null) {
+        if (DocumentationDownloader.EP.extensionList.find { it.canHandle(project, targetFile) } != null) {
+          downloadSourcesLink = DocumentationDownloader.formatLink(targetFile)
+        }
+      }
+    }
+    return DocumentationPageContent.Content(content, links, uiState, downloadSourcesLink)
   }
 
   /**
@@ -102,6 +115,10 @@ internal class DocumentationPage(val requests: List<DocumentationRequest>) {
       }
     }
   }
+
+  private fun PsiElement.getTargetFile(): VirtualFile? = containingFile?.run {
+    virtualFile ?: originalFile.virtualFile
+  }
 }
 
 internal sealed class DocumentationPageContent {
@@ -112,6 +129,6 @@ internal sealed class DocumentationPageContent {
     val content: DocumentationContentData,
     val links: LinkData,
     val uiState: UIState?,
-    val targetElement: PsiElement?
+    val downloadSourcesLink: String?
   ) : DocumentationPageContent()
 }
