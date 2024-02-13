@@ -12,6 +12,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.SystemProperties
 
 internal class CallSaulAction : DumbAwareAction() {
+  init {
+    templatePresentation.isApplicationScope = true
+  }
+
   override fun actionPerformed(e: AnActionEvent): Unit = service<Saul>().sortThingsOut(RecoveryScope.createInstance(e))
 
   override fun update(e: AnActionEvent) {
@@ -59,6 +63,10 @@ internal class CacheRecoveryActionGroup: ActionGroup(), DumbAware {
   private fun RecoveryAction.toAnAction(): AnAction {
     val recoveryAction = this
     return object: DumbAwareAction(recoveryAction.presentableName), ActionRemoteBehaviorSpecification {
+      init {
+        templatePresentation.isApplicationScope = true
+      }
+
       override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
 
       override fun actionPerformed(e: AnActionEvent) {
