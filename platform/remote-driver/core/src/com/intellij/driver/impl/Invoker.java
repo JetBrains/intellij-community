@@ -1,6 +1,9 @@
 package com.intellij.driver.impl;
 
-import com.intellij.driver.model.*;
+import com.intellij.driver.model.LocalRefDelegate;
+import com.intellij.driver.model.OnDispatcher;
+import com.intellij.driver.model.ProductVersion;
+import com.intellij.driver.model.RemoteRefDelegate;
 import com.intellij.driver.model.transport.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -28,7 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
 import static java.util.Objects.requireNonNull;
@@ -43,7 +50,7 @@ import static java.util.Objects.requireNonNull;
 public class Invoker implements InvokerMBean {
   private static final Logger LOG = Logger.getInstance(Invoker.class);
 
-  public static final int NO_SESSION_ID = 0;
+  private static final int GLOBAL_SESSION_ID = 0;
   static final AtomicInteger REF_SEQUENCE = new AtomicInteger(1);
 
   private final Map<Integer, Session> sessions = new ConcurrentHashMap<>();
@@ -68,6 +75,7 @@ public class Invoker implements InvokerMBean {
       }
     };
     this.screenshotAction = screenshotAction;
+    sessions.put(GLOBAL_SESSION_ID, new GlobalSession());
   }
 
   @Override
@@ -106,110 +114,62 @@ public class Invoker implements InvokerMBean {
       LOG.debug("Creating instance of " + targetClass);
 
       result = withSemantics(call, () -> invokeConstructor(constructor, transformedArgs));
+
+      return getRemoteCallResult(sessions.get(call.getSessionId()), result);
+    }
+
+    CallTarget callTarget = getCallTarget(call, transformedArgs);
+    LOG.debug("Calling " + callTarget);
+
+    Object instance;
+    try {
+      instance = findInstance(call, callTarget.clazz());
+    }
+    catch (Exception e) {
+      LOG.error("Unable to get instance for " + call);
+
+      throw new RuntimeException("Unable to get instance for " + call, e);
+    }
+
+    if (call.getDispatcher() == OnDispatcher.EDT) {
+      Object[] res = new Object[1];
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
+      });
+      result = res[0];
     }
     else {
-      CallTarget callTarget = getCallTarget(call, transformedArgs);
-
-      LOG.debug("Calling " + callTarget);
-
-      Object instance;
-      try {
-        instance = findInstance(call, callTarget.clazz());
-      }
-      catch (Exception e) {
-        LOG.error("Unable to get instance for " + call);
-
-        throw new RuntimeException("Unable to get instance for " + call, e);
-      }
-
-      if (call.getDispatcher() == OnDispatcher.EDT) {
-        Object[] res = new Object[1];
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
-        });
-        result = res[0];
-      }
-      else {
-        // todo handle OnDispatcher: Default or IO
-        result = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
-      }
-
-      Method targetMethod = callTarget.targetMethod();
-
-      if (Collection.class.isAssignableFrom(targetMethod.getReturnType())) {
-        Type returnType = targetMethod.getGenericReturnType();
-
-        if (returnType instanceof ParameterizedType) {
-          Type[] typeArguments = ((ParameterizedType)returnType).getActualTypeArguments();
-          if (typeArguments.length == 1 && typeArguments[0] instanceof Class<?> componentType) {
-            if (isPassByValue(componentType)) {
-              return new RemoteCallResult(result);
-            }
-          }
-        }
-      }
-      else if (targetMethod.getReturnType().isArray()) {
-        if (isPassByValue(targetMethod.getReturnType().getComponentType())) {
-          return new RemoteCallResult(result);
-        }
-      }
+      // todo handle OnDispatcher: Default or IO
+      result = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
     }
 
-    if (isPassByValue(result)) {
-      // does not need a session, pass by value
-      return new RemoteCallResult(result);
+    return getRemoteCallResult(sessions.get(call.getSessionId()), callTarget, result);
+  }
+
+  @Override
+  public @NotNull Ref putAdhocReference(@NotNull Object item) {
+    return putAdhocReference(item, sessions.get(GLOBAL_SESSION_ID));
+  }
+
+  private @NotNull Object getReference(int sessionId, String id) {
+    // first lookup in the current session
+    Session session = sessions.get(sessionId);
+    if (session == null) {
+      throw new IllegalStateException("No such session " + sessionId);
     }
 
-    if (call.getSessionId() == NO_SESSION_ID) {
-      Ref ref = putAdhocReference(result);
+    Object value = session.findReference(id);
+    if (value != null) return value;
 
-      if (result instanceof Collection<?>) {
-        List<Ref> items = new ArrayList<>(((Collection<?>)result).size());
-        for (Object item : ((Collection<?>)result)) {
-          items.add(putAdhocReference(item));
-        }
-        return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
-      }
-
-      if (result.getClass().isArray()) {
-        Object[] array = (Object[])result;
-
-        List<Ref> items = new ArrayList<>(array.length);
-        for (Object item : array) {
-          items.add(putAdhocReference(item));
-        }
-        return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
-      }
-
-      return new RemoteCallResult(ref);
+    // otherwise check any sessions
+    for (Session s : sessions.values()) {
+      value = s.findReference(id);
+      if (value != null) return value;
     }
-    else {
-      Session session = sessions.get(call.getSessionId());
-      Ref ref = putAdhocReferenceToSession(result, session);
 
-      if (result instanceof Collection<?>) {
-        List<Ref> items = new ArrayList<>(((Collection<?>)result).size());
-        for (Object item : ((Collection<?>)result)) {
-          Ref child = putAdhocReferenceToSession(item, session);
-          items.add(child);
-        }
-        return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
-      }
-
-      if (result.getClass().isArray()) {
-        int length = Array.getLength(result);
-        List<Ref> items = new ArrayList<>(length);
-        for (int i = 0; i < length; i++) {
-          Object item = Array.get(result, i);
-          Ref child = putAdhocReferenceToSession(item, session);
-          items.add(child);
-        }
-
-        return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
-      }
-
-      return new RemoteCallResult(ref);
-    }
+    throw new IllegalStateException("No such reference with id " + id + ". " +
+                                    "It may happen if a weak reference to the variable expires. " +
+                                    "Please use `Driver.withContext { }` for hard variable references.");
   }
 
   private static @NotNull Object invokeConstructor(Constructor<?> constructor, Object[] transformedArgs) throws Exception {
@@ -301,32 +261,15 @@ public class Invoker implements InvokerMBean {
   }
 
   @Override
-  public @NotNull Ref putAdhocReference(@NotNull Object item) {
-    if (item instanceof LocalRefDelegate<?> delegate) {
-      item = delegate.getLocalValue();
-    }
-    if (item instanceof RemoteRefDelegate<?> delegate) {
-      return delegate.getRemoteRef();
-    }
-    String itemId = refIdPrefix + REF_SEQUENCE.getAndIncrement();
-    adhocReferenceMap.put(itemId, new WeakReference<>(item));
-    return RefProducer.makeRef(itemId, item);
+  public int newSession() {
+    int id = sessionIdSequence.getAndIncrement();
+    return newSession(id);
   }
 
-  private @NotNull Ref putAdhocReferenceToSession(@NotNull Object item, @NotNull Session session) {
-    if (item instanceof LocalRefDelegate<?> delegate) {
-      item = delegate.getLocalValue();
-    }
-    if (item instanceof RemoteRefDelegate<?> delegate) {
-      return delegate.getRemoteRef();
-    }
-
-    Ref ref = session.putReference(item);
-
-    // also make variable available out ouf `driver.withContext { }` block as weak reference
-    adhocReferenceMap.put(ref.id(), new WeakReference<>(item));
-
-    return ref;
+  @Override
+  public int newSession(int id) {
+    sessions.put(id, new SessionImpl());
+    return id;
   }
 
   private static Constructor<?> getConstructor(@NotNull RemoteCall call, @NotNull Class<?> targetClass, Object[] transformedArgs) {
@@ -532,30 +475,28 @@ public class Invoker implements InvokerMBean {
     return args;
   }
 
-  private @NotNull Object getReference(int sessionId, String id) {
-    if (sessionId != NO_SESSION_ID) {
-      WeakReference<Object> adhocReference = adhocReferenceMap.get(id);
-      if (adhocReference != null) {
-        return dereference(adhocReference, id);
+  private static @NotNull RemoteCallResult getRemoteCallResult(@NotNull Session session, @NotNull CallTarget callTarget, Object result) {
+    Method targetMethod = callTarget.targetMethod();
+
+    if (Collection.class.isAssignableFrom(targetMethod.getReturnType())) {
+      Type returnType = targetMethod.getGenericReturnType();
+
+      if (returnType instanceof ParameterizedType) {
+        Type[] typeArguments = ((ParameterizedType)returnType).getActualTypeArguments();
+        if (typeArguments.length == 1 && typeArguments[0] instanceof Class<?> componentType) {
+          if (isPassByValue(componentType)) {
+            return new RemoteCallResult(result);
+          }
+        }
       }
-
-      Session session = sessions.get(sessionId);
-      if (session == null) {
-        throw new IllegalStateException("No such session " + sessionId);
+    }
+    else if (targetMethod.getReturnType().isArray()) {
+      if (isPassByValue(targetMethod.getReturnType().getComponentType())) {
+        return new RemoteCallResult(result);
       }
-
-      HardReference reference = session.findReference(id);
-      if (reference != null) return reference.value;
-
-      throw new IllegalStateException("No such reference with id " + id + ". " +
-                                      "It may happen if a weak reference to the variable expires. " +
-                                      "Please use `Driver.withContext { }` for hard variable references.");
     }
 
-    WeakReference<Object> reference = adhocReferenceMap.get(id);
-    if (reference == null) throw new IllegalStateException("No such variable " + id);
-
-    return dereference(reference, id);
+    return getRemoteCallResult(session, result);
   }
 
   private static @NotNull Object dereference(@NotNull WeakReference<Object> reference, String id) {
@@ -569,17 +510,36 @@ public class Invoker implements InvokerMBean {
     return weakTarget;
   }
 
-  @Override
-  public int newSession() {
-    int id = sessionIdSequence.getAndIncrement();
-    sessions.put(id, new Session(refIdPrefix));
-    return id;
+  private static @NotNull RemoteCallResult getRemoteCallResult(@NotNull Session session, Object result) {
+    if (isPassByValue(result)) {
+      // does not need a session, pass by value
+      return new RemoteCallResult(result);
+    }
+
+    Ref ref = putAdhocReference(result, session);
+
+    Stream<Object> stream =
+      result instanceof Collection<?> collection ? (Stream<Object>)collection.stream()
+                                                 : result.getClass().isArray() ? Arrays.stream((Object[])result)
+                                                                               : null;
+
+    if (stream == null) {
+      return new RemoteCallResult(ref);
+    }
+
+    List<Ref> items = stream.map(item -> putAdhocReference(item, session)).toList();
+    return new RemoteCallResult(new RefList(ref.id(), result.getClass().getName(), items));
   }
 
-  @Override
-  public int newSession(int id) {
-    sessions.put(id, new Session(refIdPrefix));
-    return id;
+  private static @NotNull Ref putAdhocReference(@NotNull Object item, @NotNull Session session) {
+    if (item instanceof LocalRefDelegate<?> delegate) {
+      item = delegate.getLocalValue();
+    }
+    if (item instanceof RemoteRefDelegate<?> delegate) {
+      return delegate.getRemoteRef();
+    }
+
+    return session.putReference(item);
   }
 
   @Override
@@ -600,6 +560,57 @@ public class Invoker implements InvokerMBean {
   public void takeScreenshot(@Nullable String outFolder) {
     this.screenshotAction.accept(outFolder);
   }
+
+  interface Session {
+    @Nullable
+    Object findReference(String id);
+
+    @NotNull
+    Ref putReference(@NotNull Object value);
+  }
+
+  final class SessionImpl implements Session {
+    private final Map<String, HardReference> variables = new ConcurrentHashMap<>();
+
+    @Override
+    public @Nullable Object findReference(String id) {
+      HardReference ref = variables.get(id);
+      if (ref == null) return null;
+
+      return ref.value;
+    }
+
+    @Override
+    public @NotNull Ref putReference(@NotNull Object value) {
+      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
+      variables.put(id, new HardReference(value));
+
+      // also make variable available out ouf `driver.withContext { }` block as weak reference
+      adhocReferenceMap.put(id, new WeakReference<>(value));
+
+      return RefProducer.makeRef(id, value);
+    }
+  }
+
+  final class GlobalSession implements Session {
+    @Override
+    public @Nullable Object findReference(String id) {
+
+      WeakReference<Object> reference = adhocReferenceMap.get(id);
+      if (reference == null) return null;
+
+      return dereference(reference, id);
+    }
+
+    @Override
+    public @NotNull Ref putReference(@NotNull Object value) {
+      var id = refIdPrefix + REF_SEQUENCE.getAndIncrement();
+      adhocReferenceMap.put(id, new WeakReference<>(value));
+
+      return RefProducer.makeRef(id, value);
+    }
+  }
+
 }
 
 record CallTarget(@NotNull Class<?> clazz, @NotNull Method targetMethod) {
@@ -611,35 +622,9 @@ final class HardReference {
   HardReference(Object value) { this.value = value; }
 }
 
-final class Session {
-  private final String idPrefix;
-  private final Map<String, HardReference> variables = new ConcurrentHashMap<>();
-
-  Session(String prefix) { idPrefix = prefix; }
-
-  public @Nullable HardReference findReference(String id) {
-    return variables.get(id);
-  }
-
-  public @NotNull Ref putReference(@NotNull Object value) {
-    var id = idPrefix + Invoker.REF_SEQUENCE.getAndIncrement();
-    variables.put(id, new HardReference(value));
-    return RefProducer.makeRef(id, value);
-  }
-}
-
 final class RefProducer {
   public static @NotNull Ref makeRef(String id, @NotNull Object value) {
     if (value instanceof Ref) return (Ref)value;
-
-    if (value instanceof RefDelegate) {
-      if (value instanceof RemoteRefDelegate) {
-        return ((RemoteRefDelegate<?>)value).getRemoteRef();
-      }
-      if (value instanceof LocalRefDelegate) {
-        value = ((LocalRefDelegate<?>)value).getLocalValue();
-      }
-    }
 
     return new Ref(
       id,
