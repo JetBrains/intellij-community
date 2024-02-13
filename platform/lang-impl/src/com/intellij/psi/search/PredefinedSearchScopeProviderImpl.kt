@@ -33,6 +33,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.scope.EditorSelectionLocalSearchScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.usages.Usage
+import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.PlatformUtils
@@ -355,59 +356,67 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
 
     // in EDT
     private fun getScopesFromUsageView(project: Project, prevSearchFiles: Boolean): Collection<SearchScope> {
+      val selectedUsageView = getSelectedAndCompletedUsageView(project) ?: return emptyList()
       val scopes = LinkedHashSet<SearchScope>()
+      addPreviousSearchScopes(selectedUsageView, prevSearchFiles, project, scopes)
+      return scopes
+    }
 
-      val selectedUsageView = UsageViewManager.getInstance(project).getSelectedUsageView()
-      if (selectedUsageView != null && !selectedUsageView.isSearchInProgress()) {
-        val usages: MutableSet<Usage> = selectedUsageView.getUsages().toMutableSet()
-        usages.removeAll(selectedUsageView.getExcludedUsages())
+    private fun getSelectedAndCompletedUsageView(project: Project): UsageView? =
+      UsageViewManager.getInstance(project).getSelectedUsageView()?.takeIf { !it.isSearchInProgress }
 
-        if (prevSearchFiles) {
-          val files = collectFiles(usages, true)
-          if (!files.isEmpty()) {
-            val prev: GlobalSearchScope = object : GlobalSearchScope(project) {
-              private var myFiles: Set<VirtualFile>? = null
-              override fun getDisplayName(): String {
-                return IdeBundle.message("scope.files.in.previous.search.result")
-              }
+    private fun addPreviousSearchScopes(
+      selectedUsageView: UsageView,
+      prevSearchFiles: Boolean,
+      project: Project,
+      scopes: LinkedHashSet<SearchScope>,
+    ) {
+      val usages: MutableSet<Usage> = selectedUsageView.getUsages().toMutableSet()
+      usages.removeAll(selectedUsageView.getExcludedUsages())
 
-              @Synchronized
-              override fun contains(file: VirtualFile): Boolean {
-                if (myFiles == null) {
-                  myFiles = collectFiles(usages, false)
-                }
-                return myFiles!!.contains(file)
-              }
-
-              override fun isSearchInModuleContent(aModule: Module): Boolean {
-                return true
-              }
-
-              override fun isSearchInLibraries(): Boolean {
-                return true
-              }
+      if (prevSearchFiles) {
+        val files = collectFiles(usages, true)
+        if (!files.isEmpty()) {
+          val prev: GlobalSearchScope = object : GlobalSearchScope(project) {
+            private var myFiles: Set<VirtualFile>? = null
+            override fun getDisplayName(): String {
+              return IdeBundle.message("scope.files.in.previous.search.result")
             }
-            scopes.add(prev)
-          }
-        }
-        else {
-          val results: MutableList<PsiElement> = ArrayList(usages.size)
-          for (usage in usages) {
-            if (usage is PsiElementUsage) {
-              val element = usage.getElement()
-              if (element != null && element.isValid() && element.getContainingFile() != null) {
-                results.add(element)
+
+            @Synchronized
+            override fun contains(file: VirtualFile): Boolean {
+              if (myFiles == null) {
+                myFiles = collectFiles(usages, false)
               }
+              return myFiles!!.contains(file)
+            }
+
+            override fun isSearchInModuleContent(aModule: Module): Boolean {
+              return true
+            }
+
+            override fun isSearchInLibraries(): Boolean {
+              return true
             }
           }
-
-          if (!results.isEmpty()) {
-            scopes.add(LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")))
-          }
+          scopes.add(prev)
         }
       }
+      else {
+        val results: MutableList<PsiElement> = ArrayList(usages.size)
+        for (usage in usages) {
+          if (usage is PsiElementUsage) {
+            val element = usage.getElement()
+            if (element != null && element.isValid() && element.getContainingFile() != null) {
+              results.add(element)
+            }
+          }
+        }
 
-      return scopes
+        if (!results.isEmpty()) {
+          scopes.add(LocalSearchScope(PsiUtilCore.toPsiElementArray(results), IdeBundle.message("scope.previous.search.results")))
+        }
+      }
     }
 
     private fun fillFromDataContext(dataContext: DataContext?,
