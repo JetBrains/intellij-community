@@ -156,8 +156,8 @@ class InspectionRunner {
 
           List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
           List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
-          List<? extends PsiElement> sortedOutside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside);
-          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, sortedOutside, true, acceptingPsiTypes, myPsiFile);
+          List<? extends PsiElement> outside = toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside;
+          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, true, acceptingPsiTypes, myPsiFile);
           init.add(context);
           if (LOG.isTraceEnabled()) {
             LOG.trace("inspect: created context: "+myPsiFile+"; host="+InjectedLanguageManager.getInstance(myPsiFile.getProject()).injectedToHost(myPsiFile, myPsiFile.getTextRange())+"; context="+context+"; acceptingPsiTypes="+acceptingPsiTypes+
