@@ -30,6 +30,10 @@ public final class Messages {
 
   public final static @NotNull String RESOURCE_FILTER_MODEL_GROUP = "gradle.resourceModel.group";
 
+  public final static @NotNull String SOURCE_SET_DEPENDENCY_MODEL_GROUP = "gradle.sourceSetDependencyModel.group";
+  public final static @NotNull String SOURCE_SET_DEPENDENCY_MODEL_CACHE_GET_GROUP = "gradle.sourceSetDependencyModel.group";
+  public final static @NotNull String SOURCE_SET_DEPENDENCY_MODEL_CACHE_SET_GROUP = "gradle.sourceSetDependencyModel.group";
+
   public final static @NotNull String EAR_CONFIGURATION_MODEL_GROUP = "gradle.earConfigurationModel.group";
   public final static @NotNull String WAR_CONFIGURATION_MODEL_GROUP = "gradle.warConfigurationModel.group";
 

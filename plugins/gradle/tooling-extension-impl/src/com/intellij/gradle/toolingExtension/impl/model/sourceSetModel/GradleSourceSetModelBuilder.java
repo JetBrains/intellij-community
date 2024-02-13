@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleSourceSetDependencyResolver;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
@@ -557,12 +556,6 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       addLegacyTestSourceDirs(externalSourceSet, project, sourceSetResolutionContext);
 
       cleanupSharedIdeaSourceDirs(externalSourceSet, sourceSetResolutionContext);
-
-      if (Boolean.getBoolean("idea.resolveSourceSetDependencies")) {
-        Collection<ExternalDependency> dependencies = new GradleSourceSetDependencyResolver(context, project)
-          .resolveDependencies(sourceSet);
-        externalSourceSet.setDependencies(dependencies);
-      }
 
       result.put(externalSourceSet.getName(), externalSourceSet);
     });

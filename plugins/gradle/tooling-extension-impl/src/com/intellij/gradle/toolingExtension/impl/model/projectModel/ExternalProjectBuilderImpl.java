@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.projectModel;
 
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.DefaultGradleSourceSetDependencyModel;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyCache;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCache;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
@@ -15,18 +17,13 @@ import org.gradle.api.tasks.testing.Test;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.DefaultExternalProject;
-import org.jetbrains.plugins.gradle.model.DefaultExternalTask;
-import org.jetbrains.plugins.gradle.model.ExternalProject;
-import org.jetbrains.plugins.gradle.model.ExternalProjectPreview;
+import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil.getIdeaModuleName;
 import static com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil.getProjectIdentityPath;
@@ -122,8 +119,20 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     @NotNull Project project,
     @NotNull ModelBuilderContext context
   ) {
-    return GradleSourceSetCache.getInstance(context)
-      .getSourceSetModel(project);
+    GradleSourceSetCache sourceSetCache = GradleSourceSetCache.getInstance(context);
+    GradleSourceSetDependencyCache sourceSetDependencyCache = GradleSourceSetDependencyCache.getInstance(context);
+    DefaultGradleSourceSetModel sourceSetModel = sourceSetCache.getSourceSetModel(project);
+    DefaultGradleSourceSetDependencyModel sourceSetDependencyModel = sourceSetDependencyCache.getSourceSetDependencyModel(project);
+    Map<String, DefaultExternalSourceSet> sourceSets = sourceSetModel.getSourceSets();
+    Map<String, Collection<ExternalDependency>> dependencies = sourceSetDependencyModel.getDependencies();
+    Set<String> sourceSetNames = new LinkedHashSet<>(sourceSets.keySet());
+    sourceSetNames.retainAll(dependencies.keySet());
+    for (String sourceSetName : sourceSetNames) {
+      DefaultExternalSourceSet sourceSet = sourceSets.get(sourceSetName);
+      Collection<ExternalDependency> sourceSetDependencies = dependencies.get(sourceSetName);
+      sourceSet.setDependencies(sourceSetDependencies);
+    }
+    return sourceSetModel;
   }
 
   private static @NotNull String wrap(@Nullable Object o) {

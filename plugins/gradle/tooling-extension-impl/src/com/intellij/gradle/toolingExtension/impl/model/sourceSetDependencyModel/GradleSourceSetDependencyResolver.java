@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
+package com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel;
 
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver;
+import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleSourceSetCachedFinder;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -15,6 +17,7 @@ import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
 import org.gradle.internal.impldep.com.google.common.collect.HashMultimap;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
@@ -30,6 +33,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class GradleSourceSetDependencyResolver {
 
   private static final String COMPILE_SCOPE = "COMPILE";
@@ -190,7 +194,7 @@ public final class GradleSourceSetDependencyResolver {
   /**
    * Merges two lists of resolved dependencies by rules:
    * <ul>
-   * <li>Dependencies that present only in the compile scope are marked with {@link #PROVIDED_SCOPE} </li>
+   * <li>Dependencies that present only in the compile scope are marked with {@link #PROVIDED_SCOPE}</li>
    * <li>Dependencies that present only in the runtime scope are marked with {@link #RUNTIME_SCOPE}</li>
    * <li>Dependencies that present in the both scopes are marked with {@link #COMPILE_SCOPE}</li>
    * </ul>

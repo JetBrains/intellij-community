@@ -2,6 +2,7 @@
 com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuilderImpl
 com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder
+com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyGraphModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyBuilder
 com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.GradleBuildScriptClasspathModelBuilder
