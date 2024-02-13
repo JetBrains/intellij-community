@@ -79,7 +79,7 @@ public class DynamicBundle extends AbstractBundle {
   ) {
     Path bundlePath = FileSystems.getDefault().getPath(defaultPath.replaceAll("\\.", "/"));
     ClassLoader pluginClassLoader = languagePluginClassLoader(bundleClassLoader, locale);
-    List<Path> paths = LocalizationUtil.Companion.getLocalizedPaths(bundlePath, locale);
+    List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPaths(bundlePath, locale);
     Map<BundleOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
       resolveBundleOrder(pluginClassLoader, true, bundlePath, paths, bundleOrderMap, bundleResolver, locale);
@@ -97,7 +97,7 @@ public class DynamicBundle extends AbstractBundle {
 
   @ApiStatus.Internal
   private static List<ResourceBundle> getBundlesFromLocalizationFolder(Path pathToBundle, ClassLoader loader, Locale locale) {
-    List<Path> paths = LocalizationUtil.Companion.getFolderLocalizedPaths(pathToBundle, locale);
+    List<Path> paths = LocalizationUtil.INSTANCE.getFolderLocalizedPaths(pathToBundle, locale);
     List<ResourceBundle> resourceBundles = new ArrayList<>();
     for (Path path : paths) {
       try {

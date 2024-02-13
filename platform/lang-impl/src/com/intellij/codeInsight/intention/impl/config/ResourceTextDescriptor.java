@@ -38,7 +38,7 @@ final class ResourceTextDescriptor implements TextDescriptor {
 
   @Override
   public @NotNull String getText() throws IOException {
-    InputStream inputStream = LocalizationUtil.Companion.getResourceAsStream(myLoader, Path.of(myResourcePath));
+    InputStream inputStream = LocalizationUtil.INSTANCE.getResourceAsStream(myLoader, Path.of(myResourcePath));
     if (inputStream != null) {
       try (inputStream) {
         return ResourceUtil.loadText(inputStream); //NON-NLS

@@ -13,24 +13,23 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
-class LocalizationUtil {
-  companion object {
+object LocalizationUtil {
     private fun getPluginClassLoader(): ClassLoader? = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
-    private fun convertPathToLocalizationFolderUsage(path: Path, locale: Locale, withRegion: Boolean): Path {
+    private fun Path.convertToLocalizationFolderUsage(locale: Locale, withRegion: Boolean): Path {
       val localizationFolderName = "localization"
       var result = Path(localizationFolderName).resolve(locale.language)
       if (withRegion && locale.country.isNotEmpty()) {
         result = result.resolve(locale.country)
       }
-      result = result.resolve(path)
+      result = result.resolve(this)
       return result
     }
 
-    private fun convertPathToLocaleSuffixUsage(path: Path, locale: Locale?, withRegion: Boolean): Path {
-      if (locale == null) return path
-      val fileName = StringBuilder(path.nameWithoutExtension)
-      val extension = path.extension
-      val foldersPath = path.parent ?: Path("")
+    private fun Path.convertPathToLocaleSuffixUsage(locale: Locale?, withRegion: Boolean): Path {
+      if (locale == null) return this
+      val fileName = StringBuilder(this.nameWithoutExtension)
+      val extension = this.extension
+      val foldersPath = this.parent ?: Path("")
       val language = locale.language
       if (!language.isEmpty()) {
         fileName.append('_').append(language)
@@ -61,20 +60,22 @@ class LocalizationUtil {
     @JvmOverloads
     fun getLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
       val locale = specialLocale ?: getLocale()
-      val result = mutableListOf<Path>()
-      //localizations/zh/CN/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, locale, true))
+      val result = listOf(
+        //localizations/zh/CN/inspectionDescriptions/name.html
+        path.convertToLocalizationFolderUsage(locale, true),
 
-      //inspectionDescriptions/name_zh_CN.html
-      result.add(convertPathToLocaleSuffixUsage(path, locale, true))
+        //inspectionDescriptions/name_zh_CN.html
+        path.convertPathToLocaleSuffixUsage(locale, true),
 
-      //localizations/zh/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, locale, false))
+        //localizations/zh/inspectionDescriptions/name.html
+        path.convertToLocalizationFolderUsage(locale, false),
 
-      //inspectionDescriptions/name_zh.html
-      result.add(convertPathToLocaleSuffixUsage(path, locale, false))
-      //inspectionDescriptions/name.html
-      result.add(path)
+        //inspectionDescriptions/name_zh.html
+        path.convertPathToLocaleSuffixUsage(locale, false),
+
+        //inspectionDescriptions/name.html
+        path
+      )
       return result
     }
 
@@ -83,11 +84,10 @@ class LocalizationUtil {
       val locale = specialLocale ?: getLocale()
       val result = mutableListOf<Path>()
       //localizations/zh/CN/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, locale, true))
+      result.add(path.convertToLocalizationFolderUsage(locale, true))
 
       //localizations/zh/inspectionDescriptions/name.html
-      result.add(convertPathToLocalizationFolderUsage(path, locale, false))
+      result.add(path.convertToLocalizationFolderUsage(locale, false))
       return result
     }
-  }
 }

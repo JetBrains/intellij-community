@@ -29,7 +29,7 @@ import java.util.Set;
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
   public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];
-  public static final String INSPECTION_DESCRIPTIONS_FOLDER = "inspectionDescriptions";
+  private static final String INSPECTION_DESCRIPTIONS_FOLDER = "inspectionDescriptions";
 
   private static final Logger LOG = Logger.getInstance(InspectionToolWrapper.class);
 
@@ -187,10 +187,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     Application app = ApplicationManager.getApplication();
     Path path = Path.of(INSPECTION_DESCRIPTIONS_FOLDER).resolve(getDescriptionFileName());
     if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return LocalizationUtil.Companion.getResourceAsStream(getDescriptionContextClass().getClassLoader(), path);
+      return LocalizationUtil.INSTANCE.getResourceAsStream(getDescriptionContextClass().getClassLoader(), path);
     }
 
-    return LocalizationUtil.Companion.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), path);
+    return LocalizationUtil.INSTANCE.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), path);
   }
 
   private @NotNull String getDescriptionFileName() {
