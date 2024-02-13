@@ -96,12 +96,6 @@ internal data class JbProductInfo(
   }
 
   private fun isCompatible(descriptor: IdeaPluginDescriptorImpl): Boolean {
-    if (!descriptor.isEnabled) {
-      JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
-                                   "because it is disabled in the source IDE")
-      return false
-    }
-
     if (PluginManagerCore.getPluginSet().isPluginEnabled(descriptor.pluginId)) {
       JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" is already present in \"${IDEData.getSelf()?.fullName}\"")
       return false
