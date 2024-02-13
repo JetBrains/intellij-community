@@ -190,4 +190,8 @@ public class NewColorAndFontPanel extends JPanel {
       mySchemesPanel,
       new Point(mySchemesPanel.getWidth() / 10, mySchemesPanel.getHeight())), Balloon.Position.below);
   }
+
+  void setSchemesPanelEnabled(boolean isEnabled) {
+    mySchemesPanel.setEnabled(isEnabled);
+  }
 }

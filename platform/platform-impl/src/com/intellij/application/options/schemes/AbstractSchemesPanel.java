@@ -48,6 +48,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
   InfoComponent myInfoComponent;
+  private JPanel myActionLinkContainer;
 
   // region Colors (probably should be standard for platform UI)
   
@@ -121,11 +122,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     controlsPanel.add(myToolbar);
     controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
 
-    ActionLink actionLink = createActionLink();
-    if (actionLink != null) {
-      controlsPanel.add(actionLink);
-      controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
-    }
+    myActionLinkContainer = new JPanel();
+    myActionLinkContainer.setLayout(new BoxLayout(myActionLinkContainer, BoxLayout.LINE_AXIS));
+    controlsPanel.add(myActionLinkContainer);
+    updateActionLinkContainer();
 
     ContextHelpLabel contextHelpLabel = createContextHelpLabel();
     if (contextHelpLabel != null) {
@@ -142,6 +142,22 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     int height = mySchemesCombo.getComponent().getPreferredSize().height;
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
+  }
+
+  private void updateActionLinkContainer() {
+    myActionLinkContainer.removeAll();
+
+    JLabel commentLabel = createActionLinkCommentLabel();
+    if (commentLabel != null) {
+      myActionLinkContainer.add(commentLabel);
+      myActionLinkContainer.add(Box.createRigidArea(new JBDimension(4, 0)));
+    }
+
+    ActionLink actionLink = createActionLink();
+    if (actionLink != null) {
+      myActionLinkContainer.add(actionLink);
+      myActionLinkContainer.add(Box.createRigidArea(new JBDimension(4, 0)));
+    }
   }
 
   private @NotNull ActionToolbar createToolbar() {
@@ -239,6 +255,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   protected abstract @NotNull InfoComponent createInfoComponent();
 
   protected @Nullable ActionLink createActionLink() {
+    return null;
+  }
+
+  protected @Nullable JLabel createActionLinkCommentLabel() {
     return null;
   }
 
@@ -363,7 +383,12 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   @Override
   public void setEnabled(boolean enabled) {
+    boolean oldEnabled = isEnabled();
     super.setEnabled(enabled);
+
     mySchemesCombo.setEnabled(enabled);
+    if (oldEnabled != isEnabled()) {
+      updateActionLinkContainer();
+    }
   }
 }

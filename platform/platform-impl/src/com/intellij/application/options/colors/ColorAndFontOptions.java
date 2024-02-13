@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.actions.QuickChangeColorSchemeAction;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoKt;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorContextProvider;
@@ -460,6 +461,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   private @NotNull Set<NewColorAndFontPanel> getPanels() {
+    if (mySubPanelFactories == null) return new HashSet<>();
+
     Set<NewColorAndFontPanel> result = new HashSet<>();
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
       NewColorAndFontPanel panel = configurable.getSubPanelIfInitialized();
@@ -740,6 +743,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     mySomeSchemesDeleted = false;
     initAll();
     resetSchemesCombo(null);
+    updateEnabledState();
+  }
+
+  boolean isSchemesPanelEnabled() {
+    return !LafManager.getInstance().getAutodetect();
+  }
+
+  private void updateEnabledState() {
+    if (myRootSchemesPanel != null) {
+      boolean isEnabled = isSchemesPanelEnabled();
+      myRootSchemesPanel.setEnabled(isEnabled);
+      for (NewColorAndFontPanel subPanel: getPanels()) {
+        subPanel.setSchemesPanelEnabled(isEnabled);
+      }
+    }
   }
 
   @Override
@@ -807,6 +825,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     if (myEditorColorSchemeConnection == null) {
       myEditorColorSchemeConnection = ApplicationManager.getApplication().getMessageBus().connect(myDisposable);
       myEditorColorSchemeConnection.subscribe(EditorColorsManager.TOPIC, scheme -> editorColorSchemeChanged(scheme));
+      myEditorColorSchemeConnection.subscribe(LafManagerListener.TOPIC, source -> updateEnabledState());
     }
   }
 

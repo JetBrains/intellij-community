@@ -13,11 +13,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> implements SkipSelfSearchComponent {
   private static final Logger LOG = Logger.getInstance(SchemesPanel.class);
@@ -33,6 +36,7 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
   public SchemesPanel(@NotNull ColorAndFontOptions options, int vGap) {
     super(vGap);
     myOptions = options;
+    setEnabled(options.isSchemesPanelEnabled());
   }
 
   private boolean myListLoaded;
@@ -43,12 +47,33 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
 
   @Override
   protected ActionLink createActionLink() {
-    return new ActionLink(ApplicationBundle.message("link.editor.scheme.change.ide.theme"), (actionEvent) -> {
+    String text;
+
+    if (isEnabled()) {
+      text = ApplicationBundle.message("link.editor.scheme.change.ide.theme");
+    }
+    else {
+      text = ApplicationBundle.message("link.editor.scheme.configure");
+    }
+
+    return new ActionLink(text, (actionEvent) -> {
       Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext((ActionLink)actionEvent.getSource()));
       if (settings != null) {
         settings.select(settings.find("preferences.lookFeel"));
       }
     });
+  }
+
+  @Override
+  protected @Nullable JLabel createActionLinkCommentLabel() {
+    if (isEnabled()) {
+      return null;
+    }
+    else {
+      JBLabel label = new JBLabel(ApplicationBundle.message("link.editor.scheme.configure.description"));
+      label.setEnabled(false);
+      return label;
+    }
   }
 
   @Nls
