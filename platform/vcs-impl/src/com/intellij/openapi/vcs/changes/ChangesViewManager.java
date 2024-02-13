@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -42,10 +43,9 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree.TreeStateStrategy;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.ChangesView;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -56,10 +56,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -358,16 +355,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
       setTreeExpander(new MyTreeExpander(this));
 
-      setDoubleClickHandler(e -> {
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return false;
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true);
-        return true;
-      });
-      setEnterKeyHandler(e -> {
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
-        return true;
-      });
-
       new HoverChangesTree(this) {
         @Override
         public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
@@ -399,7 +386,7 @@ public class ChangesViewManager implements ChangesViewEx,
     if (myToolWindowPanel == null) return false;
 
     return myToolWindowPanel.mySplitterDiffPreview != null ||
-           myToolWindowPanel.myEditorDiffPreview != null && ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
+           ChangesViewToolWindowPanel.isOpenEditorDiffPreviewWithSingleClick.asBoolean();
   }
 
   public void diffPreviewChanged(boolean state) {
@@ -451,10 +438,9 @@ public class ChangesViewManager implements ChangesViewEx,
     private final @NotNull ChangesListView myView;
 
     private final @NotNull ChangesViewCommitPanelSplitter myCommitPanelSplitter;
-    private ChangesViewDiffPreviewProcessor myEditorChangeProcessor;
-    private ChangesViewDiffPreviewProcessor mySplitterChangeProcessor;
-    private EditorTabPreview myEditorDiffPreview;
-    private PreviewDiffSplitterComponent mySplitterDiffPreview;
+    private final @NotNull ChangesViewEditorDiffPreview myEditorDiffPreview;
+    private @Nullable ChangesViewSplitterDiffPreview mySplitterDiffPreview;
+
     private final @NotNull Wrapper myProgressLabel = new Wrapper();
 
     private @Nullable ChangesViewCommitPanel myCommitPanel;
@@ -463,7 +449,7 @@ public class ChangesViewManager implements ChangesViewEx,
     private final BackgroundRefresher<@Nullable Runnable> myBackgroundRefresher =
       new BackgroundRefresher<>(getClass().getSimpleName() + " refresh", this);
 
-    private boolean myModelUpdateInProgress;
+    private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
     private boolean myDisposed = false;
 
@@ -514,15 +500,24 @@ public class ChangesViewManager implements ChangesViewEx,
       myMainPanel = simplePanel(myContentPanel)
         .addToBottom(myProgressLabel);
 
-      setDiffPreview();
+      myEditorDiffPreview = new ChangesViewEditorDiffPreview();
+      Disposer.register(this, myEditorDiffPreview);
 
-      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setDiffPreview);
-      isOpenEditorDiffPreviewWithSingleClick.addListener(new RegistryValueListener() {
-        @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
-          if (myEditorDiffPreview != null) setDiffPreview();
-        }
-      }, this);
+      setSplitterDiffPreview();
+      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setSplitterDiffPreview);
+
+      // Override the handlers registered by editorDiffPreview
+      myView.setDoubleClickHandler(e -> {
+        if (EditSourceOnDoubleClickHandler.isToggleEvent(myView, e)) return false;
+        if (myEditorDiffPreview.handleDoubleClick(e)) return true;
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true);
+        return true;
+      });
+      myView.setEnterKeyHandler(e -> {
+        if (myEditorDiffPreview.handleEnterKey()) return true;
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
+        return true;
+      });
 
       setContent(myMainPanel);
 
@@ -546,10 +541,6 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       });
       busConnection.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
-      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, () -> {
-        if (myEditorChangeProcessor != null) myEditorChangeProcessor.fireDiffSettingsChanged();
-        if (mySplitterChangeProcessor != null) mySplitterChangeProcessor.fireDiffSettingsChanged();
-      });
 
       busConnection.subscribe(ChangesViewModifier.TOPIC, () -> scheduleRefresh());
       busConnection.subscribe(VcsManagedFilesHolder.TOPIC, () -> {
@@ -559,142 +550,131 @@ public class ChangesViewManager implements ChangesViewEx,
       });
 
       scheduleRefresh();
-      updatePreview(false);
     }
 
     @Override
     public void dispose() {
       myDisposed = true;
+
+      if (mySplitterDiffPreview != null) Disposer.dispose(mySplitterDiffPreview);
+      mySplitterDiffPreview = null;
     }
 
-    private void setDiffPreview() {
+    private void setSplitterDiffPreview() {
       if (myDisposed) return;
 
-      boolean isEditorPreview = true;
       boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
 
       //noinspection DoubleNegation
-      boolean needUpdatePreviews = isEditorPreview != (myEditorChangeProcessor != null) ||
-                                   hasSplitterPreview != (mySplitterChangeProcessor != null);
+      boolean needUpdatePreviews = hasSplitterPreview != (mySplitterDiffPreview != null);
       if (!needUpdatePreviews) return;
 
-      if (myEditorChangeProcessor != null) Disposer.dispose(myEditorChangeProcessor);
-      if (mySplitterChangeProcessor != null) Disposer.dispose(mySplitterChangeProcessor);
-
-      //noinspection ConstantValue
-      if (isEditorPreview) {
-        myEditorChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, true);
-        Disposer.register(this, myEditorChangeProcessor);
-        myEditorDiffPreview = installEditorPreview(myEditorChangeProcessor, hasSplitterPreview);
-      }
-      else {
-        myEditorChangeProcessor = null;
-        myEditorDiffPreview = null;
-      }
-
       if (hasSplitterPreview) {
-        mySplitterChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, false);
-        Disposer.register(this, mySplitterChangeProcessor);
-        mySplitterDiffPreview = installSplitterPreview(mySplitterChangeProcessor);
+        mySplitterDiffPreview = new ChangesViewSplitterDiffPreview();
+        DiffPreview.setPreviewVisible(mySplitterDiffPreview, myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
       }
       else {
-        mySplitterChangeProcessor = null;
+        Disposer.dispose(mySplitterDiffPreview);
         mySplitterDiffPreview = null;
       }
-
-      configureDiffPreview();
     }
 
-    private @NotNull EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor,
-                                                           boolean hasSplitterPreview) {
-      return new SimpleTreeEditorDiffPreview(changeProcessor, myView, myContentPanel,
-                                             isOpenEditorDiffPreviewWithSingleClick.asBoolean() && !hasSplitterPreview) {
-        @Override
-        public void returnFocusToTree() {
-          ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
-          if (toolWindow != null) toolWindow.activate(null);
-        }
+    private class ChangesViewEditorDiffPreview extends TreeHandlerEditorDiffPreview {
+      private ChangesViewEditorDiffPreview() {
+        super(myView, myContentPanel, ChangesViewDiffPreviewHandler.INSTANCE);
+      }
 
-        @Override
-        public void updateDiffAction(@NotNull AnActionEvent e) {
-          ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
-        }
+      @NotNull
+      @Override
+      protected DiffEditorViewer createViewer() {
+        return new ChangesViewDiffPreviewProcessor(ChangesViewToolWindowPanel.this, myView, true);
+      }
 
-        @Override
-        protected String getCurrentName() {
-          String changeName = changeProcessor.getCurrentChangeName();
-          return changeName != null
-                 ? VcsBundle.message("commit.editor.diff.preview.title", changeName)
-                 : VcsBundle.message("commit.editor.diff.preview.empty.title");
-        }
+      @Override
+      public void returnFocusToTree() {
+        ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
+        if (toolWindow != null) toolWindow.activate(null);
+      }
 
-        @Override
-        protected boolean skipPreviewUpdate() {
-          if (super.skipPreviewUpdate()) return true;
-          if (!myView.equals(IdeFocusManager.getInstance(myProject).getFocusOwner())) return true;
-          if (!isPreviewOpen() && !isEditorPreviewAllowed()) return true;
+      @Override
+      public void updateDiffAction(@NotNull AnActionEvent e) {
+        ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
+      }
 
-          return myModelUpdateInProgress;
-        }
+      @Nullable
+      @Override
+      public String getEditorTabName(@Nullable ChangeViewDiffRequestProcessor.Wrapper wrapper) {
+        return wrapper != null
+               ? VcsBundle.message("commit.editor.diff.preview.title", wrapper.getPresentableName())
+               : VcsBundle.message("commit.editor.diff.preview.empty.title");
+      }
 
-        @Override
-        protected boolean isPreviewOnDoubleClickAllowed() {
-          return isCommitToolWindowShown(myProject) ? VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
-                 VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
-        }
+      @Override
+      protected boolean isOpenPreviewWithSingleClickEnabled() {
+        return isOpenEditorDiffPreviewWithSingleClick.asBoolean();
+      }
 
-        @Override
-        protected boolean isPreviewOnEnterAllowed() {
-          return isCommitToolWindowShown(myProject) ? VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
-                 VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
-        }
-      };
+      @Override
+      protected boolean isOpenPreviewWithSingleClick() {
+        if (myChangesPanel.getChangesView().isModelUpdateInProgress()) return false;
+        if (mySplitterDiffPreview != null && myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return false;
+        return super.isOpenPreviewWithSingleClick();
+      }
+
+      @Override
+      protected boolean isPreviewOnDoubleClick() {
+        return isCommitToolWindowShown(myProject) ?
+               VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
+               VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
+      }
+
+      @Override
+      protected boolean isPreviewOnEnter() {
+        return isCommitToolWindowShown(myProject) ?
+               VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK :
+               VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK;
+      }
     }
 
-    private @NotNull PreviewDiffSplitterComponent installSplitterPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
-      PreviewDiffSplitterComponent previewSplitter =
-        new PreviewDiffSplitterComponent(changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
-      previewSplitter.setFirstComponent(myContentPanel);
-      DiffPreview.setPreviewVisible(previewSplitter, myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+    private class ChangesViewSplitterDiffPreview implements DiffPreview, Disposable {
+      private final ChangesViewDiffPreviewProcessor myProcessor;
+      private final PreviewDiffSplitterComponent mySplitterComponent;
 
-      myView.addSelectionListener(() -> {
-        boolean fromModelRefresh = myModelUpdateInProgress;
-        invokeLater(() -> previewSplitter.updatePreview(fromModelRefresh));
-      }, changeProcessor);
+      private ChangesViewSplitterDiffPreview() {
+        myProcessor = new ChangesViewDiffPreviewProcessor(ChangesViewToolWindowPanel.this, myView, false);
+        mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
 
-      myMainPanel.addToCenter(previewSplitter);
-      Disposer.register(changeProcessor, () -> {
-        if (Disposer.isDisposed(this)) return;
-        myMainPanel.remove(previewSplitter);
-        myMainPanel.addToCenter(myContentPanel);
-
+        mySplitterComponent.setFirstComponent(myContentPanel);
+        myMainPanel.addToCenter(mySplitterComponent);
         myMainPanel.revalidate();
         myMainPanel.repaint();
-      });
+      }
 
-      return previewSplitter;
-    }
+      @Override
+      public void dispose() {
+        Disposer.dispose(myProcessor);
 
-    private boolean isEditorPreviewAllowed() {
-      return !isOpenEditorDiffPreviewWithSingleClick.asBoolean() || myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
+        if (!ChangesViewToolWindowPanel.this.myDisposed) {
+          myMainPanel.addToCenter(myContentPanel);
+          myMainPanel.revalidate();
+          myMainPanel.repaint();
+        }
+      }
+
+      @Override
+      public boolean openPreview(boolean requestFocus) {
+        return mySplitterComponent.openPreview(requestFocus);
+      }
+
+      @Override
+      public void closePreview() {
+        mySplitterComponent.closePreview();
+      }
     }
 
     private void closeEditorPreview(boolean onlyIfEmpty) {
-      if (myEditorDiffPreview == null) return;
-
-      EditorTabPreview editorPreview = myEditorDiffPreview;
-
-      if (onlyIfEmpty && editorPreview.hasContent()) return;
-      editorPreview.closePreview();
-    }
-
-    private void updatePreview(boolean fromModelRefresh) {
-      if (myEditorDiffPreview != null) {
-        myEditorDiffPreview.updatePreview(fromModelRefresh);
-      }
-      if (mySplitterDiffPreview != null) {
-        mySplitterDiffPreview.updatePreview(fromModelRefresh);
-      }
+      if (onlyIfEmpty && myEditorDiffPreview.hasContent()) return;
+      myEditorDiffPreview.closePreview();
     }
 
     public void updateCommitWorkflow() {
@@ -704,7 +684,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myCommitWorkflowHandler == newWorkflowHandler) return;
 
       if (newWorkflowHandler != null) {
-        newWorkflowHandler.addActivityListener(() -> configureDiffPreview());
+        newWorkflowHandler.addActivityListener(() -> myDispatcher.getMulticaster().allowExcludeFromCommitChanged());
 
         ChangesViewCommitPanel newCommitPanel = (ChangesViewCommitPanel)newWorkflowHandler.getUi();
         newCommitPanel.registerRootComponent(this);
@@ -720,7 +700,7 @@ public class ChangesViewManager implements ChangesViewEx,
         myCommitPanel = null;
       }
 
-      configureDiffPreview();
+      myDispatcher.getMulticaster().allowExcludeFromCommitChanged();
       configureToolbars();
     }
 
@@ -728,13 +708,8 @@ public class ChangesViewManager implements ChangesViewEx,
       return myCommitWorkflowHandler != null && myCommitWorkflowHandler.isActive();
     }
 
-    private void configureDiffPreview() {
-      if (myEditorChangeProcessor != null) {
-        myEditorChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
-      }
-      if (mySplitterChangeProcessor != null) {
-        mySplitterChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
-      }
+    public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
+      myDispatcher.addListener(listener, disposable);
     }
 
     private void configureToolbars() {
@@ -930,40 +905,41 @@ public class ChangesViewManager implements ChangesViewEx,
 
       Span span = TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).startSpan();
       try {
-        myModelUpdateInProgress = true;
-        try {
-          updateModel(myView, treeModel);
-        }
-        finally {
-          myModelUpdateInProgress = false;
-        }
+        myView.updateTreeModel(treeModel, new ChangesViewTreeStateStrategy());
 
         if (myCommitWorkflowHandler != null && !hasPendingRefresh) {
           myCommitWorkflowHandler.synchronizeInclusion(changeLists, unversionedFiles);
         }
-
-        updatePreview(true);
       }
       finally {
         span.end();
       }
     }
 
-    private static void updateModel(@NotNull ChangesListView view,
-                                    @NotNull DefaultTreeModel newModel) {
-      TreeState state = TreeState.createOn(view, view.getRoot());
-      state.setScrollToSelection(false);
-      ChangesBrowserNode<?> oldRoot = view.getRoot();
-      view.setModel(newModel);
-      ChangesBrowserNode<?> newRoot = view.getRoot();
-      state.applyTo(view, newRoot);
+    private static class ChangesViewTreeStateStrategy implements TreeStateStrategy<ChangesViewTreeStateStrategy.MyState> {
+      @Override
+      public @NotNull MyState saveState(@NotNull ChangesTree tree) {
+        ChangesBrowserNode<?> oldRoot = tree.getRoot();
+        TreeState state = TreeState.createOn(tree, oldRoot);
+        state.setScrollToSelection(false);
+        return new MyState(state, oldRoot.getFileCount());
+      }
 
-      initTreeStateIfNeeded(view, oldRoot, newRoot);
+      @Override
+      public void restoreState(@NotNull ChangesTree tree, @NotNull MyState state, boolean scrollToSelection) {
+        ChangesBrowserNode<?> newRoot = tree.getRoot();
+        state.treeState.applyTo(tree, newRoot);
+
+        initTreeStateIfNeeded((ChangesListView)tree, newRoot, state.oldFileCount);
+      }
+
+      private record MyState(@NotNull TreeState treeState, int oldFileCount) {
+      }
     }
 
     private static void initTreeStateIfNeeded(@NotNull ChangesListView view,
-                                              @NotNull ChangesBrowserNode<?> oldRoot,
-                                              @NotNull ChangesBrowserNode<?> newRoot) {
+                                              @NotNull ChangesBrowserNode<?> newRoot,
+                                              int oldFileCount) {
       ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
       if (defaultListNode == null) return;
 
@@ -971,7 +947,7 @@ public class ChangesViewManager implements ChangesViewEx,
         TreeUtil.selectNode(view, defaultListNode);
       }
 
-      if (oldRoot.getFileCount() == 0 && TreeUtil.collectExpandedPaths(view).isEmpty()) {
+      if (oldFileCount == 0 && TreeUtil.collectExpandedPaths(view).isEmpty()) {
         view.expandSafe(defaultListNode);
       }
     }
@@ -1081,6 +1057,10 @@ public class ChangesViewManager implements ChangesViewEx,
         myChangesViewManager.myState.myShowIgnored = state;
         scheduleRefreshNow();
       }
+    }
+
+    public interface Listener extends EventListener {
+      void allowExcludeFromCommitChanged();
     }
   }
 

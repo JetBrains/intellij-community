@@ -8,12 +8,11 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
+import com.intellij.openapi.vcs.changes.ChangesViewManager.ChangesViewToolWindowPanel
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
-import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import com.intellij.openapi.vcs.changes.ui.TagChangesBrowserNode
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
@@ -23,7 +22,7 @@ import java.util.*
 
 private fun wrap(project: Project,
                  changesNodes: Iterable<ChangesBrowserNode<*>>,
-                 unversioned: Iterable<FilePath>): Iterable<Wrapper> =
+                 unversioned: Iterable<FilePath>): JBIterable<Wrapper> =
   JBIterable.empty<Wrapper>()
     .append(JBIterable.from(changesNodes).map { wrapNode(project, it) }.filter(Objects::nonNull))
     .append(JBIterable.from(unversioned).map { UnversionedFileWrapper(it) })
@@ -63,41 +62,70 @@ private inline fun <reified T : ChangesBrowserNode<*>> findNodeOfType(node: Chan
   return null
 }
 
-private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesListView,
+private class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewManager.ChangesViewToolWindowPanel,
+                                              changesView: ChangesListView,
                                               private val isInEditor: Boolean)
-  : ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
+  : TreeHandlerDiffRequestProcessor(if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW, changesView,
+                                    ChangesViewDiffPreviewHandler) {
 
   init {
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
+
+    val busConnection = project.messageBus.connect(this)
+    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingsListener())
+
+    panel.addListener(MyCommitModeListener(), this)
+    setAllowExcludeFromCommit(panel.isAllowExcludeFromCommit)
+
+    TreeHandlerChangesTreeTracker(tree, this, handler).track()
   }
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
-  override fun iterateSelectedChanges(): Iterable<Wrapper> =
-    wrap(project, changesView.selectedChangesNodes, changesView.selectedUnversionedFiles)
-
-  override fun iterateAllChanges(): Iterable<Wrapper> =
-    wrap(project, changesView.changesNodes, changesView.unversionedFiles)
-
   override fun showAllChangesForEmptySelection(): Boolean = false
 
-  override fun selectChange(change: Wrapper) {
-    val tag = (change.tag as? ChangesViewUserObjectTag)?.userObject
-    val treePath = changesView.findNodePathInTree(change.userObject, tag) ?: return
-    TreeUtil.selectPath(changesView, treePath, false)
-  }
-
-  fun setAllowExcludeFromCommit(value: Boolean) {
+  private fun setAllowExcludeFromCommit(value: Boolean) {
     if (DiffUtil.isUserDataFlagSet(ALLOW_EXCLUDE_FROM_COMMIT, context) == value) return
     context.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, value)
     fireDiffSettingsChanged()
   }
 
-  fun fireDiffSettingsChanged() {
+  private fun fireDiffSettingsChanged() {
     dropCaches()
     updateRequest(true)
+  }
+
+  private inner class MyLineStatusTrackerSettingsListener : LineStatusTrackerSettingListener {
+    override fun settingsUpdated() {
+      fireDiffSettingsChanged()
+    }
+  }
+
+  private inner class MyCommitModeListener : ChangesViewToolWindowPanel.Listener {
+    override fun allowExcludeFromCommitChanged() {
+      setAllowExcludeFromCommit(panel.isAllowExcludeFromCommit)
+    }
+  }
+}
+
+internal object ChangesViewDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
+  override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
+    val changesView = tree as? ChangesListView ?: return JBIterable.empty()
+    return wrap(tree.project, changesView.selectedChangesNodes, changesView.selectedUnversionedFiles)
+  }
+
+  override fun iterateAllChanges(tree: ChangesTree): JBIterable<Wrapper> {
+    val changesView = tree as? ChangesListView ?: return JBIterable.empty()
+    return wrap(tree.project, changesView.changesNodes, changesView.unversionedFiles)
+  }
+
+  override fun selectChange(tree: ChangesTree, change: Wrapper) {
+    val tag = (change.tag as? ChangesViewUserObjectTag)?.userObject
+    val changesView = tree as? ChangesListView ?: return
+    val treePath = changesView.findNodePathInTree(change.userObject, tag) ?: return
+    TreeUtil.selectPath(changesView, treePath, false)
   }
 }
 
