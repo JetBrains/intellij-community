@@ -130,7 +130,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
         return QuickDocHighlightingHelper.getStyledFragment(name, attributes);
       }
       else {
-        return named.getName();
+        return name;
       }
     }
     return null;
