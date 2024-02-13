@@ -345,12 +345,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       }
       else {
         val category = DEFAULT_SETTINGS_CATEGORIES[data.id] ?: continue
-        filteredCategories.add(category.settingsCategory)
+        filteredCategories.add(category)
       }
     }
     LOG.info("Will import the following categories: ${filteredCategories.joinToString()}")
 
-    val allRoamableCategories = DEFAULT_SETTINGS_CATEGORIES.values.map { it.settingsCategory }
+    val allRoamableCategories = DEFAULT_SETTINGS_CATEGORIES.values
     val importEverything = filteredCategories.containsAll(allRoamableCategories)
                            && filteredCategories.contains(SettingsCategory.PLUGINS)
                            && unselectedPlugins.isNullOrEmpty()
@@ -474,10 +474,11 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                                                      ImportSettingsBundle.message("settings.category.system.description")
     )
     val DEFAULT_SETTINGS_CATEGORIES = mapOf(
-      SettingsCategory.UI.name to UI_CATEGORY,
-      SettingsCategory.CODE.name to CODE_CATEGORY,
-      SettingsCategory.TOOLS.name to TOOLS_CATEGORY,
-      SettingsCategory.SYSTEM.name to SYSTEM_CATEGORY
+      SettingsCategory.UI.name to SettingsCategory.UI,
+      SettingsCategory.KEYMAP.name to SettingsCategory.KEYMAP,
+      SettingsCategory.CODE.name to SettingsCategory.CODE,
+      SettingsCategory.TOOLS.name to SettingsCategory.TOOLS,
+      SettingsCategory.SYSTEM.name to SettingsCategory.SYSTEM
     )
   }
 
