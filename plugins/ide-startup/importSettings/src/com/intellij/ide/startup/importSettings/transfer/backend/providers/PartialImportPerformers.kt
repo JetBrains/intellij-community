@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers
 
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.startup.importSettings.models.*
@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.StartupUiUtil
 import kotlin.io.path.Path
-import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Similar to ImportPerformer
@@ -63,7 +62,7 @@ class LookAndFeelImportPerformer : PartialImportPerformer {
   override fun performEdt(project: Project?, settings: Settings) {
     (settings.laf as? BundledLookAndFeel)?.let {
       val laf = it.lafInfo
-      val wasDark = StartupUiUtil.isUnderDarcula
+      val wasDark = StartupUiUtil.isDarkTheme
 
       LafManager.getInstance().apply {
         setCurrentLookAndFeel(laf, false)
@@ -71,7 +70,7 @@ class LookAndFeelImportPerformer : PartialImportPerformer {
         repaintUI()
       }
 
-      val isDark = StartupUiUtil.isUnderDarcula
+      val isDark = StartupUiUtil.isDarkTheme
 
       if (isDark) {
         DarculaInstaller.install()
@@ -200,11 +199,11 @@ class KeymapSchemeImportPerformer : PartialImportPerformer {
       }
     }
 
-    keymap.removal.forEach {
-      val og = derived.getShortcuts(it.actionId).toSet()
-      val toRemove = it.shortcuts.filter { og.contains(it) }
+    keymap.removal.forEach { removedBinding ->
+      val og = derived.getShortcuts(removedBinding.actionId).toSet()
+      val toRemove = removedBinding.shortcuts.filter { og.contains(it) }
       toRemove.forEach { tr ->
-        derived.removeShortcut(it.actionId, tr)
+        derived.removeShortcut(removedBinding.actionId, tr)
       }
     }
 
