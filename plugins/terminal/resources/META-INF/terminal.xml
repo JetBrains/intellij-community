@@ -78,6 +78,7 @@
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
+    <advancedSetting id="terminal.editor.max.text.length" default="1048576" groupKey="group.advanced.settings.terminal"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

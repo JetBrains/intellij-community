@@ -123,11 +123,7 @@ class TerminalOutputController(
       if (lastLineText.isBlank()) {
         // remove also the line break if it is not the first block
         val startRemoveOffset = max(block.outputStartOffset, lastLineStart - if (lastLineStart > 0) 1 else 0)
-        document.deleteString(startRemoveOffset, block.endOffset)
-        outputModel.getHighlightings(block)?.let { current ->
-          val updated = current.filter { it.endOffset <= block.endOffset }
-          outputModel.putHighlightings(block, updated)
-        }
+        outputModel.deleteDocumentRange(block, TextRange(startRemoveOffset, block.endOffset))
       }
       if (document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
@@ -214,6 +210,7 @@ class TerminalOutputController(
 
     outputModel.putHighlightings(block, highlightings)
     editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
+    outputModel.trimOutput()
     hyperlinkHighlighter.highlightHyperlinks(block)
 
     // Install decorations lazily, only if there is some text.

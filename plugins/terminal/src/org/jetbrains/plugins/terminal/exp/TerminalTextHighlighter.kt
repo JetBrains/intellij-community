@@ -8,7 +8,12 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.tree.IElementType
 
-data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
+data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes) {
+  init {
+    check(startOffset <= endOffset)
+  }
+  fun length() = endOffset - startOffset
+}
 
 class TerminalTextHighlighter private constructor(
   private val allHighlightingsSnapshotProvider: () -> AllHighlightingsSnapshot

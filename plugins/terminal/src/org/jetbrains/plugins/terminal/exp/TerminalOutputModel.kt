@@ -8,12 +8,15 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.RangeMarkerImpl
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.math.max
+import kotlin.math.min
 
 class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
@@ -70,6 +73,12 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun removeBlock(block: CommandBlock) {
+    val startBlockInd = blocks.indexOf(block)
+    check(startBlockInd >= 0)
+    for (blockInd in startBlockInd + 1 until blocks.size) {
+      deleteDocumentRangeInHighlightings(blocks[blockInd], TextRange(block.startOffset, block.endOffset))
+    }
+
     decorations[block]?.let {
       Disposer.dispose(it.topInlay)
       Disposer.dispose(it.bottomInlay)
@@ -183,6 +192,80 @@ class TerminalOutputModel(val editor: EditorEx) {
     listeners.forEach { it.blockDecorationStateChanged(block, oldStates, newStates) }
   }
 
+  @RequiresEdt
+  fun trimOutput() {
+    val maxCapacity = AdvancedSettings.getInt("terminal.editor.max.text.length")
+    val textLength = document.textLength
+    if (textLength <= maxCapacity) {
+      return
+    }
+    val topBlockCountToRemove = findTopBlockCountToRemove(maxCapacity, textLength)
+    val topBlocksToRemove = blocks.subList(0, topBlockCountToRemove).toList()
+    topBlocksToRemove.forEach {
+      removeBlock(it)
+    }
+    trimTopBlock(maxCapacity)
+  }
+
+  private fun trimTopBlock(maxCapacity: Int) {
+    val textLength = document.textLength
+    val textLengthToRemove = textLength - maxCapacity
+    if (textLengthToRemove <= 0) {
+      return
+    }
+    val block = blocks.firstOrNull() ?: return
+    val outputStartOffset = block.outputStartOffset
+    val outputLengthToRemove = min(block.endOffset - outputStartOffset, textLengthToRemove)
+    deleteDocumentRange(block, TextRange(outputStartOffset, outputStartOffset + outputLengthToRemove))
+  }
+
+  private fun findTopBlockCountToRemove(maxCapacity: Int, textLength: Int): Int {
+    val firstRetainedBlockInd = blocks.indexOfFirst {
+      it.endOffset + maxCapacity > textLength
+    }
+    return firstRetainedBlockInd.coerceAtLeast(0)
+  }
+
+  fun deleteDocumentRange(block: CommandBlock, deleteRange: TextRange) {
+    val startBlockInd = blocks.indexOf(block)
+    check(startBlockInd >= 0)
+    if (!deleteRange.isEmpty) {
+      for (blockInd in startBlockInd until blocks.size) {
+        deleteDocumentRangeInHighlightings(blocks[blockInd], deleteRange)
+      }
+      document.deleteString(deleteRange.startOffset, deleteRange.endOffset)
+    }
+  }
+
+  private fun deleteDocumentRangeInHighlightings(block: CommandBlock, deleteRange: TextRange) {
+    val highlightings = getHighlightings(block) ?: emptyList()
+    val updatedHighlightings: List<HighlightingInfo> = highlightings.mapNotNull {
+      when {
+        it.endOffset <= deleteRange.startOffset -> it
+        findIntersectionLength(it, deleteRange) > 0 -> {
+          val intersectionLength = findIntersectionLength(it, deleteRange)
+          val newRangeStart = min(it.startOffset, deleteRange.startOffset)
+          val newRangeEnd = newRangeStart + it.length() - intersectionLength
+          if (newRangeStart != newRangeEnd)
+            HighlightingInfo(newRangeStart, newRangeEnd, it.textAttributes)
+          else
+            null // the whole highlighting is deleted
+        }
+        else -> {
+          check(it.startOffset >= deleteRange.endOffset)
+          val newRangeStart = it.startOffset - deleteRange.length
+          HighlightingInfo(newRangeStart, newRangeStart + it.length(), it.textAttributes)
+        }
+      }
+    }
+    putHighlightings(block, updatedHighlightings)
+  }
+
+  private fun findIntersectionLength(range1: HighlightingInfo, range2: TextRange): Int {
+    val intersectionLength = min(range1.endOffset, range2.endOffset) - max(range1.startOffset, range2.startOffset)
+    return max(intersectionLength, 0)
+  }
+
   interface TerminalOutputListener {
     fun blockRemoved(block: CommandBlock) {}
     fun blockDecorationStateChanged(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {}
@@ -261,3 +344,5 @@ data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, 
   val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
   val withCommand: Boolean = !command.isNullOrEmpty()
 }
+
+internal const val TERMINAL_EDITOR_MAX_TEXT_LENGTH: String = "terminal.editor.max.text.length"

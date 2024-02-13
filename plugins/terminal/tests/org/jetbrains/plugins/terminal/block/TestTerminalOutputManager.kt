@@ -26,10 +26,12 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
   val document: DocumentEx
     get() = editor.document
 
-  fun createBlock(command: String, output: TestCommandOutput) {
+  fun createBlock(command: String, output: TestCommandOutput): CommandBlock {
     val block = outputModel.createBlock(command, null)
     outputModel.putHighlightings(block, output.highlightings)
-    editor.document.insertString(0, output.text)
+    editor.document.replaceString(block.startOffset, block.endOffset, output.text)
+    outputModel.trimOutput()
+    return block
   }
 
   companion object {
