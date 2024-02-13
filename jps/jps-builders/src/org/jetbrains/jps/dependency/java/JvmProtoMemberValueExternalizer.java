@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +109,7 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
         for (JvmProtoMemberValueExternalizer ext : values()) {
           if (ext.ordinal() == ord) {
             int length = in.readInt();
-            final Object array = Array.newInstance(ext.dataType, length);
+            final Object array = Array.newInstance(getArrayElementType(ext.dataType), length);
             for (int idx = 0; idx < length; idx++) {
               Array.set(array, idx, ext.load(in));
             }
@@ -118,6 +118,34 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
         }
       }
       return NONE.load(in);
+    }
+
+    private Class<?> getArrayElementType(Class<?> dataType) {
+      if (Character.class.equals(dataType)) {
+        return char.class;
+      }
+      if (Byte.class.equals(dataType)) {
+        return byte.class;
+      }
+      if (Short.class.equals(dataType)) {
+        return short.class;
+      }
+      if (Integer.class.equals(dataType)) {
+        return int.class;
+      }
+      if (Long.class.equals(dataType)) {
+        return long.class;
+      }
+      if (Float.class.equals(dataType)) {
+        return float.class;
+      }
+      if (Double.class.equals(dataType)) {
+        return double.class;
+      }
+      if (Boolean.class.equals(dataType)) {
+        return boolean.class;
+      }
+      return dataType;
     }
   }
   ;
