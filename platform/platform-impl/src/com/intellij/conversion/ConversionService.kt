@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion
 
 import com.intellij.openapi.components.serviceOrNull
@@ -22,7 +22,7 @@ abstract class ConversionService {
 
   abstract fun convertModule(project: Project, moduleFile: Path): ConversionResult
 
-  abstract fun saveConversionResult(projectPath: Path)
+  abstract suspend fun saveConversionResult(projectPath: Path)
 
   companion object {
     @JvmStatic

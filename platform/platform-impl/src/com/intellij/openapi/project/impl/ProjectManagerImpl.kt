@@ -874,7 +874,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                                      projectInitObserver: ProjectInitObserver?): Project {
     var conversionResult: ConversionResult? = null
     if (options.runConversionBeforeOpen) {
-      val conversionService = ConversionService.getInstance()
+      val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx)
+        .getServiceAsyncIfDefined(ConversionService::class.java)
       if (conversionService != null) {
         conversionResult = span("project conversion") {
           conversionService.convert(projectStoreBaseDir)

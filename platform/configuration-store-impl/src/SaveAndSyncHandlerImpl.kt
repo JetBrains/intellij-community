@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
@@ -222,7 +222,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
   private suspend fun executeOnIdle() {
     withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
-      (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+      (serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl).saveAllDocuments(false)
     }
   }
 
@@ -281,9 +281,11 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       }
 
       val project = (componentManager as? Project)?.takeIf { !it.isDefault }
-      runWithModalProgressBlocking(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                                   title = getProgressTitle(componentManager),
-                                   cancellation = TaskCancellation.nonCancellable()) {
+      runWithModalProgressBlocking(
+        owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
+        title = getProgressTitle(componentManager),
+        cancellation = TaskCancellation.nonCancellable(),
+      ) {
         // ensure that is fully canceled
         currentJob?.join()
 
@@ -293,11 +295,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
           val stateStore = project.stateStore
           val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
           // update last modified for all project files modified between project open and close
-          withContext(Dispatchers.IO) {
-            blockingContext {
-              ConversionService.getInstance()?.saveConversionResult(path)
-            }
-          }
+          ConversionService.getInstance()?.saveConversionResult(path)
         }
       }
     }
@@ -308,8 +306,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     return isSavedSuccessfully
   }
 
-  private fun canSyncOrSave(): Boolean =
-    !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
+  private fun canSyncOrSave(): Boolean = !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
 
   private fun startBackgroundSync(): Job {
     LOG.debug("starting background VFS sync")
@@ -406,14 +403,20 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   @NlsContexts.ProgressTitle
-  private fun getProgressTitle(componentManager: ComponentManager): String =
-    if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
+  private fun getProgressTitle(componentManager: ComponentManager): String {
+    return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
+  }
 
-  private fun <T> generalSettingFlow(settings: GeneralSettings, name: GeneralSettings.PropertyNames, getter: (GeneralSettings) -> T): Flow<T> =
-    merge(
+  private fun <T> generalSettingFlow(
+    settings: GeneralSettings,
+    name: GeneralSettings.PropertyNames,
+    getter: (GeneralSettings) -> T,
+  ): Flow<T> {
+    return merge(
       settings.propertyChangedFlow
         .filter { it == name }
         .map { getter(GeneralSettings.getInstance()) },
       flowOf(getter(GeneralSettings.getInstance())),
     )
+  }
 }

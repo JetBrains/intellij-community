@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.conversion.impl
 
@@ -15,10 +15,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.xml.dom.readXmlAsModel
 import it.unimi.dsi.fastutil.objects.Object2LongMap
+import it.unimi.dsi.fastutil.objects.Object2LongMaps
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
+import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -30,7 +33,6 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.*
-import java.util.function.BiFunction
 import kotlin.concurrent.Volatile
 
 private val LOG = logger<ConversionContextImpl>()
@@ -54,8 +56,6 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   private var projectLibrariesSettings: MultiFilesSettings? = null
   private var artifactSettings: MultiFilesSettings? = null
 
-  private val conversionResult: Lazy<CachedConversionResult>
-
   private var moduleListFile: Path
 
   init {
@@ -74,16 +74,6 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
       moduleListFile = projectPath.resolve("modules.xml")
       workspaceFile = SettingsXmlFile(settingsBaseDir!!.resolve("workspace.xml"))
     }
-
-    conversionResult = lazy(LazyThreadSafetyMode.NONE) {
-      try {
-        return@lazy CachedConversionResult.load(CachedConversionResult.getConversionInfoFile(projectFile.path), projectBaseDir)
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-        return@lazy CachedConversionResult.createEmpty()
-      }
-    }
   }
 
   companion object {
@@ -94,28 +84,58 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
     }
   }
 
-  @Throws(CannotConvertException::class, IOException::class)
-  fun saveConversionResult(allProjectFiles: Object2LongMap<String?> = this.getAllProjectFiles()) {
-    CachedConversionResult.saveConversionResult(
-      allProjectFiles,
-      CachedConversionResult.getConversionInfoFile(projectFile.path),
-      projectBaseDir,
-    )
+  fun loadConversionResult(): CachedConversionResult {
+    try {
+      return loadCachedConversionResult(CachedConversionResult.getConversionInfoFile(projectFile.path), projectBaseDir)
+    }
+    catch (e: Exception) {
+      LOG.error(e)
+      return CachedConversionResult.createEmpty()
+    }
   }
 
-  val projectFileTimestamps: Object2LongMap<String>
-    get() = conversionResult.value.projectFilesTimestamps
+  suspend fun saveConversionResult() {
+    val projectFileMap = getAllProjectFiles()
+    val root = Element("conversion")
+    val appliedConverters = Element("applied-converters")
+    root.addContent(appliedConverters)
+    val extensionIterator = ConverterProvider.EP_NAME.filterableLazySequence().iterator()
+    while (extensionIterator.hasNext()) {
+      extensionIterator.next().id?.let {
+        appliedConverters.addContent(Element("converter").setAttribute("id", it))
+      }
+    }
 
-  val appliedConverters: Set<String>
-    get() = conversionResult.value.appliedConverters
+    val projectFiles = Element("project-files")
+    root.addContent(projectFiles)
 
-  @Throws(CannotConvertException::class)
-  fun getAllProjectFiles(): Object2LongMap<String?> {
+    val basePathWithSlash = projectBaseDir.toString() + File.separator
+    val iterator = Object2LongMaps.fastIterator(projectFileMap)
+    while (iterator.hasNext()) {
+      val entry = iterator.next()
+      val element = Element("f")
+      val path = entry.key
+      element.setAttribute("p", if (path.startsWith(basePathWithSlash)) {
+        CachedConversionResult.RELATIVE_PREFIX + path.substring(basePathWithSlash.length)
+      }
+      else {
+        path
+      })
+      element.setAttribute("t", entry.longValue.toString())
+      projectFiles.addContent(element)
+    }
+
+    withContext(Dispatchers.IO) {
+      JDOMUtil.write(root, CachedConversionResult.getConversionInfoFile(projectFile.path))
+    }
+  }
+
+  suspend fun getAllProjectFiles(): Object2LongMap<String> {
     if (storageScheme == StorageScheme.DEFAULT) {
       val moduleFiles = modulePaths
       val totalResult = Object2LongOpenHashMap<String>(moduleFiles.size + 2)
-      addLastModifiedTme(projectFile.path, totalResult)
-      addLastModifiedTme(workspaceFile.path, totalResult)
+      collectLastModifiedTme(projectFile.path, totalResult)
+      collectLastModifiedTme(workspaceFile.path, totalResult)
       addLastModifiedTime(moduleFiles, totalResult)
       return totalResult
     }
@@ -128,44 +148,36 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
       dotIdeaDirectory.resolve("runConfigurations")
     )
 
-    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Conversion: Project Files Collecting", 3, false)
-    val futures = ArrayList<CompletableFuture<List<Object2LongMap<String>>>>(dirs.size + 1)
-    futures.add(CompletableFuture.supplyAsync({ this.modulePaths }, executor)
-                  .thenComposeAsync(
-                    { moduleFiles ->
-                      val moduleCount = moduleFiles.size
-                      if (moduleCount < 50) {
-                        return@thenComposeAsync computeModuleFilesTimestamp(moduleFiles, executor)
-                      }
+    val tasks = withContext(CoroutineName("Conversion: Project Files Collecting") + Dispatchers.IO) {
+      val tasks = ArrayList<Deferred<Object2LongMap<String>>>(dirs.size + 1)
+      modulePaths.asSequence()
+        .chunked(500)
+        .mapTo(tasks) {
+          async { computeModuleFilesTimestamp(it) }
+        }
 
-                      val secondOffset = moduleCount / 2
-                      computeModuleFilesTimestamp(moduleFiles.subList(0, secondOffset), executor)
-                        .thenCombine(
-                          computeModuleFilesTimestamp(moduleFiles.subList(secondOffset, moduleCount), executor),
-                          BiFunction { list1, list2 -> list1 + list2 })
-                    }, executor))
-
-    for (subDirName in dirs) {
-      futures.add(CompletableFuture.supplyAsync(
-        {
-          val result = CachedConversionResult.createPathToLastModifiedMap()
-          addXmlFilesFromDirectory(subDirName, result)
-          listOf(result)
-        }, executor))
-    }
-
-    val totalResult = CachedConversionResult.createPathToLastModifiedMap()
-    try {
-      for (future in futures) {
-        for (result in future.get()) {
-          totalResult.putAll(result)
+      dirs.mapTo(tasks) { subDirName ->
+        async {
+          val result = Object2LongOpenHashMap<String>()
+          result.defaultReturnValue(-1)
+          collectXmlFilesFromDirectory(subDirName, result)
+          result
         }
       }
     }
-    catch (e: ExecutionException) {
-      throw CannotConvertException(e)
+
+    val totalResult = Object2LongOpenHashMap<String>()
+    totalResult.defaultReturnValue(-1)
+    try {
+      @Suppress("OPT_IN_USAGE")
+      for (future in tasks) {
+        totalResult.putAll(future.getCompleted())
+      }
     }
-    catch (e: InterruptedException) {
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
       throw CannotConvertException(e)
     }
     return totalResult
@@ -386,22 +398,20 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   }
 }
 
-private fun computeModuleFilesTimestamp(moduleFiles: List<Path>, executor: Executor): CompletableFuture<List<Object2LongMap<String>>> {
-  return CompletableFuture.supplyAsync({
-                                         val result = Object2LongOpenHashMap<String>(moduleFiles.size)
-                                         result.defaultReturnValue(-1)
-                                         addLastModifiedTime(moduleFiles, result)
-                                         listOf(result)
-                                       }, executor)
+private fun computeModuleFilesTimestamp(moduleFiles: List<Path>): Object2LongMap<String> {
+  val result = Object2LongOpenHashMap<String>(moduleFiles.size)
+  result.defaultReturnValue(-1)
+  addLastModifiedTime(moduleFiles, result)
+  return result
 }
 
-private fun addLastModifiedTime(moduleFiles: List<Path>, result: Object2LongMap<String?>) {
+private fun addLastModifiedTime(moduleFiles: List<Path>, result: Object2LongOpenHashMap<String>) {
   for (file in moduleFiles) {
-    addLastModifiedTme(file = file, files = result)
+    collectLastModifiedTme(file = file, files = result)
   }
 }
 
-private fun addLastModifiedTme(file: Path, files: Object2LongMap<String?>) {
+private fun collectLastModifiedTme(file: Path, files: Object2LongOpenHashMap<String>) {
   try {
     files.put(file.toString(), Files.getLastModifiedTime(file).to(TimeUnit.SECONDS))
   }
@@ -409,7 +419,7 @@ private fun addLastModifiedTme(file: Path, files: Object2LongMap<String?>) {
   }
 }
 
-private fun addXmlFilesFromDirectory(dir: Path, result: Object2LongMap<String>) {
+private fun collectXmlFilesFromDirectory(dir: Path, result: Object2LongOpenHashMap<String>) {
   try {
     Files.newDirectoryStream(dir).use { children ->
       for (child in children) {
@@ -447,4 +457,60 @@ private fun createCollapseMacroMap(macroName: String, dir: Path): ReplacePathToM
   map.addMacroReplacement(FileUtilRt.toSystemIndependentName(dir.toAbsolutePath().toString()), macroName)
   PathMacrosImpl.getInstanceEx().addMacroReplacements(map)
   return map
+}
+
+private fun loadCachedConversionResult(infoFile: Path, baseDir: Path): CachedConversionResult {
+  val root = try {
+    readXmlAsModel(infoFile)
+  }
+  catch (ignore: NoSuchFileException) {
+    return CachedConversionResult.createEmpty()
+  }
+
+  val projectFilesTimestamps = Object2LongOpenHashMap<String>()
+  projectFilesTimestamps.defaultReturnValue(-1)
+  val appliedConverters = HashSet<String>()
+  val basePathWithSlash = baseDir.toString() + File.separator
+  for (child in root.children) {
+    if (child.name == "applied-converters") {
+      for (element in child.children) {
+        val id = element.getAttributeValue("id")
+        if (id != null) {
+          appliedConverters.add(id)
+        }
+      }
+    }
+    else if (child.name == "project-files") {
+      val projectFiles = child.children
+      for (element in projectFiles) {
+        var path = element.getAttributeValue("p")
+        if (path == null) {
+          path = element.getAttributeValue("path")
+        }
+        else if (path.startsWith(CachedConversionResult.RELATIVE_PREFIX)) {
+          path = basePathWithSlash + path.substring(CachedConversionResult.RELATIVE_PREFIX.length)
+        }
+
+        if (path.isNullOrEmpty()) {
+          continue
+        }
+
+        try {
+          var timestamp = element.getAttributeValue("t")
+          if (timestamp == null) {
+            timestamp = element.getAttributeValue("timestamp")
+            if (timestamp != null) {
+              projectFilesTimestamps.put(path, TimeUnit.MILLISECONDS.toSeconds(timestamp.toLong()))
+            }
+          }
+          else {
+            projectFilesTimestamps.put(path, timestamp.toLong())
+          }
+        }
+        catch (ignore: NumberFormatException) {
+        }
+      }
+    }
+  }
+  return CachedConversionResult(appliedConverters, projectFilesTimestamps)
 }
