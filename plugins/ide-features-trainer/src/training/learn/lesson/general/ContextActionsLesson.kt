@@ -64,7 +64,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
     task {
       text(LessonsBundle.message("context.actions.fix.warning", strong(warningQuickFix)))
       stateCheck {
-        (insideIntention() && before != editor.document.text).also { updateBefore() }
+        (before != editor.document.text).also { updateBefore() }
       }
       restoreIfIntentionsPopupClosed(showIntentionsTaskId)
       test {
@@ -92,7 +92,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
     task {
       text(LessonsBundle.message("context.actions.apply.intention", strong(intentionText)))
       stateCheck {
-        (insideIntention() && before != editor.document.text).also { updateBefore() }
+        (before != editor.document.text).also { updateBefore() }
       }
       restoreIfIntentionsPopupClosed(showIntentionsTaskId)
       test {
