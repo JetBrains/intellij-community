@@ -41,8 +41,6 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
     )
   }
 
-  override fun isShownByDefault(): Boolean = false
-
   override fun getLanguages(): Array<PythonLanguage> = LANGUAGES
 
   override fun acceptElement(e: PsiElement): Boolean = getHelper(e) != null
@@ -117,7 +115,7 @@ class PyBreadcrumbsInfoProvider : BreadcrumbsProvider {
   private object WithHelper : Helper<PyWithStatement>(PyWithStatement::class.java) {
     override fun getPresentation(e: PyWithStatement): String {
       val getItemPresentation = fun(item: PyWithItem): String? {
-        val expression = item.expression
+        val expression = item.expression ?: return null
         val target = item.target ?: return expression.text
         return "${expression.text} as ${target.text}"
       }
