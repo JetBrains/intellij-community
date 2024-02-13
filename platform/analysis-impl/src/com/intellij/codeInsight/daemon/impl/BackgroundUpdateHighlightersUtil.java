@@ -213,12 +213,12 @@ public final class BackgroundUpdateHighlightersUtil {
 
     setHighlightersInRange(range, infos, markup, group, session, toReuse);
   }
-  static void setHighlightersInRange(@NotNull TextRange range,
-                                     @NotNull List<? extends HighlightInfo> infos,
-                                     @NotNull MarkupModelEx markup,
-                                     int group,
-                                     @NotNull HighlightingSession session,
-                                     @NotNull List<? extends HighlightInfo> toRemove) {
+  private static void setHighlightersInRange(@NotNull TextRange range,
+                                             @NotNull List<? extends HighlightInfo> infos,
+                                             @NotNull MarkupModelEx markup,
+                                             int group,
+                                             @NotNull HighlightingSession session,
+                                             @NotNull List<? extends HighlightInfo> toRemove) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile psiFile = session.getPsiFile();
