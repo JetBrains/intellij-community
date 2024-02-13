@@ -16,6 +16,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +49,14 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * It's better to prefer delegation to inheritance, and use {@link #DynamicBundle(Class, String)} instead.
+   * </p>
+   * <p/>
    * Use this constructor in bundle classes which inherit from this class.
-   * Note that it's better to prefer delegation to inheritance, and use {@link #DynamicBundle(Class, String)} instead.
    */
+  @Obsolete
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
   }
