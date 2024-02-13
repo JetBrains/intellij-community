@@ -385,12 +385,8 @@ public class DynamicBundle extends AbstractBundle {
 
     @Nullable
     private static BundleOrder getBundleOrderByIndex(int ind) {
-      for (BundleOrder bundleOrder : values()) {
-        if (bundleOrder.index == ind) {
-          return bundleOrder;
-        }
-      }
-      return null;
+      Optional<BundleOrder> matchingBundleOrder = Arrays.stream(values()).filter(b -> b.index == ind).findFirst();
+      return matchingBundleOrder.orElse(null);
     }
 
     @Nullable

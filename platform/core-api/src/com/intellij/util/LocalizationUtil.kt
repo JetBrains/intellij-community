@@ -14,10 +14,10 @@ import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 object LocalizationUtil {
+  private const val LOCALIZATION_FOLDER_NAME = "localization"
     private fun getPluginClassLoader(): ClassLoader? = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
     private fun Path.convertToLocalizationFolderUsage(locale: Locale, withRegion: Boolean): Path {
-      val localizationFolderName = "localization"
-      var result = Path(localizationFolderName).resolve(locale.language)
+      var result = Path(LOCALIZATION_FOLDER_NAME).resolve(locale.language)
       if (withRegion && locale.country.isNotEmpty()) {
         result = result.resolve(locale.country)
       }
