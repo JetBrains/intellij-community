@@ -11,9 +11,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
@@ -42,6 +40,8 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -88,6 +88,24 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
     return promise
   }
 
+  override suspend fun getPredefinedScopesSuspend(
+    project: Project,
+    dataContext: DataContext?,
+    suggestSearchInLibs: Boolean,
+    prevSearchFiles: Boolean,
+    currentSelection: Boolean,
+    usageView: Boolean,
+    showEmptyScopes: Boolean,
+  ): List<SearchScope> {
+    val context = ScopeCollectionContext.collectContextSuspend(
+      project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes
+    )
+    val restScopes = readAction {
+      context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes)
+    }
+    return context.result + restScopes
+  }
+
   private data class ScopeCollectionContext(val psiFile: PsiFile?,
                                             val selectedTextEditor: Editor?,
                                             val scopesFromUsageView: Collection<SearchScope>,
@@ -128,6 +146,20 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
     }
 
     companion object {
+
+      suspend fun collectContextSuspend(
+        project: Project,
+        dataContext: DataContext?,
+        suggestSearchInLibs: Boolean,
+        prevSearchFiles: Boolean,
+        usageView: Boolean,
+        showEmptyScopes: Boolean,
+      ): ScopeCollectionContext {
+        return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+        }
+      }
+
       // in EDT
       fun collectContext(project: Project,
                          dataContext: DataContext?,

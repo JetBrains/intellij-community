@@ -99,16 +99,14 @@ internal class CoroutineScopeModel internal constructor(
     dataContext: DataContext,
     filter: Predicate<in ScopeDescriptor>,
   ): ScopesSnapshot {
-    val predefinedScopes = withContext(Dispatchers.EDT) {
-      PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
-        project, dataContext,
-        options.contains(ScopeOption.LIBRARIES),
-        options.contains(ScopeOption.SEARCH_RESULTS),
-        options.contains(ScopeOption.FROM_SELECTION),
-        options.contains(ScopeOption.USAGE_VIEW),
-        options.contains(ScopeOption.EMPTY_SCOPES)
-      )
-    }.await()
+    val predefinedScopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopesSuspend(
+      project, dataContext,
+      options.contains(ScopeOption.LIBRARIES),
+      options.contains(ScopeOption.SEARCH_RESULTS),
+      options.contains(ScopeOption.FROM_SELECTION),
+      options.contains(ScopeOption.USAGE_VIEW),
+      options.contains(ScopeOption.EMPTY_SCOPES)
+    )
     return doProcessScopes(dataContext, predefinedScopes, filter)
   }
 

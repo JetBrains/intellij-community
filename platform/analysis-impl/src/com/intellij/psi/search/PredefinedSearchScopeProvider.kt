@@ -5,12 +5,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.resolvedPromise
 
 abstract class PredefinedSearchScopeProvider {
   /**
    * Don't use this method with option `usageView ` enabled as it may cause UI freezes.
-   * Prefer to use [PredefinedSearchScopeProvider.getPredefinedScopesAsync] instead wherever possible.
+   * Prefer to use [PredefinedSearchScopeProvider.getPredefinedScopesAsync]
+   * or [PredefinedSearchScopeProvider.getPredefinedScopesSuspend] instead wherever possible.
    *
    * @param suggestSearchInLibs add *Project and Libraries* scope
    * @param prevSearchFiles     add *Files in Previous Search Result* instead of *Previous Search Result* (only if `usageView == true`)
@@ -44,6 +46,18 @@ abstract class PredefinedSearchScopeProvider {
                                      showEmptyScopes)
     return resolvedPromise(scopes)
   }
+
+  open suspend fun getPredefinedScopesSuspend(
+    project: Project,
+    dataContext: DataContext?,
+    suggestSearchInLibs: Boolean,
+    prevSearchFiles: Boolean,
+    currentSelection: Boolean,
+    usageView: Boolean,
+    showEmptyScopes: Boolean,
+  ): List<SearchScope> =
+    getPredefinedScopesAsync(project, dataContext, suggestSearchInLibs, prevSearchFiles, currentSelection, usageView, showEmptyScopes)
+      .await()
 
   companion object {
     @JvmStatic
