@@ -7,6 +7,8 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -27,9 +29,9 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.sanitizeFileName
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
@@ -37,7 +39,6 @@ import java.nio.file.Path
 import java.util.*
 import javax.swing.JComponent
 import kotlin.io.path.exists
-import kotlin.io.path.invariantSeparatorsPathString
 
 val NOTIFICATIONS_SILENT_MODE: Key<Boolean> = Key.create("NOTIFICATIONS_SILENT_MODE")
 
@@ -60,22 +61,14 @@ fun calcRelativeToProjectPath(file: VirtualFile,
     else -> file.name
   }
 
-  if (project == null) {
-    return url
-  }
-  else {
-    return displayUrlRelativeToProject(file = file,
-                                       url = url,
-                                       project = project,
-                                       isIncludeFilePath = includeFilePath,
-                                       moduleOnTheLeft = keepModuleAlwaysOnTheLeft)
-  }
+  return if (project == null) url
+         else displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
 }
 
 fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
 /**
- * guessProjectForFile works incorrectly - even if file is config (idea config file), a first opened project will be returned
+ * guessProjectForFile works incorrectly - even if file is config (idea config file) a first opened project will be returned
  */
 @JvmOverloads
 fun guessProjectForContentFile(file: VirtualFile,
@@ -116,7 +109,7 @@ val Project.modules: Array<Module>
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).getModifiableModel()
   val result = model.task()
-  ApplicationManager.getApplication().runWriteAction {
+  runWriteAction {
     model.commit()
   }
   return result
@@ -131,6 +124,8 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
   }
 }
 
+private val BASE_DIRECTORY_SUGGESTER_EP_NAME = ExtensionPointName<BaseDirectorySuggester>("com.intellij.baseDirectorySuggester")
+
 /**
  *  Tries to guess the "main project directory" of the project.
  *
@@ -144,8 +139,14 @@ fun Project.guessProjectDir() : VirtualFile? {
     return null
   }
 
-  val baseDirectories = getBaseDirectories()
-  val baseDirectory = baseDirectories.firstOrNull { it.fileSystem is LocalFileSystem } ?: baseDirectories.firstOrNull()
+  val customBaseDir = BASE_DIRECTORY_SUGGESTER_EP_NAME.extensionList.asSequence()
+    .map { it.suggestBaseDirectory(this) }
+    .filterNotNull()
+    .firstOrNull()
+  if (customBaseDir != null) {
+    return customBaseDir
+  }
+  val baseDirectory = getBaseDirectories().firstOrNull()
   if (baseDirectory != null) {
     return baseDirectory
   }
@@ -185,20 +186,15 @@ fun Project.getProjectCacheFileName(isForceNameUse: Boolean = false, hashSeparat
  * @param projectPath value of [Project.getPresentableUrl]
  */
 fun getProjectCacheFileName(projectPath: Path): String {
-  return getProjectCacheFileName(presentableUrl = projectPath.invariantSeparatorsPathString,
-                                 projectName = (projectPath.fileName ?: projectPath).toString(),
-                                 isForceNameUse = false,
-                                 hashSeparator = ".",
-                                 extensionWithDot = "")
+  return getProjectCacheFileName(projectPath.systemIndependentPath, (projectPath.fileName ?: projectPath).toString(), false, ".", "")
 }
 
-@Internal
-fun getProjectCacheFileName(presentableUrl: String?,
-                            projectName: String,
-                            isForceNameUse: Boolean = false,
-                            hashSeparator: String = ".",
-                            extensionWithDot: String = ""): String {
-  var name = when {
+private fun getProjectCacheFileName(presentableUrl: String?,
+                                    projectName: String,
+                                    isForceNameUse: Boolean,
+                                    hashSeparator: String,
+                                    extensionWithDot: String): String {
+  val name = when {
     isForceNameUse || presentableUrl == null -> projectName
     else -> {
       // the lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was,
@@ -206,12 +202,21 @@ fun getProjectCacheFileName(presentableUrl: String?,
       PathUtilRt.getFileName(presentableUrl).lowercase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
   }
-  name = sanitizeFileName(name, truncateIfNeeded = false)
+  return doGetProjectFileName(presentableUrl = presentableUrl,
+                              name = sanitizeFileName(name, truncateIfNeeded = false),
+                              hashSeparator = hashSeparator,
+                              extensionWithDot = extensionWithDot)
+}
+
+@ApiStatus.Internal
+fun doGetProjectFileName(presentableUrl: String?,
+                         name: String,
+                         hashSeparator: String,
+                         extensionWithDot: String): String {
   // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended)
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
   // trim name to avoid "File name too long"
-  return name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false) +
-         "$hashSeparator$locationHash$extensionWithDot"
+  return "${name.trimMiddle(name.length.coerceAtMost(255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)}$hashSeparator$locationHash$extensionWithDot"
 }
 
 /**
@@ -270,13 +275,13 @@ fun clearCachesForAllProjectsStartingWith(@NonNls prefix: String) {
 /**
  * Returns the root directory for all caches related to [project].
  */
-@Internal
+@ApiStatus.Internal
 fun getProjectDataPathRoot(project: Project): Path = projectsDataDir.resolve(project.getProjectCacheFileName())
 
 /**
  * Returns the root directory for all caches related to the project at [projectPath].
  */
-@Internal
+@ApiStatus.Internal
 fun getProjectDataPathRoot(projectPath: Path): Path = projectsDataDir.resolve(getProjectCacheFileName(projectPath))
 
 fun Project.getExternalConfigurationDir(): Path {
@@ -284,20 +289,19 @@ fun Project.getExternalConfigurationDir(): Path {
 }
 
 /**
- * Use parameters only for migration purposes; once all usages are migrated, parameters will be removed.
+ * Use parameters only for migration purposes; once all usages will be migrated, parameters will be removed.
  */
 @JvmOverloads
 fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "."): Path {
   return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
 
-fun getOpenedProjects(): Sequence<Project> {
-  return sequence {
-    for (project in ((ProjectManager.getInstanceIfCreated() ?: return@sequence).openProjects)) {
-      if (!project.isDisposed && project.isInitialized) {
-        yield(project)
-      }
+fun getOpenedProjects(): Sequence<Project> = sequence {
+  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: emptyArray())) {
+    if (project.isDisposed || !project.isInitialized) {
+      continue
     }
+    yield(project)
   }
 }
 
