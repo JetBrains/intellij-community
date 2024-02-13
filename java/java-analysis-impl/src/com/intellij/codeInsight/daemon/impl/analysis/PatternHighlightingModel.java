@@ -979,66 +979,6 @@ final class PatternHighlightingModel {
       return canBeAdded;
     }
 
-    void merge(RecordExhaustivenessResult result) {
-      if (!this.isExhaustive && !this.canBeAdded) {
-        return;
-      }
-      if (!result.isExhaustive) {
-        this.isExhaustive = false;
-      }
-      if (!result.canBeAdded) {
-        this.canBeAdded = false;
-      }
-      for (Map.Entry<PsiType, Set<List<PsiType>>> newEntry : result.missedBranchesByType.entrySet()) {
-        missedBranchesByType.merge(newEntry.getKey(), newEntry.getValue(),
-                                   (lists, lists2) -> {
-                                     HashSet<List<PsiType>> result1 = new HashSet<>();
-                                     result1.addAll(lists);
-                                     result1.addAll(lists2);
-                                     return result1;
-                                   });
-      }
-      if (!this.canBeAdded) {
-        missedBranchesByType.clear();
-      }
-    }
-
-    void addNextType(PsiType recordType, PsiType nextClass) {
-      if (!this.canBeAdded) {
-        return;
-      }
-      Set<List<PsiType>> branches = missedBranchesByType.get(recordType);
-      if (branches == null) {
-        return;
-      }
-      for (List<PsiType> classes : branches) {
-        classes.add(nextClass);
-      }
-    }
-
-    void addNewBranch(@NotNull PsiType recordType,
-                      @Nullable PsiType classForNextBranch,
-                      @NotNull List<? extends PsiType> types) {
-      if (!this.canBeAdded) {
-        return;
-      }
-      List<PsiType> nextBranch = new ArrayList<>();
-      for (int i = types.size() - 1; i >= 1; i--) {
-        nextBranch.add(types.get(i));
-      }
-      if (classForNextBranch != null) {
-        nextBranch.add(classForNextBranch);
-      }
-      HashSet<List<PsiType>> newBranchSet = new HashSet<>();
-      newBranchSet.add(nextBranch);
-      this.missedBranchesByType.merge(recordType, newBranchSet,
-                                      (lists, lists2) -> {
-                                        HashSet<List<PsiType>> set = new HashSet<>(lists);
-                                        set.addAll(lists2);
-                                        return set;
-                                      });
-    }
-
     void addBranches(List<? extends PatternDescription> patterns) {
       for (PatternDescription pattern : patterns) {
         if (!(pattern instanceof PatternDeconstructionDescription deconstructionDescription)) {

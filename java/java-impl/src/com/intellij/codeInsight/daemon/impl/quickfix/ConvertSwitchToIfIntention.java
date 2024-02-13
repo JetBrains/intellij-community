@@ -368,11 +368,10 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
                                                     String expressionText,
                                                     CommentTracker commentTracker) {
     String patternCondition = null;
-    PsiPattern normalizedPattern = pattern;
-    if (normalizedPattern instanceof PsiTypeTestPattern typeTestPattern) {
+    if (pattern instanceof PsiTypeTestPattern typeTestPattern) {
       patternCondition = createIfCondition(typeTestPattern, expressionText, commentTracker);
     }
-    else if (normalizedPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
+    else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {
       patternCondition = createIfCondition(deconstructionPattern, expressionText, commentTracker);
     }
     if (guard == null || patternCondition == null) return patternCondition;

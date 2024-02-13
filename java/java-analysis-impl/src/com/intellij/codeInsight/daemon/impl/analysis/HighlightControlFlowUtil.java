@@ -351,8 +351,7 @@ public final class HighlightControlFlowUtil {
         if (inInnerClass(expression, ((PsiField)variable).getContainingClass())) return null;
         PsiCodeBlock block;
         PsiClass aClass;
-        if (parent instanceof PsiMethod) {
-          PsiMethod constructor = (PsiMethod)parent;
+        if (parent instanceof PsiMethod constructor) {
           if (!containingFile.getManager().areElementsEquivalent(constructor.getContainingClass(), ((PsiField)variable).getContainingClass())) return null;
           // static variables already initialized in class initializers
           if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
@@ -785,7 +784,6 @@ public final class HighlightControlFlowUtil {
     if (refLabel == null) return null;
     PsiExpression guardExpression = refLabel.getGuardExpression();
     if (!PsiTreeUtil.isAncestor(guardExpression, context, false)) return null;
-    LanguageLevel level = PsiUtil.getLanguageLevel(refLabel);
     //this assignment is covered by com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard
     boolean isAssignment = context instanceof PsiReferenceExpression psiExpression && PsiUtil.isAccessedForWriting(psiExpression);
     if (!isAssignment && !PsiTreeUtil.isAncestor(guardExpression, variable, false) &&
