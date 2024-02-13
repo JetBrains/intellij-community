@@ -3,6 +3,7 @@ package com.intellij.util
 
 import com.intellij.DynamicBundle
 import com.intellij.DynamicBundle.getLocale
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.nio.file.Path
@@ -50,7 +51,7 @@ object LocalizationUtil {
       val locale = specialLocale ?: getLocale()
       val localizedPaths = getLocalizedPaths(path, locale)
       for (localizedPath in localizedPaths) {
-        val pathString = localizedPath.pathString.replace('\\', '/')
+        val pathString = FileUtil.toSystemIndependentName(localizedPath.pathString)
         getPluginClassLoader()?.getResourceAsStream(pathString)?.let { return it }
         defaultLoader?.getResourceAsStream(pathString)?.let { return it }
       }

@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.LocalizationUtil;
 import com.intellij.util.ReflectionUtil;
@@ -77,7 +78,7 @@ public class DynamicBundle extends AbstractBundle {
     @NotNull String defaultPath,
     @NotNull Locale locale
   ) {
-    Path bundlePath = FileSystems.getDefault().getPath(defaultPath.replaceAll("\\.", "/"));
+    Path bundlePath = FileSystems.getDefault().getPath(FileUtil.toCanonicalPath(defaultPath, '.'));
     ClassLoader pluginClassLoader = languagePluginClassLoader(bundleClassLoader, locale);
     List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPaths(bundlePath, locale);
     Map<BundleOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
@@ -101,7 +102,7 @@ public class DynamicBundle extends AbstractBundle {
     List<ResourceBundle> resourceBundles = new ArrayList<>();
     for (Path path : paths) {
       try {
-        ResourceBundle resourceBundle = bundleResolver(path.toString().replace('\\', '/')).apply(loader, locale);
+        ResourceBundle resourceBundle = bundleResolver(FileUtil.toSystemIndependentName(path.toString())).apply(loader, locale);
         resourceBundles.add(resourceBundle);
       }
       catch (MissingResourceException e) {
@@ -161,7 +162,7 @@ public class DynamicBundle extends AbstractBundle {
                                      Map<BundleOrder, ResourceBundle> bundleOrderMap,
                                      List<Path> orderedPaths,
                                      Boolean isPluginClassLoader) {
-    String bundlePath = bundle.getBaseBundleName().replaceAll("\\.", "/");
+    String bundlePath = FileUtil.toCanonicalPath(bundle.getBaseBundleName(), '.');
     if (!bundle.getLocale().toString().isEmpty()) {
       bundlePath += "_" + bundle.getLocale().toString();
     }
