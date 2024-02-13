@@ -49,7 +49,7 @@ object DocumentationHtmlUtil {
   val docPopupMaxHeight: Int get() = 500
 
   @JvmStatic
-  val lookupDocPopupWidth: Int get() = 550
+  val lookupDocPopupWidth: Int get() = 450
 
   @JvmStatic
   val lookupDocPopupMinHeight: Int get() = 300
