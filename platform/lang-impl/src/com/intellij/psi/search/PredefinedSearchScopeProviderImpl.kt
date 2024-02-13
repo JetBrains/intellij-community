@@ -163,7 +163,7 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         }
 
         val scopesFromUsageView = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          if (usageView) getScopesFromUsageView(project, prevSearchFiles) else emptyList()
+          if (usageView) getScopesFromUsageViewSuspend(project, prevSearchFiles) else emptyList()
         }
 
         val selectedTextEditor = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -359,6 +359,17 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
       val selectedUsageView = getSelectedAndCompletedUsageView(project) ?: return emptyList()
       val scopes = LinkedHashSet<SearchScope>()
       addPreviousSearchScopes(selectedUsageView, prevSearchFiles, project, scopes)
+      return scopes
+    }
+
+    private suspend fun getScopesFromUsageViewSuspend(project: Project, prevSearchFiles: Boolean): Collection<SearchScope> {
+      val selectedUsageView = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        getSelectedAndCompletedUsageView(project)
+      } ?: return emptyList()
+      val scopes = LinkedHashSet<SearchScope>()
+      readAction {
+        addPreviousSearchScopes(selectedUsageView, prevSearchFiles, project, scopes)
+      }
       return scopes
     }
 
