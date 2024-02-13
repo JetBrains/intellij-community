@@ -48,7 +48,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
-        init_env_vars(&self.launcher_name, &self.default.ide_home).context("Preparing environment variables")?;
+        init_env_vars(&self.default.ide_home).context("Preparing environment variables")?;
 
         preload_native_libs(&self.default.ide_home).context("Preloading native libraries")?;
         self.default.prepare_for_launch()
@@ -426,7 +426,6 @@ fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded Chromium) in IDE".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other Linux libraries from plugins/remote-dev-server/self-contained. Use everything from the system. by default bundled libraries are used".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE".to_string(), description: "set to any value to use as the script name in this output".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NEW_UI_ENABLED".to_string(), description: "set to '1' to start with forced enabled new UI".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NON_INTERACTIVE".to_string(), description: "set to any value to skip all interactive shell prompts (set automatically if running without TTY)".to_string()},
@@ -454,11 +453,8 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars(launcher_name_for_usage: &str, ide_home_path: &PathBuf) -> Result<()> {
-    let mut remote_dev_env_var_values = vec![
-        ("IDEA_RESTART_VIA_EXIT_CODE", "88"),
-        ("REMOTE_DEV_LAUNCHER_NAME_FOR_USAGE", launcher_name_for_usage)
-    ];
+fn init_env_vars(ide_home_path: &PathBuf) -> Result<()> {
+    let mut remote_dev_env_var_values = Vec::new();
 
     if !std::io::stdout().is_terminal() {
         remote_dev_env_var_values.push(("REMOTE_DEV_NON_INTERACTIVE", "1"))
