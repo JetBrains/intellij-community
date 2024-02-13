@@ -224,14 +224,19 @@ fun JKJavaPrimitiveType.isNumberType() =
 
 @ApiStatus.Internal
 fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
+
 @ApiStatus.Internal
 fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
+
 @ApiStatus.Internal
 fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
+
 @ApiStatus.Internal
 fun JKJavaPrimitiveType.isByte(): Boolean = this == JKJavaPrimitiveType.BYTE
+
 @ApiStatus.Internal
 fun JKJavaPrimitiveType.isShort(): Boolean = this == JKJavaPrimitiveType.SHORT
+
 @ApiStatus.Internal
 fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
     this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE

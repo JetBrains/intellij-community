@@ -3,42 +3,11 @@
 package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.utils.SmartList
 import kotlin.random.Random
 
 @ApiStatus.Internal
 interface JKElementInfo
-
-@ApiStatus.Internal
-sealed class SuperFunctionInfo
-
-@ApiStatus.Internal
-data class ExternalSuperFunctionInfo(val descriptor: FunctionDescriptor) : SuperFunctionInfo()
-
-@ApiStatus.Internal
-data class InternalSuperFunctionInfo(val label: JKElementInfoLabel) : SuperFunctionInfo()
-
-@ApiStatus.Internal
-data class FunctionInfo(val superFunctions: List<SuperFunctionInfo>) : JKElementInfo
-
-@ApiStatus.Internal
-enum class JKTypeInfo(val unknownNullability: Boolean, val unknownMutability: Boolean) : JKElementInfo {
-    KNOWN_NULLABILITY_KNOWN_MUTABILITY(false, false),
-    UNKNOWN_NULLABILITY_KNOWN_MUTABILITY(true, false),
-    KNOWN_NULLABILITY_UNKNOWN_MUTABILITY(false, true),
-    UNKNOWN_NULLABILITY_UNKNOWN_MUTABILITY(true, true)
-    ;
-
-    companion object {
-        operator fun invoke(unknownNullability: Boolean, unknownMutability: Boolean) = when {
-            !unknownNullability && !unknownMutability -> KNOWN_NULLABILITY_KNOWN_MUTABILITY
-            unknownNullability && !unknownMutability -> UNKNOWN_NULLABILITY_KNOWN_MUTABILITY
-            !unknownNullability && unknownMutability -> KNOWN_NULLABILITY_UNKNOWN_MUTABILITY
-            else -> UNKNOWN_NULLABILITY_UNKNOWN_MUTABILITY
-        }
-    }
-}
 
 @ApiStatus.Internal
 interface JKElementInfoLabel {

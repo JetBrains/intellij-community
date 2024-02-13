@@ -69,8 +69,10 @@ interface JKOperatorToken {
 
         @ApiStatus.Internal
         val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
+
         @ApiStatus.Internal
         val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
+
         @ApiStatus.Internal
         val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
 
