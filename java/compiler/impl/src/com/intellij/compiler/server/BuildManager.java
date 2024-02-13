@@ -2256,7 +2256,7 @@ public final class BuildManager implements Disposable {
      * @param path assuming a system-independent path with forward slashes
      */
     InternedPath(String path) {
-      List<CharSequence> list = new ArrayList<>();
+      List<String> list = new ArrayList<>();
       StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
       while (tokenizer.hasMoreTokens()) {
         list.add(nameCache.get(tokenizer.nextToken()));
