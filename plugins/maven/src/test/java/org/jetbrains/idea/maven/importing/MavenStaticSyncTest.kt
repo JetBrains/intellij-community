@@ -562,6 +562,66 @@ class MavenStaticSyncTest : MavenMultiVersionImportingTestCase() {
     assertEmpty(projects)
   }
 
+  @Test
+  fun `test import project if module path set to file`(): Unit = runBlocking {
+    createPomFile(createProjectSubDir("m1"), "dev-pom.xml", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1-dev</artifactId>
+        """)
+
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1/dev-pom.xml</module>
+                    </modules>
+                    """)
+
+
+    assertModules("project", "m1-dev")
+
+  }
+
+
+  @Test
+  fun `test import project if module in the same dir but different_pom_name and importing dev_pom as project`(): Unit = runBlocking {
+    createPomFile(projectRoot, "pom.xml", """
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+        """)
+
+    projectPom = createPomFile(projectRoot, "dev_pom.xml", """
+      <groupId>test</groupId>
+      <artifactId>project-dev</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>pom.xml</module>
+      </modules>
+""")
+
+    importProjectAsync(projectPom)
+
+
+    assertModules("project-dev", "project")
+
+  }
 
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)

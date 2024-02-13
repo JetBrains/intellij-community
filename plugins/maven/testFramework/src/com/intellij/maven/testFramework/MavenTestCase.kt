@@ -416,10 +416,16 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun createPomFile(dir: VirtualFile?,
                               @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
-    var f = dir!!.findChild("pom.xml")
+    return createPomFile(dir, "pom.xml", xml)
+  }
+
+  protected fun createPomFile(dir: VirtualFile?, fileName: String? = "pom.xml",
+                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
+    val pomName = fileName ?: "pom.xml"
+    var f = dir!!.findChild(pomName)
     if (f == null) {
       try {
-        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, "pom.xml") }
+        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, pomName) }
       }
       catch (e: IOException) {
         throw RuntimeException(e)
