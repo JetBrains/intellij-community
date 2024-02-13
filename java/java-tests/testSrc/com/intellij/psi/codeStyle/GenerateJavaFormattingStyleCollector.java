@@ -16,6 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * The GenerateJavaFormattingStyleCollector class is responsible for generating a JavaFormattingStyleCollector file
+ * In general, it is better to avoid auto-generated collectors, but there is a problem
+ * that the settings are fields, and we still would need manual reporting.
+ * Another problem is the number of these fields.
+ * After simplifying Java code style settings, it is better to write normal collector
+ */
 @SuppressWarnings("NewClassNamingConvention")
 @Ignore
 public class GenerateJavaFormattingStyleCollector extends UsefulTestCase {
