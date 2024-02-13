@@ -426,7 +426,7 @@ private fun createExternalSourceSet(
             sourcesWithTypes += compilation.sourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
                 dirSet.outputDir = effectiveClassesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.sourceDirs }
-                dirSet.gradleOutputDirs += compilation.output.classesDirs
+                dirSet.gradleOutputDirs = compilation.output.classesDirs
                 dirSet.setInheritedCompilerOutput(false)
             }
         }
@@ -434,7 +434,7 @@ private fun createExternalSourceSet(
             sourcesWithTypes += compilation.resourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
                 dirSet.outputDir = resourcesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.resourceDirs }
-                dirSet.gradleOutputDirs += resourcesDir
+                dirSet.gradleOutputDirs = listOf(resourcesDir)
                 dirSet.setInheritedCompilerOutput(false)
             }
         }

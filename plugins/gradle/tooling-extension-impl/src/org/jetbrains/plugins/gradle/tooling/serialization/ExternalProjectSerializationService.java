@@ -533,7 +533,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     DefaultExternalSourceDirectorySet directorySet = new DefaultExternalSourceDirectorySet();
     directorySet.setName(assertNotNull(readString(reader, "name")));
     directorySet.setSrcDirs(readFilesSet(reader));
-    directorySet.getGradleOutputDirs().addAll(readFiles(reader));
+    directorySet.setGradleOutputDirs(readFiles(reader));
     File outputDir = readFile(reader, "outputDir");
     if (outputDir != null) {
       directorySet.setOutputDir(outputDir);

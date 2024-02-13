@@ -79,14 +79,12 @@ class GradleSourceSetGroovyHelper {
     resourcesDirectorySet.name = sourceSet.resources.name
     resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
     if (sourceSet.output.resourcesDir) {
-      resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
+      resourcesDirectorySet.gradleOutputDirs = Collections.singleton(sourceSet.output.resourcesDir)
     }
     else {
-      for (File outDir : sourceSet.output.classesDirs.files) {
-        resourcesDirectorySet.addGradleOutputDir(outDir)
-      }
+      resourcesDirectorySet.gradleOutputDirs = sourceSet.output.classesDirs.files
       if (resourcesDirectorySet.gradleOutputDirs.isEmpty()) {
-        resourcesDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
+        resourcesDirectorySet.gradleOutputDirs = Collections.singleton(GradleProjectUtil.getBuildDirectory(project))
       }
     }
     resourcesDirectorySet.inheritedCompilerOutput = sourceSetResolutionContext.isIdeaInheritOutputDirs
@@ -94,11 +92,9 @@ class GradleSourceSetGroovyHelper {
     ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
     javaDirectorySet.name = sourceSet.allJava.name
     javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-    for (File outDir : sourceSet.output.classesDirs.files) {
-      javaDirectorySet.addGradleOutputDir(outDir)
-    }
+    javaDirectorySet.gradleOutputDirs = sourceSet.output.classesDirs.files
     if (javaDirectorySet.gradleOutputDirs.isEmpty()) {
-      javaDirectorySet.addGradleOutputDir(GradleProjectUtil.getBuildDirectory(project))
+      javaDirectorySet.gradleOutputDirs = Collections.singleton(GradleProjectUtil.getBuildDirectory(project))
     }
     javaDirectorySet.inheritedCompilerOutput = sourceSetResolutionContext.isIdeaInheritOutputDirs
 
@@ -118,9 +114,7 @@ class GradleSourceSetGroovyHelper {
         generatedDirectorySet = new DefaultExternalSourceDirectorySet()
         generatedDirectorySet.name = "generated " + javaDirectorySet.name
         generatedDirectorySet.srcDirs = files
-        for (file in javaDirectorySet.gradleOutputDirs) {
-          generatedDirectorySet.addGradleOutputDir(file)
-        }
+        generatedDirectorySet.gradleOutputDirs = javaDirectorySet.gradleOutputDirs
         generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
       }
       sourceSetResolutionContext.unprocessedIdeaGeneratedSourceDirs.removeAll(files)
@@ -189,7 +183,7 @@ class GradleSourceSetGroovyHelper {
           def testDirectorySet = new DefaultExternalSourceDirectorySet()
           testDirectorySet.name = javaDirectorySet.name
           testDirectorySet.srcDirs = testDirs
-          testDirectorySet.addGradleOutputDir(javaDirectorySet.outputDir)
+          testDirectorySet.gradleOutputDirs = Collections.singleton(javaDirectorySet.outputDir)
           testDirectorySet.outputDir = sourceSetResolutionContext.ideaTestOutputDir
             ?: new File(project.projectDir, "out/test/classes")
           testDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
@@ -203,7 +197,7 @@ class GradleSourceSetGroovyHelper {
           def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
           testResourcesDirectorySet.name = resourcesDirectorySet.name
           testResourcesDirectorySet.srcDirs = testResourcesDirs
-          testResourcesDirectorySet.addGradleOutputDir(resourcesDirectorySet.outputDir)
+          testResourcesDirectorySet.gradleOutputDirs = Collections.singleton(resourcesDirectorySet.outputDir)
           testResourcesDirectorySet.outputDir = sourceSetResolutionContext.ideaTestOutputDir
             ?: new File(project.projectDir, "out/test/resources")
           testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
@@ -218,7 +212,7 @@ class GradleSourceSetGroovyHelper {
             def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
             testGeneratedDirectorySet.name = generatedDirectorySet.name
             testGeneratedDirectorySet.srcDirs = testGeneratedDirs
-            testGeneratedDirectorySet.addGradleOutputDir(generatedDirectorySet.outputDir)
+            testGeneratedDirectorySet.gradleOutputDirs = Collections.singleton(generatedDirectorySet.outputDir)
             testGeneratedDirectorySet.outputDir = generatedDirectorySet.outputDir
             testGeneratedDirectorySet.inheritedCompilerOutput = generatedDirectorySet.isCompilerOutputPathInherited()
 

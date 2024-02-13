@@ -595,7 +595,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         generatedDirectorySet.getSrcDirs().addAll(generatedSourceDirs);
         ExternalSourceDirectorySet sourceDirectorySet = externalSourceSet.getSources().get(sourceType);
         if (sourceDirectorySet != null) {
-          generatedDirectorySet.addGradleOutputDir(sourceDirectorySet.getOutputDir());
+          generatedDirectorySet.setGradleOutputDirs(Collections.singleton(sourceDirectorySet.getOutputDir()));
           generatedDirectorySet.setOutputDir(sourceDirectorySet.getOutputDir());
           generatedDirectorySet.setInheritedCompilerOutput(sourceDirectorySet.isCompilerOutputPathInherited());
         }
