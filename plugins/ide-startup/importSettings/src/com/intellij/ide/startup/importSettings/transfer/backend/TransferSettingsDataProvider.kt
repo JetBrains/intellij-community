@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend
 
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
@@ -7,6 +7,13 @@ import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.openapi.diagnostic.logger
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.job
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.time.Duration.Companion.nanoseconds
@@ -19,6 +26,16 @@ class TransferSettingsDataProvider(private val providers: List<TransferSettingsP
   val orderedIdeVersions: List<BaseIdeVersion> get() = ideVersions + failedIdeVersions
 
   constructor(vararg providers: TransferSettingsProvider) : this(providers.toList())
+
+  suspend fun hasDataToImport(): Boolean =
+    coroutineScope {
+      val result = providers.map { provider ->
+        async { provider.hasDataToImport() }::await.asFlow()
+      }.merge().first { it }
+
+      coroutineContext.job.cancelChildren()
+      result
+    }
 
   fun refresh(): TransferSettingsDataProvider {
     baseIdeVersions.clear()

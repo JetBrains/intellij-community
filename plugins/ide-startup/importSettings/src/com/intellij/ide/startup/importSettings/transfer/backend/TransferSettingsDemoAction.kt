@@ -1,16 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("HardCodedStringLiteral")
 
-package com.intellij.ide.startup.importSettings
+package com.intellij.ide.startup.importSettings.transfer.backend
 
+import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.TransferSettingsModel
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
-import com.intellij.ide.startup.importSettings.providers.testProvider.TestTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeTransferSettingsProvider
-import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacTransferSettingsProvider
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.testProvider.TestTransferSettingsProvider
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.VSMacTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.ui.TransferSettingsProgressIndicatorBase
 import com.intellij.ide.startup.importSettings.ui.TransferSettingsView
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -29,7 +30,9 @@ class TransferSettingsDemoAction : DumbAwareAction() {
 }
 
 private class TransferSettingsDemoDialog(private val project: Project) : DialogWrapper(project) {
-  private val config = DefaultTransferSettingsConfiguration(TransferSettingsDataProvider(TestTransferSettingsProvider(), VSCodeTransferSettingsProvider(), VSMacTransferSettingsProvider()), false)
+  private val config = DefaultTransferSettingsConfiguration(
+    TransferSettingsDataProvider(TestTransferSettingsProvider(), VSCodeTransferSettingsProvider(), VSMacTransferSettingsProvider()),
+    false)
   private val model: TransferSettingsModel = TransferSettingsModel(config, true)
   private val pnl = TransferSettingsView(config, model)
 

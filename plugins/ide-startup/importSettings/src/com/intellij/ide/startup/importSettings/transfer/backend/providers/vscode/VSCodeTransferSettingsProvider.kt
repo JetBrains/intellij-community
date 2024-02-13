@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vscode
 
 import com.intellij.icons.AllIcons
@@ -9,6 +9,8 @@ import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvide
 import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeSettingsProcessor.Companion.vsCodeHome
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.util.SmartList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -21,6 +23,10 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
     get() = "Visual Studio Code"
 
   override fun isAvailable(): Boolean = true
+  override suspend fun hasDataToImport(): Boolean =
+    withContext(Dispatchers.IO) {
+      isVSCodeDetected()
+    }
 
   override fun getIdeVersions(skipIds: List<String>): SmartList<IdeVersion> = when (isVSCodeDetected()) {
     true -> SmartList(getIdeVersion())

@@ -15,6 +15,10 @@ class VSPossibleVersionsEnumerator {
     }
   }
 
+  fun hasAny(): Boolean {
+    return enumNewPossibleVersions().isNotEmpty() || enumOldPossibleVersions().isNotEmpty()
+  }
+
   private fun enumOldPossibleVersions(): List<VSHive> {
     val registry = try {
       Advapi32Util.registryGetKeys(WinReg.HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\VisualStudio")

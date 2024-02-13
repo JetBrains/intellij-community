@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vscode
 
 import com.intellij.ide.startup.importSettings.db.KnownColorSchemes
@@ -6,7 +6,9 @@ import com.intellij.ide.startup.importSettings.db.KnownKeymaps
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.db.WindowsEnvVariables
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vscode.parsers.*
+import com.intellij.ide.startup.importSettings.providers.vscode.parsers.GeneralSettingsParser
+import com.intellij.ide.startup.importSettings.providers.vscode.parsers.KeyBindingsParser
+import com.intellij.ide.startup.importSettings.providers.vscode.parsers.PluginsParser
 import com.intellij.ide.startup.importSettings.vscode.parsers.StateDatabaseParser
 import com.intellij.ide.startup.importSettings.vscode.parsers.StorageParser
 import com.intellij.openapi.util.SystemInfo
@@ -43,7 +45,7 @@ class VSCodeSettingsProcessor {
     private val timeAfterLastModificationToConsiderTheInstanceRecent = Duration.ofHours(365 * 24) // one year
   }
 
-  fun willDetectAtLeastSomething(): Boolean = keyBindingsFile.exists() || pluginsDirectory.exists() || storageFile.exists() || generalSettingsFile.exists()
+  fun willDetectAtLeastSomething(): Boolean = generalSettingsFile.exists()
 
   fun isInstanceRecentEnough(): Boolean {
     try {

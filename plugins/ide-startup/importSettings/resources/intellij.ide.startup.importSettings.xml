@@ -5,7 +5,7 @@
     <action id="StartWizardAction" class="com.intellij.ide.startup.importSettings.wizard.testActions.StartWizardAction" text="[INTERNAL] 5 Transfer: StartWizardAction" internal="true"/>
     <action id="ErrorTestDialogAction" class="com.intellij.ide.startup.importSettings.chooser.testActions.ErrorTestDialogAction" text="[INTERNAL] 4 Transfer: Error Dispatcher Dialog Single" internal="true"/>
     <!--suppress PluginXmlCapitalization -->
-    <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.TransferSettingsDemoAction"
+    <action id="TransferSettingsDemoAction" class="com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDemoAction"
             internal="true" text="Test transfer settings"/>
   </actions>
 

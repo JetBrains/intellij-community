@@ -3,7 +3,6 @@ package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.TransferSettingsDataProvider
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.models.IdeVersion
@@ -12,6 +11,7 @@ import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
 import com.intellij.ide.startup.importSettings.providers.PluginInstallationState
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeTransferSettingsProvider
+import com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDataProvider
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -25,11 +25,12 @@ import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.*
+import java.time.Duration
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 
 @Service
-class SettingTransferService(private val internalScope: CoroutineScope) : ExternalService {
+class SettingTransferService(private val outerScope: CoroutineScope) : ExternalService {
 
   companion object {
 
@@ -92,7 +93,7 @@ class SettingTransferService(private val internalScope: CoroutineScope) : Extern
 
     @Suppress("RAW_RUN_BLOCKING")
     return runBlocking {
-      val ideVersions = loadIdeVersionsAsync(internalScope)
+      val ideVersions = loadIdeVersionsAsync(outerScope)
 
       logger.warn("Started waiting for transfer provider initialization.")
       try {
@@ -106,10 +107,16 @@ class SettingTransferService(private val internalScope: CoroutineScope) : Extern
     }
   }
 
-  override suspend fun hasDataToImport() =
-    coroutineScope {
-      loadIdeVersionsAsync(internalScope).await().values.any()
+  override suspend fun hasDataToImport(): Boolean {
+    val startNs = System.nanoTime()
+    try {
+      return config.dataProvider.hasDataToImport()
     }
+    finally {
+      val endNs = System.nanoTime()
+      logger.info("Checking for data to import took ${Duration.ofNanos(endNs - startNs).toMillis()} ms.")
+    }
+  }
 
   override fun products(): List<Product> {
     return logger.runAndLogException {

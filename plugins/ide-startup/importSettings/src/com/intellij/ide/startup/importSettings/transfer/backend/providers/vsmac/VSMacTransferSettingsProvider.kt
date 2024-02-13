@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vsmac
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
+import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor
 import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor.Companion.getGeneralSettingsFile
 import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor.Companion.vsPreferences
 import com.intellij.openapi.diagnostic.logger
@@ -22,6 +23,9 @@ class VSMacTransferSettingsProvider : TransferSettingsProvider {
   override val name: String = "Visual Studio for Mac"
 
   override fun isAvailable(): Boolean = SystemInfoRt.isMac
+
+  override suspend fun hasDataToImport(): Boolean =
+    getIdeVersions(emptyList()).any()
 
   override fun getIdeVersions(skipIds: List<String>): SmartList<IdeVersion> = when (val version = detectVSForMacVersion()) {
     null -> SmartList()

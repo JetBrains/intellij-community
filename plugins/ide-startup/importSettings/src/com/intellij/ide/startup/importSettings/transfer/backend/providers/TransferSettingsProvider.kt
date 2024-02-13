@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers
 
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
@@ -13,6 +13,7 @@ interface TransferSettingsProvider { // ex. AbstractTransferSettingsProvider
 
   val transferableIdeId: TransferableIdeId
   fun isAvailable(): Boolean
+  suspend fun hasDataToImport(): Boolean
   fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion>
   fun getSupportedFeatures(): List<SettingsPreferencesKind> = SettingsPreferencesKind.keysWithoutNone
   fun getRightPanel(ideV: IdeVersion, config: TransferSettingsConfiguration): TransferSettingsRightPanelChooser? = null

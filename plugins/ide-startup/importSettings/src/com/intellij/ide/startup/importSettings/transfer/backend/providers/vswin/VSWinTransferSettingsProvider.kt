@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -21,6 +21,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -37,11 +39,13 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   val failureReason: @Nls String = IdeBundle.message("transfersettings.vs.failureReason", defaultAdvice)
   private val noSettings: @Nls String = IdeBundle.message("transfersettings.vs.noSettings")
 
+  private val vsEnumerator = VSPossibleVersionsEnumerator()
+
   override fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion> {
     var speedResult = ""
 
     val badVersions = mutableListOf<FailedIdeVersion>()
-    val accessibleVSInstallations = VSPossibleVersionsEnumerator().get().mapNotNull { hive ->
+    val accessibleVSInstallations = vsEnumerator.get().mapNotNull { hive ->
       val start = timeFn()
       logger.info("Started processing ${hive.hiveString}")
 
@@ -186,6 +190,10 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   }
 
   override fun isAvailable(): Boolean = SystemInfoRt.isWindows
+  override suspend fun hasDataToImport(): Boolean =
+    withContext(Dispatchers.IO) {
+      vsEnumerator.hasAny()
+    }
 
   private fun timeFn() = System.nanoTime()
   private fun convertTimeFn(time: Long): Duration = time.nanoseconds

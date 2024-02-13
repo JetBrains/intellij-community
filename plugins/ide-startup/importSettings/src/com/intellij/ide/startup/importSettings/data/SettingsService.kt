@@ -28,7 +28,8 @@ import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISignal
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.Signal
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.time.LocalDate
@@ -77,8 +78,16 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
     else SettingTransferService.getInstance()
 
   override suspend fun shouldShowImport(): Boolean {
-    return getJbService().hasDataToImport()
-           || getExternalService().hasDataToImport()
+    return coroutineScope {
+      val importFromJetBrainsAvailable = async { getJbService().hasDataToImport() }
+      val importFromExternalAvailable = async { getExternalService().hasDataToImport() }
+      val result = select {
+        importFromJetBrainsAvailable.onAwait { it || importFromExternalAvailable.await() }
+        importFromExternalAvailable.onAwait { it || importFromJetBrainsAvailable.await() }
+      }
+      coroutineContext.job.cancelChildren()
+      result
+    }
   }
 
   override val importCancelled = Signal<Unit>().apply {
