@@ -65,8 +65,7 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
     val text = mutableListOf<String?>()
 
     if (c is ComponentWithEmptyText) {
-      text += c.emptyText.component.toString()
-      text += c.emptyText.secondaryComponent.toString()
+      text += c.emptyText.toString()
     }
 
     if (c is EditorComponentImpl) {
