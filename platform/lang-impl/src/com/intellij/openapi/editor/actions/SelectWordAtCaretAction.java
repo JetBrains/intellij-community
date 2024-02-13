@@ -5,7 +5,6 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class SelectWordAtCaretAction extends EditorAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+public final class SelectWordAtCaretAction extends EditorAction implements DumbAware {
   public SelectWordAtCaretAction() {
     super(new DefaultHandler());
     setInjectedContext(true);
