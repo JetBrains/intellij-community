@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -32,6 +33,7 @@ import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.*;
 import net.miginfocom.swing.MigLayout;
@@ -128,6 +130,19 @@ public final class ComponentPropertiesCollector {
       else if (layout instanceof com.intellij.ui.dsl.gridLayout.GridLayout && component instanceof JComponent) {
         addGridLayoutComponentConstraints(
           Objects.requireNonNull(((com.intellij.ui.dsl.gridLayout.GridLayout)layout).getConstraints((JComponent)component)));
+      }
+    }
+
+    if (component instanceof ComponentWithEmptyText) {
+      String emptyText = ((ComponentWithEmptyText)component).getEmptyText().toString();
+      if (!emptyText.isEmpty()) {
+        myProperties.add(new PropertyBean("EmptyText", emptyText));
+      }
+    }
+    if (component instanceof EditorComponentImpl editorComponent) {
+      String placeholder = editorComponent.getEditor().getPlaceholder().toString();
+      if (!placeholder.isEmpty()) {
+        myProperties.add(new PropertyBean("Editor Placeholder", placeholder));
       }
     }
   }
