@@ -27,20 +27,20 @@ import java.util.function.Supplier;
  */
 public class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
                                                                                     PriorityAction {
-  private final @NotNull Supplier<? extends AnAction> myAction;
+  private final @NotNull Supplier<? extends AnAction> myActionSupplier;
   private final int myOrder;
   private final Icon myIcon;
   private final @IntentionName String myText;
 
   public GutterIntentionAction(@NotNull AnAction action, int order, @NotNull Icon icon, @NotNull @IntentionName String text) {
-    myAction = () -> action;
+    myActionSupplier = () -> action;
     myOrder = order;
     myIcon = icon;
     myText = text;
   }
 
   public GutterIntentionAction(@NotNull Supplier<? extends AnAction> action, int order, @NotNull Icon icon, @NotNull @IntentionName String text) {
-    myAction = action;
+    myActionSupplier = action;
     myOrder = order;
     myIcon = icon;
     myText = text;
@@ -52,7 +52,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
     AnActionEvent event = AnActionEvent.createFromInputEvent(
       relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
 
-    AnAction action = myAction.get();
+    AnAction action = getAction();
     if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) return;
     ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
       ActionUtil.doPerformActionOrShowPopup(action, event, popup -> {
@@ -62,7 +62,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public @NotNull Priority getPriority() {
-    return myAction instanceof PriorityAction priority ? priority.getPriority() : Priority.NORMAL;
+    return getAction() instanceof PriorityAction priority ? priority.getPriority() : Priority.NORMAL;
   }
 
   @Override
@@ -80,8 +80,8 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public @NotNull AnAction getAction() {
-    return myAction.get();
+  public final @NotNull AnAction getAction() {
+    return myActionSupplier.get();
   }
 
   @Override
@@ -91,6 +91,6 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public @Nullable ShortcutSet getShortcut() {
-    return myAction.get().getShortcutSet();
+    return getAction().getShortcutSet();
   }
 }
