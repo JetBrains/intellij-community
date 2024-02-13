@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetModel;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
+import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -266,6 +268,21 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           }
         }
       }
+    }
+  }
+
+  static void cleanupSharedIdeaSourceDirs(
+    @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext
+  ) {
+    if (SourceSet.MAIN_SOURCE_SET_NAME.equals(externalSourceSet.getName())) return;
+    if (SourceSet.TEST_SOURCE_SET_NAME.equals(externalSourceSet.getName())) return;
+
+    for (DefaultExternalSourceDirectorySet sourceDirectorySet : externalSourceSet.getSources().values()) {
+      sourceSetResolutionContext.ideaSourceDirs.removeAll(sourceDirectorySet.getSrcDirs());
+      sourceSetResolutionContext.ideaResourceDirs.removeAll(sourceDirectorySet.getSrcDirs());
+      sourceSetResolutionContext.ideaTestSourceDirs.removeAll(sourceDirectorySet.getSrcDirs());
+      sourceSetResolutionContext.ideaTestResourceDirs.removeAll(sourceDirectorySet.getSrcDirs());
     }
   }
 
@@ -516,6 +533,181 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       logger.info(String.format("Failed to resolve java toolchain info for %s", javaCompile.getPath()), e);
     }
     return null;
+  }
+
+  static void addSourceDirs(
+    @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
+    @NotNull Project project,
+    @NotNull SourceSet sourceSet,
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext
+  ) {
+    boolean resolveSourceSetDependencies = Boolean.getBoolean("idea.resolveSourceSetDependencies");
+
+    DefaultExternalSourceDirectorySet sourceDirectorySet = new DefaultExternalSourceDirectorySet();
+    sourceDirectorySet.setName(sourceSet.getAllJava().getName());
+    sourceDirectorySet.setSrcDirs(sourceSet.getAllJava().getSrcDirs());
+    sourceDirectorySet.setGradleOutputDirs(sourceSet.getOutput().getClassesDirs().getFiles());
+    if (sourceDirectorySet.getGradleOutputDirs().isEmpty()) {
+      sourceDirectorySet.setGradleOutputDirs(Collections.singleton(GradleProjectUtil.getBuildDirectory(project)));
+    }
+    sourceDirectorySet.setInheritedCompilerOutput(sourceSetResolutionContext.isIdeaInheritOutputDirs);
+
+    DefaultExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet();
+    resourcesDirectorySet.setName(sourceSet.getResources().getName());
+    resourcesDirectorySet.setSrcDirs(sourceSet.getResources().getSrcDirs());
+    resourcesDirectorySet.setExcludes(sourceSet.getResources().getExcludes());
+    resourcesDirectorySet.setIncludes(sourceSet.getResources().getIncludes());
+    if (sourceSet.getOutput().getResourcesDir() != null) {
+      resourcesDirectorySet.setGradleOutputDirs(Collections.singleton(sourceSet.getOutput().getResourcesDir()));
+    }
+    if (resourcesDirectorySet.getGradleOutputDirs().isEmpty()) {
+      resourcesDirectorySet.setGradleOutputDirs(sourceDirectorySet.getGradleOutputDirs());
+    }
+    resourcesDirectorySet.setInheritedCompilerOutput(sourceSetResolutionContext.isIdeaInheritOutputDirs);
+
+    DefaultExternalSourceDirectorySet generatedSourceDirectorySet = null;
+    Set<File> generatedSourceDirs = new LinkedHashSet<>(sourceDirectorySet.getSrcDirs());
+    generatedSourceDirs.retainAll(sourceSetResolutionContext.ideaGeneratedSourceDirs);
+    if (!generatedSourceDirs.isEmpty()) {
+      sourceDirectorySet.getSrcDirs().removeAll(generatedSourceDirs);
+      sourceSetResolutionContext.unprocessedIdeaGeneratedSourceDirs.removeAll(generatedSourceDirs);
+
+      generatedSourceDirectorySet = new DefaultExternalSourceDirectorySet();
+      generatedSourceDirectorySet.setName("generated " + sourceDirectorySet.getName());
+      generatedSourceDirectorySet.setSrcDirs(generatedSourceDirs);
+      generatedSourceDirectorySet.setGradleOutputDirs(sourceDirectorySet.getGradleOutputDirs());
+      generatedSourceDirectorySet.setInheritedCompilerOutput(sourceDirectorySet.isCompilerOutputPathInherited());
+    }
+
+    boolean isIdeaTestSourceSet = sourceSetResolutionContext.ideaTestSourceDirs.containsAll(sourceDirectorySet.getSrcDirs());
+    boolean isKnownTestSourceSet = sourceSetResolutionContext.testSourceSets.contains(sourceSet);
+    boolean isCustomTestSourceSet = (isIdeaTestSourceSet || isKnownTestSourceSet) &&
+                                    !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName());
+    if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName()) || resolveSourceSetDependencies && isCustomTestSourceSet) {
+      if (!sourceSetResolutionContext.isIdeaInheritOutputDirs && sourceSetResolutionContext.ideaTestOutputDir != null) {
+        sourceDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
+        resourcesDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
+      }
+      else {
+        sourceDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/classes"));
+        resourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/resources"));
+      }
+      if (generatedSourceDirectorySet != null) {
+        generatedSourceDirectorySet.setOutputDir(sourceDirectorySet.getOutputDir());
+      }
+
+      resourcesDirectorySet.getExcludes().addAll(sourceSetResolutionContext.testResourcesExcludes);
+      resourcesDirectorySet.getIncludes().addAll(sourceSetResolutionContext.testResourcesIncludes);
+      resourcesDirectorySet.setFilters(sourceSetResolutionContext.testResourceFilters);
+
+      externalSourceSet.addSource(ExternalSystemSourceType.TEST, sourceDirectorySet);
+      externalSourceSet.addSource(ExternalSystemSourceType.TEST_RESOURCE, resourcesDirectorySet);
+      if (generatedSourceDirectorySet != null) {
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST_GENERATED, generatedSourceDirectorySet);
+      }
+    }
+    else {
+      if (!sourceSetResolutionContext.isIdeaInheritOutputDirs && sourceSetResolutionContext.ideaOutputDir != null) {
+        sourceDirectorySet.setOutputDir(sourceSetResolutionContext.ideaOutputDir);
+        resourcesDirectorySet.setOutputDir(sourceSetResolutionContext.ideaOutputDir);
+      }
+      else if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName()) || !resolveSourceSetDependencies) {
+        sourceDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/production/classes"));
+        resourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/production/resources"));
+      }
+      else {
+        String outputName = StringUtils.toCamelCase(sourceSet.getName(), true);
+        sourceDirectorySet.setOutputDir(new File(project.getProjectDir(), String.format("out/%s/classes", outputName)));
+        resourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), String.format("out/%s/resources", outputName)));
+      }
+      if (generatedSourceDirectorySet != null) {
+        generatedSourceDirectorySet.setOutputDir(sourceDirectorySet.getOutputDir());
+      }
+
+      resourcesDirectorySet.getExcludes().addAll(sourceSetResolutionContext.resourcesExcludes);
+      resourcesDirectorySet.getIncludes().addAll(sourceSetResolutionContext.resourcesIncludes);
+      resourcesDirectorySet.setFilters(sourceSetResolutionContext.resourceFilters);
+
+      externalSourceSet.addSource(ExternalSystemSourceType.SOURCE, sourceDirectorySet);
+      externalSourceSet.addSource(ExternalSystemSourceType.RESOURCE, resourcesDirectorySet);
+      if (generatedSourceDirectorySet != null) {
+        externalSourceSet.addSource(ExternalSystemSourceType.SOURCE_GENERATED, generatedSourceDirectorySet);
+      }
+    }
+  }
+
+  static void addLegacyTestSourceDirs(
+    @NotNull DefaultExternalSourceSet externalSourceSet, // mutable
+    @NotNull Project project,
+    @NotNull GradleSourceSetResolutionContext sourceSetResolutionContext
+  ) {
+    if (Boolean.getBoolean("idea.resolveSourceSetDependencies")) return;
+
+    Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources = externalSourceSet.getSources();
+    DefaultExternalSourceDirectorySet sourceDirectorySet = sources.get(ExternalSystemSourceType.SOURCE);
+    DefaultExternalSourceDirectorySet resourcesDirectorySet = sources.get(ExternalSystemSourceType.RESOURCE);
+    DefaultExternalSourceDirectorySet generatedSourceDirectorySet = sources.get(ExternalSystemSourceType.SOURCE_GENERATED);
+
+    if (sourceDirectorySet != null) {
+      Set<File> testSourceDirs = new LinkedHashSet<>(sourceDirectorySet.getSrcDirs());
+      testSourceDirs.retainAll(sourceSetResolutionContext.ideaTestSourceDirs);
+      if (!testSourceDirs.isEmpty()) {
+        sourceDirectorySet.getSrcDirs().removeAll(sourceSetResolutionContext.ideaTestSourceDirs);
+
+        DefaultExternalSourceDirectorySet testSourceDirectorySet = new DefaultExternalSourceDirectorySet();
+        testSourceDirectorySet.setName(sourceDirectorySet.getName());
+        testSourceDirectorySet.setSrcDirs(testSourceDirs);
+        testSourceDirectorySet.setGradleOutputDirs(Collections.singleton(sourceDirectorySet.getOutputDir()));
+        if (sourceSetResolutionContext.ideaTestOutputDir != null) {
+          testSourceDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
+        }
+        else {
+          testSourceDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/classes"));
+        }
+        testSourceDirectorySet.setInheritedCompilerOutput(sourceDirectorySet.isCompilerOutputPathInherited());
+
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST, testSourceDirectorySet);
+      }
+    }
+
+    if (resourcesDirectorySet != null) {
+      Set<File> testResourceDirs = new LinkedHashSet<>(resourcesDirectorySet.getSrcDirs());
+      testResourceDirs.retainAll(sourceSetResolutionContext.ideaTestSourceDirs);
+      if (!testResourceDirs.isEmpty()) {
+        resourcesDirectorySet.getSrcDirs().removeAll(sourceSetResolutionContext.ideaTestSourceDirs);
+
+        DefaultExternalSourceDirectorySet testResourcesDirectorySet = new DefaultExternalSourceDirectorySet();
+        testResourcesDirectorySet.setName(resourcesDirectorySet.getName());
+        testResourcesDirectorySet.setSrcDirs(testResourceDirs);
+        testResourcesDirectorySet.setGradleOutputDirs(Collections.singleton(resourcesDirectorySet.getOutputDir()));
+        if (sourceSetResolutionContext.ideaTestOutputDir != null) {
+          testResourcesDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
+        }
+        else {
+          testResourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/resources"));
+        }
+        testResourcesDirectorySet.setInheritedCompilerOutput(resourcesDirectorySet.isCompilerOutputPathInherited());
+
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet);
+      }
+    }
+
+    if (generatedSourceDirectorySet != null) {
+      Set<File> testGeneratedSourceDirs = new LinkedHashSet<>(generatedSourceDirectorySet.getSrcDirs());
+      testGeneratedSourceDirs.retainAll(sourceSetResolutionContext.ideaTestSourceDirs);
+      if (!testGeneratedSourceDirs.isEmpty()) {
+        generatedSourceDirectorySet.getSrcDirs().removeAll(sourceSetResolutionContext.ideaTestSourceDirs);
+
+        DefaultExternalSourceDirectorySet testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet();
+        testGeneratedDirectorySet.setName(generatedSourceDirectorySet.getName());
+        testGeneratedDirectorySet.setSrcDirs(testGeneratedSourceDirs);
+        testGeneratedDirectorySet.setGradleOutputDirs(Collections.singleton(generatedSourceDirectorySet.getOutputDir()));
+        testGeneratedDirectorySet.setOutputDir(generatedSourceDirectorySet.getOutputDir());
+        testGeneratedDirectorySet.setInheritedCompilerOutput(generatedSourceDirectorySet.isCompilerOutputPathInherited());
+
+        externalSourceSet.addSource(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet);
+      }
+    }
   }
 
   static void addUnprocessedIdeaSourceDirs(
