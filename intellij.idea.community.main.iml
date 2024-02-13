@@ -177,7 +177,7 @@
     <orderEntry type="module" module-name="intellij.laf.macos" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.laf.win10" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.kotlin" scope="RUNTIME" />

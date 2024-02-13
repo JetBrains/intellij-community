@@ -9,9 +9,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCache
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereStatisticianService
+import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_MODIFIED_IN_LAST_DAY
 import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_MODIFIED_IN_LAST_HOUR
 import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_MODIFIED_IN_LAST_MONTH
