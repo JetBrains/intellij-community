@@ -79,8 +79,8 @@ object DocumentationHtmlUtil {
     val result = ContainerUtil.newLinkedList(
       """
         html { padding: ${contentOuterPadding.scaled()}px ${contentOuterPadding.scaled()}px 0 ${contentOuterPadding.scaled()}px; margin: 0 }
-        body { padding: 0; margin: 0; }
-        pre  { white-space: pre-wrap }
+        body { padding: 0; margin: 0; overflow-wrap: anywhere;}
+        pre  { white-space: pre-wrap; }
         a { color: $linkColor; text-decoration: none;}
         .$CLASS_DEFINITION, .$CLASS_DEFINITION_SEPARATED {    
           padding: 0 ${contentInnerPadding.scaled()}px ${contentSpacing.scaled()}px ${contentInnerPadding.scaled()}px;

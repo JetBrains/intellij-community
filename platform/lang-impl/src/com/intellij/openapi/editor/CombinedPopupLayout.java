@@ -28,6 +28,11 @@ final class CombinedPopupLayout implements LayoutManager {
 
   @Override
   public Dimension preferredLayoutSize(Container parent) {
+    // QuickDoc contents can be updated,
+    // we need to clear the preferred size cache
+    if (quickDocComponent != null) {
+      quickDocComponent.setPreferredSize(null);
+    }
     int w1 = WidthBasedLayout.getPreferredWidth(highlightInfoComponent);
     int w2 = WidthBasedLayout.getPreferredWidth(quickDocComponent);
     int preferredWidth = Math.min(JBUI.scale(MAX_POPUP_WIDTH), Math.max(w1, w2));

@@ -105,8 +105,8 @@ internal class DocumentationUI(
     }
     scrollPane.setViewportView(editorPane, locationLabel)
     trackDocumentationBackgroundChange(this) {
-      scrollPane.viewport.background = editorPane.background
-      locationLabel.background = editorPane.background
+      scrollPane.viewport.background = it
+      locationLabel.background = it
     }
 
     browser.ui = this

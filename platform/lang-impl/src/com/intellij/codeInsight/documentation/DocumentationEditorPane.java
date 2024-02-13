@@ -60,6 +60,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   private final @NotNull DocumentationImageResolver myImageResolver;
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
   private StyleSheet myCurrentDefaultStyleSheet = null;
+  private Dimension myCachedPreferredSize = null;
 
   protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
@@ -111,6 +112,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   @Override
   public void setText(@Nls String t) {
     myText = t;
+    myCachedPreferredSize = null;
     super.setText(t);
   }
 
@@ -147,6 +149,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   @Override
   public void setDocument(Document doc) {
     super.setDocument(doc);
+    myCachedPreferredSize = null;
     doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
     if (doc instanceof StyledDocument) {
       doc.putProperty("imageCache", new DocumentationImageProvider(this, myImageResolver));
@@ -155,15 +158,22 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
 
   @NotNull
   Dimension getPackedSize(int minWidth, int maxWidth) {
-    int width = Math.max(Math.max(definitionPreferredWidth(), getMinimumSize().width), minWidth);
-    int height = getPreferredHeightByWidth(Math.min(width, maxWidth));
+    int width = Math.min(
+      Math.max(Math.max(definitionPreferredWidth(), getMinimumSize().width), minWidth),
+      maxWidth
+    );
+    int height = getPreferredHeightByWidth(width);
     return new Dimension(width, height);
   }
 
   private int getPreferredHeightByWidth(int width) {
-    getParent().setSize(width, Short.MAX_VALUE);
+    if (myCachedPreferredSize != null && myCachedPreferredSize.width == width) {
+      return myCachedPreferredSize.height;
+    }
     setSize(width, Short.MAX_VALUE);
-    return getPreferredSize().height;
+    Dimension result = getPreferredSize();
+    myCachedPreferredSize = new Dimension(width, result.height);
+    return myCachedPreferredSize.height;
   }
 
   int getPreferredWidth() {

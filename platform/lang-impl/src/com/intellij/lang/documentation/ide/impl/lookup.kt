@@ -13,12 +13,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.psi.util.PsiUtilBase
+import com.intellij.ui.WidthBasedLayout
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupPositionManager.Position
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.applyIf
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -132,7 +134,8 @@ private class LookupPopupBoundsHandler(
 
   override fun popupSize(popup: AbstractPopup, resized: Boolean): Dimension {
     // For code completion popup always use preferred size
-    return popup.component.preferredSize
+    val h = WidthBasedLayout.getPreferredHeight(popup.component, JBUI.scale(lookupDocPopupWidth))
+    return Dimension(JBUI.scale(lookupDocPopupWidth), h)
   }
 }
 

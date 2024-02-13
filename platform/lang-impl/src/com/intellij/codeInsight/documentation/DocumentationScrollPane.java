@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -34,7 +35,8 @@ public final class DocumentationScrollPane extends JBScrollPane {
   public Dimension getPreferredSize() {
     Integer forcedWidth = UIUtil.getClientProperty(this, FORCED_WIDTH);
     int minWidth = forcedWidth == null ? scale(getDocPopupMinWidth()) : forcedWidth;
-    return getPreferredSize(minWidth, scale(getDocPopupMaxWidth()), scale(getDocPopupMaxHeight()));
+    int maxWidth = forcedWidth == null ? scale(getDocPopupMaxWidth()) : forcedWidth;
+    return getPreferredSize(minWidth, maxWidth, scale(getDocPopupMaxHeight()));
   }
 
   public void setViewportView(@NotNull DocumentationEditorPane editorPane,
@@ -42,11 +44,12 @@ public final class DocumentationScrollPane extends JBScrollPane {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Dimension getPreferredSize() {
-        Integer forcedWidth = UIUtil.getClientProperty(this, FORCED_WIDTH);
-        int minWidth = forcedWidth == null ? scale(getDocPopupMinWidth()) : forcedWidth;
-        Dimension editorPaneSize = editorPane.getPackedSize(minWidth, getDocPopupMaxWidth());
+        JBViewport parent = (JBViewport)getParent();
+        Dimension minimumSize = editorPane.getMinimumSize();
+        int width = Math.max(Math.max(minimumSize.width, parent.getWidth()), scale(200));
+        Dimension editorPaneSize = editorPane.getPackedSize(width, width);
         Dimension locationLabelSize = locationLabel.isVisible() ? locationLabel.getPreferredSize() : new Dimension();
-        return new Dimension(editorPaneSize.width, editorPaneSize.height + locationLabelSize.height);
+        return new Dimension(width, editorPaneSize.height + locationLabelSize.height);
       }
     };
     panel.add(editorPane, BorderLayout.CENTER);
@@ -59,6 +62,10 @@ public final class DocumentationScrollPane extends JBScrollPane {
   private @NotNull Dimension getPreferredSize(int minWidth, int maxWidth, int maxHeight) {
     Component view = getViewport().getView();
     Dimension paneSize;
+
+    JScrollBar hBar = getHorizontalScrollBar();
+    JScrollBar vBar = getVerticalScrollBar();
+
     if (view instanceof DocumentationEditorPane editorPane) {
       paneSize = editorPane.getPackedSize(minWidth, maxWidth);
     }
@@ -67,16 +74,15 @@ public final class DocumentationScrollPane extends JBScrollPane {
       Dimension editorPaneSize = ((DocumentationEditorPane)components[0]).getPackedSize(minWidth, maxWidth);
       Dimension locationLabelSize = components.length > 1 && panel.getComponents()[1].isVisible()
                                     ? panel.getComponents()[1].getPreferredSize() : new Dimension();
-      paneSize = new Dimension(editorPaneSize.width, editorPaneSize.height + locationLabelSize.height);
+      paneSize = new Dimension(editorPaneSize.width + vBar.getPreferredSize().width,
+                               editorPaneSize.height + locationLabelSize.height);
     }
     else {
       throw new IllegalStateException(view.getClass().getName());
     }
-    JScrollBar hBar = getHorizontalScrollBar();
-    boolean hasHBar = paneSize.width > maxWidth && hBar.isOpaque();
+    boolean hasHBar = paneSize.width - vBar.getPreferredSize().width > maxWidth && hBar.isOpaque();
     int hBarHeight = hasHBar ? hBar.getPreferredSize().height : 0;
 
-    JScrollBar vBar = getVerticalScrollBar();
     boolean hasVBar = paneSize.height + hBarHeight > maxHeight && vBar.isOpaque();
     int vBarWidth = hasVBar ? vBar.getPreferredSize().width : 0;
 
