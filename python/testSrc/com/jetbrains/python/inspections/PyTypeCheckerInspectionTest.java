@@ -1557,4 +1557,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            """)
     );
   }
+
+  public void testGeneratorTypeHint() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+  }
 }

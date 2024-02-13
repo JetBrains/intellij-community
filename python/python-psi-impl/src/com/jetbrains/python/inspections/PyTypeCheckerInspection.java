@@ -245,6 +245,13 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       @Override
+      public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
+        if (ScopeUtil.getScopeOwner(node) == myFunction) {
+          myHasReturns = true;
+        }
+      }
+
+      @Override
       public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
         if (ScopeUtil.getScopeOwner(node) == myFunction) {
           myHasReturns = true;

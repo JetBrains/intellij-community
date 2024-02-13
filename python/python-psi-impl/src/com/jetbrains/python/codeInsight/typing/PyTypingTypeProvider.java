@@ -302,8 +302,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  public static boolean isGenerator(@NotNull final PyType type) {
-    return type instanceof PyCollectionType && GENERATOR.equals(((PyClassLikeType)type).getClassQName());
+  public static boolean isGenerator(@NotNull PyType type) {
+    return type instanceof PyCollectionType genericType && GENERATOR.equals(genericType.getClassQName());
   }
 
   @NotNull
