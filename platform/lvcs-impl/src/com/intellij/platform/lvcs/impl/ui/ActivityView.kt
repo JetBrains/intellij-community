@@ -17,6 +17,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
@@ -48,6 +50,7 @@ import java.awt.event.KeyEvent
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.DocumentEvent
 
@@ -198,6 +201,13 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       PropertiesComponent.getInstance().setValue(NOTIFICATION_DISMISSED_KEY, true)
       notificationPanel.parent?.remove(notificationPanel)
     }, BorderLayout.EAST)
+
+    val disableLabel = JLabel(LocalHistoryBundle.message("activity.notification.disable.text",
+                                                         ShowSettingsUtil.getSettingsMenuName(),
+                                                         LocalHistoryBundle.message("activity.configurable.title")))
+    disableLabel.foreground = EditorColorsManager.getInstance().getGlobalScheme().defaultForeground
+    disableLabel.border = JBUI.Borders.emptyTop(2)
+    notificationPanel.add(disableLabel, BorderLayout.SOUTH)
 
     return notificationPanel
   }
