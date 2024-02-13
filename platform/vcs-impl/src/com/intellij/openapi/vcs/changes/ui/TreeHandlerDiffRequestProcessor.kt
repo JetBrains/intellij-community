@@ -123,16 +123,7 @@ open class TreeHandlerChangesTreeTracker(
   }
 
   private fun clearPreview() {
-    if (editorViewer.disposable.isDisposed) return
-    when (editorViewer) {
-      is CombinedDiffComponentProcessor -> {
-        editorViewer.cleanBlocks()
-      }
-      is ChangeViewDiffRequestProcessor -> {
-        editorViewer.clear()
-      }
-      else -> fail(editorViewer)
-    }
+    clearDiffViewer(editorViewer)
   }
 
   private inner class PreviewUpdate(val updateType: UpdateType) : Update(updateType) {
@@ -157,6 +148,21 @@ open class TreeHandlerChangesTreeTracker(
 
   enum class UpdateType {
     FULL, ON_SELECTION_CHANGE, ON_MODEL_CHANGE
+  }
+
+  companion object {
+    fun clearDiffViewer(editorViewer: DiffEditorViewer) {
+      if (editorViewer.disposable.isDisposed) return
+      when (editorViewer) {
+        is CombinedDiffComponentProcessor -> {
+          editorViewer.cleanBlocks()
+        }
+        is ChangeViewDiffRequestProcessor -> {
+          editorViewer.clear()
+        }
+        else -> fail(editorViewer)
+      }
+    }
   }
 }
 

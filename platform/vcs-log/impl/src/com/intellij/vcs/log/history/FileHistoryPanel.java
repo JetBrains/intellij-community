@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
+import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -20,6 +21,8 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -137,14 +140,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     tablePanel.add(actionsToolbar, BorderLayout.WEST);
 
     setLayout(new BorderLayout());
-    add(new FrameDiffPreview<>(createDiffPreview(false), myProperties, tablePanel,
-                               "vcs.history.diff.splitter.proportion", false, 0.7f) {
-
-      @Override
-      public void updatePreview(boolean state) {
-        getPreviewDiff().updatePreview(state);
-      }
-    }.getMainComponent(), BorderLayout.CENTER);
+    DiffEditorViewer diffPreview = createDiffPreview(false);
+    FrameDiffPreview frameDiffPreview = new FrameDiffPreview(diffPreview, myProperties, tablePanel,
+                                                             "vcs.history.diff.splitter.proportion", false, 0.7f);
+    add(frameDiffPreview.getMainComponent(), BorderLayout.CENTER);
 
     PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.HISTORY_POPUP_ACTION_GROUP, ActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
@@ -196,7 +195,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     FileHistoryDiffProcessor diffPreview = new FileHistoryDiffProcessor(myProject, () -> getSelectedChange(), isInEditor, this);
     ListSelectionListener selectionListener = e -> {
       int[] selection = myGraphTable.getSelectedRows();
-      ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
+      ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(),
                                                       o -> !Arrays.equals(selection, myGraphTable.getSelectedRows()) ||
                                                            Disposer.isDisposed(diffPreview));
     };
@@ -205,10 +204,17 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     TableModelListener modelListener = e -> {
       if (e.getColumn() < 0) {
-        ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(diffPreview.getComponent().isShowing()),
+        ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(),
                                                         o -> Disposer.isDisposed(diffPreview));
       }
     };
+    UiNotifyConnector.installOn(diffPreview.getComponent(), new Activatable() {
+      @Override
+      public void showNotify() {
+        diffPreview.updatePreview();
+      }
+    });
+
     myGraphTable.getModel().addTableModelListener(modelListener);
     Disposer.register(diffPreview, () -> myGraphTable.getModel().removeTableModelListener(modelListener));
 

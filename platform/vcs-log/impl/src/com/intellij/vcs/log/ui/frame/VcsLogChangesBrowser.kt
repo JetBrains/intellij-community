@@ -1,6 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
+import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.tools.combined.CombinedDiffManager
+import com.intellij.diff.tools.combined.CombinedDiffRegistry
+import com.intellij.diff.tools.combined.DISABLE_LOADING_BLOCKS
+import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
 import com.intellij.openapi.Disposable
@@ -13,7 +18,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
@@ -67,7 +74,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   private var isShowOnlyAffectedSelected = false
 
   private var affectedPaths: Collection<FilePath>? = null
-  private val editorDiffPreviewController: DiffPreviewController?
+  private val editorDiffPreviewController: VcsLogEditorDiffPreview?
 
   init {
     val propertiesChangeListener = object : PropertiesChangeListener {
@@ -91,7 +98,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     init()
 
-    editorDiffPreviewController = if (isWithEditorDiffPreview) createDiffPreviewController() else null
+    editorDiffPreviewController = if (isWithEditorDiffPreview) VcsLogEditorDiffPreview(this) else null
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
@@ -310,13 +317,24 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     return createDiffRequestProducer(myProject, userObject, context, forDiffPreview)
   }
 
-  fun createChangeProcessor(isInEditor: Boolean): VcsLogChangeProcessor {
-    return VcsLogChangeProcessor(myProject, this, isInEditor, this)
+  fun createChangeProcessor(isInEditor: Boolean): DiffEditorViewer {
+    val place = if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW
+    val handler = VcsLogDiffPreviewHandler(this)
+
+    val processor: DiffEditorViewer
+    if (CombinedDiffRegistry.isEnabled()) {
+      processor = CombinedDiffManager.getInstance(myProject).createProcessor(place)
+      processor.context.putUserData(DISABLE_LOADING_BLOCKS, true)
+    }
+    else {
+      processor = VcsLogChangeProcessor(place, this, handler, true)
+    }
+    VcsLogTreeChangeProcessorTracker(this, processor, handler, !isInEditor).track()
+    return processor
   }
 
   override fun getShowDiffActionPreview(): DiffPreview? {
-    val editorDiffPreviewController = editorDiffPreviewController
-    return editorDiffPreviewController?.activePreview
+    return editorDiffPreviewController
   }
 
   fun selectChange(userObject: Any, tag: ChangesBrowserNode.Tag?) {
@@ -345,11 +363,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   fun interface Listener : EventListener {
     fun onModelUpdated()
   }
-
-  private fun createDiffPreviewController(): DiffPreviewController = DiffPreviewControllerImpl(
-    simpleDiffPreviewBuilder = { VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser) },
-    combinedDiffPreviewBuilder = { VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser) },
-  )
 
   private class ParentTag(commit: Hash, private val text: @Nls String) : ValueTag<Hash>(commit) {
     override fun toString() = text

@@ -1,79 +1,66 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.util.DiffPlaces
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWrapper
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
+import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.util.containers.JBIterable
 
-class VcsLogChangeProcessor internal constructor(project: Project,
-                                                 private val myBrowser: VcsLogChangesBrowser,
-                                                 private val myIsInEditor: Boolean,
-                                                 disposable: Disposable)
-  : ChangeViewDiffRequestProcessor(project, if (myIsInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW) {
-
-  init {
-    Disposer.register(disposable, this)
-
-    myBrowser.addListener({ updatePreviewLater() }, this)
-    myBrowser.viewer.addSelectionListener({ this.updatePreviewLater() }, this)
-  }
+class VcsLogChangeProcessor(place: String,
+                            val browser: VcsLogChangesBrowser,
+                            handler: ChangesTreeDiffPreviewHandler,
+                            private val isInEditor: Boolean
+) : TreeHandlerDiffRequestProcessor(place, browser.viewer, handler) {
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
-    return !myIsInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
+    return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
+  }
+}
+
+class VcsLogTreeChangeProcessorTracker(val browser: VcsLogChangesBrowser,
+                                       editorViewer: DiffEditorViewer,
+                                       handler: ChangesTreeDiffPreviewHandler,
+                                       updateWhileShown: Boolean)
+  : TreeHandlerChangesTreeTracker(browser.viewer, editorViewer, handler, updateWhileShown) {
+
+  override fun track() {
+    browser.addListener({ updatePreviewLater(UpdateType.ON_MODEL_CHANGE) }, editorViewer.disposable)
+
+    super.track()
+  }
+}
+
+class VcsLogDiffPreviewHandler(private val browser: VcsLogChangesBrowser) : ChangesTreeDiffPreviewHandler() {
+  override fun iterateSelectedChanges(tree: ChangesTree): Iterable<Wrapper> {
+    return collectWrappers(browser, VcsTreeModelData.selected(tree))
   }
 
-  override fun iterateSelectedChanges(): Iterable<Wrapper> {
-    return wrap(VcsTreeModelData.selected(myBrowser.viewer))
+  override fun iterateAllChanges(tree: ChangesTree): Iterable<Wrapper> {
+    return collectWrappers(browser, VcsTreeModelData.all(tree))
   }
 
-  override fun iterateAllChanges(): Iterable<Wrapper> {
-    return wrap(VcsTreeModelData.all(myBrowser.viewer))
-  }
-
-  private fun wrap(modelData: VcsTreeModelData): Iterable<Wrapper> {
-    return wrap(myBrowser, modelData)
-  }
-
-  override fun selectChange(change: Wrapper) {
-    myBrowser.selectChange(change.userObject, change.tag)
-  }
-
-  private fun updatePreviewLater() {
-    ApplicationManager.getApplication().invokeLater { updatePreview(myIsInEditor || component.isShowing) }
-  }
-
-  fun updatePreview(state: Boolean) {
-    // We do not have local changes here, so it's OK to always use `fromModelRefresh == false`
-    updatePreview(state, false)
-  }
-
-  private class MyChangeWrapper(private val myBrowser: VcsLogChangesBrowser, change: Change, tag: ChangesBrowserNode.Tag?)
-    : ChangeWrapper(change, tag) {
-    override fun createProducer(project: Project?): DiffRequestProducer? {
-      return myBrowser.getDiffRequestProducer(change, true)
-    }
+  override fun selectChange(tree: ChangesTree, change: Wrapper) {
+    browser.selectChange(change.userObject, change.tag)
   }
 
   companion object {
-    fun wrap(browser: VcsLogChangesBrowser, modelData: VcsTreeModelData): Iterable<Wrapper> {
+    private fun collectWrappers(browser: VcsLogChangesBrowser,
+                                modelData: VcsTreeModelData): JBIterable<Wrapper> {
       return modelData.iterateNodes()
         .filter(ChangesBrowserChangeNode::class.java)
-        .map<Wrapper> { n: ChangesBrowserChangeNode -> MyChangeWrapper(browser, n.userObject, browser.getTag(n.userObject)) }
+        .map { node -> MyChangeWrapper(browser, node.userObject, browser.getTag(node.userObject)) }
     }
+  }
+}
 
-    fun getSelectedOrAll(changesBrowser: VcsLogChangesBrowser): VcsTreeModelData {
-      val hasSelection = changesBrowser.viewer.selectionModel.selectionCount != 0
-      return if (hasSelection) VcsTreeModelData.selected(changesBrowser.viewer)
-      else VcsTreeModelData.all(changesBrowser.viewer)
-    }
+private class MyChangeWrapper(private val browser: VcsLogChangesBrowser, change: Change, tag: ChangesBrowserNode.Tag?)
+  : ChangeWrapper(change, tag) {
+  override fun createProducer(project: Project?): DiffRequestProducer? {
+    return browser.getDiffRequestProducer(change, true)
   }
 }

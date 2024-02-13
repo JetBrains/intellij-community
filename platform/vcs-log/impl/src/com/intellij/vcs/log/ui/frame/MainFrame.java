@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
+import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -95,7 +96,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private boolean myIsLoading;
   private @Nullable FilePath myPathToSelect = null;
 
-  private final @NotNull FrameDiffPreview<VcsLogChangeProcessor> myDiffPreview;
+  private final @NotNull FrameDiffPreview myDiffPreview;
 
   public MainFrame(@NotNull VcsLogData logData,
                    @NotNull AbstractVcsLogUi logUi,
@@ -169,17 +170,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     setLayout(new BorderLayout());
-    VcsLogChangeProcessor processor = myChangesBrowser.createChangeProcessor(false);
+    DiffEditorViewer processor = myChangesBrowser.createChangeProcessor(false);
+    Disposer.register(this, processor.getDisposable());
     processor.setToolbarVerticalSizeReferent(getToolbar());
-    myDiffPreview = new FrameDiffPreview<>(processor,
-                                           myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
-                                           myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
-                                           0.7f) {
-      @Override
-      public void updatePreview(boolean state) {
-        getPreviewDiff().updatePreview(state);
-      }
-    };
+    myDiffPreview = new FrameDiffPreview(processor,
+                                         myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
+                                         myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
+                                         0.7f);
     add(myDiffPreview.getMainComponent());
 
     myHistory = VcsLogUiUtil.installNavigationHistory(logUi, myGraphTable);
