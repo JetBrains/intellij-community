@@ -87,7 +87,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
 
     row(JavaUiBundle.message("project.structure.sdk")) {
       cell(myProjectJdkConfigurable.createComponent())
-        .widthGroup(NAME_SDK_GROUP_NAME)
+        .widthGroup(LANGUAGE_COMPILER_GROUP_NAME)
     }
       .bottomGap(BottomGap.SMALL)
 

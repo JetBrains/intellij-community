@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JButton
 import javax.swing.JPanel
@@ -21,7 +22,10 @@ internal class ProjectJdkConfigurableUi {
                                    SimpleJavaSdkType.notSimpleJavaSdkType(),
                                    WslSdkFilter.filterSdkByWsl(project),
                                    WslSdkFilter.filterSdkSuggestionByWsl(project),
-                                   null)).component
+                                   null))
+        .resizableColumn()
+        .align(AlignX.FILL)
+        .component
       editButton = button(ApplicationBundle.message("button.edit")) {}.component
     }
   }
