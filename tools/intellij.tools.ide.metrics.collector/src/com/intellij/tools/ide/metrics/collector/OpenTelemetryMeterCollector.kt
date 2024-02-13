@@ -4,7 +4,6 @@ import com.intellij.platform.diagnostic.telemetry.MetricsImporterUtils
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import io.opentelemetry.sdk.metrics.data.LongPointData
-import io.opentelemetry.sdk.metrics.data.PointData
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -14,7 +13,7 @@ import kotlin.io.path.name
  * [metersFilter] Input data: key - meter name. value - list of collected data points for that meter
  */
 open class OpenTelemetryMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
-                                  val metersFilter: (Map.Entry<String, List<PointData>>) -> Boolean) : TelemetryMetricsCollector {
+                                  val metersFilter: (Map.Entry<String, List<LongPointData>>) -> Boolean) : TelemetryMetricsCollector {
   private fun getOpenTelemetryCsvReportFiles(logsDirPath: Path): List<Path> {
     val metricsCsvFiles = logsDirPath.listDirectoryEntries("*.csv").filter { it.name.startsWith("open-telemetry-metrics") }
     require(metricsCsvFiles.isNotEmpty()) {

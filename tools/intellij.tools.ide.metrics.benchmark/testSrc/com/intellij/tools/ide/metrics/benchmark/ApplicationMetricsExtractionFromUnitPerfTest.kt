@@ -6,10 +6,10 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.testFramework.diagnostic.MetricsAggregation
+import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.tools.ide.metrics.collector.OpenTelemetryMeterCollector
-import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -38,7 +38,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .counterBuilder("custom.counter")
       .buildWithCallback { it.record(counter.get()) }
 
-    val meterCollector = OpenTelemetryMeterCollector(MetricsSelectionStrategy.SUM) { it.key.contains("custom") }
+    val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.key.contains("custom") }
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
@@ -55,7 +55,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .start()
 
     MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
-    val meters = meterCollector.collect(PathManager.getLogDir())
+    val meters = meterCollector.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
 
     Assertions.assertTrue(meters.count { it.id.name == "custom.counter" } == 1, "Counter meter should be present in .csv metrics file")
   }

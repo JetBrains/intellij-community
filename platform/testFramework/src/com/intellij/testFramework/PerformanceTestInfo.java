@@ -7,8 +7,8 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector;
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
-import com.intellij.tools.ide.metrics.collector.OpenTelemetryMeterCollector;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +50,7 @@ public class PerformanceTestInfo {
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
   private final IJTracer tracer;
-  private OpenTelemetryMeterCollector meterCollector = null;
+  private TelemetryMeterCollector meterCollector = null;
 
   private static final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(
     SupervisorKt.SupervisorJob(null).plus(Dispatchers.getIO())
@@ -148,7 +148,7 @@ public class PerformanceTestInfo {
    *       .counterBuilder("custom.counter")
    *       .buildWithCallback { it.record(counter.get()) }
    *
-   *     val meterCollector = OpenTelemetryMeterCollector(MetricsSelectionStrategy.SUM) { it.key.contains("custom") }
+   *     val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.key.contains("custom") }
    *
    *     PlatformTestUtil.newPerformanceTest("my perf test") {
    *       counter.incrementAndGet()
@@ -158,7 +158,7 @@ public class PerformanceTestInfo {
    * </pre>
    */
   @Contract(pure = true) // to warn about not calling .start() in the end
-  public PerformanceTestInfo withTelemetryMeters(OpenTelemetryMeterCollector meterCollector) {
+  public PerformanceTestInfo withTelemetryMeters(TelemetryMeterCollector meterCollector) {
     this.meterCollector = meterCollector;
     return this;
   }
@@ -230,7 +230,7 @@ public class PerformanceTestInfo {
    * </ul>
    * <br/>
    * By default only OpenTelemetry spans will be published. (from the {@code ./system/test/log/opentelemtry.json} file).<br/>
-   * To enable publishing of meters (from the {@code ./system/test/log/open-telemetry-metrics.*.csv}) use {@link #withTelemetryMeters(OpenTelemetryMeterCollector)}.<br/>
+   * To enable publishing of meters (from the {@code ./system/test/log/open-telemetry-metrics.*.csv}) use {@link #withTelemetryMeters(OpenTelemetryMeterCollector)}. <br/>
    * <p/>
    * Considering metrics: better to have a test that produces metrics in seconds, rather milliseconds.<br/>
    * This way degradation will be easier to detect and metric deviation from the baseline will be easier to notice.
@@ -239,7 +239,9 @@ public class PerformanceTestInfo {
    * <a href="https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_Idea_Tests_PerformanceTests?branch=&buildTypeTab=overview&mode=builds">the composite build</a>
    * <br/>
    * Raw metrics are reported as TC artifacts and can be found on Artifacts tqb in dependency builds.<br/>
-   * Human friendly metrics representation can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a>
+   * Human friendly metrics representation can be viewed in <a href="https://ij-perf.labs.jb.gg/perfUnit/tests?machine=linux-blade-hetzner&branch=master">IJ Perf</a><br/>
+   * Last but not least: if metrics arent published or even not collected - probably TelemetryManager isntance isn't initialized correctly
+   * or dependency on module intellij.tools.ide.metrics.benchmark isn't set.
    *
    * @see #start(String)
    * @see #start(Method)
