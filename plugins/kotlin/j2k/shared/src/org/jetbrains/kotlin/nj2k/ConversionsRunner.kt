@@ -4,79 +4,22 @@ package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.nj2k.conversions.*
-import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
-import org.jetbrains.kotlin.nj2k.tree.JKParameter
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.j2k.J2kConverterExtension
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @ApiStatus.Internal
 object ConversionsRunner {
-    private fun createConversions(context: NewJ2kConverterContext) = listOf(
-        ParenthesizeBitwiseOperationConversion(context),
-        ParenthesizeMultilineBinaryExpressionConversion(context),
-        NonCodeElementsConversion(context),
-        JavaModifiersConversion(context),
-        JavaAnnotationsConversion(context),
-        AnnotationClassConversion(context),
-        AnnotationConversion(context),
-        ModalityConversion(context),
-        FunctionAsAnonymousObjectToLambdaConversion(context),
-        ReturnStatementInLambdaExpressionConversion(context),
-        BoxedTypeOperationsConversion(context),
-        AnyWithStringConcatenationConversion(context),
-        AssignmentExpressionUnfoldingConversion(context),
-        ArrayInitializerConversion(context),
-        JavaStatementConversion(context),
-        EnumFieldAccessConversion(context),
-        NullabilityAnnotationsConversion(context),
-        DefaultArgumentsConversion(context),
-        ConstructorConversion(context),
-        MoveConstructorsAfterFieldsConversion(context),
-        ImplicitInitializerConversion(context),
-        ParameterModificationInMethodCallsConversion(context),
-        BlockToRunConversion(context),
-        RecordClassConversion(context),
-        PrimaryConstructorDetectConversion(context),
-        InsertDefaultPrimaryConstructorConversion(context),
-        ClassMemberConversion(context),
-        JavaStandardMethodsConversion(context),
-        SwitchToWhenConversion(context),
-        YieldStatementConversion(context),
-        ForConversion(context),
-        LabeledStatementConversion(context),
-        ArrayOperationsConversion(context),
-        EqualsOperatorConversion(context),
-        TypeMappingConversion(context),
-        InternalDeclarationConversion(context),
-        InnerClassConversion(context),
-        StaticsToCompanionExtractConversion(context),
-        InterfaceWithFieldConversion(context),
-        ClassToObjectPromotionConversion(context),
-        RemoveWrongOtherModifiersConversion(context),
-        MethodReferenceToLambdaConversion(context),
-        TypeMappingConversion(context) { typeElement ->
-            typeElement.parent.safeAs<JKParameter>()?.parent is JKLambdaExpression
-        },
-        BuiltinMembersConversion(context),
-        ImplicitCastsConversion(context),
-        PrimitiveTypeCastsConversion(context),
-        LiteralConversion(context),
-        RemoveRedundantQualifiersForCallsConversion(context),
-        FunctionalInterfacesConversion(context),
-        FilterImportsConversion(context),
-        // TODO
-        //AddElementsInfoConversion(context),
-        EnumSyntheticValuesMethodConversion(context)
-    )
-
     context(KtAnalysisSession)
     fun doApply(
         trees: List<JKTreeRoot>,
         context: NewJ2kConverterContext,
         updateProgress: (conversionIndex: Int, conversionCount: Int, fileIndex: Int, description: String) -> Unit
     ) {
-        val conversions = createConversions(context)
+        val j2kKind = if (KotlinPluginModeProvider.isK2Mode()) K2 else K1_NEW
+        val conversions = J2kConverterExtension.extension(j2kKind).getConversions(context)
         val applyingConversionsMessage: String = KotlinNJ2KBundle.message("j2k.applying.conversions")
 
         for ((conversionIndex, conversion) in conversions.withIndex()) {

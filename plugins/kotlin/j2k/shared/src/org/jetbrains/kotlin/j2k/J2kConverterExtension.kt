@@ -8,6 +8,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.nj2k.Conversion
+import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 
 @ApiStatus.Internal
 abstract class J2kConverterExtension {
@@ -31,6 +33,9 @@ abstract class J2kConverterExtension {
         files: List<PsiJavaFile>?,
         phasesCount: Int
     ): WithProgressProcessor
+
+    open fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+        emptyList()
 
     companion object {
         val EP_NAME = ExtensionPointName<J2kConverterExtension>("org.jetbrains.kotlin.j2kConverterExtension")
