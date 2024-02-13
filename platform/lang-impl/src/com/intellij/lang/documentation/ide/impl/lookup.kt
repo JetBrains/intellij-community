@@ -26,9 +26,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
+import javax.swing.BoundedRangeModel
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 import kotlin.math.min
@@ -50,12 +54,30 @@ internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext(
     }
     super.setUpPopup(popup, popupUI)
     cancelPopupWhenLookupIsClosed(lookup, popup)
+    emitDocContentsScrolledEvents(popupUI)
   }
 
   override fun requestFlow(): Flow<DocumentationRequest?> = lookup.elementFlow().map(lookupElementToRequestMapper(lookup))
 
   override fun baseBoundsHandler(): PopupBoundsHandler {
     return LookupPopupBoundsHandler(lookup)
+  }
+
+  private fun emitDocContentsScrolledEvents(popupUI: DocumentationPopupUI) {
+    var scrollBarPos = 0
+    val project = popupUI.ui.project
+    val coroutineScope = popupUI.coroutineScope
+    popupUI.ui.scrollPane.verticalScrollBar.model.addChangeListener(object : ChangeListener {
+      override fun stateChanged(e: ChangeEvent) {
+        if ((e.source as BoundedRangeModel).value != scrollBarPos) {
+          scrollBarPos = (e.source as BoundedRangeModel).value
+          (e.source as BoundedRangeModel).removeChangeListener(this)
+          coroutineScope.launch {
+            project.messageBus.syncPublisher(DocumentationPopupListener.TOPIC).contentsScrolled()
+          }
+        }
+      }
+    })
   }
 }
 
@@ -136,6 +158,11 @@ private class LookupPopupBoundsHandler(
     // For code completion popup always use preferred size
     val h = WidthBasedLayout.getPreferredHeight(popup.component, JBUI.scale(lookupDocPopupWidth))
     return Dimension(JBUI.scale(lookupDocPopupWidth), h)
+  }
+
+  override fun showPopup(popup: AbstractPopup) {
+    super.showPopup(popup)
+    lookup.project.messageBus.syncPublisher(DocumentationPopupListener.TOPIC).popupShown()
   }
 }
 

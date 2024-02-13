@@ -86,7 +86,6 @@ internal class DocumentationUI(
     }
     Disposer.register(this, editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
-    emitDocContentsScrolledEvents(scrollPane, project)
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
     switcher = createSwitcher()
     switcherToolbarComponent = switcher.createToolbar().component.apply {
@@ -141,16 +140,6 @@ internal class DocumentationUI(
     cs.launch(CoroutineName("DocumentationUI content size update emission"), start = CoroutineStart.UNDISPATCHED) {
       myContentUpdates.collect {
         myContentSizeUpdates.emit("content change")
-      }
-    }
-  }
-
-  private fun emitDocContentsScrolledEvents(scrollPane: DocumentationScrollPane, project: Project) {
-    var scrollBarPos = 0
-    scrollPane.verticalScrollBar.model.addChangeListener {
-      if ((it.source as BoundedRangeModel).value != scrollBarPos) {
-        scrollBarPos = (it.source as BoundedRangeModel).value
-        project.messageBus.syncPublisher(DocumentationPopupListener.TOPIC).contentsScrolled()
       }
     }
   }
