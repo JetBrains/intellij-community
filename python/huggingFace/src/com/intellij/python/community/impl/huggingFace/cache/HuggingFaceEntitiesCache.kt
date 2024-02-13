@@ -15,12 +15,20 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasic
 )
 abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateComponent<HuggingFaceCache> {
   private var cacheMap: LinkedHashMap<String, HuggingFaceEntityBasicApiData> =
-    object : LinkedHashMap<String, HuggingFaceEntityBasicApiData>(16, 0.75f, true) {
+    object : LinkedHashMap<String, HuggingFaceEntityBasicApiData>(maxSize, 0.75f, true) {
       override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, HuggingFaceEntityBasicApiData>?): Boolean {
       return size > maxSize
       }
     }
   private var nameSet: MutableSet<String> = mutableSetOf()
+
+  private val hotCacheMaxSize = 50  // smaller cache for IDs met on practice
+  private val hotCache: LinkedHashMap<String, HuggingFaceEntityBasicApiData> =
+    object : LinkedHashMap<String, HuggingFaceEntityBasicApiData>(16, 0.75f, true) {
+      override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, HuggingFaceEntityBasicApiData>?): Boolean {
+        return size > hotCacheMaxSize
+      }
+    }
 
   fun saveEntities(entitiesMap: Map<String, HuggingFaceEntityBasicApiData>) {
     cacheMap.putAll(entitiesMap)
@@ -29,7 +37,14 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
     }
   }
 
-  fun isInCache(entityId: String): Boolean = cacheMap.containsKey(entityId)
+  fun isInCache(entityId: String): Boolean {
+    if (hotCache.containsKey(entityId)) return true
+
+    return if (cacheMap.containsKey(entityId)) {
+      hotCache[entityId] = cacheMap[entityId]!!
+      true
+    } else false
+  }
 
   fun getBasicData(entityId: String): HuggingFaceEntityBasicApiData? = cacheMap[entityId]
 

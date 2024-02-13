@@ -20,7 +20,7 @@ class HuggingFaceDocumentationTargetProvider : PsiDocumentationTargetProvider {
 
       if (referencedElement is PyStringLiteralExpression) {
         val stringValue = referencedElement.stringValue
-        if (HuggingFaceUtil.isHuggingFaceModel(stringValue) || HuggingFaceUtil.isHuggingFaceDataset(stringValue)) {
+        if (HuggingFaceUtil.isHuggingFaceEntity(stringValue)) {
           documentationTargets.add(HuggingFaceDocumentationTarget(element))
         }
       }
@@ -28,6 +28,11 @@ class HuggingFaceDocumentationTargetProvider : PsiDocumentationTargetProvider {
       documentationTargets.add(HuggingFaceDocumentationTarget(element))
     } else if (element is HuggingFaceDatasetPsiElement) {
       documentationTargets.add(HuggingFaceDocumentationTarget(element))
+    } else if (element is PyStringLiteralExpression) {
+      val stringValue = element.stringValue
+      if (HuggingFaceUtil.isHuggingFaceEntity(stringValue)) {
+        documentationTargets.add(HuggingFaceDocumentationTarget(element))
+      }
     }
 
     return documentationTargets

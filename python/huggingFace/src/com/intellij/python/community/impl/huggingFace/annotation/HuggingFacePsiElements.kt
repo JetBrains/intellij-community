@@ -31,7 +31,7 @@ abstract class HuggingFaceEntityPsiElement(
   fun stringValue(): String = entityName
 }
 
-class HuggingFaceModelPsiElement( parent: PsiElement, modelName: String
+class HuggingFaceModelPsiElement(parent: PsiElement, modelName: String
 ) : HuggingFaceEntityPsiElement(parent, modelName, HuggingFaceURLProvider::getModelCardLink)
 
 class HuggingFaceDatasetPsiElement(parent: PsiElement, datasetName: String

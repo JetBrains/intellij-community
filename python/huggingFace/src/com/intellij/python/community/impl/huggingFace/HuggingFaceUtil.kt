@@ -14,6 +14,7 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceLastCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyPlainStringElementImpl
 import java.time.Duration
 
 val huggingFaceRelevantLibraries = setOf(
@@ -67,6 +68,8 @@ object HuggingFaceUtil {
 
   fun isHuggingFaceDataset(text: String): Boolean = HuggingFaceDatasetsCache.isInCache(text)
 
+  fun isHuggingFaceEntity(text: String): Boolean = isHuggingFaceModel(text) || isHuggingFaceDataset(text)
+
   @NlsSafe
   fun extractTextFromPyTargetExpression(pyTargetExpression: PyTargetExpression): String {
     val parent = pyTargetExpression.parent
@@ -78,20 +81,32 @@ object HuggingFaceUtil {
     }
   }
 
+  private fun extractStringAndKindFromStringLiteralExpression(stringValue: String?): Pair<String?, HuggingFaceEntityKind?> {
+    val entityKind = if (stringValue != null) isWhatHuggingFaceEntity(stringValue) else null
+    return Pair(stringValue, entityKind)
+  }
+
   fun extractStringValueAndEntityKindFromElement(element: PsiElement): Pair<String?, HuggingFaceEntityKind?> {
     return when (val parent = element.parent) {
       is PyAssignmentStatement -> when (element) {
         is PyTargetExpression -> {
           val stringValue = (parent.assignedValue as? PyStringLiteralExpression)?.stringValue
-          val entityKind = if (stringValue != null) isWhatHuggingFaceEntity(stringValue) else null
-
-          Pair(stringValue, entityKind)
+          extractStringAndKindFromStringLiteralExpression(stringValue)
         }
         else -> Pair(null, null)
       }
       is PyStringLiteralExpression -> when (element) {
         is HuggingFaceModelPsiElement -> Pair(parent.stringValue, HuggingFaceEntityKind.MODEL)
         is HuggingFaceDatasetPsiElement -> Pair(parent.stringValue, HuggingFaceEntityKind.DATASET)
+        is PyPlainStringElementImpl -> {
+          extractStringAndKindFromStringLiteralExpression(parent.stringValue)
+        }
+        else -> Pair(null, null)
+      }
+      is PyArgumentList -> when (element) {
+        is PyStringLiteralExpression -> {
+          extractStringAndKindFromStringLiteralExpression(element.stringValue)
+        }
         else -> Pair(null, null)
       }
       else -> Pair(null, null)

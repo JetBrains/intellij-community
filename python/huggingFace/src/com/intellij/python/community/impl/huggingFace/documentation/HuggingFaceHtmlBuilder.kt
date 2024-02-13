@@ -28,7 +28,7 @@ class HuggingFaceHtmlBuilder(
     val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter().convert(modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
-      .setClass(CLASS_CONTENT)
+      .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)
       .child(HtmlChunk.raw(convertedHtml))
 
     val bodyChunk = HtmlChunk.tag("body")
@@ -44,13 +44,13 @@ class HuggingFaceHtmlBuilder(
 
   private fun generateCardHeader(modelInfo: HuggingFaceEntityBasicApiData): HtmlChunk {
     val modelNameWithIconRow = HtmlChunk.tag("h1")
-      .setClass(HuggingFaceQuickDocStyles.CARD_HEADER_MARGIN)
       .children(
         HtmlChunk.raw(modelInfo.itemId.replace("-", HuggingFaceQuickDocStyles.NBHP)),
         HtmlChunk.nbsp(),
         HtmlChunk.text(HuggingFaceConstants.HF_EMOJI)
       )
 
+    // modelPurpose chunk is not applicable for datasets
     val conditionalChunks = if (entityKind == HuggingFaceEntityKind.MODEL) {
       @NlsSafe val modelPurpose = modelInfo.pipelineTag
       listOf(HtmlChunk.text(modelPurpose), HtmlChunk.nbsp(), HtmlChunk.nbsp())
@@ -71,10 +71,6 @@ class HuggingFaceHtmlBuilder(
         HtmlChunk.text(modelInfo.humanReadableLikes()),
       )
 
-    val modelInfoRowDiv =  HtmlChunk.div()
-        .children(modelInfoRow)
-
-
     val linkRow = HtmlChunk.tag("a")
       .setClass(HuggingFaceQuickDocStyles.LINK_ROW_STYLE)
       .attr("href", HuggingFaceURLProvider.getEntityCardLink(modelInfo.itemId, entityKind).toString())
@@ -85,15 +81,13 @@ class HuggingFaceHtmlBuilder(
       )
       .wrapWith("p")
 
-    val linkRowDiv = HtmlChunk.div()
-      .child(linkRow)
 
     val headerContainer = HtmlChunk.div()
-      .setClass(CLASS_CONTENT)
+      .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)
       .children(
         modelNameWithIconRow,
-        modelInfoRowDiv,
-        linkRowDiv,
+        modelInfoRow,
+        linkRow,
       )
     return headerContainer
   }
