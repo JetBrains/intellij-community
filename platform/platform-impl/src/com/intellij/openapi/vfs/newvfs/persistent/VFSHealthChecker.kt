@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.IdleTracker
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
@@ -27,6 +28,8 @@ import com.intellij.util.io.DataEnumeratorEx
 import com.intellij.util.io.PowerStatus
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.take
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.logging.ConsoleHandler
@@ -80,6 +83,7 @@ private object VFSHealthCheckerConstants {
 }
 
 private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
+
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (HEALTH_CHECKING_ENABLED) {
       if (HEALTH_CHECKING_PERIOD_MS < 1.minutes.inWholeMilliseconds) {
@@ -96,13 +100,23 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
           //MAYBE RC: track FSRecords.getLocalModCount() to run the check only if there are enough changes
           //          since the last check.
-          //MAYBE RC: use IdleTracker.getInstance().events to launch checkup on next _idle_ period?
-
           if (!PowerSaveMode.isEnabled()) {
-            launch(Dispatchers.IO) {
-              //MAYBE RC: show a progress bar -- or better not bother user?
-              doCheckupAndReportResults()
-            }
+            //HealthCheck is not really an urgent process -- it is OK to delay a minute or two after
+            // the scheduled time. On the other side, health-check takes anywhere from 3 sec to 1.5 min
+            // depending on load, and could slow down the IDE operations in the process.
+            // We don't want to disturb the user with health-check, so we delay the check until the user
+            // is idle for at least 1 min straight -- which gives us a good probability the health-check
+            // will finish before the user returns from its retreat.
+            @OptIn(FlowPreview::class)
+            IdleTracker.getInstance().events
+              .debounce(1.minutes)
+              .take(1)
+              .collect {
+                launch(Dispatchers.IO) {
+                  //MAYBE RC: show a progress bar -- or better not bother user?
+                  doCheckupAndReportResults()
+                }
+              }
           }
           else {
             LOG.info("VFS health-check skipped: PowerSaveMode is enabled")
