@@ -320,7 +320,7 @@ public final class InstanceOfUtils {
     ControlFlow flow;
     try {
       flow = ControlFlowFactory.getControlFlow(parent, new LocalsControlFlowPolicy(parent), 
-                                               ControlFlowOptions.NO_CONST_EVALUATE_EXPLICIT_EXCEPTIONS);
+                                               ControlFlowOptions.NO_CONST_EVALUATE);
     }
     catch (AnalysisCanceledException e) {
       return true;
