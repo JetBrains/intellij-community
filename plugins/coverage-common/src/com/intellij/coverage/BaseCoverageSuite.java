@@ -119,6 +119,12 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
     return myCoverageDataFileProvider;
   }
 
+  @NotNull
+  @Override
+  public String getCoverageDataFileName() {
+    return myCoverageDataFileProvider.getCoverageDataFilePath();
+  }
+
   @Override
   public long getLastCoverageTimeStamp() {
     return myTimestamp;
@@ -178,7 +184,8 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
 
   @Nullable
   protected ProjectData loadProjectInfo() {
-    String sessionDataFileName = getCoverageDataFileName();
+    String sessionDataFileName = myCoverageDataFileProvider.getCoverageDataFilePath();
+    if (sessionDataFileName == null) return null;
     File sessionDataFile = new File(sessionDataFileName);
     if (!sessionDataFile.exists()) {
       if (LOG.isDebugEnabled()) {

@@ -25,6 +25,9 @@ public interface CoverageSuite extends JDOMExternalizable {
    */
   boolean isValid();
 
+  @NotNull
+  String getCoverageDataFileName();
+
   @NlsSafe
   String getPresentableName();
 
@@ -61,12 +64,6 @@ public interface CoverageSuite extends JDOMExternalizable {
    * Reinit coverage data cache with {@link CoverageRunner#loadCoverageData(File, CoverageSuite)}.
    */
   void restoreCoverageData();
-
-
-  @NotNull
-  default String getCoverageDataFileName() {
-    return getCoverageDataFileProvider().getCoverageDataFilePath();
-  }
 
   /**
    * @return true if engine can provide means to remove coverage data.

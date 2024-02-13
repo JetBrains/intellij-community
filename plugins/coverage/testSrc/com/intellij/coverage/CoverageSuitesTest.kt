@@ -178,6 +178,24 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
     assertNoSuites()
   }
 
+  @Test
+  fun `test remote suite implementation`() {
+    // Some coverage implementations load a coverage report from net,
+    // so they use non-standard file provider implementation:
+    val remoteProvider = object : CoverageFileProvider {
+      override fun getCoverageDataFilePath() = null
+      override fun ensureFileExists() = true
+      override fun isValid() = true
+    }
+
+    val suite = object : BaseCoverageSuite("", myProject, null, DefaultCoverageFileProvider(""), 0) {
+      override fun getCoverageEngine() = TODO()
+      override fun getCoverageDataFileProvider(): CoverageFileProvider = remoteProvider
+    }
+
+    Assert.assertEquals("", suite.coverageDataFileName)
+  }
+
   private fun registerSuite(suite: CoverageSuite) {
     // Use 'presentableName' parameter to avoid report file deletion
     manager.addCoverageSuite(suite, suite.presentableName)
