@@ -107,14 +107,14 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
       myOptions.selectScheme(scheme.getName());
       if (areSchemesLoaded()) {
         myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
-      }
 
-      if (shouldApplyImmediately() && myOptions.isModified()) {
-        try {
-          myOptions.apply();
-        }
-        catch (ConfigurationException e) {
-          LOG.warn("Unable to apply compiler resource patterns", e);
+        if (shouldApplyImmediately() && myOptions.isModified()) {
+          try {
+            myOptions.apply();
+          }
+          catch (ConfigurationException e) {
+            LOG.warn("Unable to apply compiler resource patterns", e);
+          }
         }
       }
     }
