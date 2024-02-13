@@ -281,26 +281,13 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     val textWords = searchableOptionsRegistrar.getProcessedWords(text)
 
     for (filterWord in filterWords) {
-      if (!textWords.contains(filterWord) && !text.toLowerCase().contains(filterWord.toLowerCase())) {
+      if (!textWords.contains(filterWord) && !text.lowercase().contains(filterWord.lowercase())) {
         return false
       }
     }
     return true
   }
 
-  companion object {
-    fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
-      val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
-      val text = searchText?.takeIf { it.isNotBlank() }?.let {
-        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
-        "<html>$highlightedText"
-      } ?: baseText
-      when (component) {
-        is JLabel -> component.text = text
-        is AbstractButton -> component.text = text
-      }
-    }
-  }
   override fun getDisplayName(): String = ApplicationBundle.message("title.advanced.settings")
 
   override fun getId(): String = "advanced.settings"
@@ -312,5 +299,17 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
       return Runnable { applyFilter("", false) }
     }
     return Runnable { applyFilter(option, false) }
+  }
+}
+
+private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+  val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
+  val text = searchText?.takeIf { it.isNotBlank() }?.let {
+    @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
+    "<html>$highlightedText"
+  } ?: baseText
+  when (component) {
+    is JLabel -> component.text = text
+    is AbstractButton -> component.text = text
   }
 }
