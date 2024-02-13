@@ -29,6 +29,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -49,7 +50,7 @@ final class HighlightInfoUpdater implements Disposable {
   private static final Key<Map<PsiFile, Map<Object, ToolHighlights>>> VISITED_PSI_ELEMENTS = Key.create("VISITED_PSI_ELEMENTS");
 
   static class ToolHighlights {
-    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = new ConcurrentHashMap<>();
+    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap(); //new ConcurrentHashMap<>();
     @NotNull ToolLatencies latencies = new ToolLatencies(0,0,0);
   }
   record ToolLatencies(
@@ -89,10 +90,7 @@ final class HighlightInfoUpdater implements Disposable {
   }
 
   private static @NotNull Map<Object, ToolHighlights> getData(@NotNull PsiFile psiFile, @NotNull Document hostDocument) {
-    Map<PsiFile, Map<Object, ToolHighlights>> map = hostDocument.getUserData(VISITED_PSI_ELEMENTS);
-    if (map == null) {
-      map = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, new ConcurrentHashMap<>());
-    }
+    Map<PsiFile, Map<Object, ToolHighlights>> map = getOrCreateHostMap(hostDocument);
     Map<Object, ToolHighlights> result = map.get(psiFile);
     if (result == null) {
       result = map.computeIfAbsent(psiFile, __->new ConcurrentHashMap<>());
@@ -100,14 +98,19 @@ final class HighlightInfoUpdater implements Disposable {
     return result;
   }
 
+  private static @NotNull Map<PsiFile, Map<Object, ToolHighlights>> getOrCreateHostMap(@NotNull Document hostDocument) {
+    Map<PsiFile, Map<Object, ToolHighlights>> map = hostDocument.getUserData(VISITED_PSI_ELEMENTS);
+    if (map == null) {
+      map = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, CollectionFactory.createConcurrentSoftMap());
+    }
+    return map;
+  }
+
   @NotNull
   HighlightersRecycler removeOrRecycleInvalidPsiElements(@NotNull PsiFile psiFile) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
     Document hostDocument = hostFile.getFileDocument();
-    Map<PsiFile, Map<Object, ToolHighlights>> hostMap = hostDocument.getUserData(VISITED_PSI_ELEMENTS);
-    if (hostMap == null) {
-      hostMap = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, new ConcurrentHashMap<>());
-    }
+    Map<PsiFile, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(hostDocument);
     hostMap.entrySet().removeIf(entry -> {
       PsiFile psi = entry.getKey();
       if (psi == psiFile || psi.isValid()) {
