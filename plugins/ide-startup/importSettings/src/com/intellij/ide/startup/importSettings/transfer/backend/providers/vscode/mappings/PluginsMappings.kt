@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vscode.mappings
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings
 
 import com.intellij.ide.startup.importSettings.models.BuiltInFeature
 import com.intellij.ide.startup.importSettings.models.FeatureInfo
@@ -38,6 +38,7 @@ private data class FeatureData(
 private val logger = logger<CommonPluginMapping>()
 
 internal class CommonPluginMapping : VSCodePluginMapping {
+
   // Note that the later files will override the data from the former.
   private fun getResourceMappings(): List<String> = when {
     PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
@@ -58,6 +59,10 @@ internal class CommonPluginMapping : VSCodePluginMapping {
       logger.runAndLogException {
         @OptIn(ExperimentalSerializationApi::class)
         val features = this.javaClass.classLoader.getResourceAsStream("pluginData/$resourceName").use { file ->
+          if (file == null) {
+            logger.error("Cannot find resource $resourceName")
+            return@runAndLogException
+          }
           Json.decodeFromStream<List<FeatureData>>(file)
         }
         for (data in features) {
