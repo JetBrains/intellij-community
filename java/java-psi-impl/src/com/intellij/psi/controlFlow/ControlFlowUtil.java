@@ -1067,11 +1067,19 @@ public final class ControlFlowUtil {
         if (offset > endOffset) return;
         int throwToOffset = instruction.offset;
         boolean isNormal;
-        if (throwToOffset == nextOffset) {
+        //if it is not PsiThrowStatement and the next step is the last step,
+        //it is possible to complete it normally.
+        if (throwToOffset == nextOffset && nextOffset == endOffset &&
+            offset + 1 == nextOffset && !(flow.getElement(offset) instanceof PsiThrowStatement)) {
+          isNormal = true;
+        }
+        else if (throwToOffset == nextOffset) {
           isNormal = throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
         }
         else {
-          isNormal = canCompleteNormally[nextOffset];
+          //if the next step is the last step, it is certainly completed normally in `not-throw` branch
+          //otherwise, take completion from the next offset
+          isNormal = nextOffset == endOffset || canCompleteNormally[nextOffset];
         }
         canCompleteNormally[offset] |= isNormal;
       }
