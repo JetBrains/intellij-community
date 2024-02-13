@@ -12,7 +12,7 @@ import javax.swing.text.View
 import javax.swing.text.html.ImageView
 import kotlin.math.max
 
-class FitToWidthImageView(element: Element) : ImageView(element) {
+internal class FitToWidthImageView(element: Element) : ImageView(element) {
   private var myAvailableWidth = 0
 
   override fun getLoadingImageIcon(): Icon =

@@ -24,7 +24,7 @@ private val CAPTION_SIDE = CSS.Attribute::class.java
  * Supports paddings and margins for inline elements, like `<span>`. Due to limitations of [HTMLDocument],
  * paddings for nested inline elements are not supported and will cause incorrect rendering.
  */
-class InlineViewEx(elem: Element) : InlineView(elem) {
+internal class InlineViewEx(elem: Element) : InlineView(elem) {
 
   private lateinit var padding: JBInsets
   private lateinit var margin: JBInsets
