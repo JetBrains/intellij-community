@@ -72,10 +72,11 @@ public final class DocumentationScrollPane extends JBScrollPane {
     else if (view instanceof JPanel panel) {
       Component[] components = panel.getComponents();
       Dimension editorPaneSize = ((DocumentationEditorPane)components[0]).getPackedSize(minWidth, maxWidth);
-      Dimension locationLabelSize = components.length > 1 && panel.getComponents()[1].isVisible()
-                                    ? panel.getComponents()[1].getPreferredSize() : new Dimension();
+      int locationLabelSizeHeight = components.length > 1 && panel.getComponents()[1].isVisible()
+                                    ? panel.getComponents()[1].getPreferredSize().height
+                                    : Math.max(JBUI.scale(getContentOuterPadding() - getContentSpacing()), 0);
       paneSize = new Dimension(editorPaneSize.width + vBar.getPreferredSize().width,
-                               editorPaneSize.height + locationLabelSize.height);
+                               editorPaneSize.height + locationLabelSizeHeight);
     }
     else {
       throw new IllegalStateException(view.getClass().getName());
