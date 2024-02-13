@@ -126,16 +126,19 @@ public class EditorTestFixture {
   }
 
   public boolean performEditorAction(@NotNull String actionId) {
-    final DataContext dataContext = getEditorDataContext();
+    DataContext dataContext = getEditorDataContext();
 
-    final ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
-    final AnAction action = managerEx.getAction(actionId);
-    final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
-    if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      return false;
+    ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
+    AnAction action = managerEx.getAction(actionId);
+    AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(), managerEx, 0);
+    PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
+    ActionUtil.performDumbAwareUpdate(action, event, false);
+    if (event.getPresentation().isEnabled()) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+      LOG.info("performEditorAction(): performing action '" + event.getActionManager().getId(action) + "'");
+      return true;
     }
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    return true;
+    return false;
   }
 
   @NotNull

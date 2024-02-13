@@ -600,7 +600,8 @@ public final class PlatformTestUtil {
     assertNotNull(action);
     @SuppressWarnings("deprecation") DataContext context = DataManager.getInstance().getDataContext();
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
-    assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, event, false));
+    PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event);
+    ActionUtil.performDumbAwareUpdate(action, event, false);
     assertTrue(event.getPresentation().isEnabled());
     ActionUtil.performActionDumbAwareWithCallbacks(action, event);
   }
