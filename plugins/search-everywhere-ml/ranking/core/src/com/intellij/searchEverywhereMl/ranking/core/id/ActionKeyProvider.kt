@@ -3,9 +3,10 @@ package com.intellij.searchEverywhereMl.ranking.core.id
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 
-private class ActionKeyProvider: ElementKeyForIdProvider {
-  override fun getKey(element: Any): Any? {
+private class ActionKeyProvider: SearchEverywhereElementKeyProvider {
+  override fun getKeyOrNull(element: Any): Any? {
     if (element is GotoActionModel.MatchedValue) {
       val elementValue = element.value
 

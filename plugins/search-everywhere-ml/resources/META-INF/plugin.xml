@@ -15,6 +15,7 @@
 
   <content>
     <module name="intellij.searchEverywhereMl.typos"/>
+    <module name="intellij.searchEverywhereMl.ranking.ext"/>
     <module name="intellij.searchEverywhereMl.ranking.core"/>
     <module name="intellij.searchEverywhereMl.ranking.yaml"/>
     <module name="intellij.searchEverywhereMl.ranking.vcs"/>

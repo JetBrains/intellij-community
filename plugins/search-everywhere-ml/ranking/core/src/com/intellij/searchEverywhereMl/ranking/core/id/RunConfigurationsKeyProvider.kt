@@ -1,9 +1,10 @@
 package com.intellij.searchEverywhereMl.ranking.core.id
 
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
+import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 
-private class RunConfigurationsKeyProvider: ElementKeyForIdProvider {
-  override fun getKey(element: Any): Any? {
+private class RunConfigurationsKeyProvider: SearchEverywhereElementKeyProvider {
+  override fun getKeyOrNull(element: Any): Any? {
     if (element is ChooseRunConfigurationPopup.ItemWrapper<*>) {
       return element.value
     }

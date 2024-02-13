@@ -1,8 +1,22 @@
 <idea-plugin package="com.intellij.searchEverywhereMl.ranking.core">
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
+  <dependencies>
+    <module name="intellij.searchEverywhereMl.ranking.ext"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
     <rankingService implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlRankingService"/>
+
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.ActionKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiElementKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.RunConfigurationsKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.NavigationItemKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.TypoKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.TextKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.CalculatorKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiItemWithSimilarityElementKeyProvider"/>
+    <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.CommandInfoKeyProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -67,10 +81,6 @@
                     interface="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.elementKeyForIdProvider"
-                    interface="com.intellij.searchEverywhereMl.ranking.core.id.ElementKeyForIdProvider"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.rankingModelLoader"
                     interface="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereMLRankingModelLoader"
                     dynamic="true"/>
@@ -103,16 +113,6 @@
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereTextFeaturesProvider"/>
-
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.ActionKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiElementKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.RunConfigurationsKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.NavigationItemKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.TypoKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.TextKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.CalculatorKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiItemWithSimilarityElementKeyProvider"/>
-    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.CommandInfoKeyProvider"/>
 
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereActionsRankingModelLoader"/>

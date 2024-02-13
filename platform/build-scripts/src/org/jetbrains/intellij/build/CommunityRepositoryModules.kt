@@ -284,6 +284,7 @@ object CommunityRepositoryModules {
     },
     plugin(listOf(
       "intellij.searchEverywhereMl",
+      "intellij.searchEverywhereMl.ranking.ext",
       "intellij.searchEverywhereMl.ranking.core",
       "intellij.searchEverywhereMl.ranking.yaml",
       "intellij.searchEverywhereMl.ranking.vcs",

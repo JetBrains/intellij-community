@@ -18,7 +18,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGen
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_HIGH_PRIORITY
 import com.intellij.searchEverywhereMl.ranking.core.features.assert
 import com.intellij.searchEverywhereMl.ranking.core.features.get
-import com.intellij.searchEverywhereMl.ranking.core.id.ElementKeyForIdProvider
+import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.junit.Assert
 import org.junit.Test
@@ -32,7 +32,7 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
   fun `checks with single element that only changed data is recorded`() {
     val events = underMaskedExtensionPoints {
       SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
-      ElementKeyForIdProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
+      SearchEverywhereElementKeyProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
 
       MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
         type("regist")
@@ -53,14 +53,14 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
     // This test addresses IDEA-345677
     val firstSERunEvents = underMaskedExtensionPoints {
       SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
-      ElementKeyForIdProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
+      SearchEverywhereElementKeyProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
 
       MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
     }
 
     val secondSERunEvents = underMaskedExtensionPoints {
       SearchEverywhereMlService.EP_NAME maskedWith listOf(MockSearchEverywhereMlService())
-      ElementKeyForIdProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
+      SearchEverywhereElementKeyProvider.EP_NAME maskedWith listOf(MockElementKeyForIdProvider())
 
       MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents { type("reg") }
     }
@@ -162,8 +162,8 @@ internal class SearchEverywhereMlDiffLoggingTest : SearchEverywhereLoggingTestCa
       SearchEverywhereFoundElementInfoWithMl(element, sePriority, contributor, mlWeight, mlFeatures)
   }
 
-  class MockElementKeyForIdProvider : ElementKeyForIdProvider {
-    override fun getKey(element: Any): Any {
+  class MockElementKeyForIdProvider : SearchEverywhereElementKeyProvider {
+    override fun getKeyOrNull(element: Any): Any {
       return Unit
     }
   }

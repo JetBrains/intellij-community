@@ -1,11 +1,12 @@
 package com.intellij.searchEverywhereMl.ranking.core.id
 
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.searchEverywhereMl.ranking.ext.SearchEverywhereElementKeyProvider
 
-internal class PsiItemWithSimilarityElementKeyProvider : ElementKeyForIdProvider {
-  override fun getKey(element: Any): Any? {
+internal class PsiItemWithSimilarityElementKeyProvider : SearchEverywhereElementKeyProvider {
+  override fun getKeyOrNull(element: Any): Any? {
     return when (element) {
-      is PsiItemWithSimilarity<*> -> ElementKeyForIdProvider.getKeyOrNull(element.value)
+      is PsiItemWithSimilarity<*> -> SearchEverywhereElementKeyProvider.getKeyOrNull(element.value)
       else -> null
     }
   }
