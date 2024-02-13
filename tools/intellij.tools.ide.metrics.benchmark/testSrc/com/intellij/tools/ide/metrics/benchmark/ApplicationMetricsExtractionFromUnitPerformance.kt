@@ -25,7 +25,7 @@ internal val ExtractionMetricsScope: Scope = Scope("ExtractionMetricsScope", Pla
 /** Class intentionally named *Perf* (and not a *Performance*) test.
  * That way it will not be ignored during Aggregator run */
 @TestApplication
-class ApplicationMetricsExtractionFromUnitPerfTest {
+class ApplicationMetricsExtractionFromUnitPerformance {
   private val tracer = TelemetryManager.getTracer(ExtractionMetricsScope)
 
   private fun getFullTestName(testInfo: TestInfo, launchName: String) =
@@ -54,7 +54,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .withTelemetryMeters(meterCollector)
       .start()
 
-    MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
+    SpanExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
     val meters = meterCollector.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
 
     Assertions.assertTrue(meters.count { it.id.name == "custom.counter" } == 1, "Counter meter should be present in .csv metrics file")
@@ -74,9 +74,9 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     }
 
     perfTest.startAsSubtest("launch1")
-    MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, "launch1"), withWarmup = true, customSpanName)
+    SpanExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, "launch1"), withWarmup = true, customSpanName)
 
     perfTest.startAsSubtest("launch2")
-    MetricsExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, "launch2"), withWarmup = true, customSpanName)
+    SpanExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, "launch2"), withWarmup = true, customSpanName)
   }
 }

@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /** Class intentionally named *Perf* (and not a *Performance*) test.
  * That way it will not be ignored during Aggregator run */
-class MetricsExtractionFromUnitPerfTest {
+class SpanExtractionFromUnitPerfTest {
   companion object {
     fun checkMetricsAreFlushedToTelemetryFile(spanName: String, withWarmup: Boolean = true, vararg customSpanNames: String) {
       val extractedMetrics = runBlocking {
