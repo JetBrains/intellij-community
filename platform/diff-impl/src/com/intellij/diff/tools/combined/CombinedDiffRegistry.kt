@@ -3,10 +3,7 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.editor.DiffEditorViewerFileEditor.Companion.reloadDiffEditorsForFiles
 import com.intellij.diff.editor.DiffViewerVirtualFile
-import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.idea.AppMode
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.ProjectManager
@@ -23,23 +20,10 @@ object CombinedDiffRegistry {
 }
 
 class CombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {
-  companion object {
-    private var dialogScheduled = false
-  }
-
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
     if (id == "enable.combined.diff") {
       for (project in ProjectManager.getInstance().openProjects) {
         reloadDiffEditorsForFiles(project) { it is DiffViewerVirtualFile }
-      }
-
-      if (!dialogScheduled) {
-        dialogScheduled = true
-        ApplicationManager.getApplication().invokeLater(
-          {
-            dialogScheduled = false
-            RegistryBooleanOptionDescriptor.suggestRestart(null)
-          }, ModalityState.nonModal())
       }
     }
   }
