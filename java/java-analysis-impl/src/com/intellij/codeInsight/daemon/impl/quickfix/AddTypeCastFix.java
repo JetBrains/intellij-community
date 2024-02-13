@@ -64,9 +64,9 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     addTypeCast(context.project(), expression, myType);
   }
 
-  public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
+  public static PsiElement addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
     PsiExpression typeCast = createCastExpression(originalExpression, project, type);
-    originalExpression.replace(Objects.requireNonNull(typeCast));
+    return originalExpression.replace(Objects.requireNonNull(typeCast));
   }
 
   private static String tryConvertNumericLiteral(PsiElement expr, @NotNull PsiType type) {

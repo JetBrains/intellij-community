@@ -167,7 +167,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                        StringUtil.escapeStringCharacters("(" + type.getCanonicalText() + ")") +
                        "' at " +
                        MadTestingUtil.getPositionDescription(expr.getTextOffset(), getDocument()));
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> AddTypeCastFix.addTypeCast(getProject(), (PsiExpression)expr, type));
+        Runnable runnable = () -> AddTypeCastFix.addTypeCast(getProject(), (PsiExpression)expr, type);
+        WriteCommandAction.runWriteCommandAction(getProject(), runnable);
       }
     }
   }
