@@ -14,6 +14,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
@@ -267,7 +269,16 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     @JvmStatic
-    fun isViewEnabled() = Registry.`is`("lvcs.show.activity.view") && !AppMode.isRemoteDevHost()
+    fun isViewEnabled(): Boolean {
+      if (!isViewAvailable()) return false
+      return service<ActivityViewApplicationSettings>().isActivityToolWindowEnabled
+    }
+
+    @JvmStatic
+    fun isViewAvailable(): Boolean {
+      if (AppMode.isRemoteDevHost()) return false
+      return ApplicationInfo.getInstance().isEAP || Registry.`is`("lvcs.show.activity.view")
+    }
   }
 }
 
