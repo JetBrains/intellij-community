@@ -24,7 +24,7 @@ UFile (package = ) [public final class AnnotatedTypesKt {...]
         UAnnotation (fqName = kotlin.annotation.Target) [@kotlin.annotation.Target(allowedTargets = AnnotationTarget.TYPE)]
             UNamedExpression (name = allowedTargets) [allowedTargets = AnnotationTarget.TYPE]
                 UQualifiedReferenceExpression [AnnotationTarget.TYPE] : PsiType:AnnotationTarget
-                    USimpleNameReferenceExpression (identifier = AnnotationTarget) [AnnotationTarget] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = AnnotationTarget) [AnnotationTarget]
                     USimpleNameReferenceExpression (identifier = TYPE) [TYPE] : PsiType:AnnotationTarget
         UAnnotationMethod (name = a) [public abstract fun a() : int = UastEmptyExpression]
         UAnnotationMethod (name = b) [public abstract fun b() : java.lang.String = UastEmptyExpression]
