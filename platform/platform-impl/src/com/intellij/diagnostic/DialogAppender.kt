@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.logging.Handler
@@ -30,7 +30,8 @@ class DialogAppender : Handler() {
 
   private var earlyEventCounter = 0
   private val earlyEvents = ArrayDeque<IdeaLoggingEvent>()
-  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("DialogAppender", 1)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val context = Dispatchers.IO.limitedParallelism(1) + CoroutineName("DialogAppender")
 
   override fun publish(event: LogRecord) {
     if (event.level.intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
@@ -64,20 +65,27 @@ class DialogAppender : Handler() {
   }
 
   private fun processEarlyEventsIfNeeded() {
-    if (earlyEventCounter == 0) return
-    var queued: IdeaLoggingEvent
-    while ((earlyEvents.poll().also { queued = it }) != null) {
+    if (earlyEventCounter == 0) {
+      return
+    }
+
+    while (true) {
+      val queued = earlyEvents.poll() ?: break
       earlyEventCounter--
       queueAppend(queued)
     }
+
     if (earlyEventCounter > 0) {
       queueAppend(IdeaLoggingEvent(DiagnosticBundle.message("error.monitor.early.errors.skipped", earlyEventCounter), Throwable()))
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private fun queueAppend(event: IdeaLoggingEvent) {
     if (DefaultIdeaErrorLogger.canHandle(event)) {
-      executor.execute { DefaultIdeaErrorLogger.handle(event) }
+      GlobalScope.launch(context) {
+        DefaultIdeaErrorLogger.handle(event)
+      }
     }
   }
 
