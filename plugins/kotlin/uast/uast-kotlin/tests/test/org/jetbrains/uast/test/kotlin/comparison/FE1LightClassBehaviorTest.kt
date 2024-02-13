@@ -88,4 +88,12 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testAnnotationParameterReference() {
         checkAnnotationParameterReference(myFixture)
     }
+
+    fun testContainingFile() {
+        checkContainingFile(myFixture)
+    }
+
+    fun testContainingFileInFacadeFiles() {
+        checkContainingFileInFacadeFiles(myFixture)
+    }
 }

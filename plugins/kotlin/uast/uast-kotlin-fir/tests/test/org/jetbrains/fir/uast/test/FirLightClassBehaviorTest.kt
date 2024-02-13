@@ -84,4 +84,12 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
     fun testAnnotationParameterReference() {
         checkAnnotationParameterReference(myFixture)
     }
+
+    fun testContainingFile() {
+        checkContainingFile(myFixture)
+    }
+
+    fun testContainingFileInFacadeFiles() {
+        checkContainingFileInFacadeFiles(myFixture)
+    }
 }
