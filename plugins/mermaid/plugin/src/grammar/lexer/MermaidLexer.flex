@@ -411,8 +411,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   \-[\)] { return Sequence.SOLID_POINT; }
   \-\-[\)] { return Sequence.DOTTED_POINT; }
 
-  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)*/"-"?"->"">"?[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
-  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)*/"-"?"-"[>x)][^\S\n\r]*[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)*/"-"?"->"">"?[+-]?[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
+  [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)*/"-"?"-"[>x)][+-]?[^\S\n\r]*[^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)?+ { return ID; }
   [^\+\->:\s,;]([\-]*[^\+\->:\s,;]+)* { return ID; }
 
   ":" { yybegin(sequence_message); return COLON; }
