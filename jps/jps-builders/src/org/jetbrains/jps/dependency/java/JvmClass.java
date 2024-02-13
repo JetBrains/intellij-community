@@ -33,7 +33,7 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     Iterable<String> interfaces,
     Iterable<JvmField> fields,
     Iterable<JvmMethod> methods,
-    Iterable<TypeRepr.ClassType> annotations,
+    Iterable<ElementAnnotation> annotations,
     Iterable<ElemType> annotationTargets, @Nullable RetentionPolicy retentionPolicy, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata
   ) {
     

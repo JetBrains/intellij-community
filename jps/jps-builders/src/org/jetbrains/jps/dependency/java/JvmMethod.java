@@ -23,7 +23,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
   public JvmMethod(
     JVMFlags flags, String signature, String name, String descriptor,
-    @NotNull Iterable<TypeRepr.ClassType> annotations, Iterable<ParamAnnotation> parameterAnnotations,
+    @NotNull Iterable<ElementAnnotation> annotations, Iterable<ParamAnnotation> parameterAnnotations,
     Iterable<String> exceptions, Object defaultValue) {
 
     super(flags, signature, name, TypeRepr.getType(Type.getReturnType(descriptor)), annotations, defaultValue);
@@ -35,11 +35,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
   public JvmMethod(GraphDataInput in) throws IOException {
     super(in);
     myArgTypes = RW.readCollection(in, () -> TypeRepr.getType(in.readUTF()));
-    myParamAnnotations = RW.readCollection(in, () -> {
-      int index = in.readInt();
-      String jvmName = in.readUTF();
-      return new ParamAnnotation(index, new TypeRepr.ClassType(jvmName));
-    });
+    myParamAnnotations = RW.readCollection(in, () -> new ParamAnnotation(in));
     myExceptions = RW.readCollection(in, () -> new TypeRepr.ClassType(in.readUTF()));
   }
 
@@ -47,10 +43,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
   public void write(GraphDataOutput out) throws IOException {
     super.write(out);
     RW.writeCollection(out, myArgTypes, t -> out.writeUTF(t.getDescriptor()));
-    RW.writeCollection(out, myParamAnnotations, pa -> {
-      out.writeInt(pa.paramIndex);
-      out.writeUTF(pa.type.getJvmName());
-    });
+    RW.writeCollection(out, myParamAnnotations, pa -> pa.write(out));
     RW.writeCollection(out, myExceptions, t -> out.writeUTF(t.getJvmName()));
   }
 
@@ -124,8 +117,8 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
       return super.unchanged() && paramAnnotations().unchanged() && exceptions().unchanged();
     }
 
-    public Specifier<ParamAnnotation, ?> paramAnnotations() {
-      return Difference.diff(myPast.getParamAnnotations(), getParamAnnotations());
+    public Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotations() {
+      return Difference.deepDiff(myPast.getParamAnnotations(), getParamAnnotations());
     }
 
     public Specifier<TypeRepr.ClassType, ?> exceptions() {

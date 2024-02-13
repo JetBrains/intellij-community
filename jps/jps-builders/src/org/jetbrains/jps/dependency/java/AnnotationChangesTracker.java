@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +64,7 @@ public interface AnnotationChangesTracker {
    * @param paramAnnotationsDiff differences descriptor on method parameters annotations
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker.Recompile}
    */
-  default @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff, Difference.Specifier<ParamAnnotation, ?> paramAnnotationsDiff) {
+  default @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff, Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff) {
     return RECOMPILE_NONE;
   }
 
@@ -74,7 +74,7 @@ public interface AnnotationChangesTracker {
    * @param annotationsDiff differences descriptor for annotations on the field
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker.Recompile}
    */
-  default @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
+  default @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 
@@ -84,7 +84,7 @@ public interface AnnotationChangesTracker {
    * @param annotationsDiff differences descriptor for the class annotations
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link org.jetbrains.jps.builders.java.dependencyView.AnnotationsChangeTracker.Recompile}
    */
-  default @NotNull Set<Recompile> classAnnotationsChanged(JvmClass aClass, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
+  default @NotNull Set<Recompile> classAnnotationsChanged(JvmClass aClass, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 }

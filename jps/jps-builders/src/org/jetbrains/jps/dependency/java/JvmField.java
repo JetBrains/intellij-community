@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import java.util.Objects;
 public final class JvmField extends ProtoMember implements DiffCapable<JvmField, JvmField.Diff> {
   private static final JVMFlags INLINABLE_FIELD_FLAGS = new JVMFlags(Opcodes.ACC_FINAL);
   
-  public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<TypeRepr.ClassType> annotations, Object value) {
+  public JvmField(JVMFlags flags, String signature, String name, String descriptor, @NotNull Iterable<ElementAnnotation> annotations, Object value) {
     super(flags, signature, name, TypeRepr.getType(descriptor), annotations, value);
   }
 

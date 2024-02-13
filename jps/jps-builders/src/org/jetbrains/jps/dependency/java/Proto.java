@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,7 +7,6 @@ import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
-import org.jetbrains.jps.dependency.java.TypeRepr.ClassType;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -16,9 +15,9 @@ public class Proto implements ExternalizableGraphElement {
   private final JVMFlags access;
   private final String signature;
   private final String name;
-  private final @NotNull Iterable<ClassType> annotations;
+  private final @NotNull Iterable<ElementAnnotation> annotations;
 
-  public Proto(@NotNull JVMFlags flags, String signature, String name, @NotNull Iterable<ClassType> annotations) {
+  public Proto(@NotNull JVMFlags flags, String signature, String name, @NotNull Iterable<ElementAnnotation> annotations) {
     this.access = flags;
     this.signature = signature == null? "" : signature;
     this.name = name == null? "" : name;
@@ -29,7 +28,7 @@ public class Proto implements ExternalizableGraphElement {
     access = new JVMFlags(in.readInt());
     signature = in.readUTF();
     name = in.readUTF();
-    annotations = RW.readCollection(in, () -> new ClassType(in.readUTF()));
+    annotations = RW.readCollection(in, () -> new ElementAnnotation(in));
   }
 
   @Override
@@ -37,7 +36,7 @@ public class Proto implements ExternalizableGraphElement {
     out.writeInt(access.getValue());
     out.writeUTF(signature);
     out.writeUTF(name);
-    RW.writeCollection(out, annotations, t -> out.writeUTF(t.getJvmName()));
+    RW.writeCollection(out, annotations, t -> t.write(out));
   }
 
   public JVMFlags getFlags() {
@@ -52,7 +51,7 @@ public class Proto implements ExternalizableGraphElement {
     return name;
   }
 
-  public @NotNull Iterable<TypeRepr.ClassType> getAnnotations() {
+  public @NotNull Iterable<ElementAnnotation> getAnnotations() {
     return annotations;
   }
 
@@ -158,8 +157,8 @@ public class Proto implements ExternalizableGraphElement {
       return !Objects.equals(myPast.getSignature(), getSignature());
     }
 
-    public Specifier<ClassType, ?> annotations() {
-      return Difference.diff(myPast.getAnnotations(), getAnnotations());
+    public Specifier<ElementAnnotation, ElementAnnotation.Diff> annotations() {
+      return Difference.deepDiff(myPast.getAnnotations(), getAnnotations());
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.serializer;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +15,8 @@ public final class JvmClassTestUtil {
   private static final String ANNOTATION2_NAME = "annotation2";
   private static final int JVM_FLAGS_VALUE = 1234;
 
-  private static final ParamAnnotation PARAM_ANNOTATION1 = new ParamAnnotation(23, new TypeRepr.ClassType("jvmName1"));
-  private static final ParamAnnotation PARAM_ANNOTATION2 = new ParamAnnotation(32, new TypeRepr.ClassType("jvmName2"));
+  private static final ParamAnnotation PARAM_ANNOTATION1 = new ParamAnnotation(23, new TypeRepr.ClassType("jvmName1"), Long.valueOf(42));
+  private static final ParamAnnotation PARAM_ANNOTATION2 = new ParamAnnotation(32, new TypeRepr.ClassType("jvmName2"), Long.valueOf(43));
 
   private static final String SIGNATURE = "signature";
   private static final String SIGNATURE2 = "signature2";
@@ -44,9 +44,9 @@ public final class JvmClassTestUtil {
 
   @NotNull
   public static JvmClass createJvmClassNode() {
-    TypeRepr.ClassType annotation1 = new TypeRepr.ClassType(ANNOTATION1_NAME);
-    TypeRepr.ClassType annotation2 = new TypeRepr.ClassType(ANNOTATION2_NAME);
-    Iterable<TypeRepr.ClassType> annotations = Arrays.asList(annotation1, annotation2);
+    ElementAnnotation annotation1 = new ElementAnnotation(new TypeRepr.ClassType(ANNOTATION1_NAME), Long.valueOf(ANNOTATION1_NAME.hashCode()));
+    ElementAnnotation annotation2 = new ElementAnnotation(new TypeRepr.ClassType(ANNOTATION2_NAME), Long.valueOf(ANNOTATION2_NAME.hashCode()));
+    Iterable<ElementAnnotation> annotations = Arrays.asList(annotation1, annotation2);
 
     JVMFlags jvmFlags = new JVMFlags(JVM_FLAGS_VALUE);
 
@@ -60,8 +60,8 @@ public final class JvmClassTestUtil {
     JvmMethod jvmMethod2 = new JvmMethod(jvmFlags, SIGNATURE2, NAME2, DESCRIPTOR2, annotations, paramAnnotations, List.of(EXCEPTION3, EXCEPTION4), SECOND_JVM_METHOD_VALUE);
     Iterable<JvmMethod> methods = List.of(jvmMethod1, jvmMethod2);
 
-    Iterable<TypeRepr.ClassType> classAnnotations =
-      Arrays.asList(new TypeRepr.ClassType(CLASS_TYPE_1), new TypeRepr.ClassType(CLASS_TYPE_2));
+    Iterable<ElementAnnotation> classAnnotations =
+      Arrays.asList(new ElementAnnotation(new TypeRepr.ClassType(CLASS_TYPE_1), Long.valueOf(CLASS_TYPE_1.hashCode())), new ElementAnnotation(new TypeRepr.ClassType(CLASS_TYPE_2), Long.valueOf(CLASS_TYPE_2.hashCode())));
     Iterable<Usage> usages = Arrays.asList(new ClassNewUsage(CLASS_NEW_USAGE));
 
     Iterable<ElemType> annotationTargets = Arrays.asList(ElemType.TYPE_USE, ElemType.PACKAGE);

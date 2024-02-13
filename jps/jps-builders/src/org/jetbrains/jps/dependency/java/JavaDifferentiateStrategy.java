@@ -285,7 +285,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
     }
 
-    Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = classDiff.annotations();
+    Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff = classDiff.annotations();
     if (!annotationsDiff.unchanged()) {
       EnumSet<AnnotationChangesTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationChangesTracker.Recompile.class);
       for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
@@ -406,8 +406,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
 
-      Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = diff.annotations();
-      Difference.Specifier<ParamAnnotation, ?> paramAnnotationsDiff = diff.paramAnnotations();
+      Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff = diff.annotations();
+      Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff = diff.paramAnnotations();
       if (!annotationsDiff.unchanged() || !paramAnnotationsDiff.unchanged()) {
         EnumSet<AnnotationChangesTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationChangesTracker.Recompile.class);
         for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
@@ -827,7 +827,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
     }
 
-    Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = diff.annotations();
+    Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff = diff.annotations();
     if (!annotationsDiff.unchanged()) {
       EnumSet<AnnotationChangesTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationChangesTracker.Recompile.class);
       for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {

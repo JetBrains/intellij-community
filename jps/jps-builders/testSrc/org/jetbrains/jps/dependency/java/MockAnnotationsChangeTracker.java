@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,23 +17,22 @@ public class MockAnnotationsChangeTracker implements AnnotationChangesTracker {
   private static final String HIERARCHY_ANOTATION_NAME = MockHierarchyAnnotation.class.getName().replace('.', '/');
 
   @Override
-  public @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff, Difference.Specifier<ParamAnnotation, ?> paramAnnotationsDiff) {
+  public @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff, Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff) {
     //return RECOMPILE_NONE;
-    return handleChanges(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), Iterators.map(paramAnnotationsDiff.added(), pc -> pc.type), Iterators.map(paramAnnotationsDiff.removed(), pc -> pc.type))));
+    return handleChanges(Iterators.map(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), paramAnnotationsDiff.added(), paramAnnotationsDiff.removed())), an -> an.getAnnotationClass()));
   }
 
   @Override
-  public @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
+  public @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
     //return RECOMPILE_NONE;
-    return handleChanges(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()));
+    return handleChanges(Iterators.map(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()), an -> an.getAnnotationClass()));
   }
 
   @Override
-  public @NotNull Set<Recompile> classAnnotationsChanged(JvmClass aClass, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
+  public @NotNull Set<Recompile> classAnnotationsChanged(JvmClass aClass, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
     //return RECOMPILE_NONE;
-    return handleChanges(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()));
+    return handleChanges(Iterators.map(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()), an -> an.getAnnotationClass()));
   }
-
 
   @NotNull
   public Set<Recompile> handleChanges(Iterable<TypeRepr.ClassType> changes) {

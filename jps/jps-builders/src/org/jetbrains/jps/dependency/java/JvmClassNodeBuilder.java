@@ -101,13 +101,16 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     private final TypeRepr.ClassType myType;
     private final ElemType myTarget;
+    private final ContentHashBuilder myHashBuilder = ContentHashBuilder.create();
+    private final Consumer<ElementAnnotation> myResultConsumer;
 
     private final Set<String> myUsedArguments = new HashSet<>();
 
-    private AnnotationCrawler(final TypeRepr.ClassType type, final ElemType target) {
+    private AnnotationCrawler(final TypeRepr.ClassType type, final ElemType target, Consumer<ElementAnnotation> resultConsumer) {
       super(ASM_API_VERSION);
       this.myType = type;
       this.myTarget = target;
+      myResultConsumer = resultConsumer;
       final Set<ElemType> targets = myAnnotationTargets.get(type);
       if (targets == null) {
         myAnnotationTargets.put(type, EnumSet.of(target));
@@ -180,6 +183,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       if (argName != null) {
         registerUsages(argName, getMethodDescr(value, isArray), value);
       }
+      myHashBuilder.update(value);
     }
 
     @Override
@@ -201,7 +205,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     @Override
     public AnnotationVisitor visitAnnotation(String name, String desc) {
-      return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), myTarget);
+      return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), myTarget, res -> myHashBuilder.update(res.getContentHash()));
     }
 
     @Override
@@ -221,12 +225,17 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     @Override
     public void visitEnd() {
-      Set<String> s = myAnnotationArguments.get(myType);
-      if (s == null) {
-        myAnnotationArguments.put(myType, myUsedArguments);
+      try {
+        Set<String> s = myAnnotationArguments.get(myType);
+        if (s == null) {
+          myAnnotationArguments.put(myType, myUsedArguments);
+        }
+        else {
+          s.retainAll(myUsedArguments);
+        }
       }
-      else {
-        s.retainAll(myUsedArguments);
+      finally {
+        myResultConsumer.accept(new ElementAnnotation(myType, myHashBuilder.getResult()));
       }
     }
   }
@@ -408,7 +417,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   private final Map<TypeRepr.ClassType, Set<String>> myAnnotationArguments = new HashMap<>();
   private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new HashMap<>();
-  private final Set<TypeRepr.ClassType> myAnnotations = new HashSet<>();
+  private final Set<ElementAnnotation> myAnnotations = new HashSet<>();
 
   private final Set<ModuleRequires> myModuleRequires = new HashSet<>();
   private final Set<ModulePackage> myModuleExports = new HashSet<>();
@@ -533,9 +542,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       return new KotlinMetadataCrawler(myMetadata::add);
     }
 
-    TypeRepr.ClassType annotationType = (TypeRepr.ClassType)TypeRepr.getType(desc);
-    myAnnotations.add(annotationType);
-    return new AnnotationCrawler(annotationType, (myAccess & Opcodes.ACC_ANNOTATION) > 0? ElemType.ANNOTATION_TYPE : ElemType.TYPE);
+    return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), (myAccess & Opcodes.ACC_ANNOTATION) > 0? ElemType.ANNOTATION_TYPE : ElemType.TYPE, res-> myAnnotations.add(res));
   }
 
   @Override
@@ -547,13 +554,11 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     processSignature(signature);
 
     return new FieldVisitor(ASM_API_VERSION) {
-      final Set<TypeRepr.ClassType> annotations = new HashSet<>();
+      final Set<ElementAnnotation> annotations = new HashSet<>();
 
       @Override
       public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-        final TypeRepr.ClassType annotation = (TypeRepr.ClassType)TypeRepr.getType(desc);
-        annotations.add(annotation);
-        return new AnnotationCrawler(annotation, ElemType.FIELD);
+        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), ElemType.FIELD, res -> annotations.add(res));
       }
 
       @Override
@@ -587,7 +592,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   @Override
   public MethodVisitor visitMethod(final int access, final String n, final String desc, final String signature, final String[] exceptions) {
     final Ref<Object> defaultValue = Ref.create();
-    final Set<TypeRepr.ClassType> annotations = new HashSet<>();
+    final Set<ElementAnnotation> annotations = new HashSet<>();
     final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
     processSignature(signature);
 
@@ -601,28 +606,11 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
           if (kmFunction != null && Attributes.isInline(kmFunction)) {
             // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
-            try {
-              MessageDigest digest = MessageDigest.getInstance("MD5");
-              for (Object o : printer.getText()) {
-                digest.update(String.valueOf(o).getBytes(StandardCharsets.UTF_8));
-              }
-              byte[] digestBytes = digest.digest();
-              long[] hash = new long[digestBytes.length / 8];
-              for (int hi = 0; hi < hash.length; hi++) {
-                for (int i = 0; i < 8; i++) {
-                  hash[hi] = (hash[hi] << 8) | (digestBytes[hi * 8 + i] & 0xFF);
-                }
-              }
-              defaultValue.set(hash);
+            ContentHashBuilder hashBuilder = ContentHashBuilder.create();
+            for (Object o : printer.getText()) {
+              hashBuilder.update(o);
             }
-            catch (NoSuchAlgorithmException e) {
-              LOG.info(e);
-              int hash = 0; // fallback logic
-              for (Object o : printer.getText()) {
-                hash = 31 * hash + o.hashCode();
-              }
-              defaultValue.set(hash);
-            }
+            defaultValue.set(hashBuilder.getResult());
           }
           myMethods.add(new JvmMethod(new JVMFlags(access), signature, n, desc, annotations, paramAnnotations, Iterators.asIterable(exceptions), defaultValue.get()));
         }
@@ -630,9 +618,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
       @Override
       public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-        final TypeRepr.ClassType annoType = (TypeRepr.ClassType)TypeRepr.getType(desc);
-        annotations.add(annoType);
-        return new AnnotationCrawler(annoType, "<init>".equals(n)? ElemType.CONSTRUCTOR : ElemType.METHOD);
+        return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(desc), "<init>".equals(n)? ElemType.CONSTRUCTOR : ElemType.METHOD, res -> annotations.add(res));
       }
 
       @Override
@@ -683,9 +669,11 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
       @Override
       public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-        final TypeRepr.ClassType annoType = (TypeRepr.ClassType)TypeRepr.getType(desc);
-        paramAnnotations.add(new ParamAnnotation(parameter, annoType));
-        return new AnnotationCrawler(annoType, ElemType.PARAMETER);
+        return new AnnotationCrawler(
+          (TypeRepr.ClassType)TypeRepr.getType(desc),
+          ElemType.PARAMETER,
+          res -> paramAnnotations.add(new ParamAnnotation(parameter, res.getAnnotationClass(), res.getContentHash()))
+        );
       }
 
       @Override
@@ -910,4 +898,66 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       addUsage(new ClassUsage(name));
     }
   }
+
+  private interface ContentHashBuilder {
+    void update(Object data);
+    Object getResult();
+
+    static ContentHashBuilder create() {
+      try {
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        return wrap(new ContentHashBuilder() {
+          @Override
+          public void update(Object data) {
+            digest.update(String.valueOf(data).getBytes(StandardCharsets.UTF_8));
+          }
+
+          @Override
+          public Object getResult() {
+            byte[] digestBytes = digest.digest();
+            long[] hash = new long[digestBytes.length / 8];
+            for (int hi = 0; hi < hash.length; hi++) {
+              for (int i = 0; i < 8; i++) {
+                hash[hi] = (hash[hi] << 8) | (digestBytes[hi * 8 + i] & 0xFF);
+              }
+            }
+            return hash;
+          }
+        });
+      }
+      catch (NoSuchAlgorithmException e) {
+        LOG.info(e);
+      }
+      // fallback logic
+      return wrap(new ContentHashBuilder() {
+        int hash = 0;
+        @Override
+        public void update(Object data) {
+          hash = 31 * hash + (data == null? "null" : data).hashCode();
+        }
+
+        @Override
+        public Object getResult() {
+          return hash;
+        }
+      });
+    }
+
+    static ContentHashBuilder wrap(ContentHashBuilder delegate) {
+      return new ContentHashBuilder() {
+        boolean hasData = false;
+        @Override
+        public void update(Object data) {
+          hasData = true;
+          delegate.update(data);
+        }
+
+        @Override
+        public Object getResult() {
+          return hasData? delegate.getResult() : null;
+        }
+      };
+    }
+  }
+
 }

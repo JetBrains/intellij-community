@@ -42,16 +42,16 @@ public final class NullabilityAnnotationChangesTracker implements AnnotationChan
   );
 
   @Override
-  public @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff, Difference.Specifier<ParamAnnotation, ?> paramAnnotationsDiff) {
-    if (isAffected(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), Iterators.map(Iterators.flat(paramAnnotationsDiff.added(), paramAnnotationsDiff.removed()), an -> an.type))))) {
+  public @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff, Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff) {
+    if (isAffected(Iterators.map(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), paramAnnotationsDiff.added(), paramAnnotationsDiff.removed())), an -> an.getAnnotationClass()))) {
       return method.isFinal()? EnumSet.of(Recompile.USAGES) : EnumSet.of(Recompile.USAGES, Recompile.SUBCLASSES);
     }
     return RECOMPILE_NONE;
   }
 
   @Override
-  public @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff) {
-    return isAffected(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()))? EnumSet.of(Recompile.USAGES) : RECOMPILE_NONE;
+  public @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
+    return isAffected(Iterators.map(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()), an -> an.getAnnotationClass()))? EnumSet.of(Recompile.USAGES) : RECOMPILE_NONE;
   }
 
   private static boolean isAffected(Iterable<TypeRepr.ClassType> addedOrRemoved) {

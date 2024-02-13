@@ -24,7 +24,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   private final Iterable<Usage> myUsages;
   private final Iterable<JvmMetadata<?, ?>> myMetadata;
 
-  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<TypeRepr.ClassType> annotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
+  public JVMClassNode(JVMFlags flags, String signature, String name, String outFilePath, @NotNull Iterable<ElementAnnotation> annotations, @NotNull Iterable<Usage> usages, @NotNull Iterable<JvmMetadata<?, ?>> metadata) {
     super(flags, signature, name, annotations);
     myId = new JvmNodeReferenceID(name);
     this.outFilePath = outFilePath;
