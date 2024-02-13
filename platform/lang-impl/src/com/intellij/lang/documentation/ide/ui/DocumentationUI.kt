@@ -98,7 +98,7 @@ internal class DocumentationUI(
     }.apply {
       iconTextGap = 6
       border = JBUI.Borders.empty(
-        2, 2 + DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
+        0, 2 + DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
         2 + DocumentationHtmlUtil.contentOuterPadding, DocumentationHtmlUtil.contentOuterPadding)
       putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
     }
@@ -258,7 +258,7 @@ internal class DocumentationUI(
   private fun message(message: @Nls String): @Nls String {
     return HtmlChunk.div()
       .setClass(CLASS_CONTENT)
-      .addText(message)
+      .children(HtmlChunk.p().addText(message))
       .wrapWith("body")
       .wrapWith("html")
       .toString()
