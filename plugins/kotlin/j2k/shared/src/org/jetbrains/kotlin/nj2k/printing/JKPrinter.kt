@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.JKElementInfoStorage
 import org.jetbrains.kotlin.nj2k.JKImportStorage
@@ -105,6 +106,7 @@ class JKPrinter(
     private val symbolRenderer = JKSymbolRenderer(importStorage, project)
 
     private fun JKType.renderTypeInfo() {
+        if (KotlinPluginModeProvider.isK2Mode()) return
         this@JKPrinter.print(elementInfoStorage.getOrCreateInferenceLabelForElement(this).render())
     }
 

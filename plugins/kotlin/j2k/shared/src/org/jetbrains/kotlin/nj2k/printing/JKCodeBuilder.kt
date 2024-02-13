@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.printing
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
@@ -945,11 +946,16 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun printExplicitLabel(element: JKElement) {
+            // TODO: Currently disabled for K2 J2K, but may have to be enabled
+            // if we don't figure out how to accurately preserve original `this` expressions
+            // and parentheses without a post-processing
+            if (KotlinPluginModeProvider.isK2Mode()) return
             val label = elementInfoStorage.getOrCreateExplicitLabelForElement(element)
             printer.print(label.render())
         }
 
         private fun printInferenceLabel(element: JKElement) {
+            if (KotlinPluginModeProvider.isK2Mode()) return
             val label = elementInfoStorage.getOrCreateInferenceLabelForElement(element)
             printer.print(label.render())
         }
