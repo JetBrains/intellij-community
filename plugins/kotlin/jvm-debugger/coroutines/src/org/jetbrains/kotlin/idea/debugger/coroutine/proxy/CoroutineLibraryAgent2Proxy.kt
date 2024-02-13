@@ -3,17 +3,17 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackTraceProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.LazyCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineJobHierarchyProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFramesProvider
 
 class CoroutineLibraryAgent2Proxy(
     private val executionContext: DefaultExecutionContext,
     private val debugProbesImpl: DebugProbesImpl
 ) : CoroutineInfoProvider {
-    private val stackTraceProvider = CoroutineStackTraceProvider(executionContext)
+    private val stackFramesProvider = CoroutineStackFramesProvider(executionContext)
     private val jobHierarchyProvider = CoroutineJobHierarchyProvider()
 
     override fun dumpCoroutinesInfo(): List<CoroutineInfoData> {
@@ -21,7 +21,7 @@ class CoroutineLibraryAgent2Proxy(
         return result.map {
             LazyCoroutineInfoData(
                 it,
-                stackTraceProvider,
+                stackFramesProvider,
                 jobHierarchyProvider
             )
         }

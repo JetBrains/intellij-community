@@ -1,29 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.debugger.coroutine
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.google.gson.Gson
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.sun.jdi.ArrayReference
-import com.sun.jdi.ObjectReference
-import com.sun.jdi.StringReference
-import com.sun.jdi.ThreadReference
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackTraceProvider
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.LazyCoroutineInfoData
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineInfoProvider
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
+import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineJobHierarchyProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutinesInfoFromJsonAndReferencesProvider(
-    private val executionContext: DefaultExecutionContext,
-    private val debugProbesImpl: DebugProbesImpl
+  private val executionContext: DefaultExecutionContext,
+  private val debugProbesImpl: DebugProbesImpl
 ) : CoroutineInfoProvider {
-    private val stackTraceProvider = CoroutineStackTraceProvider(executionContext)
+    private val stackFramesProvider = CoroutineStackFramesProvider(executionContext)
     private val jobHierarchyProvider = CoroutineJobHierarchyProvider()
-
+    
     override fun dumpCoroutinesInfo(): List<CoroutineInfoData> {
         val array = debugProbesImpl.dumpCoroutinesInfoAsJsonAndReferences(executionContext)
             ?: return emptyList()
@@ -52,10 +45,10 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
     }
 
     private fun calculateCoroutineInfoData(
-        coroutineInfos: Array<CoroutineInfoFromJson>,
-        coroutineInfoRefs: List<ObjectReference>,
-        lastObservedThreadRefs: List<ThreadReference?>,
-        lastObservedFrameRefs: List<ObjectReference?>
+      coroutineInfos: Array<CoroutineInfoFromJson>,
+      coroutineInfoRefs: List<ObjectReference>,
+      lastObservedThreadRefs: List<ThreadReference?>,
+      lastObservedFrameRefs: List<ObjectReference?>
     ): List<CoroutineInfoData> {
         val result = mutableListOf<LazyCoroutineInfoData>()
         for ((i, info) in coroutineInfos.withIndex()) {
@@ -65,7 +58,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
                     coroutineInfoRefs[i],
                     lastObservedThreadRefs[i],
                     lastObservedFrameRefs[i],
-                    stackTraceProvider,
+                    stackFramesProvider,
                     jobHierarchyProvider
                 )
             )
@@ -74,25 +67,25 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
     }
 
     private fun getLazyCoroutineInfoData(
-        info: CoroutineInfoFromJson,
-        coroutineInfoRef: ObjectReference,
-        lastObservedThreadRef: ThreadReference?,
-        lastObservedFrameRef: ObjectReference?,
-        stackTraceProvider: CoroutineStackTraceProvider,
-        jobHierarchyProvider: CoroutineJobHierarchyProvider
+      info: CoroutineInfoFromJson,
+      coroutineInfoRef: ObjectReference,
+      lastObservedThreadRef: ThreadReference?,
+      lastObservedFrameRef: ObjectReference?,
+      stackTraceProvider: CoroutineStackFramesProvider,
+      jobHierarchyProvider: CoroutineJobHierarchyProvider
     ): LazyCoroutineInfoData {
-        DebuggerManagerThreadImpl.assertIsManagerThread()
+      DebuggerManagerThreadImpl.assertIsManagerThread()
 
         // coroutineInfo is a DebugCoroutineInfo. Need to get coroutineInfoRef.context to pass in to CoroutineContext
-        val contextRef = CoroutineInfo.instance(debugProbesImpl, executionContext)?.getContextRef(coroutineInfoRef)
+        val contextRef = CoroutineInfo.instance(executionContext)?.getContextRef(coroutineInfoRef)
         val coroutineContextMirror = contextRef?.let {
             CoroutineContext(executionContext).fetchMirror(info.name, info.id, info.dispatcher, it, executionContext)
         } ?: MirrorOfCoroutineContext(
-            info.name,
-            info.id,
-            info.dispatcher,
-            null,
-            null
+          info.name,
+          info.id,
+          info.dispatcher,
+          null,
+          null
         )
         val coroutineInfoMirror = debugProbesImpl.getCoroutineInfo(
             coroutineInfoRef,
@@ -115,6 +108,17 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
         val state: String?
     )
 
+    private inline fun <reified T> ArrayReference.toTypedList(): List<T> {
+        val result = mutableListOf<T>()
+        for (value in values) {
+            if (value !is T) {
+                error("Value has type ${value::class.java}, but ${T::class.java} was expected")
+            }
+            result.add(value)
+        }
+        return result
+    }
+
     companion object {
         fun instance(executionContext: DefaultExecutionContext, debugProbesImpl: DebugProbesImpl): CoroutinesInfoFromJsonAndReferencesProvider? {
             if (debugProbesImpl.canDumpCoroutinesInfoAsJsonAndReferences()) {
@@ -125,15 +129,4 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
 
         val log by logger
     }
-}
-
-private inline fun <reified T> ArrayReference.toTypedList(): List<T> {
-    val result = mutableListOf<T>()
-    for (value in values) {
-        if (value !is T) {
-            error("Value has type ${value::class.java}, but ${T::class.java} was expected")
-        }
-        result.add(value)
-    }
-    return result
 }

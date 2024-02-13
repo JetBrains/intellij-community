@@ -179,7 +179,7 @@ class CoroutineDumpPanel(
     private fun getAttributes(infoData: CompleteCoroutineInfoData): SimpleTextAttributes {
         return when {
             infoData.isSuspended() -> SimpleTextAttributes.GRAY_ATTRIBUTES
-            infoData.stackTrace.isEmpty() -> SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY.brighter())
+            infoData.continuationStackFrames.isEmpty() -> SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.GRAY.brighter())
             else -> SimpleTextAttributes.REGULAR_ATTRIBUTES
         }
     }
@@ -290,10 +290,9 @@ class CoroutineDumpPanel(
 private fun stringStackTrace(info: CompleteCoroutineInfoData) =
     buildString {
         appendLine("\"${info.descriptor.name}\", state: ${info.descriptor.state}")
-        info.stackTrace.forEach {
+        info.continuationStackFrames.forEach {
             append("\t")
             append(ThreadDumpAction.renderLocation(it.location))
             append("\n")
         }
     }
-
