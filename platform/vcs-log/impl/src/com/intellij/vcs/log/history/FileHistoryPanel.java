@@ -123,6 +123,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myEditorDiffPreview = new FileHistoryEditorDiffPreview(myProject, this);
+    Disposer.register(this, myEditorDiffPreview);
 
     JComponent actionsToolbar = createActionsToolbar();
     actionsToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));

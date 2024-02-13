@@ -2,10 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.chains.DiffRequestProducer
-import com.intellij.diff.editor.DiffEditorTabFilesManager
-import com.intellij.diff.editor.DiffEditorViewerFileEditor
-import com.intellij.diff.editor.DiffViewerVirtualFile
-import com.intellij.diff.editor.DiffVirtualFileWithTabName
+import com.intellij.diff.editor.*
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.ListSelection
@@ -73,7 +70,7 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
 
 
   private class TabPreviewDiffVirtualFile(preview: EditorTabDiffPreview)
-    : DiffViewerVirtualFile("TabPreviewDiffVirtualFile"), DiffVirtualFileWithTabName {
+    : DiffViewerVirtualFile("TabPreviewDiffVirtualFile"), DiffVirtualFileWithTabName, DiffVirtualFileWithProducers {
     private var _preview: EditorTabDiffPreview? = preview
 
     init {
@@ -95,6 +92,10 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
 
     override fun isValid(): Boolean {
       return _preview != null
+    }
+
+    override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer>? {
+      return _preview?.collectDiffProducers(selectedOnly)
     }
   }
 }
