@@ -16,12 +16,12 @@ public final class JavaBackspaceHandler extends BackspaceHandlerDelegate {
   @Override
   public void beforeCharDeleted(char c, @NotNull PsiFile file, @NotNull Editor editor) {
     myToDeleteGt = c == '<' &&
-                   isHigherThan50r(file) &&
+                   areGenericsAvailable(file) &&
                    TypedHandlerUtil.isAfterClassLikeIdentifierOrDot(editor.getCaretModel().getOffset() - 1,
                                                                     editor, JavaTokenType.DOT, JavaTokenType.IDENTIFIER, true);
   }
 
-  private static boolean isHigherThan50r(@Nullable PsiFile file){
+  private static boolean areGenericsAvailable(@Nullable PsiFile file){
       return file instanceof AbstractBasicJavaFile &&
              JavaFeature.GENERICS.isSufficient(AbstractBasicJavaDefinitionService.getJavaDefinitionService().getLanguageLevel(file));
   }

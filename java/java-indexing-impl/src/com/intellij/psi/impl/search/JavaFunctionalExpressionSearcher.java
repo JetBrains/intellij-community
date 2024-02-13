@@ -84,7 +84,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       if (!aClass.isValid() || !aClass.isInterface()) {
         return List.of();
       }
-      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasJava8Modules(project)) {
+      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(aClass.getContainingFile()) || !hasModuleWithFunctionalExpressions(project)) {
         return List.of();
       }
       PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(project);
@@ -340,7 +340,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
     return ThreeState.UNSURE;
   }
 
-  private static boolean hasJava8Modules(@NotNull Project project) {
+  private static boolean hasModuleWithFunctionalExpressions(@NotNull Project project) {
     final boolean projectLevelIsHigh = JavaFeature.LAMBDA_EXPRESSIONS.isSufficient(PsiUtil.getLanguageLevel(project));
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
