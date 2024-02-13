@@ -9,6 +9,9 @@ class JavaLangObjectToString(context: DefaultExecutionContext) : BaseMirror<Obje
     private val toString by MethodDelegate<StringReference>("toString", "()Ljava/lang/String;")
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): String {
+        if (value is StringReference) {
+            return value.value()
+        }
         return toString.value(value, context)?.value() ?: ""
     }
 }
