@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.buildtool;
 
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.NonExtendable
@@ -47,7 +48,7 @@ class MavenSyncSpecImpl implements MavenSyncSpec {
 
   @Override
   public boolean resolveIncrementally() {
-    return incremental;
+    return incremental && Registry.is("maven.incremental.sync.resolve.dependencies.incrementally");
   }
 
   @Override

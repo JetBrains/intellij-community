@@ -384,6 +384,9 @@
     <registryKey key="maven.incremental.sync.in.ui" defaultValue="false"
                  description="Show Maven incremental sync option in UI"/>
 
+    <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
+                 description="During incremental sync, resolve dependencies incrementally"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
