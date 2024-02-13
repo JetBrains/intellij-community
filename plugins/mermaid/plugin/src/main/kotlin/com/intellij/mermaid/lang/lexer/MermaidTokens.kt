@@ -153,6 +153,9 @@ object MermaidTokens {
   val ARROW = MermaidToken("ARROW")
 
   @JvmField
+  val START_ARROW = MermaidToken("START_ARROW")
+
+  @JvmField
   val ANNOTATION_START = MermaidToken("ANNOTATION_START")
 
   @JvmField
@@ -229,6 +232,12 @@ object MermaidTokens {
 
   @JvmField
   val STYLE_TARGET = MermaidToken("STYLE_TARGET")
+
+  @JvmField
+  val NODE_DESCR_START = MermaidToken("NODE_DESCR_START")
+
+  @JvmField
+  val NODE_DESCR_END = MermaidToken("NODE_DESCR_END")
   //endregion
 
   object Directives {
@@ -329,9 +338,6 @@ object MermaidTokens {
 
     @JvmField
     val DOUBLE_CIRCLE_END = MermaidToken("Flowchart.DOUBLE_CIRCLE_END")
-
-    @JvmField
-    val START_ARROW = MermaidToken("Flowchart.START_ARROW")
 
     @JvmField
     val LINK_TEXT = MermaidToken("Flowchart.LINK_TEXT")
@@ -893,12 +899,6 @@ object MermaidTokens {
     val ICON_VALUE = MermaidToken("Mindmap.ICON_VALUE")
 
     @JvmField
-    val NODE_DESCR_START = MermaidToken("Mindmap.NODE_DESCR_START")
-
-    @JvmField
-    val NODE_DESCR_END = MermaidToken("Mindmap.NODE_DESCR_END")
-
-    @JvmField
     val NODE_DESCR = MermaidToken("Mindmap.NODE_DESCR")
   }
 
@@ -949,5 +949,35 @@ object MermaidTokens {
 
     @JvmField
     val XY_CHART_TEXT = MermaidToken("XYChart.XY_CHART_TEXT")
+  }
+
+
+  object Block {
+    @JvmField
+    val BLOCK_DIAGRAM = MermaidToken("Block.BLOCK_DIAGRAM")
+
+    @JvmField
+    val BLOCK = MermaidToken("Block.BLOCK")
+
+    @JvmField
+    val COLUMNS = MermaidToken("Block.COLUMNS")
+
+    @JvmField
+    val SPACE = MermaidToken("Block.SPACE")
+
+    @JvmField
+    val INTERPOLATE = MermaidToken("Block.INTERPOLATE")
+
+    @JvmField
+    val ARROW_DESCR_START = MermaidToken("Block.ARROW_DESCR_START")
+
+    @JvmField
+    val ARROW_DESCR_END = MermaidToken("Block.ARROW_DESCR_END")
+
+    @JvmField
+    val ARROW_DIR = MermaidToken("Block.ARROW_DIR")
+
+    @JvmField
+    val AUTO = MermaidToken("Block.AUTO")
   }
 }

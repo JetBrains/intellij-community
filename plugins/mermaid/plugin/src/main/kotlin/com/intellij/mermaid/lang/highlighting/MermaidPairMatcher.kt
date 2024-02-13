@@ -27,6 +27,7 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Sequence.BREAK, MermaidTokens.END, true),
         BracePair(MermaidTokens.Sequence.BOX, MermaidTokens.END, true),
         BracePair(MermaidTokens.NOTE, MermaidTokens.END, true),
+        BracePair(MermaidTokens.Block.BLOCK, MermaidTokens.END, true),
 
         BracePair(MermaidTokens.Flowchart.STADIUM_START, MermaidTokens.Flowchart.STADIUM_END, false),
         BracePair(MermaidTokens.Flowchart.SUBROUTINE_START, MermaidTokens.Flowchart.SUBROUTINE_END, false),
@@ -43,7 +44,8 @@ class MermaidPairMatcher : PairedBraceMatcherAdapter(MyPairedBraceMatcher(), Mer
         BracePair(MermaidTokens.Flowchart.SEP, MermaidTokens.Flowchart.SEP, false),
 
         BracePair(MermaidTokens.Mindmap.OPEN_ICON, MermaidTokens.Mindmap.CLOSE_ICON, false),
-        BracePair(MermaidTokens.Mindmap.NODE_DESCR_START, MermaidTokens.Mindmap.NODE_DESCR_END, false),
+        BracePair(MermaidTokens.NODE_DESCR_START, MermaidTokens.NODE_DESCR_END, false),
+        BracePair(MermaidTokens.Block.ARROW_DESCR_START, MermaidTokens.Block.ARROW_DESCR_END, false),
 
         BracePair(MermaidTokens.ANNOTATION_START, MermaidTokens.ANNOTATION_END, false),
         BracePair(MermaidTokens.Directives.OPEN_DIRECTIVE, MermaidTokens.Directives.CLOSE_DIRECTIVE, false)

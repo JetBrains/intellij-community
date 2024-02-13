@@ -29,6 +29,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.ZenUML.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sankey.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.XYChart.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Block.*'
     'static com.intellij.mermaid.lang.parser.ParserUtils.*'
   ]
   generateTokens=false
@@ -58,6 +59,7 @@ private oldDiagram ::= pieHeader EOL* [pieBody]
   | timelineHeader EOL* [timelineBody]
   | quadrantHeader EOL* [quadrantBody]
   | xyChartHeader EOL* [xyChartBody]
+  | blockDiagramHeader EOL* [blockDiagramBody]
 
 private newDiagram ::= ZEN_UML
   | sankeyHeader EOL* [sankeyBody]
@@ -192,7 +194,7 @@ private linkStyleTarget ::= STYLE_TARGET (COMMA STYLE_TARGET)* | DEFAULT
 
 classDefStatement ::= CLASS_DEF (STYLE_TARGET | DEFAULT) styleOptions
 
-flowchartClassStatement ::= CLASS CLASS_ID_STYLE (COMMA CLASS_ID_STYLE)* STYLE_TARGET
+flowchartClassStatement ::= CLASS identifier (COMMA identifier)* STYLE_TARGET
 
 styleOptions ::= STYLE_OPT COLON STYLE_VAL (COMMA STYLE_OPT COLON STYLE_VAL)*
 
@@ -910,6 +912,48 @@ plotData ::= OPEN_SQUARE (NUM (COMMA NUM)*) CLOSE_SQUARE
 bandData ::= OPEN_SQUARE (xyChartText (COMMA xyChartText)*) CLOSE_SQUARE
 arrowData ::= NUM ARROW NUM
 private xyChartText ::= XY_CHART_TEXT | maybeEmptyString | maybeEmptyMdText
+
+
+blockDiagramHeader ::= BLOCK_DIAGRAM
+
+blockDiagramBody ::= blockDiagramLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private blockDiagramLines ::= blockDiagramLine [blockDiagramLines]
+private blockDiagramLine ::= blockDiagramStatement [separator] | separator
+private blockDiagramStatement ::= directive
+  | accStatement
+  | blockDiagramComplexStatement
+  | blockDiagramNodeStatement
+  | columnsStatement
+  | blockStatement
+  | spaceStatement
+  | classDefStatement
+  | flowchartClassStatement
+  | styleStatement
+
+blockDiagramComplexStatement ::= (blockDiagramNodeStatementInner | spaceStatementInner) (blockDiagramNodeStatementInner | spaceStatementInner)+
+
+blockDiagramNodeStatement ::= blockDiagramNodeStatementInner
+blockDiagramNodeStatementInner ::= blockDiagramNode [blockSize] (blockDiagramArrow blockDiagramNode)*
+
+blockDiagramNode ::= identifier [blockDiagramNodeDescr]
+blockDiagramNodeDescr ::= NODE_DESCR_START string NODE_DESCR_END
+  | ARROW_DESCR_START string ARROW_DESCR_END OPEN_ROUND directions CLOSE_ROUND
+directions ::= [COMMA] ARROW_DIR (COMMA ARROW_DIR)*
+
+blockSize ::= COLON NUM
+
+blockDiagramArrow ::= ARROW
+  | START_ARROW string ARROW
+
+
+columnsStatement ::= COLUMNS (AUTO | NUM)
+
+blockStatement ::= blockStatementHeader EOL* blockDiagramBody END { implements="com.intellij.mermaid.lang.psi.MermaidFoldableElement" }
+blockStatementHeader ::= BLOCK [COLON blockDiagramNodeStatementInner | blockSize]
+
+spaceStatement ::= spaceStatementInner
+spaceStatementInner ::= SPACE [blockSize]
+
 
 directive ::= OPEN_DIRECTIVE directiveValue? CLOSE_DIRECTIVE
 external directiveValue ::= directiveParser

@@ -20,7 +20,7 @@ FILE
             PsiElement(CLOSE_SQUARE)(']')
       PsiWhiteSpace(' ')
       MermaidFlowchartLinkStatementImpl(FLOWCHART_LINK_STATEMENT)
-        PsiElement(Flowchart.START_ARROW)('--')
+        PsiElement(START_ARROW)('--')
         PsiWhiteSpace(' ')
         MermaidComplexLinkTextImpl(COMPLEX_LINK_TEXT)
           PsiElement(Flowchart.LINK_TEXT)('text')

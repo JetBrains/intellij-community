@@ -40,6 +40,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       addQuadrantHighlights(holder)
       addSankeyHighlights(holder)
       addXYChartHighlights(holder)
+      addBlockHighlights(holder)
       return holder
     }
 
@@ -61,7 +62,6 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.Flowchart.SUBGRAPH,
         MermaidTokens.CLASS_DEF
       )
-      holder[MermaidTokens.Flowchart.START_ARROW] = MermaidTextAttributes.edge
       holder[MermaidTokens.Flowchart.LINK_TEXT] = MermaidTextAttributes.note
     }
 
@@ -315,8 +315,6 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       fillMap(
         holder,
         MermaidTextAttributes.operator,
-        MermaidTokens.Mindmap.NODE_DESCR_START,
-        MermaidTokens.Mindmap.NODE_DESCR_END,
         MermaidTokens.Mindmap.OPEN_ICON,
         MermaidTokens.Mindmap.CLOSE_ICON
       )
@@ -353,6 +351,29 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.XYChart.BAR_KEYWORD,
       )
       holder[MermaidTokens.XYChart.ORIENTATION_VALUE] = MermaidTextAttributes.constant
+    }
+
+    private fun addBlockHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.Block.BLOCK_DIAGRAM] = MermaidTextAttributes.diagram_name
+      fillMap(
+        holder,
+        MermaidTextAttributes.keyword,
+        MermaidTokens.Block.BLOCK,
+        MermaidTokens.Block.COLUMNS,
+        MermaidTokens.Block.SPACE,
+      )
+      fillMap(
+        holder,
+        MermaidTextAttributes.constant,
+        MermaidTokens.Block.ARROW_DIR,
+        MermaidTokens.Block.AUTO
+      )
+      fillMap(
+        holder,
+        MermaidTextAttributes.operator,
+        MermaidTokens.Block.ARROW_DESCR_START,
+        MermaidTokens.Block.ARROW_DESCR_END,
+      )
     }
 
     private fun addBaseHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
@@ -421,10 +442,16 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.STAR,
         MermaidTokens.POUND,
         MermaidTokens.DOLLAR,
-        MermaidTokens.STYLE_SEPARATOR
+        MermaidTokens.STYLE_SEPARATOR,
+        MermaidTokens.NODE_DESCR_START,
+        MermaidTokens.NODE_DESCR_END,
       )
-
-      holder[MermaidTokens.ARROW] = MermaidTextAttributes.edge
+      fillMap(
+        holder,
+        MermaidTextAttributes.edge,
+        MermaidTokens.ARROW,
+        MermaidTokens.START_ARROW,
+      )
       fillMap(
         holder,
         MermaidTextAttributes.constant,

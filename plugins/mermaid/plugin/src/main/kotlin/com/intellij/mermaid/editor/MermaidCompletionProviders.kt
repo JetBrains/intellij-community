@@ -33,6 +33,7 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "zenuml",
       "sankey-beta",
       "xychart-beta",
+      "block-beta",
     )
 
   override fun addCompletions(
@@ -326,3 +327,17 @@ class XYChartCompletionProvider :
 
 class XYChartOrientationCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("horizontal", "vertical"))
+
+
+class BlockCompletionProvider : MermaidLiveTemplateCompletionProvider() {
+  private val keywords = listOf("block")
+
+  override fun addCompletions(
+    parameters: CompletionParameters,
+    context: ProcessingContext,
+    result: CompletionResultSet
+  ) {
+    val project = parameters.originalFile.project
+    result.addAllElements(keywords.map { createKeywordLookupElement(project, it) })
+  }
+}

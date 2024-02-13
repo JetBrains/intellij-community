@@ -1445,6 +1445,19 @@
             }
           }
         },
+        "block": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "padding": {
+              "type": "number"
+            }
+          }
+        },
         "wrap": {
           "type": "boolean"
         },

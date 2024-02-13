@@ -26,6 +26,7 @@ class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams")
     "zenuml",
     "sankey-beta",
     "xychart-beta",
+    "block-beta",
   )
 
   fun `test diagrams headers`() = doTest(*diagrams)

@@ -392,6 +392,34 @@ class MermaidCompletionContributor : CompletionContributor() {
       XYChartCompletionProvider()
     )
     //endregion
+
+    //region Block
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.BLOCK_DIAGRAM_HEADER)),
+      BlockCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.BLOCK_DIAGRAM_HEADER)),
+      MermaidSimpleCompletionProvider(listOf("columns"))
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterSiblingSkippingElementsAndWhitespaces(MermaidTokens.Block.COLUMNS),
+      MermaidSimpleCompletionProvider(listOf("auto"))
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagram(psiElement(MermaidElements.BLOCK_DIAGRAM_HEADER)),
+      MermaidSimpleCompletionProvider(listOf("space"))
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideBlock(psiElement(MermaidTokens.Block.BLOCK)),
+      MermaidSimpleCompletionProvider(listOf("end"))
+    )
+    //endregion
   }
 
   private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {

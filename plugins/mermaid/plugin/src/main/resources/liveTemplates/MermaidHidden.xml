@@ -322,4 +322,14 @@
     </context>
   </template>
 
+  <template id="mermaid_block" name="mermaid_block"
+            value="block&#10;$INDENT$$END$$SELECTION$&#10;end"
+            description="block statement"
+            toReformat="false" toShortenFQNames="false">
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
 </templateSet>

@@ -1394,6 +1394,68 @@
             }
           }
         },
+        "sankey": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "width": {
+              "type": "number"
+            },
+            "height": {
+              "type": "number"
+            },
+            "linkColor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "source",
+                    "target",
+                    "gradient"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "nodeAlignment": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right",
+                "center",
+                "justify"
+              ]
+            },
+            "showValues": {
+              "type": "boolean"
+            },
+            "prefix": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            }
+          }
+        },
+        "block": {
+          "properties": {
+            "useWidth": {
+              "type": "number"
+            },
+            "useMaxWidth": {
+              "type": "boolean"
+            },
+            "padding": {
+              "type": "number"
+            }
+          }
+        },
         "wrap": {
           "type": "boolean"
         },

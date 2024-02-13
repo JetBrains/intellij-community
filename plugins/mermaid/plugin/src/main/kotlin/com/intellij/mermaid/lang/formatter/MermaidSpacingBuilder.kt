@@ -131,6 +131,14 @@ internal object MermaidSpacingBuilder {
     )
   //endregion
 
+  //region Block diagram
+  private val BLOCK_INNER_STMTS =
+    TokenSet.create(
+      MermaidElements.BLOCK_DIAGRAM_NODE_STATEMENT_INNER,
+      MermaidElements.SPACE_STATEMENT_INNER,
+    )
+  //endregion
+
   //region OPEN CURLY STRUCTURES
   private val OPEN_CURLY_STRUCTURES =
     TokenSet.create(
@@ -198,8 +206,8 @@ internal object MermaidSpacingBuilder {
 
       // Node text within braces
       .around(MermaidElements.NODE_TEXT).spaceIf(mermaid.WITHIN_NODE_SHAPES)
-      .after(MermaidTokens.Mindmap.NODE_DESCR_START).spaceIf(mermaid.WITHIN_NODE_SHAPES)
-      .before(MermaidTokens.Mindmap.NODE_DESCR_END).spaceIf(mermaid.WITHIN_NODE_SHAPES)
+      .after(MermaidTokens.NODE_DESCR_START).spaceIf(mermaid.WITHIN_NODE_SHAPES)
+      .before(MermaidTokens.NODE_DESCR_END).spaceIf(mermaid.WITHIN_NODE_SHAPES)
 
       .aroundInside(MermaidElements.STRING, MermaidElements.CLASS_LABEL).spaceIf(mermaid.WITHIN_NODE_SHAPES)
 
@@ -231,7 +239,7 @@ internal object MermaidSpacingBuilder {
       // Arrows
       .around(MermaidElements.FLOWCHART_LINK_STATEMENT).spaceIf(mermaid.AROUND_ARROW)
       .around(MermaidTokens.ARROW).spaceIf(mermaid.AROUND_ARROW)
-      .after(MermaidTokens.Flowchart.START_ARROW).spaceIf(mermaid.AROUND_ARROW)
+      .after(MermaidTokens.START_ARROW).spaceIf(mermaid.AROUND_ARROW)
       .around(MermaidElements.SIGNAL).spaceIf(mermaid.AROUND_ARROW)
       .around(MermaidElements.CARDINALITY).spaceIf(mermaid.AROUND_ARROW)
       .around(MermaidElements.RELATION).spaceIf(mermaid.AROUND_ARROW)
@@ -255,6 +263,10 @@ internal object MermaidSpacingBuilder {
       .around(MermaidTokens.Directives.CLOSE_DIRECTIVE).spaceIf(false)
       .after(MermaidTokens.Directives.OPEN_DIRECTIVE).spaceIf(false)
       .beforeInside(MermaidTokens.COLON, GIT_GRAPH_ATTRIBUTES).spaceIf(false)
+      .between(MermaidTokens.Block.BLOCK, MermaidTokens.COLON).spaceIf(false)
+      .between(MermaidElements.BLOCK_DIAGRAM_NODE, MermaidElements.BLOCK_SIZE).spaceIf(false)
+      .between(MermaidTokens.Block.SPACE, MermaidElements.BLOCK_SIZE).spaceIf(false)
+      .betweenInside(MermaidTokens.COLON, MermaidTokens.NUM, MermaidElements.BLOCK_SIZE).spaceIf(false)
       .before(MermaidTokens.IGNORED).spaceIf(false)
   }
 
@@ -340,6 +352,10 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.XYChart.XY_CHART, MermaidTokens.XYChart.ORIENTATION_VALUE).spaces(1)
       .after(MermaidTokens.XYChart.LINE_KEYWORD).spaces(1)
       .after(MermaidTokens.XYChart.BAR_KEYWORD).spaces(1)
+      // Block
+      .after(MermaidTokens.Block.COLUMNS).spaces(1)
+      .after(MermaidTokens.Block.SPACE).spaces(1)
+      .between(BLOCK_INNER_STMTS, BLOCK_INNER_STMTS).spaces(1)
   }
 
   private fun SpacingBuilder.addBlankLinesRules(mermaid: MermaidCustomCodeStyleSettings): SpacingBuilder {
