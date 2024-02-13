@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -75,44 +75,45 @@ object DocumentationHtmlUtil {
     val sectionColor = ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR)
 
     // When updating styles here, consider updating styles in DocRenderer#getStyleSheet
+    val contentOuterPadding = scale(contentOuterPadding)
+    val contentSpacing = scale(contentSpacing)
+    val contentInnerPadding = scale(contentInnerPadding)
+
     @Language("CSS")
     val result = ContainerUtil.newLinkedList(
       """
-        html { padding: ${contentOuterPadding.scaled()}px ${contentOuterPadding.scaled()}px 0 ${contentOuterPadding.scaled()}px; margin: 0 }
+        html { padding: ${contentOuterPadding}px ${contentOuterPadding}px 0 ${contentOuterPadding}px; margin: 0 }
         body { padding: 0; margin: 0; overflow-wrap: anywhere;}
         pre  { white-space: pre-wrap; }
         a { color: $linkColor; text-decoration: none;}
         .$CLASS_DEFINITION, .$CLASS_DEFINITION_SEPARATED {    
-          padding: 0 ${contentInnerPadding.scaled()}px ${contentSpacing.scaled()}px ${contentInnerPadding.scaled()}px;
+          padding: 0 ${contentInnerPadding}px ${contentSpacing}px ${contentInnerPadding}px;
         }
         .$CLASS_DEFINITION pre, .$CLASS_DEFINITION_SEPARATED pre { 
           margin: 0; padding: 0;
         }
         .$CLASS_CONTENT, .$CLASS_CONTENT_SEPARATED {
-          padding: 0 ${contentInnerPadding.scaled()}px 0px ${contentInnerPadding.scaled()}px;
+          padding: 0 ${contentInnerPadding}px 0px ${contentInnerPadding}px;
           max-width: 100%;
         }
         .$CLASS_SEPARATED, .$CLASS_DEFINITION_SEPARATED, .$CLASS_CONTENT_SEPARATED {
-          margin-bottom: ${contentSpacing.scaled()}px;
+          margin-bottom: ${contentSpacing}px;
           border-bottom: thin solid $borderColor;
         }
         .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION { 
-          padding: 0 ${contentInnerPadding.scaled()}px ${contentSpacing.scaled()}px ${contentInnerPadding.scaled()}px;
+          padding: 0 ${contentInnerPadding}px ${contentSpacing}px ${contentInnerPadding}px;
         }
         .$CLASS_GRAYED { color: #909090; display: inline;}
         
-        .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding.scaled() - 2}px 0 ${contentInnerPadding.scaled() - 2}px 0; border-spacing: 0; }
+        .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding - 2}px 0 ${contentInnerPadding - 2}px 0; border-spacing: 0; }
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }
       """.trimIndent()
     )
 
     // Styled code
     val globalScheme = EditorColorsManager.getInstance().globalScheme
-    result.addAll(getDefaultDocCodeStyles(globalScheme, background, contentSpacing.scaled()))
-    result.addAll(getDefaultFormattingStyles(contentSpacing.scaled()))
+    result.addAll(getDefaultDocCodeStyles(globalScheme, background, contentSpacing))
+    result.addAll(getDefaultFormattingStyles(contentSpacing))
     return result
   }
-
-  private fun Int.scaled() =
-    JBUIScale.scale(this)
 }
