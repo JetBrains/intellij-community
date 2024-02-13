@@ -85,6 +85,10 @@ final class HighlightInfoUpdater implements Disposable {
   private Map<Object, ToolHighlights> getData(@NotNull PsiFile psiFile) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
     Document hostDocument = hostFile.getFileDocument(); // store in the document because DocumentMarkupModel is associated with this document
+    return getData(psiFile, hostDocument);
+  }
+
+  private static @NotNull Map<Object, ToolHighlights> getData(@NotNull PsiFile psiFile, @NotNull Document hostDocument) {
     Map<PsiFile, Map<Object, ToolHighlights>> map = hostDocument.getUserData(VISITED_PSI_ELEMENTS);
     if (map == null) {
       map = ((UserDataHolderEx)hostDocument).putUserDataIfAbsent(VISITED_PSI_ELEMENTS, new ConcurrentHashMap<>());
@@ -95,6 +99,7 @@ final class HighlightInfoUpdater implements Disposable {
     }
     return result;
   }
+
   @NotNull
   HighlightersRecycler removeOrRecycleInvalidPsiElements(@NotNull PsiFile psiFile) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
@@ -127,7 +132,7 @@ final class HighlightInfoUpdater implements Disposable {
       return true;
     });
     HighlightersRecycler toReuse = new HighlightersRecycler();
-    Map<Object, ToolHighlights> map = getData(psiFile);
+    Map<Object, ToolHighlights> map = getData(psiFile, hostDocument);
     if (map.isEmpty()) {
       return toReuse;
     }
@@ -157,29 +162,34 @@ final class HighlightInfoUpdater implements Disposable {
     return project.getService(HighlightInfoUpdater.class);
   }
 
-  private void putInfosForVisitedPsi(@NotNull PsiFile psiFile,
+  private void putInfosForVisitedPsi(@NotNull Map<Object, ToolHighlights> data,
                                      @NotNull @NonNls Object toolId,
                                      @NotNull PsiElement visitedPsi,
                                      @NotNull List<? extends HighlightInfo> newInfos) {
-    Map<Object, ToolHighlights> map = getData(psiFile);
     ToolHighlights toolHighlights;
     if (newInfos.isEmpty()) {
-      toolHighlights = map.get(toolId);
-      if (toolHighlights != null) {
+      toolHighlights = data.get(toolId);
+      boolean toolEmpty;
+      if (toolHighlights == null) {
+        toolEmpty = true;
+      }
+      else {
         toolHighlights.elementHighlights.remove(visitedPsi);
+        toolEmpty = toolHighlights.elementHighlights.isEmpty();
+      }
+      if (toolEmpty) {
+        data.remove(toolId);
       }
     }
     else {
-      toolHighlights = map.computeIfAbsent(toolId, __ -> new ToolHighlights());
+      toolHighlights = data.computeIfAbsent(toolId, __ -> new ToolHighlights());
       toolHighlights.elementHighlights.put(visitedPsi, newInfos);
     }
   }
   @NotNull
-  private List<? extends HighlightInfo> getInfosForVisitedPsi(@NotNull PsiFile psiFile,
-                                                              @NotNull @NonNls Object toolId,
+  private List<? extends HighlightInfo> getInfosForVisitedPsi(@NotNull Map<Object, ToolHighlights> data, @NotNull @NonNls Object toolId,
                                                               @NotNull PsiElement visitedPsi) {
-    Map<Object, ToolHighlights> map = getData(psiFile);
-    ToolHighlights toolHighlights = map.get(toolId);
+    ToolHighlights toolHighlights = data.get(toolId);
     List<? extends HighlightInfo> oldInfos = toolHighlights == null ? null : toolHighlights.elementHighlights.get(visitedPsi);
     return oldInfos == null ? Collections.emptyList() : oldInfos;
   }
@@ -196,7 +206,8 @@ final class HighlightInfoUpdater implements Disposable {
                          @NotNull Project project,
                          @NotNull HighlightersRecycler invalidElementRecycler,
                          @NotNull HighlightingSession session) {
-    List<? extends HighlightInfo> oldInfos = getInfosForVisitedPsi(psiFile, toolId, visitedPsiElement);
+    Map<Object, ToolHighlights> data = getData(psiFile, hostDocument);
+    List<? extends HighlightInfo> oldInfos = getInfosForVisitedPsi(data, toolId, visitedPsiElement);
     if (!oldInfos.isEmpty() || !newInfos.isEmpty()) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("psiElementVisited: " + visitedPsiElement+ " in "+psiFile+
@@ -208,7 +219,7 @@ final class HighlightInfoUpdater implements Disposable {
       setHighlightersInRange(newInfos, oldInfos, markup, session, invalidElementRecycler);
     }
     // store back only after markup model changes are applied to avoid PCE thrown in the middle leaving corrupted data behind
-    putInfosForVisitedPsi(psiFile, toolId, visitedPsiElement, newInfos);
+    putInfosForVisitedPsi(data, toolId, visitedPsiElement, newInfos);
   }
 
   private static void setHighlightersInRange(@NotNull List<? extends HighlightInfo> newInfos,
@@ -269,11 +280,12 @@ final class HighlightInfoUpdater implements Disposable {
 
   // remove all highlight infos from `data` generated by tools absent in 'actualToolsRun'
   void recycleHighlightsForObsoleteTools(@NotNull PsiFile containingFile,
+                                         @NotNull Document hostDocument,
                                          @NotNull List<? extends PsiFile> injectedFragments,
                                          @NotNull Set<? extends Pair<Object, PsiFile>> actualToolsRun,
                                          @NotNull HighlightersRecycler recycler) {
     for (PsiFile psiFile: ContainerUtil.append(injectedFragments, containingFile)) {
-      getData(psiFile).entrySet().removeIf(entry -> {
+      getData(psiFile, hostDocument).entrySet().removeIf(entry -> {
         Object toolId = entry.getKey();
         ToolHighlights toolHighlights = entry.getValue();
         if (UNKNOWN_ID.equals(toolId) || !isInspectionToolId(toolId)) {
@@ -304,10 +316,10 @@ final class HighlightInfoUpdater implements Disposable {
   }
 
   // TODO very dirty method which throws all incrementality away, but we'd need to rewrite too many inspections to get rid of it
-  void removeWarningsInsideErrors(@NotNull List<? extends PsiFile> injectedFragments, @NotNull HighlightingSessionImpl session) {
+  void removeWarningsInsideErrors(@NotNull List<? extends PsiFile> injectedFragments, @NotNull Document hostDocument, @NotNull HighlightingSessionImpl session) {
     HighlightersRecycler recycler = new HighlightersRecycler();
     for (PsiFile psiFile: ContainerUtil.append(injectedFragments, session.getPsiFile())) {
-      Map<Object, ToolHighlights> map = getData(psiFile);
+      Map<Object, ToolHighlights> map = getData(psiFile, hostDocument);
       if (map.isEmpty()) {
         continue;
       }

@@ -151,8 +151,8 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
         injectedFragments = runner.getInjectedFragments();
       }
       Set<Pair<Object, PsiFile>> pairs = ContainerUtil.map2Set(resultContexts, context -> Pair.create(context.tool().getShortName(), context.psiFile()));
-      highlightInfoUpdater.recycleHighlightsForObsoleteTools(getFile(), injectedFragments, pairs, invalidElementsRecycler);
-      highlightInfoUpdater.removeWarningsInsideErrors(injectedFragments, myHighlightingSession);  // must be the last
+      highlightInfoUpdater.recycleHighlightsForObsoleteTools(getFile(), getDocument(), injectedFragments, pairs, invalidElementsRecycler);
+      highlightInfoUpdater.removeWarningsInsideErrors(injectedFragments, getDocument(), myHighlightingSession);  // must be the last
     }
     finally {
       // incinerate range highlighters for invalid PSI elements even in the case of PCE, or otherwise these dangling range highlighters will stay onscreen forever
