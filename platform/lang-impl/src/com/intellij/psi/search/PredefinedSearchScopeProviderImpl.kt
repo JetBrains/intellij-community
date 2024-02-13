@@ -155,8 +155,27 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
         usageView: Boolean,
         showEmptyScopes: Boolean,
       ): ScopeCollectionContext {
-        return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          collectContext(project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+        val result: MutableCollection<SearchScope> = LinkedHashSet()
+
+        readAction {
+          addCommonScopes(result, project, suggestSearchInLibs, dataContext, showEmptyScopes)
+        }
+
+        val scopesFromUsageView = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          if (usageView) getScopesFromUsageView(project, prevSearchFiles) else emptyList()
+        }
+
+        val selectedTextEditor = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          FileEditorManager.getInstance(project).getSelectedTextEditor()
+        }
+
+        return readAction {
+          val psiFile = selectedTextEditor?.let {
+            PsiDocumentManager.getInstance(project).getPsiFile(it.getDocument())
+          }
+          val currentFile = fillFromDataContext(dataContext, result, psiFile)
+          val selectedFilesScope = getSelectedFilesScope(project, dataContext, currentFile)
+          ScopeCollectionContext(psiFile, selectedTextEditor, scopesFromUsageView, currentFile, selectedFilesScope, result)
         }
       }
 
@@ -391,7 +410,6 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
       return scopes
     }
 
-    // in EDT
     private fun fillFromDataContext(dataContext: DataContext?,
                                     result: MutableCollection<SearchScope>,
                                     psiFile: PsiFile?): PsiFile? {
