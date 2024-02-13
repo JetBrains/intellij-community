@@ -5,6 +5,7 @@ import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.Service
@@ -225,7 +226,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     @JvmStatic
-    fun isViewEnabled() = Registry.`is`("lvcs.show.activity.view")
+    fun isViewEnabled() = Registry.`is`("lvcs.show.activity.view") && !AppMode.isRemoteDevHost()
   }
 }
 
