@@ -17,7 +17,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
 
 @Service(Service.Level.PROJECT)
-internal class LibrarySynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
+class LibrarySynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
   private val synchronizationRequests = Channel<Request>(capacity = Channel.UNLIMITED).apply {
     scope.coroutineContext.job.invokeOnCompletion {
       close()
@@ -84,7 +84,11 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
       if (!coroutineContext.isActive) {
         return
       }
-      if (readAction { library.needToReload() }) {
+      val needToReload = readAction {
+        if (library.isDisposed) return@readAction false
+        library.needToReload()
+      }
+      if (needToReload) {
         RepositoryUtils.reloadDependencies(project, library)
       }
     }
