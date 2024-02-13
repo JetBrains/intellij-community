@@ -182,7 +182,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       return new SpeedSearchInputMethodRequests() {
         @Override
         protected InputMethodRequests getDelegate() {
-          return mySpeedSearchPatternField.getTextEditor().getInputMethodRequests();
+          if (searchFieldShown) {
+            return mySpeedSearchPatternField.getTextEditor().getInputMethodRequests();
+          } else {
+            return null;
+          }
         }
 
         @Override
