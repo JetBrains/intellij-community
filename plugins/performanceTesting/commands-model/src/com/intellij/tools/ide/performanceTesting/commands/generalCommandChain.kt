@@ -584,6 +584,10 @@ fun <T : CommandChain> T.createMavenProject(newMavenProjectDto: NewMavenProjectD
   addCommand("${CMD_PREFIX}createMavenProject $json")
 }
 
+fun <T : CommandChain> T.editMavenGoal(): T = apply {
+  addCommand("${CMD_PREFIX}editMavenGoal")
+}
+
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {
   startInlineRename()
   delayType(150, to)
