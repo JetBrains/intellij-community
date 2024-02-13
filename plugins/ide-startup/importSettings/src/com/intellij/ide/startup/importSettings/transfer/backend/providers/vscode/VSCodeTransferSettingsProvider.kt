@@ -58,6 +58,10 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
     = VSCodeTransferSettingsRightPanelChooser(ideV, config)
 }
 
-private class VSCodeTransferSettingsRightPanelChooser(private val ide: IdeVersion, config: TransferSettingsConfiguration) : TransferSettingsRightPanelChooser(ide, config) {
+private class VSCodeTransferSettingsRightPanelChooser(
+  ide: IdeVersion,
+  config: TransferSettingsConfiguration
+) : TransferSettingsRightPanelChooser(ide, config) {
+
   override fun getBottomComponentFactory() = null
 }

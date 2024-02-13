@@ -30,7 +30,6 @@ class VSCodeSettingsProcessor {
     }
 
     internal val storageFile: File = File("$vsCodeHome/storage.json")
-    internal val rapidRenderFile: File = File("$vsCodeHome/rapid_render.json")
     internal val keyBindingsFile: File = File("$vsCodeHome/User/keybindings.json")
     internal val generalSettingsFile: File = File("$vsCodeHome/User/settings.json")
     internal val pluginsDirectory: File = File("$homeDirectory/.vscode/extensions")

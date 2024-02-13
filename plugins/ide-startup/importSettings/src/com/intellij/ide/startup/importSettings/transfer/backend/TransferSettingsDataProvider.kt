@@ -58,7 +58,6 @@ class TransferSettingsDataProvider(private val providers: List<TransferSettingsP
 
 private class TransferSettingsDataProviderSession(private val providers: List<TransferSettingsProvider>,
                                                   private val skipIds: List<String>?) {
-  private val logger = logger<TransferSettingsDataProviderSession>()
 
   val baseIdeVersions: List<BaseIdeVersion> by lazy { createBaseIdeVersions() }
 
@@ -90,3 +89,5 @@ private class TransferSettingsDataProviderSession(private val providers: List<Tr
     .filter(Objects::nonNull)
     .collect(Collectors.toList())
 }
+
+private val logger = logger<TransferSettingsDataProvider>()
