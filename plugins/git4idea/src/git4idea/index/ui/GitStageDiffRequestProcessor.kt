@@ -23,11 +23,11 @@ import git4idea.index.*
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-class GitStageDiffPreview(project: Project,
-                          private val tree: GitStageTree,
-                          tracker: GitStageTracker,
-                          private val isInEditor: Boolean,
-                          parent: Disposable) :
+class GitStageDiffRequestProcessor(project: Project,
+                                   private val tree: GitStageTree,
+                                   tracker: GitStageTracker,
+                                   private val isInEditor: Boolean,
+                                   parent: Disposable) :
   ChangeViewDiffRequestProcessor(project, "Stage") {
   private val disposableFlag = Disposer.newCheckedDisposable()
 

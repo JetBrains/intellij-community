@@ -10,7 +10,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import git4idea.index.actions.updateStageDiffAvailability
 
 class GitStageEditorDiffPreview(
-  private val changeViewProcessor: GitStageDiffPreview,
+  private val changeViewProcessor: GitStageDiffRequestProcessor,
   private val tree: ChangesTree
 ) : EditorTabPreview(changeViewProcessor) {
 

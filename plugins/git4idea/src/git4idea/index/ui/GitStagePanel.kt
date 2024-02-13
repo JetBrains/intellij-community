@@ -82,7 +82,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
-  private var diffPreviewProcessor: GitStageDiffPreview? = null
+  private var diffPreviewProcessor: GitStageDiffRequestProcessor? = null
   private var editorTabPreview: GitStageEditorDiffPreview? = null
 
   private val state: GitStageTracker.State
@@ -222,7 +222,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     if (!isInitial && !needUpdatePreviews) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    diffPreviewProcessor = GitStageDiffPreview(project, _tree, tracker, isInEditor, this)
+    diffPreviewProcessor = GitStageDiffRequestProcessor(project, _tree, tracker, isInEditor, this)
     diffPreviewProcessor!!.setToolbarVerticalSizeReferent(toolbar.component)
 
     if (isInEditor) {
