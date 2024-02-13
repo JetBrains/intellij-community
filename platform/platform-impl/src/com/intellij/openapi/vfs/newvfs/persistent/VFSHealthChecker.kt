@@ -60,12 +60,12 @@ private object VFSHealthCheckerConstants {
 
 
   /** Wrap the main part of health-check (fs-records vs secondary storages, like name/content/attributes...) in
-   *  RA. Since VFS modifications are done under WA, checking consistency without RA is generally incorrect,
+   *  RA. Since VFS modifications are done under WA, checking consistency without RA is generally incorrect
    *  because the checker could see intermediate inconsistent results.
    *  Acquiring RA for each file record could be costly, and I want HealthCheck to be un-intrusive, so
    *  it is initially switched off -- I expect it to be switched on by default, eventually, after it proves itself
    *  to be safe */
-  val WRAP_HEALTH_CHECK_IN_READ_ACTION = getBooleanProperty("vfs.health-check.wrap-in-read-action", false)
+  val WRAP_HEALTH_CHECK_IN_READ_ACTION = getBooleanProperty("vfs.health-check.wrap-in-read-action", true)
 
   /**
    * May slow down scanning significantly, hence dedicated property to control.
@@ -112,7 +112,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
           //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10sec long once/(few) hours,
           //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
-          //          through that few hours
+          //          over the same few hours
           if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
             LOG.info("VFS health-check delayed: power source is battery")
             delay(checkingPeriod) //make it twice rarer
