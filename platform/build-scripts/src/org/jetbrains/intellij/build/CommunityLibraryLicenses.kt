@@ -673,7 +673,7 @@ object CommunityLibraryLicenses {
       .suppliedByPersons("Atsuhiko Yamanaka"),
     LibraryLicense(name = "JSON", libraryName = "json.jar", license = "JSON License", licenseUrl = "https://www.json.org/license.html",
                    url = "https://www.json.org/", version = LibraryLicense.CUSTOM_REVISION),
-    LibraryLicense(name = "JSON in Java", libraryName = "org.json:json:20170516", license = "JSON License",
+    LibraryLicense(name = "JSON in Java", libraryName = "org.json:json", license = "JSON License",
                    licenseUrl = "https://www.json.org/license.html", url = "https://github.com/stleary/JSON-java"),
     LibraryLicense(name = "JSON Schema (schema.json)", attachedTo = "intellij.json", version = "draft-04",
                    url = "https://json-schema.org/draft-04/schema#").simplifiedBsd(),

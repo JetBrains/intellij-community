@@ -274,20 +274,20 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.json:json:20170516" type="repository">
-        <properties maven-id="org.json:json:20170516">
+      <library name="org.json:json" type="repository">
+        <properties maven-id="org.json:json:20240205">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/json/json/20170516/json-20170516.jar">
-              <sha256sum>813f37e4820f1854e8a4eb4f80df94bf1b1f2ec6c3b72692f23ab9a556256af6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar">
+              <sha256sum>e89df61466f0807f8a86db0e8805a837e59462c8ca47c67786e432133c490aca</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20170516/json-20170516.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20170516/json-20170516-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/json/json/20240205/json-20240205-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
