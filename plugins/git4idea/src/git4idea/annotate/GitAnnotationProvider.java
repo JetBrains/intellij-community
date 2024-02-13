@@ -383,7 +383,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
         }
         else {
           Date committerDate = null;
-          FilePath filePath = null;
+          FilePath commitFilePath = null;
           String subject = null;
           String authorName = null;
           String authorEmail = null;
@@ -407,7 +407,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
               committerDate = GitUtil.parseTimestamp(value);
             }
             else if (FILENAME_KEY.equals(key)) {
-              filePath = VcsUtil.getFilePath(root, value);
+              commitFilePath = VcsUtil.getFilePath(root, value);
             }
             else if (AUTHOR_EMAIL_KEY.equals(key)) {
               authorEmail = value;
@@ -426,7 +426,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
           if (authorDate == null ||
               committerDate == null ||
-              filePath == null ||
+              commitFilePath == null ||
               authorName == null ||
               authorEmail == null ||
               subject == null) {
@@ -438,10 +438,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
           GitRevisionNumber previousRevisionNumber = previousRevision != null ? new GitRevisionNumber(previousRevision) : null;
 
 
-          filePath = pathInterner.intern(filePath);
+          commitFilePath = pathInterner.intern(commitFilePath);
           if (previousFilePath != null) previousFilePath = pathInterner.intern(previousFilePath);
 
-          commit = new CommitInfo(project, revisionNumber, filePath, committerDate, authorDate, author, subject,
+          commit = new CommitInfo(project, revisionNumber, commitFilePath, committerDate, authorDate, author, subject,
                                   previousRevisionNumber, previousFilePath);
           commits.put(commitHash, commit);
         }
