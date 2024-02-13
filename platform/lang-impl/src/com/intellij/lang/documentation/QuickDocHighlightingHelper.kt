@@ -13,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -282,14 +283,15 @@ object QuickDocHighlightingHelper {
       "h2 { font-size: ${fontSize + 10}}",
       "h1 { font-size: ${fontSize + 12}}",
       "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
-      "p, ol, ul { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
-      "li { padding: 1px 0 2px 0; }",
+      "p { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0;}",
+      "ol, ul { margin: 0 0 0 ${scale(10)}px; padding: 0 0 ${spacing}px 0;}",
+      "li { padding: ${scale(1)}px 0 ${scale(2)}px 0; }",
       "li p { padding-top: 0; padding-bottom: 0; }",
       "th { text-align: left; }",
       "tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }",
       "td { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
       "td p { padding-top: 0; padding-bottom: 0; }",
-      "td pre { padding: 1px 0 0 0; margin: 0 0 0 0 }",
+      "td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }",
       ".$CLASS_CENTERED { text-align: center}",
     )
   }
