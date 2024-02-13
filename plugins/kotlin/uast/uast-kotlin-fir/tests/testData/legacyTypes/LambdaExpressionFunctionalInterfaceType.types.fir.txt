@@ -4,13 +4,13 @@ UFile (package = ) [public final class LambdaExpressionFunctionalInterfaceTypeKt
             UBlockExpression [{...}] : PsiType:Stream<String>
                 UQualifiedReferenceExpression [java.util.stream.Stream.of(1, 2).map({ var it: java.lang.Integer ->...})] : PsiType:Stream<String>
                     UQualifiedReferenceExpression [java.util.stream.Stream.of(1, 2)] : PsiType:Stream<Integer>
-                        UQualifiedReferenceExpression [java.util.stream.Stream] : PsiType:Unit
-                            UQualifiedReferenceExpression [java.util.stream] : PsiType:Unit
-                                UQualifiedReferenceExpression [java.util] : PsiType:Unit
-                                    USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                                    USimpleNameReferenceExpression (identifier = util) [util] : PsiType:Unit
-                                USimpleNameReferenceExpression (identifier = stream) [stream] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = Stream) [Stream] : PsiType:Unit
+                        UQualifiedReferenceExpression [java.util.stream.Stream]
+                            UQualifiedReferenceExpression [java.util.stream]
+                                UQualifiedReferenceExpression [java.util]
+                                    USimpleNameReferenceExpression (identifier = java) [java]
+                                    USimpleNameReferenceExpression (identifier = util) [util]
+                                USimpleNameReferenceExpression (identifier = stream) [stream]
+                            USimpleNameReferenceExpression (identifier = Stream) [Stream]
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [of(1, 2)] : PsiType:Stream<Integer>
                             UIdentifier (Identifier (of)) [UIdentifier (Identifier (of))]
                             USimpleNameReferenceExpression (identifier = of, resolvesTo = null) [of] : PsiType:Stream<Integer>

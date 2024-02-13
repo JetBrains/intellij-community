@@ -60,9 +60,9 @@ UFile (package = ) [public final class ResolveKt {...]
                 UDeclarationsExpression [var date: java.util.Date = java.util.<init>()]
                     ULocalVariable (name = date) [var date: java.util.Date = java.util.<init>()]
                         UQualifiedReferenceExpression [java.util.<init>()] : PsiType:Date
-                            UQualifiedReferenceExpression [java.util] : PsiType:Unit
-                                USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                                USimpleNameReferenceExpression (identifier = util) [util] : PsiType:Unit
+                            UQualifiedReferenceExpression [java.util]
+                                USimpleNameReferenceExpression (identifier = java) [java]
+                                USimpleNameReferenceExpression (identifier = util) [util]
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] : PsiType:Date
                                 UIdentifier (Identifier (Date)) [UIdentifier (Identifier (Date))]
                                 USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Date) [<init>] : PsiType:Date

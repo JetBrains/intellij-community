@@ -26,9 +26,9 @@ UFile (package = ) [public abstract interface Pizza {...]
             UBlockExpression [{...}]
                 UReturnExpression [return java.lang.<init>("Margherita")]
                     UQualifiedReferenceExpression [java.lang.<init>("Margherita")] : PsiType:String
-                        UQualifiedReferenceExpression [java.lang] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
+                        UQualifiedReferenceExpression [java.lang]
+                            USimpleNameReferenceExpression (identifier = java) [java]
+                            USimpleNameReferenceExpression (identifier = lang) [lang]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("Margherita")] : PsiType:String
                             UIdentifier (Identifier (String)) [UIdentifier (Identifier (String))]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: String) [<init>] : PsiType:String
