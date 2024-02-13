@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.ide
@@ -39,6 +39,21 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
     fun getInstance(): IdleTracker = service<IdleTracker>()
   }
 
+  /**
+   * Emits an event each time AWT queue finishes processing of user-initiated event.
+   * To be used with [kotlinx.coroutines.flow.Flow.debounce] in constructs like this:
+   * ```kotlin
+   * IdleTracker.getInstance().events
+   *         .debounce(30.seconds)
+   *         .collect {
+   *          //Do something each time user did nothing for 30 sec.
+   *          // It doesn't mean the IDE itself was completely idle in that period -- background
+   *          // activities could be running -- but there was no user activity inside the IDE.
+   *         }
+   * ```
+   * @see IdeEventQueue.processIdleActivityListeners
+   * @see IdeEventQueue.isUserActivityEvent
+   */
   val events: SharedFlow<Unit> = _events.asSharedFlow()
 
   init {
