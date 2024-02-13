@@ -1149,10 +1149,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return
     }
     val container =
-      if (event.presentation.isApplicationScope) ApplicationManager.getApplication()
-      else project ?: ApplicationManager.getApplication()
-    val cs = (container as ComponentManagerImpl)
-      .pluginCoroutineScope(action.javaClass.classLoader)
+      if (!event.presentation.isApplicationScope && project is ComponentManagerImpl) project
+      else ApplicationManager.getApplication() as ComponentManagerImpl
+    val cs = container.pluginCoroutineScope(action.javaClass.classLoader)
     val coroutineName = CoroutineName("${action.javaClass.name}#actionPerformed@${event.place}")
     // save stack frames using an explicit continuation trick & inline blockingContext
     lateinit var continuation: CancellableContinuation<Unit>
