@@ -240,7 +240,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             renderModifiersList(field)
             field.name.accept(this)
             if (field.type.present()) {
-                printer.print(":")
+                printer.print(": ")
                 field.type.accept(this)
             }
             if (field.initializer !is JKStubExpression) {
@@ -289,7 +289,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
             parameter.name.accept(this)
             if (parameter.type.present() && parameter.type.type !is JKContextType) {
-                printer.print(":")
+                printer.print(": ")
                 parameter.type.accept(this)
             }
             if (parameter.initializer !is JKStubExpression) {
@@ -341,7 +341,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitIfElseExpressionRaw(ifElseExpression: JKIfElseExpression) {
             printer.print("if (")
             ifElseExpression.condition.accept(this)
-            printer.print(")")
+            printer.print(") ")
             ifElseExpression.thenBranch.accept(this)
             if (ifElseExpression.elseBranch !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("else")
@@ -353,7 +353,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitIfElseStatementRaw(ifElseStatement: JKIfElseStatement) {
             printer.print("if (")
             ifElseStatement.condition.accept(this)
-            printer.print(")")
+            printer.print(") ")
             if (ifElseStatement.thenBranch.isEmpty()) {
                 printer.print(";")
             } else {
@@ -533,7 +533,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitWhileStatementRaw(whileStatement: JKWhileStatement) {
             printer.print("while (")
             whileStatement.condition.accept(this)
-            printer.print(")")
+            printer.print(") ")
             if (whileStatement.body.isEmpty()) {
                 printer.print(";")
             } else {
@@ -829,7 +829,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {
-            printer.print("when(")
+            printer.print("when (")
             ktWhenBlock.expression.accept(this)
             printer.print(")")
             printer.block {

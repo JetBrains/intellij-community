@@ -34,15 +34,21 @@ open class JKPrinterBase {
         if (value.isEmpty()) return
 
         if (value == " ") {
-            // To prettify the printed code for easier debugging, don't try to print multiple single spaces in a row
+            // Don't try to print a single space at the beginning of the line
+            if (lastSymbolIsLineBreak) return
+
             val prevLastSymbolIsSingleSpace = lastSymbolIsSingleSpace
             lastSymbolIsSingleSpace = true
-            if (!prevLastSymbolIsSingleSpace) {
-                append(" ")
-            }
+
+            // Don't try to print multiple single spaces in a row
+            if (!prevLastSymbolIsSingleSpace) append(" ")
         } else {
             lastSymbolIsSingleSpace = false
             append(value)
+
+            if (value.length >= 2 && value.last() == ' ' && value[value.lastIndex - 1] != ' ') {
+                lastSymbolIsSingleSpace = true
+            }
         }
     }
 
