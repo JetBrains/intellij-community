@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.annotation.JsonIgnore
@@ -168,7 +170,7 @@ object StorageDiagnosticData {
   private fun indexStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
                                      enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>): IndexStorageStats {
 
-    val perIndexStats = sortedMapOf<String, StatsPerStorage>()
+    val perIndexStats = TreeMap<String, StatsPerStorage>()
     for (id in ID.getRegisteredIds()) {
       val indexStats = listOf(IndexInfrastructure.getIndexRootDir(id), IndexInfrastructure.getPersistentIndexRootDir(id))
         .map {

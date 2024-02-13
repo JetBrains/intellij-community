@@ -105,7 +105,7 @@ public class VFSInitializationBenchmark {
       context.connectionToClose = connection;
       
       Supplier<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
-        AppExecutorUtil.getAppExecutorService(), connection.getRecords()
+        connection.getRecords()
       );
 
       int maxAllocatedID = connection.getRecords().maxAllocatedID();

@@ -5,7 +5,6 @@ import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -41,18 +40,13 @@ import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -172,7 +166,6 @@ public final class FSRecordsImpl implements Closeable {
     ExceptionUtil.rethrow(error);
   };
 
-
   public static ErrorHandler getDefaultErrorHandler() {
     if (VfsLog.isVfsTrackingEnabled()) {
       return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED;
@@ -181,7 +174,6 @@ public final class FSRecordsImpl implements Closeable {
       return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD;
     }
   }
-
 
   private final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
@@ -228,7 +220,7 @@ public final class FSRecordsImpl implements Closeable {
   private volatile Exception closedStackTrace = null;
 
   //@GuardedBy("this")
-  private final ObjectOpenHashSet<AutoCloseable> closeables = new ObjectOpenHashSet<>();
+  private final Set<AutoCloseable> closeables = new HashSet<>();
   private final CopyOnWriteArraySet<FileIdIndexedStorage> fileIdIndexedStorages = new CopyOnWriteArraySet<>();
 
   private static int nextMask(int value,
@@ -265,7 +257,6 @@ public final class FSRecordsImpl implements Closeable {
     //@formatter:on
   }
 
-
   /**
    * Factory
    *
@@ -298,9 +289,7 @@ public final class FSRecordsImpl implements Closeable {
 
       PersistentFSConnection connection = initializationResult.connection;
 
-      Supplier<InvertedNameIndex> invertedNameIndexLazy = asyncFillInvertedNameIndex(
-        AppExecutorUtil.getAppExecutorService(), connection.getRecords()
-      );
+      Supplier<InvertedNameIndex> invertedNameIndexLazy = asyncFillInvertedNameIndex(connection.getRecords());
 
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
                initializationResult.attemptsFailures.size() + " failed attempts, " +
@@ -312,7 +301,6 @@ public final class FSRecordsImpl implements Closeable {
       PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?
                                               new PersistentFSTreeRawAccessor(attributeAccessor, recordAccessor, connection) :
                                               new PersistentFSTreeAccessor(attributeAccessor, recordAccessor, connection);
-
 
       try {
         treeAccessor.ensureLoaded();
@@ -359,7 +347,6 @@ public final class FSRecordsImpl implements Closeable {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
     }
   }
-
 
   private FSRecordsImpl(@NotNull PersistentFSConnection connection,
                         @NotNull PersistentFSContentAccessor contentAccessor,
@@ -1478,33 +1465,32 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @VisibleForTesting
-  public static @NotNull Supplier<@NotNull InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull ExecutorService pool,
-                                                                                         @NotNull PersistentFSRecordsStorage recordsStorage) {
-    Future<InvertedNameIndex> fillUpInvertedNameIndexTask = pool.submit(() -> {
+  public static @NotNull Supplier<@NotNull InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull PersistentFSRecordsStorage recordsStorage) {
+    CompletableFuture<InvertedNameIndex> fillUpInvertedNameIndexTask = PersistentFsConnectorHelper.INSTANCE.executor().async(() -> {
       InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
       // fill up nameId->fileId index:
       int maxAllocatedID = recordsStorage.maxAllocatedID();
-      for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-        int flags = recordsStorage.getFlags(fileId);
-        int nameId = recordsStorage.getNameId(fileId);
-        if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
-          invertedNameIndex.updateDataInner(fileId, nameId);
+        for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+          int flags = recordsStorage.getFlags(fileId);
+          int nameId = recordsStorage.getNameId(fileId);
+          if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
+            invertedNameIndex.updateDataInner(fileId, nameId);
+          }
         }
-      }
       LOG.info("VFS scanned: file-by-name index was populated");
       return invertedNameIndex;
     });
 
     // We don't need volatile/atomicLazy, since computation is idempotent: same instance returned always.
     // So _there could be_ a data race, but it is a benign race.
-    return NotNullLazyValue.lazy(() -> {
+    return () -> {
       try {
-        return fillUpInvertedNameIndexTask.get();
+        return fillUpInvertedNameIndexTask.join();
       }
       catch (Throwable e) {
         throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
       }
-    });
+    };
   }
 
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("AppJavaExecutorUtil")
 @file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.util.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
@@ -32,7 +33,6 @@ fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: Corout
 @Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: String) {
-
   private val childScope = coroutineScope.namedChildScope(name, Dispatchers.IO.limitedParallelism(parallelism = 1))
 
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
@@ -43,7 +43,8 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
       try {
         it.run()
       }
-      catch (_: ProcessCanceledException) { }
+      catch (_: ProcessCanceledException) {
+      }
     }
   }
 
