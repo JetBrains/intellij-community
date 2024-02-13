@@ -104,7 +104,9 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
       writeArrayFieldStart("mainDescriptors")
       writeIncludedPaths(plugin)
       writeEndArray()
-      writeClassLoaderData(plugin.classLoader, classLoaderIds, printedClassLoaders)
+      if (plugin.isEnabled) {
+        writeClassLoaderData(plugin.classLoader, classLoaderIds, printedClassLoaders)
+      }
       writePluginModulesData(plugin, classLoaderIds, printedClassLoaders)
       writeEndObject()
     }
@@ -120,11 +122,15 @@ private class DumpPluginDescriptorsAction : DumbAwareAction() {
       for (moduleItem in modules) {
         writeStartObject()
         writeStringField("name", moduleItem.name)
-        writeArrayFieldStart("descriptors")
         val descriptor = moduleItem.requireDescriptor()
+        val isEnabled = descriptor in PluginManagerCore.getPluginSet().getEnabledModules()
+        writeBooleanField("enabled", isEnabled)
+        writeArrayFieldStart("descriptors")
         writeIncludedPaths(descriptor)
         writeEndArray()
-        writeClassLoaderData(descriptor.classLoader, classLoaderIds, printedClassLoaders)
+        if (isEnabled) {
+          writeClassLoaderData(descriptor.classLoader, classLoaderIds, printedClassLoaders)
+        }
         writeEndObject()
       }
       writeEndArray()
