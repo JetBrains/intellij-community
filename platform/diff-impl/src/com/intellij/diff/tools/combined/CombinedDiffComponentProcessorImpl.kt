@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
+import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffEditorViewerListener
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -18,6 +19,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorStateWithPreferredOpenMode
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState
 import com.intellij.openapi.project.Project
@@ -241,7 +244,10 @@ data class CombinedDiffEditorState(
   val currentBlockIds: Set<CombinedBlockId>,
   val activeBlockId: CombinedBlockId,
   val activeEditorStates: List<TextEditorState>
-) : FileEditorState {
+) : FileEditorStateWithPreferredOpenMode {
+  override val openMode: FileEditorManagerImpl.OpenMode?
+    get() = if (!isDiffInEditor) FileEditorManagerImpl.OpenMode.NEW_WINDOW else null
+
   override fun canBeMergedWith(otherState: FileEditorState, level: FileEditorStateLevel): Boolean {
     return otherState is CombinedDiffEditorState &&
            (currentBlockIds != otherState.currentBlockIds ||

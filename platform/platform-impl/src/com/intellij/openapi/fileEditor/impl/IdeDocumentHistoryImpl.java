@@ -584,7 +584,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     FileEditorManagerEx editorManager = getFileEditorManager();
     FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
       .withUsePreviewTab(info.isPreviewTab())
-      .withRequestFocus(requestFocus);
+      .withRequestFocus(requestFocus)
+      .withOpenMode(info.getOpenMode());
     var editorsWithProviders = editorManager.openFile(info.getFile(), info.getWindow(), openOptions);
 
     editorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
@@ -728,6 +729,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     public boolean isPreviewTab() {
       return myIsPreviewTab;
+    }
+
+    public @Nullable FileEditorManagerImpl.OpenMode getOpenMode() {
+      if (myNavigationState instanceof FileEditorStateWithPreferredOpenMode) {
+        return ((FileEditorStateWithPreferredOpenMode)myNavigationState).getOpenMode();
+      }
+      return null;
     }
   }
 
