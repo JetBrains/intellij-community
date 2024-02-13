@@ -173,10 +173,11 @@ public final class MainPassesRunner {
       return;
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
-    HighlightingSessionImpl session = HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null,
-                                                                                        range, CanISilentlyChange.Result.UH_UH, 0);
-    session.setMinimumSeverity(minimumSeverity);
-    ProgressManager.getInstance().runProcess(() -> runMainPasses(daemonIndicator, result, psiFile, document), daemonIndicator);
+    ProgressManager.getInstance().runProcess(() ->
+      HighlightingSessionImpl.runInsideHighlightingSession(psiFile, null, range, false, session -> {
+        ((HighlightingSessionImpl)session).setMinimumSeverity(minimumSeverity);
+        runMainPasses(daemonIndicator, result, psiFile, document);
+      }), daemonIndicator);
   }
 
   private void runMainPasses(@NotNull ProgressIndicator daemonIndicator,

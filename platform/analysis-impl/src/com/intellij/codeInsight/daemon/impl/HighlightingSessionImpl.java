@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
@@ -134,12 +136,12 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return createHighlightingSession(psiFile, progressIndicator, editorColorsScheme, visibleRange, canChangeFileSilently, daemonCancelEventCount);
   }
 
-  static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
-                                                                    @NotNull DaemonProgressIndicator progressIndicator,
-                                                                    @Nullable EditorColorsScheme editorColorsScheme,
-                                                                    @NotNull ProperTextRange visibleRange,
-                                                                    @NotNull CanISilentlyChange.Result canChangeFileSilently,
-                                                                    @NotNull Number daemonCancelEventCount) {
+  private static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
+                                                                            @NotNull DaemonProgressIndicator progressIndicator,
+                                                                            @Nullable EditorColorsScheme editorColorsScheme,
+                                                                            @NotNull ProperTextRange visibleRange,
+                                                                            @NotNull CanISilentlyChange.Result canChangeFileSilently,
+                                                                            @NotNull Number daemonCancelEventCount) {
     // no assertIsDispatchThread() is necessary
     Map<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map == null) {
@@ -157,14 +159,49 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                   boolean canChangeFileSilently,
                                                   @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     HighlightingSessionImpl session = createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
                                                                                                                  ? CanISilentlyChange.Result.UH_HUH
                                                                                                                  : CanISilentlyChange.Result.UH_UH,
                                                                 0);
-    session.additionalSetupFromBackground(file);
-    runnable.accept(session);
+    try {
+      session.additionalSetupFromBackground(file);
+      runnable.accept(session);
+    }
+    finally {
+      Map<PsiFile, HighlightingSession> map = indicator.getUserData(HIGHLIGHTING_SESSION);
+      if (map != null) {
+        map.remove(file);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  static void runInsideHighlightingSessionInEDT(@NotNull PsiFile file,
+                                                @Nullable EditorColorsScheme editorColorsScheme,
+                                                @NotNull ProperTextRange visibleRange,
+                                                boolean canChangeFileSilently,
+                                                @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+      ProgressManager.getInstance().executeProcessUnderProgress(()->runInsideHighlightingSessionInEDT(file, editorColorsScheme, visibleRange, canChangeFileSilently, runnable), new DaemonProgressIndicator());
+      return;
+    }
+    DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
+    HighlightingSessionImpl session = createHighlightingSession(file, indicator, editorColorsScheme, visibleRange, canChangeFileSilently
+                                                                                                                 ? CanISilentlyChange.Result.UH_HUH
+                                                                                                                 : CanISilentlyChange.Result.UH_UH,
+                                                                0);
+    session.myInContent = true;
+    try {
+      runnable.accept(session);
+    }
+    finally {
+      Map<PsiFile, HighlightingSession> map = indicator.getUserData(HIGHLIGHTING_SESSION);
+      if (map != null) {
+        map.remove(file);
+      }
+    }
   }
 
   static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
@@ -203,8 +240,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   // return true if added
-  boolean addInfoIncrementally(@NotNull HighlightInfo info, @NotNull TextRange restrictedRange, int groupId) {
-    return BackgroundUpdateHighlightersUtil.addHighlighterToEditorIncrementally(this, getPsiFile(), getDocument(), restrictedRange,
+  void addInfoIncrementally(@NotNull HighlightInfo info, @NotNull TextRange restrictedRange, int groupId) {
+    BackgroundUpdateHighlightersUtil.addHighlighterToEditorIncrementally(this, getPsiFile(), getDocument(), restrictedRange,
                                                                          info, getColorsScheme(), groupId, myRange2markerCache);
   }
 
@@ -242,11 +279,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   // compute additional stuff in background thread
   void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    myIsEssentialHighlightingOnly = HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile);
-    VirtualFile virtualFile = psiFile.getVirtualFile();
-    myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false);
-    extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile);
+    myIsEssentialHighlightingOnly = ReadAction.compute(() -> HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile));
+    VirtualFile virtualFile = ReadAction.compute(() -> psiFile.getVirtualFile());
+    myInContent = ReadAction.compute(() -> virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false));
+    extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : ReadAction.compute(() -> SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile));
   }
 
   public boolean isCanceled() {
