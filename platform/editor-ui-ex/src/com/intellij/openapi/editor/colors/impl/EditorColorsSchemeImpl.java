@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,11 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public boolean isReadOnly() {
+    return false;
+  }
+
+  @ApiStatus.Internal
+  public boolean isFromIntellij() {
     return false;
   }
 

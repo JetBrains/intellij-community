@@ -57,6 +57,9 @@ class UIThemeExportableBean(
 fun EditorColorsScheme.isDefaultForTheme(theme: UIThemeLookAndFeelInfo?): Boolean =
   (theme?.editorSchemeId ?: defaultNonLaFSchemeName()) == Scheme.getBaseName(name)
 
-private fun defaultNonLaFSchemeName() = if (StartupUiUtil.isDarkTheme) "Darcula" else "Default"
+val UIThemeLookAndFeelInfo.defaultSchemeName: String @Internal get() = editorSchemeId ?: defaultNonLaFSchemeName(isDark)
+private fun defaultNonLaFSchemeName() = defaultNonLaFSchemeName(StartupUiUtil.isDarkTheme)
+@Internal
+fun defaultNonLaFSchemeName(dark: Boolean): String = if (dark) "Darcula" else EditorColorsScheme.DEFAULT_SCHEME_NAME
 
-val UIThemeLookAndFeelInfo.isThemeFromPlugin: Boolean get() = providerClassLoader is PluginAwareClassLoader
+val UIThemeLookAndFeelInfo.isThemeFromPlugin: Boolean @Internal get() = providerClassLoader is PluginAwareClassLoader

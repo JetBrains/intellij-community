@@ -1279,9 +1279,6 @@ private fun applyDensityOnUpdateUi(uiDefaults: UIDefaults) {
   }
 }
 
-private val UIThemeLookAndFeelInfo.defaultSchemeName: String get() = editorSchemeId ?: defaultNonLaFSchemeName(isDark)
-private fun defaultNonLaFSchemeName(dark: Boolean) = if (dark) DarculaLaf.NAME else EditorColorsScheme.DEFAULT_SCHEME_NAME
-
 @JvmField
 internal val patchableFontResources: Array<String> = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
                                                              "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font",

@@ -885,4 +885,6 @@ internal class BundledEditorColorScheme(@JvmField val resourcePath: String) : Ed
   override fun isReadOnly() = true
 
   override fun getSchemeState() = SchemeState.UNCHANGED
+
+  override fun isFromIntellij(): Boolean = (metaProperties.get("pluginId") as? String)?.startsWith("com.intellij") == true
 }
