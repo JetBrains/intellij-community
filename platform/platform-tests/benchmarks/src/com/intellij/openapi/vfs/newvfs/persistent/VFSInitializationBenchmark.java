@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -14,10 +13,10 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Benchmarks VFS (FSRecords) initialization duration
@@ -34,7 +33,7 @@ public class VFSInitializationBenchmark {
   @State(Scope.Benchmark)
   public static class Context {
 
-    @Param({"true"})
+    @Param("true")
     public boolean warmupOpenTelemetry;
 
     public Path temporaryFolder;
@@ -78,7 +77,7 @@ public class VFSInitializationBenchmark {
 
 
   @Benchmark
-  public void initEmptyVFS(Context context) throws Exception {
+  public void initEmptyVFS(Context context) {
     int version = FSRecordsImpl.currentImplementationVersion();
     Path cachesDir = context.temporaryFolder;
 
@@ -86,7 +85,7 @@ public class VFSInitializationBenchmark {
   }
 
   @Benchmark
-  public void initVFS_OverAlreadyExistingFiles(Context context) throws IOException {
+  public void initVFS_OverAlreadyExistingFiles(Context context) {
     int version = FSRecordsImpl.currentImplementationVersion();
     Path cachesDir = context.realFolder;
     if (cachesDir != null) {
@@ -98,14 +97,14 @@ public class VFSInitializationBenchmark {
   }
 
   @Benchmark
-  public void initVFS_OverAlreadyExistingFiles_AndWaitForInvertedNamesIndex(Context context) throws Exception {
+  public void initVFS_OverAlreadyExistingFiles_AndWaitForInvertedNamesIndex(Context context) {
     int version = FSRecordsImpl.currentImplementationVersion();
     Path cachesDir = context.realFolder;
     if (cachesDir != null) {
       PersistentFSConnection connection = initVFS(cachesDir, version);
       context.connectionToClose = connection;
       
-      NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
+      Supplier<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
         AppExecutorUtil.getAppExecutorService(), connection.getRecords()
       );
 
@@ -113,7 +112,7 @@ public class VFSInitializationBenchmark {
       assert maxAllocatedID > 100_000 : "maxAllocatedID" + maxAllocatedID + " is too low, probably already existing files are dummy?";
 
       //wait for index to fill up:
-      invertedNameIndexLazy.getValue();
+      invertedNameIndexLazy.get();
     }
   }
 
