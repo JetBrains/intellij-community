@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.openapi.application.ApplicationManager
@@ -93,8 +93,8 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
   private sealed interface Request {
     class QueueSynchronization(val library: LibraryEx) : Request
     class RevokeSynchronization(val library: LibraryEx) : Request
-    object AllLibrariesSynchronization : Request
-    object Flush : Request
+    data object AllLibrariesSynchronization : Request
+    data object Flush : Request
   }
 
   companion object {
