@@ -9,13 +9,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
 import org.h2.mvstore.type.ByteArrayDataType
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.channels.ClosedChannelException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
@@ -62,16 +62,15 @@ internal class MvStoreManager {
   }
 
   @VisibleForTesting
-  suspend fun compactStore() {
-    runInterruptible {
-      try {
-        store.compactFile(30.seconds.inWholeMilliseconds.toInt())
-      }
-      catch (e: RuntimeException) {
-        /** see [org.h2.mvstore.FileStore.compact] */
-        if (e.cause !is InterruptedException) {
-          thisLogger().warn("Cannot compact", e)
-        }
+  fun compactStore() {
+    try {
+      store.compactFile(3.seconds.inWholeMilliseconds.toInt())
+    }
+    catch (e: RuntimeException) {
+      /** see [org.h2.mvstore.FileStore.compact] */
+      val cause = e.cause
+      if (cause !is InterruptedException && cause !is ClosedChannelException) {
+        thisLogger().warn("Cannot compact", e)
       }
     }
   }
