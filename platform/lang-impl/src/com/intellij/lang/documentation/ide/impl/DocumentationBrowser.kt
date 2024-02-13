@@ -70,7 +70,7 @@ internal class DocumentationBrowser private constructor(
     check(myRequestFlow.tryEmit(BrowserRequest.Reload))
   }
 
-  fun navigateByLink(url: String) {
+  fun handleLink(url: String) {
     check(myRequestFlow.tryEmit(BrowserRequest.Link(url)))
   }
 
@@ -89,8 +89,8 @@ internal class DocumentationBrowser private constructor(
   private suspend fun handleBrowserRequest(request: BrowserRequest): Unit = when (request) {
     is BrowserRequest.Load -> handleLoadRequest(request.request, request.reset)
     is BrowserRequest.Reload -> page.loadPage()
-    is BrowserRequest.Link -> handleLink(request.url)
-    is BrowserRequest.Restore -> handleRestore(request.snapshot)
+    is BrowserRequest.Link -> handleLinkRequest(request.url)
+    is BrowserRequest.Restore -> handleRestoreRequest(request.snapshot)
   }
 
   private suspend fun handleLoadRequest(request: DocumentationRequest, reset: Boolean) {
@@ -108,7 +108,7 @@ internal class DocumentationBrowser private constructor(
     page.loadPage()
   }
 
-  private suspend fun handleLink(url: String) {
+  private suspend fun handleLinkRequest(url: String) {
     val targetPointer = this.targetPointer
     val internalResult = try {
       handleLink(project, targetPointer, url, page)
@@ -142,7 +142,7 @@ internal class DocumentationBrowser private constructor(
     }
   }
 
-  private suspend fun handleRestore(snapshot: HistorySnapshot) {
+  private suspend fun handleRestoreRequest(snapshot: HistorySnapshot) {
     val page = snapshot.page
     val restored = page.restorePage(snapshot.ui)
     this.page = page

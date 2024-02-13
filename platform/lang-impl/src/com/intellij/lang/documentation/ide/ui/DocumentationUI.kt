@@ -317,7 +317,7 @@ internal class DocumentationUI(
       }
     }
     else {
-      browser.navigateByLink(href)
+      browser.handleLink(href)
     }
   }
 
