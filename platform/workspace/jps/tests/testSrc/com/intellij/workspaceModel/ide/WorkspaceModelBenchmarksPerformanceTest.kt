@@ -21,10 +21,13 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntities
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.cache.CacheResetTracker
+import com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
+import com.intellij.platform.workspace.storage.impl.cache.cache
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
@@ -1025,6 +1028,48 @@ class WorkspaceModelBenchmarksPerformanceTest {
       .attempts(1).start()
   }
 
+  @Test
+  fun `find rate when cache is better on adding entities`() {
+    // This test finds a percentage of changes when the cache calculation remains faster than full recalculation of data
+    TracedSnapshotCache.LOG_QUEUE_MAX_SIZE = 2_000_000
+    listOf(1000, 10_000, 100_000, 500_000).forEach { size ->
+      val builder = MutableEntityStorage.create()
+      repeat(size) {
+        builder addEntity NamedEntity("Name$it", MySource)
+      }
+      val baseSnapshot = builder.toSnapshot()
+
+      val q = entities<NamedEntity>().map { it.myName }
+
+      baseSnapshot.cached(q)
+
+      val perentages = ArrayList<Int>()
+      val timesCalc = ArrayList<Duration>()
+      val timesCache = ArrayList<Duration>()
+      (1..100).forEach { percent ->
+        val intBuilder = baseSnapshot.toBuilder()
+        repeat((size / 100) * percent) { entitiesBatch ->
+          intBuilder addEntity NamedEntity("MyEnt$entitiesBatch", MySource)
+        }
+        val newSnapshot = intBuilder.toSnapshot()
+
+        val timeCalc = measureTime { newSnapshot.entities<NamedEntity>().map { it.myName }.toList() }
+        val timeCached = measureTime {
+          newSnapshot.cached(q)
+        }
+        timesCalc += timeCalc
+        timesCache += timeCached
+        if (timeCached < timeCalc) {
+          perentages.add(percent)
+        }
+      }
+      val averageCache = timesCache.map { it.inWholeMilliseconds }.average()
+      val averageCalc = timesCalc.map { it.inWholeMilliseconds }.average()
+      val maxPerc = perentages.sortedDescending().take(5)
+      println("Size: $size, average cache: $averageCache, average calc: $averageCalc, maxPerc: $maxPerc")
+    }
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = [false, true])
   fun `find rate when cache is better on adding entities`(preInitializeEntities: Boolean) {
@@ -1149,6 +1194,218 @@ class WorkspaceModelBenchmarksPerformanceTest {
         blackhole[it % size] = res
       }
     }
+  }
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  @Test
+  fun `cache with adding modules`() {
+    val q = entities<NamedEntity>().map { it.myName }
+
+    val builder = MutableEntityStorage.create()
+    repeat(1000) {
+      builder addEntity NamedEntity("Data$it", MySource)
+    }
+
+    var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
+
+    var cache = cache()
+    cache.cached(q, snapshot, null)
+
+    PlatformTestUtil.newPerformanceTest("Cache - adding 1000 modules") {
+      repeat(1000) { count ->
+        val newBuilder = snapshot.toBuilder().also { it addEntity NamedEntity("AnotherData$count", MySource) }
+        val newCache = cache()
+        val newSnapshot = newBuilder.toSnapshot() as ImmutableEntityStorageInstrumentation
+        val changes = ChangeOnVersionedChange((newBuilder as MutableEntityStorageInstrumentation).collectChanges().values.asSequence().flatten())
+        newCache.pullCache(newSnapshot, cache, changes)
+        newCache.cached(q, newSnapshot, snapshot)
+        snapshot = newSnapshot
+        cache = newCache
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).startAsSubtest()
+  }
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  @Test
+  fun `cache with removing modules`() {
+    val q = entities<NamedEntity>().map { it.myName }
+
+    val builder = MutableEntityStorage.create()
+    repeat(1000) {
+      builder addEntity NamedEntity("Data$it", MySource)
+      builder addEntity NamedEntity("Another$it", MySource)
+    }
+
+    var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
+
+    var cache = cache()
+    cache.cached(q, snapshot, null)
+
+    PlatformTestUtil.newPerformanceTest("Cache - removing 1000 modules") {
+      repeat(1000) { count ->
+        val newBuilder = snapshot.toBuilder().also {
+          val id = it.resolve(NameId("Another$count"))!!
+          it.removeEntity(id)
+        }
+        val newCache = cache()
+        val newSnapshot = newBuilder.toSnapshot() as ImmutableEntityStorageInstrumentation
+        val changes = ChangeOnVersionedChange((newBuilder as MutableEntityStorageInstrumentation).collectChanges().values.asSequence().flatten())
+        newCache.pullCache(newSnapshot, cache, changes)
+        newCache.cached(q, newSnapshot, snapshot)
+        snapshot = newSnapshot
+        cache = newCache
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).startAsSubtest()
+  }
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  @Test
+  fun `cache with modification modules`() {
+    val q = entities<NamedEntity>().map { it.myName }
+
+    val builder = MutableEntityStorage.create()
+    repeat(1000) {
+      builder addEntity NamedEntity("Data$it", MySource)
+      builder addEntity NamedEntity("Another$it", MySource)
+    }
+
+    var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
+
+    var cache = cache()
+    cache.cached(q, snapshot, null)
+
+    PlatformTestUtil.newPerformanceTest("Cache - modifying 1000 modules") {
+      repeat(1000) { count ->
+        val newBuilder = snapshot.toBuilder().also {
+          val id = it.resolve(NameId("Another$count"))!!
+          it.modifyEntity(id) {
+            this.myName = "Third$count"
+          }
+        }
+        val newCache = cache()
+        val newSnapshot = newBuilder.toSnapshot() as ImmutableEntityStorageInstrumentation
+        val changes = ChangeOnVersionedChange((newBuilder as MutableEntityStorageInstrumentation).collectChanges().values.asSequence().flatten())
+        newCache.pullCache(newSnapshot, cache, changes)
+        newCache.cached(q, newSnapshot, snapshot)
+        snapshot = newSnapshot
+        cache = newCache
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).startAsSubtest()
+  }
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  @Test
+  fun `cache with bunches of unrelated changes`() {
+    val q = entities<NamedEntity>().map { it.myName }
+
+    val builder = MutableEntityStorage.create()
+    repeat(1000) {
+      builder addEntity NamedEntity("Data$it", MySource)
+      builder addEntity NamedEntity("Another$it", MySource)
+    }
+
+    var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
+
+    var cache = cache()
+    cache.cached(q, snapshot, null)
+
+    PlatformTestUtil.newPerformanceTest("Cache - unrelated modifications 1000 times") {
+      repeat(1000) { count ->
+        val newBuilder = snapshot.toBuilder().also { builder ->
+          if (count % 2 == 0) {
+            repeat(1000) { builder addEntity ParentEntity("", MySource) }
+          }
+          else {
+            builder.entities<ParentEntity>().toList().forEach { builder.removeEntity(it) }
+          }
+        }
+        val newCache = cache()
+        val newSnapshot = newBuilder.toSnapshot() as ImmutableEntityStorageInstrumentation
+        val changes = ChangeOnVersionedChange((newBuilder as MutableEntityStorageInstrumentation).collectChanges().values.asSequence().flatten())
+        newCache.pullCache(newSnapshot, cache, changes)
+        newCache.cached(q, newSnapshot, snapshot)
+        snapshot = newSnapshot
+        cache = newCache
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).startAsSubtest()
+  }
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  @Test
+  fun `cache with bunches of related changes`() {
+    val q = entities<NamedEntity>().map { it.myName }
+
+    val builder = MutableEntityStorage.create()
+
+    var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
+
+    var cache = cache()
+    cache.cached(q, snapshot, null)
+
+    PlatformTestUtil.newPerformanceTest("Cache - related modifications 1000 times") {
+      repeat(1000) { count ->
+        val newBuilder = snapshot.toBuilder().also { builder ->
+          if (count % 2 == 0) {
+            repeat(1000) { builder addEntity NamedEntity("XXX$it", MySource) }
+          }
+          else {
+            builder.entities<NamedEntity>().toList().forEach { builder.removeEntity(it) }
+          }
+        }
+        val newCache = cache()
+        val newSnapshot = newBuilder.toSnapshot() as ImmutableEntityStorageInstrumentation
+        val changes = ChangeOnVersionedChange((newBuilder as MutableEntityStorageInstrumentation).collectChanges().values.asSequence().flatten())
+        newCache.pullCache(newSnapshot, cache, changes)
+        newCache.cached(q, newSnapshot, snapshot)
+        snapshot = newSnapshot
+        cache = newCache
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).startAsSubtest()
+  }
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  @Test
+  fun `cache with bunches of related changes with many queries`() {
+    val qs = List(100) { entities<NamedEntity>().map { it.myName } }
+
+    val builder = MutableEntityStorage.create()
+
+    var snapshot = builder.toSnapshot() as ImmutableEntityStorageInstrumentation
+
+    var cache = cache()
+    qs.forEach { q -> cache.cached(q, snapshot, null) }
+
+    PlatformTestUtil.newPerformanceTest("Cache - many queries and related modifications 1000 times") {
+      repeat(1000) { count ->
+        val newBuilder = snapshot.toBuilder().also { builder ->
+          if (count % 2 == 0) {
+            repeat(1000) { builder addEntity NamedEntity("XXX$it", MySource) }
+          }
+          else {
+            builder.entities<NamedEntity>().toList().forEach { builder.removeEntity(it) }
+          }
+        }
+        val newCache = cache()
+        val newSnapshot = newBuilder.toSnapshot() as ImmutableEntityStorageInstrumentation
+        val changes = ChangeOnVersionedChange((newBuilder as MutableEntityStorageInstrumentation).collectChanges().values.asSequence().flatten())
+        newCache.pullCache(newSnapshot, cache, changes)
+        qs.forEach { q -> newCache.cached(q, newSnapshot, snapshot) }
+        snapshot = newSnapshot
+        cache = newCache
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).startAsSubtest()
   }
 
   private fun measureOperation(launchName: String, singleBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
