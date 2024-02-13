@@ -3,7 +3,6 @@ package com.intellij.psi.codeStyle
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -24,7 +23,8 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 
-abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettings> : VirtualFileCustomDataProvider<ByteArray>, VirtualFileCustomDataConsumer<ByteArray> {
+abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettings>
+  : VirtualFileCustomDataProvider<ByteArray>, VirtualFileCustomDataConsumer<ByteArray> {
   companion object {
     private val LOG = logger<CodeStyleSettingsCustomDataSynchronizer<*>>()
 
@@ -51,15 +51,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
         }
       }
     }.mapNotNull {
-      val (common, custom) = readAction {
-        val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: run {
-          LOG.trace { "Cannot find PSI file for ${virtualFile.path}. provider.id=$id" }
-          return@readAction null
-        }
-        val custom = CodeStyle.getSettings(psiFile).getCustomSettings(customCodeStyleSettingsClass)
-        val common = CodeStyle.getSettings(psiFile).getCommonSettings(language)
-        Pair(common, custom)
-      } ?: return@mapNotNull null
+      val (common, custom) = getActiveCodeStyleSettings(project, virtualFile) ?: return@mapNotNull null
 
       val provider = LanguageCodeStyleProvider.forLanguage(language) ?: run {
         LOG.trace { "Cannot find LanguageCodeStyleProvider for lang ${language}. provider.id=$id" }
@@ -87,14 +79,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
     }
   }
 
-  // inspired by com.intellij.util.JdomKt.toByteArray. no dependency on module with this code
-  private fun Element.toByteArray(): ByteArray {
-    val out = BufferExposingByteArrayOutputStream(1024)
-    JDOMUtil.write(this, out, LineSeparator.LF.separatorString)
-    return out.toByteArray()
-  }
-
-  final override fun consumeValue(project: Project, virtualFile: VirtualFile, value: ByteArray) {
+  final override suspend fun consumeValue(project: Project, virtualFile: VirtualFile, value: ByteArray) {
     val element = try {
       JDOMUtil.load(value)
     }
@@ -103,15 +88,7 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
       return
     }
 
-    val (common, custom) = ApplicationManager.getApplication().runReadAction<Pair<CommonCodeStyleSettings, T>> {
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: run {
-        LOG.trace { "Cannot find PSI file for ${virtualFile.path}. provider.id=$id" }
-        return@runReadAction null
-      }
-      val custom = CodeStyle.getSettings(psiFile).getCustomSettings(customCodeStyleSettingsClass)
-      val common = CodeStyle.getSettings(psiFile).getCommonSettings(language)
-      Pair(common, custom)
-    } ?: return
+    val (common, custom) = getActiveCodeStyleSettings(project, virtualFile) ?: return
 
     val provider = LanguageCodeStyleProvider.forLanguage(language) ?: run {
       LOG.trace { "Cannot find LanguageCodeStyleProvider for lang ${language}. provider.id=$id" }
@@ -135,9 +112,29 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile)
   }
 
+  private suspend fun getActiveCodeStyleSettings(project: Project,
+                                                 virtualFile: VirtualFile): Pair<CommonCodeStyleSettings, T>? {
+    return readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: run {
+        LOG.trace { "Cannot find PSI file for ${virtualFile.path}. provider.id=$id" }
+        return@readAction null
+      }
+      val custom = CodeStyle.getSettings(psiFile).getCustomSettings(customCodeStyleSettingsClass)
+      val common = CodeStyle.getSettings(psiFile).getCommonSettings(language)
+      Pair(common, custom)
+    }
+  }
+
   private fun resetToDefaultState(customCodeStyleSettings: T, defaultCustomSettings: CustomCodeStyleSettings) {
     val defaultsElement = Element("default")
     defaultCustomSettings.writeExternal(defaultsElement, customCodeStyleSettings)
     customCodeStyleSettings.readExternal(defaultsElement)
+  }
+
+  // inspired by com.intellij.util.JdomKt.toByteArray. no dependency on module with this code
+  private fun Element.toByteArray(): ByteArray {
+    val out = BufferExposingByteArrayOutputStream(1024)
+    JDOMUtil.write(this, out, LineSeparator.LF.separatorString)
+    return out.toByteArray()
   }
 }
