@@ -158,7 +158,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                @NotNull VirtualFile file) {
     Object annotatedData = myCache.getAnnotation(filePath, GitVcs.getKey(), revision);
     if (annotatedData instanceof CachedData) {
-      return restoreFromCache(file, revision, (CachedData)annotatedData);
+      return restoreFromCache(file, filePath, revision, (CachedData)annotatedData);
     }
     return null;
   }
@@ -253,7 +253,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
       String output = new String(h.run(), StandardCharsets.UTF_8);
 
-      return parseAnnotations(project, revision, file, root, output);
+      return parseAnnotations(project, revision, file, filePath, root, output);
     }
   }
 
@@ -314,6 +314,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
         GitFileAnnotation newFileAnnotation =
           new GitFileAnnotation(fileAnnotation.getProject(),
                                 fileAnnotation.getFile(),
+                                fileAnnotation.getFilePath(),
                                 fileAnnotation.getCurrentRevision(),
                                 fileAnnotation.getLines());
         newFileAnnotation.setRevisions(revisions);
@@ -350,6 +351,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   private static @NotNull GitFileAnnotation parseAnnotations(@NotNull Project project,
                                                              @Nullable VcsRevisionNumber revision,
                                                              @NotNull VirtualFile file,
+                                                             @NotNull FilePath filePath,
                                                              @NotNull VirtualFile root,
                                                              @NotNull String output) throws VcsException {
     Interner<FilePath> pathInterner = Interner.createInterner();
@@ -456,7 +458,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
         LineInfo lineInfo = new LineInfo(commit, lineNum, originalLineNum);
         lines.add(lineInfo);
       }
-      return new GitFileAnnotation(project, file, revision, lines);
+      return new GitFileAnnotation(project, file, filePath, revision, lines);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -489,9 +491,10 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
   }
 
   private @NotNull GitFileAnnotation restoreFromCache(@NotNull VirtualFile file,
+                                                      @NotNull FilePath filePath,
                                                       @Nullable VcsRevisionNumber revisionNumber,
                                                       @NotNull CachedData data) {
-    return new GitFileAnnotation(myProject, file, revisionNumber, data.lines);
+    return new GitFileAnnotation(myProject, file, filePath, revisionNumber, data.lines);
   }
 
   private @NotNull Pair<FilePath, VcsRevisionNumber> getPathAndRevision(@NotNull VirtualFile file) {
