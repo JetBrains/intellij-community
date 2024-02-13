@@ -256,7 +256,8 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         JsonSchemaObject effectiveBranch = effectiveBranchOrNull(ifThenElse, myProject, object);
         if (effectiveBranch == null) continue;
 
-        addAllPropertyVariants(effectiveBranch, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
+        addAllPropertyVariants(effectiveBranch, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath
+        );
       }
     }
 
@@ -573,28 +574,33 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
           while (offset < docChars.length() && Character.isWhitespace(docChars.charAt(offset))) {
             offset++;
           }
+          String propertyValueSeparator = myWalker.getPropertyValueSeparator(null);
           if (hasValue) {
             // fix colon for YAML and alike
-            if (offset < docChars.length() && docChars.charAt(offset) != ':') {
-              editor.getDocument().insertString(initialOffset, ":");
-              handleWhitespaceAfterColon(editor, docChars, initialOffset + 1);
+            if (offset < docChars.length() && !isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
+              editor.getDocument().insertString(initialOffset, propertyValueSeparator);
+              handleWhitespaceAfterColon(editor, docChars, initialOffset + propertyValueSeparator.length());
             }
             return;
           }
 
-          if (offset < docChars.length() && docChars.charAt(offset) == ':') {
-            handleWhitespaceAfterColon(editor, docChars, offset + 1);
+          if (offset < docChars.length() && isSeparatorAtOffset(docChars, offset, propertyValueSeparator)) {
+            handleWhitespaceAfterColon(editor, docChars, offset + propertyValueSeparator.length());
           }
           else {
             // inserting longer string for proper formatting
-            final String stringToInsert = ": 1" + (insertComma ? "," : "");
-            EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 2);
+            final String stringToInsert = propertyValueSeparator + " 1" + (insertComma ? "," : "");
+            EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, propertyValueSeparator.length() + 1);
             formatInsertedString(context, stringToInsert.length());
             offset = editor.getCaretModel().getOffset();
             context.getDocument().deleteString(offset, offset + 1);
           }
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
           AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
+        }
+
+        private static boolean isSeparatorAtOffset(CharSequence docChars, int offset, @NotNull String propertyValueSeparator) {
+          return docChars.subSequence(offset, docChars.length()).toString().startsWith(propertyValueSeparator);
         }
 
         public void handleWhitespaceAfterColon(Editor editor, CharSequence docChars, int nextOffset) {
@@ -631,19 +637,21 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
 
           if (handleInsideQuotesInsertion(context, editor, hasValue)) return;
 
+          String propertyValueSeparator = myWalker.getPropertyValueSeparator(finalType);
+
           PsiElement element = context.getFile().findElementAt(editor.getCaretModel().getOffset());
-          boolean insertColon = element == null || !":".equals(element.getText());
+          boolean insertColon = element == null || !propertyValueSeparator.equals(element.getText());
           if (!insertColon) {
-            editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + 1);
+            editor.getCaretModel().moveToOffset(editor.getCaretModel().getOffset() + propertyValueSeparator.length());
           }
 
           if (finalType != null) {
             boolean hadEnter;
             switch (finalType) {
               case _object -> {
-                EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
+                EditorModificationUtil.insertStringAtCaret(editor, insertColon ? (propertyValueSeparator + " ") : " ",
                                                            false, true,
-                                                           insertColon ? 2 : 1);
+                                                           insertColon ? propertyValueSeparator.length() + 1 : 1);
                 hadEnter = false;
                 boolean invokeEnter = myWalker.hasWhitespaceDelimitedCodeBlocks();
                 if (insertColon && invokeEnter) {
@@ -671,7 +679,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
               }
               case _boolean -> {
                 String value = String.valueOf(Boolean.TRUE.toString().equals(defaultValueAsString));
-                stringToInsert = (insertColon ? ": " : " ") + value + comma;
+                stringToInsert = (insertColon ? propertyValueSeparator + " " : " ") + value + comma;
                 SelectionModel model = editor.getSelectionModel();
 
                 EditorModificationUtil.insertStringAtCaret(editor, stringToInsert,
@@ -683,9 +691,9 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
               }
               case _array -> {
-                EditorModificationUtilEx.insertStringAtCaret(editor, insertColon ? ":" : " ",
+                EditorModificationUtilEx.insertStringAtCaret(editor, insertColon ? propertyValueSeparator : " ",
                                                              false, true,
-                                                             1);
+                                                             propertyValueSeparator.length());
                 hadEnter = false;
                 if (insertColon && myWalker.hasWhitespaceDelimitedCodeBlocks()) {
                   invokeEnterHandler(editor);
@@ -787,6 +795,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                                              String comma,
                                              JsonLikePsiWalker walker,
                                              boolean insertColon) {
+    String propertyValueSeparator = walker.getPropertyValueSeparator(type);
     if (!walker.requiresValueQuotes() && defaultValue != null) {
       defaultValue = StringUtil.unquoteString(defaultValue);
     }
@@ -800,10 +809,10 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     int offset = editor.getCaretModel().getOffset();
     CharSequence charSequence = editor.getDocument().getCharsSequence();
     final String ws = charSequence.length() > offset && charSequence.charAt(offset) == ' ' ? "" : " ";
-    final String colonWs = insertColon ? ":" + ws : ws;
+    final String colonWs = insertColon ? propertyValueSeparator + ws : ws;
     String stringToInsert = colonWs + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
     EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
-                                               insertColon ? 2 : 1);
+                                               insertColon ? propertyValueSeparator.length() + 1 : 1);
     if (!hasQuotes || hasDefaultValue) {
       SelectionModel model = editor.getSelectionModel();
       int caretStart = model.getSelectionStart();

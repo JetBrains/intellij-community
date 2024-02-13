@@ -11,6 +11,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,4 +104,6 @@ public interface JsonLikePsiWalker {
 
   @Nullable
   PsiElement getPropertyNameElement(@Nullable PsiElement property);
+
+  default String getPropertyValueSeparator(@Nullable JsonSchemaType valueType) { return ":"; }
 }
