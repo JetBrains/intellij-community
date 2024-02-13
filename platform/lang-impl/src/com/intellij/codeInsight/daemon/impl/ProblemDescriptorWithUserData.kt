@@ -16,6 +16,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
 val RELATED_LOCATIONS = Key.create<List<ProblemRelatedLocation>>("RELATED_LOCATIONS")
+val RELATED_PROBLEMS_ROOT_HASH = Key.create<String>("RELATED_PROBLEMS_ROOT_HASH")
+val RELATED_PROBLEMS_CHILD_HASH = Key.create<String>("RELATED_PROBLEMS_CHILD_HASH")
 
 class ProblemRelatedLocation(startElement: PsiElement,
                              endElement: PsiElement,
