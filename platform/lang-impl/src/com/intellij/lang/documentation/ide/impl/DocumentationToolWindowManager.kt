@@ -172,6 +172,7 @@ internal class DocumentationToolWindowManager(
       initUI(ui, reusableContent)
       makeVisible(reusableContent)
     }
+    ui.updateSwitcherVisibility()
   }
 
   private fun showInNewTab(ui: DocumentationUI) {

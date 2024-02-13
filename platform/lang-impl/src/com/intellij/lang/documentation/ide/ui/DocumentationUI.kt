@@ -59,7 +59,7 @@ internal class DocumentationUI(
   val editorPane: DocumentationHintEditorPane
   private val locationLabel: JLabel
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
-  val switcherToolbarComponent: JComponent?
+  val switcherToolbarComponent: JComponent
 
   @Volatile
   private var documentationDownloader: DocumentationDownloader? = null
@@ -71,6 +71,7 @@ internal class DocumentationUI(
   val contentUpdates: SharedFlow<Unit> = myContentUpdates.asSharedFlow()
   private val myContentSizeUpdates = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val contentSizeUpdates: SharedFlow<String> = myContentSizeUpdates.asSharedFlow()
+  private val switcher: DefinitionSwitcher<DocumentationRequest>
 
   init {
     scrollPane = DocumentationScrollPane()
@@ -87,7 +88,8 @@ internal class DocumentationUI(
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
     emitDocContentsScrolledEvents(scrollPane, project)
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
-    switcherToolbarComponent = createSwitcherIfNeeded()?.createToolbar()?.component?.apply {
+    switcher = createSwitcher()
+    switcherToolbarComponent = switcher.createToolbar().component.apply {
       border = JBUI.Borders.emptyTop(5)
     }
     val textTrimmer = SwingTextTrimmer.createCenterTrimmer(0.8f)
@@ -194,9 +196,22 @@ internal class DocumentationUI(
 
   private suspend fun handlePage(page: DocumentationPage) {
     val presentation = page.request.presentation
+    val i = switcher.elements.indexOf(page.request)
+    if (i < 0) {
+      switcher.elements = page.requests.toTypedArray()
+      switcher.index = 0
+    }
+    else {
+      switcher.index = i
+    }
+    updateSwitcherVisibility()
     page.contentFlow.collectLatest {
       handleContent(presentation, it)
     }
+  }
+
+  public fun updateSwitcherVisibility() {
+    switcherToolbarComponent.isVisible = switcher.elements.count() > 1
   }
 
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent?) {
@@ -331,9 +346,8 @@ internal class DocumentationUI(
     }
   }
 
-  private fun createSwitcherIfNeeded(): DefinitionSwitcher<DocumentationRequest>? {
+  private fun createSwitcher(): DefinitionSwitcher<DocumentationRequest> {
     val requests = browser.page.requests
-    if (requests.size < 2) return null
     return DefinitionSwitcher(requests.toTypedArray(), scrollPane) {
       browser.resetBrowser(it)
     }
