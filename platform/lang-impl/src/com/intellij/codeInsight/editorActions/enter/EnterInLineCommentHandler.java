@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,19 +35,17 @@ public final class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter
     if (commenter == null) return Result.Continue;
 
     int caretOffset = caretOffsetRef.get();
-    Document document = editor.getDocument();
-
-    int lineNumber = document.getLineNumber(caretOffset);
-    String commentedLineText = document.getText(new TextRange(document.getLineStartOffset(lineNumber), caretOffset));
-    String prefix = ContainerUtil.find(commenter.getLineCommentPrefixes(), commentedLineText::contains);
-    assert prefix != null : "Could find Comment Prefix in commented line!";
-
-    int lineCommentStartOffset = getLineCommentStartOffset(editor, caretOffset, commenter, prefix);
+    Pair<Integer, String> lineCommentStart = getLineCommentStart(editor, caretOffset, commenter);
+    int lineCommentStartOffset = lineCommentStart.first;
     if (lineCommentStartOffset < 0) return Result.Continue;
 
+    Document document = editor.getDocument();
     CharSequence text = document.getImmutableCharSequence();
     final int offset = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
     if (offset >= document.getTextLength() || text.charAt(offset) == '\n') return Result.Continue;
+
+    String prefix = lineCommentStart.second;
+    assert prefix != null : "Line Comment type is set but Line Comment Prefix is null!";
     String prefixTrimmed = prefix.trim();
 
     int beforeCommentOffset = CharArrayUtil.shiftBackward(text, lineCommentStartOffset - 1, WHITESPACE);
@@ -88,18 +87,26 @@ public final class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter
     return Result.DefaultForceIndent;
   }
 
-  private static int getLineCommentStartOffset(@NotNull Editor editor,
-                                               int offset,
-                                               @NotNull CodeDocumentationAwareCommenter commenter,
-                                               @NotNull String prefix) {
-    if (offset < 1) return -1;
+  private static Pair<Integer, String> getLineCommentStart(@NotNull Editor editor,
+                                                           int offset,
+                                                           @NotNull CodeDocumentationAwareCommenter commenter) {
+    if (offset < 1) return Pair.pair(-1, null);
     EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
+    String possiblePrefix = tryToFindCommentPrefix(editor, offset, commenter);
+    String prefix = possiblePrefix != null ? possiblePrefix : commenter.getLineCommentPrefix();
     for (IElementType tokenType : commenter.getLineCommentTokenTypes()) {
-      if (iterator.getTokenType() == tokenType && (iterator.getStart() + prefix.length()) <= offset) {
-        return iterator.getStart();
+      if (iterator.getTokenType() == tokenType && (iterator.getStart() + (prefix == null ? 0 : prefix.length())) <= offset) {
+        return Pair.pair(iterator.getStart(), prefix);
       }
     }
-    return -1;
+    return Pair.pair(-1, null);
+  }
+
+  private static String tryToFindCommentPrefix(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
+    Document document = editor.getDocument();
+    int lineNumber = document.getLineNumber(offset);
+    String commentedLineText = document.getText(new TextRange(document.getLineStartOffset(lineNumber), offset));
+    return ContainerUtil.find(commenter.getLineCommentPrefixes(), commentedLineText::contains);
   }
 }
