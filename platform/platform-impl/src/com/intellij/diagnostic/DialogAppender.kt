@@ -1,115 +1,114 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.diagnostic;
+package com.intellij.diagnostic
 
-import com.intellij.idea.AppMode;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
-
-import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
+import com.intellij.idea.AppMode
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import kotlin.concurrent.Volatile
 
 @ApiStatus.Internal
-public final class DialogAppender extends Handler {
-  private static final int MAX_EARLY_LOGGING_EVENTS = 5;
+class DialogAppender : Handler() {
+  companion object {
+    //TODO android update checker accesses project jdk, fix it and remove
+    fun delayPublishingForcibly() {
+      delay = true
+    }
 
-  private static volatile boolean ourDelay;
-
-  private int myEarlyEventCounter;
-  private final Queue<IdeaLoggingEvent> myEarlyEvents = new ArrayDeque<>();
-  private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService("DialogAppender", 1);
-
-  //TODO android update checker accesses project jdk, fix it and remove
-  public static void delayPublishingForcibly() {
-    ourDelay = true;
+    fun stopForceDelaying() {
+      delay = false
+    }
   }
 
-  public static void stopForceDelaying() {
-    ourDelay = false;
-  }
+  private var earlyEventCounter = 0
+  private val earlyEvents = ArrayDeque<IdeaLoggingEvent>()
+  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("DialogAppender", 1)
 
-  @Override
-  public void publish(LogRecord event) {
-    if (event.getLevel().intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
+  override fun publish(event: LogRecord) {
+    if (event.level.intValue() < Level.SEVERE.intValue() || AppMode.isCommandLine()) {
       // the dialog appender doesn't deal with non-critical errors
       // also, it makes no sense when there is no frame to show an error icon
-      return;
+      return
     }
 
-    IdeaLoggingEvent ideaEvent;
-    Object[] parameters = event.getParameters();
-    if (parameters != null && parameters.length > 0 && parameters[0] instanceof IdeaLoggingEvent) {
-      ideaEvent = (IdeaLoggingEvent)parameters[0];
+    val ideaEvent: IdeaLoggingEvent
+    val parameters = event.parameters
+    if (parameters?.firstOrNull() is IdeaLoggingEvent) {
+      ideaEvent = parameters[0] as IdeaLoggingEvent
     }
     else {
-      Throwable thrown = event.getThrown();
-      if (thrown == null) return;
-      ideaEvent = extractLoggingEvent(event.getMessage(), thrown);
+      val thrown = event.thrown ?: return
+      ideaEvent = extractLoggingEvent(messageObject = event.message, throwable = thrown)
     }
 
-    synchronized (this) {
-      if (LoadingState.COMPONENTS_LOADED.isOccurred() && !ourDelay) {
-        processEarlyEventsIfNeeded();
-        queueAppend(ideaEvent);
+    synchronized(this) {
+      if (LoadingState.COMPONENTS_LOADED.isOccurred && !delay) {
+        processEarlyEventsIfNeeded()
+        queueAppend(ideaEvent)
       }
       else {
-        myEarlyEventCounter++;
-        if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
-          myEarlyEvents.add(ideaEvent);
+        earlyEventCounter++
+        if (earlyEvents.size < MAX_EARLY_LOGGING_EVENTS) {
+          earlyEvents.add(ideaEvent)
         }
       }
     }
   }
 
-  private void processEarlyEventsIfNeeded() {
-    if (myEarlyEventCounter == 0) return;
-    IdeaLoggingEvent queued;
-    while ((queued = myEarlyEvents.poll()) != null) {
-      myEarlyEventCounter--;
-      queueAppend(queued);
+  private fun processEarlyEventsIfNeeded() {
+    if (earlyEventCounter == 0) return
+    var queued: IdeaLoggingEvent
+    while ((earlyEvents.poll().also { queued = it }) != null) {
+      earlyEventCounter--
+      queueAppend(queued)
     }
-    if (myEarlyEventCounter > 0) {
-      queueAppend(new IdeaLoggingEvent(DiagnosticBundle.message("error.monitor.early.errors.skipped", myEarlyEventCounter), new Throwable()));
+    if (earlyEventCounter > 0) {
+      queueAppend(IdeaLoggingEvent(DiagnosticBundle.message("error.monitor.early.errors.skipped", earlyEventCounter), Throwable()))
     }
   }
 
-  private void queueAppend(IdeaLoggingEvent event) {
+  private fun queueAppend(event: IdeaLoggingEvent) {
     if (DefaultIdeaErrorLogger.canHandle(event)) {
-      myExecutor.execute(() -> DefaultIdeaErrorLogger.handle(event));
+      executor.execute { DefaultIdeaErrorLogger.handle(event) }
     }
   }
 
-  private static IdeaLoggingEvent extractLoggingEvent(Object messageObject, Throwable throwable) {
-    String message = null;
-    List<ExceptionWithAttachments> withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments.class);
-    if (!withAttachments.isEmpty() && withAttachments.get(0) instanceof RuntimeExceptionWithAttachments) {
-      message = ((RuntimeExceptionWithAttachments)withAttachments.get(0)).getUserMessage();
-    }
-    if (message == null && messageObject != null) {
-      message = messageObject.toString();
-    }
-    if (withAttachments.isEmpty()) {
-      return new IdeaLoggingEvent(message, throwable);
-    }
-    else {
-      List<Attachment> list = new ArrayList<>();
-      for (ExceptionWithAttachments e : withAttachments) {
-        Collections.addAll(list, e.getAttachments());
-      }
-      return LogMessage.eventOf(throwable, message, list);
-    }
+  override fun flush() {}
+
+  override fun close() {}
+}
+
+@Volatile
+private var delay = false
+
+private const val MAX_EARLY_LOGGING_EVENTS = 5
+
+private fun extractLoggingEvent(messageObject: Any?, throwable: Throwable): IdeaLoggingEvent {
+  var message: String? = null
+  val withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments::class.java)
+  (withAttachments.firstOrNull() as? RuntimeExceptionWithAttachments)?.let {
+    message = it.userMessage
+  }
+  if (message == null && messageObject != null) {
+    message = messageObject.toString()
   }
 
-  @Override
-  public void flush() { }
-
-  @Override
-  public void close() { }
+  if (withAttachments.isEmpty()) {
+    return IdeaLoggingEvent(message, throwable)
+  }
+  else {
+    val list = ArrayList<Attachment>()
+    for (e in withAttachments) {
+      list.addAll(e.attachments)
+    }
+    return LogMessage.eventOf(throwable, message, list)
+  }
 }
