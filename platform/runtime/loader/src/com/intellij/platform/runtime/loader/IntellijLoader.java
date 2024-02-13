@@ -33,7 +33,7 @@ public final class IntellijLoader {
       reportError(RUNTIME_REPOSITORY_PATH_PROPERTY + " is not specified");
     }
     
-    RuntimeModuleRepository repository = RuntimeModuleRepository.create(Path.of(repositoryPathString));
+    RuntimeModuleRepository repository = RuntimeModuleRepository.create(Path.of(repositoryPathString).toAbsolutePath());
     List<Path> bootstrapClasspath = repository.getBootstrapClasspath("intellij.platform.bootstrap");
     startupTimings.add("calculating bootstrap classpath");
     startupTimings.add(System.nanoTime());
