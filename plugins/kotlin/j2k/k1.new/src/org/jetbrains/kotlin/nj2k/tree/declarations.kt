@@ -2,11 +2,13 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 
-internal abstract class JKDeclaration : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
+@ApiStatus.Internal
+abstract class JKDeclaration : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
     abstract val name: JKNameIdentifier
 }
 
@@ -14,7 +16,8 @@ internal abstract class JKDeclaration : JKTreeElement(), PsiOwner by PsiOwnerImp
  * @param hasTrailingComma - Makes sense only in an enum class,
  * which can have a trailing comma after the last enum entry both in Java and in Kotlin
  */
-internal open class JKClass(
+@ApiStatus.Internal
+open class JKClass(
     name: JKNameIdentifier,
     inheritance: JKInheritanceInfo,
     var classKind: ClassKind,
@@ -49,7 +52,8 @@ internal open class JKClass(
     }
 }
 
-internal class JKRecordClass(
+@ApiStatus.Internal
+class JKRecordClass(
     name: JKNameIdentifier,
     recordComponents: List<JKJavaRecordComponent>,
     inheritance: JKInheritanceInfo,
@@ -72,12 +76,14 @@ internal class JKRecordClass(
     var recordComponents: List<JKJavaRecordComponent> by children(recordComponents)
 }
 
-internal abstract class JKVariable : JKDeclaration(), JKAnnotationListOwner {
+@ApiStatus.Internal
+abstract class JKVariable : JKDeclaration(), JKAnnotationListOwner {
     abstract var type: JKTypeElement
     abstract var initializer: JKExpression
 }
 
-internal class JKLocalVariable(
+@ApiStatus.Internal
+class JKLocalVariable(
     type: JKTypeElement,
     name: JKNameIdentifier,
     initializer: JKExpression,
@@ -93,7 +99,8 @@ internal class JKLocalVariable(
     override fun accept(visitor: JKVisitor) = visitor.visitLocalVariable(this)
 }
 
-internal class JKForLoopVariable(
+@ApiStatus.Internal
+class JKForLoopVariable(
     type: JKTypeElement,
     name: JKNameIdentifier,
     initializer: JKExpression,
@@ -107,7 +114,8 @@ internal class JKForLoopVariable(
     override fun accept(visitor: JKVisitor) = visitor.visitForLoopVariable(this)
 }
 
-internal open class JKParameter(
+@ApiStatus.Internal
+open class JKParameter(
     type: JKTypeElement,
     name: JKNameIdentifier,
     var isVarArgs: Boolean = false,
@@ -121,14 +129,16 @@ internal open class JKParameter(
     override fun accept(visitor: JKVisitor) = visitor.visitParameter(this)
 }
 
-internal class JKJavaRecordComponent(
+@ApiStatus.Internal
+class JKJavaRecordComponent(
     type: JKTypeElement,
     name: JKNameIdentifier,
     isVarArgs: Boolean,
     annotationList: JKAnnotationList
 ) : JKParameter(type, name, isVarArgs, annotationList = annotationList)
 
-internal class JKEnumConstant(
+@ApiStatus.Internal
+class JKEnumConstant(
     name: JKNameIdentifier,
     arguments: JKArgumentList,
     body: JKClassBody,
@@ -145,7 +155,8 @@ internal class JKEnumConstant(
     override fun accept(visitor: JKVisitor) = visitor.visitEnumConstant(this)
 }
 
-internal class JKTypeParameter(
+@ApiStatus.Internal
+class JKTypeParameter(
     name: JKNameIdentifier,
     upperBounds: List<JKTypeElement>,
     annotationList: JKAnnotationList = JKAnnotationList()
@@ -157,7 +168,8 @@ internal class JKTypeParameter(
     override fun accept(visitor: JKVisitor) = visitor.visitTypeParameter(this)
 }
 
-internal abstract class JKMethod :
+@ApiStatus.Internal
+abstract class JKMethod :
     JKDeclaration(), JKVisibilityOwner, JKModalityOwner, JKOtherModifiersOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
 
     abstract var parameters: List<JKParameter>
@@ -168,7 +180,8 @@ internal abstract class JKMethod :
     val rightParen = JKTokenElementImpl(")")
 }
 
-internal class JKMethodImpl(
+@ApiStatus.Internal
+class JKMethodImpl(
     returnType: JKTypeElement,
     name: JKNameIdentifier,
     parameters: List<JKParameter>,
@@ -195,11 +208,13 @@ internal class JKMethodImpl(
     override var modalityElement by child(modalityElement)
 }
 
-internal abstract class JKConstructor : JKMethod() {
+@ApiStatus.Internal
+abstract class JKConstructor : JKMethod() {
     abstract var delegationCall: JKExpression
 }
 
-internal class JKConstructorImpl(
+@ApiStatus.Internal
+class JKConstructorImpl(
     name: JKNameIdentifier,
     parameters: List<JKParameter>,
     block: JKBlock,
@@ -223,7 +238,8 @@ internal class JKConstructorImpl(
     override fun accept(visitor: JKVisitor) = visitor.visitConstructor(this)
 }
 
-internal class JKKtPrimaryConstructor(
+@ApiStatus.Internal
+class JKKtPrimaryConstructor(
     name: JKNameIdentifier,
     parameters: List<JKParameter>,
     delegationCall: JKExpression,
@@ -246,7 +262,8 @@ internal class JKKtPrimaryConstructor(
     override fun accept(visitor: JKVisitor) = visitor.visitKtPrimaryConstructor(this)
 }
 
-internal class JKField(
+@ApiStatus.Internal
+class JKField(
     type: JKTypeElement,
     name: JKNameIdentifier,
     initializer: JKExpression,
@@ -268,18 +285,21 @@ internal class JKField(
     override fun accept(visitor: JKVisitor) = visitor.visitField(this)
 }
 
-internal sealed class JKInitDeclaration(block: JKBlock) : JKDeclaration() {
+@ApiStatus.Internal
+sealed class JKInitDeclaration(block: JKBlock) : JKDeclaration() {
     var block: JKBlock by child(block)
     abstract val isStatic: Boolean
     override val name: JKNameIdentifier by child(JKNameIdentifier("<init>"))
 }
 
-internal class JKKtInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
+@ApiStatus.Internal
+class JKKtInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
     override val isStatic: Boolean get() = false
     override fun accept(visitor: JKVisitor) = visitor.visitKtInitDeclaration(this)
 }
 
-internal class JKJavaStaticInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
+@ApiStatus.Internal
+class JKJavaStaticInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
     override val isStatic: Boolean get() = true
     override fun accept(visitor: JKVisitor) = visitor.visitJavaStaticInitDeclaration(this)
 }

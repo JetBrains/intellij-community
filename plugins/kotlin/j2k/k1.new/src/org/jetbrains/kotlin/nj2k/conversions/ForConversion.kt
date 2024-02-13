@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.*
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.hasWriteAccesses
@@ -21,7 +22,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.extractRadix
 import kotlin.math.abs
 
-internal class ForConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+@ApiStatus.Internal
+class ForConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     private val forToWhile = ForToWhileConverter(context, symbolProvider)
     private val forToForeach = ForToForeachConverter(context, symbolProvider, typeFactory)
 

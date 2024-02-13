@@ -6,6 +6,7 @@ package org.jetbrains.kotlin.nj2k.tree
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiSwitchExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKContextType
@@ -13,7 +14,8 @@ import org.jetbrains.kotlin.nj2k.types.JKNoType
 import org.jetbrains.kotlin.nj2k.types.JKType
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
-internal abstract class JKExpression : JKAnnotationMemberValue(), PsiOwner by PsiOwnerImpl() {
+@ApiStatus.Internal
+abstract class JKExpression : JKAnnotationMemberValue(), PsiOwner by PsiOwnerImpl() {
     protected abstract val expressionType: JKType?
 
     open fun calculateType(typeFactory: JKTypeFactory): JKType? {
@@ -22,13 +24,15 @@ internal abstract class JKExpression : JKAnnotationMemberValue(), PsiOwner by Ps
     }
 }
 
-internal abstract class JKOperatorExpression : JKExpression() {
+@ApiStatus.Internal
+abstract class JKOperatorExpression : JKExpression() {
     abstract var operator: JKOperator
 
     override fun calculateType(typeFactory: JKTypeFactory) = expressionType ?: operator.returnType
 }
 
-internal class JKBinaryExpression(
+@ApiStatus.Internal
+class JKBinaryExpression(
     left: JKExpression,
     right: JKExpression,
     override var operator: JKOperator,
@@ -40,11 +44,13 @@ internal class JKBinaryExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitBinaryExpression(this)
 }
 
-internal abstract class JKUnaryExpression : JKOperatorExpression() {
+@ApiStatus.Internal
+abstract class JKUnaryExpression : JKOperatorExpression() {
     abstract var expression: JKExpression
 }
 
-internal class JKPrefixExpression(
+@ApiStatus.Internal
+class JKPrefixExpression(
     expression: JKExpression,
     override var operator: JKOperator,
     override val expressionType: JKType? = null,
@@ -53,7 +59,8 @@ internal class JKPrefixExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitPrefixExpression(this)
 }
 
-internal class JKPostfixExpression(
+@ApiStatus.Internal
+class JKPostfixExpression(
     expression: JKExpression,
     override var operator: JKOperator,
     override val expressionType: JKType? = null
@@ -62,7 +69,8 @@ internal class JKPostfixExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitPostfixExpression(this)
 }
 
-internal class JKQualifiedExpression(
+@ApiStatus.Internal
+class JKQualifiedExpression(
     receiver: JKExpression,
     selector: JKExpression,
     override val expressionType: JKType? = null,
@@ -76,7 +84,8 @@ internal class JKQualifiedExpression(
  * @param shouldBePreserved - parentheses came from original Java code and should be preserved
  * (don't run "Remove unnecessary parentheses" inspection on them)
  */
-internal class JKParenthesizedExpression(
+@ApiStatus.Internal
+class JKParenthesizedExpression(
     expression: JKExpression,
     override val expressionType: JKType? = null,
     val shouldBePreserved: Boolean = false
@@ -86,7 +95,8 @@ internal class JKParenthesizedExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitParenthesizedExpression(this)
 }
 
-internal class JKTypeCastExpression(
+@ApiStatus.Internal
+class JKTypeCastExpression(
     expression: JKExpression,
     type: JKTypeElement,
     override val expressionType: JKType? = null,
@@ -97,7 +107,8 @@ internal class JKTypeCastExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitTypeCastExpression(this)
 }
 
-internal class JKLiteralExpression(
+@ApiStatus.Internal
+class JKLiteralExpression(
     var literal: String,
     val type: LiteralType,
     override val expressionType: JKType? = null,
@@ -123,7 +134,8 @@ internal class JKLiteralExpression(
     }
 }
 
-internal class JKStubExpression(override val expressionType: JKType? = null) : JKExpression() {
+@ApiStatus.Internal
+class JKStubExpression(override val expressionType: JKType? = null) : JKExpression() {
     override fun calculateType(typeFactory: JKTypeFactory): JKType? = expressionType
     override fun accept(visitor: JKVisitor) = visitor.visitStubExpression(this)
 }
@@ -132,7 +144,8 @@ internal class JKStubExpression(override val expressionType: JKType? = null) : J
  * @param shouldBePreserved - this is an original `this` expression from Java code
  * that should be preserved in Kotlin (don't run "Redundant explicit 'this'" inspection on it automatically).
  */
-internal class JKThisExpression(
+@ApiStatus.Internal
+class JKThisExpression(
     qualifierLabel: JKLabel,
     override val expressionType: JKType? = null,
     val shouldBePreserved: Boolean = false
@@ -141,7 +154,8 @@ internal class JKThisExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitThisExpression(this)
 }
 
-internal class JKSuperExpression(
+@ApiStatus.Internal
+class JKSuperExpression(
     override val expressionType: JKType = JKNoType,
     val superTypeQualifier: JKClassSymbol? = null,
     outerTypeQualifier: JKLabel = JKLabelEmpty(),
@@ -150,7 +164,8 @@ internal class JKSuperExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitSuperExpression(this)
 }
 
-internal class JKIfElseExpression(
+@ApiStatus.Internal
+class JKIfElseExpression(
     condition: JKExpression,
     thenBranch: JKExpression,
     elseBranch: JKExpression,
@@ -163,7 +178,8 @@ internal class JKIfElseExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitIfElseExpression(this)
 }
 
-internal class JKLambdaExpression(
+@ApiStatus.Internal
+class JKLambdaExpression(
     statement: JKStatement,
     parameters: List<JKParameter> = emptyList(),
     functionalType: JKTypeElement = JKTypeElement(JKNoType),
@@ -178,12 +194,14 @@ internal class JKLambdaExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitLambdaExpression(this)
 }
 
-internal abstract class JKCallExpression : JKExpression(), JKTypeArgumentListOwner {
+@ApiStatus.Internal
+abstract class JKCallExpression : JKExpression(), JKTypeArgumentListOwner {
     abstract var identifier: JKMethodSymbol
     abstract var arguments: JKArgumentList
 }
 
-internal class JKDelegationConstructorCall(
+@ApiStatus.Internal
+class JKDelegationConstructorCall(
     override var identifier: JKMethodSymbol,
     expression: JKExpression,
     arguments: JKArgumentList,
@@ -195,7 +213,8 @@ internal class JKDelegationConstructorCall(
     override fun accept(visitor: JKVisitor) = visitor.visitDelegationConstructorCall(this)
 }
 
-internal class JKCallExpressionImpl(
+@ApiStatus.Internal
+class JKCallExpressionImpl(
     override var identifier: JKMethodSymbol,
     arguments: JKArgumentList = JKArgumentList(),
     typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
@@ -206,7 +225,8 @@ internal class JKCallExpressionImpl(
     override fun accept(visitor: JKVisitor) = visitor.visitCallExpressionImpl(this)
 }
 
-internal class JKNewExpression(
+@ApiStatus.Internal
+class JKNewExpression(
     val classSymbol: JKClassSymbol,
     arguments: JKArgumentList,
     typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
@@ -220,34 +240,40 @@ internal class JKNewExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitNewExpression(this)
 }
 
-internal class JKFieldAccessExpression(
+@ApiStatus.Internal
+class JKFieldAccessExpression(
     var identifier: JKFieldSymbol,
     override val expressionType: JKType? = null,
 ) : JKExpression() {
     override fun accept(visitor: JKVisitor) = visitor.visitFieldAccessExpression(this)
 }
 
-internal class JKPackageAccessExpression(var identifier: JKPackageSymbol) : JKExpression() {
+@ApiStatus.Internal
+class JKPackageAccessExpression(var identifier: JKPackageSymbol) : JKExpression() {
     override val expressionType: JKType? get() = null
     override fun calculateType(typeFactory: JKTypeFactory): JKType? = null
     override fun accept(visitor: JKVisitor) = visitor.visitPackageAccessExpression(this)
 }
 
-internal class JKClassAccessExpression(
+@ApiStatus.Internal
+class JKClassAccessExpression(
     var identifier: JKClassSymbol, override val expressionType: JKType? = null,
 ) : JKExpression() {
     override fun accept(visitor: JKVisitor) = visitor.visitClassAccessExpression(this)
 }
 
-internal class JKMethodAccessExpression(val identifier: JKMethodSymbol, override val expressionType: JKType? = null) : JKExpression() {
+@ApiStatus.Internal
+class JKMethodAccessExpression(val identifier: JKMethodSymbol, override val expressionType: JKType? = null) : JKExpression() {
     override fun accept(visitor: JKVisitor) = visitor.visitMethodAccessExpression(this)
 }
 
-internal class JKTypeQualifierExpression(val type: JKType, override val expressionType: JKType? = null) : JKExpression() {
+@ApiStatus.Internal
+class JKTypeQualifierExpression(val type: JKType, override val expressionType: JKType? = null) : JKExpression() {
     override fun accept(visitor: JKVisitor) = visitor.visitTypeQualifierExpression(this)
 }
 
-internal class JKMethodReferenceExpression(
+@ApiStatus.Internal
+class JKMethodReferenceExpression(
     qualifier: JKExpression,
     val identifier: JKSymbol,
     functionalType: JKTypeElement,
@@ -259,7 +285,8 @@ internal class JKMethodReferenceExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitMethodReferenceExpression(this)
 }
 
-internal class JKLabeledExpression(
+@ApiStatus.Internal
+class JKLabeledExpression(
     statement: JKStatement,
     labels: List<JKNameIdentifier>,
     override val expressionType: JKType? = null,
@@ -269,7 +296,8 @@ internal class JKLabeledExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitLabeledExpression(this)
 }
 
-internal class JKClassLiteralExpression(
+@ApiStatus.Internal
+class JKClassLiteralExpression(
     classType: JKTypeElement,
     var literalType: ClassLiteralType,
     override val expressionType: JKType? = null,
@@ -286,7 +314,8 @@ internal class JKClassLiteralExpression(
     }
 }
 
-internal abstract class JKKtAssignmentChainLink : JKExpression() {
+@ApiStatus.Internal
+abstract class JKKtAssignmentChainLink : JKExpression() {
     abstract val receiver: JKExpression
     abstract val assignmentStatement: JKKtAssignmentStatement
     abstract val field: JKExpression
@@ -295,7 +324,8 @@ internal abstract class JKKtAssignmentChainLink : JKExpression() {
     override fun calculateType(typeFactory: JKTypeFactory) = field.calculateType(typeFactory)
 }
 
-internal class JKAssignmentChainAlsoLink(
+@ApiStatus.Internal
+class JKAssignmentChainAlsoLink(
     receiver: JKExpression,
     assignmentStatement: JKKtAssignmentStatement,
     field: JKExpression
@@ -306,7 +336,8 @@ internal class JKAssignmentChainAlsoLink(
     override fun accept(visitor: JKVisitor) = visitor.visitAssignmentChainAlsoLink(this)
 }
 
-internal class JKAssignmentChainLetLink(
+@ApiStatus.Internal
+class JKAssignmentChainLetLink(
     receiver: JKExpression,
     assignmentStatement: JKKtAssignmentStatement,
     field: JKExpression
@@ -317,7 +348,8 @@ internal class JKAssignmentChainLetLink(
     override fun accept(visitor: JKVisitor) = visitor.visitAssignmentChainLetLink(this)
 }
 
-internal class JKIsExpression(expression: JKExpression, type: JKTypeElement) : JKExpression() {
+@ApiStatus.Internal
+class JKIsExpression(expression: JKExpression, type: JKTypeElement) : JKExpression() {
     var type by child(type)
     var expression by child(expression)
     override val expressionType: JKType? get() = null
@@ -325,11 +357,13 @@ internal class JKIsExpression(expression: JKExpression, type: JKTypeElement) : J
     override fun accept(visitor: JKVisitor) = visitor.visitIsExpression(this)
 }
 
-internal class JKKtItExpression(override val expressionType: JKType) : JKExpression() {
+@ApiStatus.Internal
+class JKKtItExpression(override val expressionType: JKType) : JKExpression() {
     override fun accept(visitor: JKVisitor) = visitor.visitKtItExpression(this)
 }
 
-internal class JKKtAnnotationArrayInitializerExpression(
+@ApiStatus.Internal
+class JKKtAnnotationArrayInitializerExpression(
     initializers: List<JKAnnotationMemberValue>,
     override val expressionType: JKType? = null
 ) : JKExpression() {
@@ -340,7 +374,8 @@ internal class JKKtAnnotationArrayInitializerExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitKtAnnotationArrayInitializerExpression(this)
 }
 
-internal class JKKtTryExpression(
+@ApiStatus.Internal
+class JKKtTryExpression(
     tryBlock: JKBlock,
     finallyBlock: JKBlock,
     catchSections: List<JKKtTryCatchSection>,
@@ -353,14 +388,16 @@ internal class JKKtTryExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitKtTryExpression(this)
 }
 
-internal class JKThrowExpression(exception: JKExpression) : JKExpression() {
+@ApiStatus.Internal
+class JKThrowExpression(exception: JKExpression) : JKExpression() {
     var exception: JKExpression by child(exception)
     override val expressionType: JKType? get() = null
     override fun calculateType(typeFactory: JKTypeFactory) = typeFactory.types.nothing
     override fun accept(visitor: JKVisitor) = visitor.visitKtThrowExpression(this)
 }
 
-internal class JKJavaNewEmptyArray(
+@ApiStatus.Internal
+class JKJavaNewEmptyArray(
     initializer: List<JKExpression>,
     type: JKTypeElement,
     override val expressionType: JKType? = null
@@ -373,7 +410,8 @@ internal class JKJavaNewEmptyArray(
 /**
  * @param hasTrailingComma - Java array initializer has a trailing comma
  */
-internal class JKJavaNewArray(
+@ApiStatus.Internal
+class JKJavaNewArray(
     initializer: List<JKExpression>,
     type: JKTypeElement,
     val hasTrailingComma: Boolean,
@@ -384,7 +422,8 @@ internal class JKJavaNewArray(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaNewArray(this)
 }
 
-internal class JKJavaAssignmentExpression(
+@ApiStatus.Internal
+class JKJavaAssignmentExpression(
     field: JKExpression,
     expression: JKExpression,
     var operator: JKOperator,
@@ -395,7 +434,8 @@ internal class JKJavaAssignmentExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaAssignmentExpression(this)
 }
 
-internal class JKJavaSwitchExpression(
+@ApiStatus.Internal
+class JKJavaSwitchExpression(
     expression: JKExpression,
     cases: List<JKJavaSwitchCase>,
     override val expressionType: JKType? = null,
@@ -410,7 +450,8 @@ internal class JKJavaSwitchExpression(
     }
 }
 
-internal class JKKtWhenExpression(
+@ApiStatus.Internal
+class JKKtWhenExpression(
     expression: JKExpression,
     cases: List<JKKtWhenCase>,
     override val expressionType: JKType?,
@@ -422,7 +463,8 @@ internal class JKKtWhenExpression(
     override fun calculateType(typeFactory: JKTypeFactory): JKType? = expressionType
 }
 
-internal class JKErrorExpression(
+@ApiStatus.Internal
+class JKErrorExpression(
     override var psi: PsiElement?,
     override val reason: String?,
     override val expressionType: JKType? = null

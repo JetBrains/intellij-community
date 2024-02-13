@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
@@ -15,7 +16,8 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal interface JKSymbol {
+@ApiStatus.Internal
+interface JKSymbol {
     val target: Any
     val declaredIn: JKSymbol?
     val fqName: String
@@ -26,7 +28,8 @@ internal interface JKSymbol {
         get() = typeFactory.symbolProvider
 }
 
-internal interface JKUniverseSymbol<T : JKDeclaration> : JKSymbol {
+@ApiStatus.Internal
+interface JKUniverseSymbol<T : JKDeclaration> : JKSymbol {
     override var target: T
     override val fqName: String
         get() {
@@ -50,7 +53,8 @@ internal interface JKUniverseSymbol<T : JKDeclaration> : JKSymbol {
                 ?.let { symbolProvider.provideUniverseSymbol(it) }
 }
 
-internal interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
+@ApiStatus.Internal
+interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
     override val target: T
     override val declaredIn: JKSymbol?
         get() = target.getStrictParentOfType<PsiMember>()?.let { symbolProvider.provideDirectSymbol(it) }
@@ -60,7 +64,8 @@ internal interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
         get() = target.name ?: SpecialNames.ANONYMOUS.asString()
 }
 
-internal interface JKMultiverseKtSymbol<T : KtNamedDeclaration> : JKSymbol {
+@ApiStatus.Internal
+interface JKMultiverseKtSymbol<T : KtNamedDeclaration> : JKSymbol {
     override val target: T
     override val name: String
         get() = target.name ?: SpecialNames.ANONYMOUS.asString()
@@ -70,7 +75,8 @@ internal interface JKMultiverseKtSymbol<T : KtNamedDeclaration> : JKSymbol {
         get() = target.fqName?.asString() ?: name
 }
 
-internal interface JKUnresolvedSymbol : JKSymbol {
+@ApiStatus.Internal
+interface JKUnresolvedSymbol : JKSymbol {
     override val target: String
     override val declaredIn: JKSymbol?
         get() = null

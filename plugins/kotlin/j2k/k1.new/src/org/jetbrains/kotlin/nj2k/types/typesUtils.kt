@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.types
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
@@ -29,20 +30,24 @@ import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
-internal fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()) =
+@ApiStatus.Internal
+fun JKType.asTypeElement(annotationList: JKAnnotationList = JKAnnotationList()) =
     JKTypeElement(this, annotationList)
 
-internal fun JKClassSymbol.asType(nullability: Nullability = Default): JKClassType =
+@ApiStatus.Internal
+fun JKClassSymbol.asType(nullability: Nullability = Default): JKClassType =
     JKClassType(this, nullability = nullability)
 
-internal val PsiType.isKotlinFunctionalType: Boolean
+@get:ApiStatus.Internal
+val PsiType.isKotlinFunctionalType: Boolean
     get() {
         val fqName = safeAs<PsiClassType>()?.resolve()?.kotlinFqName ?: return false
         return functionalTypeRegex.matches(fqName.asString())
     }
 
 context(KtAnalysisSession) // TODO: currently unused, will be used in the K2 implementation
-internal fun PsiParameter.typeFqNamePossiblyMappedToKotlin(): FqName {
+@ApiStatus.Internal
+fun PsiParameter.typeFqNamePossiblyMappedToKotlin(): FqName {
     // TODO: support (nested) array types: KTIJ-28739
     // TODO: use `asKtType` function in the K2 implementation (it doesn't work in K1 yet: KT-65545)
     //val ktType = type.asKtType(useSitePosition = this) as? KtNonErrorClassType ?: return null
@@ -79,7 +84,8 @@ private val primitiveTypeMapping: Map<String, String> = mapOf(
 )
 
 context(KtAnalysisSession)
-internal fun KtParameter.typeFqName(): FqName? {
+@ApiStatus.Internal
+fun KtParameter.typeFqName(): FqName? {
     val type = getParameterSymbol().returnType as? KtNonErrorClassType
     return type?.classId?.asSingleFqName()
 }
@@ -87,10 +93,12 @@ internal fun KtParameter.typeFqName(): FqName? {
 private val functionalTypeRegex = """(kotlin\.jvm\.functions|kotlin)\.Function[\d+]""".toRegex()
 
 context(KtAnalysisSession)
-internal fun KtTypeReference.toJK(typeFactory: JKTypeFactory): JKType =
+@ApiStatus.Internal
+fun KtTypeReference.toJK(typeFactory: JKTypeFactory): JKType =
     typeFactory.fromKtType(getKtType())
 
-internal infix fun JKJavaPrimitiveType.isStrongerThan(other: JKJavaPrimitiveType) =
+@ApiStatus.Internal
+infix fun JKJavaPrimitiveType.isStrongerThan(other: JKJavaPrimitiveType) =
     jvmPrimitiveTypesPriority.getValue(this.jvmPrimitiveType.primitiveType) >
             jvmPrimitiveTypesPriority.getValue(other.jvmPrimitiveType.primitiveType)
 
@@ -106,7 +114,8 @@ private val jvmPrimitiveTypesPriority =
         PrimitiveType.DOUBLE to 6
     )
 
-internal fun JKType.applyRecursive(transform: (JKType) -> JKType?): JKType =
+@ApiStatus.Internal
+fun JKType.applyRecursive(transform: (JKType) -> JKType?): JKType =
     transform(this) ?: when (this) {
         is JKTypeParameterType -> this
         is JKClassType ->
@@ -128,7 +137,8 @@ internal fun JKType.applyRecursive(transform: (JKType) -> JKType?): JKType =
         else -> this
     }
 
-internal inline fun <reified T : JKType> T.updateNullability(newNullability: Nullability): T =
+@ApiStatus.Internal
+inline fun <reified T : JKType> T.updateNullability(newNullability: Nullability): T =
     if (nullability == newNullability) this
     else when (this) {
         is JKTypeParameterType -> JKTypeParameterType(identifier, newNullability)
@@ -143,7 +153,8 @@ internal inline fun <reified T : JKType> T.updateNullability(newNullability: Nul
     } as T
 
 @Suppress("UNCHECKED_CAST")
-internal fun <T : JKType> T.updateNullabilityRecursively(newNullability: Nullability): T =
+@ApiStatus.Internal
+fun <T : JKType> T.updateNullabilityRecursively(newNullability: Nullability): T =
     applyRecursive { type ->
         when (type) {
             is JKTypeParameterType -> JKTypeParameterType(type.identifier, newNullability)
@@ -159,14 +170,17 @@ internal fun <T : JKType> T.updateNullabilityRecursively(newNullability: Nullabi
         }
     } as T
 
-internal fun JKType.isStringType(): Boolean =
+@ApiStatus.Internal
+fun JKType.isStringType(): Boolean =
     (this as? JKClassType)?.classReference?.isStringType() == true
 
-internal fun JKClassSymbol.isStringType(): Boolean =
+@ApiStatus.Internal
+fun JKClassSymbol.isStringType(): Boolean =
     fqName == CommonClassNames.JAVA_LANG_STRING
             || fqName == StandardNames.FqNames.string.asString()
 
-internal fun JKSymbol.isEnumType(): Boolean =
+@ApiStatus.Internal
+fun JKSymbol.isEnumType(): Boolean =
     when (val target = target) {
         is JKClass -> target.classKind == ENUM
         is KtClass -> target.isEnum()
@@ -174,7 +188,8 @@ internal fun JKSymbol.isEnumType(): Boolean =
         else -> false
     }
 
-internal fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralType? =
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralType? =
     when (this) {
         JKJavaPrimitiveType.CHAR -> JKLiteralExpression.LiteralType.CHAR
         JKJavaPrimitiveType.BOOLEAN -> JKLiteralExpression.LiteralType.BOOLEAN
@@ -185,7 +200,8 @@ internal fun JKJavaPrimitiveType.toLiteralType(): JKLiteralExpression.LiteralTyp
         else -> null
     }
 
-internal fun JKType.asPrimitiveType(): JKJavaPrimitiveType? =
+@ApiStatus.Internal
+fun JKType.asPrimitiveType(): JKJavaPrimitiveType? =
     if (this is JKJavaPrimitiveType) this
     else when (fqName) {
         StandardNames.FqNames._char.asString(), CommonClassNames.JAVA_LANG_CHARACTER -> JKJavaPrimitiveType.CHAR
@@ -199,24 +215,33 @@ internal fun JKType.asPrimitiveType(): JKJavaPrimitiveType? =
         else -> null
     }
 
-internal fun JKJavaPrimitiveType.isNumberType() =
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.isNumberType() =
     this == JKJavaPrimitiveType.INT ||
             this == JKJavaPrimitiveType.LONG ||
             this == JKJavaPrimitiveType.FLOAT ||
             this == JKJavaPrimitiveType.DOUBLE
 
-internal fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
-internal fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
-internal fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
-internal fun JKJavaPrimitiveType.isByte(): Boolean = this == JKJavaPrimitiveType.BYTE
-internal fun JKJavaPrimitiveType.isShort(): Boolean = this == JKJavaPrimitiveType.SHORT
-internal fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.isByte(): Boolean = this == JKJavaPrimitiveType.BYTE
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.isShort(): Boolean = this == JKJavaPrimitiveType.SHORT
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
     this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE
 
-internal fun JKJavaPrimitiveType.kotlinName() =
+@ApiStatus.Internal
+fun JKJavaPrimitiveType.kotlinName() =
     jvmPrimitiveType.javaKeywordName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
 
-internal val primitiveTypes: List<JvmPrimitiveType> =
+@ApiStatus.Internal
+val primitiveTypes: List<JvmPrimitiveType> =
     listOf(
         JvmPrimitiveType.BOOLEAN,
         JvmPrimitiveType.CHAR,
@@ -228,12 +253,14 @@ internal val primitiveTypes: List<JvmPrimitiveType> =
         JvmPrimitiveType.DOUBLE
     )
 
-internal fun JKType.arrayFqName(): String =
+@ApiStatus.Internal
+fun JKType.arrayFqName(): String =
     if (this is JKJavaPrimitiveType)
         PrimitiveType.valueOf(jvmPrimitiveType.name).arrayTypeFqName.asString()
     else StandardNames.FqNames.array.asString()
 
-internal fun JKClassSymbol.isArrayType(): Boolean =
+@ApiStatus.Internal
+fun JKClassSymbol.isArrayType(): Boolean =
     fqName in arrayFqNames
 
 private val arrayFqNames = buildList {
@@ -241,20 +268,24 @@ private val arrayFqNames = buildList {
     add(StandardNames.FqNames.array.asString())
 }
 
-internal fun JKType.isArrayType() =
+@ApiStatus.Internal
+fun JKType.isArrayType() =
     when (this) {
         is JKClassType -> classReference.isArrayType()
         is JKJavaArrayType -> true
         else -> false
     }
 
-internal fun JKType.isUnit(): Boolean =
+@ApiStatus.Internal
+fun JKType.isUnit(): Boolean =
     fqName == StandardNames.FqNames.unit.asString()
 
-internal val JKType.isCollectionType: Boolean
+@get:ApiStatus.Internal
+val JKType.isCollectionType: Boolean
     get() = fqName in collectionFqNames
 
-internal val JKType.fqName: String?
+@get:ApiStatus.Internal
+val JKType.fqName: String?
     get() = safeAs<JKClassType>()?.classReference?.fqName
 
 private val collectionFqNames = setOf(
@@ -267,7 +298,8 @@ private val collectionFqNames = setOf(
     StandardNames.FqNames.mutableListIterator.asString()
 )
 
-internal fun JKType.arrayInnerType(): JKType? =
+@ApiStatus.Internal
+fun JKType.arrayInnerType(): JKType? =
     when (this) {
         is JKJavaArrayType -> type
         is JKClassType ->
@@ -277,14 +309,16 @@ internal fun JKType.arrayInnerType(): JKType? =
         else -> null
     }
 
-internal fun JKMethodSymbol.isAnnotationMethod(): Boolean =
+@ApiStatus.Internal
+fun JKMethodSymbol.isAnnotationMethod(): Boolean =
     when (val target = target) {
         is JKJavaAnnotationMethod, is PsiAnnotationMethodImpl -> true
         is ClsMethodImpl -> target.containingClass?.isAnnotationType == true
         else -> false
     }
 
-internal fun JKClassSymbol.isInterface(): Boolean {
+@ApiStatus.Internal
+fun JKClassSymbol.isInterface(): Boolean {
     return when (val target = target) {
         is PsiClass -> target.isInterface
         is KtClass -> target.isInterface()
@@ -293,10 +327,12 @@ internal fun JKClassSymbol.isInterface(): Boolean {
     }
 }
 
-internal fun JKType.isInterface(): Boolean =
+@ApiStatus.Internal
+fun JKType.isInterface(): Boolean =
     (this as? JKClassType)?.classReference?.isInterface() ?: false
 
-internal fun JKType.replaceJavaClassWithKotlinClassType(symbolProvider: JKSymbolProvider): JKType =
+@ApiStatus.Internal
+fun JKType.replaceJavaClassWithKotlinClassType(symbolProvider: JKSymbolProvider): JKType =
     applyRecursive { type ->
         if (type is JKClassType && type.classReference.fqName == "java.lang.Class") {
             JKClassType(
@@ -307,10 +343,12 @@ internal fun JKType.replaceJavaClassWithKotlinClassType(symbolProvider: JKSymbol
         } else null
     }
 
-internal fun JKLiteralExpression.isNull(): Boolean =
+@ApiStatus.Internal
+fun JKLiteralExpression.isNull(): Boolean =
     this.type == JKLiteralExpression.LiteralType.NULL
 
-internal fun JKParameter.determineType(symbolProvider: JKSymbolProvider): JKType =
+@ApiStatus.Internal
+fun JKParameter.determineType(symbolProvider: JKSymbolProvider): JKType =
     if (isVarArgs) {
         val typeParameters =
             if (type.type is JKJavaPrimitiveType) emptyList() else listOf(JKVarianceTypeParameterType(Variance.OUT, type.type))

@@ -2,14 +2,17 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import org.jetbrains.annotations.ApiStatus
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KProperty0
 
-internal inline fun <reified T : JKElement> JKElement.parentOfType(): T? {
+@ApiStatus.Internal
+inline fun <reified T : JKElement> JKElement.parentOfType(): T? {
     return generateSequence(parent) { it.parent }.filterIsInstance<T>().firstOrNull()
 }
 
-internal fun JKElement.parents(): Sequence<JKElement> {
+@ApiStatus.Internal
+fun JKElement.parents(): Sequence<JKElement> {
     return generateSequence(parent) { it.parent }
 }
 
@@ -22,16 +25,20 @@ private fun <T : JKElement> KProperty0<Any>.detach(element: T) {
     element.detach(boundReceiver)
 }
 
-internal fun <T : JKElement> KProperty0<T>.detached(): T =
+@ApiStatus.Internal
+fun <T : JKElement> KProperty0<T>.detached(): T =
     get().also { detach(it) }
 
-internal fun <T : JKElement> KProperty0<List<T>>.detached(): List<T> =
+@ApiStatus.Internal
+fun <T : JKElement> KProperty0<List<T>>.detached(): List<T> =
     get().also { list -> list.forEach { detach(it) } }
 
-internal fun <T : JKElement> T.detached(from: JKElement): T =
+@ApiStatus.Internal
+fun <T : JKElement> T.detached(from: JKElement): T =
     also { it.detach(from) }
 
-internal fun <E : JKTreeElement, D> applyRecursive(element: E, data: D, func: (JKTreeElement, D) -> JKTreeElement): E {
+@ApiStatus.Internal
+fun <E : JKTreeElement, D> applyRecursive(element: E, data: D, func: (JKTreeElement, D) -> JKTreeElement): E {
     val iterator = element.children.listIterator()
 
     fun applyRecursiveToList(child: List<JKTreeElement>): List<JKTreeElement> {
@@ -66,13 +73,16 @@ internal fun <E : JKTreeElement, D> applyRecursive(element: E, data: D, func: (J
     return element
 }
 
-internal fun <E : JKTreeElement> applyRecursive(element: E, func: (JKTreeElement) -> JKTreeElement): E =
+@ApiStatus.Internal
+fun <E : JKTreeElement> applyRecursive(element: E, func: (JKTreeElement) -> JKTreeElement): E =
     applyRecursive(element, data = null) { it, _ -> func(it) }
 
-internal inline fun <reified T : JKTreeElement> T.copyTree(): T =
+@ApiStatus.Internal
+inline fun <reified T : JKTreeElement> T.copyTree(): T =
     copy().withFormattingFrom(this) as T
 
-internal inline fun <reified T : JKTreeElement> T.copyTreeAndDetach(): T =
+@ApiStatus.Internal
+inline fun <reified T : JKTreeElement> T.copyTreeAndDetach(): T =
     copyTree().also {
         if (it.parent != null) it.detach(it.parent!!)
     }

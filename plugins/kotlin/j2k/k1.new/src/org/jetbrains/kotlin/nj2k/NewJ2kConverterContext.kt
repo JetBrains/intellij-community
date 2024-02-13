@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessin
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
 @ApiStatus.Internal
-data class NewJ2kConverterContext internal constructor(
-    internal val symbolProvider: JKSymbolProvider,
-    internal val typeFactory: JKTypeFactory,
+data class NewJ2kConverterContext @ApiStatus.Internal constructor(
+    @ApiStatus.Internal val symbolProvider: JKSymbolProvider,
+    @ApiStatus.Internal val typeFactory: JKTypeFactory,
     val converter: NewJavaToKotlinConverter,
     val inConversionContext: (PsiElement) -> Boolean,
     val importStorage: JKImportStorage,

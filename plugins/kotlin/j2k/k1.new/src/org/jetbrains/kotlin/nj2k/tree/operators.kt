@@ -4,16 +4,19 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.types.JKType
 
-internal interface JKOperator {
+@ApiStatus.Internal
+interface JKOperator {
     val token: JKOperatorToken
     val returnType: JKType
 }
 
-internal interface JKOperatorToken {
+@ApiStatus.Internal
+interface JKOperatorToken {
     val text: String
 
     @Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
@@ -64,9 +67,12 @@ internal interface JKOperatorToken {
         val GTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTEQ)
         val GTGTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTGTEQ)
 
-        internal val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
-        internal val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
-        internal val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
+        @ApiStatus.Internal
+        val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
+        @ApiStatus.Internal
+        val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
+        @ApiStatus.Internal
+        val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
 
         private val elementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
             JavaTokenType.DIV to DIV,
@@ -115,25 +121,32 @@ internal interface JKOperatorToken {
     }
 }
 
-internal class JKKtWordOperatorToken(override val text: String) : JKKtOperatorToken
+@ApiStatus.Internal
+class JKKtWordOperatorToken(override val text: String) : JKKtOperatorToken
 
-internal class JKKtOperatorImpl(override val token: JKOperatorToken, override val returnType: JKType) : JKOperator
+@ApiStatus.Internal
+class JKKtOperatorImpl(override val token: JKOperatorToken, override val returnType: JKType) : JKOperator
 
-internal interface JKKtOperatorToken : JKOperatorToken
+@ApiStatus.Internal
+interface JKKtOperatorToken : JKOperatorToken
 
-internal class JKJavaOperatorToken(private val psiToken: IElementType) : JKOperatorToken {
+@ApiStatus.Internal
+class JKJavaOperatorToken(private val psiToken: IElementType) : JKOperatorToken {
     override val text: String
         get() = error("Java token '$psiToken' should not be printed, it should be replaced with the corresponding Kotlin one")
 }
 
-internal class JKKtSingleValueOperatorToken(val psiToken: KtSingleValueToken) : JKKtOperatorToken {
+@ApiStatus.Internal
+class JKKtSingleValueOperatorToken(val psiToken: KtSingleValueToken) : JKKtOperatorToken {
     override val text: String = psiToken.value
 }
 
-internal object JKKtSpreadOperatorToken : JKKtOperatorToken {
+@ApiStatus.Internal
+object JKKtSpreadOperatorToken : JKKtOperatorToken {
     override val text: String = "*"
 }
 
-internal class JKKtSpreadOperator(override val returnType: JKType) : JKOperator {
+@ApiStatus.Internal
+class JKKtSpreadOperator(override val returnType: JKType) : JKOperator {
     override val token: JKOperatorToken = JKKtSpreadOperatorToken
 }

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -10,7 +11,8 @@ import org.jetbrains.kotlin.util.AbstractKotlinBundle
 @NonNls
 private const val BUNDLE = "messages.KotlinNJ2KBundle"
 
-internal object KotlinNJ2KBundle : AbstractKotlinBundle(BUNDLE) {
+@ApiStatus.Internal
+object KotlinNJ2KBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic
     fun message(@NonNls @PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)

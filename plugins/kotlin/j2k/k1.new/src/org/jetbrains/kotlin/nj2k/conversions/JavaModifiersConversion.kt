@@ -2,13 +2,15 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_9
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 
-internal class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+@ApiStatus.Internal
+class JavaModifiersConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element is JKModalityOwner && element is JKAnnotationListOwner) {

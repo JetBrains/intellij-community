@@ -8,7 +8,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 
-internal inline fun <T> List<T>.mutate(mutate: MutableList<T>.() -> Unit): List<T> {
+@ApiStatus.Internal
+inline fun <T> List<T>.mutate(mutate: MutableList<T>.() -> Unit): List<T> {
     val mutableList = toMutableList()
     mutate(mutableList)
     return mutableList
@@ -36,7 +37,8 @@ fun String.asSetterName(): String? =
         ?.decapitalizeAsciiOnly()
         ?.escaped()
 
-internal fun String.canBeGetterOrSetterName(): Boolean =
+@ApiStatus.Internal
+fun String.canBeGetterOrSetterName(): Boolean =
     asGetterName() != null || asSetterName() != null
 
 private val KEYWORDS: Set<String> = KtTokens.KEYWORDS.types.map { (it as KtKeywordToken).value }.toSet()

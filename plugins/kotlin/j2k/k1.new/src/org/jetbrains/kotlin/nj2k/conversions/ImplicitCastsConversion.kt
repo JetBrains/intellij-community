@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiNewExpression
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.PrimitiveTypeCastsConversion.Companion.castToAsPrimitiveTypes
@@ -16,7 +17,8 @@ import org.jetbrains.kotlin.nj2k.types.*
 
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+@ApiStatus.Internal
+class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         when (element) {

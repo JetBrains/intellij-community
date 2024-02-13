@@ -3,12 +3,14 @@
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.AccessorKind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
-internal sealed class JKExternalConversion : Comparable<JKExternalConversion> {
+@ApiStatus.Internal
+sealed class JKExternalConversion : Comparable<JKExternalConversion> {
     abstract val usage: PsiElement
 
     abstract fun apply()
@@ -29,7 +31,8 @@ internal sealed class JKExternalConversion : Comparable<JKExternalConversion> {
     }
 }
 
-internal class AccessorToPropertyKotlinExternalConversion(
+@ApiStatus.Internal
+class AccessorToPropertyKotlinExternalConversion(
     private val name: String,
     private val accessorKind: AccessorKind,
     override val usage: PsiElement
@@ -64,7 +67,8 @@ internal class AccessorToPropertyKotlinExternalConversion(
     }
 }
 
-internal class AccessorToPropertyJavaExternalConversion(
+@ApiStatus.Internal
+class AccessorToPropertyJavaExternalConversion(
     private val name: String,
     private val accessorKind: AccessorKind,
     override val usage: PsiElement
@@ -97,7 +101,8 @@ internal class AccessorToPropertyJavaExternalConversion(
         }
 }
 
-internal class PropertyRenamedKotlinExternalUsageConversion(
+@ApiStatus.Internal
+class PropertyRenamedKotlinExternalUsageConversion(
     private val newName: String,
     override val usage: KtElement
 ) : JKExternalConversion() {
@@ -108,7 +113,8 @@ internal class PropertyRenamedKotlinExternalUsageConversion(
     }
 }
 
-internal class PropertyRenamedJavaExternalUsageConversion(
+@ApiStatus.Internal
+class PropertyRenamedJavaExternalUsageConversion(
     private val newName: String,
     override val usage: PsiElement
 ) : JKExternalConversion() {

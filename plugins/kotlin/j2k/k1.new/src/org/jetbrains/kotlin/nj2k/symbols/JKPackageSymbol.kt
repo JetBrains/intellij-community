@@ -3,12 +3,15 @@
 package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiPackage
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.JKPackageDeclaration
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
-internal sealed class JKPackageSymbol : JKSymbol
+@ApiStatus.Internal
+sealed class JKPackageSymbol : JKSymbol
 
-internal class JKMultiversePackageSymbol(
+@ApiStatus.Internal
+class JKMultiversePackageSymbol(
     override val target: PsiPackage,
     override val typeFactory: JKTypeFactory
 ) : JKPackageSymbol(), JKMultiverseSymbol<PsiPackage> {
@@ -16,7 +19,8 @@ internal class JKMultiversePackageSymbol(
         get() = null
 }
 
-internal class JKUniversePackageSymbol(
+@ApiStatus.Internal
+class JKUniversePackageSymbol(
     override val typeFactory: JKTypeFactory
 ) : JKPackageSymbol(), JKUniverseSymbol<JKPackageDeclaration> {
     override lateinit var target: JKPackageDeclaration

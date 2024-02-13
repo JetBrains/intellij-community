@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.isNullLiteral
 import org.jetbrains.kotlin.name.Name
@@ -24,7 +25,8 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 //copied from old j2k
-internal fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
+@ApiStatus.Internal
+fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
     if (left.isNullLiteral() || (right?.isNullLiteral() == true)) return true
     when (val type = left.type) {
         is PsiPrimitiveType, is PsiArrayType -> return true
@@ -45,7 +47,8 @@ internal fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
     }
 }
 
-internal fun PsiMember.visibility(
+@ApiStatus.Internal
+fun PsiMember.visibility(
     referenceSearcher: ReferenceSearcher,
     assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?
 ): JKVisibilityModifierElement =
@@ -65,7 +68,8 @@ internal fun PsiMember.visibility(
         }
     }?.firstOrNull() ?: JKVisibilityModifierElement(Visibility.INTERNAL)
 
-internal fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {
+@ApiStatus.Internal
+fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {
     val modalityFromModifier = modifierList?.children?.mapNotNull { child ->
         if (child !is PsiKeyword) return@mapNotNull null
         when (child.text) {
@@ -87,7 +91,8 @@ internal fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiE
     }
 }
 
-internal fun JvmClassKind.toJk(): JKClass.ClassKind = when (this) {
+@ApiStatus.Internal
+fun JvmClassKind.toJk(): JKClass.ClassKind = when (this) {
     JvmClassKind.CLASS -> JKClass.ClassKind.CLASS
     JvmClassKind.INTERFACE -> JKClass.ClassKind.INTERFACE
     JvmClassKind.ANNOTATION -> JKClass.ClassKind.ANNOTATION
@@ -128,7 +133,8 @@ private fun allowProtected(element: PsiElement, member: PsiMember, originalClass
     }
 }
 
-internal fun PsiClass.classKind(): JKClass.ClassKind =
+@ApiStatus.Internal
+fun PsiClass.classKind(): JKClass.ClassKind =
     when {
         isAnnotationType -> JKClass.ClassKind.ANNOTATION
         isEnum -> JKClass.ClassKind.ENUM
@@ -143,7 +149,8 @@ val KtDeclaration.fqNameWithoutCompanions
         .toList()
         .foldRight(containingKtFile.packageFqName) { container, acc -> acc.child(Name.identifier(container.name!!)) }
 
-internal fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> T): T {
+@ApiStatus.Internal
+fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> T): T {
     var result: T? = null
     ApplicationManager.getApplication().invokeAndWait {
         CommandProcessor.getInstance().runUndoTransparentAction {
@@ -156,7 +163,8 @@ internal fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: (
     return result!!
 }
 
-internal fun PsiElement.getContainingClass(): PsiClass? {
+@ApiStatus.Internal
+fun PsiElement.getContainingClass(): PsiClass? {
     var context = context
     while (context != null) {
         val _context = context

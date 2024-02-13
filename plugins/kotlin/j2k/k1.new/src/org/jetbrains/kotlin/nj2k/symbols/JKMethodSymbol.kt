@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -16,7 +17,8 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal sealed class JKMethodSymbol : JKSymbol {
+@ApiStatus.Internal
+sealed class JKMethodSymbol : JKSymbol {
     context(KtAnalysisSession)
     abstract val receiverType: JKType?
 
@@ -27,7 +29,8 @@ internal sealed class JKMethodSymbol : JKSymbol {
     abstract val returnType: JKType?
 }
 
-internal class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethodSymbol(), JKUniverseSymbol<JKMethod> {
+@ApiStatus.Internal
+class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethodSymbol(), JKUniverseSymbol<JKMethod> {
     context(KtAnalysisSession)
     override val receiverType: JKType?
         get() = target.parent.safeAs<JKClass>()?.let {
@@ -45,7 +48,8 @@ internal class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) :
     override lateinit var target: JKMethod
 }
 
-internal class JKMultiverseMethodSymbol(
+@ApiStatus.Internal
+class JKMultiverseMethodSymbol(
     override val target: PsiMethod,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseSymbol<PsiMethod> {
@@ -67,7 +71,8 @@ internal class JKMultiverseMethodSymbol(
         }
 }
 
-internal class JKMultiverseFunctionSymbol(
+@ApiStatus.Internal
+class JKMultiverseFunctionSymbol(
     override val target: KtFunction,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseKtSymbol<KtFunction> {
@@ -95,7 +100,8 @@ internal class JKMultiverseFunctionSymbol(
         get() = target.typeReference?.toJK(typeFactory)
 }
 
-internal class JKUnresolvedMethod(
+@ApiStatus.Internal
+class JKUnresolvedMethod(
     override val target: String,
     override val typeFactory: JKTypeFactory,
     override val returnType: JKType = JKNoType
@@ -111,7 +117,8 @@ internal class JKUnresolvedMethod(
         get() = emptyList()
 }
 
-internal class KtClassImplicitConstructorSymbol(
+@ApiStatus.Internal
+class KtClassImplicitConstructorSymbol(
     override val target: KtLightMethod,
     override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKMultiverseSymbol<KtLightMethod> {

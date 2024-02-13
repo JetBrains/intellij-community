@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
@@ -15,7 +16,8 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.psi.*
 
-internal class JKSymbolProvider(private val resolver: JKResolver) {
+@ApiStatus.Internal
+class JKSymbolProvider(private val resolver: JKResolver) {
     lateinit var typeFactory: JKTypeFactory
 
     val symbolsByPsi: MutableMap<PsiElement, JKSymbol> = mutableMapOf()
@@ -47,7 +49,7 @@ internal class JKSymbolProvider(private val resolver: JKResolver) {
         return provideDirectSymbol(psi)
     }
 
-    inline fun <reified T : JKSymbol> provideSymbolForReference(reference: PsiReference): T {
+    internal inline fun <reified T : JKSymbol> provideSymbolForReference(reference: PsiReference): T {
         val target = reference.resolve()
         if (target is LightRecordMethod) {
             val field = getFieldForComponent(target.recordComponent)

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
@@ -12,7 +13,8 @@ import org.jetbrains.kotlin.nj2k.types.JKClassType
 
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class ReturnStatementInLambdaExpressionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+@ApiStatus.Internal
+class ReturnStatementInLambdaExpressionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     companion object {
         const val DEFAULT_LABEL_NAME = "label"
     }

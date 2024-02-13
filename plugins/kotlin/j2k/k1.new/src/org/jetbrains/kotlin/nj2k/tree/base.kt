@@ -3,11 +3,13 @@
 package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-internal interface JKElement {
+@ApiStatus.Internal
+interface JKElement {
     val parent: JKElement?
     fun detach(from: JKElement)
     fun attach(to: JKElement)
@@ -41,7 +43,8 @@ private class JKListChild<T : JKElement>(val value: Int) : ReadWriteProperty<JKT
     }
 }
 
-internal abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
+@ApiStatus.Internal
+abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
     override val commentsBefore: MutableList<JKComment> = mutableListOf()
     override val commentsAfter: MutableList<JKComment> = mutableListOf()
     override var lineBreaksBefore: Int = 0
@@ -141,18 +144,23 @@ internal abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable 
     }
 }
 
-internal abstract class JKAnnotationMemberValue : JKTreeElement()
+@ApiStatus.Internal
+abstract class JKAnnotationMemberValue : JKTreeElement()
 
-internal interface PsiOwner {
+@ApiStatus.Internal
+interface PsiOwner {
     var psi: PsiElement?
 }
 
-internal class PsiOwnerImpl(override var psi: PsiElement? = null) : PsiOwner
+@ApiStatus.Internal
+class PsiOwnerImpl(override var psi: PsiElement? = null) : PsiOwner
 
-internal interface JKTypeArgumentListOwner : JKFormattingOwner {
+@ApiStatus.Internal
+interface JKTypeArgumentListOwner : JKFormattingOwner {
     var typeArgumentList: JKTypeArgumentList
 }
 
-internal interface JKTypeParameterListOwner : JKFormattingOwner {
+@ApiStatus.Internal
+interface JKTypeParameterListOwner : JKFormattingOwner {
     var typeParameterList: JKTypeParameterList
 }

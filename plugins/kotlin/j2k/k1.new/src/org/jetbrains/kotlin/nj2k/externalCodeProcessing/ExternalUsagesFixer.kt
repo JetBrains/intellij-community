@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.j2k.AccessorKind.GETTER
@@ -13,7 +14,8 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
+@ApiStatus.Internal
+class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     private val conversions: MutableList<JKExternalConversion> = mutableListOf()
     private val jvmFieldAnnotatedDeclarations: MutableSet<KtNamedDeclaration> = mutableSetOf()
     private val jvmStaticAnnotatedDeclarations: MutableSet<KtNamedDeclaration> = mutableSetOf()
@@ -120,7 +122,8 @@ internal class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsag
         ShortenReferencesFacility.getInstance().shorten(annotation)
     }
 
-    internal data class JKMemberInfoWithUsages(
+    @ApiStatus.Internal
+    data class JKMemberInfoWithUsages(
         val member: JKMemberData,
         val javaUsages: List<PsiElement>,
         val kotlinUsages: List<KtElement>

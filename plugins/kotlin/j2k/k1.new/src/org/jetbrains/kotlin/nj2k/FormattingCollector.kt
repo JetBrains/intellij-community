@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.javadoc.PsiDocComment
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.j2k.IdeaDocCommentConverter
 import org.jetbrains.kotlin.nj2k.tree.JKComment
 import org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class FormattingCollector {
+@ApiStatus.Internal
+class FormattingCollector {
     private val commentCache = mutableMapOf<PsiElement, JKComment>()
 
     fun copyFormattingFrom(

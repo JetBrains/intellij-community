@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.conversions.*
 import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
@@ -9,7 +10,8 @@ import org.jetbrains.kotlin.nj2k.tree.JKParameter
 import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal object ConversionsRunner {
+@ApiStatus.Internal
+object ConversionsRunner {
     private fun createConversions(context: NewJ2kConverterContext) = listOf(
         ParenthesizeBitwiseOperationConversion(context),
         ParenthesizeMultilineBinaryExpressionConversion(context),

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.printing
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
@@ -18,7 +19,8 @@ import org.jetbrains.kotlin.nj2k.types.isInterface
 import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal class JKCodeBuilder(context: NewJ2kConverterContext) {
+@ApiStatus.Internal
+class JKCodeBuilder(context: NewJ2kConverterContext) {
     private val elementInfoStorage = context.elementsInfoStorage
     private val printer = JKPrinter(context.project, context.importStorage, elementInfoStorage)
     private val commentPrinter = JKCommentPrinter(printer)

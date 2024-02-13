@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.name.Name
@@ -13,7 +14,8 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUniverseMethodSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 
-internal class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
+@ApiStatus.Internal
+class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
 
     private fun JKMethod.canNotBeMerged(): Boolean =
         modality == Modality.ABSTRACT

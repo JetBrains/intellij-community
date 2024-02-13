@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -9,7 +10,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
-internal abstract class Conversion(val context: NewJ2kConverterContext) {
+@ApiStatus.Internal
+abstract class Conversion(val context: NewJ2kConverterContext) {
     val symbolProvider: JKSymbolProvider
         get() = context.symbolProvider
 
@@ -33,16 +35,19 @@ internal abstract class Conversion(val context: NewJ2kConverterContext) {
         org.jetbrains.kotlin.nj2k.tree.applyRecursive(element, data, func)
 }
 
-internal val Conversion.languageVersionSettings: LanguageVersionSettings
+@get:ApiStatus.Internal
+val Conversion.languageVersionSettings: LanguageVersionSettings
     get() {
         val converter = context.converter
         return converter.targetModule?.languageVersionSettings ?: converter.project.languageVersionSettings
     }
 
-internal val Conversion.moduleApiVersion: ApiVersion
+@get:ApiStatus.Internal
+val Conversion.moduleApiVersion: ApiVersion
     get() = languageVersionSettings.apiVersion
 
-internal abstract class RecursiveConversion(context: NewJ2kConverterContext) : Conversion(context) {
+@ApiStatus.Internal
+abstract class RecursiveConversion(context: NewJ2kConverterContext) : Conversion(context) {
     context(KtAnalysisSession)
     override fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext) {
         val root = applyToElement(treeRoot)
@@ -56,7 +61,8 @@ internal abstract class RecursiveConversion(context: NewJ2kConverterContext) : C
     protected fun <E : JKTreeElement> recurse(element: E): E = applyRecursive(element) { applyToElement(it) }
 }
 
-internal abstract class RecursiveConversionWithData<D>(context: NewJ2kConverterContext, private val initialData: D) : Conversion(context) {
+@ApiStatus.Internal
+abstract class RecursiveConversionWithData<D>(context: NewJ2kConverterContext, private val initialData: D) : Conversion(context) {
     context(KtAnalysisSession)
     override fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext) {
         val root = applyToElement(treeRoot, initialData)
