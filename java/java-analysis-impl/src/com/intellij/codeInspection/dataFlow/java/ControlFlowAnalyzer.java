@@ -1113,8 +1113,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPatternInInstanceof(@NotNull PsiPattern pattern, @NotNull PsiInstanceOfExpression expression,
                                           @NotNull PsiType checkType) {
     boolean potentiallyRedundantInstanceOf = pattern instanceof PsiTypeTestPattern ||
-                                             pattern instanceof PsiTypeTestPattern ||
-                                             pattern instanceof PsiDeconstructionPattern dec && JavaPsiPatternUtil.hasUnconditionalComponents(dec);
+                                             pattern instanceof PsiDeconstructionPattern dec &&
+                                             JavaPsiPatternUtil.hasUnconditionalComponents(dec);
     DfaAnchor instanceofAnchor = potentiallyRedundantInstanceOf ? new JavaExpressionAnchor(expression) : null;
     DeferredOffset endPatternOffset = new DeferredOffset();
     processPattern(pattern, pattern, checkType, instanceofAnchor, endPatternOffset);

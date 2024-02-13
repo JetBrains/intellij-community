@@ -488,8 +488,6 @@ public class EquivalenceChecker {
     if (pattern1 == null || pattern2 == null) {
       return EXACT_MISMATCH;
     }
-    pattern1 = pattern1;
-    pattern2 = pattern2;
     if (pattern1 instanceof PsiUnnamedPattern && pattern2 instanceof PsiUnnamedPattern) {
       return EXACT_MATCH;
     }
@@ -623,9 +621,6 @@ public class EquivalenceChecker {
   }
 
   private static PsiCaseLabelElement skipParenthesizedElementDown(@Nullable PsiCaseLabelElement element) {
-    if (element instanceof PsiPattern) {
-      return (PsiPattern)element;
-    }
     if (element instanceof PsiExpression) {
       return PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
     }
