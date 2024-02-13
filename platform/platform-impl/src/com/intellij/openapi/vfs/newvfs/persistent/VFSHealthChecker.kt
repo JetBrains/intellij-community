@@ -124,7 +124,7 @@ private class VFSHealthCheckServiceStarter : ApplicationInitializedListener {
 
           delay(checkingPeriod)
 
-          //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10sec long once/(few) hours,
+          //MAYBE RC: this seems useless -- i.e. VFS h-check is ~10-60sec long once/(few) hours,
           //          which is negligible comparing to (GC/JIT/bg tasks) load accumulated
           //          over the same few hours
           if (PowerStatus.getPowerStatus() == PowerStatus.BATTERY) {
@@ -362,7 +362,6 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
           checkSingleFileTask()
         }
       }
-      log.info("${fileRecords.recordsCount()} file records checked: ${childrenChecked} children, ${notNullContentIds} contents")
     }
   }
 
