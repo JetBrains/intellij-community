@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.roots
 
 import com.intellij.conversion.*
@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.utils.PathUtil
-import java.util.*
 
 private val rootTypesToMigrate: List<JpsModuleSourceRootType<*>> = listOf(
     JavaSourceRootType.SOURCE,
@@ -72,15 +71,15 @@ internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
                 val classRoots = contextImpl.getClassRootUrls(element, moduleSettings)
                 val jarFileSystem = JarFileSystem.getInstance()
                 return classRoots
-                    .map {
+                    .mapNotNull {
                         if (it.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
                             jarFileSystem.findFileByPath(it.substring(JarFileSystem.PROTOCOL_PREFIX.length))
                         } else {
                             null
                         }
                     }
-                    .filter(Objects::nonNull)
-                    .toArray{ arrayOfNulls<VirtualFile>(it) }
+                    .toList()
+                    .toTypedArray()
             }
         }
 
@@ -108,7 +107,7 @@ internal class KotlinNonJvmSourceRootConverterProvider : ConverterProvider() {
 
     class ConverterImpl(private val context: ConversionContext) : ProjectConverter() {
         private val projectLibrariesByName by lazy {
-            context.projectLibrariesSettings.projectLibraries.groupBy { it.getAttributeValue(NAME_ATTRIBUTE) }
+            context.projectLibrarySettings.projectLibraries.groupBy { it.getAttributeValue(NAME_ATTRIBUTE) }
         }
 
         private fun findGlobalLibrary(name: String) = LibraryTablesRegistrar.getInstance().libraryTable.getLibraryByName(name)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.impl
 
 import com.intellij.conversion.*
@@ -24,7 +24,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal class ConversionServiceImpl : ConversionService() {
+private class ConversionServiceImpl : ConversionService() {
   override suspend fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
     try {
       val context = ConversionContextImpl(projectPath)
@@ -184,7 +184,7 @@ private suspend fun isConversionNeeded(context: ConversionContextImpl): List<Con
       LOG.debug("conversion will be performed because no information about project files")
     }
     else {
-      val newMap = CoroutineTracerShim.coroutineTracer.span("conversion: project files collecting") { context.allProjectFiles }
+      val newMap = CoroutineTracerShim.coroutineTracer.span("conversion: project files collecting") { context.getAllProjectFiles() }
       LOG.debug("Checking project files")
       val iterator = Object2LongMaps.fastIterator(newMap)
       while (iterator.hasNext()) {

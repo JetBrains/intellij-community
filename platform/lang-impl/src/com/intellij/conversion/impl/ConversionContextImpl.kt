@@ -1,25 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.conversion.impl
 
-import com.intellij.application.options.PathMacrosImpl.Companion.getInstanceEx
+import com.intellij.application.options.PathMacrosImpl
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.conversion.*
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.highlighter.WorkspaceFileType
-import com.intellij.ide.impl.convert.JDomConvertingUtil
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
@@ -28,7 +24,6 @@ import org.jdom.JDOMException
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.io.File
 import java.io.IOException
 import java.nio.file.*
@@ -42,27 +37,26 @@ private val LOG = logger<ConversionContextImpl>()
 
 class ConversionContextImpl(projectPath: Path) : ConversionContext {
   private val fileToSettings = HashMap<Path, SettingsXmlFile>()
-  private var storageScheme: StorageScheme? = null
-  private var projectBaseDir: Path? = null
+  private var storageScheme: StorageScheme
+  private val projectBaseDir: Path
   private val projectFile = SettingsXmlFile(projectPath)
-  private var workspaceFile: SettingsXmlFile? = null
+  private val workspaceFile: SettingsXmlFile
 
   @Volatile
-  private var myModuleFiles: List<Path>? = null
+  private var moduleFiles: List<Path>? = null
   val nonExistingModuleFiles: List<Path> = ArrayList()
   private val fileToModuleSettings = HashMap<Path, ModuleSettingsImpl>()
   private val nameToModuleSettings = HashMap<String, ModuleSettingsImpl>()
   private var runManagerSettings: RunManagerSettingsImpl? = null
-  private var settingsBaseDir: Path? = null
+  private val settingsBaseDir: Path?
   private var compilerManagerSettings: ComponentManagerSettings? = null
   private var projectRootManagerSettings: ComponentManagerSettings? = null
-  private var moduleSettings: SettingsXmlFile? = null
   private var projectLibrariesSettings: MultiFilesSettings? = null
-  private var artifactsSettings: MultiFilesSettings? = null
+  private var artifactSettings: MultiFilesSettings? = null
 
-  private val conversionResult: NotNullLazyValue<CachedConversionResult>
+  private val conversionResult: Lazy<CachedConversionResult>
 
-  private var moduleListFile: Path? = null
+  private var moduleListFile: Path
 
   init {
     if (projectPath.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
@@ -70,7 +64,8 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
       projectBaseDir = projectPath.parent
       moduleListFile = projectPath
       workspaceFile = SettingsXmlFile(projectPath.parent.resolve(
-        Strings.trimEnd(projectPath.fileName.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) + WorkspaceFileType.DOT_DEFAULT_EXTENSION))
+        projectPath.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION) + WorkspaceFileType.DOT_DEFAULT_EXTENSION))
+      settingsBaseDir = null
     }
     else {
       storageScheme = StorageScheme.DIRECTORY_BASED
@@ -80,55 +75,32 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
       workspaceFile = SettingsXmlFile(settingsBaseDir!!.resolve("workspace.xml"))
     }
 
-    conversionResult = NotNullLazyValue.createValue {
+    conversionResult = lazy(LazyThreadSafetyMode.NONE) {
       try {
-        return@createValue CachedConversionResult.load(CachedConversionResult.getConversionInfoFile(projectFile.path), projectBaseDir!!)
+        return@lazy CachedConversionResult.load(CachedConversionResult.getConversionInfoFile(projectFile.path), projectBaseDir)
       }
       catch (e: Exception) {
         LOG.error(e)
-        return@createValue CachedConversionResult.createEmpty()
+        return@lazy CachedConversionResult.createEmpty()
       }
     }
   }
 
   companion object {
+    @JvmStatic
     fun collapsePath(path: String, moduleSettings: ComponentManagerSettings): String {
       val map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.path.parent)
       return map.substitute(path, SystemInfoRt.isFileSystemCaseSensitive)
     }
-
-    private fun createCollapseMacroMap(macroName: String, dir: Path): ReplacePathToMacroMap {
-      val map = ReplacePathToMacroMap()
-      map.addMacroReplacement(FileUtilRt.toSystemIndependentName(dir.toAbsolutePath().toString()), macroName)
-      getInstanceEx().addMacroReplacements(map)
-      return map
-    }
-
-    @Throws(CannotConvertException::class)
-    private fun findGlobalLibraryElement(name: String): Element? {
-      val file = PathManager.getOptionsFile("applicationLibraries")
-      if (file.exists()) {
-        val root = JDomConvertingUtil.load(file.toPath())
-        val libraryTable = JDomSerializationUtil.findComponent(root, "libraryTable")
-        if (libraryTable != null) {
-          return findLibraryInTable(libraryTable, name)
-        }
-      }
-      return null
-    }
-
-    private fun findLibraryInTable(tableElement: Element, name: String): Element? {
-      val filter = JDomConvertingUtil.createElementWithAttributeFilter(JpsLibraryTableSerializer.LIBRARY_TAG,
-                                                                       JpsLibraryTableSerializer.NAME_ATTRIBUTE, name)
-      return JDomConvertingUtil.findChild(tableElement, filter)
-    }
   }
 
-  @JvmOverloads
   @Throws(CannotConvertException::class, IOException::class)
-  fun saveConversionResult(allProjectFiles: Object2LongMap<String?> = this.allProjectFiles) {
-    CachedConversionResult.saveConversionResult(allProjectFiles, CachedConversionResult.getConversionInfoFile(projectFile.path),
-                                                projectBaseDir!!)
+  fun saveConversionResult(allProjectFiles: Object2LongMap<String?> = this.getAllProjectFiles()) {
+    CachedConversionResult.saveConversionResult(
+      allProjectFiles,
+      CachedConversionResult.getConversionInfoFile(projectFile.path),
+      projectBaseDir,
+    )
   }
 
   val projectFileTimestamps: Object2LongMap<String>
@@ -137,82 +109,76 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   val appliedConverters: Set<String>
     get() = conversionResult.value.appliedConverters
 
-  @get:Throws(CannotConvertException::class)
-  val allProjectFiles: Object2LongMap<String?>
-    get() {
-      if (storageScheme == StorageScheme.DEFAULT) {
-        val moduleFiles = modulePaths
-        val totalResult: Object2LongMap<String?> = Object2LongOpenHashMap(moduleFiles.size + 2)
-        addLastModifiedTme(projectFile.path, totalResult)
-        addLastModifiedTme(workspaceFile!!.path, totalResult)
-        addLastModifiedTime(moduleFiles, totalResult)
-        return totalResult
-      }
-
-      val dotIdeaDirectory = settingsBaseDir!!
-      val dirs = listOf(
-        dotIdeaDirectory,
-        dotIdeaDirectory.resolve("libraries"),
-        dotIdeaDirectory.resolve("artifacts"),
-        dotIdeaDirectory.resolve("runConfigurations")
-      )
-
-      val executor: Executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Conversion: Project Files Collecting", 3, false)
-      val futures: MutableList<CompletableFuture<List<Object2LongMap<String>>>> = ArrayList(dirs.size + 1)
-      futures.add(CompletableFuture.supplyAsync(
-        { this.modulePaths }, executor)
-                    .thenComposeAsync<List<Object2LongMap<String>>>(
-                      { moduleFiles: List<Path> ->
-                        val moduleCount = moduleFiles.size
-                        if (moduleCount < 50) {
-                          return@thenComposeAsync computeModuleFilesTimestamp(moduleFiles, executor)
-                        }
-
-                        val secondOffset = moduleCount / 2
-                        computeModuleFilesTimestamp(moduleFiles.subList(0, secondOffset), executor)
-                          .thenCombine(
-                            computeModuleFilesTimestamp(moduleFiles.subList(secondOffset, moduleCount), executor),
-                            BiFunction { list1, list2 ->
-                              ContainerUtil.concat(list1, list2)
-                            })
-                      }, executor))
-
-      for (subDirName in dirs) {
-        futures.add(CompletableFuture.supplyAsync(
-          {
-            val result = CachedConversionResult.createPathToLastModifiedMap()
-            addXmlFilesFromDirectory(subDirName, result)
-            listOf(result)
-          }, executor))
-      }
-
-      val totalResult = CachedConversionResult.createPathToLastModifiedMap()
-      try {
-        for (future in futures) {
-          for (result in future.get()) {
-            totalResult.putAll(result)
-          }
-        }
-      }
-      catch (e: ExecutionException) {
-        throw CannotConvertException(e)
-      }
-      catch (e: InterruptedException) {
-        throw CannotConvertException(e)
-      }
+  @Throws(CannotConvertException::class)
+  fun getAllProjectFiles(): Object2LongMap<String?> {
+    if (storageScheme == StorageScheme.DEFAULT) {
+      val moduleFiles = modulePaths
+      val totalResult = Object2LongOpenHashMap<String>(moduleFiles.size + 2)
+      addLastModifiedTme(projectFile.path, totalResult)
+      addLastModifiedTme(workspaceFile.path, totalResult)
+      addLastModifiedTime(moduleFiles, totalResult)
       return totalResult
     }
 
-  override fun getProjectBaseDir(): Path {
-    return projectBaseDir!!
+    val dotIdeaDirectory = settingsBaseDir!!
+    val dirs = listOf(
+      dotIdeaDirectory,
+      dotIdeaDirectory.resolve("libraries"),
+      dotIdeaDirectory.resolve("artifacts"),
+      dotIdeaDirectory.resolve("runConfigurations")
+    )
+
+    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Conversion: Project Files Collecting", 3, false)
+    val futures = ArrayList<CompletableFuture<List<Object2LongMap<String>>>>(dirs.size + 1)
+    futures.add(CompletableFuture.supplyAsync({ this.modulePaths }, executor)
+                  .thenComposeAsync(
+                    { moduleFiles ->
+                      val moduleCount = moduleFiles.size
+                      if (moduleCount < 50) {
+                        return@thenComposeAsync computeModuleFilesTimestamp(moduleFiles, executor)
+                      }
+
+                      val secondOffset = moduleCount / 2
+                      computeModuleFilesTimestamp(moduleFiles.subList(0, secondOffset), executor)
+                        .thenCombine(
+                          computeModuleFilesTimestamp(moduleFiles.subList(secondOffset, moduleCount), executor),
+                          BiFunction { list1, list2 -> list1 + list2 })
+                    }, executor))
+
+    for (subDirName in dirs) {
+      futures.add(CompletableFuture.supplyAsync(
+        {
+          val result = CachedConversionResult.createPathToLastModifiedMap()
+          addXmlFilesFromDirectory(subDirName, result)
+          listOf(result)
+        }, executor))
+    }
+
+    val totalResult = CachedConversionResult.createPathToLastModifiedMap()
+    try {
+      for (future in futures) {
+        for (result in future.get()) {
+          totalResult.putAll(result)
+        }
+      }
+    }
+    catch (e: ExecutionException) {
+      throw CannotConvertException(e)
+    }
+    catch (e: InterruptedException) {
+      throw CannotConvertException(e)
+    }
+    return totalResult
   }
+
+  override fun getProjectBaseDir(): Path = projectBaseDir
 
   @Throws(CannotConvertException::class)
   override fun getModulePaths(): List<Path> {
-    var result = myModuleFiles
+    var result = moduleFiles
     if (result == null) {
       result = try {
-        findModuleFiles(JDOMUtil.load(moduleListFile!!))
+        findModuleFiles(JDOMUtil.load(moduleListFile))
       }
       catch (e: NoSuchFileException) {
         emptyList()
@@ -223,7 +189,7 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
       catch (e: IOException) {
         throw CannotConvertException(moduleListFile.toString() + ": " + e.message, e)
       }
-      myModuleFiles = result
+      moduleFiles = result
     }
     return result!!
   }
@@ -236,12 +202,12 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
     }
 
     val macros = createExpandMacroMap()
-    val files: MutableList<Path> = ArrayList()
+    val files = ArrayList<Path>()
     for (module in modules.getChildren(JpsProjectLoader.MODULE_TAG)) {
       var filePath = module.getAttributeValue(JpsProjectLoader.FILE_PATH_ATTRIBUTE)
       if (filePath != null) {
         filePath = macros.substitute(filePath, true)
-        files.add(Paths.get(filePath))
+        files.add(Path.of(filePath))
       }
     }
     return files
@@ -266,35 +232,19 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   }
 
   override fun collapsePath(path: String): String {
-    val map = createCollapseMacroMap(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectBaseDir!!)
+    val map = createCollapseMacroMap(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectBaseDir)
     return map.substitute(path, SystemInfoRt.isFileSystemCaseSensitive)
-  }
-
-  override fun getLibraryClassRoots(name: String, level: String): Collection<Path> {
-    try {
-      var libraryElement: Element? = null
-      if (LibraryTablesRegistrar.PROJECT_LEVEL == level) {
-        libraryElement = findProjectLibraryElement(name)
-      }
-      else if (LibraryTablesRegistrar.APPLICATION_LEVEL == level) {
-        libraryElement = findGlobalLibraryElement(name)
-      }
-      return if (libraryElement == null) emptyList() else getClassRootPaths(libraryElement, null)
-    }
-    catch (e: CannotConvertException) {
-      return emptyList()
-    }
   }
 
   fun getClassRoots(libraryElement: Element, moduleSettings: ModuleSettings?): List<File> {
     return getClassRootUrls(libraryElement, moduleSettings)
-      .map { File(Strings.trimEnd(URLUtil.extractPath(it), URLUtil.JAR_SEPARATOR)) }
+      .map { File(URLUtil.extractPath(it).removeSuffix(URLUtil.JAR_SEPARATOR)) }
       .toList()
   }
 
   fun getClassRootPaths(libraryElement: Element, moduleSettings: ModuleSettings?): List<Path> {
     return getClassRootUrls(libraryElement, moduleSettings)
-      .map { Path.of(Strings.trimEnd(URLUtil.extractPath(it), URLUtil.JAR_SEPARATOR)) }
+      .map { Path.of(URLUtil.extractPath(it).removeSuffix(URLUtil.JAR_SEPARATOR)) }
       .toList()
   }
 
@@ -322,14 +272,7 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
     return projectRootManagerSettings
   }
 
-  override fun getModulesSettings(): ComponentManagerSettings {
-    if (moduleSettings == null) {
-      moduleSettings = createProjectSettings("modules.xml")
-    }
-    return moduleSettings!!
-  }
-
-  override fun createProjectSettings(fileName: String): SettingsXmlFile {
+  override fun createProjectSettings(fileName: String): ComponentManagerSettings {
     return if (storageScheme == StorageScheme.DEFAULT) {
       projectFile
     }
@@ -338,65 +281,49 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
     }
   }
 
-  @Throws(CannotConvertException::class)
-  private fun findProjectLibraryElement(name: String): Element? {
-    val libraries = projectLibrariesSettings.projectLibraries
-    val filter = JDomConvertingUtil.createElementWithAttributeFilter(JpsLibraryTableSerializer.LIBRARY_TAG,
-                                                                     JpsLibraryTableSerializer.NAME_ATTRIBUTE, name)
-    return libraries.find(filter::test)
-  }
-
   private fun createExpandMacroMap(): ExpandMacroToPathMap {
     val macros = ExpandMacroToPathMap()
-    val projectDir = FileUtilRt.toSystemIndependentName(projectBaseDir!!.toAbsolutePath().toString())
+    val projectDir = FileUtilRt.toSystemIndependentName(projectBaseDir.toAbsolutePath().toString())
     macros.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectDir)
-    getInstanceEx().addMacroExpands(macros)
+    PathMacrosImpl.getInstanceEx().addMacroExpands(macros)
     return macros
   }
 
-  override fun getSettingsBaseDir(): Path? {
-    return settingsBaseDir
-  }
+  override fun getSettingsBaseDir(): Path? = settingsBaseDir
 
-  override fun getProjectFile(): Path {
-    return projectFile.path
-  }
+  override fun getProjectFile(): Path = projectFile.path
 
-  override fun getProjectSettings(): ComponentManagerSettings {
-    return projectFile
-  }
+  override fun getProjectSettings(): ComponentManagerSettings = projectFile
 
   @Throws(CannotConvertException::class)
-  override fun getRunManagerSettings(): RunManagerSettingsImpl {
+  internal fun getRunManagerSettings(): RunManagerSettingsImpl {
     if (runManagerSettings == null) {
       runManagerSettings = if (storageScheme == StorageScheme.DEFAULT) {
-        RunManagerSettingsImpl(workspaceFile!!, projectFile, null, this)
+        RunManagerSettingsImpl(workspaceFile, projectFile, null, this)
       }
       else {
-        RunManagerSettingsImpl(workspaceFile!!, null, settingsBaseDir!!.resolve("runConfigurations"), this)
+        RunManagerSettingsImpl(workspaceFile, null, settingsBaseDir!!.resolve("runConfigurations"), this)
       }
     }
     return runManagerSettings!!
   }
 
-  override fun getWorkspaceSettings(): WorkspaceSettings {
-    return workspaceFile!!
-  }
+  override fun getWorkspaceSettings(): WorkspaceSettings = workspaceFile
 
   @Throws(CannotConvertException::class)
   override fun getModuleSettings(moduleFile: Path): ModuleSettings {
-    var settings = fileToModuleSettings[moduleFile]
+    var settings = fileToModuleSettings.get(moduleFile)
     if (settings == null) {
       settings = ModuleSettingsImpl(moduleFile, this)
-      fileToModuleSettings[moduleFile] = settings
-      nameToModuleSettings[settings.getModuleName()] = settings
+      fileToModuleSettings.put(moduleFile, settings)
+      nameToModuleSettings.put(settings.moduleName, settings)
     }
     return settings
   }
 
   override fun getModuleSettings(moduleName: String): ModuleSettings? {
     if (!nameToModuleSettings.containsKey(moduleName)) {
-      for (moduleFile in myModuleFiles!!) {
+      for (moduleFile in moduleFiles!!) {
         try {
           getModuleSettings(moduleFile)
         }
@@ -404,23 +331,20 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
         }
       }
     }
-    return nameToModuleSettings[moduleName]
+    return nameToModuleSettings.get(moduleName)
   }
 
-  override fun getStorageScheme(): StorageScheme {
-    return storageScheme!!
-  }
+  override fun getStorageScheme(): StorageScheme = storageScheme
 
-  @Throws(IOException::class)
   fun saveFiles(files: Collection<Path>) {
     for (file in files) {
-      var xmlFile = fileToSettings[file]
+      var xmlFile = fileToSettings.get(file)
       if (xmlFile == null) {
-        xmlFile = fileToModuleSettings[file]
+        xmlFile = fileToModuleSettings.get(file)
       }
       xmlFile?.save()
     }
-    if (files.contains(workspaceFile!!.path)) {
+    if (files.contains(workspaceFile.path)) {
       workspaceFile.save()
     }
     if (files.contains(projectFile.path)) {
@@ -429,47 +353,51 @@ class ConversionContextImpl(projectPath: Path) : ConversionContext {
   }
 
   @Throws(CannotConvertException::class)
-  fun getOrCreateFile(file: Path): SettingsXmlFile {
-    return fileToSettings.computeIfAbsent(file) { file: Path? ->
-      SettingsXmlFile(
-        file!!)
-    }
+  internal fun getOrCreateFile(file: Path): SettingsXmlFile {
+    return fileToSettings.computeIfAbsent(file) { SettingsXmlFile(it) }
   }
 
+  override fun getProjectLibrarySettings(): ProjectLibrariesSettings = doGetProjectLibrarySettings()
+
   @Throws(CannotConvertException::class)
-  override fun getProjectLibrariesSettings(): MultiFilesSettings {
+  internal fun doGetProjectLibrarySettings(): MultiFilesSettings {
     if (projectLibrariesSettings == null) {
-      projectLibrariesSettings = if (storageScheme == StorageScheme.DEFAULT
-      ) MultiFilesSettings(projectFile, null, this)
-      else MultiFilesSettings(null, settingsBaseDir!!.resolve("libraries"), this)
+      projectLibrariesSettings = if (storageScheme == StorageScheme.DEFAULT) {
+        MultiFilesSettings(projectFile, null, this)
+      }
+      else {
+        MultiFilesSettings(null, settingsBaseDir!!.resolve("libraries"), this)
+      }
     }
     return projectLibrariesSettings!!
   }
 
   @Throws(CannotConvertException::class)
-  override fun getArtifactsSettings(): MultiFilesSettings {
-    if (artifactsSettings == null) {
-      artifactsSettings = if (storageScheme == StorageScheme.DEFAULT
-      ) MultiFilesSettings(projectFile, null, this)
-      else MultiFilesSettings(null, settingsBaseDir!!.resolve("artifacts"), this)
+  internal fun getArtifactSettings(): MultiFilesSettings {
+    if (artifactSettings == null) {
+      artifactSettings = if (storageScheme == StorageScheme.DEFAULT) {
+        MultiFilesSettings(projectFile, null, this)
+      }
+      else {
+        MultiFilesSettings(null, settingsBaseDir!!.resolve("artifacts"), this)
+      }
     }
-    return artifactsSettings!!
+    return artifactSettings!!
   }
 }
 
 private fun computeModuleFilesTimestamp(moduleFiles: List<Path>, executor: Executor): CompletableFuture<List<Object2LongMap<String>>> {
-  return CompletableFuture.supplyAsync(
-    {
-      val result = Object2LongOpenHashMap<String>(moduleFiles.size)
-      result.defaultReturnValue(-1)
-      addLastModifiedTime(moduleFiles, result)
-      listOf(result)
-    }, executor)
+  return CompletableFuture.supplyAsync({
+                                         val result = Object2LongOpenHashMap<String>(moduleFiles.size)
+                                         result.defaultReturnValue(-1)
+                                         addLastModifiedTime(moduleFiles, result)
+                                         listOf(result)
+                                       }, executor)
 }
 
 private fun addLastModifiedTime(moduleFiles: List<Path>, result: Object2LongMap<String?>) {
   for (file in moduleFiles) {
-    addLastModifiedTme(file, result)
+    addLastModifiedTme(file = file, files = result)
   }
 }
 
@@ -485,8 +413,8 @@ private fun addXmlFilesFromDirectory(dir: Path, result: Object2LongMap<String>) 
   try {
     Files.newDirectoryStream(dir).use { children ->
       for (child in children) {
-        val childPath = child.toString()
-        if (!childPath.endsWith(".xml") || child.fileName.toString().startsWith(".")) {
+        val fileName = child.fileName.toString()
+        if (!fileName.endsWith(".xml") || fileName.startsWith(".")) {
           continue
         }
 
@@ -501,7 +429,7 @@ private fun addXmlFilesFromDirectory(dir: Path, result: Object2LongMap<String>) 
           continue
         }
 
-        result.put(childPath, attributes.lastModifiedTime().to(TimeUnit.SECONDS))
+        result.put(child.toString(), attributes.lastModifiedTime().to(TimeUnit.SECONDS))
       }
     }
   }
@@ -512,4 +440,11 @@ private fun addXmlFilesFromDirectory(dir: Path, result: Object2LongMap<String>) 
   catch (e: IOException) {
     LOG.warn(e)
   }
+}
+
+private fun createCollapseMacroMap(macroName: String, dir: Path): ReplacePathToMacroMap {
+  val map = ReplacePathToMacroMap()
+  map.addMacroReplacement(FileUtilRt.toSystemIndependentName(dir.toAbsolutePath().toString()), macroName)
+  PathMacrosImpl.getInstanceEx().addMacroReplacements(map)
+  return map
 }

@@ -2,7 +2,6 @@
 package com.intellij.ide.impl.convert;
 
 import com.intellij.conversion.CannotConvertException;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.Constants;
@@ -51,11 +50,11 @@ public final class JDomConvertingUtil {
     return element -> elementName.equals(element.getName());
   }
 
-  public static List<Element> removeChildren(final Element element, final Condition<? super Element> filter) {
+  public static List<Element> removeChildren(final Element element, Predicate<? super Element> filter) {
     List<Element> toRemove = new ArrayList<>();
     final List<Element> list = element.getChildren();
     for (Element e : list) {
-      if (filter.value(e)) {
+      if (filter.test(e)) {
         toRemove.add(e);
       }
     }
@@ -65,10 +64,10 @@ public final class JDomConvertingUtil {
     return toRemove;
   }
 
-  public static @Nullable Element findChild(Element parent, final Condition<? super Element> filter) {
+  public static @Nullable Element findChild(Element parent, Predicate<? super Element> filter) {
     final List<Element> list = parent.getChildren();
     for (Element e : list) {
-      if (filter.value(e)) {
+      if (filter.test(e)) {
         return e;
       }
     }
