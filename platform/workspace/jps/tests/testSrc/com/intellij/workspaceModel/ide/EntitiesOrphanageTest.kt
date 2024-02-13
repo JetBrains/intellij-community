@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.EDT
@@ -16,6 +16,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.waitUntil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -127,8 +128,10 @@ class EntitiesOrphanageTest {
       .entities<ModuleEntity>().single().contentRoots.single()
     assertEquals(url, contentRoots.url)
 
-    val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
-    assertEquals(0, orphanModules.size)
+    waitUntil {
+      val orphanModules = EntitiesOrphanage.getInstance(projectModel.project).currentSnapshot.entities<ModuleEntity>().toList()
+      0 == orphanModules.size
+    }
   }
 
   @ParameterizedTest
@@ -683,9 +686,8 @@ class EntitiesOrphanageTest {
     assertEquals(0, orphanModules.size)
   }
 
-  @ParameterizedTest
-  @ValueSource(booleans = [true, false])
-  fun `adding exclude root to removed module`(orphanBeforeUpdate: Boolean) = timeoutRunBlocking {
+  @Test
+  fun `adding exclude root to removed module`() = timeoutRunBlocking {
     val url = virtualFileManager.getOrCreateFromUri("/123")
     val excludeUrl = virtualFileManager.getOrCreateFromUri("/123/source1")
     writeAction {

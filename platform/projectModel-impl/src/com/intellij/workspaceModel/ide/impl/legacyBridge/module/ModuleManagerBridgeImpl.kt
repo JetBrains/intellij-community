@@ -83,6 +83,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
                                        moduleRootListenerBridge: ModuleRootListenerBridge) : ModuleManagerEx(), Disposable {
   private val moduleNameToUnloadedModuleDescription: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
 
+  private val moduleNamesQuery = entities<ModuleEntity>().map { it.name }
+
   init {
     // default project doesn't have modules
     if (!project.isDefault) {
@@ -90,7 +92,41 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       busConnection.subscribe(WorkspaceModelTopics.CHANGED, LegacyProjectModelListenersBridge(project = project,
                                                                                               moduleModificationTracker = this,
                                                                                               moduleRootListenerBridge = moduleRootListenerBridge))
-      busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
+
+      if (useNewWorkspaceModelApiForUnloadedModules()) {
+        // [Alex Plate] DO NOT TURN IT ON unless refactored
+        // This function requires an empty list in case there are no unloaded modules, or a list of
+        //   loaded modules otherwise. While it's easy to get a list of loaded modules from the workspace model,
+        //   the list of unloaded modules, or just the fact that the system has unloaded modules, can be obtained only from
+        //   unloaded entity storage.
+        //
+        // At the moment, `setLoadedModules` function is called from different places. It works fine with blocking API, but it causes
+        //   racing when using async API like here.
+        //   For example, we can set the list of loaded modules A and B, then unload some module A. For proper work, we should firstly call
+        //   setLoadedModules(emptyList), then setLoadedModules(B).
+        //   However, if the API is async, the coroutine may delay and we'll firstly call for setLoadedModules(B), and
+        //   then setLoadedModules(emptyList).
+        // With the new API, the proper fix would be to have all information in one storage to avoid synchronization issues. However, at the
+        //   moment it's not possible to store unloaded modules under the entity storage. However, for this calculation we only need to know
+        //   if there exist at least one unloaded modules. So, we can create a flag entity in workspace model that will exist if any
+        //   of the modules are unloaded. This flag will be used for reactive calculation of the loaded list.
+        //
+        // Current problems that prevent this implementation:
+        // - Such calculation will requre two entities, however at the moment we can fetch only an entity of a single type
+        // - `setUnloadedModules` logic has some additional logic between `setLoadedModules` and updating the workspace model. This might
+        //   be a problem.
+        coroutineScope.launch {
+          project.workspaceModel.internal.flowOfQuery(moduleNamesQuery).collect {
+            delay(1000) // TODO: Get rid of it, but don't forget to test with it
+            if (moduleNameToUnloadedModuleDescription.isNotEmpty()) {
+              AutomaticModuleUnloader.getInstance(project).setLoadedModules(it)
+            }
+          }
+        }
+      } else {
+        busConnection.subscribe(WorkspaceModelTopics.CHANGED, LoadedModulesListUpdater())
+      }
+
       busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelUnloadedStorageChangeListener {
         override fun changed(event: VersionedStorageChange) {
           for (change in event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()) {
@@ -103,6 +139,21 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       })
     }
   }
+
+  private inner class LoadedModulesListUpdater : WorkspaceModelChangeListener {
+    override fun changed(event: VersionedStorageChange) {
+      if (event.getChanges(ModuleEntity::class.java).isNotEmpty() && moduleNameToUnloadedModuleDescription.isNotEmpty()) {
+        val moduleNames = if (useQueryCacheWorkspaceModelApi()) {
+          event.storageAfter.cached(moduleNamesQuery).toList()
+        }
+        else {
+          modules.map { it.name }
+        }
+        AutomaticModuleUnloader.getInstance(project).setLoadedModules(moduleNames)
+      }
+    }
+  }
+
 
   override fun dispose() {
     modules().forEach(Disposer::dispose)
@@ -267,8 +318,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   private val modulesArrayValue = CachedValue<Array<Module>> { storage ->
     modules(storage).toList().toTypedArray()
   }
-
-  private val moduleNamesQuery = entities<ModuleEntity>().map { it.name }
 
   override val modules: Array<Module>
     get() = entityStore.cachedValue(modulesArrayValue)
@@ -465,20 +514,6 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   ): ModuleBridge
 
   abstract fun initializeBridges(event: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage)
-
-  private inner class LoadedModulesListUpdater : WorkspaceModelChangeListener {
-    override fun changed(event: VersionedStorageChange) {
-      if (event.getChanges(ModuleEntity::class.java).isNotEmpty() && moduleNameToUnloadedModuleDescription.isNotEmpty()) {
-        val moduleNames = if (useQueryCacheWorkspaceModelApi()) {
-          event.storageAfter.cached(moduleNamesQuery).toList()
-        }
-        else {
-          modules.map { it.name }
-        }
-        AutomaticModuleUnloader.getInstance(project).setLoadedModules(moduleNames)
-      }
-    }
-  }
 
   companion object {
     @JvmStatic

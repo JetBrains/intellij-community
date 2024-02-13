@@ -23,6 +23,10 @@
                  description="Enables loading shared workspace model cache from ZIP archive"/>
     <registryKey key="ide.workspace.model.use.query.cache.api" defaultValue="false" restartRequired="true"
                  description="Enables various functionality in IDE to work via the query cache API for the workspace model"/>
+    <registryKey key="ide.workspace.model.use.reactive.api" defaultValue="false" restartRequired="true"
+                 description="Enables various functionality in IDE to work via the new reactive API for the workspace model"/>
+    <registryKey key="ide.workspace.model.use.new.api.unloaded.modules" defaultValue="false" restartRequired="true"
+                 description="Enable work of unloaded modules via reactive read"/>
     <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.platform.workspace.jps.serialization.impl.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>

@@ -165,6 +165,8 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     SaveAndSyncHandler.getInstance().scheduleProjectSave(project, forceSavingAllSettings = true)
   }
 
+  override fun getLoadedModules(): Collection<String> = state.modules
+
   companion object {
     private val LOG = logger<AutomaticModuleUnloaderImpl>()
 

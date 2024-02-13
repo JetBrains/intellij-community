@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.module.AutomaticModuleUnloader
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
@@ -18,7 +19,10 @@ import com.intellij.project.TestProjectManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.*
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.configurationStore.copyFilesAndReloadProject
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.rules.TempDirectory
@@ -68,9 +72,108 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
     createModule(project, "c")
 
     val moduleFiles = createNewModuleFiles(listOf("d")) {}
+
+    waitUntil {
+      runCatching {
+        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+      }.isSuccess
+    }
+
     val newProject = reloadProjectWithNewModules(project, moduleFiles)
 
-    assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
+    waitUntil {
+      runCatching {
+        assertSameElements(ModuleManager.getInstance(newProject).unloadedModuleDescriptions.map { it.name }, "a", "d")
+      }.isSuccess
+    }
+  }
+
+  @Test
+  fun `check loaded modules state`() = runBlocking {
+    val project = createProject()
+    createModule(project, "a")
+    createModule(project, "b")
+    withContext(Dispatchers.EDT) {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+    }
+    assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b")
+    createModule(project, "c")
+
+    waitUntil {
+      runCatching {
+        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+      }.isSuccess
+    }
+
+    createModule(project, "x")
+
+    waitUntil {
+      runCatching {
+        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c", "x")
+      }.isSuccess
+    }
+  }
+
+  @Test
+  fun `loaded modules are empty if no modules are unloaded`() = timeoutRunBlocking {
+    val project = createProject()
+    assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+
+    createModule(project, "a")
+    createModule(project, "b")
+    waitUntil {
+      runCatching {
+        assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+      }.isSuccess
+    }
+
+    createModule(project, "c")
+
+    waitUntil {
+      runCatching {
+        assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+      }.isSuccess
+    }
+  }
+
+  @Test
+  fun `loaded modules list is updated when we set unloaded modules`() = timeoutRunBlocking {
+    val project = createProject()
+    createModule(project, "a")
+    createModule(project, "b")
+    createModule(project, "c")
+
+    assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+
+    withContext(Dispatchers.EDT) {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("a"))
+    }
+
+    waitUntil {
+      runCatching {
+        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "b", "c")
+      }.isSuccess
+    }
+
+    withContext(Dispatchers.EDT) {
+      ModuleManager.getInstance(project).setUnloadedModules(listOf("a", "b"))
+    }
+
+    waitUntil {
+      runCatching {
+        assertSameElements(AutomaticModuleUnloader.getInstance(project).getLoadedModules(), "c")
+      }.isSuccess
+    }
+
+    withContext(Dispatchers.EDT) {
+      ModuleManager.getInstance(project).setUnloadedModules(emptyList())
+    }
+
+    waitUntil {
+      runCatching {
+        assertEmpty(AutomaticModuleUnloader.getInstance(project).getLoadedModules())
+      }.isSuccess
+    }
   }
 
   @Test
@@ -169,10 +272,10 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
 
   private suspend fun doTest(project: Project,
-                     initiallyUnloaded: String,
-                     newModulesName: List<String>,
-                     setup: (Map<String, Module>) -> Unit,
-                     vararg expectedUnloadedModules: String) {
+                             initiallyUnloaded: String,
+                             newModulesName: List<String>,
+                             setup: (Map<String, Module>) -> Unit,
+                             vararg expectedUnloadedModules: String) {
     val moduleManager = ModuleManager.getInstance(project)
     withContext(Dispatchers.EDT) {
       moduleManager.setUnloadedModules(listOf(initiallyUnloaded))

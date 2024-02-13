@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module
 
 import com.intellij.openapi.components.service
@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.util.Pair
-
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 interface AutomaticModuleUnloader {
@@ -17,6 +17,9 @@ interface AutomaticModuleUnloader {
    * The list of modules should be empty if all modules are loaded.
    */
   fun setLoadedModules(modules: Collection<String>)
+
+  @TestOnly
+  fun getLoadedModules(): Collection<String>
 
   companion object {
     fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
@@ -31,4 +34,5 @@ internal class DummyAutomaticModuleUnloader : AutomaticModuleUnloader {
   override fun updateUnloadedStorage(modulesToLoad: List<String>, modulesToUnload: List<String>) {}
 
   override fun setLoadedModules(modules: Collection<String>) {}
+  override fun getLoadedModules(): Collection<String> = emptyList()
 }

@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
@@ -14,12 +19,25 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import io.opentelemetry.api.metrics.Meter
-import java.util.concurrent.atomic.AtomicLong
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
+
+
+class OrphanageActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    if (useReactiveWorkspaceModelApi()) {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+      project.service<OrphanService>().start()
+    }
+  }
+}
 
 class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
   private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
@@ -29,7 +47,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
   @OptIn(EntityStorageInstrumentationApi::class)
   @RequiresWriteLock
   override fun update(updater: (MutableEntityStorage) -> Unit) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(before)
@@ -76,9 +94,67 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
   }
 }
 
+@Service(Service.Level.PROJECT)
+class OrphanService(
+  private val project: Project,
+  private val cs: CoroutineScope,
+) {
+
+  private val query = entities<ModuleEntity>()
+
+  fun start() {
+    cs.launch {
+      // flowOfDiff is used to process updates in batches
+      project.workspaceModel.internal.flowOfDiff(query).collect { diff ->
+        val added = diff.added
+
+        val updateTime = measureTimeMillis {
+          // Do not move to the field! They should be created every time! (or the code should be refactored)
+          val adders = listOf(
+            ContentRootAdder(),
+            SourceRootAdder(),
+            ExcludeRootAdder(),
+          )
+
+          val orphanage = EntitiesOrphanage.getInstance(project).currentSnapshot
+          val orphanModules = added.mapNotNull {
+            orphanage.resolve(it.symbolicId)?.let { om -> om to it }
+          }
+          adders.forEach { it.collectOrphanRoots(orphanModules) }
+
+          val needToUpdateOrphanage = adders.any { it.hasUpdatesForOrphanage() }
+          val needToUpdateWorkspaceModel = adders.any { it.hasUpdates() }
+          if (needToUpdateWorkspaceModel || needToUpdateOrphanage) {
+            writeAction {
+              if (needToUpdateOrphanage) {
+                EntitiesOrphanage.getInstance(project).update {
+                  adders.forEach { adder -> adder.cleanOrphanage(it) }
+                }
+              }
+              if (needToUpdateWorkspaceModel) {
+                project.workspaceModel.updateProjectModel("Move orphan elements") { storage ->
+                  adders.forEach { it.addToBuilder(storage) }
+                }
+              }
+            }
+          }
+        }
+
+        updateOrphanTimeMs.duration.addAndGet(updateTime)
+        if (updateTime > 1_000) LOG.warn("Orphanage update took $updateTime ms")
+      }
+    }
+  }
+
+  companion object {
+    private val LOG = logger<OrphanService>()
+  }
+}
+
 class OrphanListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
     if (!EntitiesOrphanage.isEnabled) return
+    if (useReactiveWorkspaceModelApi()) return
 
     val adders = listOf(
       ContentRootAdder(),
@@ -114,18 +190,19 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
   companion object {
     private val log = logger<OrphanListener>()
 
-    private val updateOrphanTimeMs = MillisecondsMeasurer()
-
-    private fun setupOpenTelemetryReporting(meter: Meter) {
-      val updateOrphanTimeCounter = meter.counterBuilder("workspaceModel.orphan.listener.update.ms").buildObserver()
-
-      meter.batchCallback({ updateOrphanTimeCounter.record(updateOrphanTimeMs.asMilliseconds()) }, updateOrphanTimeCounter)
-    }
-
     init {
       setupOpenTelemetryReporting(jpsMetrics.meter)
     }
   }
+}
+
+
+private val updateOrphanTimeMs = MillisecondsMeasurer()
+
+private fun setupOpenTelemetryReporting(meter: Meter) {
+  val updateOrphanTimeCounter = meter.counterBuilder("workspaceModel.orphan.listener.update.ms").buildObserver()
+
+  meter.batchCallback({ updateOrphanTimeCounter.record(updateOrphanTimeMs.asMilliseconds()) }, updateOrphanTimeCounter)
 }
 
 //--- Helper classes
@@ -137,6 +214,7 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
 private interface EntityAdder {
   fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>)
   fun hasUpdates(): Boolean
+  fun hasUpdatesForOrphanage(): Boolean
   fun addToBuilder(builder: MutableEntityStorage)
   fun cleanOrphanage(builder: MutableEntityStorage)
 }
@@ -165,10 +243,15 @@ private class ContentRootAdder : EntityAdder {
     return updates.isNotEmpty()
   }
 
+  override fun hasUpdatesForOrphanage(): Boolean {
+    return entitiesToRemoveFromOrphanage.isNotEmpty()
+  }
+
   override fun addToBuilder(builder: MutableEntityStorage) {
     log.info("Move content roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
-      builder.modifyEntity(snapshotModule) {
+      val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
+      builder.modifyEntity(resolvedModule) {
         this.contentRoots += rootsToAdd
       }
     }
@@ -222,12 +305,17 @@ private class SourceRootAdder : EntityAdder {
     return updates.isNotEmpty()
   }
 
+  override fun hasUpdatesForOrphanage(): Boolean {
+    return entitiesToRemoveFromOrphanage.isNotEmpty()
+  }
+
   @Suppress("DuplicatedCode")
   override fun addToBuilder(builder: MutableEntityStorage) {
     log.info("Move source roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
+      val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, sources) ->
-        val contentRoot = snapshotModule.contentRoots.find { it.url == root }!!
+        val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
         builder.modifyEntity(contentRoot) {
           this.sourceRoots += sources
         }
@@ -291,12 +379,17 @@ private class ExcludeRootAdder : EntityAdder {
     return updates.isNotEmpty()
   }
 
+  override fun hasUpdatesForOrphanage(): Boolean {
+    return entitiesToRemoveFromOrphanage.isNotEmpty()
+  }
+
   @Suppress("DuplicatedCode")
   override fun addToBuilder(builder: MutableEntityStorage) {
     log.info("Move exclude roots for ${updates.size} modules from orphanage to storage")
     updates.forEach { (snapshotModule, rootsToAdd) ->
+      val resolvedModule = builder.resolve(snapshotModule.symbolicId) ?: return@forEach
       rootsToAdd.forEach { (root, excludes) ->
-        val contentRoot = snapshotModule.contentRoots.find { it.url == root }!!
+        val contentRoot = resolvedModule.contentRoots.find { it.url == root }!!
         builder.modifyEntity(contentRoot) {
           this.excludedUrls += excludes
         }

@@ -6,3 +6,11 @@ import com.intellij.openapi.util.registry.Registry
 public fun useQueryCacheWorkspaceModelApi(): Boolean {
   return Registry.`is`("ide.workspace.model.use.query.cache.api")
 }
+
+public fun useReactiveWorkspaceModelApi(): Boolean {
+  return Registry.`is`("ide.workspace.model.use.reactive.api")
+}
+
+public fun useNewWorkspaceModelApiForUnloadedModules(): Boolean {
+  return Registry.`is`("ide.workspace.model.use.new.api.unloaded.modules", false)
+}
