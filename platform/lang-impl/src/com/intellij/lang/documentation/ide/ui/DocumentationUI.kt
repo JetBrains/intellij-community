@@ -57,7 +57,7 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
-  private val locationLabel: JLabel
+  val locationLabel: JLabel
   val fontSize: DocumentationFontSizeModel = DocumentationFontSizeModel()
   val switcherToolbarComponent: JComponent
 

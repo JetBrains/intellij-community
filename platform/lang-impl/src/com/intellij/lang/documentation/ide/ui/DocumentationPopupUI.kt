@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentOuterPadding
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
@@ -22,6 +23,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
@@ -32,8 +34,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emitAll
 import java.awt.BorderLayout
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.util.function.Supplier
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 internal class DocumentationPopupUI(
   private val project: Project,
@@ -86,6 +91,12 @@ internal class DocumentationPopupUI(
     component = DocumentationPopupPane(ui.scrollPane).also { pane ->
       pane.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
       pane.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
+      updateLocationLabelPadding(ui.locationLabel, corner)
+      corner.addComponentListener(object : ComponentAdapter() {
+        override fun componentResized(e: ComponentEvent?) {
+          updateLocationLabelPadding(ui.locationLabel, corner)
+        }
+      })
     }
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
@@ -134,6 +145,12 @@ internal class DocumentationPopupUI(
         updater()
       }
     }
+  }
+
+  private fun updateLocationLabelPadding(label: JLabel, toolbar: JComponent) {
+    label.border = JBUI.Borders.empty(
+      2, 2 + contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
+      2 + contentOuterPadding, 2 + (toolbar.width / JBUIScale.scale(1f)).toInt())
   }
 
   private fun detachUI(): DocumentationUI {
