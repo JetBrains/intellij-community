@@ -252,21 +252,26 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return bestIndex == -1 ? 0 : bestIndex;
   }
 
-  private static <T> @Nullable T getBestMatchingBreakpoint(int caretOffset, Iterator<@NotNull T> breakpoints, Function<T, @Nullable TextRange> rangeProvider) {
-    // Best matching = minimal by range of all breakpoints containing caret offset in their range.
+  private static <T> @Nullable T getClosestBreakpoint(int caretOffset, Iterator<@NotNull T> breakpoints, Function<T, @Nullable TextRange> rangeProvider) {
+    // Best matching = closest to the insertion point and minimal by range of all breakpoints or breakpoint variants
     T bestBreakpoint = null;
+    int bestDistance = Integer.MAX_VALUE;
     int bestRangeLength = Integer.MAX_VALUE;
     while (breakpoints.hasNext()) {
       var b = breakpoints.next();
       TextRange range = rangeProvider.apply(b);
       int rangeLength = range != null ? range.getLength() : Integer.MAX_VALUE;
       // note that range = null means "whole line"
-      if (range == null || range.contains(caretOffset)) {
-        if (bestBreakpoint == null || rangeLength < bestRangeLength) {
+      int distance = range == null ?
+                       0 :
+                       range.containsOffset(caretOffset) ? //include end offset
+                         0 :
+                         Math.min(Math.abs(range.getStartOffset() - caretOffset), Math.abs(range.getEndOffset() - caretOffset));
+      if (bestBreakpoint == null || distance < bestDistance || (distance == bestDistance && rangeLength < bestRangeLength)) {
           bestBreakpoint = b;
+          bestDistance = distance;
           bestRangeLength = rangeLength;
         }
-      }
     }
     return bestBreakpoint;
   }
@@ -290,7 +295,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       return variantsAsync.then(variantsWithAll -> {
         var variants = variantsWithAll.stream().filter(v -> !v.isMultiVariant()).toList();
 
-        var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,
+        var breakpointOrVariant = getClosestBreakpoint(caretOffset,
                                                             Stream.concat(
                                                               types.stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()),
                                                               variants.stream()).iterator(),
@@ -307,14 +312,12 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           return null;
         }
 
-        assert !variants.isEmpty();
-        XLineBreakpointType.XLineBreakpointVariant variant;
-        if (variants.size() > 1) {
-          variant = breakpointOrVariant instanceof XLineBreakpointType.XLineBreakpointVariant v ? v : variants.get(0);
-        } else {
-          variant = variants.get(0);
+        if (breakpointOrVariant instanceof XLineBreakpointType.XLineBreakpointVariant variant) {
+          return addLineBreakpoint(breakpointManager, variant, file, line, temporary);
         }
-        return addLineBreakpoint(breakpointManager, variant, file, line, temporary);
+
+        // No breakpoints and no possible variants. Return nothing
+        return null;
       });
       // FIXME[inline-bp]: review code below, I was able to loose something non-trivial there
     }
