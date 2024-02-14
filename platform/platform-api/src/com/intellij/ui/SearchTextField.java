@@ -475,4 +475,9 @@ public class SearchTextField extends JPanel {
       return ActionUpdateThread.BGT;
     }
   }
+
+  @Override
+  public void processInputMethodEvent(InputMethodEvent e) {
+    super.processInputMethodEvent(e);
+  }
 }

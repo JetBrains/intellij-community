@@ -17,10 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Collection;
 import java.util.stream.Stream;
 
@@ -182,6 +179,20 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
     return popup.dispatchKeyEvent(e);
   }
 
+  public boolean dispatchInputMethodEvent(InputMethodEvent e) {
+    JBPopup popup = getFocusedPopup();
+    if (popup == null) {
+      return false;
+    }
+
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (window instanceof Dialog && ((Dialog)window).isModal()) {
+      if (!SwingUtilities.isDescendingFrom(popup.getContent(), window)) return false;
+    }
+
+    return popup.dispatchInputMethodEvent(e);
+  }
+
   @Override
   public @Nullable Component getComponent() {
     return myStack.isEmpty() || myStack.peek().isDisposed() ? null : myStack.peek().getContent();
@@ -197,7 +208,16 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
    if (event instanceof KeyEvent) {
       return dispatchKeyEvent((KeyEvent) event);
    }
-    return event instanceof MouseEvent && dispatchMouseEvent(event);
+
+   if (event instanceof MouseEvent) {
+     return dispatchMouseEvent(event);
+   }
+
+   if (event instanceof InputMethodEvent) {
+     return dispatchInputMethodEvent((InputMethodEvent) event);
+   }
+
+   return false;
   }
 
   @Override

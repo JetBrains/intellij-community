@@ -23,6 +23,9 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
+import java.awt.event.InputMethodEvent;
+import java.awt.im.InputContext;
+import java.awt.im.InputMethodRequests;
 
 public final class ListWithFilter<T> extends JPanel implements DataProvider {
   private final JList<T> myList;
@@ -121,6 +124,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
 
     setBackground(background);
     //setFocusable(true);
+    enableInputMethods(true);
   }
 
   @Override
@@ -212,6 +216,28 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     protected void doActivate() {
       update();
     }
+
+    @Override
+    public InputMethodRequests getInputMethodRequests() {
+      return new SpeedSearchInputMethodRequests() {
+        @Override
+        protected InputMethodRequests getDelegate() {
+          if (searchFieldShown) {
+            return mySearchField.getTextEditor().getInputMethodRequests();
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        protected void ensurePopupIsShown() {
+          if (!searchFieldShown) {
+            mySearchField.setVisible(true);
+            searchFieldShown = true;
+          }
+        }
+      };
+    }
   }
 
   private void onSpeedSearchPatternChanged() {
@@ -248,5 +274,17 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
   @Override
   public void requestFocus() {
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
+  }
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    return mySpeedSearch.getInputMethodRequests();
+  }
+
+  @Override
+  public void processInputMethodEvent(InputMethodEvent e) {
+    mySearchField.getTextEditor().dispatchEvent(e);
+    mySpeedSearch.updatePattern(mySearchField.getText());
+    mySpeedSearch.update();
   }
 }

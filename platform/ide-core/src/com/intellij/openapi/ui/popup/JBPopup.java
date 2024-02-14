@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -221,6 +222,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * {@code false} otherwise
    */
   boolean dispatchKeyEvent(@NotNull KeyEvent e);
+
+  default boolean dispatchInputMethodEvent(@NotNull InputMethodEvent e) { return false; }
 
   /**
    * Whether it's OK to invoke one of the 'show' methods. Some implementation might prohibit it e.g. if the popup is shown already.

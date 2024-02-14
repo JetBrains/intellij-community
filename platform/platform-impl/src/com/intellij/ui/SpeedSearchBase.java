@@ -495,7 +495,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  protected void processInputMethodEvent(InputMethodEvent e) {
+  public void processInputMethodEvent(InputMethodEvent e) {
     if (!isSpeedSearchEnabled()) return;
 
     if (mySearchPopup == null && e.getID() == InputMethodEvent.INPUT_METHOD_TEXT_CHANGED) {

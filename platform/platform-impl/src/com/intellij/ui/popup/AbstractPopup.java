@@ -50,6 +50,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchInputMethodRequests;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -182,7 +183,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       return new SpeedSearchInputMethodRequests() {
         @Override
         protected InputMethodRequests getDelegate() {
-          if (searchFieldShown) {
+          if (searchFieldShown || mySpeedSearchAlwaysShown) {
             return mySpeedSearchPatternField.getTextEditor().getInputMethodRequests();
           } else {
             return null;
@@ -191,7 +192,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
         @Override
         protected void ensurePopupIsShown() {
-          if (!searchFieldShown) {
+          if (!searchFieldShown && !mySpeedSearchAlwaysShown) {
             setHeaderComponent(mySpeedSearchPatternField);
             searchFieldShown = true;
           }
@@ -2567,11 +2568,26 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (bar != null) consumer.consume(bar);
   }
 
+  @Override
   public final boolean dispatchInputMethodEvent(InputMethodEvent event) {
     if (anyModalWindowsKeepPopupOpen()) {
       return false;
     }
-    if (mySpeedSearchPatternField != null) {
+
+    // Try forwarding the input method event to various possible speed search handlers
+
+    JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(comp, true);
+
+    if (!event.isConsumed() && supply instanceof SpeedSearchBase<?>) {
+      ((SpeedSearchBase<?>)supply).processInputMethodEvent(event);
+    }
+
+    if (!event.isConsumed() && comp instanceof ListWithFilter<?>) {
+      ((ListWithFilter<?>)comp).processInputMethodEvent(event);
+    }
+
+    if (!event.isConsumed() && mySpeedSearchPatternField != null) {
       mySpeedSearchPatternField.getTextEditor().dispatchEvent(event);
       mySpeedSearch.updatePattern(mySpeedSearchPatternField.getText());
       mySpeedSearch.update();
