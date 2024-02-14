@@ -130,7 +130,7 @@ object ActionUtil {
     }
     var beforePerformedMode: String? = null // on|fast_only|old_only|off
     if (beforeActionPerformed) {
-      beforePerformedMode = Registry.get("actionSystem.update.ignore.beforeActionPerformedUpdate").selectedOption
+      beforePerformedMode = Registry.get("actionSystem.update.beforeActionPerformedUpdate").selectedOption
       val updateThread = action.getActionUpdateThread()
       if (beforePerformedMode == "off" || beforePerformedMode == "old_only" &&
           (updateThread == ActionUpdateThread.BGT ||
