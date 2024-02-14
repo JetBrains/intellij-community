@@ -2,20 +2,17 @@
   {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "alexkrechik.cucumberautocomplete",
     "ideaName": "Gherkin",
-    "ideaId": "gherkin",
-    "builtIn": true
+    "ideaId": "gherkin"
   },
   {
     "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
     "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit",
-    "builtIn": true
+    "ideaId": "aws.toolkit"
   },
   {
     "vsCodeId": "bungcip.better-toml",
@@ -31,14 +28,12 @@
   {
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
-    "ideaId": "Dart",
-    "builtIn": true
+    "ideaId": "Dart"
   },
   {
     "vsCodeId": "Dart-Code.flutter",
     "ideaName": "Flutter",
-    "ideaId": "io.flutter",
-    "builtIn": true
+    "ideaId": "io.flutter"
   },
   {
     "vsCodeId": "dbaeumer.vscode-eslint",
@@ -104,32 +99,27 @@
   {
     "vsCodeId": "GoogleCloudTools.cloudcode",
     "ideaName": "Google Cloud Code",
-    "ideaId": "com.google.gct.core",
-    "builtIn": true
+    "ideaId": "com.google.gct.core"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql-syntax",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "kumar-harsh.graphql-for-vscode",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
@@ -139,19 +129,16 @@
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "ms-python.black-formatter",
-    "ideaName": "Black Formatter",
-    "builtIn": true
+    "ideaName": "Black Formatter"
   },
   {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -178,13 +165,11 @@
   {
     "vsCodeId": "oderwat.indent-rainbow",
     "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "builtIn": true
+    "ideaId": "indent-rainbow.indent-rainbow"
   },
   {
     "vsCodeId": "onecentlin.laravel-blade",
-    "ideaName": "Laravel Blade Snippets",
-    "builtIn": true
+    "ideaName": "Laravel Blade Snippets"
   },
   {
     "vsCodeId": "redhat.java",
@@ -205,8 +190,7 @@
   {
     "vsCodeId": "scala-lang.scala",
     "ideaName": "Scala",
-    "ideaId": "org.intellij.scala",
-    "builtIn": true
+    "ideaId": "org.intellij.scala"
   },
   {
     "vsCodeId": "Shan.code-settings-sync",
@@ -216,20 +200,17 @@
   {
     "vsCodeId": "SonarSource.sonarlint-vscode",
     "ideaName": "SonarLint",
-    "ideaId": "org.sonarlint.idea",
-    "builtIn": true
+    "ideaId": "org.sonarlint.idea"
   },
   {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "Tyriar.sort-lines",
     "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "builtIn": true
+    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscjava.vscode-gradle",
@@ -259,8 +240,7 @@
   {
     "vsCodeId": "vscjava.vscode-lombok",
     "ideaName": "Lombok",
-    "ideaId": "Lombook Plugin",
-    "builtIn": true
+    "ideaId": "Lombook Plugin"
   },
   {
     "vsCodeId": "vscjava.vscode-maven",
@@ -270,13 +250,11 @@
   {
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
-    "ideaId": "IdeaVIM",
-    "builtIn": true
+    "ideaId": "IdeaVIM"
   },
   {
     "vsCodeId": "zxh404.vscode-proto3",
     "ideaName": "Protocol Buffers",
-    "ideaId": "idea.plugin.protoeditor",
-    "builtIn": true
+    "ideaId": "idea.plugin.protoeditor"
   }
 ]

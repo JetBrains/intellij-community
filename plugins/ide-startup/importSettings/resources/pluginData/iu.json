@@ -2,8 +2,7 @@
   {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "abusaidm.html-snippets",
@@ -18,14 +17,12 @@
   {
     "vsCodeId": "alexkrechik.cucumberautocomplete",
     "ideaName": "Gherkin",
-    "ideaId": "gherkin",
-    "builtIn": true
+    "ideaId": "gherkin"
   },
   {
     "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
     "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit",
-    "builtIn": true
+    "ideaId": "aws.toolkit"
   },
   {
     "vsCodeId": "Angular.ng-template",
@@ -41,14 +38,12 @@
   {
     "vsCodeId": "batisteo.vscode-django",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "bmewburn.vscode-intelephense-client",
     "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   },
   {
     "vsCodeId": "bungcip.better-toml",
@@ -70,14 +65,12 @@
   {
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
-    "ideaId": "Dart",
-    "builtIn": true
+    "ideaId": "Dart"
   },
   {
     "vsCodeId": "Dart-Code.flutter",
     "ideaName": "Flutter",
-    "ideaId": "io.flutter",
-    "builtIn": true
+    "ideaId": "io.flutter"
   },
   {
     "vsCodeId": "dbaeumer.vscode-eslint",
@@ -97,19 +90,16 @@
   {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "donjayamanne.python-extension-pack",
-    "ideaName": "Python Extension Pack",
-    "builtIn": true
+    "ideaName": "Python Extension Pack"
   },
   {
     "vsCodeId": "dustypomerleau.rust-syntax",
     "ideaName": "Rust",
-    "ideaId": "com.jetbrains.rust",
-    "builtIn": true
+    "ideaId": "com.jetbrains.rust"
   },
   {
     "vsCodeId": "eamodio.gitlens",
@@ -172,8 +162,7 @@
   {
     "vsCodeId": "GitHub.codespaces",
     "ideaName": "GitHub Codespaces",
-    "ideaId": "com.github.codespaces.jetbrains.gateway",
-    "builtIn": true
+    "ideaId": "com.github.codespaces.jetbrains.gateway"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -188,38 +177,32 @@
   {
     "vsCodeId": "golang.Go",
     "ideaName": "Go",
-    "ideaId": "org.jetbrains.plugins.go",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.go"
   },
   {
     "vsCodeId": "GoogleCloudTools.cloudcode",
     "ideaName": "Google Cloud Code",
-    "ideaId": "com.google.gct.core",
-    "builtIn": true
+    "ideaId": "com.google.gct.core"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql-syntax",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "hollowtree.vue-snippets",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "ipedrazas.kubernetes-snippets",
@@ -236,19 +219,16 @@
   {
     "vsCodeId": "JScearcy.rust-doc-viewer",
     "ideaName": "Rust",
-    "ideaId": "com.jetbrains.rust",
-    "builtIn": true
+    "ideaId": "com.jetbrains.rust"
   },
   {
     "vsCodeId": "KevinRose.vsc-python-indent",
-    "ideaName": "Python Indent",
-    "builtIn": true
+    "ideaName": "Python Indent"
   },
   {
     "vsCodeId": "kumar-harsh.graphql-for-vscode",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "liximomo.sftp",
@@ -258,8 +238,7 @@
   },
   {
     "vsCodeId": "magicstack.MagicPython",
-    "ideaName": "MagicPython",
-    "builtIn": true
+    "ideaName": "MagicPython"
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
@@ -298,26 +277,22 @@
   },
   {
     "vsCodeId": "ms-python.black-formatter",
-    "ideaName": "Black Formatter",
-    "builtIn": true
+    "ideaName": "Black Formatter"
   },
   {
     "vsCodeId": "ms-python.isort",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "ms-toolsai.jupyter",
     "ideaName": "Jupyter",
-    "ideaId": "intellij.jupyter",
-    "builtIn": true
+    "ideaId": "intellij.jupyter"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -366,8 +341,7 @@
   {
     "vsCodeId": "oderwat.indent-rainbow",
     "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "builtIn": true
+    "ideaId": "indent-rainbow.indent-rainbow"
   },
   {
     "vsCodeId": "pranaygp.vscode-css-peek",
@@ -399,14 +373,12 @@
   {
     "vsCodeId": "rust-lang.rust-analyzer",
     "ideaName": "Rust",
-    "ideaId": "com.jetbrains.rust",
-    "builtIn": true
+    "ideaId": "com.jetbrains.rust"
   },
   {
     "vsCodeId": "scala-lang.scala",
     "ideaName": "Scala",
-    "ideaId": "org.intellij.scala",
-    "builtIn": true
+    "ideaId": "org.intellij.scala"
   },
   {
     "vsCodeId": "Shan.code-settings-sync",
@@ -416,8 +388,7 @@
   {
     "vsCodeId": "SonarSource.sonarlint-vscode",
     "ideaName": "SonarLint",
-    "ideaId": "org.sonarlint.idea",
-    "builtIn": true
+    "ideaId": "org.sonarlint.idea"
   },
   {
     "vsCodeId": "svelte.svelte-vscode",
@@ -428,14 +399,12 @@
   {
     "vsCodeId": "swellaby.rust-pack",
     "ideaName": "Rust",
-    "ideaId": "com.jetbrains.rust",
-    "builtIn": true
+    "ideaId": "com.jetbrains.rust"
   },
   {
     "vsCodeId": "swellaby.vscode-rust-test-adapter",
     "ideaName": "Rust",
-    "ideaId": "com.jetbrains.rust",
-    "builtIn": true
+    "ideaId": "com.jetbrains.rust"
   },
   {
     "vsCodeId": "techer.open-in-browser",
@@ -445,14 +414,12 @@
   {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "Tyriar.sort-lines",
     "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "builtIn": true
+    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vmware.vscode-boot-dev-pack",
@@ -518,32 +485,27 @@
   {
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
-    "ideaId": "IdeaVIM",
-    "builtIn": true
+    "ideaId": "IdeaVIM"
   },
   {
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "wholroyd.jinja",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "xdebug.php-debug",
     "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   },
   {
     "vsCodeId": "xdebug.php-pack",
     "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

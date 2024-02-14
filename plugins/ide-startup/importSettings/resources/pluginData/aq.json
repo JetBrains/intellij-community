@@ -44,20 +44,17 @@
   {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql-syntax",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",

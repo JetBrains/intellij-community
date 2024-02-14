@@ -2,14 +2,12 @@
   {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "aaron-bond.better-comments",
     "ideaName": "Better Comments",
-    "ideaId": "org.igu.plugins.bettercomments",
-    "builtIn": true
+    "ideaId": "org.igu.plugins.bettercomments"
   },
   {
     "vsCodeId": "abusaidm.html-snippets",
@@ -52,14 +50,12 @@
   {
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
-    "ideaId": "Dart",
-    "builtIn": true
+    "ideaId": "Dart"
   },
   {
     "vsCodeId": "Dart-Code.flutter",
     "ideaName": "Flutter",
-    "ideaId": "io.flutter",
-    "builtIn": true
+    "ideaId": "io.flutter"
   },
   {
     "vsCodeId": "dbaeumer.vscode-eslint",
@@ -85,8 +81,7 @@
   {
     "vsCodeId": "dracula-theme.theme-dracula",
     "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea",
-    "builtIn": true
+    "ideaId": "com.vermouthx.idea"
   },
   {
     "vsCodeId": "eamodio.gitlens",
@@ -112,8 +107,7 @@
   {
     "vsCodeId": "Equinusocio.vsc-material-theme-icons",
     "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi",
-    "builtIn": true
+    "ideaId": "com.mallowigi"
   },
   {
     "vsCodeId": "esbenp.prettier-vscode",
@@ -150,20 +144,17 @@
   {
     "vsCodeId": "GitHub.codespaces",
     "ideaName": "GitHub Codespaces",
-    "ideaId": "com.github.codespaces.jetbrains.gateway",
-    "builtIn": true
+    "ideaId": "com.github.codespaces.jetbrains.gateway"
   },
   {
     "vsCodeId": "GitHub.copilot",
     "ideaName": "GitHub Copilot",
-    "ideaId": "com.github.copilot",
-    "builtIn": true
+    "ideaId": "com.github.copilot"
   },
   {
     "vsCodeId": "GitHub.github-vscode-theme",
     "ideaName": "GitHub Theme",
-    "ideaId": "club.nutsoft.Github3Theme",
-    "builtIn": true
+    "ideaId": "club.nutsoft.Github3Theme"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -178,20 +169,17 @@
   {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql-syntax",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "hollowtree.vue-snippets",
@@ -234,8 +222,7 @@
   {
     "vsCodeId": "mikestead.dotenv",
     "ideaName": ".env files support",
-    "ideaId": "ru.adelf.idea.dotenv",
-    "builtIn": true
+    "ideaId": "ru.adelf.idea.dotenv"
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
@@ -257,20 +244,17 @@
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code",
-    "builtIn": true
+    "ideaName": "Japanese Language Pack for Visual Studio Code"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
     "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
-    "ideaId": "com.intellij.zh",
-    "builtIn": true
+    "ideaId": "com.intellij.zh"
   },
   {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
-    "ideaId": "com.intellij.kubernetes",
-    "builtIn": true
+    "ideaId": "com.intellij.kubernetes"
   },
   {
     "vsCodeId": "ms-mssql.mssql",
@@ -292,8 +276,7 @@
   {
     "vsCodeId": "ms-python.pylint",
     "ideaName": "Pylint",
-    "ideaId": "com.leinardi.pycharm.pylint",
-    "builtIn": true
+    "ideaId": "com.leinardi.pycharm.pylint"
   },
   {
     "vsCodeId": "ms-python.python",
@@ -310,8 +293,7 @@
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.docker.gateway"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -331,8 +313,7 @@
   {
     "vsCodeId": "ms-vscode.PowerShell",
     "ideaName": "PowerShell",
-    "ideaId": "com.intellij.plugin.adernov.powershell",
-    "builtIn": true
+    "ideaId": "com.intellij.plugin.adernov.powershell"
   },
   {
     "vsCodeId": "ms-vscode.vscode-typescript-next",
@@ -386,14 +367,12 @@
   {
     "vsCodeId": "oderwat.indent-rainbow",
     "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "builtIn": true
+    "ideaId": "indent-rainbow.indent-rainbow"
   },
   {
     "vsCodeId": "PKief.material-icon-theme",
     "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi",
-    "builtIn": true
+    "ideaId": "com.mallowigi"
   },
   {
     "vsCodeId": "pranaygp.vscode-css-peek",
@@ -440,8 +419,7 @@
   {
     "vsCodeId": "TabNine.tabnine-vscode",
     "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "ideaId": "com.tabnine.TabNine",
-    "builtIn": true
+    "ideaId": "com.tabnine.TabNine"
   },
   {
     "vsCodeId": "techer.open-in-browser",
@@ -450,14 +428,12 @@
   },
   {
     "vsCodeId": "thebarkman.vscode-djaneiro",
-    "ideaName": "Djaneiro - Django Snippets",
-    "builtIn": true
+    "ideaName": "Djaneiro - Django Snippets"
   },
   {
     "vsCodeId": "thekalinga.bootstrap4-vscode",
     "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
-    "ideaId": "in.thekalinga.snippet.intellij",
-    "builtIn": true
+    "ideaId": "in.thekalinga.snippet.intellij"
   },
   {
     "vsCodeId": "tht13.python",
@@ -468,14 +444,12 @@
   {
     "vsCodeId": "Tyriar.sort-lines",
     "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "builtIn": true
+    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
-    "ideaId": "IdeaVIM",
-    "builtIn": true
+    "ideaId": "IdeaVIM"
   },
   {
     "vsCodeId": "wholroyd.jinja",
@@ -491,8 +465,7 @@
   {
     "vsCodeId": "zhuangtongfa.Material-theme",
     "ideaName": "One Dark Pro Color Scheme",
-    "ideaId": "color.scheme.One Dark Pro",
-    "builtIn": true
+    "ideaId": "color.scheme.One Dark Pro"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

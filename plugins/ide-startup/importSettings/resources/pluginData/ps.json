@@ -2,8 +2,7 @@
   {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "adpyke.vscode-sql-formatter",
@@ -86,20 +85,17 @@
   {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql-syntax",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "ikappas.phpcs",
@@ -127,8 +123,7 @@
   {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
-    "ideaId": "com.intellij.kubernetes",
-    "builtIn": true
+    "ideaId": "com.intellij.kubernetes"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -160,8 +155,7 @@
   {
     "vsCodeId": "oderwat.indent-rainbow",
     "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "builtIn": true
+    "ideaId": "indent-rainbow.indent-rainbow"
   },
   {
     "vsCodeId": "onecentlin.laravel-blade",
@@ -171,8 +165,7 @@
   {
     "vsCodeId": "onecentlin.laravel5-snippets",
     "ideaName": "Laravel Idea",
-    "ideaId": "com.laravel_idea.plugin",
-    "builtIn": true
+    "ideaId": "com.laravel_idea.plugin"
   },
   {
     "vsCodeId": "pranaygp.vscode-css-peek",
@@ -204,8 +197,7 @@
   {
     "vsCodeId": "Tyriar.sort-lines",
     "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "builtIn": true
+    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "xdebug.php-debug",

@@ -2,8 +2,7 @@
   {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "abusaidm.html-snippets",
@@ -12,14 +11,12 @@
   },
   {
     "vsCodeId": "adpyke.vscode-sql-formatter",
-    "ideaName": "SQL Formatter",
-    "builtIn": true
+    "ideaName": "SQL Formatter"
   },
   {
     "vsCodeId": "akamud.vscode-theme-onedark",
     "ideaName": "Atom OneDark Theme",
-    "ideaId": "github.cweijan.test-theme",
-    "builtIn": true
+    "ideaId": "github.cweijan.test-theme"
   },
   {
     "vsCodeId": "Angular.ng-template",
@@ -29,8 +26,7 @@
   },
   {
     "vsCodeId": "bajdzis.vscode-database",
-    "ideaName": "vscode-database",
-    "builtIn": true
+    "ideaName": "vscode-database"
   },
   {
     "vsCodeId": "bradlc.vscode-tailwindcss",
@@ -46,8 +42,7 @@
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "Dart-Code.dart-code",
@@ -72,8 +67,7 @@
   {
     "vsCodeId": "dracula-theme.theme-dracula",
     "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea",
-    "builtIn": true
+    "ideaId": "com.vermouthx.idea"
   },
   {
     "vsCodeId": "eamodio.gitlens",
@@ -114,8 +108,7 @@
   {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -130,20 +123,17 @@
   {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql-syntax",
     "ideaName": "GraphQL",
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "builtIn": true
+    "ideaId": "com.intellij.lang.jsgraphql"
   },
   {
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
-    "ideaId": "org.intellij.plugins.hcl",
-    "builtIn": true
+    "ideaId": "org.intellij.plugins.hcl"
   },
   {
     "vsCodeId": "hollowtree.vue-snippets",
@@ -166,8 +156,7 @@
   {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "mrmlnc.vscode-scss",
@@ -183,37 +172,31 @@
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code",
-    "builtIn": true
+    "ideaName": "Japanese Language Pack for Visual Studio Code"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
     "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
-    "ideaId": "com.intellij.zh",
-    "builtIn": true
+    "ideaId": "com.intellij.zh"
   },
   {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
-    "ideaId": "com.intellij.kubernetes",
-    "builtIn": true
+    "ideaId": "com.intellij.kubernetes"
   },
   {
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "ms-mssql.sql-database-projects-vscode",
-    "ideaName": "SQL Database Projects",
-    "builtIn": true
+    "ideaName": "SQL Database Projects"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.docker.gateway"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -250,8 +233,7 @@
   },
   {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
-    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
-    "builtIn": true
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB"
   },
   {
     "vsCodeId": "octref.vetur",
@@ -262,14 +244,12 @@
   {
     "vsCodeId": "oderwat.indent-rainbow",
     "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "builtIn": true
+    "ideaId": "indent-rainbow.indent-rainbow"
   },
   {
     "vsCodeId": "PKief.material-icon-theme",
     "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi",
-    "builtIn": true
+    "ideaId": "com.mallowigi"
   },
   {
     "vsCodeId": "pranaygp.vscode-css-peek",
@@ -329,14 +309,12 @@
   {
     "vsCodeId": "Tyriar.sort-lines",
     "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "builtIn": true
+    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
-    "ideaId": "IdeaVIM",
-    "builtIn": true
+    "ideaId": "IdeaVIM"
   },
   {
     "vsCodeId": "Vue.volar",
