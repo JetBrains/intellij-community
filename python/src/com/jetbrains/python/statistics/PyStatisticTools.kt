@@ -18,8 +18,10 @@ import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.sdk.sdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode.*
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
@@ -134,7 +136,7 @@ val Sdk.interpreterType: InterpreterType
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> PIPENV
     isPoetry -> POETRY
-    PythonSdkUtil.isConda(this) -> CONDAVENV
+    PythonSdkUtil.isConda(this) || this.sdkFlavor is CondaEnvSdkFlavor -> CONDAVENV
     PythonSdkUtil.isVirtualEnv(this) -> VIRTUALENV
     else -> REGULAR
   }
