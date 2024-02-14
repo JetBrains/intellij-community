@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
@@ -176,11 +177,24 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
 }
 
 private fun updatePresentation(presentation: Presentation, toolWindow: ToolWindow) {
-  val title = toolWindow.stripeTitleProvider
-  presentation.setText(title)
-  presentation.setDescription { IdeBundle.message("action.activate.tool.window", title.get()) }
+  val toolWindowRef = WeakReference(toolWindow)
   val projectRef: Reference<Project> = WeakReference(toolWindow.project)
   val toolWindowId = toolWindow.id
+  val fallbackStripeTitleText = toolWindow.stripeTitleProvider.get()
+  updatePresentationImpl(presentation, toolWindowId, projectRef, toolWindowRef, fallbackStripeTitleText)
+}
+
+private fun updatePresentationImpl(presentation: Presentation,
+                                   toolWindowId: String,
+                                   projectRef: Reference<Project>,
+                                   toolWindowRef: Reference<ToolWindow>,
+                                   fallbackStripeTitleText: @NlsContexts.TabTitle String) {
+  presentation.setText { toolWindowRef.get()?.stripeTitleProvider?.get() ?: fallbackStripeTitleText }
+  presentation.setDescription {
+    IdeBundle.message("action.activate.tool.window",
+                      toolWindowRef.get()?.stripeTitleProvider?.get() ?: fallbackStripeTitleText)
+  }
+
   presentation.iconSupplier = SynchronizedClearableLazy label@{
     val project = projectRef.get()?.takeIf { !it.isDisposed } ?: return@label null
     val icon = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.icon
