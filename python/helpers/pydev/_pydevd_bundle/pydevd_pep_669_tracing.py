@@ -17,7 +17,7 @@ from _pydevd_bundle.pydevd_comm_constants import CMD_STEP_OVER, CMD_SMART_STEP_I
     CMD_SET_BREAK, CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, \
     CMD_STEP_RETURN
 from _pydevd_bundle.pydevd_constants import get_current_thread_id, PYDEVD_TOOL_NAME, \
-    STATE_RUN, STATE_SUSPEND
+    STATE_RUN, STATE_SUSPEND, GlobalDebuggerHolder
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import NORM_PATHS_AND_BASE_CONTAINER, \
@@ -28,6 +28,230 @@ get_file_type = DONT_TRACE.get
 
 global_cache_skips = {}
 global_cache_frame_skips = {}
+
+
+monitoring = sys.monitoring
+
+
+def _make_frame_cache_key(code):
+    return code.co_firstlineno, code.co_name, code.co_filename
+
+
+def _get_additional_info(thread):
+    # noinspection PyBroadException
+    try:
+        additional_info = thread.additional_info
+        if additional_info is None:
+            raise AttributeError()
+    except:
+        additional_info = set_additional_thread_info(thread)
+    return additional_info
+
+
+def _get_abs_path_real_path_and_base_from_frame(frame):
+    try:
+        abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[
+            frame.f_code.co_filename]
+    except:
+        abs_path_real_path_and_base \
+            = get_abs_path_real_path_and_base_from_frame(frame)
+
+    return abs_path_real_path_and_base
+
+
+def _should_enable_line_events_for_code(frame, code, filename, info):
+    line_number = frame.f_lineno
+
+    # print('PY_START (should enable line events check) %s %s %s %s' % (line_number, code.co_name, filename, info.pydev_step_cmd))
+
+    py_db = GlobalDebuggerHolder.global_dbg
+
+    plugin_manager = py_db.plugin
+
+    stop_frame = info.pydev_step_stop
+    step_cmd = info.pydev_step_cmd
+
+    breakpoints_for_file = py_db.breakpoints.get(filename)
+
+    can_skip = False
+
+    if info.pydev_state == 1:  # STATE_RUN = 1
+        can_skip = (step_cmd == -1 and stop_frame is None) \
+                   or (step_cmd in (109, 108) and stop_frame is not frame)
+
+        if can_skip:
+            if plugin_manager is not None and py_db.has_plugin_line_breaks:
+                can_skip = not plugin_manager.can_not_skip(
+                    py_db, frame, info)
+
+            # CMD_STEP_OVER = 108
+            if (can_skip and py_db.show_return_values
+                    and info.pydev_step_cmd == 108
+                    and frame.f_back is info.pydev_step_stop):
+                # trace function for showing return values after step over
+                can_skip = False
+
+    frame_cache_key = _make_frame_cache_key(code)
+    line_cache_key = (frame_cache_key, line_number)
+
+    if breakpoints_for_file:
+        if can_skip:
+            # When cached, 0 means we don't have a breakpoint
+            # and 1 means we have.
+            breakpoints_in_line_cache = global_cache_frame_skips.get(
+                line_cache_key, -1)
+            if breakpoints_in_line_cache == 0:
+                return False
+
+            breakpoints_in_frame_cache = global_cache_frame_skips.get(
+                frame_cache_key, -1)
+            if breakpoints_in_frame_cache != -1:
+                has_breakpoint_in_frame = breakpoints_in_frame_cache == 1
+            else:
+                has_breakpoint_in_frame = False
+                # Checks the breakpoint to see if there is a context
+                # match in some function.
+                curr_func_name = frame.f_code.co_name
+
+                # global context is set with an empty name
+                if curr_func_name in ('?', '<module>', '<lambda>'):
+                    curr_func_name = ''
+
+                for breakpoint in breakpoints_for_file.values():
+                    # will match either global or some function
+                    if breakpoint.func_name in ('None', curr_func_name):
+                        has_breakpoint_in_frame = True
+                        break
+
+                # Cache the value (1 or 0 or -1 for default because of cython).
+                if has_breakpoint_in_frame:
+                    global_cache_frame_skips[frame_cache_key] = 1
+                else:
+                    global_cache_frame_skips[frame_cache_key] = 0
+
+            if can_skip and not has_breakpoint_in_frame:
+                return False
+
+    return True
+
+
+def _stop_monitoring():
+    monitoring.set_events(monitoring.DEBUGGER_ID, 0)
+
+
+def _enable_return_tracing(code):
+    local_events = monitoring.get_local_events(monitoring.DEBUGGER_ID, code)
+    monitoring.set_local_events(monitoring.DEBUGGER_ID, code,
+                                local_events | monitoring.events.PY_RETURN)
+
+
+def _enable_line_tracing(code):
+    local_events = monitoring.get_local_events(monitoring.DEBUGGER_ID, code)
+    monitoring.set_local_events(monitoring.DEBUGGER_ID, code,
+                                local_events | monitoring.events.LINE)
+
+
+def py_start_callback(code, instruction_offset):
+    frame = sys._getframe(1)
+
+    # print('ENTER: PY_START ', code.co_filename, frame.f_lineno, code.co_name)
+
+    py_db = GlobalDebuggerHolder.global_dbg
+
+    # noinspection PyBroadException
+    try:
+        if py_db._finish_debugging_session:
+            if not py_db._termination_event_set:
+                try:
+                    if py_db.output_checker_thread is None:
+                        kill_all_pydev_threads()
+                except:
+                    traceback.print_exc()
+                py_db._termination_event_set = True
+            _stop_monitoring()
+            return
+
+        thread = threadingCurrentThread()
+
+        if not is_thread_alive(thread):
+            py_db.notify_thread_not_alive(get_current_thread_id(thread))
+            _stop_monitoring()
+
+        if py_db.thread_analyser is not None:
+            py_db.thread_analyser.log_event(frame)
+
+        if py_db.asyncio_analyser is not None:
+            py_db.asyncio_analyser.log_event(frame)
+
+        frame_cache_key = _make_frame_cache_key(code)
+
+        additional_info = _get_additional_info(thread)
+        pydev_step_cmd = additional_info.pydev_step_cmd
+        is_stepping = pydev_step_cmd != -1
+
+        if not is_stepping and frame_cache_key in global_cache_skips:
+            # print('skipped: PY_START (cache hit)', frame_cache_key, frame.f_lineno, code.co_name)
+            return
+
+        abs_path_real_path_and_base = \
+            _get_abs_path_real_path_and_base_from_frame(frame)
+
+        filename = abs_path_real_path_and_base[1]
+        file_type = get_file_type(abs_path_real_path_and_base[-1])
+
+        if file_type is not None:
+            if file_type == 1:  # inlining LIB_FILE = 1
+                if not py_db.in_project_scope(filename):
+                    # print('skipped: PY_START (not in scope)', abs_path_real_path_and_base[-1], frame.f_lineno, code.co_name, file_type)
+                    global_cache_skips[frame_cache_key] = 1
+                    return
+            else:
+                # print('skipped: PY_START', abs_path_real_path_and_base[-1], frame.f_lineno, code.co_name, file_type)
+                global_cache_skips[frame_cache_key] = 1
+                return
+
+        breakpoints_for_file = py_db.breakpoints.get(filename)
+        if not breakpoints_for_file and not is_stepping:
+            return
+
+        if is_stepping:
+            if (pydev_step_cmd == CMD_STEP_OVER
+                    and frame is not additional_info.pydev_step_stop):
+                if frame.f_back is additional_info.pydev_step_stop:
+                    _enable_return_tracing(code)
+                return
+            if (py_db.is_filter_enabled
+                    and py_db.is_ignored_by_filters(filename)):
+                return
+            if (py_db.is_filter_libraries
+                    and not py_db.in_project_scope(filename)):
+                return
+            # We are stepping, and there is no reason to skip the frame
+            # at this point.
+            _enable_line_tracing(code)
+            _enable_return_tracing(code)
+            return
+
+        # print('PY_START', base, frame.f_lineno, code.co_name, file_type)
+        if additional_info.is_tracing:
+            return
+
+        if _should_enable_line_events_for_code(frame, code, filename, additional_info):
+            _enable_line_tracing(code)
+            _enable_return_tracing(code)
+        else:
+            global_cache_skips[frame_cache_key] = 1
+            return
+
+    except SystemExit:
+        return
+    except Exception:
+        try:
+            if traceback is not None:
+                traceback.print_exc()
+        except:
+            pass
+        _stop_monitoring()
 
 
 class PEP669CallbackBase:
@@ -45,21 +269,6 @@ class PEP669CallbackBase:
     @property
     def thread(self):
         return threadingCurrentThread()
-
-    @staticmethod
-    def _make_frame_cache_key(code):
-        return code.co_firstlineno, code.co_name, code.co_filename
-
-    @staticmethod
-    def _get_additional_info(thread):
-        # noinspection PyBroadException
-        try:
-            additional_info = thread.additional_info
-            if additional_info is None:
-                raise AttributeError()
-        except:
-            additional_info = set_additional_thread_info(thread)
-        return additional_info
 
     @staticmethod
     def _get_abs_path_real_path_and_base_from_frame(frame):
@@ -103,14 +312,14 @@ class PyStartCallback(PEP669CallbackBase):
                     except:
                         traceback.print_exc()
                     py_db._termination_event_set = True
-                self.stop_monitoring()
+                _stop_monitoring()
                 return
 
             thread = self.thread
 
             if not is_thread_alive(thread):
                 py_db.notify_thread_not_alive(get_current_thread_id(thread))
-                self.stop_monitoring()
+                _stop_monitoring()
 
             if py_db.thread_analyser is not None:
                 py_db.thread_analyser.log_event(frame)
@@ -118,9 +327,9 @@ class PyStartCallback(PEP669CallbackBase):
             if py_db.asyncio_analyser is not None:
                 py_db.asyncio_analyser.log_event(frame)
 
-            frame_cache_key = self._make_frame_cache_key(code)
+            frame_cache_key = _make_frame_cache_key(code)
 
-            additional_info = self._get_additional_info(thread)
+            additional_info = _get_additional_info(thread)
             pydev_step_cmd = additional_info.pydev_step_cmd
             is_stepping = pydev_step_cmd != -1
 
@@ -219,7 +428,7 @@ class PyStartCallback(PEP669CallbackBase):
                     # trace function for showing return values after step over
                     can_skip = False
 
-        frame_cache_key = self._make_frame_cache_key(code)
+        frame_cache_key = _make_frame_cache_key(code)
         line_cache_key = (frame_cache_key, line_number)
 
         if breakpoints_for_file:
@@ -300,7 +509,7 @@ class PyLineCallback(PEP669CallbackBase):
     def __call__(self, code, line_number):
         frame = self.frame
         thread = self.thread
-        info = self._get_additional_info(thread)
+        info = _get_additional_info(thread)
 
         # print('LINE %s %s %s %s' % (frame.f_lineno, code.co_name, code.co_filename, info.pydev_step_cmd))
 
@@ -320,7 +529,7 @@ class PyLineCallback(PEP669CallbackBase):
             filename = self._get_abs_path_real_path_and_base_from_frame(frame)[1]
             breakpoints_for_file = self.py_db.breakpoints.get(filename)
 
-            frame_cache_key = self._make_frame_cache_key(code)
+            frame_cache_key = _make_frame_cache_key(code)
             line_cache_key = (frame_cache_key, line_number)
 
             try:
@@ -496,7 +705,7 @@ class PyRaiseCallback(PEP669CallbackBase):
 
         frame = self.frame
         thread = self.thread
-        info = self._get_additional_info(thread)
+        info = _get_additional_info(thread)
 
         try:
             if frame is self._get_top_level_frame():
@@ -510,7 +719,7 @@ class PyRaiseCallback(PEP669CallbackBase):
                 args = (
                     self.py_db,
                     self._get_abs_path_real_path_and_base_from_frame(frame)[1],
-                    self._get_additional_info(self.thread), self.thread,
+                    _get_additional_info(self.thread), self.thread,
                     global_cache_skips,
                     global_cache_frame_skips
                 )
@@ -523,7 +732,7 @@ class PyRaiseCallback(PEP669CallbackBase):
             raise
 
     def _stop_on_unhandled_exception(self, exc_info):
-        additional_info = self._get_additional_info(self.thread)
+        additional_info = _get_additional_info(self.thread)
         if not additional_info.suspended_at_unhandled:
             additional_info.suspended_at_unhandled = True
             stop_on_unhandled_exception(self.py_db, self.thread, additional_info,
@@ -536,7 +745,7 @@ class PyReturnCallback(PEP669CallbackBase):
 
         frame = self.frame
         thread = self.thread
-        info = self._get_additional_info(thread)
+        info = _get_additional_info(thread)
 
         try:
             if self.py_db.show_return_values or self.py_db.remove_return_values_flag:
