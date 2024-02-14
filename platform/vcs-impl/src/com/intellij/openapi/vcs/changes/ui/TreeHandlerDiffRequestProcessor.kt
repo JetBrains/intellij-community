@@ -80,7 +80,8 @@ open class TreeHandlerChangesTreeTracker(
     if (updateWhileShown) {
       UiNotifyConnector.installOn(editorViewer.component, object : Activatable {
         override fun showNotify() {
-          updatePreviewLater(UpdateType.FULL)
+          updatePreview(UpdateType.FULL)
+          updatePreviewQueue.cancelAllUpdates()
         }
 
         override fun hideNotify() {
@@ -89,7 +90,7 @@ open class TreeHandlerChangesTreeTracker(
       })
     }
     else {
-      updatePreviewLater(UpdateType.FULL)
+      updatePreview(UpdateType.FULL)
     }
   }
 
