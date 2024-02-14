@@ -2,7 +2,7 @@
   {
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",

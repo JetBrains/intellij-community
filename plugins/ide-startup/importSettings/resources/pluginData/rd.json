@@ -2,71 +2,71 @@
   {
     "vsCodeId": "ms-dotnettools.csharp",
     "ideaName": "C#",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "jchannon.csharpextensions",
     "ideaName": "C#",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "ms-dotnettools.csdevkit",
     "ideaName": "C#",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "kreativ-software.csharpextensions",
     "ideaName": "C#",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "jmrog.vscode-nuget-package-manager",
     "ideaName": "NuGet",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "formulahendry.dotnet-test-explorer",
     "ideaName": "Test Explorer",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "formulahendry.dotnet",
     "ideaName": "Run Configurations",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "unity.unity-debug",
     "ideaName": "Unity",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "tobiah.unity-tools",
     "ideaName": "Unity",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "kleber-swf.unity-code-snippets",
     "ideaName": "Unity",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
     "ideaName": "Live Templates",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "fudge.auto-using",
     "ideaName": "C#",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "k--kato.docomment",
     "ideaName": "C#",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "icsharpcode.ilspy-vscode",
     "ideaName": ".NET Decompiler",
-    "builtIn": "True"
+    "builtIn": true
   }
 ]

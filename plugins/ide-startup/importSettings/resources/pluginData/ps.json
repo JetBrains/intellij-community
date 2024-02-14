@@ -2,26 +2,26 @@
   {
     "vsCodeId": "xdebug.php-debug",
     "ideaName": "PHP",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "bmewburn.vscode-intelephense-client",
     "ideaName": "PHP",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "xdebug.php-pack",
     "ideaName": "PHP",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "zobo.php-intellisense",
     "ideaName": "PHP",
-    "builtIn": "True"
+    "builtIn": true
   },
   {
     "vsCodeId": "DEVSENSE.phptools-vscode",
     "ideaName": "PHP",
-    "builtIn": "True"
+    "builtIn": true
   }
 ]
