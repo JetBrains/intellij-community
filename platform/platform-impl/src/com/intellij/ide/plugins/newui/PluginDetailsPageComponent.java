@@ -119,6 +119,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myHomePage;
   private LinkPanel myForumUrl;
   private LinkPanel myLicenseUrl;
+  private LinkPanel myPluginReportUrl;
   private VendorInfoPanel myVendorInfoPanel;
   private LinkPanel myBugtrackerUrl;
   private LinkPanel myDocumentationUrl;
@@ -772,6 +773,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myForumUrl = new LinkPanel(infoPanel, false);
     mySourceCodeUrl = new LinkPanel(infoPanel, false);
     myLicenseUrl = new LinkPanel(infoPanel, false);
+    myPluginReportUrl = new LinkPanel(infoPanel, false);
 
     infoPanel.add(myVendorInfoPanel = new VendorInfoPanel());
     infoPanel.add(myRating = new JLabel());
@@ -1236,6 +1238,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       updateUrlComponent(myBugtrackerUrl, "plugins.configurable.bugtracker.url", pluginNode.getBugtrackerUrl());
       updateUrlComponent(myDocumentationUrl, "plugins.configurable.documentation.url", pluginNode.getDocumentationUrl());
       updateUrlComponent(mySourceCodeUrl, "plugins.configurable.source.code", pluginNode.getSourceCodeUrl());
+      updateUrlComponent(myPluginReportUrl, "plugins.configurable.report.marketplace.plugin", pluginNode.getReportPluginUrl());
 
       myVendorInfoPanel.show(pluginNode);
 

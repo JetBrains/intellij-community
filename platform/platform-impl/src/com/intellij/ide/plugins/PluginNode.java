@@ -51,6 +51,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String licenseUrl;
   private String bugtrackerUrl;
   private String documentationUrl;
+  private String reportPluginUrl;
   private long date = Long.MAX_VALUE;
   private List<IdeaPluginDependency> myDependencies = new ArrayList<>();
   private Status myStatus = Status.UNKNOWN;
@@ -398,6 +399,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setDocumentationUrl(@Nullable String documentationUrl) {
     this.documentationUrl = documentationUrl;
+  }
+
+  public @Nullable String getReportPluginUrl() {
+    return reportPluginUrl;
+  }
+
+  public void setReportPluginUrl(@Nullable String reportPluginUrl) {
+    this.reportPluginUrl = reportPluginUrl;
   }
 
   public void setDate(String date) {

@@ -194,7 +194,9 @@ data class IntellijPluginMetadata(
   val licenseUrl: String? = null,
   val bugtrackerUrl: String? = null,
   val documentationUrl: String? = null,
-  val sourceCodeUrl: String? = null) {
+  val sourceCodeUrl: String? = null,
+  val reportPluginUrl: String? = null
+) {
 
   fun toPluginNode(pluginNode: PluginNode) {
     if (vendor != null) {
@@ -207,6 +209,7 @@ data class IntellijPluginMetadata(
     pluginNode.bugtrackerUrl = bugtrackerUrl
     pluginNode.documentationUrl = documentationUrl
     pluginNode.sourceCodeUrl = sourceCodeUrl
+    pluginNode.reportPluginUrl = reportPluginUrl
   }
 }
 
