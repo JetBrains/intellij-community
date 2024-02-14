@@ -33,7 +33,7 @@ open class TransferableSetting(
     const val PLUGINS_ID = "plugins"
     const val RECENT_PROJECTS_ID = "recentProjects"
 
-    fun uiTheme(laf: ILookAndFeel): TransferableSetting? {
+    fun uiTheme(laf: ILookAndFeel): TransferableSetting {
       val themeName = laf.getPreview().name
       return TransferableSetting(
         UI_ID,
@@ -156,7 +156,7 @@ private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
     }
 }
 
-private class RecentProjectSetting(private val item: RecentPathInfo) : ChildSetting {
+private class RecentProjectSetting(item: RecentPathInfo) : ChildSetting {
   override val id = ""
   override val name = Path(item.path).fileName?.toString() ?: ""
   override val leftComment = null
