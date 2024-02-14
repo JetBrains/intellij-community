@@ -58,6 +58,11 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize.kt");
     }
 
+    @TestMetadata("serialize_classFromJar.kt")
+    public void testSerialize_classFromJar() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize_classFromJar.kt");
+    }
+
     @TestMetadata("serialize_importFromGeneratedCompanion.kt")
     public void testSerialize_importFromGeneratedCompanion() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize_importFromGeneratedCompanion.kt");
