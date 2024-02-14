@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.components.ActionLink
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
                                   private val applyImmediately: Boolean = false): SchemesPanel(colorAndFontsOptions, 0) {
@@ -56,7 +57,7 @@ internal class EditorSchemesPanel(val colorAndFontsOptions: ColorAndFontOptions,
   }
 
   override fun createActionLink(): ActionLink? = null
-
+  override fun createActionLinkCommentLabel(): JLabel? = null
   override fun getContextHelpLabelText(): String? = null
 
   override fun useBoldForNonRemovableSchemes(): Boolean = false
