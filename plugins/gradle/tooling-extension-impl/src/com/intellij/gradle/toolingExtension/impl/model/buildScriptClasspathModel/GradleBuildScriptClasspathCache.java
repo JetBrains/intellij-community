@@ -34,8 +34,8 @@ public class GradleBuildScriptClasspathCache {
         .withGroup(Messages.BUILDSCRIPT_CLASSPATH_MODEL_CACHE_GET_GROUP)
         .withTitle("Gradle build script class-path model aren't found")
         .withText("Gradle build script class-path model for " + projectDisplayName + " wasn't collected.")
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
       return new DefaultGradleBuildScriptClasspathModel();
     }
@@ -51,8 +51,8 @@ public class GradleBuildScriptClasspathCache {
         .withGroup(Messages.BUILDSCRIPT_CLASSPATH_MODEL_CACHE_SET_GROUP)
         .withTitle("Gradle build script class-path model redefinition")
         .withText("Gradle build script class-path model for " + projectDisplayName + " was already collected.")
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }
   }

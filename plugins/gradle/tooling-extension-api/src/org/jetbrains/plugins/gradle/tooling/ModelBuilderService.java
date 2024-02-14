@@ -58,7 +58,8 @@ public interface ModelBuilderService extends Serializable {
   ) {
     context.getMessageReporter().createMessage()
       .withGroup(this)
-      .withKind(Message.Kind.INTERNAL)
+      .withInternal()
+      .withKind(Message.Kind.WARNING)
       .withTitle("Gradle sync execution issue")
       .withText("Unable to load " + modelName + " model for project " + project.getDisplayName())
       .withException(exception)

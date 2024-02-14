@@ -36,8 +36,8 @@ public class GradleSourceSetDependencyCache {
           "Source set dependencies for " + project.getDisplayName() + " wasn't collected. " +
           "All source set dependencies should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE + "."
         )
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
       return new DefaultGradleSourceSetDependencyModel();
     }
@@ -56,8 +56,8 @@ public class GradleSourceSetDependencyCache {
         .withGroup(Messages.SOURCE_SET_DEPENDENCY_MODEL_CACHE_SET_GROUP)
         .withTitle("Source set dependency model redefinition")
         .withText("Source set dependencies for " + project.getDisplayName() + " was already collected.")
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }
   }

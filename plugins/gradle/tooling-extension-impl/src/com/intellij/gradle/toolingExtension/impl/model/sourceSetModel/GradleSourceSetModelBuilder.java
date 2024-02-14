@@ -112,8 +112,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           .withTitle("Jar task configuration error")
           .withText("Artifact files collecting for project Jar tasks was finished. " +
                     "Resolution for the Jar task " + element.getPath() + " will be skipped.")
-          .withKind(Message.Kind.INTERNAL)
-          .withStackTrace()
+          .withInternal().withStackTrace()
+          .withKind(Message.Kind.WARNING)
           .reportMessage(project);
       }
     });
@@ -155,8 +155,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           .withTitle("Jar task configuration error")
           .withText("Artifact files collecting for project Jar tasks was finished. " +
                     "Resolution for the Jar task " + element.getPath() + " will be skipped.")
-          .withKind(Message.Kind.INTERNAL)
-          .withStackTrace()
+          .withInternal().withStackTrace()
+          .withKind(Message.Kind.WARNING)
           .reportMessage(project);
       }
     });
@@ -196,8 +196,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           .withTitle("Project configuration error")
           .withText("Artifact files collecting for project configurations was finished. " +
                     "Resolution for the configuration " + element + " will be skipped.")
-          .withKind(Message.Kind.INTERNAL)
-          .withStackTrace()
+          .withInternal().withStackTrace()
+          .withKind(Message.Kind.WARNING)
           .reportMessage(project);
       }
     });
@@ -238,8 +238,8 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
           .withTitle("Project configuration error")
           .withText("Artifact files collecting for source sets was finished. " +
                     "Resolution for the source set" + element + " will be skipped.")
-          .withKind(Message.Kind.INTERNAL)
-          .withStackTrace()
+          .withInternal().withStackTrace()
+          .withKind(Message.Kind.WARNING)
           .reportMessage(project);
       }
     });

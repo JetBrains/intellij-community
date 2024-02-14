@@ -102,7 +102,6 @@ public final class GradleSourceSetDependencyResolver {
       catch (Exception e) {
         myContext.getMessageReporter().createMessage()
           .withGroup(Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP)
-          .withKind(Message.Kind.INTERNAL)
           .withTitle("Compile classpath resolution error")
           .withText(String.format(
             "Error obtaining compile classpath for java compilation task for [%s] in project [%s]",
@@ -110,6 +109,7 @@ public final class GradleSourceSetDependencyResolver {
             myProject.getPath()
           ))
           .withException(e)
+          .withKind(Message.Kind.WARNING)
           .reportMessage(myProject);
       }
     }

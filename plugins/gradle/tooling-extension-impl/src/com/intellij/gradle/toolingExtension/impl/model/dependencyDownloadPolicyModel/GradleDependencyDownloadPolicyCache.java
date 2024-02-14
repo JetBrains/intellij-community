@@ -33,8 +33,8 @@ public class GradleDependencyDownloadPolicyCache {
         .withGroup(Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP)
         .withTitle("Gradle dependency download policy aren't found")
         .withText("Gradle dependency download policy for " + projectDisplayName + " wasn't collected.")
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
       return GradleDependencyDownloadPolicy.NONE;
     }
@@ -50,8 +50,8 @@ public class GradleDependencyDownloadPolicyCache {
         .withGroup(Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP)
         .withTitle("Gradle dependency download policy redefinition")
         .withText("Gradle dependency download policy for " + projectDisplayName + " was already collected.")
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }
   }

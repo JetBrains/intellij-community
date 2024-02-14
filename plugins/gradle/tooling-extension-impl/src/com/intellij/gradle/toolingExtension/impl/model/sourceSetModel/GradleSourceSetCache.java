@@ -36,8 +36,8 @@ public class GradleSourceSetCache {
           "Source sets for " + project.getDisplayName() + " wasn't collected. " +
           "All source sets should be collected during " + GradleModelFetchPhase.PROJECT_SOURCE_SET_PHASE + "."
         )
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
       return new DefaultGradleSourceSetModel();
     }
@@ -52,8 +52,8 @@ public class GradleSourceSetCache {
         .withGroup(Messages.SOURCE_SET_CACHE_SET_GROUP)
         .withTitle("Source set model redefinition")
         .withText("Source sets for " + project.getDisplayName() + " was already collected.")
-        .withStackTrace()
-        .withKind(Message.Kind.INTERNAL)
+        .withInternal().withStackTrace()
+        .withKind(Message.Kind.ERROR)
         .reportMessage(project);
     }
   }

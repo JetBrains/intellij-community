@@ -440,7 +440,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     moduleLibDeps.addAll(getModuleLibDeps("project.p2", "Gradle: dep_1"));
     for (LibraryOrderEntry libDep : moduleLibDeps) {
       libs.add(libDep.getLibrary());
-      assertFalse("Dependency be project level: " + libDep.toString(), libDep.isModuleLevel());
+      assertFalse("Dependency be project level: " + libDep, libDep.isModuleLevel());
     }
 
     assertProjectLibraries("Gradle: dep", "Gradle: dep_1");
@@ -1862,19 +1862,15 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("4.6+")
   public void testAnnotationProcessorDependencies() throws Exception {
-    importProject(
-      """
-        apply plugin: 'java'
-
-        dependencies {
-            compileOnly 'org.projectlombok:lombok:1.16.2'
-            testCompileOnly 'org.projectlombok:lombok:1.16.2'
-            annotationProcessor 'org.projectlombok:lombok:1.16.2'
-        }
-        """);
-
-    final String depName = "Gradle: org.projectlombok:lombok:1.16.2";
-    assertModuleLibDepScope("project.main", depName, DependencyScope.PROVIDED);
+    var lombok = "org.projectlombok:lombok:1.16.2";
+    importProject(script(it -> {
+      it.withJavaPlugin();
+      it.withMavenCentral();
+      it.addDependency("compileOnly", lombok);
+      it.addDependency("testCompileOnly", lombok);
+      it.addDependency("annotationProcessor", lombok);
+    }));
+    assertModuleLibDepScope("project.main", "Gradle: " + lombok, DependencyScope.PROVIDED);
   }
 
   @Test // https://youtrack.jetbrains.com/issue/IDEA-223152

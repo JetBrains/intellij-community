@@ -88,8 +88,6 @@ public final class Message {
   public enum Kind {
     ERROR,
     WARNING,
-    INFO,
-    @ApiStatus.Internal
-    INTERNAL
+    INFO
   }
 }
