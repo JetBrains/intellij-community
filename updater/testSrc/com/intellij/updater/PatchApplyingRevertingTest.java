@@ -301,14 +301,16 @@ abstract class PatchApplyingRevertingTest {
   @Test
   //Android Studio: b/299293997
   public void testApplyingWithReadOnlyCriticalFile() throws Exception {
-    myPatchSpec.setStrict(true);
-    myPatchSpec.setCriticalFiles(Collections.singletonList("lib/annotations.jar"));
-    createPatch();
+    var dirs = prepareDirectories(tempDir, dataDir, true);
+    var spec = createPatchSpec(dirs.oldDir, dirs.newDir)
+      .setStrict(true)
+      .setCriticalFiles(Collections.singletonList("lib/annotations.jar"));
+    var patch = createPatch(spec);
 
-    File file = new File(myOlderDir, "lib/annotations.jar");
+    File file = dirs.oldDir.resolve("lib/annotations.jar").toFile();
     assertThat(file.setWritable(false)).isTrue();
 
-    assertAppliedAndReverted();
+    assertAppliedAndReverted(dirs, patch);
   }
 
   @Test void applyingWithModifiedCriticalFilesAndDifferentRoot() throws Exception {
