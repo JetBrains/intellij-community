@@ -1566,7 +1566,9 @@
       implementationClass="com.intellij.codeInsight.inline.completion.BackSpaceInlineCompletionHandler"
       order="before hide-hints"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEditorListener"/>
-    <actionPromoter implementation="com.intellij.codeInsight.inline.completion.InlineCompletionActionsPromoter" order="last"/>
+    <actionPromoter id="InlineCompletionPromoter"
+                    implementation="com.intellij.codeInsight.inline.completion.InlineCompletionActionsPromoter"
+                    order="last"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionNewLineEditorListener"/>
     <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElementManipulator"
