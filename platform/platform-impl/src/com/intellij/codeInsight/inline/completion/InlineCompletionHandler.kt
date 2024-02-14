@@ -17,13 +17,11 @@ import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExec
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -170,10 +168,7 @@ class InlineCompletionHandler(
     currentCoroutineContext().ensureActive()
 
     val context = session.context
-
     val result = Result.runCatching {
-      ensureFilesConsistency(request.file.project)
-
       var variants = request(session.provider, request).getVariants()
       if (variants.size > InlineCompletionSuggestion.MAX_VARIANTS_NUMBER) {
         val provider = session.provider
@@ -433,14 +428,6 @@ class InlineCompletionHandler(
   @RequiresEdt
   private suspend fun trace(event: InlineCompletionEventType) {
     coroutineToIndicator { traceBlocking(event) }
-  }
-
-  private suspend fun ensureFilesConsistency(project: Project) {
-    withContext(Dispatchers.EDT) {
-      writeAction {
-        PsiDocumentManager.getInstance(project).commitAllDocuments()
-      }
-    }
   }
 
   @TestOnly
