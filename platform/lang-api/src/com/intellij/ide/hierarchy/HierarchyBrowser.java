@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +11,7 @@ import javax.swing.*;
 /**
  * Base class for components which can be displayed in the Hierarchy toolwindow.
  */
-public interface HierarchyBrowser {
+public interface HierarchyBrowser extends PossiblyDumbAware {
   /**
    * Returns the UI component to be displayed in the toolwindow.
    *

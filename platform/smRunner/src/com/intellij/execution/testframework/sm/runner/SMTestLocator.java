@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,7 +18,7 @@ import java.util.List;
  * A parser for location URLs reported by test runners.
  * See {@link SMTestProxy#getLocation(Project, GlobalSearchScope)} for details.
  */
-public interface SMTestLocator {
+public interface SMTestLocator extends PossiblyDumbAware {
   /**
    * Creates the <code>Location</code> list from <code>protocol</code> and <code>path</code> in <code>scope</code>.
    */
@@ -30,8 +31,8 @@ public interface SMTestLocator {
   /**
    * Creates the <code>Location</code> list from <code>protocol</code>, <code>path</code>, and <code>metainfo</code> in <code>scope</code>.
    * Implementation of test framework can provide additional information in <code>metainfo</code> parameter,
-   * The <code>metainfo</code> parameter simplifies the search for locations, but can not be used to identify the test.
-   * A good example for code>metainfo</code> is the line number of the beginning of the test. It can speed up the search procedure,
+   * The <code>metainfo</code> parameter simplifies the search for locations, but cannot be used to identify the test.
+   * A good example for <code>metainfo</code> is the line number of the beginning of the test. It can speed up the search procedure,
    * but it changes when editing.
    */
   @NotNull

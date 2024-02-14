@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nls;
@@ -21,8 +22,7 @@ import java.util.Iterator;
  * that might be called just before run configuration start.
  * Exact list of tasks should be specified for every run configuration (or template) by user in dedicated UI.
  */
-
-public abstract class BeforeRunTaskProvider<@NotNull T extends BeforeRunTask<?>> {
+public abstract class BeforeRunTaskProvider<@NotNull T extends BeforeRunTask<?>> implements PossiblyDumbAware {
   public static final ProjectExtensionPointName<BeforeRunTaskProvider<BeforeRunTask<?>>> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.stepsBeforeRunProvider");
 
