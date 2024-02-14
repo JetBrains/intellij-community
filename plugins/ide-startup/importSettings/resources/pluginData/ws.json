@@ -35,12 +35,6 @@
     "ideaId": "Dart"
   },
   {
-    "vsCodeId": "Dart-Code.dart-code",
-    "ideaName": "Dart",
-    "ideaId": "Dart",
-    "builtIn": true
-  },
-  {
     "vsCodeId": "Dart-Code.flutter",
     "ideaName": "Flutter",
     "ideaId": "io.flutter"
@@ -55,12 +49,6 @@
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
     "ideaId": "intellij.prettierJS"
-  },
-  {
-    "vsCodeId": "esbenp.prettier-vscode",
-    "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS",
-    "builtIn": true
   },
   {
     "vsCodeId": "formulahendry.vscode-mysql",
@@ -150,12 +138,6 @@
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
     "ideaName": "TSLint",
     "ideaId": "tslint"
-  },
-  {
-    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
-    "ideaName": "TSLint",
-    "ideaId": "tslint",
-    "builtIn": true
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",

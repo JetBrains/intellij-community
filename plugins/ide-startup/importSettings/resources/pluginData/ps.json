@@ -11,12 +11,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "bmewburn.vscode-intelephense-client",
-    "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php",
-    "builtIn": true
-  },
-  {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
@@ -130,19 +124,8 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "xdebug.php-debug",
-    "ideaName": "PHP",
-    "builtIn": true
-  },
-  {
     "vsCodeId": "xdebug.php-pack",
     "ideaName": "PHP",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "xdebug.php-pack",
-    "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php",
     "builtIn": true
   },
   {

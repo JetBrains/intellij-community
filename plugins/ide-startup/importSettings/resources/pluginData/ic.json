@@ -127,12 +127,6 @@
     "ideaId": "org.intellij.scala"
   },
   {
-    "vsCodeId": "scala-lang.scala",
-    "ideaName": "Scala",
-    "ideaId": "org.intellij.scala",
-    "builtIn": true
-  },
-  {
     "vsCodeId": "SonarSource.sonarlint-vscode",
     "ideaName": "SonarLint",
     "ideaId": "org.sonarlint.idea",
@@ -157,11 +151,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "vscjava.vscode-gradle",
-    "ideaName": "Gradle",
-    "builtIn": true
-  },
-  {
     "vsCodeId": "vscjava.vscode-java-debug",
     "ideaName": "Debugger",
     "builtIn": true
@@ -175,12 +164,6 @@
     "vsCodeId": "vscjava.vscode-lombok",
     "ideaName": "Lombok",
     "ideaId": "Lombook Plugin"
-  },
-  {
-    "vsCodeId": "vscjava.vscode-lombok",
-    "ideaName": "Lombok",
-    "ideaId": "Lombook Plugin",
-    "builtIn": true
   },
   {
     "vsCodeId": "vscjava.vscode-maven",

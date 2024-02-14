@@ -113,12 +113,6 @@
     "ideaId": "com.intellij.python"
   },
   {
-    "vsCodeId": "ms-python.python",
-    "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
-  },
-  {
     "vsCodeId": "ms-vscode.PowerShell",
     "ideaName": "PowerShell",
     "ideaId": "com.intellij.plugin.adernov.powershell",
