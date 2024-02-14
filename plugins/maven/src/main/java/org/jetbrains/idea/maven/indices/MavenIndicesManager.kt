@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -119,7 +120,9 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
       MavenLog.LOG.info("Updating index list for project $myProject")
       updateMutex.lock()
       val existing = myGavIndices.firstOrNull()
-      val repository = MavenIndexUtils.getLocalRepository(myProject)
+      val repository = blockingContext {
+        MavenIndexUtils.getLocalRepository (myProject)
+      }
       if (existing != null && existing.repository == repository) {
         MavenLog.LOG.info("updating index list for ${myProject} - ${repository} remains the same, nothing to update")
         return
