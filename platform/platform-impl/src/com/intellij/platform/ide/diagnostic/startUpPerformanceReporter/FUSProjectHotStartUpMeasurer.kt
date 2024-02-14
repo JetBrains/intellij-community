@@ -10,8 +10,6 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ComparatorUtil
@@ -197,26 +195,21 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.MarkupRestoredEvent(file.id))
   }
 
-  private suspend fun reportFirstEditor(file: VirtualFile, sourceOfSelectedEditor: SourceOfSelectedEditor) {
-    if (!isProperContext()) return
-    channel.trySend(Event.FirstEditorEvent(sourceOfSelectedEditor, file))
-  }
-
   fun firstOpenedEditor(file: VirtualFile) {
     if (!currentThreadContext().isProperContext()) {
       return
     }
-    service<MeasurerCoroutineService>().coroutineScope.launch(context = MyMarker) {
-      reportFirstEditor(file, SourceOfSelectedEditor.TextEditor)
-    }
+    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file))
   }
 
   suspend fun firstOpenedUnknownEditor(file: VirtualFile) {
-    reportFirstEditor(file, SourceOfSelectedEditor.UnknownEditor)
+    if (!isProperContext()) return
+    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file))
   }
 
   suspend fun openedReadme(readmeFile: VirtualFile) {
-    reportFirstEditor(readmeFile, SourceOfSelectedEditor.FoundReadmeFile)
+    if (!isProperContext()) return
+    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile))
   }
 
   suspend fun reportNoMoreEditorsOnStartup() {
@@ -474,6 +467,3 @@ internal class HotProjectReopenStartUpPerformanceCollector : CounterUsagesCollec
     return GROUP
   }
 }
-
-@Service
-private class MeasurerCoroutineService(val coroutineScope: CoroutineScope)
