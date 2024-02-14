@@ -302,7 +302,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
   }
 }
 
-private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
   val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
   val text = searchText?.takeIf { it.isNotBlank() }?.let {
     @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
