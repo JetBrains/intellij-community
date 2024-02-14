@@ -173,20 +173,8 @@ internal suspend fun loadApp(app: ApplicationImpl,
       getAppInitializedListeners(app)
     }
 
-    __coroutineDebugJob = asyncScope.launch(CoroutineName("coroutine debug probes init")) {
-      if (SystemInfoRt.isWindows && CpuArch.isArm64()) {
-        return@launch
-      }
-
-      enableCoroutineDump().onFailure { e ->
-        if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-          LOG.warn("Cannot enable coroutine debug dump", e)
-        }
-        else {
-          LOG.error("Cannot enable coroutine debug dump", e)
-        }
-      }
-      asyncScope.enableJstack()
+    asyncScope.launch {
+      enableCoroutineDumpAndJstack()
     }
 
     appRegisteredJob.join()
@@ -202,7 +190,6 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
     asyncScope.launch {
       // do not use launch here - don't overload CPU, let some room for JIT and other CPU-intensive tasks during start-up
-      __coroutineDebugJob?.join()
 
       span("checkThirdPartyPluginsAllowed") {
         checkThirdPartyPluginsAllowed()
@@ -222,14 +209,39 @@ internal suspend fun loadApp(app: ApplicationImpl,
   }
 }
 
-// todo remove when will be clear what's wrong with out tests / when we will remove byte-buddy usage
-@Suppress("ObjectPropertyName")
-@Internal
-@JvmField
-var __coroutineDebugJob: Job? = null
+private suspend fun enableCoroutineDumpAndJstack() {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean() || (SystemInfoRt.isWindows && CpuArch.isArm64())) {
+    return
+  }
 
-private fun CoroutineScope.enableJstack() {
-  launch(CoroutineName("coroutine jstack configuration")) {
+  var isInstalled = false
+  span("coroutine debug probes init") {
+    try {
+      enableCoroutineDump()
+        .onFailure { e ->
+          if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+            LOG.warn("Cannot enable coroutine debug dump", e)
+          }
+          else {
+            LOG.error("Cannot enable coroutine debug dump", e)
+          }
+        }
+        .onSuccess {
+          isInstalled = true
+        }
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot enable coroutine debug dump", e)
+    }
+  }
+
+  if (isInstalled) {
+    enableJstack()
+  }
+}
+
+private suspend fun enableJstack() {
+  span("coroutine jstack configuration") {
     JBR.getJstack()?.includeInfoFrom {
       """
 $COROUTINE_DUMP_HEADER
