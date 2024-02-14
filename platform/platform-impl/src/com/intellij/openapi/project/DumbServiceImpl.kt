@@ -581,7 +581,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   @TestOnly
-  val isRunning: Boolean = myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value
+  fun isRunning(): Boolean {
+    return myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value
+  }
 
   companion object {
     @JvmField
