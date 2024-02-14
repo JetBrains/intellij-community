@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
@@ -379,10 +379,20 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   public int allocateRecord() {
     int recordId = allocatedRecordsCount.incrementAndGet();
     try {
-      //Issue a dummy write (0 is default value of unallocated file regions) to ensure storage file
-      // is extended to fit new record. We calculate allocated records via file size on load, hence
-      // file size must extend to include new record, otherwise it will be lost
-      setIntField(recordId, RECORD_SIZE_IN_BYTES - Integer.BYTES, 0);
+      //Ensure storage file is extended to fit new record.
+      // We calculate allocated records via file size on load, so file size must extend to include new record,
+      // otherwise newly allocated record can be lost
+      long recordOffsetInFile = recordOffsetInFile(recordId);
+      int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+      try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
+        page.lockPageForWrite();
+        try {
+          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
+        }
+        finally {
+          page.unlockPageForWrite();
+        }
+      }
     }
     catch (IOException e) {
       throw new UncheckedIOException("Can't ensure room for recordId=" + recordId, e);

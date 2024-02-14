@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedStorage;
 import com.intellij.util.BitUtil;
-import com.intellij.util.io.DataEnumerator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
@@ -14,8 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.NULL_FILE_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE_RECORD_FLAG;
+import static com.intellij.util.io.DataEnumerator.NULL_ID;
 
 /**
  * This class responsibility is record allocation/deletion/re-use.
@@ -106,14 +107,18 @@ public final class PersistentFSRecordAccessor {
     }
   }
 
-  private static void checkNewRecordIsZero(PersistentFSRecordsStorage records, int newRecordId) throws IOException {
+  private static void checkNewRecordIsZero(PersistentFSRecordsStorage records,
+                                           int newRecordId) throws IOException {
+    int parentId = records.getParent(newRecordId);
     int nameId = records.getNameId(newRecordId);
     int contentId = records.getContentRecordId(newRecordId);
     int attributeRecordId = records.getAttributeRecordId(newRecordId);
-    if (nameId != NULL_NAME_ID || contentId != DataEnumerator.NULL_ID || attributeRecordId != DataEnumerator.NULL_ID) {
-      int parentId = records.getParent(newRecordId);
-      int flags = records.getFlags(newRecordId);
-      int modCount = records.getModCount(newRecordId);
+    int flags = records.getFlags(newRecordId);
+    int modCount = records.getModCount(newRecordId);
+    long length = records.getLength(newRecordId);
+    long timestamp = records.getTimestamp(newRecordId);
+    if (parentId != NULL_FILE_ID || nameId != NULL_NAME_ID || contentId != NULL_ID || attributeRecordId != NULL_ID ||
+        flags != 0 || modCount != 0 || length!=0 || timestamp != 0) {
       throw new IOException("new record (id: " + newRecordId + ") has non-empty fields: " +
                             "parentId=" + parentId + ", flags=" + flags + ", nameId= " + nameId + ", " +
                             "attributeId=" + attributeRecordId + ", contentId=" + contentId + ", modCount=" + modCount
