@@ -37,7 +37,12 @@ class TerminalBlockCornersRenderer private constructor(
   )
 
   /** Paints the linear gradient from left to right */
-  constructor(gradientCache: GradientTextureCache) : this(background = null, gradientCache = gradientCache)
+  constructor(gradientCache: GradientTextureCache, strokeBackground: Color? = null, strokeWidth: Int = 0) : this(
+    background = null,
+    gradientCache = gradientCache,
+    strokeBackground = strokeBackground,
+    strokeWidth = strokeWidth
+  )
 
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {

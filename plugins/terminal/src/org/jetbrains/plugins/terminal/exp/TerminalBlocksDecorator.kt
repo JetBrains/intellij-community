@@ -151,7 +151,7 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
       calculateSelectionDecorationState()
     }
     else if (outputModel.getBlockInfo(block).let { it != null && it.exitCode != 0 }) {
-      ErrorBlockDecorationState()
+      ErrorBlockDecorationState(gradientCache)
     }
     else DefaultBlockDecorationState(gradientCache)
   }

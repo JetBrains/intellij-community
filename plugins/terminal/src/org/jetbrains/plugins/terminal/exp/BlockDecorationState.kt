@@ -44,12 +44,12 @@ internal class InactiveSelectedBlockDecorationState : BlockDecorationState {
   )
 }
 
-internal class ErrorBlockDecorationState : BlockDecorationState {
-  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.errorBlockBackground)
-  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(background = TerminalUi.errorBlockBackground,
+internal class ErrorBlockDecorationState(gradientCache: GradientTextureCache) : BlockDecorationState {
+  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(gradientCache)
+  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(gradientCache = gradientCache,
                                                                                          strokeBackground = TerminalUi.errorBlockStrokeColor,
                                                                                          strokeWidth = 1)
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(background = TerminalUi.errorBlockBackground,
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(background = gradientCache.colorStart,
                                                                                     strokeBackground = TerminalUi.errorBlockStrokeColor,
                                                                                     strokeWidth = 1)
 }
