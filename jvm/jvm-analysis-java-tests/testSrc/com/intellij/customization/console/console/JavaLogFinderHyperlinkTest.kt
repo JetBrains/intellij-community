@@ -392,7 +392,7 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
   }
 
 
-  fun `testSimpleSlf4jWith$`() {
+  fun `testSimpleSlf4jWith$AndNotClass`() {
     LoggingTestUtils.addSlf4J(myFixture)
     checkColumnFinderJava(
       fileName = "Slf4J",
@@ -431,6 +431,7 @@ class JavaLogFinderHyperlinkTest : LogFinderHyperlinkTestBase() {
         LogItem("1", null),
         LogItem("20:37:13.351 [main] INFO com.example.loggingjava.java.Slf4J\$ - test1", LogicalPosition(5, 19)),
         LogItem("20:37:13.356 [main] INFO com.e.l.j.Slf4J\$ - log22", LogicalPosition(21, 8)),
+        LogItem("sun.awt.X11", null),
       )
     )
   }

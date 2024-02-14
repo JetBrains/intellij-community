@@ -21,6 +21,10 @@ private const val AT: @NonNls String = "\tat "
 
 private const val POINT_CODE = '.'.code
 
+private val HARDCODED_NOT_CLASS = setOf(
+  "sun.awt.X11"
+)
+
 internal class ClassFinderFilter(private val myProject: Project, myScope: GlobalSearchScope) : Filter {
   private val cache = ClassInfoResolver(myProject, myScope)
 
@@ -127,11 +131,15 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
         actualEndExclusive--
       }
       val fullClassName = line.substring(startInclusive, actualEndExclusive)
-      if (canBeShortenedFullyQualifiedClassName(fullClassName) && isJavaStyle(fullClassName)) {
+      if (canBeShortenedFullyQualifiedClassName(fullClassName) && isJavaStyle(fullClassName) && !isHardcodedNotClass(fullClassName)) {
         val probableClassName = ProbableClassName(startInclusive + fullClassName.lastIndexOf(".") + 1,
                                                   startInclusive + fullClassName.length, line, fullClassName)
         result.add(probableClassName)
       }
+    }
+
+    private fun isHardcodedNotClass(fullClassName: String): Boolean {
+      return HARDCODED_NOT_CLASS.contains(fullClassName)
     }
 
     private fun isJavaStyle(shortenedClassName: String): Boolean {
