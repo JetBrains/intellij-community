@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
@@ -42,11 +42,15 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
         val referenceList = dumpMethod.mirror(instance, context) ?: return emptyList()
         return referenceList.values.mapNotNull { coroutineInfo.mirror(it, context) }
     }
-
-    fun getCurrentThreadCoroutineId(context: DefaultExecutionContext): Long? {
-        return instance?.let { currentThreadCoroutineIdMethod.value(it, context)?.longValue() }
+    
+    fun getCoroutinesRunningOnCurrentThread(context: DefaultExecutionContext): Set<Long> {
+        val coroutines = dumpCoroutinesInfo(context)
+        return coroutines.mapNotNull { 
+            val currentThread = context.suspendContext.anotherThreadToFocus ?: context.suspendContext.thread
+            if (it.lastObservedThread == currentThread?.threadReference) it.sequenceNumber else null 
+        }.toSet()
     }
-
+    
     fun canDumpCoroutinesInfoAsJsonAndReferences() =
         dumpCoroutinesInfoAsJsonAndReferences.method != null
 
@@ -77,6 +81,8 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
         val coroutineOwner = debugProbesCoroutineOwner.mirror(value, context)
         return coroutineOwner?.coroutineInfo
     }
+
+    fun getObject() = instance
 
     companion object {
         val log by logger

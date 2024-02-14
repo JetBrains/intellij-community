@@ -8,14 +8,16 @@ import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 
-interface ContinuationFilter
+interface ContinuationFilter {
+    fun canRunTo(nextContinuationFilter: ContinuationFilter): Boolean
+}
 
 data class CoroutineJobInfo(private val continuationFilter: ContinuationFilter) : LightOrRealThreadInfo {
     override val realThread = null
 
     override fun checkSameThread(thread: ThreadReference, suspendContext: SuspendContextImpl): Boolean {
-        val jobFromContext = getContinuationObject(suspendContext)
-        return jobFromContext == continuationFilter
+        val nextContinuationFilter = getContinuationObject(suspendContext)
+        return nextContinuationFilter != null && continuationFilter.canRunTo(nextContinuationFilter)
     }
 
     companion object {

@@ -130,9 +130,11 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
         evaluationContext.keep(reference)
     }
 
-    fun findClassSafe(className: String): ClassType? = findReferenceTypeSafe(className) as? ClassType
+    fun findClassSafe(className: String): ClassType? =
+        hopelessAware { findClass(className, classLoader) as? ClassType }
 
-    fun findReferenceTypeSafe(name: String): ReferenceType? = hopelessAware { findClass(name, classLoader) }
+    fun findReferenceTypeSafe(name: String): ReferenceType? =
+        hopelessAware { findClass(name, classLoader) }
 
     fun invokeMethodSafe(type: ClassType, method: Method, args: List<Value?>): Value? {
         return hopelessAware { debugProcess.invokeMethod(evaluationContext, type, method, args) }
