@@ -33,7 +33,7 @@ class GitLabMergeRequestDTO(
   @SinceGitLab("13.12") val draft: Boolean,
   @SinceGitLab("13.1") val author: GitLabUserDTO,
   val targetProject: GitLabProjectDTO,
-  val sourceProject: GitLabProjectDTO?,
+  val sourceProject: GitLabProjectDTO?, // Is null when the source project is a private fork or is unavailable
   val userPermissions: GitLabMergeRequestPermissionsDTO,
   val shouldBeRebased: Boolean,
   val rebaseInProgress: Boolean,
