@@ -168,8 +168,7 @@ private fun <T : Any> getXmlSerializationState(
   var result = mergeInto
   val bindings = rootBinding.bindings!!
 
-  for ((index, binding) in bindings
-    .withIndex()) {
+  for ((index, binding) in bindings.withIndex()) {
     val data = getXmlDataFromController(
       key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}"),
       controller = controller,
@@ -181,14 +180,7 @@ private fun <T : Any> getXmlSerializationState(
           @Suppress("UNCHECKED_CAST")
           result = rootBinding.newInstance() as T
         }
-        deserializeBeanInto(
-          result = result,
-          element = oldData,
-          accessorNameTracker = null,
-          bindings = bindings,
-          start = index,
-          end = index + 1,
-        )
+        deserializeBeanInto(result = result, element = oldData, bindings = bindings, start = index, end = index + 1)
       }
       continue
     }
@@ -224,7 +216,7 @@ private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controll
   catch (e: Throwable) {
     LOG.error("Cannot deserialize value for $key", e)
   }
-  return GetResult.resolved(null)
+  return GetResult.inapplicable()
 }
 
 private val shimPluginId = PluginId.getId("__controller_shim__")

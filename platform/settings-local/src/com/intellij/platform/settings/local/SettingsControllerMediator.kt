@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.settings.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
@@ -23,6 +24,10 @@ class SettingsControllerMediator(
   private val controllers: List<DelegatedSettingsController> = SETTINGS_CONTROLLER_EP_NAME.extensionList,
   private val isPersistenceStateComponentProxy: Boolean = controllers.size > 1,
 ) : SettingsController {
+  @TestOnly
+  constructor(isPersistenceStateComponentProxy: Boolean)
+    : this(controllers = SETTINGS_CONTROLLER_EP_NAME.extensionList, isPersistenceStateComponentProxy = isPersistenceStateComponentProxy)
+
   override fun <T : Any> getItem(key: SettingDescriptor<T>): T? {
     return doGetItem(key).get()
   }

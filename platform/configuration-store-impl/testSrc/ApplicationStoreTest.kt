@@ -15,6 +15,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.io.write
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.Dispatchers
@@ -181,7 +182,6 @@ class ApplicationStoreTest {
 
   @Test
   fun `import deprecated settings`() {
-
     @State(name = "Comp", storages = [
       Storage("old.xml", roamingType = RoamingType.PER_OS, deprecated = true),
       Storage("new.xml", roamingType = RoamingType.PER_OS)])
@@ -199,9 +199,11 @@ class ApplicationStoreTest {
     val component = Comp()
     ApplicationManager.getApplication().registerServiceInstance(Comp::class.java, component)
     try {
-      val allItems = getExportableComponentsMap(isComputePresentableNames = false,
-                                                storageManager = storageManager,
-                                                withDeprecated = true)
+      val allItems = getExportableComponentsMap(
+        isComputePresentableNames = false,
+        storageManager = storageManager,
+        withDeprecated = true,
+      )
       assertThat(allItems).containsKeys(
         fileSpec("old.xml"),
         fileSpec("$os/old.xml"),
@@ -550,9 +552,6 @@ class ApplicationStoreTest {
     assertThat(component.state.bar).isEqualTo("42")
   }
 
-  private data class TestStateWithMap(@JvmField @Attribute var foo: String = "",
-                                      @JvmField val map: Map<String, Set<String>> = HashMap())
-
   private fun createComponentFileContent(fooValue: String, componentName: String = "A"): String {
     return """<application>${createComponentData(fooValue, componentName)}</application>"""
   }
@@ -560,18 +559,26 @@ class ApplicationStoreTest {
   @State(name = "A", storages = [Storage(value = "per-os.xml", roamingType = RoamingType.PER_OS)])
   private class PerOsComponent : FooComponent()
 
-  private fun writeConfig(fileName: String, @Language("XML") data: String): Path =
-    testAppConfig.resolve(fileName).createParentDirectories().apply { writeText(data) }
+  private fun writeConfig(fileName: String, @Language("XML") data: String): Path {
+    val file = testAppConfig.resolve(fileName)
+    file.write(data)
+    return file
+  }
 
   private class MyStreamProvider : StreamProvider {
     override val isExclusive = true
 
-    override fun processChildren(path: String, roamingType: RoamingType, filter: (String) -> Boolean, processor: (String, InputStream, Boolean) -> Boolean) = true
+    override fun processChildren(
+      path: String,
+      roamingType: RoamingType,
+      filter: (String) -> Boolean,
+      processor: (String, InputStream, Boolean) -> Boolean,
+    ) = true
 
     val data: MutableMap<RoamingType, MutableMap<String, String>> = EnumMap(RoamingType::class.java)
 
     override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
-      getMap(roamingType).put(fileSpec, String(content, Charsets.UTF_8))
+      getMap(roamingType).put(fileSpec, content.decodeToString())
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> = data.computeIfAbsent(roamingType) { HashMap() }
@@ -583,7 +590,7 @@ class ApplicationStoreTest {
     }
 
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      data[roamingType]?.remove(fileSpec)
+      data.get(roamingType)?.remove(fileSpec)
       return true
     }
   }

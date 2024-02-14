@@ -16,8 +16,10 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.intellij.lang.annotations.Language
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -48,6 +50,10 @@ class ControllerBackedStoreTest {
   @Before
   fun setUp() {
     testAppConfig = fsRule.fs.getPath("/app-config")
+  }
+
+  @Test
+  fun `cache storage`() = runBlocking<Unit>(Dispatchers.Default) {
     componentStore = ControllerBackedTestComponentStore(
       testAppConfigPath = testAppConfig,
       controller = SettingsControllerMediator(
@@ -65,14 +71,8 @@ class ControllerBackedStoreTest {
         isPersistenceStateComponentProxy = true,
       ),
     )
-  }
 
-  @Test
-  fun `settingsController - cache storage`() = runBlocking<Unit>(Dispatchers.Default) {
-    @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
-    class Component : SerializablePersistentStateComponent<TestState>(TestState())
-
-    val component = Component()
+    val component = TestComponent()
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
 
     assertThat(component.state.foo).isEmpty()
@@ -89,6 +89,40 @@ class ControllerBackedStoreTest {
     """.trimIndent().toByteArray())
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
     assertThat(component.state.bar).isEqualTo("12")
+  }
+
+  @Test
+  fun `not applicable`() = runBlocking<Unit>(Dispatchers.Default) {
+    componentStore = ControllerBackedTestComponentStore(
+      testAppConfigPath = testAppConfig,
+      controller = SettingsControllerMediator(isPersistenceStateComponentProxy = true),
+    )
+
+    val oldContent = """
+      <application>
+        <component name="TestState" foo="old"/>
+      </application>
+      """.trimMargin()
+    writeConfig(StoragePathMacros.NON_ROAMABLE_FILE, oldContent)
+
+    val component = TestComponent()
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+
+    assertThat(component.state.foo).isEqualTo("old")
+    assertThat(component.state.bar).isEmpty()
+
+    component.state = TestState(bar = "42")
+    componentStore.save(forceSavingAllSettings = true)
+
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    assertThat(component.state.bar).isEqualTo("42")
+  }
+
+  @Suppress("SameParameterValue")
+  private fun writeConfig(fileName: String, @Language("XML") data: String): Path {
+    val file = testAppConfig.resolve(fileName)
+    file.write(data)
+    return file
   }
 }
 
@@ -110,3 +144,6 @@ private class ControllerBackedTestComponentStore(
     storageManager.setMacros(listOf(Macro(APP_CONFIG, path), Macro(ROOT_CONFIG, path), Macro(StoragePathMacros.CACHE_FILE, path)))
   }
 }
+
+@State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+private class TestComponent : SerializablePersistentStateComponent<TestState>(TestState())
