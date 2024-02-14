@@ -14,6 +14,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -403,7 +404,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
     return false;
   }
 
-  private static class RemoveCallFix extends PsiUpdateModCommandQuickFix {
+  static class RemoveCallFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myMethodName;
     private final @Nullable String myBindPreviousCall;
 
@@ -435,7 +436,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiMethodCallExpression call = tryCast(element, PsiMethodCallExpression.class);
+      PsiMethodCallExpression call = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
