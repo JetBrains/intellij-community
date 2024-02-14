@@ -42,4 +42,11 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends Descriptio
     DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevKitIcons.Gutter.Diff,
                                                   "after.java.template", "before.java.template");
   }
+  
+  public void testIntentionDescriptionFolderNameShouldBeEqualToClassNameNotIgnoringCase() {
+    myFixture.copyDirectoryToProject("intentionDescriptions", "intentionDescriptions");
+
+    List<GutterMark> gutters = myFixture.findAllGutters("caseSensitive/MyIntentionActionwithDescription.java");
+    assertThat(gutters.size()).isEqualTo(0);
+  }
 }
