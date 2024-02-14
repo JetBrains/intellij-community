@@ -208,6 +208,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
 
   private fun customizeEditorSettings(settings: EditorSettings) {
     settings.isLineMarkerAreaShown = myIsEditor
+    settings.isShowIntentionBulb = myIsEditor
     settings.isFoldingOutlineShown = false
     settings.additionalColumnsCount = 0
     settings.additionalLinesCount = 0
