@@ -17,16 +17,20 @@ import javax.swing.Icon
 @ApiStatus.Experimental
 abstract class LanguageServiceWidgetItem {
   /**
-   * The default label for the widget in the status bar is generic: "Language Services".
-   * But if this item is the only one in the `For Current File` popup section
-   * (according to the [widgetActionLocation] property value) then the widget label is set to the service-specific one:
-   * the [statusBarText] property value.
+   * The default label for the status bar widget is the generic one: "Language Services".
+   *
+   * But if
+   * - this [LanguageServiceWidgetItem] is the only one in the `For Current File` popup section
+   *   (only for this item the [widgetActionLocation] value is [LanguageServicePopupSection.ForCurrentFile])
+   * - and the [statusBarText] value is not `null`
+   *
+   * then the service-specific text will be shown in the status bar.
    *
    * If this item is not the only one in the `For Current File` popup section,
    * or it is not in the `For Current File` popup section at all,
-   * then the [statusBarText] property is ignored.
+   * then the [statusBarText] value is ignored.
    */
-  abstract val statusBarText: @NlsContexts.StatusBarText String
+  open val statusBarText: @NlsContexts.StatusBarText String? = null
 
   /**
    * A tooltip for the status bar widget label.
