@@ -47,7 +47,7 @@ object GitLabLoginUtil {
     val exitCode = showLoginDialog(project, parentComponent, model, dialogTitle, false)
     return when (exitCode) {
       DialogWrapper.OK_EXIT_CODE -> {
-        val loginResult = model.loginState.asSafely<LoginModel.LoginState.Connected>() ?: return LoginResult.Failure
+        val loginResult = model.loginState.value.asSafely<LoginModel.LoginState.Connected>() ?: return LoginResult.Failure
         return LoginResult.Success(GitLabAccount(name = loginResult.username, server = model.getServerPath()), model.token)
       }
       DialogWrapper.NEXT_USER_EXIT_CODE -> LoginResult.OtherMethod
