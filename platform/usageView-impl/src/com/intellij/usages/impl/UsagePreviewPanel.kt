@@ -57,8 +57,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -149,7 +151,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
         if (isDisposed) return@withContext
         myEditor = createEditor(psiFile, document)
         lineHeight = myEditor!!.lineHeight
-        myEditor!!.setBorder(null)
+        myEditor!!.setBorder(if (myIsEditor) null else JBEmptyBorder(0, UIUtil.LARGE_VGAP, 0, 0))
         add(myEditor!!.component, BorderLayout.CENTER)
         invalidate()
         validate()
