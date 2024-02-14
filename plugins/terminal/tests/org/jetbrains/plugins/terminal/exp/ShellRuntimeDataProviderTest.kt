@@ -16,8 +16,10 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
+import org.jetbrains.plugins.terminal.exp.completion.isBashZshPwsh
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.util.ShellType
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,6 +47,7 @@ class ShellRuntimeDataProviderTest(private val shellPath: Path) {
   @Test
   fun `get all files from directory`() {
     val session = TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath.toString(), disposableRule.disposable)
+    Assume.assumeTrue(session.isBashZshPwsh())
     val testDirectory = createTempDirectory(prefix = "runtime_data")
     Disposer.register(disposableRule.disposable) { testDirectory.deleteRecursively() }
 
@@ -71,6 +74,7 @@ class ShellRuntimeDataProviderTest(private val shellPath: Path) {
   @Test
   fun `get shell environment`() {
     val session = TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath.toString(), disposableRule.disposable)
+    Assume.assumeTrue(session.isBashZshPwsh())
 
     val env: ShellEnvironment = executeRuntimeDataRequest(session) { provider ->
       provider.getShellEnvironment()

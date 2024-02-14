@@ -81,7 +81,7 @@ internal class GetEnvironmentCommand(private val session: BlockTerminalSession) 
   }
 }
 
-private fun BlockTerminalSession.isBashZshPwsh(): Boolean {
+internal fun BlockTerminalSession.isBashZshPwsh(): Boolean {
   return shellIntegration.shellType == ShellType.ZSH
          || shellIntegration.shellType == ShellType.BASH
          || shellIntegration.shellType == ShellType.POWERSHELL
