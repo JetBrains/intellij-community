@@ -5,9 +5,12 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.io.ByteArrayInputStream
 import java.io.Closeable
+import java.io.DataInputStream
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -52,10 +55,12 @@ abstract class ProductLoadingStrategy {
   ): List<Deferred<IdeaPluginDescriptorImpl?>>
 
   /** Loads descriptors for custom (non-bundled) plugins from [customPluginDir] */
-  abstract fun loadCustomPluginDescriptors(scope: CoroutineScope,
-                                           customPluginDir: Path,
-                                           context: DescriptorListLoadingContext,
-                                           zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>>
+  abstract fun loadCustomPluginDescriptors(
+    scope: CoroutineScope,
+    customPluginDir: Path,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): Collection<Deferred<IdeaPluginDescriptorImpl?>>
   
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 
@@ -84,9 +89,13 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
 
     val classPathFile = effectiveBundledPluginDir.resolve("plugin-classpath.txt")
     val data = try {
-      Files.readAllLines(classPathFile)
+      Files.readAllBytes(classPathFile)
     }
     catch (ignored: NoSuchFileException) {
+      null
+    }
+
+    if (data == null || data[0] != 1.toByte()) {
       return scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
     }
 
@@ -96,55 +105,66 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       zipFilePool = zipFilePool,
       bundledPluginDir = effectiveBundledPluginDir,
       scope = scope,
-    )
+    ).asList()
   }
 
-  override fun loadCustomPluginDescriptors(scope: CoroutineScope, customPluginDir: Path, context: DescriptorListLoadingContext, 
-                                           zipFilePool: ZipFilePool): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
+  override fun loadCustomPluginDescriptors(
+    scope: CoroutineScope,
+    customPluginDir: Path,
+    context: DescriptorListLoadingContext,
+    zipFilePool: ZipFilePool,
+  ): Collection<Deferred<IdeaPluginDescriptorImpl?>> {
     return scope.loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool)
   }
 
   private fun loadFromPluginClasspathDescriptor(
-    data: List<String>,
+    data: ByteArray,
     context: DescriptorListLoadingContext,
     zipFilePool: ZipFilePool,
     bundledPluginDir: Path,
     scope: CoroutineScope,
-  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-    val jarOnly = data.first().contains("jarOnly=true")
-    val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>(data.size - 1)
-    for ((index, element) in data.withIndex()) {
-      if (index == 0 || element.isEmpty()) {
-        continue
-      }
+  ): Array<Deferred<IdeaPluginDescriptorImpl?>> {
+    val jarOnly = data[1] == 1.toByte()
+    val input = DataInputStream(ByteArrayInputStream(data, 2, data.size))
+    val pluginCount = input.readUnsignedShort()
+    return Array(pluginCount) {
+      val fileCount = input.readUnsignedShort()
 
-      val fileIterator = element.splitToSequence(';').iterator()
-      val pluginDir = bundledPluginDir.resolve(fileIterator.next())
-      val fileItems = ArrayList<FileItem>()
-      for (path in fileIterator) {
+      val pluginDir = bundledPluginDir.resolve(input.readUTF())
+      val descriptorSize = input.readInt()
+      val pluginDescriptorData = if (descriptorSize == 0) null else ByteArray(descriptorSize).also { input.read(it) }
+      val fileItems = Array(fileCount) {
+        val path = input.readUTF()
         var file = pluginDir.resolve(path)
         if (!jarOnly) {
           file = file.normalize()
         }
-        fileItems.add(FileItem(file = file, path = path))
+        FileItem(file = file, path = path)
       }
-      result.add(scope.asyncOrNull(fileItems) {
+
+      scope.asyncOrNull(fileItems) {
         val item = fileItems.first()
         val dataLoader = MixedDirAndJarDataLoader(files = fileItems, pool = zipFilePool, jarOnly = jarOnly)
         val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-        val raw = readModuleDescriptor(
-          input = if (jarOnly || item.path.endsWith(".jar")) {
-            dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)!!
+        val descriptorInput = when {
+          pluginDescriptorData != null -> createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
+          jarOnly || item.path.endsWith(".jar") -> {
+            createNonCoalescingXmlStreamReader(
+              input = dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)!!,
+              locationSource = item.path,
+            )
           }
-          else {
-            Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH))
-          },
+          else -> {
+            createNonCoalescingXmlStreamReader(Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH)), item.path)
+          }
+        }
+        val raw = readModuleDescriptor(
+          reader = descriptorInput,
           readContext = context,
           pathResolver = pluginPathResolver,
           dataLoader = dataLoader,
           includeBase = null,
           readInto = null,
-          locationSource = item.path,
         )
 
         val descriptor = IdeaPluginDescriptorImpl(
@@ -158,9 +178,8 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
         descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, isSub = false, dataLoader = dataLoader)
         descriptor.jarFiles = fileItems.map { it.file }
         descriptor
-      })
+      }
     }
-    return result
   }
 
   override fun isOptionalProductModule(moduleName: String): Boolean = false
@@ -169,7 +188,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
     get() = true
 }
 
-private fun CoroutineScope.asyncOrNull(files: List<FileItem>, task: () -> IdeaPluginDescriptorImpl): Deferred<IdeaPluginDescriptorImpl?> {
+private fun CoroutineScope.asyncOrNull(files: Array<FileItem>, task: () -> IdeaPluginDescriptorImpl): Deferred<IdeaPluginDescriptorImpl?> {
   return async(Dispatchers.IO) {
     try {
       task()
@@ -192,7 +211,7 @@ private data class FileItem(
 }
 
 private class MixedDirAndJarDataLoader(
-  private val files: List<FileItem>,
+  private val files: Array<FileItem>,
   private val pool: ZipFilePool,
   private val jarOnly: Boolean,
 ) : DataLoader {

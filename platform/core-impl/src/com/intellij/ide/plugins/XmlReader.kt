@@ -42,42 +42,52 @@ private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 /**
  * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
  */
-fun readModuleDescriptor(input: InputStream,
-                         readContext: ReadModuleContext,
-                         pathResolver: PathResolver,
-                         dataLoader: DataLoader,
-                         includeBase: String?,
-                         readInto: RawPluginDescriptor?,
-                         locationSource: String?): RawPluginDescriptor {
-  return readModuleDescriptor(reader = createNonCoalescingXmlStreamReader(input, locationSource),
-                              readContext = readContext,
-                              pathResolver = pathResolver,
-                              dataLoader = dataLoader,
-                              includeBase = includeBase,
-                              readInto = readInto)
+fun readModuleDescriptor(
+  input: InputStream,
+  readContext: ReadModuleContext,
+  pathResolver: PathResolver,
+  dataLoader: DataLoader,
+  includeBase: String?,
+  readInto: RawPluginDescriptor?,
+  locationSource: String?,
+): RawPluginDescriptor {
+  return readModuleDescriptor(
+    reader = createNonCoalescingXmlStreamReader(input, locationSource),
+    readContext = readContext,
+    pathResolver = pathResolver,
+    dataLoader = dataLoader,
+    includeBase = includeBase,
+    readInto = readInto,
+  )
 }
 
-fun readModuleDescriptor(input: ByteArray,
-                         readContext: ReadModuleContext,
-                         pathResolver: PathResolver,
-                         dataLoader: DataLoader,
-                         includeBase: String?,
-                         readInto: RawPluginDescriptor?,
-                         locationSource: String?): RawPluginDescriptor {
-  return readModuleDescriptor(reader = createNonCoalescingXmlStreamReader(input, locationSource),
-                              readContext = readContext,
-                              pathResolver = pathResolver,
-                              dataLoader = dataLoader,
-                              includeBase = includeBase,
-                              readInto = readInto)
+fun readModuleDescriptor(
+  input: ByteArray,
+  readContext: ReadModuleContext,
+  pathResolver: PathResolver,
+  dataLoader: DataLoader,
+  includeBase: String?,
+  readInto: RawPluginDescriptor?,
+  locationSource: String?,
+): RawPluginDescriptor {
+  return readModuleDescriptor(
+    reader = createNonCoalescingXmlStreamReader(input, locationSource),
+    readContext = readContext,
+    pathResolver = pathResolver,
+    dataLoader = dataLoader,
+    includeBase = includeBase,
+    readInto = readInto,
+  )
 }
 
-internal fun readModuleDescriptor(reader: XMLStreamReader2,
-                                  readContext: ReadModuleContext,
-                                  pathResolver: PathResolver,
-                                  dataLoader: DataLoader,
-                                  includeBase: String?,
-                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
+internal fun readModuleDescriptor(
+  reader: XMLStreamReader2,
+  readContext: ReadModuleContext,
+  pathResolver: PathResolver,
+  dataLoader: DataLoader,
+  includeBase: String?,
+  readInto: RawPluginDescriptor?,
+): RawPluginDescriptor {
   try {
     if (reader.eventType != XMLStreamConstants.START_DOCUMENT) {
       throw XMLStreamException("State ${XMLStreamConstants.START_DOCUMENT} is expected, " +

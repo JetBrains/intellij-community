@@ -1,13 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -26,12 +29,8 @@ object CommunityRepositoryModules {
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
 
-      spec.withGeneratedResources { path, buildContext ->
-        val antDir = path.resolve("dist")
-        Files.createDirectories(antDir)
-
-        val antTargetFile = antDir.resolve("ant.jar")
-        copyAnt(antDir, antTargetFile, buildContext)
+      spec.withGeneratedResources { dir, buildContext ->
+        copyAnt(pluginDir = dir, context = buildContext)
       }
     },
     plugin("intellij.laf.macos") { spec ->
@@ -315,7 +314,6 @@ object CommunityRepositoryModules {
     }
   )
 
-  @Suppress("SpellCheckingInspection")
   val CONTRIB_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
     plugin("intellij.errorProne") { spec ->
       spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
@@ -884,6 +882,43 @@ object CommunityRepositoryModules {
       spec.withResource("hotswap/gragent.jar", "lib/agent")
       spec.withResource("groovy-psi/resources/conf", "lib")
       addition?.invoke(spec)
+    }
+  }
+}
+
+private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
+  val antDir = pluginDir.resolve("dist")
+  return TraceManager.spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
+    val sources = ArrayList<ZipSource>()
+    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.MERGED, reason = "ant")
+    copyDir(
+      sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
+      targetDir = antDir,
+      dirFilter = { !it.endsWith("src") },
+      fileFilter = { file ->
+        if (file.toString().endsWith(".jar")) {
+          sources.add(ZipSource(file = file, distributionFileEntryProducer = null))
+          false
+        }
+        else {
+          true
+        }
+      },
+    )
+    sources.sort()
+
+    val antTargetFile = antDir.resolve("ant.jar")
+    buildJar(targetFile = antTargetFile, sources = sources)
+
+    sources.map { source ->
+      ProjectLibraryEntry(
+        path = antTargetFile,
+        data = libraryData,
+        libraryFile = source.file,
+        hash = source.hash,
+        size = source.size,
+        relativeOutputFile = "dist/ant.jar",
+      )
     }
   }
 }

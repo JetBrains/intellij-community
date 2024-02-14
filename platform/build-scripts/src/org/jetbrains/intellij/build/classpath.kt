@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
 
@@ -16,12 +16,14 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFil
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.transformZipUsingTempFile
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private val excludedLibJars = setOf(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
+private val excludedLibJars = java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
 
 private fun processClassReport(consumer: (String, String) -> Unit) {
   val osName = System.getProperty("os.name")
@@ -70,9 +72,9 @@ fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
 private fun computeAppClassPath(homeDir: Path, libDir: Path): LinkedHashSet<Path> {
   val existing = HashSet<Path>()
   addJarsFromDir(libDir) { paths ->
-    paths.filterTo(existing) { it.fileName.toString() !in excludedLibJars }
+    paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }
   }
-  return computeAppClassPath(libDir, existing, homeDir)
+  return computeAppClassPath(libDir = libDir, existing = existing, homeDir = homeDir)
 }
 
 fun computeAppClassPath(libDir: Path, existing: Set<Path>, homeDir: Path): LinkedHashSet<Path> {
@@ -162,10 +164,20 @@ data class PluginBuildDescriptor(
   @JvmField val moduleNames: List<String>,
 )
 
+fun writePluginClassPathHeader(out: DataOutputStream, isJarOnly: Boolean, pluginCount: Int) {
+  // format version
+  out.write(1)
+  // jarOnly
+  out.write(if (isJarOnly) 1 else 0)
+  out.writeShort(pluginCount)
+}
+
 fun generatePluginClassPath(
   pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
-): CharSequence {
-  val s = StringBuilder()
+  writeDescriptor: Boolean,
+): ByteArray {
+  val byteOut = ByteArrayOutputStream()
+  val out = DataOutputStream(byteOut)
   for ((pluginAsset, entries) in pluginEntries) {
     val files = entries.asSequence()
       .filter {
@@ -187,27 +199,62 @@ fun generatePluginClassPath(
     if (files.size > 1) {
       // always sort
       putMoreLikelyPluginJarsFirst(pluginDirName = pluginAsset.dir.fileName.toString(), filesInLibUnderPluginDir = files)
-
-      // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
-      var pluginDirIndex = files.indexOfFirst { Files.isDirectory(it) && Files.exists(it.resolve("META-INF/plugin.xml")) }
-      if (pluginDirIndex == -1) {
-        pluginDirIndex = files.indexOfFirst {
-          !Files.isDirectory(it) && HashMapZipFile.load(it).use { zip ->
-            zip.getRawEntry("META-INF/plugin.xml") != null
-          }
-        }
-      }
-
-      check(pluginDirIndex != -1) { "plugin descriptor is not found among\n  ${files.joinToString(separator = "\n  ")}" }
-      if (pluginDirIndex != 0) {
-        files.add(0, files.removeAt(pluginDirIndex))
-      }
     }
 
+    // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
+    val pluginDescriptorContent = reorderPluginClassPath(files, writeDescriptor)
+
     // plugin dir as the last item in the list
-    s.append(pluginAsset.dir.fileName.invariantSeparatorsPathString).append(';')
-    files.joinTo(buffer = s, separator = ";") { pluginAsset.dir.relativize(it).invariantSeparatorsPathString }
-    s.appendLine()
+    out.writeShort(files.size)
+    out.writeUTF(pluginAsset.dir.fileName.invariantSeparatorsPathString)
+
+    if (pluginDescriptorContent == null) {
+      out.writeInt(0)
+    }
+    else {
+      out.writeInt(pluginDescriptorContent.size)
+      out.write(pluginDescriptorContent)
+    }
+
+    for (file in files) {
+      out.writeUTF(pluginAsset.dir.relativize(file).invariantSeparatorsPathString)
+    }
   }
-  return s
+  out.close()
+  return byteOut.toByteArray()
+}
+
+private fun reorderPluginClassPath(files: MutableList<Path>, writeDescriptor: Boolean): ByteArray? {
+  var pluginDescriptorContent: ByteArray? = null
+  var pluginDirIndex = -1
+  for ((index, file) in files.withIndex()) {
+    if (Files.isDirectory(file)) {
+      val pluginDescriptorFile = file.resolve("META-INF/plugin.xml")
+      if (Files.exists(pluginDescriptorFile)) {
+        pluginDescriptorContent = if (writeDescriptor) Files.readAllBytes(pluginDescriptorFile) else null
+        pluginDirIndex = index
+        break
+      }
+    }
+    else {
+      val found = HashMapZipFile.load(file).use { zip ->
+        val rawEntry = zip.getRawEntry("META-INF/plugin.xml")
+        if (writeDescriptor) {
+          pluginDescriptorContent = rawEntry?.getData(zip)
+        }
+        rawEntry != null
+      }
+
+      if (found) {
+        pluginDirIndex = index
+        break
+      }
+    }
+  }
+
+  check(pluginDirIndex != -1) { "plugin descriptor is not found among\n  ${files.joinToString(separator = "\n  ")}" }
+  if (pluginDirIndex != 0) {
+    files.add(0, files.removeAt(pluginDirIndex))
+  }
+  return pluginDescriptorContent
 }

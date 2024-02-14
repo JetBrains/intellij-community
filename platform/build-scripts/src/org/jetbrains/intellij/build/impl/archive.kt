@@ -7,6 +7,9 @@ import com.intellij.util.PathUtilRt
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.DistFileContent
+import org.jetbrains.intellij.build.InMemoryDistFileContent
+import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.unmapBuffer
 import java.nio.channels.FileChannel
@@ -18,23 +21,32 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 import java.util.zip.ZipEntry
-import kotlin.io.path.readText
 
 private const val fileFlag = 32768  // 0100000
 
 internal const val executableFileUnixMode: Int = fileFlag or 493  // 0755
 
-fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, Path>): Boolean {
-  val old = zipFiles.putIfAbsent(relativePath, file) ?: return true
-  if (compareByMemoryMappedFiles(file, old)) {
-    return false
+internal fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: MutableMap<String, DistFileContent>): Boolean {
+  val content = LocalDistFileContent(file)
+  val oldContent = zipFiles.putIfAbsent(relativePath, content) ?: return true
+  when (oldContent) {
+    is LocalDistFileContent -> {
+      if (compareByMemoryMappedFiles(file, oldContent.file)) {
+        return false
+      }
+    }
+    is InMemoryDistFileContent -> {
+      if (Files.readAllBytes(file).contentEquals(oldContent.data)) {
+        return false
+      }
+    }
   }
 
-  val file1Text = file.readText()
-  val file2Text = old.readText()
+  val file1Text = content.readAsStringForDebug()
+  val file2Text = oldContent.readAsStringForDebug()
   val isAsciiText: (Char) -> Boolean = { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 }
-  val message = "Two files '${old}' and '${file}' with the same target path '${relativePath}' have different content"
-  if (file1Text.take(1024).all(isAsciiText) && file2Text.take(1024).all(isAsciiText)) {
+  val message = "Two dist files '$oldContent' and '$content' with the same target path '$relativePath' have different content"
+  if (file1Text.all(isAsciiText) && file2Text.all(isAsciiText)) {
     throw RuntimeException("$message\n\nFile 1: ${"-".repeat(80)}\n$file1Text\n\nFile 2 ${"-".repeat(80)}\n$file2Text")
   }
   else {

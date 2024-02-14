@@ -6,7 +6,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.plugins.DescriptorListLoadingContext
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.loadCustomDescriptorsFromDir
+import com.intellij.ide.plugins.loadCustomDescriptorsFromDirForImportSettings
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.*
@@ -81,7 +81,7 @@ internal data class JbProductInfo(
 
   private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
     JbImportServiceImpl.LOG.debug("Prefetching plugin descriptors from $pluginDir")
-    val descriptorDeferreds = loadCustomDescriptorsFromDir(scope = coroutineScope, dir = pluginDir, context = context)
+    val descriptorDeferreds = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
     descriptors2ProcessCnt = descriptorDeferreds.size
     JbImportServiceImpl.LOG.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
     for (def in descriptorDeferreds) {

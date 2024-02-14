@@ -30,13 +30,11 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
+private const val NO_RUNTIME_SUFFIX = "-no-jdk"
+
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
                              private val ideaProperties: CharSequence?) : OsSpecificDistributionBuilder {
-  private companion object {
-    const val NO_RUNTIME_SUFFIX = "-no-jdk"
-  }
-
   override val targetOs: OsFamily
     get() = OsFamily.MACOS
 
@@ -402,8 +400,9 @@ private fun propertiesToXml(properties: List<String>, moreProperties: Map<String
   return buff.toString().trim()
 }
 
-internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String =
-  "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+internal fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
+  return "${customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)}/Contents"
+}
 
 private fun generateProductJson(context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
   return generateProductInfoJson(
@@ -508,7 +507,10 @@ private suspend fun buildMacZip(macDistributionBuilder: MacDistributionBuilder,
             }
 
             for (item in extraFiles) {
-              zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = item.file)
+              when(val content = item.content) {
+                is LocalDistFileContent -> zipOutStream.entry(name = "$zipRoot/${item.relativePath}", file = content.file)
+                is InMemoryDistFileContent -> zipOutStream.entry(name = "$zipRoot/${item.relativePath}", data = content.data)
+              }
             }
           }
         }
@@ -527,13 +529,15 @@ private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
   return vmOptionsPath
 }
 
-internal fun substitutePlaceholdersInInfoPlist(macAppDir: Path,
-                                               docTypes: String?,
-                                               arch: JvmArchitecture,
-                                               macCustomizer: MacDistributionCustomizer,
-                                               context: BuildContext,
-                                               executableFileName: String = context.productProperties.baseFileName,
-                                               icnsFileName: String = context.productProperties.targetIcnsFileName) {
+internal fun substitutePlaceholdersInInfoPlist(
+  macAppDir: Path,
+  docTypes: String?,
+  arch: JvmArchitecture,
+  macCustomizer: MacDistributionCustomizer,
+  context: BuildContext,
+  executableFileName: String = context.productProperties.baseFileName,
+  icnsFileName: String = context.productProperties.targetIcnsFileName,
+) {
   val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
   val classPath = context.bootClassPathJarNames.joinToString(separator = ":") { "\$APP_PACKAGE/Contents/lib/${it}" }
   val fullName = context.applicationInfo.fullProductName

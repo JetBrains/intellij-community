@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.Files
 import java.nio.file.Path
 
 interface BuildContext : CompilationContext {
@@ -147,8 +148,35 @@ class BuiltinModulesFileData(
   @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
 )
 
+sealed interface DistFileContent {
+  fun readAsStringForDebug(): String
+}
+
+internal data class LocalDistFileContent(@JvmField val file: Path) : DistFileContent {
+  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
+
+  override fun toString(): String = "LocalDistFileContent(file=$file)"
+}
+
+internal data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
+  override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is InMemoryDistFileContent) return false
+
+    if (!data.contentEquals(other.data)) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = data.contentHashCode()
+
+  override fun toString(): String = "InMemoryDistFileContent(size=${data.size})"
+}
+
 data class DistFile(
-  @JvmField val file: Path,
+  @JvmField val content: DistFileContent,
   @JvmField val relativePath: String,
   @JvmField val os: OsFamily? = null,
   @JvmField val arch: JvmArchitecture? = null,

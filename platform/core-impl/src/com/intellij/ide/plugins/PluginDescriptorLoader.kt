@@ -565,7 +565,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     platformPrefixProperty
   }
 
-  val result = mutableListOf<Deferred<IdeaPluginDescriptorImpl?>>()
+  val result = ArrayList<Deferred<IdeaPluginDescriptorImpl?>>()
   result.addAll(loadCoreModules(
     context = context,
     platformPrefix = platformPrefix,
@@ -575,7 +575,12 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     pool = zipFilePool,
     classLoader = mainClassLoader,
   ))
-  result.addAll(ProductLoadingStrategy.strategy.loadCustomPluginDescriptors(scope = this, customPluginDir = customPluginDir, context = context, zipFilePool = zipFilePool))
+  result.addAll(ProductLoadingStrategy.strategy.loadCustomPluginDescriptors(
+    scope = this,
+    customPluginDir = customPluginDir,
+    context = context,
+    zipFilePool = zipFilePool,
+  ))
 
   result.addAll(ProductLoadingStrategy.strategy.loadBundledPluginDescriptors(
     scope = this,
@@ -817,7 +822,8 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
   return result.enabledPlugins
 }
 
-fun loadCustomDescriptorsFromDir(
+// do not use it
+fun loadCustomDescriptorsFromDirForImportSettings(
   scope: CoroutineScope,
   dir: Path,
   context: DescriptorListLoadingContext,

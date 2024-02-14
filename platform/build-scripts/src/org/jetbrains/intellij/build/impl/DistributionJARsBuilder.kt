@@ -35,6 +35,8 @@ import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement
 import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -165,45 +167,56 @@ private suspend fun buildBundledPluginsForAllPlatforms(
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   context: BuildContext,
 ): List<DistributionFileEntry> {
-  val bundledPluginItems = coroutineScope {
-    listOf(
-      async {
-        doBuildBundledPlugins(
-          state = state,
-          plugins = pluginLayouts,
-          isUpdateFromSources = isUpdateFromSources,
-          buildPlatformJob = buildPlatformJob,
-          context = context,
-        )
-      },
-      async {
-        buildOsSpecificBundledPlugins(
-          state = state,
-          plugins = pluginLayouts,
-          isUpdateFromSources = isUpdateFromSources,
-          buildPlatformJob = buildPlatformJob,
-          context = context,
-        )
-      },
-    )
-  }.map { it.getCompleted() }
+  return coroutineScope {
+    val commonDeferred = async {
+      doBuildBundledPlugins(
+        state = state,
+        plugins = pluginLayouts,
+        isUpdateFromSources = isUpdateFromSources,
+        buildPlatformJob = buildPlatformJob,
+        context = context,
+      )
+    }
 
-  val pluginClassPath = coroutineScope {
-    bundledPluginItems.map {
-      async {
-        generatePluginClassPath(it)
+    val pluginDirs = getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)
+    val specificDeferred = async {
+      buildOsSpecificBundledPlugins(
+        pluginDirs = pluginDirs,
+        state = state,
+        plugins = pluginLayouts,
+        isUpdateFromSources = isUpdateFromSources,
+        buildPlatformJob = buildPlatformJob,
+        context = context,
+      )
+    }
+
+    val common = commonDeferred.await()
+    val commonClassPath = generatePluginClassPath(common, writeDescriptor = true)
+
+    val specific = specificDeferred.await()
+    for ((supportedDist) in pluginDirs) {
+      val specificList = specific.get(supportedDist)
+      val specificClasspath = specificList?.let { generatePluginClassPath(it, writeDescriptor = true) }
+
+      val byteOut = ByteArrayOutputStream()
+      val out = DataOutputStream(byteOut)
+      writePluginClassPathHeader(out = out, isJarOnly = true, pluginCount = common.size + (specificList?.size ?: 0))
+      out.write(commonClassPath)
+      if (specificClasspath != null) {
+        out.write(specificClasspath)
       }
-    }
-  }.joinToString(separator = "\n") { it.getCompleted() }
+      out.close()
 
-  for ((_, pluginDir) in getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)) {
-    withContext(Dispatchers.IO) {
-      Files.createDirectories(pluginDir)
-      Files.writeString(pluginDir.resolve("plugin-classpath.txt"), "jarOnly=true\n$pluginClassPath")
+      context.addDistFile(DistFile(
+        relativePath = "$PLUGINS_DIRECTORY/plugin-classpath.txt",
+        content = InMemoryDistFileContent(byteOut.toByteArray()),
+        os = supportedDist.os,
+        arch = supportedDist.arch,
+      ))
     }
-  }
 
-  return bundledPluginItems.flatMap { list -> list.flatMap { it.second } }
+    listOf(common, specific.values.flatten())
+  }.flatMap { list -> list.flatMap { it.second } }
 }
 
 /**
@@ -297,12 +310,13 @@ private suspend fun buildOsSpecificBundledPlugins(
   isUpdateFromSources: Boolean,
   buildPlatformJob: Job?,
   context: BuildContext,
-): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+  pluginDirs: List<Pair<SupportedDistribution, Path>>,
+): Map<SupportedDistribution, List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>> {
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
     .useWithScope {
-      getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources).mapNotNull { (dist, targetDir) ->
+      pluginDirs.mapNotNull { (dist, targetDir) ->
         val (os, arch) = dist
         if (!context.shouldBuildDistributionForOS(os = os, arch = arch)) {
           return@mapNotNull null
@@ -322,7 +336,7 @@ private suspend fun buildOsSpecificBundledPlugins(
             .setAttribute("count", osSpecificPlugins.size.toLong())
             .setAttribute("outDir", targetDir.toString())
             .useWithScope {
-              buildPlugins(
+              dist to buildPlugins(
                 moduleOutputPatcher = ModuleOutputPatcher(),
                 plugins = osSpecificPlugins,
                 targetDir = targetDir,
@@ -333,7 +347,9 @@ private suspend fun buildOsSpecificBundledPlugins(
             }
         }
       }
-    }.flatMap { deferred -> deferred.getCompleted() }
+    }
+    .map { deferred -> deferred.getCompleted() }
+    .associateBy(keySelector = { it.first }, valueTransform = { it.second })
 }
 
 suspend fun buildNonBundledPlugins(
@@ -826,14 +842,15 @@ fun getPluginAutoUploadFile(context: BuildContext): Path? {
   }
 }
 
-fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> =
-  autoUploadFile.useLines { lines ->
+fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
+  return autoUploadFile.useLines { lines ->
     lines
       .map { StringUtil.split(it, "//", true, false)[0] }
       .map { StringUtil.split(it, "#", true, false)[0].trim() }
       .filter { !it.isEmpty() }
       .toCollection(TreeSet(String.CASE_INSENSITIVE_ORDER))
   }
+}
 
 private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
   val tool = context.proprietaryBuildTools.scrambleTool
@@ -845,48 +862,16 @@ private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
-  return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
-    val sources = ArrayList<ZipSource>()
-    val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED, reason = "ant")
-    copyDir(sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
-            targetDir = antDir,
-            dirFilter = { !it.endsWith("src") },
-            fileFilter = { file ->
-              if (file.toString().endsWith(".jar")) {
-                sources.add(ZipSource(file = file, distributionFileEntryProducer = null))
-                false
-              }
-              else {
-                true
-              }
-            })
-    sources.sort()
-    buildJar(targetFile = antTargetFile, sources = sources)
-
-    sources.map { source ->
-      ProjectLibraryEntry(
-        path = antTargetFile,
-        data = libraryData,
-        libraryFile = source.file,
-        hash = source.hash,
-        size = source.size,
-        relativeOutputFile = null,
-      )
-    }
-  }
-}
-
 private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext): Job? {
   val buildString = context.fullBuildNumber
-  val fileName = "brokenPlugins.db"
-  val targetFile = context.paths.tempDir.resolve(fileName)
-  return createSkippableJob(spanBuilder("build broken plugin list")
-                              .setAttribute("buildNumber", buildString)
-                              .setAttribute("path", targetFile.toString()), BuildOptions.BROKEN_PLUGINS_LIST_STEP, context) {
-    buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
-    if (Files.exists(targetFile)) {
-      context.addDistFile(DistFile(file = targetFile, relativePath = "bin/$fileName"))
+  return createSkippableJob(
+    spanBuilder("build broken plugin list").setAttribute("buildNumber", buildString),
+    BuildOptions.BROKEN_PLUGINS_LIST_STEP,
+    context,
+  ) {
+    val data = buildBrokenPlugins(currentBuildString = buildString, isInDevelopmentMode = context.options.isInDevelopmentMode)
+    if (data != null) {
+      context.addDistFile(DistFile(content = InMemoryDistFileContent(data), relativePath = "bin/brokenPlugins.db"))
     }
   }
 }
@@ -922,7 +907,7 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
 }
 
 fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFamily?, arch: JvmArchitecture?, context: BuildContext): Boolean {
-  if (plugin.directoryName in context.options.bundledPluginDirectoriesToSkip) {
+  if (context.options.bundledPluginDirectoriesToSkip.contains(plugin.directoryName)) {
     return false
   }
 
@@ -984,30 +969,32 @@ private fun loadPluginAutoPublishList(context: BuildContext): Predicate<PluginLa
 private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): List<Pair<Path, ByteArray>> {
   val keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
   Files.createDirectories(targetDir)
-  return spanBuilder("build keymap plugins").useWithScope {
-    withContext(Dispatchers.IO) {
-      listOf(
-        arrayOf("Mac OS X", "Mac OS X 10.5+"),
-        arrayOf("Default for GNOME"),
-        arrayOf("Default for KDE"),
-        arrayOf("Default for XWin"),
-        arrayOf("Emacs"),
-        arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
-      ).map {
-        async { buildKeymapPlugin(it, context.buildNumber, targetDir, keymapDir) }
+  return spanBuilder("build keymap plugins").useWithScope(Dispatchers.IO) {
+    listOf(
+      arrayOf("Mac OS X", "Mac OS X 10.5+"),
+      arrayOf("Default for GNOME"),
+      arrayOf("Default for KDE"),
+      arrayOf("Default for XWin"),
+      arrayOf("Emacs"),
+      arrayOf("Sublime Text", "Sublime Text (Mac OS X)"),
+    ).map {
+      async {
+        buildKeymapPlugin(keymaps = it, buildNumber = context.buildNumber, targetDir = targetDir, keymapDir = keymapDir)
       }
-    }.map { it.getCompleted() }
-  }
+    }
+  }.map { it.getCompleted() }
 }
 
-suspend fun layoutDistribution(layout: BaseLayout,
-                               platformLayout: PlatformLayout,
-                               targetDirectory: Path,
-                               copyFiles: Boolean = true,
-                               moduleOutputPatcher: ModuleOutputPatcher,
-                               includedModules: Collection<ModuleItem>,
-                               moduleWithSearchableOptions: Set<String>,
-                               context: BuildContext): Pair<List<DistributionFileEntry>, Path> {
+suspend fun layoutDistribution(
+  layout: BaseLayout,
+  platformLayout: PlatformLayout,
+  targetDirectory: Path,
+  copyFiles: Boolean = true,
+  moduleOutputPatcher: ModuleOutputPatcher,
+  includedModules: Collection<ModuleItem>,
+  moduleWithSearchableOptions: Set<String>,
+  context: BuildContext,
+): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
     withContext(Dispatchers.IO) {
       Files.createDirectories(targetDirectory)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.intellij.build.impl
 
@@ -14,10 +14,12 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
   val longName = keymaps.first().replace("Mac OS X", "macOS").replace("Default for |[.0-9]", "").trim()
   val shortName = longName.replace(" ", "")
 
-  val pluginXmlData = keymapPluginXml(buildNumber,
-                                      shortName.lowercase(Locale.ENGLISH),
-                                      longName,
-                                      keymaps).toByteArray()
+  val pluginXmlData = keymapPluginXml(
+    version = buildNumber,
+    id = shortName.lowercase(Locale.ENGLISH),
+    name = longName,
+    keymaps = keymaps,
+  ).toByteArray()
 
   val buffer = ByteBuffer.allocate(128 * 1024)
   ZipFileWriter(WritableByteChannelBackedByByteBuffer(buffer)).use { zipCreator ->

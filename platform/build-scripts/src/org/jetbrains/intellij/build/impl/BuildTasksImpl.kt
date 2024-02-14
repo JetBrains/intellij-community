@@ -1200,7 +1200,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         relPath != "license/remote-dev-server.html"
       }
 
-      val zipFileUniqueGuard = HashMap<String, Path>()
+      val zipFileUniqueGuard = HashMap<String, DistFileContent>()
 
       out.dir(distAllDir, "", fileFilter = { _, relPath -> relPath != "bin/idea.properties" }, entryCustomizer = entryCustomizer)
 
@@ -1211,7 +1211,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
           !relPath.startsWith("Resources/") &&
           !relPath.startsWith("Info.plist") &&
           !relPath.startsWith("Helpers/") &&
-          filterFileIfAlreadyInZip(relPath, macArm64DistDir.resolve(relPath), zipFileUniqueGuard)
+          filterFileIfAlreadyInZip(relativePath = relPath, file = macArm64DistDir.resolve(relPath), zipFiles = zipFileUniqueGuard)
         }, entryCustomizer = entryCustomizer)
       }
 
@@ -1223,14 +1223,18 @@ private fun crossPlatformZip(macX64DistDir: Path,
       out.dir(startDir = winX64DistDir, prefix = "", fileFilter = { _, relPath ->
         commonFilter.invoke(relPath) &&
         !(relPath.startsWith("bin/${executableName}") && relPath.endsWith(".exe")) &&
-        filterFileIfAlreadyInZip(relPath, winX64DistDir.resolve(relPath), zipFileUniqueGuard)
+        filterFileIfAlreadyInZip(relativePath = relPath, file = winX64DistDir.resolve(relPath), zipFiles = zipFileUniqueGuard)
       }, entryCustomizer = entryCustomizer)
 
       for (distFile in distFiles) {
         // Linux and Windows: we don't add specific dist dirs for ARM, so, copy dist files explicitly
         // macOS: we don't copy dist files to avoid extra copy operation
-        if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, distFile.file) == null) {
-          out.entry(distFile.relativePath, distFile.file)
+        val content = distFile.content
+        if (zipFileUniqueGuard.putIfAbsent(distFile.relativePath, content) == null) {
+          when (content) {
+            is LocalDistFileContent -> out.entry(distFile.relativePath, content.file)
+            is InMemoryDistFileContent -> out.entry(distFile.relativePath, content.data)
+          }
         }
       }
     }
@@ -1315,7 +1319,12 @@ fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmAr
   for (item in context.getDistFiles(os, arch)) {
     val targetFile = newDir.resolve(item.relativePath)
     Files.createDirectories(targetFile.parent)
-    Files.copy(item.file, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    if (item.content is LocalDistFileContent) {
+      Files.copy(item.content.file, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    }
+    else {
+      Files.write(targetFile, (item.content as InMemoryDistFileContent).data)
+    }
   }
 }
 

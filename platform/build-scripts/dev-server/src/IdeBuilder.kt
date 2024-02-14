@@ -27,6 +27,8 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEnt
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
@@ -158,28 +160,37 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       )
     }
 
-    launch(Dispatchers.IO) {
-      val s = generatePluginClassPath(pluginEntries = pluginDistributionEntriesDeferred.await())
-      Files.writeString(runDir.resolve("plugins").resolve("plugin-classpath.txt"), "jarOnly=${!isUnpackedDist}\n$s")
+    launch {
+      val pluginEntries = pluginDistributionEntriesDeferred.await()
+      spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
+        val data = generatePluginClassPath(pluginEntries = pluginEntries, writeDescriptor = !isUnpackedDist)
+
+        val byteOut = ByteArrayOutputStream()
+        val out = DataOutputStream(byteOut)
+        writePluginClassPathHeader(out, isJarOnly = !isUnpackedDist, pluginEntries.size)
+        out.write(data)
+        out.close()
+        Files.write(runDir.resolve("plugins").resolve("plugin-classpath.txt"), byteOut.toByteArray())
+      }
     }
 
     if (context.generateRuntimeModuleRepository) {
       launch {
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
                                      pluginDistributionEntriesDeferred.await().asSequence().map { it.second }.flatten()
-        spanBuilder("generate runtime repository").useWithScope {
-          withContext(Dispatchers.IO) {
-            generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
-          }
+        spanBuilder("generate runtime repository").useWithScope(Dispatchers.IO) {
+          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
       }
     }
 
     launch {
-      computeIdeFingerprint(platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
-                            pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
-                            runDir = runDir,
-                            homePath = request.homePath)
+      computeIdeFingerprint(
+        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
+        pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
+        runDir = runDir,
+        homePath = request.homePath,
+      )
     }
   }
     .invokeOnCompletion {
