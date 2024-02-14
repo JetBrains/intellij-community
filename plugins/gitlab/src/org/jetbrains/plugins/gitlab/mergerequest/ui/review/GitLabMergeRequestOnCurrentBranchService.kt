@@ -60,7 +60,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
         )
         GitLabMergeRequestEditorReviewViewModel.ChangesState.NotLoaded,
         is GitLabMergeRequestEditorReviewViewModel.ChangesState.Loaded -> {
-          if (vm.localRepositorySyncStatus.value?.getOrNull()?.incoming != false) {
+          if (vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true) {
             GitCurrentBranchPresenter.Presentation(
               GitlabIcons.GitLabWarning,
               GitLabBundle.message("merge.request.on.branch", vm.mergeRequestIid, currentBranchName),
