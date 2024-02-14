@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
@@ -49,10 +50,12 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     val fileSpecificItems = file?.let { allItems.filter { it.widgetActionLocation == ForCurrentFile } } ?: emptyList()
     val singleFileSpecificItem = fileSpecificItems.singleOrNull()
     val text = singleFileSpecificItem?.statusBarText ?: LangBundle.message("language.services.widget")
-    val tooltip = singleFileSpecificItem?.statusBarTooltip
+    val maxToolbarTextLength = 30
+    val shortenedText = StringUtil.shortenTextWithEllipsis(text, maxToolbarTextLength, 0, true)
+    val tooltip = singleFileSpecificItem?.statusBarTooltip ?: if (text.length > maxToolbarTextLength) text else null
     val isError = fileSpecificItems.any { it.isError } // or maybe `allItems.any { it.isError }`?
 
-    return WidgetState(tooltip, text, true).apply {
+    return WidgetState(tooltip, shortenedText, true).apply {
       icon = if (isError) errorIcon else normalIcon
     }
   }
@@ -65,7 +68,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       true
     ).apply {
-      setMinimumSize(JBDimension(250, 1))
+      setMinimumSize(JBDimension(270, 1))
     }
 
   private fun createActionGroup(): ActionGroup {
