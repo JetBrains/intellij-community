@@ -200,8 +200,8 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
   }
 }
 
-data class BlockDecoration(val backgroundHighlighter: RangeHighlighter,
-                           val cornersHighlighter: RangeHighlighter,
-                           val topInlay: Inlay<*>,
-                           val bottomInlay: Inlay<*>,
-                           val commandToOutputInlay: Inlay<*>?)
+private data class BlockDecoration(val backgroundHighlighter: RangeHighlighter,
+                                   val cornersHighlighter: RangeHighlighter,
+                                   val topInlay: Inlay<*>,
+                                   val bottomInlay: Inlay<*>,
+                                   val commandToOutputInlay: Inlay<*>?)

@@ -8,27 +8,19 @@ import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockBackgroundRenderer
 import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockCornersRenderer
 import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockLeftAreaRenderer
 
-interface BlockDecorationState {
-  val name: String
-  val priority: Int
+internal interface BlockDecorationState {
   val backgroundRenderer: CustomHighlighterRenderer
   val cornersRenderer: CustomHighlighterRenderer
   val leftAreaRenderer: LineMarkerRenderer
 }
 
-abstract class AbstractBlockDecorationState(override val name: String, override val priority: Int) : BlockDecorationState
-
-class DefaultBlockDecorationState(gradientCache: GradientTextureCache) : AbstractBlockDecorationState(NAME, priority = 0) {
+internal class DefaultBlockDecorationState(gradientCache: GradientTextureCache) : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(gradientCache)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(gradientCache)
   override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(gradientCache.colorStart)
-
-  companion object {
-    const val NAME: String = "DEFAULT"
-  }
 }
 
-class SelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 2) {
+internal class SelectedBlockDecorationState : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.selectedBlockBackground)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(background = TerminalUi.selectedBlockBackground,
                                                                                          strokeBackground = TerminalUi.selectedBlockStrokeColor,
@@ -36,13 +28,9 @@ class SelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority
   override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(background = TerminalUi.selectedBlockBackground,
                                                                                     strokeBackground = TerminalUi.selectedBlockStrokeColor,
                                                                                     strokeWidth = 2)
-
-  companion object {
-    const val NAME: String = "SELECTED"
-  }
 }
 
-class InactiveSelectedBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 3) {
+internal class InactiveSelectedBlockDecorationState : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.inactiveSelectedBlockBackground)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(
     background = TerminalUi.inactiveSelectedBlockBackground,
@@ -54,13 +42,9 @@ class InactiveSelectedBlockDecorationState : AbstractBlockDecorationState(NAME, 
     strokeBackground = TerminalUi.inactiveSelectedBlockStrokeColor,
     strokeWidth = 2
   )
-
-  companion object {
-    const val NAME: String = "SELECTED_INACTIVE"
-  }
 }
 
-class ErrorBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 1) {
+internal class ErrorBlockDecorationState : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.errorBlockBackground)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(background = TerminalUi.errorBlockBackground,
                                                                                          strokeBackground = TerminalUi.errorBlockStrokeColor,
@@ -68,8 +52,4 @@ class ErrorBlockDecorationState : AbstractBlockDecorationState(NAME, priority = 
   override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(background = TerminalUi.errorBlockBackground,
                                                                                     strokeBackground = TerminalUi.errorBlockStrokeColor,
                                                                                     strokeWidth = 1)
-
-  companion object {
-    const val NAME: String = "ERROR"
-  }
 }
