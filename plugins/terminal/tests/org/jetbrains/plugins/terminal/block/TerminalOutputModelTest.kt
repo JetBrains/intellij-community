@@ -21,17 +21,15 @@ class TerminalOutputModelTest {
   val ruleChain = RuleChain(EdtRule(), projectRule, disposableRule)
 
   @Test
-  fun `editor highlighter finds proper initial range`() {
+  fun `trim top block output when editor max capacity reached`() {
     val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
     val maxCapacity = 100
     setMaxOutputEditorTextLength(maxCapacity)
-    val firstBlock = outputManager.createBlock("echo foo", TestCommandOutput("foo".repeat(20),
-                                                                             listOf(HighlightingInfo(1, 2, green()))))
-    val secondBlockStartOffset = firstBlock.endOffset
-    val secondBlockHighlighting = HighlightingInfo(secondBlockStartOffset + 1, secondBlockStartOffset + 2, green())
-    outputManager.createBlock("echo bar", TestCommandOutput("bar".repeat(20),
-                                                            listOf(secondBlockHighlighting)))
-    val expectedOutput = ("foo".repeat(20) + "\n" + "bar".repeat(20)).takeLast(maxCapacity)
+    val (_, firstBlockOutput) = outputManager.createBlock(
+      "echo foo", TestCommandOutput("foo".repeat(20), listOf(HighlightingInfo(1, 2, green()))))
+    val (_, secondBlockOutput) = outputManager.createBlock(
+      "echo bar", TestCommandOutput("bar".repeat(20), listOf(HighlightingInfo(1, 2, green()))))
+    val expectedOutput = (firstBlockOutput.text + "\n" + secondBlockOutput.text).takeLast(maxCapacity)
     Assert.assertEquals(expectedOutput, outputManager.document.text)
   }
 
@@ -42,5 +40,4 @@ class TerminalOutputModelTest {
       AdvancedSettings.setInt(TERMINAL_EDITOR_MAX_TEXT_LENGTH, prevValue)
     }
   }
-
 }

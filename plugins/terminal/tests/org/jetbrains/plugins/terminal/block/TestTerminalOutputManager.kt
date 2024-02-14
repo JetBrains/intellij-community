@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.exp.*
+import org.junit.Assert
 
 class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) {
   private val editor: EditorEx = createEditor(project, parentDisposable)
@@ -26,12 +27,17 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
   val document: DocumentEx
     get() = editor.document
 
-  fun createBlock(command: String, output: TestCommandOutput): CommandBlock {
+  fun createBlock(command: String, output: TestCommandOutput): Pair<CommandBlock, TestCommandOutput> {
+    val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
+    Assert.assertEquals(lastBlockEndOffset, document.textLength)
+    val updatedHighlightings = output.highlightings.map {
+      HighlightingInfo(it.startOffset + lastBlockEndOffset, it.endOffset + lastBlockEndOffset, it.textAttributes)
+    }
     val block = outputModel.createBlock(command, null)
-    outputModel.putHighlightings(block, output.highlightings)
+    outputModel.putHighlightings(block, updatedHighlightings)
     editor.document.replaceString(block.startOffset, block.endOffset, output.text)
     outputModel.trimOutput()
-    return block
+    return block to TestCommandOutput(output.text, updatedHighlightings)
   }
 
   companion object {
