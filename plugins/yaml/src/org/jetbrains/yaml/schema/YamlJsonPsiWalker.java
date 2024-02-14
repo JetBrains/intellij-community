@@ -50,7 +50,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
     if (parent instanceof YAMLKeyValue && isFirstChild(element, parent)) {
       ASTNode prev = element.getNode().getTreePrev();
-      return prev.getElementType() == YAMLTokenTypes.INDENT ? ThreeState.YES : ThreeState.NO;
+      return prev != null && prev.getElementType() == YAMLTokenTypes.INDENT ? ThreeState.YES : ThreeState.NO;
     }
 
     if (parent instanceof YAMLSequenceItem && isFirstChild(element, parent)) {
@@ -117,7 +117,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Override
   public JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
     YAMLMapping mapping = PsiTreeUtil.getParentOfType(element, YAMLMapping.class, true, YAMLKeyValue.class);
-    if (mapping != null) {
+    if (mapping != null && (element instanceof YAMLScalar || element.getParent() instanceof YAMLScalar)) {
       // if we reach a mapping without reaching any key-value, this is a case like:
       // - foo: bar
       //   a
@@ -126,9 +126,16 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
     final YAMLKeyValue property = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, false);
     if (property == null) return null;
-    // it is a parent property only if its value contains the current property
+    // it is a parent property only if its value or its key contains the current property,
+    //  or it is the property itself (we perform a non-strict parent search)
     YAMLValue value = property.getValue();
-    if (value == null || !PsiTreeUtil.isAncestor(value, element, true)) return null;
+    boolean isSelf = element == property;
+    PsiElement key = property.getKey();
+    boolean isKey = key != null && PsiTreeUtil.isAncestor(key, element, false);
+    // don't jump up from sequences
+    if (!isSelf && !isKey && value instanceof YAMLSequence && value != element) return null;
+    boolean isValue = value != null && PsiTreeUtil.isAncestor(value, element, false);
+    if (!isKey && !isValue && !isSelf) return null;
     return new YamlPropertyAdapter(property);
   }
 
