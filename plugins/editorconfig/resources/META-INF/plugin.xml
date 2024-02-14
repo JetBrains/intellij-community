@@ -6,17 +6,15 @@
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[
-Handles properties in .editorconfig files and applies them to all supported languages in all JetBrains IDEs.
-<p>
-<b>Features</b>
-<ul><li>Code assistance for all supported properties, standard and extended</li>
+<p>Handles properties in <i>.editorconfig</i> files and applies them to all supported languages in all JetBrains IDEs.
+
+<h2>Features</h2>
+<ul>
+  <li>Code assistance for all supported properties, standard and extended
 </ul>
-</p>
-<p>
-<b>Getting started</b>
-<br/>
-For more information, check the documentation for <a href="https://editorconfig.org/">EditorConfig</a> files and your <a href="https://www.jetbrains.com/help/">IDE</a>.
-</p>
+<h2>Getting started</h2>
+<p>For more information,
+check the documentation for <a href="https://editorconfig.org/">EditorConfig</a> files and your <a href="https://www.jetbrains.com/help/">IDE</a>.
 ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
