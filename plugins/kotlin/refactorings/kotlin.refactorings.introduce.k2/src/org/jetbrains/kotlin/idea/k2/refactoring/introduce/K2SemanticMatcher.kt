@@ -7,9 +7,6 @@ import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -49,80 +46,81 @@ object K2SemanticMatcher {
     }
 
     context(KtAnalysisSession)
-    fun KtElement.isSemanticMatch(
+    fun KtElement.isSemanticMatch(patternElement: KtElement): Boolean = isSemanticMatch(patternElement, MatchingContext())
+
+    context(KtAnalysisSession)
+    private fun KtElement.isSemanticMatch(
         patternElement: KtElement,
-        context: MatchingContext = MatchingContext(analysisSession.token),
+        context: MatchingContext,
     ): Boolean = this == patternElement || accept(VisitingMatcher(this@KtAnalysisSession, context), patternElement)
 
-    data class MatchingContext(
-        override val token: KtLifetimeToken,
-        private val _symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
-        private val _blockBodyOwners: MutableMap<KtFunctionLikeSymbol, KtFunctionLikeSymbol> = mutableMapOf(),
-    ) : KtLifetimeOwner {
+    private data class MatchingContext(
+        val symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
+        val blockBodyOwners: MutableMap<KtFunctionLikeSymbol, KtFunctionLikeSymbol> = mutableMapOf(),
+    ) {
         context(KtAnalysisSession)
-        fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean = withValidityAssertion {
+        fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean {
             if (targetSymbol == null || patternSymbol == null) return targetSymbol == null && patternSymbol == null
 
-            targetSymbol == patternSymbol || _symbols[targetSymbol] == patternSymbol
+            return targetSymbol == patternSymbol || symbols[targetSymbol] == patternSymbol
         }
 
         context(KtAnalysisSession)
         fun areBlockBodyOwnersEqualOrAssociated(targetFunction: KtFunctionLikeSymbol, patternFunction: KtFunctionLikeSymbol): Boolean =
-            withValidityAssertion { targetFunction == patternFunction || _blockBodyOwners[targetFunction] == patternFunction }
+            targetFunction == patternFunction || blockBodyOwners[targetFunction] == patternFunction
 
         // TODO: current approach doesn't work on pairs of types such as `List<U>` and `List<T>`, where `U` and `T` are associated
         context(KtAnalysisSession)
-        fun areTypesEqualOrAssociated(targetType: KtType?, patternType: KtType?): Boolean = withValidityAssertion {
+        fun areTypesEqualOrAssociated(targetType: KtType?, patternType: KtType?): Boolean {
             if (targetType == null || patternType == null) return targetType == null && patternType == null
 
-            targetType.isEqualTo(patternType) ||
+            return targetType.isEqualTo(patternType) ||
                     targetType is KtTypeParameterType &&
                     patternType is KtTypeParameterType &&
-                    _symbols[targetType.symbol] == patternType.symbol
+                    symbols[targetType.symbol] == patternType.symbol
         }
 
         context(KtAnalysisSession)
-        fun getAndAssociateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) =
-            withValidityAssertion {
-                val targetSymbol = targetDeclaration.getSymbol()
-                val patternSymbol = patternDeclaration.getSymbol()
+        fun getAndAssociateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) {
+            val targetSymbol = targetDeclaration.getSymbol()
+            val patternSymbol = patternDeclaration.getSymbol()
 
-                if (targetSymbol is KtDestructuringDeclarationSymbol && patternSymbol is KtDestructuringDeclarationSymbol) {
-                    for ((targetEntry, patternEntry) in targetSymbol.entries.zip(patternSymbol.entries)) {
-                        _symbols[targetEntry] = patternEntry
-                    }
-                } else {
-                    _symbols[targetSymbol] = patternSymbol
+            if (targetSymbol is KtDestructuringDeclarationSymbol && patternSymbol is KtDestructuringDeclarationSymbol) {
+                for ((targetEntry, patternEntry) in targetSymbol.entries.zip(patternSymbol.entries)) {
+                    symbols[targetEntry] = patternEntry
                 }
+            } else {
+                symbols[targetSymbol] = patternSymbol
             }
+        }
 
         context(KtAnalysisSession)
-        fun getAndAssociateSymbolsForBlockBodyOwners(targetFunction: KtFunction, patternFunction: KtFunction) = withValidityAssertion {
+        fun getAndAssociateSymbolsForBlockBodyOwners(targetFunction: KtFunction, patternFunction: KtFunction) {
             check(targetFunction.bodyExpression is KtBlockExpression && patternFunction.bodyExpression is KtBlockExpression)
 
-            _blockBodyOwners[targetFunction.getFunctionLikeSymbol()] = patternFunction.getFunctionLikeSymbol()
+            blockBodyOwners[targetFunction.getFunctionLikeSymbol()] = patternFunction.getFunctionLikeSymbol()
         }
 
         context(KtAnalysisSession)
         fun getAndAssociateSingleParameterSymbolsForAnonymousFunctionsOrDoNothing(
             targetFunction: KtFunction,
             patternFunction: KtFunction,
-        ) = withValidityAssertion {
+        ) {
             val targetSymbol = getSingleParameterSymbolForAnonymousFunctionOrNull(targetFunction) ?: return
             val patternSymbol = getSingleParameterSymbolForAnonymousFunctionOrNull(patternFunction) ?: return
 
-            _symbols[targetSymbol] = patternSymbol
+            symbols[targetSymbol] = patternSymbol
         }
 
         context(KtAnalysisSession)
         fun getAndAssociateReceiverParameterSymbolsForCallablesOrDoNothing(
             targetDeclaration: KtCallableDeclaration,
             patternDeclaration: KtCallableDeclaration,
-        ) = withValidityAssertion {
+        ) {
             val targetSymbol = targetDeclaration.getCallableSymbol().receiverParameter ?: return
             val patternSymbol = patternDeclaration.getCallableSymbol().receiverParameter ?: return
 
-            _symbols[targetSymbol] = patternSymbol
+            symbols[targetSymbol] = patternSymbol
         }
 
         context(KtAnalysisSession)
