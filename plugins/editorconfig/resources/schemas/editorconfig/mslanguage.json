@@ -1431,6 +1431,7 @@
           "private",
           "protected",
           "internal",
+          "file",
           "static",
           "extern",
           "new",
@@ -1440,6 +1441,7 @@
           "override",
           "readonly",
           "unsafe",
+          "required",
           "volatile",
           "async"
         ]

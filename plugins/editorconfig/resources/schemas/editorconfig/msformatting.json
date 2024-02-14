@@ -753,7 +753,13 @@
                 "methods"
               ]
             },
-            "object_collection",
+            {
+              "type": "union",
+              "values": [
+                "object_collection",
+                "object_collection_array_initializers"
+              ]
+            },
             "properties",
             "types"
           ]
