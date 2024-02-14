@@ -26,3 +26,15 @@ enum class GHReactionContent {
   // Represents the `:eyes:` emoji
   EYES
 }
+
+val GHReactionContent.presentableName
+  get() = when(this) {
+    GHReactionContent.THUMBS_UP -> "thumbs up"
+    GHReactionContent.THUMBS_DOWN -> "thumbs down"
+    GHReactionContent.LAUGH -> "laugh"
+    GHReactionContent.HOORAY -> "hooray"
+    GHReactionContent.CONFUSED -> "confused"
+    GHReactionContent.HEART -> "heart"
+    GHReactionContent.ROCKET -> "rocket"
+    GHReactionContent.EYES -> "eyes"
+  }

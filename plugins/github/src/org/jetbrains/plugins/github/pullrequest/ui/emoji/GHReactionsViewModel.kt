@@ -45,7 +45,7 @@ internal class GHReactionViewModelImpl(
   override val reactionsWithInfo: StateFlow<Map<GHReactionContent, ReactionInfo>> = dataState.mapState(cs) { data ->
     val reactionToUsers = data.groupBy({ it.content }, { it.user })
     reactionToUsers.mapValues { (_, users) ->
-      ReactionInfo(users.size, users.map(GHUser::id).contains(currentUser.id))
+      ReactionInfo(users, users.map(GHUser::id).contains(currentUser.id))
     }
   }
 
@@ -82,6 +82,6 @@ private enum class ReactionRequest {
 }
 
 data class ReactionInfo(
-  val count: Int,
+  val users: List<GHUser>,
   val isReactedByCurrentUser: Boolean
 )

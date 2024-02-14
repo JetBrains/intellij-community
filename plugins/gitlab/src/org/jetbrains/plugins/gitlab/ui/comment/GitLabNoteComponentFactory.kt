@@ -152,7 +152,7 @@ internal object GitLabNoteComponentFactory {
     val button = InlineIconButton(
       CollaborationToolsIcons.AddEmoji,
       CollaborationToolsIcons.AddEmojiHovered,
-      tooltip = CollaborationToolsBundle.message("review.comments.add.reaction.tooltip")
+      tooltip = CollaborationToolsBundle.message("review.comments.reaction.add.tooltip")
     )
     button.actionListener = ActionListener {
       cs.launch {

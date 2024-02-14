@@ -15,6 +15,7 @@ import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReaction
 import javax.swing.JComponent
 
@@ -47,8 +48,12 @@ internal object GitLabReactionsComponentFactory {
     }
     return ReactionLabel(layout, onClick = { reactionsVm.toggle(reaction) }) {
       bindTextIn(cs, reactionsVm.reactionsWithInfo.map { reactionsWithInfo ->
-        val (count, _) = reactionsWithInfo[reaction] ?: return@map ""
-        if (count > 0) "${reaction.emoji + VARIATION_SELECTOR} $count" else reaction.emoji + VARIATION_SELECTOR
+        val (users, _) = reactionsWithInfo[reaction] ?: return@map ""
+        if (users.isNotEmpty()) "${reaction.emoji + VARIATION_SELECTOR} ${users.size}" else reaction.emoji + VARIATION_SELECTOR
+      })
+      bindTooltipTextIn(cs, reactionsVm.reactionsWithInfo.map { reactionsWithInfo ->
+        val (users, _) = reactionsWithInfo[reaction] ?: return@map ""
+        CodeReviewReactionsUIUtil.createTooltipText(users.map(GitLabUserDTO::name), reaction.name)
       })
     }.apply {
       var currentBorder: RoundedLineBorder = BORDER

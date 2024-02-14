@@ -14,6 +14,8 @@ import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.GHReactionContent
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.presentableName
 import javax.swing.JComponent
 
 internal object GHReactionsComponentFactory {
@@ -52,8 +54,12 @@ internal object GHReactionsComponentFactory {
     ) {
       border = JBUI.Borders.empty(REACTION_LABEL_PADDING)
       bindTextIn(cs, reactionsVm.reactionsWithInfo.map { reactionsWithInfo ->
-        val (count, _) = reactionsWithInfo[reaction] ?: return@map ""
-        if (count > 0) "$count" else ""
+        val (users, _) = reactionsWithInfo[reaction] ?: return@map ""
+        if (users.isNotEmpty()) "${users.size}" else ""
+      })
+      bindTooltipTextIn(cs, reactionsVm.reactionsWithInfo.map { reactionsWithInfo ->
+        val (users, _) = reactionsWithInfo[reaction] ?: return@map ""
+        CodeReviewReactionsUIUtil.createTooltipText(users.map(GHUser::getPresentableName), reaction.presentableName)
       })
     }.apply {
       var currentBorder: RoundedLineBorder = BORDER
