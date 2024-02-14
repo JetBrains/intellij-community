@@ -17,11 +17,11 @@ interface IComponentStore {
 
   fun setPath(path: Path)
 
-  fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?)
+  fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
 
   fun unloadComponent(component: Any)
 
-  fun initPersistencePlainComponent(component: Any, @NlsSafe key: String)
+  fun initPersistencePlainComponent(component: Any, @NlsSafe key: String, pluginId: PluginId)
 
   fun reloadStates(componentNames: Set<String>, messageBus: MessageBus)
 

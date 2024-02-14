@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.settings.SettingsController
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -12,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
+  @JvmField
   protected val storageDataRef: AtomicReference<T> = AtomicReference()
 
   protected open val saveStorageDataOnReload: Boolean
@@ -19,7 +21,14 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
   abstract val controller: SettingsController?
 
-  final override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
+  final override fun <T : Any> getState(
+    component: Any?,
+    componentName: String,
+    pluginId: PluginId,
+    stateClass: Class<T>,
+    mergeInto: T?,
+    reload: Boolean,
+  ): T? {
     val stateElement = getSerializedState(
       storageData = getStorageData(reload = reload),
       component = component,
@@ -32,6 +41,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
       mergeInto = mergeInto,
       controller = controller,
       componentName = componentName,
+      pluginId = pluginId,
     )
   }
 

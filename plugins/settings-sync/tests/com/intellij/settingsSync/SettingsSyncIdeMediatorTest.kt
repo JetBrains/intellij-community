@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.getStateSpec
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -115,15 +116,15 @@ true
     val callbackCalls = mutableListOf<String>()
     val firstComponent = FirstComponent({ callbackCalls.add("First") })
     componentManager.registerComponentInstance(FirstComponent::class.java, firstComponent)
-    componentStore.initComponent(firstComponent, null, null)
+    componentStore.initComponent(firstComponent, null, PluginManagerCore.CORE_ID)
     componentStore.storageManager.getStateStorage(getStateSpec(FirstComponent::class.java)!!.storages[0]).createSaveSessionProducer()
 
     val secondComponent = SecondComponent({ callbackCalls.add("Second") })
     componentManager.registerComponentInstance(SecondComponent::class.java, secondComponent)
-    componentStore.initComponent(secondComponent, null, null)
+    componentStore.initComponent(secondComponent, null, PluginManagerCore.CORE_ID)
     componentStore.storageManager.getStateStorage(getStateSpec(SecondComponent::class.java)!!.storages[0]).createSaveSessionProducer()
 
-    val mediator = SettingsSyncIdeMediatorImpl(componentStore, rootConfig, { true })
+    val mediator = SettingsSyncIdeMediatorImpl(componentStore = componentStore, rootConfig = rootConfig) { true }
     val metaInfo = SettingsSnapshot.MetaInfo(Instant.now(), null)
     val snapshot = SettingsSnapshot(metaInfo, setOf(FileState.Modified("options/first.xml", """
       <application>

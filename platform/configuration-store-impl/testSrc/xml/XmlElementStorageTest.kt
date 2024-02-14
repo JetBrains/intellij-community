@@ -4,6 +4,7 @@ package com.intellij.configurationStore.xml
 import com.intellij.configurationStore.DataWriter
 import com.intellij.configurationStore.StateMap
 import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.settings.SettingsController
@@ -13,21 +14,38 @@ import org.jdom.Element
 import org.junit.Test
 
 class XmlElementStorageTest {
-  @Test fun testGetStateSucceeded() {
+  @Test
+  fun testGetStateSucceeded() {
     val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
-    val state = storage.getState(component = this, componentName = "test", Element::class.java, mergeInto = null, reload = false)
+    val state = storage.getState(
+      component = this,
+      componentName = "test",
+      pluginId = PluginManagerCore.CORE_ID,
+      stateClass = Element::class.java,
+      mergeInto = null,
+      reload = false,
+    )
     assertThat(state).isNotNull
     assertThat(state!!.name).isEqualTo("component")
     assertThat(state.getChild("foo")).isNotNull
   }
 
-  @Test fun `get state not succeeded`() {
+  @Test
+  fun `get state not succeeded`() {
     val storage = MyXmlElementStorage(Element("root"))
-    val state = storage.getState(component = this, componentName = "test", Element::class.java, mergeInto = null, reload = false)
+    val state = storage.getState(
+      component = this,
+      componentName = "test",
+      PluginManagerCore.CORE_ID,
+      Element::class.java,
+      mergeInto = null,
+      reload = false,
+    )
     assertThat(state).isNull()
   }
 
-  @Test fun `set state overrides old state`() {
+  @Test
+  fun `set state overrides old state`() {
     val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
     val newState = Element("component").setAttribute("name", "test").addContent(Element("bar"))
     val externalizationSession = storage.createSaveSessionProducer()!!

@@ -40,7 +40,14 @@ internal class StateStorageBackedByController(
   private val bindingProducer = BindingProducer()
 
   @OptIn(ExperimentalSerializationApi::class)
-  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
+  override fun <T : Any> getState(
+    component: Any?,
+    componentName: String,
+    pluginId: PluginId,
+    stateClass: Class<T>,
+    mergeInto: T?,
+    reload: Boolean,
+  ): T? {
     @Suppress("DEPRECATION", "UNCHECKED_CAST")
     when {
       stateClass === Element::class.java -> {

@@ -638,7 +638,7 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  internal fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
+  internal fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     @Suppress("DEPRECATION")
     if ((serviceDescriptor == null || !isPreInitialized(component)) &&
         (component is PersistentStateComponent<*> || component is com.intellij.openapi.util.JDOMExternalizable)) {

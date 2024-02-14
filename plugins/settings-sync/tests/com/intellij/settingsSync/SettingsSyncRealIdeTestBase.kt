@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
@@ -54,7 +55,7 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   }
 
   protected fun <T : PersistentStateComponent<*>> T.init(): T {
-    componentStore.initComponent(this, null, null)
+    componentStore.initComponent(component = this, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     val defaultConstructor: Constructor<T> = this::class.java.declaredConstructors.find { it.parameterCount == 0 } as Constructor<T>
     val componentInstance: T = defaultConstructor.newInstance()
     componentStore.componentsAndDefaultStates[this] = componentInstance.state!!

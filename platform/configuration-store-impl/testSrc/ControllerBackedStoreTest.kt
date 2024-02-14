@@ -4,6 +4,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.State
@@ -20,6 +21,7 @@ import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
+import org.jdom.Element
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -73,22 +75,76 @@ class ControllerBackedStoreTest {
     )
 
     val component = TestComponent()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.foo).isEmpty()
     assertThat(component.state.bar).isEmpty()
 
     component.state = TestState(bar = "42")
 
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("42")
 
     val propertyName = "bar"
     data.put("TestState.$propertyName", """
       <s $propertyName="12" />
     """.trimIndent().toByteArray())
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("12")
+  }
+
+  @Test
+  fun `pass Element`() = runBlocking<Unit>(Dispatchers.Default) {
+    var requested = false
+    componentStore = ControllerBackedTestComponentStore(
+      testAppConfigPath = testAppConfig,
+      controller = SettingsControllerMediator(
+        controllers = listOf(object : DelegatedSettingsController {
+          override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
+            requested = true
+            return GetResult.inapplicable()
+          }
+
+          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.STOP
+        }),
+        isPersistenceStateComponentProxy = true,
+      ),
+    )
+
+    @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+    class TestComponentWithElementState : SerializablePersistentStateComponent<Element>(Element("test"))
+
+    val component = TestComponentWithElementState()
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    assertThat(requested).isTrue()
+    assertThat(component.state.isEmpty).isTrue()
+  }
+
+  @Test
+  fun `override Element`() = runBlocking<Unit>(Dispatchers.Default) {
+    componentStore = ControllerBackedTestComponentStore(
+      testAppConfigPath = testAppConfig,
+      controller = SettingsControllerMediator(
+        controllers = listOf(object : DelegatedSettingsController {
+          override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
+            @Suppress("UNCHECKED_CAST")
+            return GetResult.resolved("""<state foo="42" />""".encodeToByteArray() as T)
+          }
+
+          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.STOP
+        }),
+        isPersistenceStateComponentProxy = true,
+      ),
+    )
+
+    @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+    class TestComponentWithElementState : SerializablePersistentStateComponent<Element>(Element("test"))
+
+    val component = TestComponentWithElementState()
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    assertThat(component.state.getAttributeValue("foo")).isEqualTo("42")
   }
 
   @Test
@@ -106,7 +162,7 @@ class ControllerBackedStoreTest {
     writeConfig(StoragePathMacros.NON_ROAMABLE_FILE, oldContent)
 
     val component = TestComponent()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.foo).isEqualTo("old")
     assertThat(component.state.bar).isEmpty()
@@ -114,7 +170,7 @@ class ControllerBackedStoreTest {
     component.state = TestState(bar = "42")
     componentStore.save(forceSavingAllSettings = true)
 
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("42")
   }
 

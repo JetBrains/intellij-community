@@ -37,7 +37,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     result
   }
 
-  final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
+  final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }

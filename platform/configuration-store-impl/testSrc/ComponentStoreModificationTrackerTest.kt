@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
@@ -57,7 +58,7 @@ internal class ComponentStoreModificationTrackerTest {
     }
 
     val component = A()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
 
     assertThat(component.modificationCount).isEqualTo(0)
     assertThat(component.stateCalledCount.get()).isEqualTo(0)
@@ -124,7 +125,7 @@ internal class ComponentStoreModificationTrackerTest {
     }
 
     val component = A()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
 
     assertThat(component.modificationCount.get()).isEqualTo(0)
     assertThat(component.stateCalledCount.get()).isEqualTo(0)

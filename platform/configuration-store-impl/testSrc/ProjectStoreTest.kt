@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -205,7 +206,7 @@ class ProjectStoreTest {
       class AOther : A()
 
       val component = AOther()
-      componentStore.initComponent(component, null, null)
+      componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
       assertThat(component.options.foo).isEqualTo("some data")
 
       componentStore.save()
@@ -229,7 +230,7 @@ class ProjectStoreTest {
     testComponent.loadState(TestState(AAValue = "foo"))
     (projectManager.defaultProject as ComponentManager).stateStore.initComponent(component = testComponent,
                                                                                  serviceDescriptor = null,
-                                                                                 pluginId = null)
+                                                                                 pluginId = PluginManagerCore.CORE_ID)
 
     runBlocking {
       val newProjectPath = tempDirManager.newPath()
@@ -245,7 +246,7 @@ class ProjectStoreTest {
 
   private suspend fun test(project: Project): TestComponent {
     val testComponent = TestComponent()
-    project.stateStore.initComponent(testComponent, null, null)
+    project.stateStore.initComponent(testComponent, null, PluginManagerCore.CORE_ID)
     assertThat(testComponent.state).isEqualTo(TestState("customValue"))
 
     testComponent.state!!.AAValue = "foo"

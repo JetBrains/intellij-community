@@ -28,6 +28,7 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   internal fun <S : Any> createGetSession(
     component: PersistentStateComponent<S>,
     componentName: String,
+    pluginId: PluginId,
     stateClass: Class<S>,
     reload: Boolean = false,
   ): StateGetter<S> {
@@ -37,6 +38,7 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
       storageData = getStorageData(reload),
       stateClass = stateClass,
       storage = this,
+      pluginId = pluginId,
     )
   }
 
@@ -51,11 +53,18 @@ internal fun <S : Any> createStateGetter(
   storage: StateStorage,
   component: PersistentStateComponent<S>,
   componentName: String,
+  pluginId: PluginId,
   stateClass: Class<S>,
   reloadData: Boolean,
 ): StateGetter<S> {
   if (isUseLoadedStateAsExisting && storage is StorageBaseEx<*>) {
-    return storage.createGetSession(component = component, componentName = componentName, stateClass = stateClass, reload = reloadData)
+    return storage.createGetSession(
+      component = component,
+      componentName = componentName,
+      stateClass = stateClass,
+      reload = reloadData,
+      pluginId = pluginId,
+    )
   }
 
   return object : StateGetter<S> {
@@ -63,6 +72,7 @@ internal fun <S : Any> createStateGetter(
       return storage.getState(
         component = component,
         componentName = componentName,
+        pluginId = pluginId,
         stateClass = stateClass,
         mergeInto = mergeInto,
         reload = reloadData,
@@ -87,8 +97,25 @@ internal fun <T : Any> deserializeStateWithController(
   mergeInto: T?,
   controller: SettingsController?,
   componentName: String,
+  pluginId: PluginId,
 ): T? {
   if (stateClass === Element::class.java) {
+    try {
+      val item = controller?.doGetItem(createSettingDescriptor(key = componentName, pluginId = pluginId)) ?: GetResult.inapplicable()
+      if (item.isResolved) {
+        val xmlData = item.get() ?: return null
+        val xmlStreamReader = createXmlStreamReader(xmlData)
+        try {
+          return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader) as T
+        }
+        finally {
+          xmlStreamReader.close()
+        }
+      }
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot deserialize value for $componentName", e)
+    }
     return stateElement as T?
   }
   else if (com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
@@ -129,6 +156,7 @@ internal fun <T : Any> deserializeStateWithController(
         rootBinding = rootBinding,
         controller = controller,
         componentName = componentName,
+        pluginId = pluginId,
       )
     }
     else {
@@ -145,6 +173,7 @@ internal fun <T : Any> deserializeStateWithController(
           rootBinding = rootBinding as BeanBinding,
           controller = controller,
           componentName = componentName,
+          pluginId = pluginId,
         )
       }
       return mergeInto
@@ -163,6 +192,7 @@ private fun <T : Any> getXmlSerializationState(
   mergeInto: T?,
   rootBinding: BeanBinding,
   componentName: String,
+  pluginId: PluginId,
   controller: SettingsController,
 ): T? {
   var result = mergeInto
@@ -170,7 +200,7 @@ private fun <T : Any> getXmlSerializationState(
 
   for ((index, binding) in bindings.withIndex()) {
     val data = getXmlDataFromController(
-      key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}"),
+      key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}", pluginId = pluginId),
       controller = controller,
     )
     if (!data.isResolved) {
@@ -219,12 +249,10 @@ private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controll
   return GetResult.inapplicable()
 }
 
-private val shimPluginId = PluginId.getId("__controller_shim__")
-
-internal fun createSettingDescriptor(key: String): SettingDescriptor<ByteArray> {
+internal fun createSettingDescriptor(key: String, pluginId: PluginId): SettingDescriptor<ByteArray> {
   return SettingDescriptor(
     key = key,
-    pluginId = shimPluginId,
+    pluginId = pluginId,
     tags = emptyList(),
     serializer = RawSettingSerializerDescriptor,
   )
@@ -233,6 +261,7 @@ internal fun createSettingDescriptor(key: String): SettingDescriptor<ByteArray> 
 private class StateGetterImpl<S : Any, T : Any>(
   private val component: PersistentStateComponent<S>,
   private val componentName: String,
+  private val pluginId: PluginId,
   private val storageData: T,
   private val stateClass: Class<S>,
   private val storage: StorageBaseEx<T>,
@@ -254,6 +283,7 @@ private class StateGetterImpl<S : Any, T : Any>(
       mergeInto = mergeInto,
       controller = storage.controller,
       componentName = componentName,
+      pluginId = pluginId,
     )
   }
 

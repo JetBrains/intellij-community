@@ -5,6 +5,7 @@ package com.intellij.configurationStore
 
 import com.intellij.configurationStore.ApplicationStoreImpl.ApplicationStateStorageManager
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -61,7 +62,7 @@ class ApplicationStoreTest {
     componentStore.storageManager.removeStreamProvider(MyStreamProvider::class.java)
     componentStore.storageManager.addStreamProvider(streamProvider)
 
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     component.foo = "newValue"
     componentStore.save()
 
@@ -81,7 +82,7 @@ class ApplicationStoreTest {
     val storageManager = componentStore.storageManager
     storageManager.removeStreamProvider(MyStreamProvider::class.java)
     storageManager.addStreamProvider(streamProvider)
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.foo).isEqualTo("newValue")
 
     assertThat(storageManager.expandMacro(fileSpec)).doesNotExist()
@@ -110,7 +111,7 @@ class ApplicationStoreTest {
 
     testAppConfig.refreshVfs()
 
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.foo).isEqualTo("new")
 
     component.foo = "new2"
@@ -140,7 +141,7 @@ class ApplicationStoreTest {
   @Test
   fun `import settings`() {
     val component = A()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
 
     component.options.foo = "new"
 
@@ -240,7 +241,7 @@ class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = SeveralStoragesConfigured()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.foo).isEqualTo("new")
 
     componentStore.save()
@@ -258,7 +259,7 @@ class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = A()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.options).isEqualTo(TestState("old"))
 
     componentStore.save()
@@ -284,12 +285,12 @@ class ApplicationStoreTest {
     val component = A()
     component.isThrowErrorOnLoadState = true
     assertThatThrownBy {
-      componentStore.initComponent(component, null, null)
+      componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     }.isInstanceOf(ProcessCanceledException::class.java)
     assertThat(component.options).isEqualTo(TestState())
 
     component.isThrowErrorOnLoadState = false
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.options).isEqualTo(TestState("old"))
   }
 
@@ -303,7 +304,7 @@ class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = AWorkspace()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.options).isEqualTo(TestState("old"))
 
     try {
@@ -326,7 +327,7 @@ class ApplicationStoreTest {
     class AOther : A()
 
     val component = AOther()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     component.options.foo = "old"
 
     componentStore.save()
@@ -349,15 +350,15 @@ class ApplicationStoreTest {
     class COther : A()
 
     val component = AOther()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     component.options.foo = "old"
 
     val component2 = BOther()
-    componentStore.initComponent(component2, null, null)
+    componentStore.initComponent(component2, null, PluginManagerCore.CORE_ID)
     component2.options.foo = "old?"
 
     val component3 = COther()
-    componentStore.initComponent(component3, null, null)
+    componentStore.initComponent(component3, null, PluginManagerCore.CORE_ID)
     component3.options.bar = "foo"
 
     componentStore.save()
@@ -435,8 +436,8 @@ class ApplicationStoreTest {
 
     val component = MyComponent()
     assertThatThrownBy {
-      componentStore.initComponent(component, null, null)
-    }.hasMessage("Cannot init component state (componentName=Bad, componentClass=MyComponent)")
+      componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
+    }.hasMessage("Cannot init component state (componentName=Bad, componentClass=MyComponent) [Plugin: com.intellij]")
 
     assertThat(componentStore.getComponents()).doesNotContainKey("Bad")
   }
@@ -444,7 +445,7 @@ class ApplicationStoreTest {
   @Test
   fun `test per-os components are stored in subfolder`() = runBlocking {
     val component = PerOsComponent()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     component.foo = "bar"
 
     componentStore.save()
@@ -462,7 +463,7 @@ class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = PerOsComponent()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.foo).isEqualTo("new")
 
     componentStore.save()
@@ -482,7 +483,7 @@ class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = PerOsComponent()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.foo).isEqualTo("new")
   }
 
@@ -499,7 +500,7 @@ class ApplicationStoreTest {
     testAppConfig.refreshVfs()
 
     val component = Comp()
-    componentStore.initComponent(component, null, null)
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.foo).isEqualTo("old")
 
     componentStore.save()
@@ -515,7 +516,7 @@ class ApplicationStoreTest {
     class Component : FooComponent()
 
     val component = Component()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     writeConfig("a.xml", "")
     componentStore.reloadComponents(changedFileSpecs = listOf("a.xml"), deletedFileSpecs = emptyList())
@@ -542,13 +543,13 @@ class ApplicationStoreTest {
     class Component : SerializablePersistentStateComponent<TestState>(TestState())
 
     val component = Component()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.foo).isEmpty()
     assertThat(component.state.bar).isEmpty()
 
     component.state = TestState(bar = "42")
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = null)
+    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("42")
   }
 
