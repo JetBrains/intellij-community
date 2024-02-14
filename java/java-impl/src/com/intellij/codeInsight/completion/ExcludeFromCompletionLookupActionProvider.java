@@ -33,13 +33,9 @@ public final class ExcludeFromCompletionLookupActionProvider implements LookupAc
         addExcludes(consumer, field, PsiUtil.getMemberQualifiedName(field));
       }
     }
-
-    if (lookupElement instanceof LoggerLookupElement loggerLookupElement && o instanceof PsiElement element) {
-      addExcludes(consumer, element, loggerLookupElement.getLoggerTypeName());
-    }
   }
 
-  private static void addExcludes(Consumer<? super LookupElementAction> consumer, PsiElement element, @Nullable String qname) {
+  public static void addExcludes(Consumer<? super LookupElementAction> consumer, PsiElement element, @Nullable String qname) {
     if (qname == null) return;
     final Project project = element.getProject();
     for (final String s : AddImportAction.getAllExcludableStrings(qname)) {

@@ -42,26 +42,23 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
                val place = possiblePlaces.firstOrNull() ?: return
 
                for (logger in availableLoggers) {
-                 val lookupElement = buildLoggerElement(project, place, logger) ?: continue
+                 val lookupElement = buildLoggerElement(project, place, logger)
                  javaResultWithSorting.addElement(lookupElement)
                }
              }
            })
   }
 
-  private fun buildLoggerElement(project: Project, place: PsiClass, logger: JvmLogger): LookupElement? =
-    logger.createLogger(project, place)?.let {
-      LoggerLookupElement(
-        LookupElementBuilder
-          .create(it, JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
-          .withTailText(" ${logger.loggerTypeName}")
-          .withTypeText(logger.toString())
-          .withInsertHandler { insertionContext, lookupItem ->
-            lookupItem.psiElement?.let {
-              logger.insertLoggerAtClass(insertionContext.project, place, it)
-            }
-          },
-        logger.loggerTypeName
-      )
-    }
+  private fun buildLoggerElement(project: Project, place: PsiClass, logger: JvmLogger): LookupElement =
+    LoggerLookupElement(
+      LookupElementBuilder
+        .create(logger.loggerTypeName, JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
+        .withTailText(" ${logger.loggerTypeName}")
+        .withTypeText(logger.toString())
+        .withInsertHandler { insertionContext, _ ->
+          val loggerText = logger.createLogger(project, place) ?: return@withInsertHandler
+          logger.insertLoggerAtClass(insertionContext.project, place, loggerText)
+        },
+      logger.loggerTypeName
+    )
 }
