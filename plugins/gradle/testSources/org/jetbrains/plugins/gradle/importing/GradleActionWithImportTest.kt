@@ -37,6 +37,7 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
     val testFile = File(projectPath, "testFile")
     assertThat(testFile).doesNotExist()
 
+    val testFilePath = testFile.absolutePath
     val randomKey = Random().nextLong().toString()
 
     importProject(
@@ -75,7 +76,7 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
         apply plugin: TestPlugin
         task importTestTask {
           doLast {
-            def f = new File('testFile')
+            def f = new File('$testFilePath')
             f.write '$randomKey'
           }
         }
@@ -86,9 +87,12 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
       .exists()
       .hasContent(randomKey)
 
-    assertSyncViewTreeEquals("-\n" +
-                             " -finished\n" +
-                             "  :importTestTask")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNode(":importTestTask")
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
   }
 
   @Test
@@ -127,8 +131,11 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
         apply plugin: TestPlugin
       """.trimIndent())
 
-    assertSyncViewTreeEquals("-\n" +
-                             " finished")
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
   }
 }
 
