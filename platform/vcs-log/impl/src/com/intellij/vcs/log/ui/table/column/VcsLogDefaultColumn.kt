@@ -14,6 +14,7 @@ import com.intellij.vcs.log.history.FileHistoryPaths.filePathOrDefault
 import com.intellij.vcs.log.history.FileHistoryPaths.hasPathsInformation
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.impl.onPropertyChange
 import com.intellij.vcs.log.paint.GraphCellPainter
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
@@ -58,7 +59,7 @@ internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) 
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
-    doOnPropertyChange(table) { property ->
+    table.properties.onPropertyChange(table) { property ->
       if (CommonUiProperties.SHOW_ROOT_NAMES == property) {
         table.rootColumnUpdated()
       }
@@ -98,7 +99,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
     commitCellRenderer.setShowTagsNames(table.properties[CommonUiProperties.SHOW_TAG_NAMES])
     commitCellRenderer.setLeftAligned(table.properties[CommonUiProperties.LABELS_LEFT_ALIGNED])
 
-    doOnPropertyChange(table) { property ->
+    table.properties.onPropertyChange(table) { property ->
       if (CommonUiProperties.COMPACT_REFERENCES_VIEW == property) {
         commitCellRenderer.setCompactReferencesView(table.properties[CommonUiProperties.COMPACT_REFERENCES_VIEW])
         table.repaint()
@@ -147,7 +148,7 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
-    doOnPropertyChange(table) { property ->
+    table.properties.onPropertyChange(table) { property ->
       if (property == CommonUiProperties.PREFER_COMMIT_DATE && table.getTableColumn(this@Date) != null) {
         table.repaint()
       }
@@ -190,15 +191,6 @@ private fun updateTableOnCommitDetailsLoaded(column: VcsLogColumn<*>, graphTable
   Disposer.register(graphTable) {
     graphTable.logData.miniDetailsGetter.removeDetailsLoadedListener(miniDetailsLoadedListener)
   }
-}
-
-private fun doOnPropertyChange(graphTable: VcsLogGraphTable, listener: (VcsLogUiProperties.VcsLogUiProperty<*>) -> Unit) {
-  val propertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
-    override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
-      listener(property)
-    }
-  }
-  graphTable.properties.addChangeListener(propertiesChangeListener, graphTable)
 }
 
 @ApiStatus.Internal

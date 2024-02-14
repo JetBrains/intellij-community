@@ -41,3 +41,10 @@ interface VcsLogUiProperties {
     fun <T> onPropertyChanged(property: VcsLogUiProperty<T>)
   }
 }
+
+fun VcsLogUiProperties.onPropertyChange(disposable: Disposable, listener: (VcsLogUiProperties.VcsLogUiProperty<*>) -> Unit) {
+  val propertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
+    override fun <T> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) = listener(property)
+  }
+  addChangeListener(propertiesChangeListener, disposable)
+}

@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.impl.onPropertyChange
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 import kotlin.math.roundToInt
@@ -32,8 +33,14 @@ abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
   init {
     previewDiffSplitter.firstComponent = mainComponent
 
-    toggleDiffPreviewOnPropertyChange(uiProperties, this, ::showDiffPreview)
-    toggleDiffPreviewOrientationOnPropertyChange(uiProperties, this, ::changeDiffPreviewOrientation)
+    uiProperties.onPropertyChange(this) { p ->
+      if (CommonUiProperties.SHOW_DIFF_PREVIEW == p) {
+        showDiffPreview(uiProperties[CommonUiProperties.SHOW_DIFF_PREVIEW])
+      }
+      else if (MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == p) {
+        changeDiffPreviewOrientation(uiProperties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT])
+      }
+    }
     invokeLater { showDiffPreview(uiProperties[CommonUiProperties.SHOW_DIFF_PREVIEW]) }
 
     Disposer.register(parentDisposable, this)
@@ -78,27 +85,4 @@ abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
   private fun changeDiffPreviewOrientation(bottom: Boolean) {
     previewDiffSplitter.orientation = bottom
   }
-}
-
-private fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties, parent: Disposable, showDiffPreview: (Boolean) -> Unit) {
-  onBooleanPropertyChange(uiProperties, CommonUiProperties.SHOW_DIFF_PREVIEW, parent, showDiffPreview)
-}
-
-private fun toggleDiffPreviewOrientationOnPropertyChange(uiProperties: VcsLogUiProperties, parent: Disposable,
-                                                         changeShowDiffPreviewOrientation: (Boolean) -> Unit) {
-  onBooleanPropertyChange(uiProperties, MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT, parent, changeShowDiffPreviewOrientation)
-}
-
-private fun onBooleanPropertyChange(uiProperties: VcsLogUiProperties,
-                                    property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
-                                    parent: Disposable,
-                                    onPropertyChangeAction: (Boolean) -> Unit) {
-  val propertiesChangeListener: VcsLogUiProperties.PropertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
-    override fun <T> onPropertyChanged(p: VcsLogUiProperties.VcsLogUiProperty<T>) {
-      if (property == p) {
-        onPropertyChangeAction(uiProperties[property])
-      }
-    }
-  }
-  uiProperties.addChangeListener(propertiesChangeListener, parent)
 }
