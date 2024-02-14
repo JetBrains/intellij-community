@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
         branch-name:
           - releases/232
