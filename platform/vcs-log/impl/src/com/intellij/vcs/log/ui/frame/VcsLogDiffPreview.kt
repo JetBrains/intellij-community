@@ -101,16 +101,16 @@ class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
     Disposer.register(changesBrowser, this)
   }
 
-  private var oldToolWindowFocus: WeakReference<ToolWindowFocus>? = null
+  private var oldToolWindowFocus: ToolWindowFocus? = null
 
   override fun openPreview(requestFocus: Boolean): Boolean {
-    oldToolWindowFocus = WeakReference(getCurrentToolWindowFocus())
+    oldToolWindowFocus = getCurrentToolWindowFocus()
     return super.openPreview(requestFocus)
   }
 
   override fun handleEscapeKey() {
     closePreview()
-    restoreToolWindowFocus(oldToolWindowFocus?.get())
+    restoreToolWindowFocus(oldToolWindowFocus)
   }
 
   private fun getCurrentToolWindowFocus(): ToolWindowFocus? {
@@ -123,14 +123,20 @@ class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
 
   private fun restoreToolWindowFocus(oldToolWindowFocus: ToolWindowFocus?) {
     if (oldToolWindowFocus == null) return
+    val component = oldToolWindowFocus.component.get() ?: return
+    val content = oldToolWindowFocus.content.get() ?: return
+
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(oldToolWindowFocus.toolWindowId) ?: return
     val contentManager = toolWindow.contentManagerIfCreated ?: return
-    if (contentManager.getIndexOfContent(oldToolWindowFocus.content) < 0) return
-    contentManager.setSelectedContent(oldToolWindowFocus.content)
-    toolWindow.activate({ IdeFocusManager.getInstance(project).requestFocus(oldToolWindowFocus.component, true) }, false)
+    if (contentManager.getIndexOfContent(content) < 0) return
+    contentManager.setSelectedContent(content)
+    toolWindow.activate({ IdeFocusManager.getInstance(project).requestFocus(component, true) }, false)
   }
 
-  private class ToolWindowFocus(val component: Component, val toolWindowId: String, val content: Content)
+  private class ToolWindowFocus(component: Component, val toolWindowId: String, content: Content) {
+    val component: WeakReference<Component> = WeakReference(component)
+    val content: WeakReference<Content> = WeakReference(content)
+  }
 
 
   override fun createViewer(): DiffEditorViewer {
