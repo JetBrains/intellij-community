@@ -2610,21 +2610,25 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
       else {
-        ActionGroup group = null;
+        List<AnAction> actions = new ArrayList<>();
         if (ExperimentalUI.isNewUI() &&
             myEditor.getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA &&
-            getClientProperty("line.number.hover.icon.context.menu") instanceof ActionGroup) {
-          group = (ActionGroup)getClientProperty("line.number.hover.icon.context.menu");
+            getClientProperty("line.number.hover.icon.context.menu") instanceof ActionGroup g) {
+          actions.add(g);
         }
-
-        if (group == null) {
-          group = myCustomGutterPopupGroup;
+        if (myCustomGutterPopupGroup != null) {
+          actions.add(Separator.getInstance());
+          actions.add(myCustomGutterPopupGroup);
         }
-        if (group == null && myShowDefaultGutterPopup) {
-          group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        else if (myShowDefaultGutterPopup) {
+          ActionGroup g = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+          if (g != null) {
+            actions.add(Separator.getInstance());
+            actions.add(g);
+          }
         }
-        if (group != null) {
-          showGutterContextMenu(group, e);
+        if (!actions.isEmpty()) {
+          showGutterContextMenu(new DefaultActionGroup(actions), e);
         }
       }
     }
