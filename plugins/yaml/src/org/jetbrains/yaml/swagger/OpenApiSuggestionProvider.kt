@@ -29,7 +29,7 @@ internal class OpenApiSuggestionProvider : PluginSuggestionProvider {
   override fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>? {
     if (!FileTypeManager.getInstance().isFileOfType(file, YAMLFileType.YML)) return null
 
-    if (isPluginSuggestionDismissed()) return null
+    if (isPluginSuggestionDismissed() || tryUltimateIsDisabled()) return null
 
     val requiredPluginId = PluginId.getId(OPENAPI_PLUGIN_ID)
     if (PluginManager.isPluginInstalled(requiredPluginId)) return null

@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.ui.PluginBooleanOptionDescriptor
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.computeDetached
@@ -637,6 +639,17 @@ data class SuggestedIde(
     }
 }
 
+private const val TRY_ULTIMATE_DISABLED_KEY = "ide.try.ultimate.disabled"
+private fun setTryUltimateKey(project: Project, value: Boolean) {
+  PropertiesComponent.getInstance().setValue(TRY_ULTIMATE_DISABLED_KEY, value)
+  EditorNotifications.getInstance(project).updateAllNotifications()
+}
+
+fun disableTryUltimate(project: Project) = setTryUltimateKey(project, true)
+fun enableTryUltimate(project: Project) = setTryUltimateKey(project, false)
+
+fun tryUltimateIsDisabled() : Boolean = PropertiesComponent.getInstance().getBoolean(TRY_ULTIMATE_DISABLED_KEY)
+
 fun tryUltimate(
   pluginId: PluginId?,
   suggestedIde: SuggestedIde,
@@ -666,7 +679,6 @@ fun EditorNotificationPanel.createTryUltimateActionLabel(
     component?.icon = AllIcons.Actions.Install
 
     tryUltimate(pluginId, suggestedIde, project)
-    component?.isEnabled = false
   }
 }
 

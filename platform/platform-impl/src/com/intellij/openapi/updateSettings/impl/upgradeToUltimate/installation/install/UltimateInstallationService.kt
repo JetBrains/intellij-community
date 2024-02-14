@@ -16,6 +16,8 @@ import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.disableTryUltimate
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.enableTryUltimate
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.linux.LinuxInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.mac.MacOsInstaller
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.windows.WindowsInstaller
@@ -71,12 +73,18 @@ class UltimateInstallationService(
             val productData = UpdateChecker.loadProductData(null)
             val status = if (Registry.`is`("ide.try.ultimate.use.eap")) ChannelStatus.EAP else ChannelStatus.RELEASE
             val build = productData?.channels?.firstOrNull { it.status == status }?.builds?.first() ?: return@withBackgroundProgress
-            tryToInstallIfChosen(suggestedIde, build, pluginId, productData.name)
+
+            disableTryUltimate(project)
+            val isInstalled = tryToInstallIfChosen(suggestedIde, build, pluginId, productData.name)
+            if (!isInstalled) {
+              enableTryUltimate(project)
+            }
           }
         }
       }
       catch (e: CancellationException) {
         FUSEventSource.EDITOR.logTryUltimateCancelled(project, pluginId)
+        enableTryUltimate(project)
         throw e
       }
       finally {
@@ -85,7 +93,7 @@ class UltimateInstallationService(
     }
   }
 
-  private suspend fun tryToInstallIfChosen(suggestedIde: SuggestedIde, build: BuildInfo, pluginId: PluginId?, currentIdeName: String) {
+  private suspend fun tryToInstallIfChosen(suggestedIde: SuggestedIde, build: BuildInfo, pluginId: PluginId?, currentIdeName: String): Boolean {
     val suggestedIdeName = suggestedIde.name
     val message = IdeBundle.message("plugins.advertiser.try.ultimate.dialog", suggestedIdeName, currentIdeName)
 
@@ -97,20 +105,20 @@ class UltimateInstallationService(
         Messages.getInformationIcon()
       )
     }
-    
-    if (dialogResult != 0) return
+
+    if (dialogResult != 0) return false
 
     if (Registry.`is`("ide.try.ultimate.automatic.installation.use.toolbox")) {
       val result = tryToInstallViaToolbox(build)
       if (result) {
         FUSEventSource.EDITOR.logTryUltimateToolboxUsed(project, pluginId)
-        return
+        return true
       }
     }
 
-    tryToInstall(build, pluginId, suggestedIde)
+    return tryToInstall(build, pluginId, suggestedIde)
   }
-  
+
   private fun tryToInstallViaToolbox(buildInfo: BuildInfo): Boolean {
     val build = buildInfo.number.components.joinToString(".")
     val uri = URI.create("$TOOLBOX_INSTALL_BASE_URL/$build")
@@ -120,17 +128,17 @@ class UltimateInstallationService(
     return resp.statusCode() == 200
   }
 
-  private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null, suggestedIde: SuggestedIde) =
+  private suspend fun tryToInstall(buildInfo: BuildInfo, pluginId: PluginId? = null, suggestedIde: SuggestedIde): Boolean =
     reportSequentialProgress { reporter ->
-      if (installer == null) return
+      if (installer == null) return@reportSequentialProgress false
 
       val downloadResult = reporter.nextStep(endFraction = 100, IdeBundle.message("plugins.advertiser.try.ultimate.download")) {
         download(buildInfo, suggestedIde, pluginId)
-      } ?: return@reportSequentialProgress
+      } ?: return@reportSequentialProgress false
 
       val installationResult = reporter.indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.install")) {
         installIde(downloadResult, suggestedIde, pluginId)
-      } ?: return@reportSequentialProgress
+      } ?: return@reportSequentialProgress false
 
       reporter.indeterminateStep(IdeBundle.message("plugins.advertiser.try.ultimate.opening", suggestedIde.name)) {
         start(installationResult, suggestedIde, pluginId)
@@ -156,15 +164,14 @@ class UltimateInstallationService(
     return result
   }
 
-  private suspend fun start(installationResult: InstallationResult, suggestedIde: SuggestedIde, pluginId: PluginId?) {
-    val startResult = runCatching {
-      installer!!.notifyAndOfferStart(installationResult, suggestedIde, pluginId) 
-    }
-
+  private suspend fun start(installationResult: InstallationResult, suggestedIde: SuggestedIde, pluginId: PluginId?): Boolean {
+    val startResult = runCatching { installer!!.notifyAndOfferStart(installationResult, suggestedIde, pluginId) }
     if (startResult.isFailure) {
       val openMessage = IdeBundle.message("plugins.advertiser.try.ultimate.could.not.open", suggestedIde.name)
       showOpenProcessErrorDialog(openMessage, pluginId, suggestedIde)
     }
+
+    return startResult.isSuccess
   }
 
   private fun <T> Result<T>.getOrNullLogged(): T? {
@@ -213,8 +220,8 @@ class UltimateInstallationService(
   }
 
   private suspend fun messageDialog(message: @Nls String, suggestedIdeName: String, options: List<@Nls String>, icon: Icon): Int {
-    return withContext(Dispatchers.EDT) { 
-      MessagesService.getInstance ().showMessageDialog(
+    return withContext(Dispatchers.EDT) {
+      MessagesService.getInstance().showMessageDialog(
         project,
         title = IdeBundle.message("plugins.advertiser.try.ultimate.dialog.title", suggestedIdeName),
         message = message,

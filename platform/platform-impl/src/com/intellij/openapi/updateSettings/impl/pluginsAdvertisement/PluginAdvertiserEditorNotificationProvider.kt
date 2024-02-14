@@ -42,7 +42,7 @@ import javax.swing.JLabel
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+    if (app.isUnitTestMode || app.isHeadlessEnvironment || tryUltimateIsDisabled()) {
       return null
     }
 
