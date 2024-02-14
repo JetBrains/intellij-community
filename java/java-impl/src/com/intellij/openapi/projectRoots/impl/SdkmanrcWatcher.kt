@@ -66,7 +66,8 @@ data class SdkmanCandidate(val target: String,
       vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
       vendor == "adpt" && flavour == "j9" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
       vendor == "amzn" -> JdkVersionDetector.Variant.Corretto
-      vendor == "grl" -> JdkVersionDetector.Variant.GraalVM
+      vendor == "graal" -> JdkVersionDetector.Variant.GraalVM
+      vendor == "graalce" -> JdkVersionDetector.Variant.GraalVMCE
       vendor == "jbr" -> JdkVersionDetector.Variant.JBR
       vendor == "librca" -> JdkVersionDetector.Variant.Liberica
       vendor == "oracle" -> JdkVersionDetector.Variant.Oracle
