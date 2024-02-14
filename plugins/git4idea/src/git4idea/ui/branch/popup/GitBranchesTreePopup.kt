@@ -53,7 +53,6 @@ import git4idea.ui.branch.GitBranchPopupFetchAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
-import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer.Companion.getText
@@ -449,7 +448,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
    */
   private fun JTree.calculateTopLevelVisibleRows() =
     model.getChildCount(model.root) + model.getChildCount(
-      if (model is GitBranchesTreeSingleRepoModel) GitBranchesTreeModel.RecentNode else GitBranchType.LOCAL)
+      if (model is GitBranchesTreeSingleRepoModel
+          && GitVcsSettings.getInstance(treeStep.project).showRecentBranches()) RecentNode else GitBranchType.LOCAL)
 
   private fun overrideTreeActions(tree: JTree) = with(tree) {
     overrideBuiltInAction("toggle") {
