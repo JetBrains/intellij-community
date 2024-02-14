@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -46,6 +47,7 @@ import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
 import java.awt.event.MouseEvent
 import java.util.*
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -250,7 +252,7 @@ internal class FilteringBranchesTree(
   private val uiController: BranchesDashboardController,
   rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
   place: @NonNls String,
-  disposable: Disposable
+  private val disposable: Disposable
 ) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(component, rootNode) {
 
   private val expandedPaths = HashSet<TreePath>()
@@ -267,7 +269,8 @@ internal class FilteringBranchesTree(
   private var remoteNodeExist = false
   private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
 
-  private val treeStateHolder: BranchesTreeStateHolder get() = project.service()
+  private val treeStateHolder: BranchesTreeStateHolder get() =
+    BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Supplier { project.service() })
 
   private val groupingConfig: MutableMap<GroupingKey, Boolean> =
     with(project.service<GitBranchManager>()) {
