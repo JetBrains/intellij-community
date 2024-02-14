@@ -94,8 +94,10 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
           .gap(RightGap.SMALL)
         intTextField(UINumericRange(5, 1, 15).asRange())
           .bindIntText(model::getStickyLineLimit, model::setStickyLineLimit)
-          .columns(4)
+          .columns(2)
+          .gap(RightGap.SMALL)
           .enabledIf(cbShowSticky.selected)
+        text(ApplicationBundle.message("label.show.sticky.lines"))
       }
       row {
         checkBox(myCbShowMethodSeparators)
