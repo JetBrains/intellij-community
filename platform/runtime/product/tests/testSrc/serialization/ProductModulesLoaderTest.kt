@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.runtime.repository.serialization
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.runtime.product.serialization
 
+import com.intellij.platform.runtime.product.ModuleImportance
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.repository.*
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.util.io.directoryContent
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,14 +22,14 @@ class ProductModulesLoaderTest {
 
   @Test
   fun simple() {
-    val repository = createRepository(tempDirectory.rootPath, 
-      RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("root", emptyList(), listOf("util")),
-      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
+    val repository = createRepository(tempDirectory.rootPath,
+                                      RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor("root", emptyList(), listOf("util")),
+                                      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
     )
     writePluginXml(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
     val xml = generateProductModulesWithPlugins("plugin")
-    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
     assertEquals(2, mainGroupModules.size)
     val (root, util) = mainGroupModules
@@ -42,10 +45,10 @@ class ProductModulesLoaderTest {
   
   @Test
   fun `optional modules in main module group`() {
-    val repository = createRepository(tempDirectory.rootPath, 
-      RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("root", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor("optional", emptyList(), listOf("root")),
+    val repository = createRepository(tempDirectory.rootPath,
+                                      RawRuntimeModuleDescriptor("util", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor("root", emptyList(), emptyList()),
+                                      RawRuntimeModuleDescriptor("optional", emptyList(), listOf("root")),
     )
     val xml = directoryContent { 
       xml(FILE_NAME, """
@@ -58,7 +61,7 @@ class ProductModulesLoaderTest {
         </product-modules>
       """.trimIndent())
     }.generateInTempDir().resolve(FILE_NAME)
-    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
     assertEquals(2, mainGroupModules.size)
     val (optional, root) = mainGroupModules
@@ -88,7 +91,7 @@ class ProductModulesLoaderTest {
       """.trimMargin())
 
     val xml = generateProductModulesWithPlugins("plugin")
-    val productModules = RuntimeModuleRepositorySerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
     val pluginModuleGroup = productModules.bundledPluginModuleGroups.single()
     val pluginModules = pluginModuleGroup.includedModules
     assertEquals(2, pluginModules.size)
@@ -125,7 +128,7 @@ class ProductModulesLoaderTest {
 
     val xml = generateProductModulesWithPlugins("plugin")
     fun checkGroup(productMode: ProductMode, additionalModuleName: String) {
-      val productModules = RuntimeModuleRepositorySerialization.loadProductModules(xml, productMode, repository)
+      val productModules = ProductModulesSerialization.loadProductModules(xml, productMode, repository)
       val pluginModuleGroup = productModules.bundledPluginModuleGroups.single()
       val pluginModules = pluginModuleGroup.includedModules
       assertEquals(3, pluginModules.size)

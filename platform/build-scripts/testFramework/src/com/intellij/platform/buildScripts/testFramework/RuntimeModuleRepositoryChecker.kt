@@ -2,7 +2,13 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.runtime.repository.*
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.ProductModules
+import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.repository.MalformedRepositoryException
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.FList
 import org.assertj.core.api.SoftAssertions
@@ -169,7 +175,8 @@ class RuntimeModuleRepositoryChecker private constructor(
 
   private fun loadProductModules(productModulesModule: String): ProductModules {
     val moduleOutputDir = context.getModuleOutputDir(context.findRequiredModule(productModulesModule))
-    return RuntimeModuleRepositorySerialization.loadProductModules(moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), currentMode, repository)
+    return ProductModulesSerialization.loadProductModules(
+      moduleOutputDir.resolve("META-INF/$productModulesModule/product-modules.xml"), currentMode, repository)
   }
 
   private fun RuntimeModuleRepository.collectDependencies(moduleDescriptor: RuntimeModuleDescriptor, path: FList<String>, result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap()): MutableMap<RuntimeModuleId, FList<String>> {

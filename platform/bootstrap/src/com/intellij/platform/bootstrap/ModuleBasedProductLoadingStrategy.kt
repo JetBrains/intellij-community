@@ -4,8 +4,16 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.runtime.repository.*
-import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl
+import com.intellij.platform.runtime.product.IncludedRuntimeModule
+import com.intellij.platform.runtime.product.ModuleImportance
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.RuntimeModuleGroup
+import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl
+import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
+import com.intellij.platform.runtime.repository.MalformedRepositoryException
+import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
+import com.intellij.platform.runtime.repository.RuntimeModuleId
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.lang.PathClassLoader
@@ -37,7 +45,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     if (moduleGroupStream == null) {
       error("$productModulesPath is not found in '$rootModuleName' module")
     }
-    RuntimeModuleRepositorySerialization.loadProductModules(moduleGroupStream, productModulesPath, currentMode, moduleRepository)
+    ProductModulesSerialization.loadProductModules(moduleGroupStream, productModulesPath, currentMode, moduleRepository)
   }
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {

@@ -77,6 +77,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.usageView.impl",
   "intellij.platform.ml.impl",
 
+  "intellij.platform.runtime.product",
   "intellij.platform.bootstrap",
 
   "intellij.relaxng",

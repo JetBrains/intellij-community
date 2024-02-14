@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.runtime.repository.serialization
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.runtime.product.serialization
 
-import com.intellij.platform.runtime.repository.ModuleImportance
+import com.intellij.platform.runtime.product.ModuleImportance
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.createRepository
-import com.intellij.platform.runtime.repository.serialization.impl.PluginXmlReader
+import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
+import com.intellij.platform.runtime.product.serialization.impl.PluginXmlReader
 import com.intellij.platform.runtime.repository.writePluginXml
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.assertEquals

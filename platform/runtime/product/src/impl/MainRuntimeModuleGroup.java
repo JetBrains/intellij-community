@@ -1,8 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.runtime.repository.impl;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.runtime.product.impl;
 
+import com.intellij.platform.runtime.product.IncludedRuntimeModule;
+import com.intellij.platform.runtime.product.ModuleImportance;
+import com.intellij.platform.runtime.product.ProductMode;
+import com.intellij.platform.runtime.product.RuntimeModuleGroup;
 import com.intellij.platform.runtime.repository.*;
-import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

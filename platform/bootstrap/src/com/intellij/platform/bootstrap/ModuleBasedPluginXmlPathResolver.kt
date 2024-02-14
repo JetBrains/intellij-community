@@ -2,7 +2,7 @@
 package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
-import com.intellij.platform.runtime.repository.IncludedRuntimeModule
+import com.intellij.platform.runtime.product.IncludedRuntimeModule
 
 /**
  * Implementation of [PathResolver] which can load module descriptors not only from the main plugin JAR file, unlike [PluginXmlPathResolver]

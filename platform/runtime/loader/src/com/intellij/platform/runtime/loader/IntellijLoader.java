@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.loader;
 
-import com.intellij.platform.runtime.repository.ProductModules;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.util.lang.PathClassLoader;
 import org.jetbrains.annotations.Contract;
@@ -15,7 +14,7 @@ import java.util.List;
 
 /**
  * Initiates loading of a product based on IntelliJ platform. It loads information about the product modules from {@link RuntimeModuleRepository}
- * and {@link ProductModules}, and configures the classloader accordingly.
+ * and configures the classloader accordingly.
  * <p>It's an experimental way, and it isn't used in production yet.</p>
  */
 public final class IntellijLoader {

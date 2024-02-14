@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.runtime.repository.ProductMode
+import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtilRt

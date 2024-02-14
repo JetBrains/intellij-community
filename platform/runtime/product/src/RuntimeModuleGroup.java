@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.runtime.repository;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.runtime.product;
 
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

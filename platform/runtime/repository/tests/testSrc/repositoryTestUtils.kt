@@ -11,17 +11,17 @@ import java.nio.file.Path
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
-internal fun DirectoryContentBuilder.xml(name: String, @Language("XML") content: String) {
+fun DirectoryContentBuilder.xml(name: String, @Language("XML") content: String) {
   file(name, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n$content")
 }
 
-internal fun createRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor, bootstrapModuleName: String? = null): RuntimeModuleRepository {
+fun createRepository(basePath: Path, vararg descriptors: RawRuntimeModuleDescriptor, bootstrapModuleName: String? = null): RuntimeModuleRepository {
   val moduleDescriptorsJarPath = basePath.resolve("module-descriptors.jar")
   RuntimeModuleRepositorySerialization.saveToJar(descriptors.asList(), bootstrapModuleName, moduleDescriptorsJarPath, 0)
   return RuntimeModuleRepositoryImpl(moduleDescriptorsJarPath)
 }
 
-internal fun writePluginXml(resourceRoot: Path, @Language("XM") content: String) {
+fun writePluginXml(resourceRoot: Path, @Language("XM") content: String) {
   val path = resourceRoot / "META-INF" / "plugin.xml"
   path.createParentDirectories()
   path.writeText(content)

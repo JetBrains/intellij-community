@@ -2,18 +2,12 @@
 package com.intellij.platform.runtime.repository.serialization;
 
 import com.intellij.platform.runtime.repository.MalformedRepositoryException;
-import com.intellij.platform.runtime.repository.ProductMode;
-import com.intellij.platform.runtime.repository.ProductModules;
-import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
-import com.intellij.platform.runtime.repository.serialization.impl.ProductModulesXmlLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
@@ -42,28 +36,6 @@ public final class RuntimeModuleRepositorySerialization {
     }
     catch (XMLStreamException | IOException e) {
       throw new MalformedRepositoryException("Failed to load repository from " + jarPath, e);
-    }
-  }
-
-  public static @NotNull ProductModules loadProductModules(@NotNull Path xmlFile, @NotNull ProductMode currentMode,
-                                                           @NotNull RuntimeModuleRepository repository) {
-    try {
-      return loadProductModules(Files.newInputStream(xmlFile), xmlFile.toString(), currentMode, repository);
-    }
-    catch (IOException e) {
-      throw new MalformedRepositoryException("Failed to load module group from " + xmlFile, e);
-    }
-  }
-
-  @NotNull
-  public static ProductModules loadProductModules(@NotNull InputStream inputStream, @NotNull String filePath,
-                                                  @NotNull ProductMode currentMode,
-                                                  @NotNull RuntimeModuleRepository repository) {
-    try {
-      return ProductModulesXmlLoader.parseModuleXml(inputStream, filePath, currentMode, repository);
-    }
-    catch (XMLStreamException e) {
-      throw new MalformedRepositoryException("Failed to load module group from " + filePath, e);
     }
   }
 }
