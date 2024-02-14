@@ -61,7 +61,7 @@ object LocalizationUtil {
     @JvmOverloads
     fun getLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
       val locale = specialLocale ?: getLocale()
-      val result = listOf(
+      return listOf(
         //localizations/zh/CN/inspectionDescriptions/name.html
         path.convertToLocalizationFolderUsage(locale, true),
 
@@ -77,18 +77,16 @@ object LocalizationUtil {
         //inspectionDescriptions/name.html
         path
       )
-      return result
     }
 
     @JvmOverloads
     fun getFolderLocalizedPaths(path: Path, specialLocale: Locale? = null): List<Path> {
       val locale = specialLocale ?: getLocale()
-      val result = mutableListOf<Path>()
+      return listOf(
       //localizations/zh/CN/inspectionDescriptions/name.html
-      result.add(path.convertToLocalizationFolderUsage(locale, true))
+      path.convertToLocalizationFolderUsage(locale, true),
 
       //localizations/zh/inspectionDescriptions/name.html
-      result.add(path.convertToLocalizationFolderUsage(locale, false))
-      return result
+      path.convertToLocalizationFolderUsage(locale, false))
     }
 }
