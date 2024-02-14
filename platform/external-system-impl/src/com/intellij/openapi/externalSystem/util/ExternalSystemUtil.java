@@ -872,7 +872,9 @@ public final class ExternalSystemUtil {
     ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, progressExecutionMode, new ExternalSystemTaskUnderProgress() {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
+        environment.putUserData(ExternalSystemRunnableState.PROGRESS_INDICATOR_KEY, indicator);
         indicator.setIndeterminate(true);
+
         var targetDone = new Semaphore();
         var result = new Ref<>(false);
         var disposable = Disposer.newDisposable();

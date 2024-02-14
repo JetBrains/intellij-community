@@ -33,8 +33,8 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
@@ -65,6 +65,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemRunnableState.class);
 
+  @ApiStatus.Internal
+  public static final Key<ProgressIndicator> PROGRESS_INDICATOR_KEY = Key.create("PROGRESS_INDICATOR");
   @ApiStatus.Internal
   public static final Key<Integer> DEBUGGER_DISPATCH_PORT_KEY = Key.create("DEBUGGER_DISPATCH_PORT");
   @ApiStatus.Internal
@@ -224,21 +226,16 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
     var runnerSettings = myEnv.getRunnerSettings();
     var runConfigurationExtensionManager = ExternalSystemRunConfigurationExtensionManager.getInstance();
     runConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, runnerSettings);
-    var title = ExternalSystemBundle.message("progress.run.text", executionName);
-    ExternalSystemTaskUnderProgress.executeTaskUnderProgress(myProject, title, ProgressExecutionMode.NO_PROGRESS_ASYNC,
-                                                             new ExternalSystemTaskUnderProgress() {
-
-      @Override
-      public @NotNull ExternalSystemTaskId getId() {
-        return task.getId();
-      }
-
-      @Override
-      public void execute(@NotNull ProgressIndicator indicator) {
-        executeTask(task, executionName, indicator, processHandler, progressListener, consoleManager, consoleView,
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> {
+        var progressIndicator = myEnv.getUserData(PROGRESS_INDICATOR_KEY);
+        if (progressIndicator == null) {
+          progressIndicator = new EmptyProgressIndicator();
+        }
+        executeTask(task, executionName, progressIndicator, processHandler, progressListener, consoleManager, consoleView,
                     buildDescriptor, customActions, restartActions, contextActions);
       }
-    });
+    );
     ExecutionConsole executionConsole = progressListener instanceof ExecutionConsole ? (ExecutionConsole)progressListener : consoleView;
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     if (executionConsole instanceof BuildView) {
