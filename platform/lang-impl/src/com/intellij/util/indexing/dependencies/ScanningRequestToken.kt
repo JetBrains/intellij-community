@@ -9,6 +9,7 @@ import org.jetbrains.annotations.VisibleForTesting
 abstract class ScanningRequestToken {
   @Volatile
   private var successful = true
+  abstract val appIndexingRequestId: AppIndexingDependenciesToken
   abstract fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp
   fun markUnsuccessful() {
     successful = false
@@ -21,18 +22,24 @@ internal object RequestHeavyScanningOnNextStartToken : ScanningRequestToken() {
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     throw IllegalStateException("This token is a marker. It should not be used.")
   }
+
+  override val appIndexingRequestId: AppIndexingDependenciesToken
+    get() = throw IllegalStateException("This token is a marker. It should not be used.")
 }
 
 internal object RequestHeavyScanningOnThisOrNextStartToken : ScanningRequestToken() {
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     throw IllegalStateException("This token is a marker. It should not be used.")
   }
+
+  override val appIndexingRequestId: AppIndexingDependenciesToken
+    get() = throw IllegalStateException("This token is a marker. It should not be used.")
 }
 
 
 @VisibleForTesting
 class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken) : ScanningRequestToken() {
-  private val appIndexingRequestId = appIndexingRequest.toInt()
+  override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
     val fileStamp = PersistentFS.getInstance().getModificationCount(file)
@@ -41,14 +48,14 @@ class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenc
 
   @VisibleForTesting
   fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-    return WriteOnlyFileIndexingStampImpl(fileStamp + appIndexingRequestId)
+    return WriteOnlyFileIndexingStampImpl(fileStamp + appIndexingRequestId.toInt())
   }
 }
 
 
 @VisibleForTesting
 class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken) : ScanningRequestToken() {
-  private val appIndexingRequestId = appIndexingRequest.toInt()
+  override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
     val fileStamp = PersistentFS.getInstance().getModificationCount(file)
@@ -57,6 +64,6 @@ class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenc
 
   @VisibleForTesting
   fun getFileIndexingStamp(fileStamp: Int): FileIndexingStamp {
-    return ReadWriteFileIndexingStampImpl(fileStamp + appIndexingRequestId)
+    return ReadWriteFileIndexingStampImpl(fileStamp + appIndexingRequestId.toInt())
   }
 }

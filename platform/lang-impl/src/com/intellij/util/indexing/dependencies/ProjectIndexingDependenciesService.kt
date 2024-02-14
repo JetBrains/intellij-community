@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage.Companion.DEFAULT_APP_INDEXING_REQUEST_ID_OF_LAST_COMPLETED_SCANNING
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
@@ -80,9 +81,17 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
 
   init {
     try {
+      var shouldMigrateV0toV1 = false
       storage.checkVersion { expectedVersion, actualVersion ->
-        requestVfsRebuildAndResetStorage(IOException("Incompatible version change in ProjectIndexingDependenciesService: " +
-                                                     "$actualVersion to $expectedVersion"))
+        if (expectedVersion == 1 && actualVersion == 0) {
+          shouldMigrateV0toV1 = true
+        } else {
+          requestVfsRebuildAndResetStorage(IOException("Incompatible version change in ProjectIndexingDependenciesService: " +
+                                                       "$actualVersion to $expectedVersion"))
+        }
+      }
+      if (shouldMigrateV0toV1) {
+        migrateV0toV1()
       }
 
       heavyScanningOnProjectOpen = storage.readIncompleteScanningMark()
@@ -91,6 +100,11 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       requestVfsRebuildAndResetStorage(e)
       // we don't rethrow exception, because this will put IDE in unusable state.
     }
+  }
+
+  private fun migrateV0toV1() {
+    storage.writeAppIndexingRequestIdOfLastScanning(DEFAULT_APP_INDEXING_REQUEST_ID_OF_LAST_COMPLETED_SCANNING)
+    storage.completeMigration()
   }
 
   private fun requestVfsRebuildAndResetStorage(reason: IOException) {
@@ -131,7 +145,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       ReadWriteScanningRequestTokenImpl(appCurrent)
     }
     registerIssuedToken(token)
-    completeTokenOrFutureToken(RequestHeavyScanningOnThisOrNextStartToken, true)
+    completeTokenOrFutureToken(RequestHeavyScanningOnThisOrNextStartToken, null, true)
     return token
   }
 
@@ -149,17 +163,17 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   }
 
   fun completeToken(token: FutureScanningRequestToken) {
-    completeTokenOrFutureToken(token, token.isSuccessful())
+    completeTokenOrFutureToken(token, null, token.isSuccessful())
   }
 
   fun completeToken(token: ScanningRequestToken, isFullScanning: Boolean) {
     if (token.isSuccessful() && isFullScanning) {
-      completeTokenOrFutureToken(RequestHeavyScanningOnNextStartToken, true)
+      completeTokenOrFutureToken(RequestHeavyScanningOnNextStartToken, null, true)
     }
-    completeTokenOrFutureToken(token, token.isSuccessful())
+    completeTokenOrFutureToken(token, token.appIndexingRequestId, token.isSuccessful())
   }
 
-  private fun completeTokenOrFutureToken(token: Any, successful: Boolean) {
+  private fun completeTokenOrFutureToken(token: Any, lastAppIndexingRequestId: AppIndexingDependenciesToken?, successful: Boolean) {
     if (!successful) {
       registerIssuedToken(RequestHeavyScanningOnNextStartToken)
     }
@@ -168,6 +182,9 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       val removed = issuedScanningTokens.remove(token)
       if (removed && issuedScanningTokens.isEmpty()) {
         storage.writeIncompleteScanningMark(false)
+        if (lastAppIndexingRequestId != null) {
+          storage.writeAppIndexingRequestIdOfLastScanning(lastAppIndexingRequestId.toInt())
+        }
       }
     }
   }
