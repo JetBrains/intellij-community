@@ -6,16 +6,20 @@ import com.intellij.diff.editor.*
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.showExternalToolIfNeeded
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.Nls
+import java.lang.ref.WeakReference
 
 abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, DiffPreview {
   abstract fun hasContent(): Boolean
@@ -69,6 +73,15 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
   }
 
 
+  protected open fun handleEscapeKey() {
+    closePreview()
+  }
+
+  open fun createEscapeHandler(): AnAction? {
+    return DiffEditorPreviewEscapeAction(this)
+  }
+
+
   private class TabPreviewDiffVirtualFile(preview: EditorTabDiffPreview)
     : DiffViewerVirtualFile("TabPreviewDiffVirtualFile"), DiffVirtualFileWithTabName, DiffVirtualFileWithProducers {
     private var _preview: EditorTabDiffPreview? = preview
@@ -97,5 +110,24 @@ abstract class EditorTabDiffPreview(val project: Project) : CheckedDisposable, D
     override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer>? {
       return _preview?.collectDiffProducers(selectedOnly)
     }
+
+    override fun createEscapeHandler(): AnAction? {
+      return _preview?.createEscapeHandler()
+    }
   }
+
+  private class DiffEditorPreviewEscapeAction(preview: EditorTabDiffPreview) : DumbAwareAction(), DiffEditorEscapeAction {
+    private val previewRef: WeakReference<EditorTabDiffPreview> = WeakReference(preview)
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = previewRef.get() != null
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      previewRef.get()?.handleEscapeKey()
+    }
+  }
+
 }

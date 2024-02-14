@@ -51,6 +51,12 @@ abstract class EditorTabPreviewBase(protected val project: Project,
       setRestartTimerOnAdd(true)
     }
 
+  init {
+    Disposer.register(parentDisposable) {
+      previewFile.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, null)
+    }
+  }
+
   protected abstract val updatePreviewProcessor: DiffPreviewUpdateProcessor
 
   protected abstract val previewFile: VirtualFile

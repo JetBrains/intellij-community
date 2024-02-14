@@ -3,7 +3,6 @@ package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithoutContent
@@ -21,6 +20,10 @@ abstract class DiffVirtualFileBase(name: String) :
   override fun isWritable(): Boolean = false
 
   override fun toString(): String = "${javaClass.name}@${Integer.toHexString(hashCode())}"
+
+  open fun createEscapeHandler(): AnAction? {
+    return getUserData(ESCAPE_HANDLER)
+  }
 
   companion object {
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vcs.changes.EditorTabPreviewBase.Companion.registerEscapeHandler
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
@@ -27,7 +26,6 @@ abstract class ChangesTreeEditorDiffPreview(
     tree.enterKeyHandler = Processor { e -> handleEnterKey() }
     tree.addSelectionListener { handleSingleClick() }
     PreviewOnNextDiffAction().registerCustomShortcutSet(targetComponent, this)
-    registerEscapeHandler(previewFile, Runnable { handleEscapeKey() })
 
     UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
@@ -67,7 +65,7 @@ abstract class ChangesTreeEditorDiffPreview(
     openPreview(true)
   }
 
-  protected open fun handleEscapeKey() {
+  override fun handleEscapeKey() {
     closePreview()
     returnFocusToTree()
   }

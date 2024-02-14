@@ -4,7 +4,7 @@ package com.intellij.diff.editor
 /**
  * Marker-interface for 'Close diff editor on ESC' actions.
  *
- * @see DiffVirtualFileBase.ESCAPE_HANDLER
+ * @see DiffVirtualFileBase.createEscapeHandler
  * @see DefaultDiffFileEditorCustomizer
  */
 interface DiffEditorEscapeAction
