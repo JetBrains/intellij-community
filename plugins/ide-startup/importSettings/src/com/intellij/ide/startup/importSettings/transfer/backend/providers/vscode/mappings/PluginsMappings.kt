@@ -40,15 +40,25 @@ private val logger = logger<CommonPluginMapping>()
 internal class CommonPluginMapping : VSCodePluginMapping {
 
   // Note that the later files will override the data from the former.
+  @Suppress("DEPRECATION")
   private fun getResourceMappings(): List<String> = when {
+    PlatformUtils.isAqua() -> listOf("general.json", "aq.json")
+    PlatformUtils.isCLion() -> listOf("general.json", "cl.json")
     PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
-    PlatformUtils.isIntelliJ() -> listOf("general.json", "ic.json")
+    PlatformUtils.isDataSpell() -> listOf("general.json", "ds.json")
+    PlatformUtils.isGoIde() -> listOf("general.json", "go.json")
     PlatformUtils.isPhpStorm() -> listOf("general.json", "ps.json")
-    PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json")
+    PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json", "pp.json")
+    PlatformUtils.isPyCharmPro() -> listOf("general.json", "pc.json")
+    PlatformUtils.isRider() -> listOf("general.json", "rd.json")
     PlatformUtils.isRubyMine() -> listOf("general.json", "rm.json")
     PlatformUtils.isRustRover() -> listOf("general.json", "rr.json")
-    PlatformUtils.isRider() -> listOf("general.json", "rd.json")
     PlatformUtils.isWebStorm() -> listOf("general.json", "ws.json")
+
+    // NOTE: order is important in this section
+    PlatformUtils.isIdeaUltimate() -> listOf("general.json", "ic.json", "iu.json")
+    PlatformUtils.isIntelliJ() -> listOf("general.json", "ic.json")
+
     else -> listOf("general.json")
   }
 
