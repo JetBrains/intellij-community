@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
@@ -127,22 +126,6 @@ public abstract class ActionManager {
    * @return {@code true} if the ID represents an action group, {@code false} otherwise.
    */
   public abstract boolean isGroup(@NotNull String actionId);
-
-  /**
-   * Creates a panel with buttons which invoke actions from the specified action group.
-   *
-   * @param actionPlace        the place where the panel will be used (see {@link ActionPlaces}).
-   * @param messageActionGroup the action group from which the toolbar is created.
-   * @return the created panel.
-   *
-   * @deprecated use regular Swing {@link Action},
-   *   {@link com.intellij.openapi.ui.DialogWrapper#createActions()},
-   *   {@link com.intellij.openapi.ui.DialogWrapper#createLeftSideActions()},
-   *   {@link #createActionToolbar(String, ActionGroup, boolean)}, or
-   *   {@link com.intellij.ui.ToolbarDecorator} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public abstract @NotNull JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
 
   public abstract @Nullable AnAction getActionOrStub(@NotNull @NonNls String id);
 

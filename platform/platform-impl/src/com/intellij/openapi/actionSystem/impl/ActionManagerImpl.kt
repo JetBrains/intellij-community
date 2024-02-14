@@ -84,7 +84,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
@@ -427,12 +426,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   final override fun isGroup(actionId: String): Boolean {
     return getAction(id = actionId, canReturnStub = true, actionPostInitRegistrar) is ActionGroup
-  }
-
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun createButtonToolbar(actionPlace: String, messageActionGroup: ActionGroup): JComponent {
-    @Suppress("removal", "DEPRECATION")
-    return ButtonToolbarImpl(actionPlace, messageActionGroup)
   }
 
   final override fun getActionOrStub(id: String): AnAction? {
