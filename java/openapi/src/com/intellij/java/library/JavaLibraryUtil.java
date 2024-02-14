@@ -24,6 +24,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.Interner;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,7 @@ public final class JavaLibraryUtil {
 
   private static final Key<CachedValue<Map<String, Boolean>>> LIBRARY_CLASSES_PRESENCE_KEY = Key.create("LIBRARY_CLASSES_PRESENCE");
   private static final Key<CachedValue<Libraries>> MAVEN_LIBRARY_PRESENCE_KEY = Key.create("MAVEN_LIBRARY_PRESENCE");
+  private static final Interner<String> INTERNER = Interner.createStringInterner();
 
   public static @Nullable MavenCoordinates getMavenCoordinates(@NotNull Library library) {
     if (library instanceof LibraryEx) {
@@ -67,7 +69,9 @@ public final class JavaLibraryUtil {
     var parts = StringUtil.split(coordinatesString, ":");
     if (parts.size() < 3) return null;
 
-    return new MavenCoordinates(parts.get(0), parts.get(1), parts.get(parts.size() - 1));
+    return new MavenCoordinates(INTERNER.intern(parts.get(0)),
+                                INTERNER.intern(parts.get(1)),
+                                INTERNER.intern(parts.get(parts.size() - 1)));
   }
 
   /**
@@ -254,7 +258,7 @@ public final class JavaLibraryUtil {
       .forEachLibrary(library -> {
         MavenCoordinates coordinates = getMavenCoordinates(library);
         if (coordinates != null) {
-          allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
+          allMavenCoords.add(INTERNER.intern(coordinates.getGroupId() + ":" + coordinates.getArtifactId()));
         }
 
         if (collectFiles && library instanceof LibraryEx) {
@@ -283,7 +287,7 @@ public final class JavaLibraryUtil {
         String nameWithoutExtension = libraryFile.getNameWithoutExtension();
 
         // Drop prefix of Bazel processed libraries IDEA-324807
-        nameWithoutExtension = sanitizeLibraryName(nameWithoutExtension);
+        nameWithoutExtension = INTERNER.intern(sanitizeLibraryName(nameWithoutExtension));
 
         jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
@@ -304,7 +308,7 @@ public final class JavaLibraryUtil {
 
         String indexNamePart = nameBuilder.toString();
         if (!indexNamePart.equals(nameWithoutExtension)) {
-          jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
+          jarLibrariesIndex.put(indexNamePart, INTERNER.intern(nameWithoutExtension));
         }
       }
     }
