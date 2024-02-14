@@ -1,26 +1,14 @@
 [
   {
-    "ideaId": "izhangzhihao.rainbow.brackets",
-    "ideaName": "Rainbow Brackets",
-    "vsCodeId": "2gua.rainbow-brackets",
-    "builtIn": true
-  },
-  {
     "ideaId": "org.intellij.plugins.hcl",
     "ideaName": "Terraform and HCL",
     "vsCodeId": "4ops.terraform",
     "builtIn": true
   },
   {
-    "ideaId": "org.igu.plugins.bettercomments",
-    "ideaName": "Better Comments",
-    "vsCodeId": "aaron-bond.better-comments",
-    "builtIn": true
-  },
-  {
-    "ideaId": "github.cweijan.test-theme",
-    "ideaName": "Atom OneDark Theme",
-    "vsCodeId": "akamud.vscode-theme-onedark",
+    "ideaId": "gherkin",
+    "ideaName": "Gherkin",
+    "vsCodeId": "alexkrechik.cucumberautocomplete",
     "builtIn": true
   },
   {
@@ -36,6 +24,24 @@
     "builtIn": true
   },
   {
+    "ideaId": "Pythonid",
+    "ideaName": "Python",
+    "vsCodeId": "batisteo.vscode-django",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.php",
+    "ideaName": "PHP",
+    "vsCodeId": "bmewburn.vscode-intelephense-client",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.toml.lang",
+    "ideaName": "Toml",
+    "vsCodeId": "bungcip.better-toml",
+    "builtIn": true
+  },
+  {
     "ideaId": "com.intellij.database",
     "ideaName": "Database Tools and SQL for WebStorm",
     "vsCodeId": "cweijan.vscode-mysql-client2",
@@ -48,9 +54,21 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.vermouthx.idea",
-    "ideaName": "Dracula Theme",
-    "vsCodeId": "dracula-theme.theme-dracula",
+    "ideaId": "io.flutter",
+    "ideaName": "Flutter",
+    "vsCodeId": "Dart-Code.flutter",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "donjayamanne.python-environment-manager",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "dustypomerleau.rust-syntax",
     "builtIn": true
   },
   {
@@ -72,9 +90,21 @@
     "builtIn": true
   },
   {
-    "ideaId": "club.nutsoft.Github3Theme",
-    "ideaName": "GitHub Theme",
-    "vsCodeId": "GitHub.github-vscode-theme",
+    "ideaId": "com.github.codespaces.jetbrains.gateway",
+    "ideaName": "GitHub Codespaces",
+    "vsCodeId": "GitHub.codespaces",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.jetbrains.plugins.go",
+    "ideaName": "Go",
+    "vsCodeId": "golang.Go",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.google.gct.core",
+    "ideaName": "Google Cloud Code",
+    "vsCodeId": "GoogleCloudTools.cloudcode",
     "builtIn": true
   },
   {
@@ -96,21 +126,33 @@
     "builtIn": true
   },
   {
+    "ideaId": "org.jetbrains.plugins.vue",
+    "ideaName": "Vue.js",
+    "vsCodeId": "hollowtree.vue-snippets",
+    "builtIn": true
+  },
+  {
     "ideaId": "com.intellij.kubernetes",
     "ideaName": "Kubernetes",
     "vsCodeId": "ipedrazas.kubernetes-snippets",
     "builtIn": true
   },
   {
-    "ideaId": "AngularJS",
-    "ideaName": "Angular and AngularJS",
-    "vsCodeId": "johnpapa.Angular2",
+    "ideaId": "org.jetbrains.plugins.vue",
+    "ideaName": "Vue.js",
+    "vsCodeId": "jcbuisson.vue",
     "builtIn": true
   },
   {
-    "ideaId": "ru.adelf.idea.dotenv",
-    "ideaName": ".env files support",
-    "vsCodeId": "mikestead.dotenv",
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "JScearcy.rust-doc-viewer",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.plugins.webDeployment",
+    "ideaName": "FTP/SFTP/WebDAV Connectivity",
+    "vsCodeId": "liximomo.sftp",
     "builtIn": true
   },
   {
@@ -132,18 +174,6 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.ko",
-    "ideaName": "Korean Language Pack / 한국어 언어 팩",
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.zh",
-    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
-    "builtIn": true
-  },
-  {
     "ideaId": "com.intellij.kubernetes",
     "ideaName": "Kubernetes",
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
@@ -158,6 +188,12 @@
   {
     "ideaId": "PythonCore",
     "ideaName": "Python Community Edition",
+    "vsCodeId": "ms-python.isort",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
     "vsCodeId": "ms-python.python",
     "builtIn": true
   },
@@ -165,18 +201,6 @@
     "ideaId": "org.jetbrains.plugins.docker.gateway",
     "ideaName": "Dev Containers",
     "vsCodeId": "ms-vscode-remote.remote-containers",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.plugin.adernov.powershell",
-    "ideaName": "PowerShell",
-    "vsCodeId": "ms-vscode.PowerShell",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.resharper.azure",
-    "ideaName": "Azure Toolkit for Rider",
-    "vsCodeId": "ms-vscode.vscode-node-azure-pack",
     "builtIn": true
   },
   {
@@ -204,9 +228,9 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.mallowigi",
-    "ideaName": "Atom Material Icons",
-    "vsCodeId": "PKief.material-icon-theme",
+    "ideaId": "com.intellij.quarkus",
+    "ideaName": "Quarkus",
+    "vsCodeId": "redhat.vscode-quarkus",
     "builtIn": true
   },
   {
@@ -216,15 +240,87 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.tabnine.TabNine",
-    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "vsCodeId": "TabNine.tabnine-vscode",
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "rust-lang.rust-analyzer",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.intellij.scala",
+    "ideaName": "Scala",
+    "vsCodeId": "scala-lang.scala",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.sonarlint.idea",
+    "ideaName": "SonarLint",
+    "vsCodeId": "SonarSource.sonarlint-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "dev.blachut.svelte.lang",
+    "ideaName": "Svelte",
+    "vsCodeId": "svelte.svelte-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "swellaby.rust-pack",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "swellaby.vscode-rust-test-adapter",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "tht13.python",
     "builtIn": true
   },
   {
     "ideaId": "org.sylfra.idea.plugins.linessorter",
     "ideaName": "Lines Sorter",
     "vsCodeId": "Tyriar.sort-lines",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.spring.boot",
+    "ideaName": "Spring Boot",
+    "vsCodeId": "vmware.vscode-boot-dev-pack",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.spring.boot",
+    "ideaName": "Spring Boot",
+    "vsCodeId": "vmware.vscode-spring-boot",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.gradle",
+    "ideaName": "Gradle",
+    "vsCodeId": "vscjava.vscode-gradle",
+    "builtIn": true
+  },
+  {
+    "ideaId": "Lombook Plugin",
+    "ideaName": "Lombok",
+    "vsCodeId": "vscjava.vscode-lombok",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.spring.boot",
+    "ideaName": "Spring Boot",
+    "vsCodeId": "vscjava.vscode-spring-boot-dashboard",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.spring.boot.initializr",
+    "ideaName": "Spring Initializr",
+    "vsCodeId": "vscjava.vscode-spring-initializr",
     "builtIn": true
   },
   {
@@ -240,9 +336,21 @@
     "builtIn": true
   },
   {
-    "ideaId": "color.scheme.One Dark Pro",
-    "ideaName": "One Dark Pro Color Scheme",
-    "vsCodeId": "zhuangtongfa.Material-theme",
+    "ideaId": "Pythonid",
+    "ideaName": "Python",
+    "vsCodeId": "wholroyd.jinja",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.php",
+    "ideaName": "PHP",
+    "vsCodeId": "xdebug.php-debug",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.php",
+    "ideaName": "PHP",
+    "vsCodeId": "xdebug.php-pack",
     "builtIn": true
   },
   {
@@ -252,73 +360,9 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
-    "ideaName": "Live Templates",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "fudge.auto-using",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "tobiah.unity-tools",
-    "ideaName": "Unity",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "k--kato.docomment",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "unity.unity-debug",
-    "ideaName": "Unity",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "formulahendry.dotnet",
-    "ideaName": "Run Configurations",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "formulahendry.dotnet-test-explorer",
-    "ideaName": "Test Explorer",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "jmrog.vscode-nuget-package-manager",
-    "ideaName": "NuGet",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "kreativ-software.csharpextensions",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-dotnettools.csdevkit",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "icsharpcode.ilspy-vscode",
-    "ideaName": ".NET Decompiler",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "jchannon.csharpextensions",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "kleber-swf.unity-code-snippets",
-    "ideaName": "Unity",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-dotnettools.csharp",
-    "ideaName": "C#",
+    "ideaId": "idea.plugin.protoeditor",
+    "ideaName": "Protocol Buffers",
+    "vsCodeId": "zxh404.vscode-proto3",
     "builtIn": true
   }
 ]

@@ -6,9 +6,9 @@
     "builtIn": true
   },
   {
-    "ideaId": "github.cweijan.test-theme",
-    "ideaName": "Atom OneDark Theme",
-    "vsCodeId": "akamud.vscode-theme-onedark",
+    "ideaId": "org.igu.plugins.bettercomments",
+    "ideaName": "Better Comments",
+    "vsCodeId": "aaron-bond.better-comments",
     "builtIn": true
   },
   {
@@ -18,9 +18,9 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.tailwindcss",
-    "ideaName": "Tailwind CSS",
-    "vsCodeId": "bradlc.vscode-tailwindcss",
+    "ideaId": "Pythonid",
+    "ideaName": "Python",
+    "vsCodeId": "batisteo.vscode-django",
     "builtIn": true
   },
   {
@@ -36,9 +36,33 @@
     "builtIn": true
   },
   {
+    "ideaId": "io.flutter",
+    "ideaName": "Flutter",
+    "vsCodeId": "Dart-Code.flutter",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "donjayamanne.python-environment-manager",
+    "builtIn": true
+  },
+  {
     "ideaId": "com.vermouthx.idea",
     "ideaName": "Dracula Theme",
     "vsCodeId": "dracula-theme.theme-dracula",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.editorconfig.editorconfigjetbrains",
+    "ideaName": "EditorConfig",
+    "vsCodeId": "EditorConfig.EditorConfig",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.mallowigi",
+    "ideaName": "Atom Material Icons",
+    "vsCodeId": "Equinusocio.vsc-material-theme-icons",
     "builtIn": true
   },
   {
@@ -51,6 +75,24 @@
     "ideaId": "com.intellij.database",
     "ideaName": "Database Tools and SQL for WebStorm",
     "vsCodeId": "formulahendry.vscode-mysql",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.github.codespaces.jetbrains.gateway",
+    "ideaName": "GitHub Codespaces",
+    "vsCodeId": "GitHub.codespaces",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.github.copilot",
+    "ideaName": "GitHub Copilot",
+    "vsCodeId": "GitHub.copilot",
+    "builtIn": true
+  },
+  {
+    "ideaId": "club.nutsoft.Github3Theme",
+    "ideaName": "GitHub Theme",
+    "vsCodeId": "GitHub.github-vscode-theme",
     "builtIn": true
   },
   {
@@ -78,15 +120,21 @@
     "builtIn": true
   },
   {
-    "ideaId": "org.jetbrains.plugins.vue",
-    "ideaName": "Vue.js",
-    "vsCodeId": "jcbuisson.vue",
-    "builtIn": true
-  },
-  {
     "ideaId": "AngularJS",
     "ideaName": "Angular and AngularJS",
     "vsCodeId": "johnpapa.Angular2",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.plugins.webDeployment",
+    "ideaName": "FTP/SFTP/WebDAV Connectivity",
+    "vsCodeId": "liximomo.sftp",
+    "builtIn": true
+  },
+  {
+    "ideaId": "ru.adelf.idea.dotenv",
+    "ideaName": ".env files support",
+    "vsCodeId": "mikestead.dotenv",
     "builtIn": true
   },
   {
@@ -126,9 +174,33 @@
     "builtIn": true
   },
   {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "ms-python.isort",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.leinardi.pycharm.pylint",
+    "ideaName": "Pylint",
+    "vsCodeId": "ms-python.pylint",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "ms-python.python",
+    "builtIn": true
+  },
+  {
     "ideaId": "org.jetbrains.plugins.docker.gateway",
     "ideaName": "Dev Containers",
     "vsCodeId": "ms-vscode-remote.remote-containers",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.plugin.adernov.powershell",
+    "ideaName": "PowerShell",
+    "vsCodeId": "ms-vscode.PowerShell",
     "builtIn": true
   },
   {
@@ -174,27 +246,27 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.plugins.watcher",
-    "ideaName": "File Watchers",
-    "vsCodeId": "ritwickdey.live-sass",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.jetbrains.plugins.vue",
-    "ideaName": "Vue.js",
-    "vsCodeId": "sdras.vue-vscode-snippets",
-    "builtIn": true
-  },
-  {
     "ideaId": "dev.blachut.svelte.lang",
     "ideaName": "Svelte",
     "vsCodeId": "svelte.svelte-vscode",
     "builtIn": true
   },
   {
-    "ideaId": "org.jetbrains.plugins.sass",
-    "ideaName": "Sass",
-    "vsCodeId": "Syler.sass-indented",
+    "ideaId": "com.tabnine.TabNine",
+    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
+    "vsCodeId": "TabNine.tabnine-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "in.thekalinga.snippet.intellij",
+    "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
+    "vsCodeId": "thekalinga.bootstrap4-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "tht13.python",
     "builtIn": true
   },
   {
@@ -210,34 +282,21 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.css",
-    "ideaName": "CSS",
-    "vsCodeId": "Zignd.html-css-class-completion",
+    "ideaId": "Pythonid",
+    "ideaName": "Python",
+    "vsCodeId": "wholroyd.jinja",
     "builtIn": true
   },
   {
-    "vsCodeId": "esbenp.prettier-vscode",
-    "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS"
+    "ideaId": "color.scheme.One Dark Pro",
+    "ideaName": "One Dark Pro Color Scheme",
+    "vsCodeId": "zhuangtongfa.Material-theme",
+    "builtIn": true
   },
   {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
-  },
-  {
-    "vsCodeId": "Dart-Code.dart-code",
-    "ideaName": "Dart",
-    "ideaId": "Dart"
-  },
-  {
-    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
-    "ideaName": "TSLint",
-    "ideaId": "tslint"
-  },
-  {
-    "vsCodeId": "Vue.volar",
-    "ideaName": "Vue.js",
+    "ideaId": "com.intellij.css",
+    "ideaName": "CSS",
+    "vsCodeId": "Zignd.html-css-class-completion",
     "builtIn": true
   }
 ]

@@ -24,15 +24,15 @@
     "builtIn": true
   },
   {
-    "ideaId": "aws.toolkit",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "builtIn": true
-  },
-  {
     "ideaId": "AngularJS",
     "ideaName": "Angular and AngularJS",
     "vsCodeId": "Angular.ng-template",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.toml.lang",
+    "ideaName": "Toml",
+    "vsCodeId": "bungcip.better-toml",
     "builtIn": true
   },
   {
@@ -48,9 +48,21 @@
     "builtIn": true
   },
   {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "donjayamanne.python-environment-manager",
+    "builtIn": true
+  },
+  {
     "ideaId": "com.vermouthx.idea",
     "ideaName": "Dracula Theme",
     "vsCodeId": "dracula-theme.theme-dracula",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "dustypomerleau.rust-syntax",
     "builtIn": true
   },
   {
@@ -69,6 +81,18 @@
     "ideaId": "com.intellij.database",
     "ideaName": "Database Tools and SQL for WebStorm",
     "vsCodeId": "formulahendry.vscode-mysql",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.github.codespaces.jetbrains.gateway",
+    "ideaName": "GitHub Codespaces",
+    "vsCodeId": "GitHub.codespaces",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.github.copilot",
+    "ideaName": "GitHub Copilot",
+    "vsCodeId": "GitHub.copilot",
     "builtIn": true
   },
   {
@@ -96,15 +120,21 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.kubernetes",
-    "ideaName": "Kubernetes",
-    "vsCodeId": "ipedrazas.kubernetes-snippets",
+    "ideaId": "nl.rubensten.texifyidea",
+    "ideaName": "TeXiFy IDEA",
+    "vsCodeId": "James-Yu.latex-workshop",
     "builtIn": true
   },
   {
-    "ideaId": "AngularJS",
-    "ideaName": "Angular and AngularJS",
-    "vsCodeId": "johnpapa.Angular2",
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "JScearcy.rust-doc-viewer",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.andrey4623.rainbowcsv",
+    "ideaName": "Rainbow CSV",
+    "vsCodeId": "mechatroner.rainbow-csv",
     "builtIn": true
   },
   {
@@ -117,6 +147,12 @@
     "ideaId": "com.intellij.database",
     "ideaName": "Database Tools and SQL for WebStorm",
     "vsCodeId": "mongodb.mongodb-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "monokai-pro",
+    "ideaName": "Monokai Pro Theme",
+    "vsCodeId": "monokai.theme-monokai-pro-vscode",
     "builtIn": true
   },
   {
@@ -150,9 +186,9 @@
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.database",
-    "ideaName": "Database Tools and SQL for WebStorm",
-    "vsCodeId": "ms-mssql.mssql",
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "ms-python.isort",
     "builtIn": true
   },
   {
@@ -168,21 +204,21 @@
     "builtIn": true
   },
   {
+    "ideaId": "org.exbin.deltahex.intellij",
+    "ideaName": "BinEd - Binary/Hex Editor",
+    "vsCodeId": "ms-vscode.hexeditor",
+    "builtIn": true
+  },
+  {
     "ideaId": "com.intellij.plugin.adernov.powershell",
     "ideaName": "PowerShell",
     "vsCodeId": "ms-vscode.PowerShell",
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.resharper.azure",
-    "ideaName": "Azure Toolkit for Rider",
-    "vsCodeId": "ms-vscode.vscode-node-azure-pack",
-    "builtIn": true
-  },
-  {
-    "ideaId": "tslint",
-    "ideaName": "TSLint",
-    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
+    "ideaId": "com.intellij.plugins.sublimetextkeymap",
+    "ideaName": "Sublime Text Keymap",
+    "vsCodeId": "ms-vscode.sublime-keybindings",
     "builtIn": true
   },
   {
@@ -210,9 +246,33 @@
     "builtIn": true
   },
   {
+    "ideaId": "intellij.clion.embedded.platformio",
+    "ideaName": "PlatformIO for CLion",
+    "vsCodeId": "platformio.platformio-ide",
+    "builtIn": true
+  },
+  {
     "ideaId": "org.jetbrains.plugins.yaml",
     "ideaName": "YAML",
     "vsCodeId": "redhat.vscode-yaml",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "rust-lang.rust-analyzer",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "swellaby.rust-pack",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.rust",
+    "ideaName": "Rust",
+    "vsCodeId": "swellaby.vscode-rust-test-adapter",
     "builtIn": true
   },
   {
@@ -222,9 +282,27 @@
     "builtIn": true
   },
   {
+    "ideaId": "in.thekalinga.snippet.intellij",
+    "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
+    "vsCodeId": "thekalinga.bootstrap4-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "tht13.python",
+    "builtIn": true
+  },
+  {
     "ideaId": "org.sylfra.idea.plugins.linessorter",
     "ideaName": "Lines Sorter",
     "vsCodeId": "Tyriar.sort-lines",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.vladsch.clionarduinoplugin",
+    "ideaName": "Arduino Support",
+    "vsCodeId": "vsciot-vscode.vscode-arduino",
     "builtIn": true
   },
   {
@@ -240,6 +318,18 @@
     "builtIn": true
   },
   {
+    "ideaId": "quokka.js",
+    "ideaName": "Quokka",
+    "vsCodeId": "WallabyJs.quokka-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "Pythonid",
+    "ideaName": "Python",
+    "vsCodeId": "wholroyd.jinja",
+    "builtIn": true
+  },
+  {
     "ideaId": "color.scheme.One Dark Pro",
     "ideaName": "One Dark Pro Color Scheme",
     "vsCodeId": "zhuangtongfa.Material-theme",
@@ -249,76 +339,6 @@
     "ideaId": "com.intellij.css",
     "ideaName": "CSS",
     "vsCodeId": "Zignd.html-css-class-completion",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
-    "ideaName": "Live Templates",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "fudge.auto-using",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "tobiah.unity-tools",
-    "ideaName": "Unity",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "k--kato.docomment",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "unity.unity-debug",
-    "ideaName": "Unity",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "formulahendry.dotnet",
-    "ideaName": "Run Configurations",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "formulahendry.dotnet-test-explorer",
-    "ideaName": "Test Explorer",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "jmrog.vscode-nuget-package-manager",
-    "ideaName": "NuGet",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "kreativ-software.csharpextensions",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-dotnettools.csdevkit",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "icsharpcode.ilspy-vscode",
-    "ideaName": ".NET Decompiler",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "jchannon.csharpextensions",
-    "ideaName": "C#",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "kleber-swf.unity-code-snippets",
-    "ideaName": "Unity",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-dotnettools.csharp",
-    "ideaName": "C#",
     "builtIn": true
   }
 ]

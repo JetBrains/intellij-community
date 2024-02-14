@@ -1,5 +1,95 @@
 [
   {
+    "ideaId": "org.intellij.plugins.hcl",
+    "ideaName": "Terraform and HCL",
+    "vsCodeId": "4ops.terraform",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.database",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "vsCodeId": "cweijan.vscode-mysql-client2",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.database",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "vsCodeId": "formulahendry.vscode-mysql",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "ideaName": "GraphQL",
+    "vsCodeId": "GraphQL.vscode-graphql",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "ideaName": "GraphQL",
+    "vsCodeId": "GraphQL.vscode-graphql-syntax",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.intellij.plugins.hcl",
+    "ideaName": "Terraform and HCL",
+    "vsCodeId": "HashiCorp.terraform",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.database",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "vsCodeId": "mongodb.mongodb-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.jetbrains.plugins.sass",
+    "ideaName": "Sass",
+    "vsCodeId": "mrmlnc.vscode-scss",
+    "builtIn": true
+  },
+  {
+    "ideaId": "Docker",
+    "ideaName": "Docker",
+    "vsCodeId": "ms-azuretools.vscode-docker",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.kubernetes",
+    "ideaName": "Kubernetes",
+    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "builtIn": true
+  },
+  {
+    "ideaId": "PythonCore",
+    "ideaName": "Python Community Edition",
+    "vsCodeId": "ms-python.python",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.codeWithMe",
+    "ideaName": "Code With Me",
+    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "builtIn": true
+  },
+  {
+    "ideaId": "indent-rainbow.indent-rainbow",
+    "ideaName": "Indent Rainbow",
+    "vsCodeId": "oderwat.indent-rainbow",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.sylfra.idea.plugins.linessorter",
+    "ideaName": "Lines Sorter",
+    "vsCodeId": "Tyriar.sort-lines",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.css",
+    "ideaName": "CSS",
+    "vsCodeId": "Zignd.html-css-class-completion",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "rust-lang.rust-analyzer",
     "ideaName": "Rust Support",
     "builtIn": true

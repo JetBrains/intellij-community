@@ -1,52 +1,118 @@
 [
   {
-    "vsCodeId": "Shopify.ruby-lsp",
-    "ideaName": "Ruby support",
+    "ideaId": "org.intellij.plugins.hcl",
+    "ideaName": "Terraform and HCL",
+    "vsCodeId": "4ops.terraform",
     "builtIn": true
   },
   {
-    "vsCodeId": "castwide.solargraph",
-    "ideaName": "Ruby support",
+    "ideaId": "com.intellij.database",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "vsCodeId": "cweijan.vscode-mysql-client2",
     "builtIn": true
   },
   {
-    "vsCodeId": "KoichiSasada.vscode-rdbg",
-    "ideaName": "Ruby Debugger",
+    "ideaId": "intellij.prettierJS",
+    "ideaName": "Prettier",
+    "vsCodeId": "esbenp.prettier-vscode",
     "builtIn": true
   },
   {
-    "vsCodeId": "misogi.ruby-rubocop",
-    "ideaName": "Rubocop support",
+    "ideaId": "com.intellij.database",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "vsCodeId": "formulahendry.vscode-mysql",
     "builtIn": true
   },
   {
-    "vsCodeId": "sorbet.sorbet-vscode-extension",
-    "ideaName": "Ruby Sorbet support",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "ideaName": "GraphQL",
+    "vsCodeId": "GraphQL.vscode-graphql",
     "builtIn": true
   },
   {
-    "vsCodeId": "connorshea.vscode-ruby-test-adapter",
-    "ideaName": "Ruby Test Runner",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "ideaName": "GraphQL",
+    "vsCodeId": "GraphQL.vscode-graphql-syntax",
     "builtIn": true
   },
   {
-    "vsCodeId": "kaiwood.endwise",
-    "ideaName": "Ruby support",
+    "ideaId": "org.intellij.plugins.hcl",
+    "ideaName": "Terraform and HCL",
+    "vsCodeId": "HashiCorp.terraform",
     "builtIn": true
   },
   {
-    "vsCodeId": "CraigMaslowski.erb",
+    "ideaId": "com.intellij.database",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "vsCodeId": "mongodb.mongodb-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.jetbrains.plugins.sass",
+    "ideaName": "Sass",
+    "vsCodeId": "mrmlnc.vscode-scss",
+    "builtIn": true
+  },
+  {
+    "ideaId": "Docker",
+    "ideaName": "Docker",
+    "vsCodeId": "ms-azuretools.vscode-docker",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.kubernetes",
+    "ideaName": "Kubernetes",
+    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.jetbrains.codeWithMe",
+    "ideaName": "Code With Me",
+    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "builtIn": true
+  },
+  {
+    "ideaId": "indent-rainbow.indent-rainbow",
+    "ideaName": "Indent Rainbow",
+    "vsCodeId": "oderwat.indent-rainbow",
+    "builtIn": true
+  },
+  {
+    "ideaId": "dev.blachut.svelte.lang",
+    "ideaName": "Svelte",
+    "vsCodeId": "svelte.svelte-vscode",
+    "builtIn": true
+  },
+  {
+    "ideaId": "org.sylfra.idea.plugins.linessorter",
+    "ideaName": "Lines Sorter",
+    "vsCodeId": "Tyriar.sort-lines",
+    "builtIn": true
+  },
+  {
+    "ideaId": "com.intellij.css",
+    "ideaName": "CSS",
+    "vsCodeId": "Zignd.html-css-class-completion",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bung87.vscode-gemfile",
+    "ideaName": "Gemfile support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "sianglim.slim",
+    "ideaName": "Slim support",
+    "bundled": true
+  },
+  {
+    "vsCodeId": "karunamurti.haml",
+    "ideaName": "HAML support",
+    "bundled": true
+  },
+  {
+    "vsCodeId": "aliariff.vscode-erb-beautify",
     "ideaName": "ERB support",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "noku.rails-run-spec-vscode",
-    "ideaName": "RSpec support",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "bung87.rails",
-    "ideaName": "Rails support",
     "builtIn": true
   },
   {
@@ -55,19 +121,49 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "aliariff.vscode-erb-beautify",
+    "vsCodeId": "bung87.rails",
+    "ideaName": "Rails support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "noku.rails-run-spec-vscode",
+    "ideaName": "RSpec support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "CraigMaslowski.erb",
     "ideaName": "ERB support",
     "builtIn": true
   },
   {
-    "vsCodeId": "karunamurti.haml",
-    "ideaName": "HAML support",
-    "bundled": true
+    "vsCodeId": "kaiwood.endwise",
+    "ideaName": "Ruby support",
+    "builtIn": true
   },
   {
-    "vsCodeId": "sianglim.slim",
-    "ideaName": "Slim support",
-    "bundled": true
+    "vsCodeId": "connorshea.vscode-ruby-test-adapter",
+    "ideaName": "Ruby Test Runner",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "sorbet.sorbet-vscode-extension",
+    "ideaName": "Ruby Sorbet support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "misogi.ruby-rubocop",
+    "ideaName": "Rubocop support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "KoichiSasada.vscode-rdbg",
+    "ideaName": "Ruby Debugger",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "castwide.solargraph",
+    "ideaName": "Ruby support",
+    "builtIn": true
   },
   {
     "vsCodeId": "Shopify.theme-check-vscode",
@@ -75,8 +171,8 @@
     "bundled": true
   },
   {
-    "vsCodeId": "bung87.vscode-gemfile",
-    "ideaName": "Gemfile support",
+    "vsCodeId": "Shopify.ruby-lsp",
+    "ideaName": "Ruby support",
     "builtIn": true
   }
 ]
