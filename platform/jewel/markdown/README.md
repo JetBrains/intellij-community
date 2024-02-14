@@ -65,17 +65,18 @@ The second pass is done in the composition, and essentially renders a series of 
 @Composable
 fun Markdown(blocks: List<MarkdownBlock>) {
     val isDark = JewelTheme.isDark
+    val markdownStyling =
+        remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
     val blockRenderer = remember(markdownStyling, isDark) {
         if (isDark) MarkdownBlockRenderer.dark() else MarkdownBlockRenderer.light()
     }
 
-    val scrollState = rememberScrollState()
     SelectionContainer(Modifier.fillMaxSize()) {
         Column(
-            state = scrollState,
+            modifier = Modifier.verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
         ) {
-            items(markdownBlocks) { blockRenderer.render(it) }
+            blockRenderer.render(blocks)
         }
     }
 }
