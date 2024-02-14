@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public interface JsonLikePsiWalker {
@@ -75,7 +74,11 @@ public interface JsonLikePsiWalker {
     return true;
   }
 
-  static @Nullable JsonLikePsiWalker getWalker(final @NotNull PsiElement element, JsonSchemaObject schemaObject) {
+  static @Nullable JsonLikePsiWalker getWalker(final @NotNull PsiElement element) {
+    return getWalker(element, null);
+  }
+
+  static @Nullable JsonLikePsiWalker getWalker(final @NotNull PsiElement element, @Nullable JsonSchemaObject schemaObject) {
     if (JsonOriginalPsiWalker.INSTANCE.handles(element)) return JsonOriginalPsiWalker.INSTANCE;
 
     return JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME.getExtensionList().stream()

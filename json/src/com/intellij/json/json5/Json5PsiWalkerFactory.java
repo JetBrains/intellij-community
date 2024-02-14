@@ -8,6 +8,7 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
   public static final JsonLikePsiWalker WALKER_INSTANCE = new JsonOriginalPsiWalker() {
@@ -29,7 +30,7 @@ public final class Json5PsiWalkerFactory implements JsonLikePsiWalkerFactory {
   }
 
   @Override
-  public @NotNull JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject) {
+  public @NotNull JsonLikePsiWalker create(@Nullable JsonSchemaObject schemaObject) {
     return WALKER_INSTANCE;
   }
 }

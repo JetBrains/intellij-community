@@ -6,6 +6,7 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLFile;
 
 public class YamlJsonLikePsiWalkerFactory implements JsonLikePsiWalkerFactory {
@@ -16,7 +17,7 @@ public class YamlJsonLikePsiWalkerFactory implements JsonLikePsiWalkerFactory {
 
   @NotNull
   @Override
-  public JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject) {
+  public JsonLikePsiWalker create(@Nullable JsonSchemaObject schemaObject) {
     return YamlJsonPsiWalker.INSTANCE;
   }
 }
