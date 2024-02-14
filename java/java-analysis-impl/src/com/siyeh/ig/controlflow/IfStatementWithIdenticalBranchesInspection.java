@@ -366,17 +366,38 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
         }
         PsiStatement[] thenStatements = ControlFlowUtils.unwrapBlock(ifStatement.getThenBranch());
         PsiStatement[] elseStatements = ControlFlowUtils.unwrapBlock(ifStatement.getElseBranch());
-        int thenLength = thenStatements.length;
-        int elseLength = elseStatements.length;
-        for (int i = 0; i < tailStatements.size(); i++) {
-          PsiStatement thenStatement = thenStatements[thenLength - 1 - i];
-          // handling situation, when there is no braces around then branch
-          if (thenStatements.length == 1 && thenStatement.getParent() == ifStatement) {
-            thenStatement.replace(JavaPsiFacade.getElementFactory(thenStatement.getProject()).createCodeBlock());
-          } else {
-            thenStatement.delete();
+        for (int i = thenStatements.length - 1; i >= 0; i--) {
+          PsiStatement statement = thenStatements[i];
+          if (!(statement instanceof PsiEmptyStatement)) break;
+          //emptyStatementCount++;
+        }
+        if (thenStatements.length == 1 && thenStatements[0].getParent() == ifStatement) {
+          thenStatements[0].replace(JavaPsiFacade.getElementFactory(ifStatement.getProject()).createCodeBlock());
+        }
+        else {
+          deleteStatements(thenStatements, tailStatements.size(), ct, false);
+        }
+        deleteStatements(elseStatements, tailStatements.size(), ct, true);
+      }
+    }
+
+    private static void deleteStatements(PsiStatement[] statements, int count, CommentTracker ct, boolean keepComments) {
+      for (int i = statements.length - 1; i >= 0; i--) {
+        PsiStatement statement = statements[i];
+        if (statement instanceof PsiEmptyStatement) {
+          ct.delete(statement);
+        }
+        else if (count > 0) {
+          count--;
+          if (keepComments) {
+            ct.delete(statement);
           }
-          ct.delete(elseStatements[elseLength - 1 - i]);
+          else {
+            statement.delete();
+          }
+        }
+        else {
+          break;
         }
       }
     }
@@ -776,12 +797,12 @@ public final class IfStatementWithIdenticalBranchesInspection extends AbstractBa
     final Map<PsiLocalVariable, String> mySubstitutionTable;
 
     private ThenElse(List<ExtractionUnit> headUnitsOfThen,
-                     List<PsiStatement> tailUnitsOfThen,
+                     List<PsiStatement> tailStatementsOfThen,
                      boolean mayChangeSemantics,
                      CommonPartType commonPartType,
                      Map<PsiLocalVariable, String> substitutionTable) {
       myHeadUnitsOfThen = headUnitsOfThen;
-      myTailStatementsOfThen = tailUnitsOfThen;
+      myTailStatementsOfThen = tailStatementsOfThen;
       myMayChangeSemantics = mayChangeSemantics;
       myCommonPartType = commonPartType;
       mySubstitutionTable = substitutionTable;
