@@ -11,16 +11,22 @@ public final class Message {
   @NotNull private final String myText;
   @Nullable private final String myGroup;
   @NotNull private final Kind myKind;
-  @Nullable FilePosition myFilePosition;
+  @Nullable private final FilePosition myFilePosition;
 
-  public Message(@NotNull String title,
-                 @NotNull String text,
-                 @Nullable String group,
-                 @NotNull Kind kind,
-                 @Nullable FilePosition filePosition) {
+  private final boolean myInternal;
+
+  public Message(
+    @NotNull String title,
+    @NotNull String text,
+    @Nullable String group,
+    @NotNull Kind kind,
+    @Nullable FilePosition filePosition,
+    boolean isInternal
+  ) {
     myTitle = title;
     myText = text;
     myGroup = group;
+    myInternal = isInternal;
     myKind = kind;
     myFilePosition = filePosition;
   }
@@ -48,6 +54,10 @@ public final class Message {
   @Nullable
   public FilePosition getFilePosition() {
     return myFilePosition;
+  }
+
+  public boolean isInternal() {
+    return myInternal;
   }
 
   public static class FilePosition {

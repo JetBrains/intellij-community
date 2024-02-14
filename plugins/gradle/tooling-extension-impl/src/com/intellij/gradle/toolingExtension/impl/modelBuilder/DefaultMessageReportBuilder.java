@@ -16,8 +16,10 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
   private @Nullable String myText = null;
   private @Nullable String myGroup = null;
   private @Nullable Exception myException = null;
-  private @NotNull Message.Kind myKind = Message.Kind.INFO;
+  private @Nullable Message.Kind myKind = null;
   private @Nullable Message.FilePosition myFilePosition = null;
+
+  private boolean myInternal = false;
 
   public DefaultMessageReportBuilder(@NotNull MessageReporter reporter) {
     myMessageReporter = reporter;
@@ -72,6 +74,12 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
   }
 
   @Override
+  public @NotNull MessageReportBuilder withInternal() {
+    myInternal = true;
+    return this;
+  }
+
+  @Override
   public void reportMessage(@NotNull Project project) {
     myMessageReporter.reportMessage(project, new DefaultMessageBuilder()
       .withTitle(myTitle)
@@ -81,6 +89,7 @@ public class DefaultMessageReportBuilder implements MessageReportBuilder {
       .withException(myException)
       .withLocation(myFilePosition)
       .withProject(project)
+      .withInternal(myInternal)
       .build()
     );
   }

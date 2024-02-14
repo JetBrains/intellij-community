@@ -24,6 +24,8 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   private @Nullable Message.FilePosition myFilePosition = null;
   private @Nullable Project myProject = null;
 
+  private boolean myInternal = false;
+
   @Override
   public @NotNull MessageBuilder withTitle(String title) {
     myTitle = title;
@@ -72,13 +74,19 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   }
 
   @Override
+  public @NotNull MessageBuilder withInternal(boolean isInternal) {
+    myInternal = isInternal;
+    return this;
+  }
+
+  @Override
   public @NotNull Message build() {
     String title = buildTitle();
     String text = buildText();
     String group = buildGroup();
     Message.Kind kind = buildKind();
     Message.FilePosition filePosition = buildFilePosition();
-    return new Message(title, text, group, kind, filePosition);
+    return new Message(title, text, group, kind, filePosition, myInternal);
   }
 
   private @NotNull String buildTitle() {
