@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.authentication
 
 import com.intellij.collaboration.auth.ui.login.LoginException
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.util.NlsSafe
@@ -27,7 +28,9 @@ internal class GitLabLoginErrorStatusPresenter(
       is ConnectException -> builder.append(CollaborationToolsBundle.message("clone.dialog.login.error.server"))
       is LoginException.UnsupportedServerVersion -> builder.customizeUnsupportedVersionError(error)
       is LoginException.InvalidTokenOrUnsupportedServerVersion -> builder.customizeInvalidTokenOrUnsupportedServerVersionError(error)
-      else -> {}
+      is LoginException.AccountAlreadyExists -> builder.append(CollaborationToolsBundle.message("login.dialog.error.account.already.exists", error.username))
+      is LoginException.AccountUsernameMismatch -> builder.append(CollaborationToolsBundle.message("login.dialog.error.account.username.mismatch", error.requiredUsername, error.username))
+      else -> builder.append(ExceptionUtil.getPresentableMessage(error))
     }
 
     return builder.wrapWithHtmlBody().toString()

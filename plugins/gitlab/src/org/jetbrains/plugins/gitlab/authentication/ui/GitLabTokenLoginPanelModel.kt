@@ -19,7 +19,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.getMetadataOrNull
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.GitLabSecurityUtil
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
                                  var uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean)
@@ -45,15 +44,15 @@ class GitLabTokenLoginPanelModel(var requiredUsername: String? = null,
       api.graphQL.getCurrentUser()
     }
     val username = user.username
-    if (requiredUsername != null) {
-      require(username == requiredUsername) {
-        GitLabBundle.message("account.username.mismatch", requiredUsername!!, username)
-      }
+    val _requiredUsername = requiredUsername
+    if (_requiredUsername != null && username != _requiredUsername) {
+      throw LoginException.AccountUsernameMismatch(_requiredUsername, username)
     }
 
-    require(uniqueAccountPredicate(server, username)) {
-      GitLabBundle.message("account.not.unique", username)
+    if (!uniqueAccountPredicate(server, username)) {
+      throw LoginException.AccountAlreadyExists(username)
     }
+
     return username
   }
 
