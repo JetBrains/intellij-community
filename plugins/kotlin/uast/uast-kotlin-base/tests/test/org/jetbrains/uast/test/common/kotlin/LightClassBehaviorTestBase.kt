@@ -3,9 +3,14 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.util.KeyedLazyInstance
+import com.intellij.util.ProcessingContext
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -625,6 +630,13 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
     }
 
     fun checkAnnotationParameterReference(myFixture: JavaCodeInsightTestFixture) {
+        PsiReferenceContributor.EP_NAME.point.registerExtension(
+            PsiReferenceContributorEP().apply {
+                implementationClass = MyPsiReferenceContributor::class.java.name
+                pluginDescriptor = DefaultPluginDescriptor("test")
+            },
+            myFixture.testRootDisposable
+        )
         myFixture.configureByText(
             "main.kt",
             """
@@ -644,9 +656,41 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         val fullNameProperty = lc.findFieldByName("fullName", false) ?: error("unable to look up property `fullName`")
         val annotation = fullNameProperty.modifierList?.annotations?.singleOrNull()
             ?: error("expected the only one annotation")
-        val annotationMemberValue = annotation.findDeclaredAttributeValue("name") as? PsiLiteralValue ?: error("expected PsiLiteralValue annotation")
+        val annotationMemberValue =
+            annotation.findDeclaredAttributeValue("name") as? PsiLiteralValue ?: error("expected PsiLiteralValue annotation")
         TestCase.assertEquals("aName", annotationMemberValue.value)
-        TestCase.assertTrue(annotationMemberValue.references.isNotEmpty())
+        val references = annotationMemberValue.references
+        TestCase.assertEquals(1, references.size)
+        TestCase.assertTrue(references[0].resolve() != null)
+    }
+
+    class MyPsiReferenceContributor : PsiReferenceContributor(),
+                                      KeyedLazyInstance<PsiReferenceContributor> {
+        override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
+            val referenceProvider = object : PsiReferenceProvider() {
+                override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
+                    val text = (element as KtStringTemplateExpression).text
+                    return if (text == "\"aName\"") {
+                        arrayOf(object : PsiReferenceBase<PsiElement?>(element, false) {
+                            override fun resolve(): PsiElement? {
+                                return element.originalElement
+                            }
+                        })
+                    } else {
+                        PsiReference.EMPTY_ARRAY
+                    }
+                }
+            }
+            registrar.registerReferenceProvider(
+                PlatformPatterns.psiElement(KtStringTemplateExpression::class.java),
+                referenceProvider,
+                PsiReferenceRegistrar.HIGHER_PRIORITY
+            )
+        }
+
+        override fun getKey(): String = "custom"
+
+        override fun getInstance(): PsiReferenceContributor = this
     }
 
     fun checkContainingFile(myFixture: JavaCodeInsightTestFixture) {
