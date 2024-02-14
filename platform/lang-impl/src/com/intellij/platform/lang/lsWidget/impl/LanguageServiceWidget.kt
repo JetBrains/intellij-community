@@ -43,7 +43,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     if (!Registry.`is`("language.service.status.bar.widget")) return WidgetState.HIDDEN
 
-    val allItems = LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.flatMap { it.getWidgetItems(project, file) }
+    val allItems = LanguageServiceWidgetItemsProvider.EP_NAME.extensionList.flatMap { it.createWidgetItems(project, file) }
     cachedWidgetItems = allItems
     if (allItems.isEmpty()) return WidgetState.HIDDEN
 

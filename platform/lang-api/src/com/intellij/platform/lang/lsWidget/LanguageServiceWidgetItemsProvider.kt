@@ -14,7 +14,7 @@ abstract class LanguageServiceWidgetItemsProvider {
       ExtensionPointName.create("com.intellij.platform.lang.lsWidget.itemsProvider")
   }
 
-  abstract fun getWidgetItems(project: Project, currentFile: VirtualFile?): List<LanguageServiceWidgetItem>
+  abstract fun createWidgetItems(project: Project, currentFile: VirtualFile?): List<LanguageServiceWidgetItem>
 
   /**
    * [LanguageServiceWidgetItemsProvider] implementations should ask the Platform to update the 'Language Services' widget
@@ -22,7 +22,7 @@ abstract class LanguageServiceWidgetItemsProvider {
    * Typically, they register some technology-specific service state listener,
    * and call [updateWidget] function on service state change.
    * Once the [updateWidget] function is called, the Platform rebuilds the widget from scratch,
-   * which means that it collects the up-to-date information by calling [getWidgetItems].
+   * which means that it collects the up-to-date information by calling [createWidgetItems].
    *
    * Make sure to use the [widgetDisposable] to unregister technology-specific listeners, otherwise they will leak.
    *
