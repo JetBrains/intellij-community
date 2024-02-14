@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.CacheSwitcher;
@@ -1043,6 +1043,11 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testSearchingForJarRootWhenItsNotCached() throws IOException {
     // IDEA-341011 PersistentFSImpl.cacheMissedRootFromPersistence fails to find jars because it uses name instead of path
+    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+    // ensure clean VFS
+    fs.disconnect();
+    fs.connect();
+
     File root = tempDirectory.newDirectory("out");
     FileUtil.writeToFile(new File(root, "fileInJar.txt"), "some text");
 
@@ -1053,8 +1058,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     VirtualFile fileInJar = jarRoot.findChild("fileInJar.txt");
     assertNotNull(fileInJar);
 
-    // drop caches
-    PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
+    // clear in-memory caches:
     fs.disconnect();
     fs.connect();
 
