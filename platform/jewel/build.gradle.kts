@@ -85,6 +85,10 @@ tasks {
                 .filter { it.trim().startsWith("releases/") }
                 .map { it.trim().removePrefix("releases/") }
 
+            if (releaseBranches.isEmpty()) {
+                throw GradleException("No local release branches found, make sure they exist locally")
+            }
+
             logger.lifecycle("Release branches: ${releaseBranches.joinToString { "releases/$it" }}")
 
             // Check all release branches have gotten the latest from main
