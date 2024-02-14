@@ -276,12 +276,12 @@ object QuickDocHighlightingHelper {
   fun getDefaultFormattingStyles(spacing: Int): List<String> {
     val fontSize = StartupUiUtil.labelFont.size
     return listOf(
-      "h6 { font-size: ${fontSize + 2}}",
-      "h5 { font-size: ${fontSize + 4}}",
-      "h4 { font-size: ${fontSize + 6}}",
-      "h3 { font-size: ${fontSize + 8}}",
-      "h2 { font-size: ${fontSize + 10}}",
-      "h1 { font-size: ${fontSize + 12}}",
+      "h6 { font-size: ${fontSize + 1}}",
+      "h5 { font-size: ${fontSize + 2}}",
+      "h4 { font-size: ${fontSize + 3}}",
+      "h3 { font-size: ${fontSize + 4}}",
+      "h2 { font-size: ${fontSize + 6}}",
+      "h1 { font-size: ${fontSize + 8}}",
       "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
       "p { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0;}",
       "ol, ul { margin: 0 0 0 ${scale(10)}px; padding: 0 0 ${spacing}px 0;}",
