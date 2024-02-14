@@ -93,6 +93,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
 
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
+  public static final Key<Boolean> IS_CONSOLE_DOCUMENT = Key.create("IS_CONSOLE_DOCUMENT");
 
   private static boolean ourTypedHandlerInitialized;
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
@@ -888,6 +889,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     int bufferSize = ConsoleBuffer.useCycleBuffer() ? ConsoleBuffer.getCycleBufferSize() : 0;
     editor.getDocument().setCyclicBufferSize(bufferSize);
+    editor.getDocument().putUserData(IS_CONSOLE_DOCUMENT, true);
     editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
     editor.getSettings().setAllowSingleLogicalLineFolding(true); // We want to fold long soft-wrapped command lines
     return editor;
