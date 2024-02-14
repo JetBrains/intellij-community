@@ -50,6 +50,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     else {
       fireInitialized()
     }
+    clearTerminal()
   }
 
   private fun processCommandStartedEvent(event: List<String>) {
@@ -102,6 +103,26 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     else {
       fireGeneratorFinished(requestId, result)
     }
+    clearTerminal()
+  }
+
+  /**
+   * Clear backing terminal text buffer on command/generator termination.
+   * This helps to ensure that IDE doesn't see previous command/generator output when a new command starts.
+   * A possible problem with this approach is that it might not work on ConPTY as it synchronizes buffers sometimes.
+   * In this case (the worst case), the problem is that the fix won't work as intended, but nothing else bad will happen.
+   *
+   * It might be solved differently - start scraping command output on command_started event, but it won't work
+   * reliably on ConPTY where command_started event is delivered asynchronously with command output.
+   *
+   * There is a plan to get rid of command_started event and replace this code with a new clear_all generator running
+   * on command termination.
+   */
+  private fun clearTerminal() {
+    session.terminalStarterFuture.getNow(null)?.let {
+      debug { "force clearing terminal" }
+      session.model.clearAllAndMoveCursorToTopLeftCorner(it.terminal)
+    }
   }
 
   private fun fireInitialized() {
@@ -136,6 +157,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
         listener.commandFinished(startedCommand.command, exitCode, duration)
       }
     }
+    clearTerminal()
   }
 
   private fun firePromptStateUpdated(state: TerminalPromptState) {
