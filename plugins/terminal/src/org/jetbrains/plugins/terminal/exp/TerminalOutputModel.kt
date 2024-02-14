@@ -46,13 +46,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     val marker = document.createRangeMarker(startOffset, startOffset)
     marker.isGreedyToRight = true
 
-    val adjustedPrompt = prompt?.let { p ->
-      val highlightings = p.highlightings.map {
-        HighlightingInfo(startOffset + it.startOffset, startOffset + it.endOffset, it.textAttributes)
-      }
-      PromptRenderingInfo(p.text, highlightings)
-    }
-    val block = CommandBlock(command, adjustedPrompt, marker)
+    val block = CommandBlock(command, prompt, marker)
     blocks.add(block)
     return block
   }

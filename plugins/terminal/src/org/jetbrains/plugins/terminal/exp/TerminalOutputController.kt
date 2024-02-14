@@ -64,10 +64,10 @@ class TerminalOutputController(
 
   @RequiresEdt
   fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
-    // The prompt is empty for the initial block, but better to use explicit null here
     val block = outputModel.createBlock(command, prompt)
     if (block.withPrompt) {
-      appendLineToBlock(block, block.prompt!!.text, block.prompt.highlightings, block.withCommand)
+      val highlightings = adjustHighlightings(block.prompt!!.highlightings, block.startOffset)
+      appendLineToBlock(block, block.prompt.text, highlightings, block.withCommand)
     }
     if (block.withCommand) {
       appendLineToBlock(block, command!!, listOf(createCommandHighlighting(block)), false)
@@ -201,7 +201,7 @@ class TerminalOutputController(
           highlightings.add(0, createCommandHighlighting(block))
         }
         if (block.withPrompt) {
-          highlightings.addAll(0, block.prompt!!.highlightings)
+          highlightings.addAll(0, adjustHighlightings(block.prompt!!.highlightings, block.startOffset))
         }
       }
     }
@@ -245,6 +245,12 @@ class TerminalOutputController(
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
     val attributes = TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
     return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length, attributes)
+  }
+
+  private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
+    return highlightings.map {
+      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributes)
+    }
   }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {

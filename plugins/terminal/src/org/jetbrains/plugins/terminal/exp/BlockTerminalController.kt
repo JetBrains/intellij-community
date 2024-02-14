@@ -35,6 +35,7 @@ class BlockTerminalController(
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
+    // The prompt is empty for the initial block, but better to use explicit null here
     outputController.startCommandBlock(command = null, prompt = null)
     promptController.promptIsVisible = false
     session.model.isCommandRunning = true
