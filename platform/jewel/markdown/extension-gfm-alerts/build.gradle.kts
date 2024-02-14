@@ -6,7 +6,7 @@ plugins {
 }
 
 dependencies {
-    api(projects.markdown.core)
+    compileOnly(projects.markdown.core)
 
     implementation(libs.commonmark.core)
 

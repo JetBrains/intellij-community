@@ -6,7 +6,7 @@ plugins {
 }
 
 dependencies {
-    api(projects.ui)
+    compileOnly(projects.ui)
 
     implementation(libs.commonmark.core)
 
