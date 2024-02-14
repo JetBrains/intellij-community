@@ -121,6 +121,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
     myFixture.setUp();
 
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   @NotNull
