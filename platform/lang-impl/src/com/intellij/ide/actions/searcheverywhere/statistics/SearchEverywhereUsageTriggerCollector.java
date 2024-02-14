@@ -15,35 +15,41 @@ import java.util.List;
 
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 14);
+
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
   private static final String NOT_REPORTABLE_CONTRIBUTOR_ID = "third.party";
 
-  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID",
-                                                                                 Arrays.asList("FileSearchEverywhereContributor",
-                                                                                               "SearchEverywhereContributor.All",
-                                                                                               "ClassSearchEverywhereContributor",
-                                                                                               "RecentFilesSEContributor",
-                                                                                               "ActionSearchEverywhereContributor",
-                                                                                               "SymbolSearchEverywhereContributor",
-                                                                                               "TopHitSEContributor",
-                                                                                               "RunConfigurationsSEContributor",
-                                                                                               "YAMLKeysSearchEverywhereContributor",
-                                                                                               "CommandsContributor", "third.party",
-                                                                                               "Vcs.Git", "UrlSearchEverywhereContributor",
-                                                                                               "GitSearchEverywhereContributor",
-                                                                                               "TextSearchContributor",
-                                                                                               "RiderOnboardingSearchEverywhereContributor"));
+  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID", Arrays.asList(
+    "FileSearchEverywhereContributor",
+    "SearchEverywhereContributor.All",
+    "ClassSearchEverywhereContributor",
+    "RecentFilesSEContributor",
+    "ActionSearchEverywhereContributor",
+    "SymbolSearchEverywhereContributor",
+    "TopHitSEContributor",
+    "RunConfigurationsSEContributor",
+    "YAMLKeysSearchEverywhereContributor",
+    "CommandsContributor",
+    "third.party",
+    "TextSearchContributor",
+    "DbSETablesContributor",
+    "UrlSearchEverywhereContributor",
+    "Vcs.Git", "GitSearchEverywhereContributor",
+    "RiderOnboardingSearchEverywhereContributor"
+  ));
 
   private static final List<String> ourTabs = Arrays.asList("FileSearchEverywhereContributor",
                                                             "SearchEverywhereContributor.All",
                                                             "ClassSearchEverywhereContributor",
                                                             "ActionSearchEverywhereContributor",
                                                             "SymbolSearchEverywhereContributor",
-                                                            "third.party", "Vcs.Git");
+                                                            "UrlSearchEverywhereContributor",
+                                                            "DbSETablesContributor",
+                                                            "Vcs.Git",
+                                                            "third.party");
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId", ourTabs);
-
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 13);
 
   public static final EventId2<String, AnActionEvent> DIALOG_OPEN = GROUP.registerEvent("dialogOpen",
                                                                                         CONTRIBUTOR_ID_FIELD,
