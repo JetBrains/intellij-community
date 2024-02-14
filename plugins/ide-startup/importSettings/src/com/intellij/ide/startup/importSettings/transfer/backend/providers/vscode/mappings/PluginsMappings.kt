@@ -14,7 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 
 /**
- * Allows to register plugins of third-party products for importing from VSCode.
+ * Allows registering plugins of third-party products for importing from VSCode.
  */
 interface VSCodePluginMapping {
 
@@ -31,7 +31,6 @@ private data class FeatureData(
   val ideaId: String? = null,
   val ideaName: String,
   val builtIn: Boolean = false,
-  val bundled: Boolean = false,
   val disabled: Boolean = false
 )
 
@@ -82,9 +81,8 @@ internal class CommonPluginMapping : VSCodePluginMapping {
             continue
           }
 
-          val isBundled = data.bundled || data.builtIn
           val feature =
-            if (isBundled) BuiltInFeature(null, data.ideaName)
+            if (data.builtIn) BuiltInFeature(null, data.ideaName)
             else {
               if (data.ideaId == null) {
                 logger.error("Cannot determine IntelliJ plugin id for feature $data.")

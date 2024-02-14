@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.ide.nls.NlsMessages
@@ -8,14 +8,7 @@ import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ide.startup.importSettings.data.Multiple
-import com.intellij.ide.startup.importSettings.models.BuiltInFeature
-import com.intellij.ide.startup.importSettings.models.DummyKeyboardShortcut
-import com.intellij.ide.startup.importSettings.models.FeatureInfo
-import com.intellij.ide.startup.importSettings.models.ILookAndFeel
-import com.intellij.ide.startup.importSettings.models.Keymap
-import com.intellij.ide.startup.importSettings.models.PatchedKeymap
-import com.intellij.ide.startup.importSettings.models.PluginFeature
-import com.intellij.ide.startup.importSettings.models.RecentPathInfo
+import com.intellij.ide.startup.importSettings.models.*
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
@@ -148,7 +141,7 @@ private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
     is BuiltInFeature -> ImportSettingsBundle.message("transfer.setting.feature.built-in")
     is PluginFeature ->
       if (PluginManager.isPluginInstalled(PluginId.getId(feature.pluginId)))
-        ImportSettingsBundle.message("transfer.setting.feature.bundled")
+        ImportSettingsBundle.message("transfer.setting.feature.built-in")
       else null
     else -> null
   }

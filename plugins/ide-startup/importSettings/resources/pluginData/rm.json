@@ -144,7 +144,7 @@
   {
     "vsCodeId": "karunamurti.haml",
     "ideaName": "HAML support",
-    "bundled": true
+    "builtIn": true
   },
   {
     "vsCodeId": "KoichiSasada.vscode-rdbg",
@@ -230,12 +230,12 @@
   {
     "vsCodeId": "Shopify.theme-check-vscode",
     "ideaName": "Liquid support",
-    "bundled": true
+    "builtIn": true
   },
   {
     "vsCodeId": "sianglim.slim",
     "ideaName": "Slim support",
-    "bundled": true
+    "builtIn": true
   },
   {
     "vsCodeId": "sorbet.sorbet-vscode-extension",
