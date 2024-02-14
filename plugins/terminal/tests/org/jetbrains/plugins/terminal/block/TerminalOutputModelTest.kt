@@ -23,21 +23,21 @@ class TerminalOutputModelTest {
   @Test
   fun `trim top block output when editor max capacity reached`() {
     val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
-    val maxCapacity = 100
-    setMaxOutputEditorTextLength(maxCapacity)
+    val maxCapacityKB = 1
+    setNewTerminalOutputCapacityKB(maxCapacityKB)
     val (_, firstBlockOutput) = outputManager.createBlock(
-      "echo foo", TestCommandOutput("foo".repeat(20), listOf(HighlightingInfo(1, 2, green()))))
+      "echo foo", TestCommandOutput("foo".repeat(200), listOf(HighlightingInfo(1, 2, green()))))
     val (_, secondBlockOutput) = outputManager.createBlock(
-      "echo bar", TestCommandOutput("bar".repeat(20), listOf(HighlightingInfo(1, 2, green()))))
-    val expectedOutput = (firstBlockOutput.text + "\n" + secondBlockOutput.text).takeLast(maxCapacity)
+      "echo bar", TestCommandOutput("bar".repeat(200), listOf(HighlightingInfo(1, 2, green()))))
+    val expectedOutput = (firstBlockOutput.text + "\n" + secondBlockOutput.text).takeLast(maxCapacityKB * 1024)
     Assert.assertEquals(expectedOutput, outputManager.document.text)
   }
 
-  private fun setMaxOutputEditorTextLength(@Suppress("SameParameterValue") maxTextLength: Int) {
-    val prevValue = AdvancedSettings.getInt(TERMINAL_EDITOR_MAX_TEXT_LENGTH)
-    AdvancedSettings.setInt(TERMINAL_EDITOR_MAX_TEXT_LENGTH, maxTextLength)
+  private fun setNewTerminalOutputCapacityKB(@Suppress("SameParameterValue") newTerminalOutputCapacityKB: Int) {
+    val prevValue = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB)
+    AdvancedSettings.setInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB, newTerminalOutputCapacityKB)
     Disposer.register(disposableRule.disposable) {
-      AdvancedSettings.setInt(TERMINAL_EDITOR_MAX_TEXT_LENGTH, prevValue)
+      AdvancedSettings.setInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB, prevValue)
     }
   }
 }

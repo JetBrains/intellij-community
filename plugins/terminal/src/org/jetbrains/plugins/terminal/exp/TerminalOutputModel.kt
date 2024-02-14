@@ -194,7 +194,7 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun trimOutput() {
-    val maxCapacity = AdvancedSettings.getInt("terminal.editor.max.text.length")
+    val maxCapacity = getMaxCapacity()
     val textLength = document.textLength
     if (textLength <= maxCapacity) {
       return
@@ -264,6 +264,10 @@ class TerminalOutputModel(val editor: EditorEx) {
   private fun findIntersectionLength(range1: HighlightingInfo, range2: TextRange): Int {
     val intersectionLength = min(range1.endOffset, range2.endOffset) - max(range1.startOffset, range2.startOffset)
     return max(intersectionLength, 0)
+  }
+
+  private fun getMaxCapacity(): Int {
+    return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
   }
 
   interface TerminalOutputListener {
@@ -345,4 +349,4 @@ data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, 
   val withCommand: Boolean = !command.isNullOrEmpty()
 }
 
-internal const val TERMINAL_EDITOR_MAX_TEXT_LENGTH: String = "terminal.editor.max.text.length"
+internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"
