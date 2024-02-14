@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
@@ -41,6 +41,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.*
+import git4idea.ui.branch.dashboard.BranchesTreeComponent.Companion.getSelectedBranches
 import git4idea.ui.branch.dashboard.BranchesTreeComponent.Companion.getSelectedRepositories
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -126,7 +127,9 @@ internal object BranchesDashboardActions {
     @RequiresBackgroundThread
     fun build(e: AnActionEvent?): ActionGroup? {
       val project = e?.project ?: return null
-      val selectedBranches = e.getData(GIT_BRANCHES).orEmpty()
+      @Suppress("UNCHECKED_CAST")
+      val selectionPaths = e.getData(SELECTED_ITEMS) as? Array<TreePath>
+      val selectedBranches = getSelectedBranches(selectionPaths)
       val multipleBranchSelection = selectedBranches.size > 1
       val guessRepo = GitBranchUtil.guessWidgetRepository(project, e.dataContext) ?: return null
       if (multipleBranchSelection) {
@@ -136,8 +139,6 @@ internal object BranchesDashboardActions {
       val branchInfo = selectedBranches.singleOrNull()
       val headSelected = e.getData(GIT_BRANCH_FILTERS).orEmpty().contains(HEAD)
       if (branchInfo != null && !headSelected) {
-        @Suppress("UNCHECKED_CAST")
-        val selectionPaths = e.getData(SELECTED_ITEMS) as? Array<TreePath>
         val selectedRepositories = getSelectedRepositories(branchInfo, selectionPaths).toList().ifEmpty(branchInfo::repositories)
         val selectedRepository = selectedRepositories.singleOrNull() ?: guessRepo
 
@@ -222,6 +223,9 @@ internal object BranchesDashboardActions {
 
   class UpdateSelectedBranchAction : BranchesActionBase(text = messagePointer("action.Git.Update.Selected.text"),
                                                         icon = AllIcons.Actions.CheckOut) {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun update(e: AnActionEvent) {
       val enabledAndVisible = e.project?.let(::hasRemotes) ?: false
       e.presentation.isEnabledAndVisible = enabledAndVisible
@@ -238,12 +242,15 @@ internal object BranchesDashboardActions {
         presentation.description = message("action.Git.Update.Selected.description.already.running")
         return
       }
-      val controller = e.getData(BRANCHES_UI_CONTROLLER)!!
-      val repositories = branches.flatMap(controller::getSelectedRepositories).distinct()
+
+      @Suppress("UNCHECKED_CAST")
+      val selectionPaths = e.getData(SELECTED_ITEMS) as? Array<TreePath>
+      val selectedRepositories =
+        branches.flatMap { branch -> getSelectedRepositories(branch, selectionPaths).ifEmpty(branch::repositories) }.distinct()
       val branchNames = branches.map(BranchInfo::branchName)
       val updateMethodName = GitVcsSettings.getInstance(project).updateMethod.name.toLowerCase()
       presentation.description = message("action.Git.Update.Selected.description", branches.size, updateMethodName)
-      val trackingInfosExist = isTrackingInfosExist(branchNames, repositories)
+      val trackingInfosExist = isTrackingInfosExist(branchNames, selectedRepositories)
       presentation.isEnabled = trackingInfosExist
       if (!trackingInfosExist) {
         presentation.description = message("action.Git.Update.Selected.description.tracking.not.configured", branches.size)
@@ -637,7 +644,7 @@ internal object BranchesDashboardActions {
 
     override fun update(e: AnActionEvent) {
       val controller = e.getData(BRANCHES_UI_CONTROLLER)
-      val branches = e.getData(GIT_BRANCHES)
+      val branches = getBranches(e)
       val project = e.project
       val enabled = project != null && controller != null && !branches.isNullOrEmpty()
       e.presentation.isEnabled = enabled
@@ -645,6 +652,15 @@ internal object BranchesDashboardActions {
       if (enabled) {
         update(e, project!!, branches!!)
       }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun getBranches(e: AnActionEvent): List<BranchInfo>? {
+      if (actionUpdateThread == ActionUpdateThread.EDT) {
+        return e.getData(GIT_BRANCHES)
+      }
+
+      return (e.getData(SELECTED_ITEMS) as? Array<TreePath>)?.let(::getSelectedBranches)
     }
   }
 

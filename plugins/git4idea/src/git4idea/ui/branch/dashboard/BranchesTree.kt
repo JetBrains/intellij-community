@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.DvcsUtil
@@ -210,6 +210,15 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 
   companion object {
+    internal fun getSelectedBranches(selectionPaths: Array<TreePath>?): List<BranchInfo> {
+      val paths = selectionPaths ?: return emptyList()
+      return paths.asSequence()
+        .map(TreePath::getLastPathComponent)
+        .mapNotNull { it as? BranchTreeNode }
+        .mapNotNull { it.getNodeDescriptor().branchInfo }
+        .toList()
+    }
+
     internal fun getSelectedRepositories(branchInfo: BranchInfo, selectionPaths: Array<TreePath>?): Set<GitRepository> {
       val paths = selectionPaths ?: return emptySet()
       return paths.asSequence()
