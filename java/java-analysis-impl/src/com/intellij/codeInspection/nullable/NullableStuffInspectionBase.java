@@ -136,10 +136,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           final String anno = annotated.isDeclaredNotNull ? manager.getDefaultNotNull() : manager.getDefaultNullable();
           final List<String> annoToRemove = annotated.isDeclaredNotNull ? nullables : notNulls;
 
-          /* Android Studio: Disabled. We don't use code generation for @NotNull in Gradle builds,
-             so this is misleading.
           if (!checkNonStandardAnnotations(field, annotated, manager, anno, holder)) return;
-          */
 
           checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
