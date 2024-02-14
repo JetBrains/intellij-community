@@ -18,6 +18,7 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
   private val eventDispatcher = EventDispatcher.create(PropertiesChangeListener::class.java)
   protected abstract val logUiState: S
 
+  @OptIn(ExperimentalStdlibApi::class)
   override fun <T> get(property: VcsLogUiProperty<T>): T {
     if (appSettings.exists(property)) {
       return appSettings[property]
