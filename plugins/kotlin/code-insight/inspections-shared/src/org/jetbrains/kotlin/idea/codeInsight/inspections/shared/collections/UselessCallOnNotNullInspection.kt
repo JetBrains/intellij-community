@@ -20,6 +20,10 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+// TODO: This class is currently only registered for K2 due to bugs in the
+//  K1 implementation of the analysis API.
+//  Once it is fixed, it should be used for both K1 and K2.
+//  See: KT-65376
 class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
     override val uselessFqNames = mapOf(
         topLevelCallableId("kotlin.collections", "orEmpty") to Conversion.Delete,

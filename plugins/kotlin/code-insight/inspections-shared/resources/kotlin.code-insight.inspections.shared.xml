@@ -315,20 +315,5 @@
                      language="kotlin"
                      key="inspection.control.flow.with.empty.body.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.UselessCallOnNotNullInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.useless.call.on.not.null.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections.UselessCallOnCollectionInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.useless.call.on.collection.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>
