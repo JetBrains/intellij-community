@@ -135,42 +135,51 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
     byte[] cryptoHash = PersistentFSContentAccessor.calculateHash(bytes);
     int hash = hashCodeOf(cryptoHash);
     ByteBuffer cryptoHashWrapped = ByteBuffer.wrap(cryptoHash);
-    return hashToContentRecordIdMap.lookupOrInsert(
-      hash,
-      recordId -> {
-        long storageId = contentIdToStorageId(recordId);
-        Boolean recordHasSameCryptoHash = contentStorage.read(storageId, buffer -> {
-          ByteBuffer cryptoHashSlice = buffer.slice(0, CONTENT_HASH_LENGTH);
-          return cryptoHashSlice.equals(cryptoHashWrapped);
-        });
-        return recordHasSameCryptoHash;
-      },
-      _hash -> {
-        ByteArraySequence bytesToStore;
-        int uncompressedSize;
-        if (shouldCompress(bytes)) {
-          bytesToStore = compress(bytes);
-          uncompressedSize = -bytes.length();//sign bit indicates 'compressed data'
-        }
-        else {
-          bytesToStore = bytes;
-          uncompressedSize = bytes.length();
-        }
+    try {
+      return hashToContentRecordIdMap.lookupOrInsert(
+        hash,
+        recordId -> {
+          long storageId = contentIdToStorageId(recordId);
+          Boolean recordHasSameCryptoHash = contentStorage.read(storageId, buffer -> {
+            ByteBuffer cryptoHashSlice = buffer.slice(0, CONTENT_HASH_LENGTH);
+            return cryptoHashSlice.equals(cryptoHashWrapped);
+          });
+          return recordHasSameCryptoHash;
+        },
+        _hash -> {
+          ByteArraySequence bytesToStore;
+          int uncompressedSize;
+          if (shouldCompress(bytes)) {
+            bytesToStore = compress(bytes);
+            uncompressedSize = -bytes.length();//sign bit indicates 'compressed data'
+          }
+          else {
+            bytesToStore = bytes;
+            uncompressedSize = bytes.length();
+          }
 
-        //record: cryptoHash[CONTENT_HASH_LENGTH], uncompressedSize(int32), contentBytes[...]
-        //  uncompressedSize >= 0 => not compressed data, size=uncompressedSize
-        //  uncompressedSize < 0  => compressed data, uncompressed size = -uncompressedSize
-        int totalSize = cryptoHash.length + Integer.BYTES + bytesToStore.length();
+          //record: cryptoHash[CONTENT_HASH_LENGTH], uncompressedSize(int32), contentBytes[...]
+          //  uncompressedSize >= 0 => not compressed data, size=uncompressedSize
+          //  uncompressedSize < 0  => compressed data, uncompressed size = -uncompressedSize
+          int totalSize = cryptoHash.length + Integer.BYTES + bytesToStore.length();
 
-        long storageId = contentStorage.append(
-          buffer -> buffer.put(cryptoHash)
-            .putInt(uncompressedSize)
-            .put(bytesToStore.getInternalBuffer(), bytesToStore.getOffset(), bytesToStore.length()),
-          totalSize
-        );
-        return storageIdToContentId(storageId);
-      }
-    );
+          long storageId = contentStorage.append(
+            buffer -> buffer.put(cryptoHash)
+              .putInt(uncompressedSize)
+              .put(bytesToStore.getInternalBuffer(), bytesToStore.getOffset(), bytesToStore.length()),
+            totalSize
+          );
+          return storageIdToContentId(storageId);
+        }
+      );
+    }
+    catch (IOException | IllegalArgumentException e) {
+      //just add more diagnostic info
+      e.addSuppressed(new IOException(
+        "content[" + bytes.length() + "b], cryptoHash[" + IOUtil.toHexString(cryptoHash) + "], hash(=" + hash + ")"
+      ));
+      throw e;
+    }
   }
 
   @Override
