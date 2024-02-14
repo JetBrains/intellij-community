@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
@@ -76,7 +77,9 @@ abstract class ProjectUsagesCollector : FeatureUsagesCollector() {
       }
     }
     else {
-      getMetrics(project)
+      blockingContext {
+        getMetrics(project)
+      }
     }
   }
 
