@@ -10,12 +10,9 @@ import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmen
 import com.intellij.execution.configurations.ParameterTargetValuePart
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.target.*
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.LanguageRuntimeType.VolumeType
-import com.intellij.execution.target.TargetEnvironment
-import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.java.JavaLanguageRuntimeTypeConstants
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -158,6 +155,25 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     return result
   }
 
+  /**
+   * @param host the hostname the [localPort] is bound to
+   * @param localPort the local port that is listening for the incoming connections
+   * @return the promised value with the host and port the process started on the target may connect to be directed to the local one
+   */
+  fun requestLocalPortBinding(host: String, localPort: Int): TargetValue<HostPort> {
+    val binding = TargetEnvironment.LocalPortBinding(localPort, target = null)
+    request.localPortBindings.add(binding)
+    val result = DeferredTargetValue(HostPort(host, localPort))
+    dependingOnEnvironmentPromise += environmentPromise.then { (environment, targetProgressIndicator) ->
+      if (targetProgressIndicator.isCanceled || targetProgressIndicator.isStopped) {
+        return@then
+      }
+      val resolvedPortBinding = environment.localPortBindings[binding]
+      result.resolve(resolvedPortBinding?.localEndpoint)
+    }
+    return result
+  }
+
   private class Upload(val volume: TargetEnvironment.UploadableVolume, val relativePath: String)
 
   private fun createUploadRoot(volumeDescriptor: VolumeDescriptor, localRootPath: Path): TargetEnvironment.UploadRoot {
@@ -208,11 +224,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
     else {
       if (languageRuntime == null) {
-        throw CantRunException(LangCoreBundle.message("error.message.cannot.find.java.configuration.in.0.target", request.configuration?.displayName))
+        commandLine.setExePath("java")
       }
-
-      val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
-      commandLine.setExePath(joinPath(arrayOf(languageRuntime.homePath, "bin", java)))
+      else {
+        val java = if (platform == Platform.WINDOWS) "java.exe" else "java"
+        commandLine.setExePath(joinPath(arrayOf(languageRuntime.homePath, "bin", java)))
+      }
     }
   }
 
