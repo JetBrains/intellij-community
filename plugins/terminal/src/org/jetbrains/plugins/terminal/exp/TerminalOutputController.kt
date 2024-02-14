@@ -30,7 +30,7 @@ class TerminalOutputController(
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
   private val scraper: ShellCommandOutputScraper = ShellCommandOutputScraper(session)
-  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, focusModel, selectionModel, editor)
+  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(session.colorPalette, outputModel, focusModel, selectionModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 
   private var caretPainter: TerminalCaretPainter? = null

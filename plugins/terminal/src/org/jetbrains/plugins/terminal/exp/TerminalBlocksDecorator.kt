@@ -1,28 +1,33 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.RangeMarkerImpl
-import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.BlockTerminalColors
+import com.intellij.terminal.TerminalColorPalette
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
 import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.getAwtForegroundByIndex
 import org.jetbrains.plugins.terminal.exp.ui.GradientTextureCache
+import java.awt.Font
 import java.awt.Graphics
+import java.awt.Rectangle
 
-class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
+class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
+                              private val outputModel: TerminalOutputModel,
                               private val focusModel: TerminalFocusModel,
                               private val selectionModel: TerminalSelectionModel,
                               private val editor: EditorEx) : TerminalOutputListener {
@@ -62,6 +67,7 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
           Disposer.dispose(it.topInlay)
           Disposer.dispose(it.bottomInlay)
           it.commandToOutputInlay?.let { inlay -> Disposer.dispose(inlay) }
+          it.exitCodeInlay?.let { inlay -> Disposer.dispose(inlay) }
           editor.markupModel.removeHighlighter(it.backgroundHighlighter)
           editor.markupModel.removeHighlighter(it.cornersHighlighter)
         }
@@ -71,6 +77,9 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
       // Highlight the blocks with non-zero exit code as an error
       override fun blockInfoUpdated(block: CommandBlock, newInfo: CommandBlockInfo) {
         updateDecorationState(block)
+        if (newInfo.exitCode != 0) {
+          addExitCodeInlay(block, newInfo.exitCode)
+        }
       }
     })
 
@@ -172,6 +181,46 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
     editor.component.repaint(bounds)
   }
 
+  private fun addExitCodeInlay(block: CommandBlock, exitCode: Int) {
+    val decoration = decorations[block] ?: error("No decoration for block, installDecoration should be called first")
+    val renderer = ExitCodeRenderer(exitCode, JBFont.label().deriveFont(editor.colorsScheme.editorFontSize2D), colorPalette)
+    val inlay = editor.inlayModel.addAfterLineEndElement(block.endOffset, false, renderer)
+    decorations[block] = decoration.copy(exitCodeInlay = inlay)
+  }
+
+  private class ExitCodeRenderer(exitCode: Int,
+                                 private val font: Font,
+                                 private val colorPalette: TerminalColorPalette) : EditorCustomElementRenderer {
+    private val text = "Exit code $exitCode"
+    private val icon = AllIcons.General.Error
+
+    override fun calcWidthInPixels(inlay: Inlay<*>): Int {
+      val fontMetrics = inlay.editor.contentComponent.getFontMetrics(font)
+      return fontMetrics.stringWidth(text) + JBUI.scale(TerminalUi.exitCodeTextIconGap) + icon.iconWidth
+    }
+
+    override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
+      val g2 = g.create()
+      try {
+        val visibleArea = inlay.editor.scrollingModel.visibleArea
+        val textX = visibleArea.x + visibleArea.width - targetRegion.width - JBUI.scale(TerminalUi.cornerToBlockInset + TerminalUi.exitCodeRightInset)
+        val fontMetrics = g2.getFontMetrics(font)
+        val baseLine = SimpleColoredComponent.getTextBaseLine(fontMetrics, targetRegion.height)
+        g2.font = font
+        g2.color = colorPalette.getAwtForegroundByIndex(1) // red color
+        g2.drawString(text, textX, targetRegion.y + baseLine)
+
+        val heightDiff = fontMetrics.height - icon.iconHeight
+        val iconY = targetRegion.y + heightDiff / 2 + heightDiff % 2
+        val iconX = textX + targetRegion.width - icon.iconWidth
+        icon.paintIcon(inlay.editor.contentComponent, g2, iconX, iconY)
+      }
+      finally {
+        g2.dispose()
+      }
+    }
+  }
+
   /** Inlay to just create the space between lines */
   private class EmptyWidthInlayRenderer(val height: Int) : EditorCustomElementRenderer {
     override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
@@ -204,4 +253,5 @@ private data class BlockDecoration(val backgroundHighlighter: RangeHighlighter,
                                    val cornersHighlighter: RangeHighlighter,
                                    val topInlay: Inlay<*>,
                                    val bottomInlay: Inlay<*>,
-                                   val commandToOutputInlay: Inlay<*>?)
+                                   val commandToOutputInlay: Inlay<*>?,
+                                   val exitCodeInlay: Inlay<*>? = null)

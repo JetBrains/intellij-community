@@ -15,6 +15,9 @@ object TerminalUi {
   const val blockArc = 8
   const val blocksGap = 6
 
+  const val exitCodeRightInset = 8
+  const val exitCodeTextIconGap = 4
+
   const val promptTopInset = 11
   const val promptBottomInset = 12
   const val promptToCommandInset = 2
