@@ -160,6 +160,8 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
    * This is an internal function, it's supposed to be used by the platform only.
    */
   public void loadAdditionalRepositories(@NotNull List<@NotNull RawRuntimeModuleRepositoryData> repositories) {
+    if (repositories.isEmpty()) return;
+    
     if (myAdditionalData != null) {
       throw new IllegalStateException("additional repositories may be loaded only once");
     }
