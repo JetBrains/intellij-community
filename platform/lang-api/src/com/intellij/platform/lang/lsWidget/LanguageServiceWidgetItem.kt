@@ -2,6 +2,7 @@
 package com.intellij.platform.lang.lsWidget
 
 import com.intellij.icons.AllIcons
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -65,10 +66,14 @@ abstract class LanguageServiceWidgetItem {
 enum class LanguageServicePopupSection { ForCurrentFile, Other }
 
 
+/**
+ * - When creating an action for [LanguageServiceWidgetItem.createWidgetMainAction], pass item-specific `text` and `icon`
+ * - When creating an action for [LanguageServiceWidgetItem.createWidgetInlineActions], pass only [settingsPageClass]
+ */
 class OpenSettingsAction(
-  text: @NlsActions.ActionText String,
-  icon: Icon,
   private val settingsPageClass: Class<out Configurable>,
+  text: @NlsActions.ActionText String = LangBundle.message("language.services.widget.open.settings.action"),
+  icon: Icon = AllIcons.General.Settings,
 ) : AnAction(text, null, icon), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {
