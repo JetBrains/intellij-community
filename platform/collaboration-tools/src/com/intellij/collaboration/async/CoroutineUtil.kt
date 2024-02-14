@@ -276,15 +276,17 @@ fun <T, K, V> Flow<Iterable<T>>.associateCachingBy(keyExtractor: (T) -> K,
                                                    valueExtractor: CoroutineScope.(T) -> V,
                                                    destroy: suspend V.() -> Unit,
                                                    update: (suspend V.(T) -> Unit)? = null)
-  : Flow<Map<K, V>> = channelFlow {
-  val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
-  launchNow {
-    collect { items ->
-      container.update(items)
+  : Flow<Map<K, V>> = flow {
+  coroutineScope {
+    val container = MappingScopedItemsContainer(this, keyExtractor, hashingStrategy, valueExtractor, destroy, update)
+    launchNow {
+      collect { items ->
+        container.update(items)
+      }
     }
-  }
-  container.mappingState.collect {
-    send(it)
+    container.mappingState.collect {
+      emit(it)
+    }
   }
 }
 
