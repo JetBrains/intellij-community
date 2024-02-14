@@ -3,11 +3,13 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -24,6 +26,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
@@ -50,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
@@ -221,7 +225,15 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       groupBy.setPopup(true);
       groupBy.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
       groupBy.getTemplatePresentation().setText(UsageViewBundle.messagePointer("action.group.by.title"));
+      ConflictOccurenceNavigatorSupport occurenceNavigator = new ConflictOccurenceNavigatorSupport(myTree);
+      AnAction prevOccurenceAction = actionsManager.createPrevOccurenceAction(occurenceNavigator);
+      prevOccurenceAction.registerCustomShortcutSet(myTree, getDisposable());
+      AnAction nextOccurenceAction = actionsManager.createNextOccurenceAction(occurenceNavigator);
+      nextOccurenceAction.registerCustomShortcutSet(myTree, getDisposable());
       DefaultActionGroup toolbarGroup = new DefaultActionGroup(
+        prevOccurenceAction,
+        nextOccurenceAction,
+        new Separator(),
         groupBy,
         actionsManager.createExpandAllHeaderAction(myTree),
         actionsManager.createCollapseAllHeaderAction(myTree)
@@ -478,6 +490,30 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     @NotNull
     public String getPlainText() {
       return myConflictDescription;
+    }
+  }
+  
+  private static class ConflictOccurenceNavigatorSupport extends OccurenceNavigatorSupport {
+
+    public static final Navigatable DUMMY = new Navigatable() {};
+
+    private ConflictOccurenceNavigatorSupport(@NotNull JTree tree) {
+      super(tree);
+    }
+
+    @Override
+    public @NotNull String getNextOccurenceActionName() {
+      return UsageViewBundle.message("action.next.occurrence");
+    }
+
+    @Override
+    public @NotNull String getPreviousOccurenceActionName() {
+      return UsageViewBundle.message("action.previous.occurrence");
+    }
+
+    @Override
+    protected @Nullable Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
+      return node.isLeaf() ? DUMMY : null;
     }
   }
 }
