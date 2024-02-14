@@ -207,6 +207,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return false;
   }
 
+  public boolean changeLine(@NotNull XLineBreakpoint<P> breakpoint, int newLine, @NotNull Project project) {
+    return true;
+  }
+
   public abstract class XLineBreakpointVariant {
     @NotNull
     @Nls
