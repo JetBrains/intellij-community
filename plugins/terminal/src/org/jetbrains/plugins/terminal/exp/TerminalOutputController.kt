@@ -19,7 +19,6 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDI
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
 import java.awt.Font
-import kotlin.math.max
 
 class TerminalOutputController(
   project: Project,
@@ -68,10 +67,10 @@ class TerminalOutputController(
     // The prompt is empty for the initial block, but better to use explicit null here
     val block = outputModel.createBlock(command, prompt)
     if (block.withPrompt) {
-      appendLineToBlock(block, block.prompt!!.text, block.prompt.highlightings)
+      appendLineToBlock(block, block.prompt!!.text, block.prompt.highlightings, block.withCommand)
     }
     if (block.withCommand) {
-      appendLineToBlock(block, command!!, listOf(createCommandHighlighting(block)))
+      appendLineToBlock(block, command!!, listOf(createCommandHighlighting(block)), false)
     }
     if (block.withPrompt || block.withCommand) {
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
@@ -122,7 +121,7 @@ class TerminalOutputController(
       // remove the line with empty prompt
       if (lastLineText.isBlank()) {
         // remove also the line break if it is not the first block
-        val startRemoveOffset = max(block.outputStartOffset, lastLineStart - if (lastLineStart > 0) 1 else 0)
+        val startRemoveOffset = lastLineStart - if (lastLineStart > 0) 1 else 0
         outputModel.deleteDocumentRange(block, TextRange(startRemoveOffset, block.endOffset))
       }
       if (document.getText(block.textRange).isBlank()) {
@@ -209,7 +208,9 @@ class TerminalOutputController(
     else output.highlightings
 
     outputModel.putHighlightings(block, highlightings)
-    editor.document.replaceString(block.outputStartOffset, block.endOffset, output.text)
+    // add leading \n here, because \n is not added after command in `startCommandBlock`
+    val prefix = "\n".takeIf { block.withPrompt || block.withCommand }.orEmpty()
+    editor.document.replaceString(block.outputStartOffset - prefix.length, block.endOffset, prefix + output.text)
     outputModel.trimOutput()
     hyperlinkHighlighter.highlightHyperlinks(block)
 
@@ -234,10 +235,10 @@ class TerminalOutputController(
 
   private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
 
-  private fun appendLineToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>) {
+  private fun appendLineToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>, addTrailingNewLine: Boolean) {
     val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
     outputModel.putHighlightings(block, existingHighlightings + highlightings)
-    editor.document.insertString(block.endOffset, text + "\n")
+    editor.document.insertString(block.endOffset, if (addTrailingNewLine) text + "\n" else text)
   }
 
   /** It is implied that [CommandBlock.command] is not null */
