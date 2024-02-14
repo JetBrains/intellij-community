@@ -23,6 +23,7 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
@@ -176,6 +177,8 @@ public final class VcsLogUiUtil {
 
       Object value = place.getPath(PLACE_KEY);
       if (!(value instanceof Integer commitIndex)) return ActionCallback.REJECTED;
+
+      VcsLogUsageTriggerCollector.triggerPlaceHistoryUsed(myUi.getLogData().getProject());
 
       ActionCallback callback = new ActionCallback();
 
