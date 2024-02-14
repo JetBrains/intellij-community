@@ -984,7 +984,8 @@ private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String
   Supplier { CoreBundle.message(key!!, *params) }
 
 @Synchronized
-internal fun tryReadPluginIdsFromFile(path: Path, log: Logger): Set<PluginId> {
+@ApiStatus.Internal
+fun tryReadPluginIdsFromFile(path: Path, log: Logger): Set<PluginId> {
   try {
     return readPluginIdsFromFile(path)
   }
