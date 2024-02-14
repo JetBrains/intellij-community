@@ -3,6 +3,7 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -42,6 +43,11 @@ abstract class ProductLoadingStrategy {
   }
 
   /**
+   * Returns ID of current [ProductMode][com.intellij.platform.runtime.product.ProductMode].
+   */
+  abstract val currentModeId: String
+
+  /**
    * Adds roots of all modules from the main module group and their dependencies to the classpath of [bootstrapClassLoader].
    */
   abstract fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader)
@@ -71,6 +77,11 @@ abstract class ProductLoadingStrategy {
 }
 
 private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
+  /* This property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of 
+     this module */
+  override val currentModeId: String
+    get() = if (AppMode.isRemoteDevHost()) "backend" else "local_IDE" 
+
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
   }
 

@@ -28,15 +28,19 @@ import kotlin.io.path.extension
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   @OptIn(ExperimentalStdlibApi::class)
-  private val productModules by lazy {
-    val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
-    if (rootModuleName == null) {
-      error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
-    }
+  private val currentMode by lazy {
     val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.LOCAL_IDE.id)
     val currentMode = ProductMode.entries.find { it.id == currentModeId }
     if (currentMode == null) {
       error("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
+    }
+    currentMode
+  }
+  
+  private val productModules by lazy {
+    val rootModuleName = System.getProperty(PLATFORM_ROOT_MODULE_PROPERTY)
+    if (rootModuleName == null) {
+      error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
     }
 
     val rootModule = moduleRepository.getModule(RuntimeModuleId.module(rootModuleName))
@@ -47,6 +51,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     ProductModulesSerialization.loadProductModules(moduleGroupStream, productModulesPath, currentMode, moduleRepository)
   }
+  
+  override val currentModeId: String
+    get() = currentMode.id
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
     val mainGroupClassPath = productModules.mainModuleGroup.includedModules.flatMapTo(LinkedHashSet()) {

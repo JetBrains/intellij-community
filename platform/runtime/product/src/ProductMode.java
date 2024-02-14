@@ -17,8 +17,13 @@ public enum ProductMode {
    * Indicates that this process doesn't perform heavy tasks like code analysis, and takes necessary information from another process.
    * Currently, this is used by JetBrains Client process connected to a remote development host or CodeWithMe session.
    */
-  FRONTEND("frontend");
-  
+  FRONTEND("frontend"),
+  /**
+   * Indicates that this process doesn't perform heavy tasks like code analysis, and takes necessary information from another process.
+   * Currently, this is used by JetBrains Client process connected to a remote development host or CodeWithMe session.
+   */
+  BACKEND("backend");
+
   private final String myId;
 
   ProductMode(@NotNull @NonNls String id) {
