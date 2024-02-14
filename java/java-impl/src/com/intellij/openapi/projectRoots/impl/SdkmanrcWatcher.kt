@@ -60,7 +60,7 @@ data class SdkmanCandidate(val target: String,
 
   fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
-    if ("version $version" !in versionString && "version \"$version" !in versionString) return false
+    if (version !in versionString) return false
 
     val variant = when {
       vendor == "adpt" && flavour == "hs" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
