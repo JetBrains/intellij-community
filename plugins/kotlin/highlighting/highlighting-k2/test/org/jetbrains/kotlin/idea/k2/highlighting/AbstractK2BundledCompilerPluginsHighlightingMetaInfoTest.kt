@@ -2,13 +2,11 @@
 package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
@@ -34,6 +32,17 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
     override fun setUp() {
         super.setUp()
 
+        ModuleRootModificationUtil.updateModel(module) { model ->
+            // annotations for lombok plugin
+            MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES)
+
+            // annotations for serialization plugin
+            MavenDependencyUtil.addFromMaven(model, KOTLINX_SERIALIZATION_CORE_MAVEN_COORDINATES)
+
+            // annotations for parcelize plugin
+            MavenDependencyUtil.addFromMaven(model, PARCELIZE_RUNTIME_MAVEN_COORDINATES)
+        }
+
         // N.B. We don't use PathMacroContributor here because it's too late to register at this point
         PathMacros.getInstance().setMacro(testDirPlaceholder, testDataDirectory.toString())
     }
@@ -51,23 +60,6 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
         withCustomCompilerOptions(file.text, project, module) {
             ensureFilesResolved(file)
             super.doMultiFileTest(files, globalDirectives)
-        }
-    }
-
-    override fun getDefaultProjectDescriptor(): ProjectDescriptorWithStdlibSources {
-        return object : ProjectDescriptorWithStdlibSources() {
-            override fun configureModule(module: Module, model: ModifiableRootModel) {
-                super.configureModule(module, model)
-
-                // annotations for lombok plugin
-                MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES)
-
-                // annotations for serialization plugin
-                MavenDependencyUtil.addFromMaven(model, KOTLINX_SERIALIZATION_CORE_MAVEN_COORDINATES)
-
-                // annotations for parcelize plugin
-                MavenDependencyUtil.addFromMaven(model, PARCELIZE_RUNTIME_MAVEN_COORDINATES)
-            }
         }
     }
 }
