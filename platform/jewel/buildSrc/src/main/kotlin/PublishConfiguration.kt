@@ -1,11 +1,13 @@
 @file:Suppress("UnstableApiUsage", "UnusedImports")
 
+import org.gradle.api.Project
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.maven
+import java.io.File
 
-internal fun PublishingExtension.configureJewelRepositories() {
+internal fun PublishingExtension.configureJewelRepositories(project: Project) {
     repositories {
         maven("https://packages.jetbrains.team/maven/p/kpm/public") {
             name = "Space"
@@ -13,6 +15,10 @@ internal fun PublishingExtension.configureJewelRepositories() {
                 username = System.getenv("MAVEN_SPACE_USERNAME")
                 password = System.getenv("MAVEN_SPACE_PASSWORD")
             }
+        }
+
+        maven(project.rootProject.layout.buildDirectory.dir("maven-test")) {
+            name = "LocalTest"
         }
     }
 }

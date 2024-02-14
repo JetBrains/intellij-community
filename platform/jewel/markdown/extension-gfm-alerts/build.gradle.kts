@@ -17,3 +17,7 @@ publicApiValidation {
     // We don't foresee changes to the data models for now
     excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.extensions.github.alerts.Alert\\$.*")
 }
+
+publishing.publications.named<MavenPublication>("main") {
+    artifactId = "jewel-markdown-${project.name}"
+}

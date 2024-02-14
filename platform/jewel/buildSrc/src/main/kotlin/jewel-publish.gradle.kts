@@ -19,7 +19,7 @@ val javadocJar by tasks.registering(Jar::class) {
 }
 
 publishing {
-    configureJewelRepositories()
+    configureJewelRepositories(project)
 
     publications {
         register<MavenPublication>("main") {
