@@ -15,7 +15,7 @@ import java.util.List;
 
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 14);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 15);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -37,7 +37,8 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     "DbSETablesContributor",
     "UrlSearchEverywhereContributor",
     "Vcs.Git", "GitSearchEverywhereContributor",
-    "RiderOnboardingSearchEverywhereContributor"
+    "RiderOnboardingSearchEverywhereContributor",
+    "CalculatorSEContributor"
   ));
 
   private static final List<String> ourTabs = Arrays.asList("FileSearchEverywhereContributor",
@@ -47,6 +48,8 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
                                                             "SymbolSearchEverywhereContributor",
                                                             "UrlSearchEverywhereContributor",
                                                             "DbSETablesContributor",
+                                                            "TextSearchContributor",
+                                                            "CalculatorSEContributor",
                                                             "Vcs.Git",
                                                             "third.party");
   public static final StringEventField CURRENT_TAB_FIELD = EventFields.String("currentTabId", ourTabs);

@@ -40,13 +40,13 @@ internal class CalculatorSEContributorFactory : SearchEverywhereContributorFacto
 
 /**
  * @param value The resulting value of the given [expression]
- * @param expression The query typed by the user, for example 2+2
+ * @param expression The query typed by the user, for example, 2+2
  */
 data class EvaluationResult(val value: String, val expression: String)
 
 private class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {
 
-  override fun getSearchProviderId(): String = javaClass.name
+  override fun getSearchProviderId(): String = "CalculatorSEContributor"
   override fun getGroupName(): String = LangBundle.message("search.everywhere.calculator.group.name")
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = false
