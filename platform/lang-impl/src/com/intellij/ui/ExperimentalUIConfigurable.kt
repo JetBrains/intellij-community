@@ -115,12 +115,9 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
   open fun getExploreNewUiUrl(): String = EXPLORE_NEW_UI_URL_TEMPLATE.format("idea")
   open fun getExploreNewUiLabel(): @Nls String = IdeBundle.message("new.ui.explore.new.ui")
   open fun onSubmitFeedback(): Unit = NewUIFeedbackDialog(null, false).show()
-  open fun getRedefinedHelpTopic(): String? = null
   open fun onApply() {}
 
-  final override fun getHelpTopic(): String? {
-    return getFirstEnabledConfigurable()?.getRedefinedHelpTopic()
-  }
+  final override fun getHelpTopic() = "New_UI"
 
   final override fun apply() {
     getFirstEnabledConfigurable()?.onApply()
