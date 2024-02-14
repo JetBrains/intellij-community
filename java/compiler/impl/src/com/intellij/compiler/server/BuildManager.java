@@ -35,6 +35,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -955,7 +956,7 @@ public final class BuildManager implements Disposable {
         }
 
         try {
-          Future<?> buildFuture = BackgroundTaskUtil.submitTask(projectTaskQueue, project, () -> {
+          Future<?> buildFuture = BackgroundTaskUtil.submitTask(projectTaskQueue, ProjectDisposableService.getInstance(project), () -> {
             Throwable execFailure = null;
             try {
               if (project.isDisposed()) {
@@ -1218,7 +1219,7 @@ public final class BuildManager implements Disposable {
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue, @Nullable WSLDistribution projectWslDistribution) {
 
     // launching the build process from projectTaskQueue ensures that no other build process for this project is currently running
-    return BackgroundTaskUtil.submitTask(projectTaskQueue, project, () -> {
+    return BackgroundTaskUtil.submitTask(projectTaskQueue, ProjectDisposableService.getInstance(project), () -> {
       if (project.isDisposed()) {
         return null;
       }
@@ -1985,6 +1986,18 @@ public final class BuildManager implements Disposable {
     }
   }
 
+  @Service(Service.Level.PROJECT)
+  private static final class ProjectDisposableService implements Disposable {
+    static @NotNull ProjectDisposableService getInstance(@NotNull Project project) {
+      return project.getService(ProjectDisposableService.class);
+    }
+
+    @Override
+    public void dispose() {
+      // Nothing.
+    }
+  }
+
   static final class BuildManagerStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
@@ -2045,7 +2058,7 @@ public final class BuildManager implements Disposable {
             return;
           }
 
-          BackgroundTaskUtil.submitTask(project, () -> {  // TODO Proper plugin-level disposable.
+          BackgroundTaskUtil.submitTask(ProjectDisposableService.getInstance(project), () -> {
             if (project.isDisposed()) {
               return;
             }
@@ -2118,7 +2131,7 @@ public final class BuildManager implements Disposable {
       });
 
       String projectPath = getProjectPath(project);
-      Disposer.register(project, () -> {
+      Disposer.register(ProjectDisposableService.getInstance(project), () -> {
         BuildManager buildManager = getInstance();
         buildManager.cancelPreloadedBuilds(projectPath);
         buildManager.myProjectDataMap.remove(projectPath);
@@ -2129,7 +2142,7 @@ public final class BuildManager implements Disposable {
       getInstance().runCommand(() -> {
         try {
           BackgroundTaskUtil
-            .submitTask(project, () -> {  // TODO Proper plugin-level disposable.
+            .submitTask(ProjectDisposableService.getInstance(project), () -> {
               updateUsageFile(project, getInstance().getProjectSystemDirectory(project));
             })
             .awaitCompletion();
