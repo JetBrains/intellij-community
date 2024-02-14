@@ -7,7 +7,10 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -408,7 +411,12 @@ class WSLDistributionTest {
 
     return when (this) {
       WslTestStrategy.Legacy -> mockWslDistribution.patchCommandLine(cmd, null, options)
-      WslTestStrategy.Ijent -> passGeneralCommandLineThroughWslIjentManager(mockWslDistribution, cmd, options)
+      WslTestStrategy.Ijent -> ProgressManager.getInstance().runProcess(
+        Computable {
+          passGeneralCommandLineThroughWslIjentManager(mockWslDistribution, cmd, options)
+        },
+        EmptyProgressIndicator()  // These particular tests don't require any really cancellable progress indicator.
+      )
     }
   }
 

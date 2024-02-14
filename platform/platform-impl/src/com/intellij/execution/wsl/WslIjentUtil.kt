@@ -8,6 +8,7 @@ import com.intellij.execution.ijent.IjentChildProcessAdapter
 import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ijent.IjentChildProcess
@@ -17,7 +18,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import java.io.IOException
 
 /**
@@ -31,7 +31,7 @@ fun fetchLoginShellEnv(
   project: Project?,
   rootUser: Boolean,
 ): Map<String, String> =
-  runBlocking {
+  runBlockingCancellable {
     wslIjentManager.getIjentApi(wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
   }
 
@@ -59,7 +59,7 @@ fun runProcessBlocking(
   processBuilder: ProcessBuilder,
   options: WSLCommandLineOptions,
   ptyOptions: LocalPtyOptions?,
-): Process = runBlocking {
+): Process = runBlockingCancellable {
   val ijentApi = wslIjentManager.getIjentApi(wslDistribution, project, options.isSudo)
 
   val args = processBuilder.command().toMutableList()
