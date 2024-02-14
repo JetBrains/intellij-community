@@ -597,8 +597,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     }
   }
 
-  private var myScrollValue = 0
-
   private val myEventHandler = ComponentEventHandler()
 
   private val myTimeComponents = ArrayList<JLabel>()
@@ -646,32 +644,12 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myScrollPane.border = null
     mainPanel.add(myScrollPane)
 
-    myScrollPane.verticalScrollBar.addAdjustmentListener {
-      val value = it.value
-      if (myScrollValue == 0 && value > 0 || myScrollValue > 0 && value == 0) {
-        myScrollValue = value
-        repaint()
-      }
-      else {
-        myScrollValue = value
-      }
-    }
-
     myEventHandler.add(this)
   }
 
   fun updateLaf() {
     updateComponents()
     iterateComponents { it.updateLaf() }
-  }
-
-  override fun paintComponent(g: Graphics) {
-    super.paintComponent(g)
-    if (myScrollValue > 0) {
-      g.color = JBColor.border()
-      val y = myScrollPane.y - 1
-      g.drawLine(0, y, width, y)
-    }
   }
 
   fun add(notification: Notification, singleSelectionHandler: SingleTextSelectionHandler) {
