@@ -208,7 +208,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
       out.close()
 
       context.addDistFile(DistFile(
-        relativePath = "$PLUGINS_DIRECTORY/plugin-classpath.txt",
+        relativePath = PLUGIN_CLASSPATH,
         content = InMemoryDistFileContent(byteOut.toByteArray()),
         os = supportedDist.os,
         arch = supportedDist.arch,
@@ -672,6 +672,8 @@ private suspend fun buildPlatformSpecificPluginResources(
 }
 
 private const val PLUGINS_DIRECTORY = "plugins"
+const val PLUGIN_CLASSPATH: String = "$PLUGINS_DIRECTORY/plugin-classpath.txt"
+
 private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = compareBy { it.mainModule }
 
 internal class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)

@@ -170,7 +170,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         writePluginClassPathHeader(out, isJarOnly = !isUnpackedDist, pluginEntries.size)
         out.write(data)
         out.close()
-        Files.write(runDir.resolve("plugins").resolve("plugin-classpath.txt"), byteOut.toByteArray())
+        Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
       }
     }
 

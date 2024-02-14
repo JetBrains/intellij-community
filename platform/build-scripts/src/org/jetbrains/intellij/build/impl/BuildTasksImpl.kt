@@ -1196,6 +1196,7 @@ private fun crossPlatformZip(macX64DistDir: Path,
         !relPath.startsWith("help/") &&
         relPath != "license/launcher-third-party-libraries.html" &&
         relPath != MODULE_DESCRIPTORS_JAR_PATH && //todo merge module-descriptors.jar for different OS into a single one instead
+        relPath != PLUGIN_CLASSPATH &&
         !relPath.startsWith("bin/remote-dev-server") &&
         relPath != "license/remote-dev-server.html"
       }
