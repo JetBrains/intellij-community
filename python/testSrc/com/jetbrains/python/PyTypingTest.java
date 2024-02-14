@@ -4471,6 +4471,41 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  public void testMixingUpConcatenateAndTypeVarTuple() {
+    doTest("(int, int, x: int, y: str) -> int",
+           """
+             from typing import TypeVarTuple, ParamSpec, Callable, Any, Concatenate, reveal_type
+                          
+             Ts = TypeVarTuple('Ts')
+             P = ParamSpec('P')
+                          
+                          
+             def f(prefix: tuple[*Ts], fn: Callable[P, Any]) -> Callable[Concatenate[*Ts, P], int]:
+                 ...
+                          
+             def g(x: int, y: str) -> bool:
+                 ...
+                          
+             expr = f((1, 2), g)
+             """);
+  }
+
+  public void testParamSpecInConcatenateMappedToAnotherParamSpec() {
+    doTest("(int, ParamSpec(\"P1\")) -> Any",
+           """
+             from typing import Callable, Any, ParamSpec, Concatenate
+                                
+             P1 = ParamSpec('P1')
+             P2 = ParamSpec('P2')
+                          
+             def f(fn: Callable[P1, Any]):
+                 expr = g(fn)
+                          
+             def g(fn: Callable[P2, Any]) -> Callable[Concatenate[int, P2], Any]:
+                ...
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
