@@ -224,6 +224,14 @@ class ToolWindowPane internal constructor(
           val component1 = (if (info.isSplit) c.firstComponent else c.secondComponent) as InternalDecoratorImpl
           state.addSplitProportion(info, component1, c)
           setComponent(component1, anchor, getRegisteredMutableInfoOrLogError(component1).weight)
+          // detach removed component from the splitter
+          // makes a difference for rem-dev scenarios, see BackendServerToolWindowManager.ensureShowing
+          if (info.isSplit) {
+            c.secondComponent = null
+          }
+          else {
+            c.firstComponent = null
+          }
         }
         else {
           setComponent(null, anchor, 0f)
