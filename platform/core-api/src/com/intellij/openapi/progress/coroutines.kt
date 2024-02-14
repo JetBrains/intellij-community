@@ -30,7 +30,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
 /**
  * Checks whether the coroutine is active, and throws [CancellationException] if the coroutine is canceled.
  * This function might suspend if the coroutine is paused,
- * or yield if the coroutine has a lower priority while higher priority task is running.
+ * or yield if the coroutine has a lower priority while a higher priority task is running.
  *
  * @throws CancellationException if the coroutine is canceled; the exception is also thrown if coroutine is canceled while suspended
  * @see ensureActive
@@ -58,7 +58,7 @@ suspend fun checkCancelled() {
  * - Instead of [ProgressManager.checkCanceled] use [ensureActive] in a coroutine.
  * - [ModalityState] is not expected to be used explicitly. Instead of `invokeAndWait` or `invokeLater` use
  *   `withContext(`[Dispatchers.EDT][com.intellij.openapi.application.EDT]`) {}` in a coroutine.
- *   If actually needed (twink twice), use [contextModality] to obtain the context [ModalityState].
+ *   If actually needed (think twice), use [contextModality] to obtain the context [ModalityState].
  * - To invoke older code, which cannot be modified but relies on [ProgressManager.checkCanceled] or
  *   [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait],
  *   use [blockingContext] to switch from a coroutine to the blocking context.
@@ -71,7 +71,7 @@ suspend fun checkCancelled() {
  * ### Non-cancellable `runBlocking`
  *
  * If this function is invoked in a thread without a current job or indicator, then it may block just as a regular [runBlocking].
- * To prevent such usage an exception is logged.
+ * To prevent such a usage, an exception is logged.
  *
  * What to do with that exception? Options:
  * - Make sure this method is called under a context job.
@@ -322,7 +322,7 @@ private fun <T> blockingContextInner(currentContext: CoroutineContext, action: (
 }
 
 /**
- * Runs blocking (e.g. Java) code under indicator, which is canceled if current Job is canceled.
+ * Runs blocking (e.g., Java) code under indicator, which is canceled if the current Job is canceled.
  *
  * This function switches from suspending context to indicator context.
  *
@@ -351,7 +351,7 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
 }
 
 /**
- * Runs blocking (e.g. Java) code under indicator, which is canceled if [current][Cancellation.currentJob] Job is canceled.
+ * Runs blocking (e.g., Java) code under indicator, which is canceled if [current][Cancellation.currentJob] Job is canceled.
  *
  * This function switches from [blockingContext] to indicator context.
  *
