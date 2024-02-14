@@ -20,7 +20,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.dependencies.ScanningRequestToken;
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,7 @@ final class UnindexedFilesFinder {
   private final UpdatableIndex<FileType, Void, FileContent, ?> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
   private final @Nullable Predicate<? super IndexedFile> myForceReindexingTrigger;
-  private final @NotNull ProjectIndexableFilesFilterHolder myIndexableFilesFilterHolder;
+  private final FilesFilterScanningHandler myFilterHandler;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
   private final ScanningRequestToken indexingRequest;
@@ -142,7 +141,9 @@ final class UnindexedFilesFinder {
                        IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
                        @Nullable Predicate<? super IndexedFile> forceReindexingTrigger,
-                       @Nullable VirtualFile root, ScanningRequestToken indexingRequest) {
+                       @Nullable VirtualFile root,
+                       ScanningRequestToken indexingRequest,
+                       @NotNull FilesFilterScanningHandler filterHandler) {
     this.explanationLogger = explanationLogger;
     myProject = project;
     myFileBasedIndex = fileBasedIndex;
@@ -156,7 +157,7 @@ final class UnindexedFilesFinder {
 
     myShouldProcessUpToDateFiles = ContainerUtil.find(myStateProcessors, p -> p.shouldProcessUpToDateFiles()) != null;
 
-    myIndexableFilesFilterHolder = fileBasedIndex.getIndexableFilesFilterHolder();
+    myFilterHandler = filterHandler;
     this.indexingRequest = indexingRequest;
   }
 
@@ -172,7 +173,7 @@ final class UnindexedFilesFinder {
 
     if (TRUST_INDEXING_FLAG) {
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
-        myIndexableFilesFilterHolder.addFileId(FileBasedIndex.getFileId(file), myProject);
+        myFilterHandler.addFileId(myProject, FileBasedIndex.getFileId(file));
         return new UnindexedFileStatusBuilder(applicationMode).build();
       }
     }
@@ -189,7 +190,7 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
-      myIndexableFilesFilterHolder.addFileId(inputId, myProject);
+      myFilterHandler.addFileId(myProject, inputId);
 
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         boolean wasInvalidated = false;

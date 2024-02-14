@@ -31,7 +31,7 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
 
   fun addFileId(fileId: Int, project: Project)
 
-  fun entireProjectUpdateStarted(project: Project)
+  fun resetFileIds(project: Project)
 
   fun removeFile(fileId: Int)
 
@@ -68,7 +68,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     return getFilter(project)
   }
 
-  override fun entireProjectUpdateStarted(project: Project) {
+  override fun resetFileIds(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
     getFilter(project)?.resetFileIds()

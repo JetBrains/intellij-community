@@ -28,6 +28,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
+import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
 import com.intellij.util.indexing.dependencies.FutureScanningRequestToken;
@@ -37,6 +38,7 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.diagnostic.*;
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
@@ -429,6 +431,10 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myFutureScanningRequestToken.markSuccessful();
     projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken);
 
+    ProjectIndexableFilesFilterHolder filterHolder = myIndex.getIndexableFilesFilterHolder();
+    FilesFilterScanningHandler filterHandler = new UpdatingFilesFilterScanningHandler(filterHolder);
+    filterHandler.scanningStarted(project, isFullIndexUpdate());
+
     List<IndexableFileScanner.@NotNull ScanSession> sessions =
       ContainerUtil.map(IndexableFileScanner.EP_NAME.getExtensionList(), scanner -> scanner.startSession(project));
 
@@ -482,7 +488,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
           scanningStatistics.startFileChecking();
           for (Pair<VirtualFile, List<VirtualFile>> rootAndFiles : rootsAndFiles) {
             UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
-                                                                   rootAndFiles.getFirst(), scanningRequest);
+                                                                   rootAndFiles.getFirst(), scanningRequest, filterHandler);
             var rootIterator = new SingleProviderIterator(project, indicator, provider, finder,
                                                           scanningStatistics, perProviderSink);
             if (!rootIterator.mayBeUsed()) {
@@ -527,6 +533,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       synchronized (allTasksFinished) {
         allTasksFinished.set(true);
         projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate());
+        filterHandler.scanningCompleted();
       }
     }
   }
@@ -554,7 +561,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
     myIndex.loadIndexes();
-    myIndex.filesUpdateStarted(myProject, isFullIndexUpdate());
+    myIndex.filesUpdateStarted();
     IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {

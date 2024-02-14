@@ -875,10 +875,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myChangedFilesCollector.getValue();
   }
 
-  void filesUpdateStarted(Project project, boolean isFullUpdate) {
-    if (isFullUpdate) {
-      myIndexableFilesFilterHolder.entireProjectUpdateStarted(project);
-    }
+  void filesUpdateStarted() {
     ensureStaleIdsDeleted();
     getChangedFilesCollector().ensureUpToDate();
   }
