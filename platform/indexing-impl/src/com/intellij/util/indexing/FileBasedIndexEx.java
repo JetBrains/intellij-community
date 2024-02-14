@@ -244,6 +244,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         IntSet fileIdsInner = new IntOpenHashSet();
         trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
         index.getData(dataKey).forEach((id, value) -> {
+          ProgressManager.checkCanceled();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return true;
           fileIdsInner.add(id);
           return true;
