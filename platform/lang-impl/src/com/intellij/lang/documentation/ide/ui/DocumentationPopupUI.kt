@@ -3,6 +3,7 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentInnerPadding
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentOuterPadding
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
@@ -38,7 +39,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.function.Supplier
 import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.JPanel
 
 internal class DocumentationPopupUI(
   private val project: Project,
@@ -91,10 +92,11 @@ internal class DocumentationPopupUI(
     component = DocumentationPopupPane(ui.scrollPane).also { pane ->
       pane.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
       pane.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
-      updateLocationLabelPadding(ui.locationLabel, corner)
+      updatePaddings(corner)
       corner.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent?) {
-          updateLocationLabelPadding(ui.locationLabel, corner)
+          updatePaddings(corner)
+          popupUpdateFlow.tryEmit("toolbar size change")
         }
       })
     }
@@ -147,10 +149,22 @@ internal class DocumentationPopupUI(
     }
   }
 
-  private fun updateLocationLabelPadding(label: JLabel, toolbar: JComponent) {
-    label.border = JBUI.Borders.empty(
-      2, 2 + contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
+  private fun updatePaddings(toolbar: JComponent) {
+    ui.locationLabel.border = JBUI.Borders.empty(
+      2, 2 + contentOuterPadding + contentInnerPadding,
       2 + contentOuterPadding, 2 + (toolbar.width / JBUIScale.scale(1f)).toInt())
+    val editorPreferredSize = ui.editorPane.preferredSize
+    val viewPanel = ui.scrollPane.viewport.view as JPanel
+    if (editorPreferredSize.height < toolbar.height * 2
+        && !ui.locationLabel.isVisible
+        && editorPreferredSize.width + toolbar.width > JBUIScale.scale(DocumentationHtmlUtil.docPopupMinWidth)
+    ) {
+      viewPanel.border = JBUI.Borders.empty(
+        0, 0, 0, (toolbar.width / JBUIScale.scale(1f)).toInt() - contentOuterPadding - contentInnerPadding - 10)
+    }
+    else {
+      viewPanel.border = JBUI.Borders.empty()
+    }
   }
 
   private fun detachUI(): DocumentationUI {

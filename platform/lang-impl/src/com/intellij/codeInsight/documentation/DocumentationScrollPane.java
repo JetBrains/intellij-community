@@ -46,10 +46,12 @@ public final class DocumentationScrollPane extends JBScrollPane {
       public Dimension getPreferredSize() {
         JBViewport parent = (JBViewport)getParent();
         Dimension minimumSize = editorPane.getMinimumSize();
-        int width = Math.max(Math.max(minimumSize.width, parent.getWidth()), scale(200));
+        Insets insets = getInsets();
+        int insetWidth = insets.left + insets.right;
+        int width = Math.max(Math.max(minimumSize.width, parent.getWidth() - insetWidth), scale(200));
         Dimension editorPaneSize = editorPane.getPackedSize(width, width);
         Dimension locationLabelSize = locationLabel.isVisible() ? locationLabel.getPreferredSize() : new Dimension();
-        return new Dimension(width, editorPaneSize.height + locationLabelSize.height);
+        return new Dimension(width + insetWidth, editorPaneSize.height + locationLabelSize.height + insets.top + insets.bottom);
       }
     };
     panel.add(editorPane, BorderLayout.CENTER);
@@ -65,23 +67,25 @@ public final class DocumentationScrollPane extends JBScrollPane {
 
     JScrollBar hBar = getHorizontalScrollBar();
     JScrollBar vBar = getVerticalScrollBar();
-
+    int insetWidth = 0;
     if (view instanceof DocumentationEditorPane editorPane) {
       paneSize = editorPane.getPackedSize(minWidth, maxWidth);
     }
     else if (view instanceof JPanel panel) {
       Component[] components = panel.getComponents();
+      Insets viewInsets = ((JPanel)view).getInsets();
+      insetWidth = viewInsets.left + viewInsets.right;
       Dimension editorPaneSize = ((DocumentationEditorPane)components[0]).getPackedSize(minWidth, maxWidth);
       int locationLabelSizeHeight = components.length > 1 && panel.getComponents()[1].isVisible()
                                     ? panel.getComponents()[1].getPreferredSize().height
                                     : Math.max(JBUI.scale(getContentOuterPadding() - getContentSpacing()), 0);
-      paneSize = new Dimension(editorPaneSize.width + vBar.getPreferredSize().width,
-                               editorPaneSize.height + locationLabelSizeHeight);
+      paneSize = new Dimension(editorPaneSize.width + vBar.getPreferredSize().width + insetWidth,
+                               editorPaneSize.height + locationLabelSizeHeight + viewInsets.top + viewInsets.bottom);
     }
     else {
       throw new IllegalStateException(view.getClass().getName());
     }
-    boolean hasHBar = paneSize.width - vBar.getPreferredSize().width > maxWidth && hBar.isOpaque();
+    boolean hasHBar = paneSize.width - vBar.getPreferredSize().width - insetWidth > maxWidth && hBar.isOpaque();
     int hBarHeight = hasHBar ? hBar.getPreferredSize().height : 0;
 
     boolean hasVBar = paneSize.height + hBarHeight > maxHeight && vBar.isOpaque();
