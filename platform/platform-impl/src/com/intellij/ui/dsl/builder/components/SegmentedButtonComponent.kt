@@ -21,7 +21,6 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.VerticalComponentGap
-import com.intellij.ui.dsl.builder.impl.SegmentedButtonImpl
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -45,7 +44,13 @@ import kotlin.math.roundToInt
 private const val PLACE = "SegmentedButton"
 
 @ApiStatus.Internal
-internal class SegmentedButtonComponent<T>(private val segmentedButton: SegmentedButtonImpl<T>) : JPanel(GridLayout()) {
+class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.ui.dsl.builder.SegmentedButton.ItemPresentation) : JPanel(GridLayout()) {
+
+  var items: Collection<T> = emptyList()
+    set(value) {
+      field = value
+      rebuild()
+    }
 
   var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {
@@ -117,7 +122,7 @@ internal class SegmentedButtonComponent<T>(private val segmentedButton: Segmente
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
       g2.paint = getSegmentedButtonBorderPaint(this, true)
-      val selectedButton = components.getOrNull(segmentedButton.items.indexOf(selectedItem))
+      val selectedButton = components.getOrNull(items.indexOf(selectedItem))
       if (selectedButton != null) {
         val r = selectedButton.bounds
         JBInsets.addTo(r, JBUI.insets(DarculaUIUtil.LW.unscaled.toInt()))
@@ -133,8 +138,8 @@ internal class SegmentedButtonComponent<T>(private val segmentedButton: Segmente
     removeAll()
     val presentationFactory = PresentationFactory()
     val builder = RowsGridBuilder(this)
-    for (item in segmentedButton.items) {
-      val presentation = segmentedButton.presentations[item]!!
+    for (item in items) {
+      val presentation = presentation(item)
       val action = SegmentedButtonAction(this, item, presentation.text, presentation.toolTipText, presentation.icon, presentation.enabled)
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
 
@@ -147,13 +152,12 @@ internal class SegmentedButtonComponent<T>(private val segmentedButton: Segmente
   }
 
   private fun setSelectedState(item: T?, selectedState: Boolean) {
-    val componentIndex = segmentedButton.items.indexOf(item)
+    val componentIndex = items.indexOf(item)
     val segmentedButton = components.getOrNull(componentIndex) as? SegmentedButton<*>
     segmentedButton?.selectedState = selectedState
   }
 
   private fun moveSelection(step: Int) {
-    val items = segmentedButton.items
     if (items.isEmpty()) {
       return
     }
@@ -243,7 +247,7 @@ internal class SegmentedButtonComponent<T>(private val segmentedButton: Segmente
   }
 
   @ApiStatus.Internal
-  internal interface ModelListener : EventListener {
+  interface ModelListener : EventListener {
     fun onItemSelected() {}
 
     fun onRebuild() {}
