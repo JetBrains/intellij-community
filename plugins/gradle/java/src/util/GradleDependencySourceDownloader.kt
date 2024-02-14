@@ -90,7 +90,7 @@ object GradleDependencySourceDownloader {
       }
     }
     ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
-                               callback, ProgressExecutionMode.NO_PROGRESS_ASYNC, false, userData)
+                               callback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData)
     return resultWrapper
   }
 
