@@ -628,8 +628,6 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/intellij.c.clangdBridge.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/intellij.c.clangdBridge.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/plugin/intellij.c.clangdBridge.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/clangdBridge/plugin/intellij.c.clangdBridge.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/debugger/intellij.c.debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/debugger/intellij.c.debugger.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.api/intellij.rml.dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.api/intellij.rml.dfa.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.ide/intellij.rml.dfa.ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa.ide/intellij.rml.dfa.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/doxygen/intellij.c.doxygen.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/plugin/intellij.c.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/plugin/intellij.c.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/testing/intellij.c.testing.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/testing/intellij.c.testing.iml" />
@@ -640,6 +638,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-config/intellij.cidr.clangConfig.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-config/intellij.cidr.clangConfig.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-config/plugin/intellij.cidr.clangConfig.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-config/plugin/intellij.cidr.clangConfig.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/intellij.cidr.clangFormat.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/intellij.cidr.clangFormat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/lang/intellij.cidr.clangFormat.lang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/lang/intellij.cidr.clangFormat.lang.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/plugin/intellij.cidr.clangFormat.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-clang-format/plugin/intellij.cidr.clangFormat.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/intellij.cidr.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common-testFramework/intellij.cidr.common.testFramework.iml" />
@@ -663,6 +662,11 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/intellij.cidr.workspaceModel.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/intellij.cidr.workspaceModel.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/ide/intellij.cidr.workspaceModel.ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/ide/intellij.cidr.workspaceModel.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/devtools/impl/intellij.rml.dfa.devtools.impl.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/devtools/impl/intellij.rml.dfa.devtools.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/devtools/intellij.rml.dfa.devtools.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/devtools/intellij.rml.dfa.devtools.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/impl/intellij.rml.dfa.impl.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/impl/intellij.rml.dfa.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/intellij.rml.dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/intellij.rml.dfa.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/plugin/intellij.rml.dfa.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/plugin/intellij.rml.dfa.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/all-hallows-eve-color-scheme/intellij.color.scheme.all_hallows_eve.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/blackboard-color-scheme/intellij.color.scheme.blackboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" filepath="$PROJECT_DIR$/plugins/color-schemes/cobalt-color-scheme/intellij.color.scheme.cobalt.iml" />
