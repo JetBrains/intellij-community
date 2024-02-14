@@ -252,6 +252,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
               // Hence, we override `ContentEncoding` plugin config from `httpClient` with zero weights.
               deflate(0.0F)
               gzip(0.0F)
+              identity(1.0F)
             }
           }
 
@@ -292,9 +293,9 @@ private suspend fun downloadFileToCacheLocation(url: String,
           }
 
           val statusCode = response.status.value
+          val headers = response.headers
           if (statusCode != 200) {
             val builder = StringBuilder("Cannot download\n")
-            val headers = response.headers
             headers.names()
               .asSequence()
               .sorted()
@@ -311,12 +312,20 @@ private suspend fun downloadFileToCacheLocation(url: String,
             throw BuildDependenciesDownloader.HttpStatusException(builder.toString(), statusCode, url)
           }
 
-          val contentLength = response.headers.get(HttpHeaders.ContentLength)?.toLongOrNull() ?: -1
+          val contentLength = headers.get(HttpHeaders.ContentLength)?.toLongOrNull() ?: -1
           check(contentLength > 0) { "Header '${HttpHeaders.ContentLength}' is missing or zero for $url" }
-          val fileSize = Files.size(tempFile)
-          check(fileSize == contentLength) {
-            "Wrong file length after downloading uri '$url' to '$tempFile': expected length $contentLength " +
-            "from ${HttpHeaders.ContentLength} header, but got $fileSize on disk"
+          val contentEncoding = headers.get(HttpHeaders.ContentEncoding)
+          if (contentEncoding != null && contentEncoding != "identity") {
+            // There's a `Content-Encoding` in response while we explicitly asked server not to use it.
+            // We cannot compare `Content-Length` with local file size,
+            // so we rely only on the fact that the encoder would've thrown an exception when decoding incorrect body.
+          }
+          else {
+            val fileSize = Files.size(tempFile)
+            check(fileSize == contentLength) {
+              "Wrong file length after downloading uri '$url' to '$tempFile': expected length $contentLength " +
+              "from ${HttpHeaders.ContentLength} header, but got $fileSize on disk"
+            }
           }
           Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
         }
