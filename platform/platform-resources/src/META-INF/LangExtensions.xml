@@ -1381,7 +1381,7 @@
                             order="after Position, after AIAssistant, before LineSeparator"/>
     <registryKey key="language.service.status.bar.widget"
                  description="Show Language Services status bar widget"
-                 defaultValue="false"/>
+                 defaultValue="true"/>
     <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
                             order="after Position"/>
     <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory"
