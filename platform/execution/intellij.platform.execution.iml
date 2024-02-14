@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
   </component>
 </module>
