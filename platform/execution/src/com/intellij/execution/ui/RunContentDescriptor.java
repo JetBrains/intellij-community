@@ -14,6 +14,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
+import com.jetbrains.rd.util.lifetime.Lifetime;
+import com.jetbrains.rd.util.lifetime.LifetimeDefinition;
+import com.jetbrains.rd.util.reactive.IProperty;
+import com.jetbrains.rd.util.reactive.IPropertyView;
+import com.jetbrains.rd.util.reactive.Property;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +35,8 @@ public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final @TabTitle String myDisplayName;
-  private final Icon myIcon;
+  private final IProperty<@TabTitle String> myDisplayNameView = new Property<>(null);
+  private final IProperty<Icon> myIconView = new Property<>(null);
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
@@ -49,6 +54,8 @@ public class RunContentDescriptor implements Disposable {
 
   @Nullable
   private final Runnable myActivationCallback;
+
+  private final LifetimeDefinition myLifetimeDef;
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
@@ -69,8 +76,8 @@ public class RunContentDescriptor implements Disposable {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
-    myDisplayName = displayName;
-    myIcon = icon;
+    myDisplayNameView.set(displayName);
+    myIconView.set(icon);
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
     myActivationCallback = activationCallback;
     if (myExecutionConsole != null) {
@@ -81,6 +88,8 @@ public class RunContentDescriptor implements Disposable {
     if (processHandler != null) {
       setContentToolWindowId(processHandler.getUserData(CONTENT_TOOL_WINDOW_ID_KEY));
     }
+
+    myLifetimeDef = Lifetime.Companion.getEternal().createNested();
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -126,6 +135,7 @@ public class RunContentDescriptor implements Disposable {
 
   @Override
   public void dispose() {
+    myLifetimeDef.terminate(true);
     myExecutionConsole = null;
     myComponent = null;
     myProcessHandler = null;
@@ -134,12 +144,27 @@ public class RunContentDescriptor implements Disposable {
 
   /**
    * Returns the icon to show in the Run or Debug toolwindow tab corresponding to this content.
-   *
+   * <p>
+   * Note: This method will return a current snapshot of the icon value. It may change during content execution.
+   * Use {@link RunContentDescriptor#getIconView} to obtain a reactive property to track icon changes.
+   * </p>
    * @return the icon to show, or null if the executor icon should be used.
    */
   @Nullable
   public Icon getIcon() {
-    return myIcon;
+    return myIconView.getValue();
+  }
+
+  /**
+   * Returns the reactive view for an icon to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the icon view that can be observed for the most recent icon value.
+   */
+  public IPropertyView<Icon> getIconView() {
+    return myIconView;
+  }
+
+  protected void setIcon(@Nullable Icon icon) {
+    myIconView.setValue(icon);
   }
 
   @Nullable
@@ -159,9 +184,29 @@ public class RunContentDescriptor implements Disposable {
     return myComponent;
   }
 
+  /**
+   * Returns the title to show in the Run or Debug toolwindow tab corresponding to this content.
+   * <p>
+   * Note: This method will return a current snapshot of the title value. It may change during content execution.
+   * Use {@link RunContentDescriptor#getDisplayNameView} to obtain a reactive property to track title changes.
+   * </p>
+   * @return the title to show, or null if the executor name should be used.
+   */
   @BuildEventsNls.Title
   public String getDisplayName() {
-    return myDisplayName;
+    return myDisplayNameView.getValue();
+  }
+
+  /**
+   * Returns the reactive view for a title to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the title view that can be observed for the most recent title value.
+   */
+  public IPropertyView<@Nullable @BuildEventsNls.Title String> getDisplayNameView() {
+    return myDisplayNameView;
+  }
+
+  protected void setDisplayName(@Nullable @TabTitle String displayName) {
+    myDisplayNameView.setValue(displayName);
   }
 
   public String getHelpId() {
@@ -278,5 +323,9 @@ public class RunContentDescriptor implements Disposable {
 
   public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
     myReusePolicy = reusePolicy;
+  }
+
+  public Lifetime getLifetime() {
+    return myLifetimeDef;
   }
 }

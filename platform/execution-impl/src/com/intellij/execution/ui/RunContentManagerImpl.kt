@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.util.launchOnUi
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
@@ -263,7 +264,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
     val content: Content?
     if (oldDescriptor == null) {
-      content = createNewContent(descriptor, executor)
+      content = createNewContent(descriptor)
     }
     else {
       content = oldDescriptor.attachedContent!!
@@ -276,20 +277,28 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     content.setPreferredFocusedComponent(descriptor.preferredFocusComputable)
     content.putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor)
     content.putUserData(EXECUTOR_KEY, executor)
-    content.displayName = descriptor.displayName
+
+    descriptor.displayNameView.advise(descriptor.lifetime) {
+      descriptor.lifetime.launchOnUi {
+        content.displayName = it
+      }
+    }
+
     descriptor.setAttachedContent(content)
     val toolWindow = getToolWindowManager().getToolWindow(toolWindowId)
     val processHandler = descriptor.processHandler
     if (processHandler != null) {
       val processAdapter = object : ProcessAdapter() {
         override fun startNotified(event: ProcessEvent) {
-          UIUtil.invokeLaterIfNeeded {
-            content.icon = getLiveIndicator(descriptor.icon)
-            var icon = toolWindowIdToBaseIcon[toolWindowId]
-            if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
-              icon = loadIconCustomVersionOrScale(icon = icon, size = 20)
+          descriptor.iconView.advise(descriptor.lifetime) {
+            UIUtil.invokeLaterIfNeeded {
+              content.icon = getLiveIndicator(it)
+              var icon = toolWindowIdToBaseIcon[toolWindowId]
+              if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
+                icon = loadIconCustomVersionOrScale(icon = icon, size = 20)
+              }
+              toolWindow!!.setIcon(getLiveIndicator(icon))
             }
-            toolWindow!!.setIcon(getLiveIndicator(icon))
           }
         }
 
@@ -298,6 +307,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
             val manager = getContentManagerByToolWindowId(toolWindowId) ?: return@invokeLaterIfProjectAlive
             val alive = isAlive(manager)
             setToolWindowIcon(alive, toolWindow!!)
+            // Since it's a terminated state, it's okay to stick with the last available one
             val icon = descriptor.icon
             content.icon = if (icon == null) executor.disabledIcon else IconLoader.getTransparentIcon(icon)
           }
@@ -307,6 +317,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       val disposer = content.disposer
       if (disposer != null) {
         Disposer.register(disposer, Disposable { processHandler.removeProcessListener(processAdapter) })
+      }
+    } else {
+      descriptor.iconView.advise(descriptor.lifetime) {
+        descriptor.lifetime.launchOnUi {
+          content.icon = it ?: executor.toolWindowIcon
+        }
       }
     }
 
@@ -703,11 +719,11 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
   return descriptor?.contentToolWindowId ?: executor.toolWindowId
 }
 
-private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
+private fun createNewContent(descriptor: RunContentDescriptor): Content {
   val content = ContentFactory.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
   if (AdvancedSettings.getBoolean("start.run.configurations.pinned")) content.isPinned = true
-  content.icon = descriptor.icon ?: executor.toolWindowIcon
+
   return content
 }
 
