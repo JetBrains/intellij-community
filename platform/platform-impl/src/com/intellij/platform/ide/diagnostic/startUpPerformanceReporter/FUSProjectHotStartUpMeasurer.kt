@@ -85,14 +85,11 @@ object FUSProjectHotStartUpMeasurer {
     class MarkupRestoredEvent(val fileId: Int) : Event
     class FirstEditorEvent(
       val sourceOfSelectedEditor: SourceOfSelectedEditor,
-      val file: VirtualFile
-    ) : Event {
-      val time: Long = System.nanoTime()
-    }
+      val file: VirtualFile,
+      val time: Long
+    ) : Event
 
-    class NoMoreEditorsEvent : Event {
-      val time: Long = System.nanoTime()
-    }
+    class NoMoreEditorsEvent(val time: Long) : Event
 
     data object ResetProjectPathEvent : Event
     data object IdeStarterStartedEvent : Event
@@ -199,22 +196,22 @@ object FUSProjectHotStartUpMeasurer {
     if (!currentThreadContext().isProperContext()) {
       return
     }
-    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file))
+    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime()))
   }
 
-  suspend fun firstOpenedUnknownEditor(file: VirtualFile) {
+  suspend fun firstOpenedUnknownEditor(file: VirtualFile, nanoTime: Long) {
     if (!isProperContext()) return
-    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file))
+    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.UnknownEditor, file, nanoTime))
   }
 
-  suspend fun openedReadme(readmeFile: VirtualFile) {
+  suspend fun openedReadme(readmeFile: VirtualFile, nanoTime: Long) {
     if (!isProperContext()) return
-    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile))
+    channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime))
   }
 
-  suspend fun reportNoMoreEditorsOnStartup() {
+  suspend fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
     if (!isProperContext()) return
-    channel.trySend(Event.NoMoreEditorsEvent())
+    channel.trySend(Event.NoMoreEditorsEvent(nanoTime))
   }
 
   private data class LastHandledEvent(val event: Event.FUSReportableEvent, val durationReportedToFUS: Duration)

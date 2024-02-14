@@ -217,7 +217,7 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
           }
         }
         finally {
-          FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup()
+          FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
         }
       }
 
@@ -422,7 +422,7 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   val composite = editorComponent.currentWindow?.selectedComposite ?: return
   val editor = (composite.selectedEditor as? TextEditor)?.editor
   if (editor == null) {
-    FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file)
+    FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file, System.nanoTime())
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
@@ -545,7 +545,7 @@ private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
       (project.serviceAsync<FileEditorManager>() as FileEditorManagerEx).openFile(readme, FileEditorOpenOptions(requestFocus = true))
 
       readme.putUserData(README_OPENED_ON_START_TS, Instant.now())
-      FUSProjectHotStartUpMeasurer.openedReadme(readme)
+      FUSProjectHotStartUpMeasurer.openedReadme(readme, System.nanoTime())
     }
   }
 }
