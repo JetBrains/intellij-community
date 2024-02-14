@@ -4,13 +4,10 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.error
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-import com.intellij.collaboration.ui.util.swingAction
-import com.intellij.ide.BrowserUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.data.GitLabHttpStatusError.HttpStatusErrorType
 import org.jetbrains.plugins.gitlab.api.data.asGitLabStatusError
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDataException
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.net.ConnectException
 import javax.swing.Action
@@ -31,7 +28,6 @@ internal class GitLabMergeRequestErrorStatusPresenter(
           HttpStatusErrorType.UNKNOWN -> CollaborationToolsBundle.message("http.request.error") + "\n" + actualError.error
         }
       }
-      is GitLabMergeRequestDataException.EmptySourceProject -> error.localizedMessage
       else -> error.localizedMessage
     }
   }
@@ -44,9 +40,6 @@ internal class GitLabMergeRequestErrorStatusPresenter(
           HttpStatusErrorType.INVALID_TOKEN -> accountVm.loginAction()
           HttpStatusErrorType.UNKNOWN -> null
         }
-      }
-      is GitLabMergeRequestDataException.EmptySourceProject -> swingAction(GitLabBundle.message("group.GitLab.Open.In.Browser.text")) {
-        BrowserUtil.browse(error.url)
       }
       else -> reloadAction
     }
