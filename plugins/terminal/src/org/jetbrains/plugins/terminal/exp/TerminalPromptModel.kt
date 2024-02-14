@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.ui.AwtTransformers
 import org.jetbrains.plugins.terminal.TerminalUtil
@@ -18,14 +19,17 @@ class TerminalPromptModel(private val session: BlockTerminalSession) {
   private val listeners: MutableList<TerminalPromptStateListener> = CopyOnWriteArrayList()
 
   var renderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
+    @RequiresEdt
+    get
     private set
 
   init {
     session.addCommandListener(object : ShellCommandListener {
       override fun promptStateUpdated(newState: TerminalPromptState) {
+        val updatedInfo = calculateRenderingInfo(newState)
         runInEdt {
-          renderingInfo = calculateRenderingInfo(newState)
-          listeners.forEach { it.promptStateUpdated(renderingInfo) }
+          renderingInfo = updatedInfo
+          listeners.forEach { it.promptStateUpdated(updatedInfo) }
         }
       }
     })
