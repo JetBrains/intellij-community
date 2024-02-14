@@ -68,6 +68,10 @@ public class ConsoleViewContentType {
     myTextAttributesKey = textAttributesKey;
   }
 
+  public String getName() {
+    return myName;
+  }
+
   public String toString() {
     return myName;
   }
