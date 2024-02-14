@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -19,9 +20,7 @@ import javax.swing.JPopupMenu
 import javax.swing.MenuSelectionManager
 
 class TerminalFocusModel(private val project: Project,
-                         private val blockTerminalView: BlockTerminalView,
-                         private val outputView: TerminalOutputView,
-                         private val promptView: TerminalPromptView) {
+                         private val terminalView: BlockTerminalView) {
   /** True, if focus is inside the terminal component */
   var isActive: Boolean = true
     private set(value) {
@@ -35,35 +34,38 @@ class TerminalFocusModel(private val project: Project,
 
   init {
     val listener = AWTEventListener {
-      if (UIUtil.isFocusAncestor(blockTerminalView.component)) {
+      if (UIUtil.isFocusAncestor(terminalView.component)) {
         isActive = true  // a simple case - focused component is descendant of terminal parent component
       }
       else {
         // consider active if a menu is invoked on some component inside the terminal
         val menu = MenuSelectionManager.defaultManager().selectedPath.firstOrNull() as? JPopupMenu
-        isActive = UIUtil.isDescendingFrom(menu, blockTerminalView.component)
+        isActive = UIUtil.isDescendingFrom(menu, terminalView.component)
       }
     }
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.FOCUS_EVENT_MASK)
-    Disposer.register(blockTerminalView) {
+    Disposer.register(terminalView) {
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
 
-    promptView.preferredFocusableComponent.addFocusListener(object : FocusAdapter() {
-      override fun focusGained(e: FocusEvent?) {
-        listeners.forEach { it.promptFocused() }
-      }
-    })
+    // Set the prompt view listener later, because prompt view is not initialized yet at this moment
+    invokeLater {
+      terminalView.promptView.preferredFocusableComponent.addFocusListener(object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+          listeners.forEach { it.promptFocused() }
+        }
+      })
+    }
   }
 
   @RequiresEdt
   fun focusOutput() {
-    requestFocus(outputView.preferredFocusableComponent)
+    requestFocus(terminalView.outputView.preferredFocusableComponent)
   }
 
   @RequiresEdt
   fun focusPrompt() {
-    requestFocus(promptView.preferredFocusableComponent)
+    requestFocus(terminalView.promptView.preferredFocusableComponent)
   }
 
   fun addListener(listener: TerminalFocusListener, disposable: Disposable? = null) {

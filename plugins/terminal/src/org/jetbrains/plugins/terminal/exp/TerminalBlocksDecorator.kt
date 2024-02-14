@@ -6,18 +6,28 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.RangeMarkerImpl
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.BlockTerminalColors
+import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
+import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
+import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
 import org.jetbrains.plugins.terminal.exp.ui.GradientTextureCache
 import java.awt.Graphics
 
 class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
-                              private val editor: EditorEx) : TerminalOutputModel.TerminalOutputListener {
+                              private val focusModel: TerminalFocusModel,
+                              private val selectionModel: TerminalSelectionModel,
+                              private val editor: EditorEx) : TerminalOutputListener {
+  private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
+
   private val gradientCache: GradientTextureCache = GradientTextureCache(
     scheme = editor.colorsScheme,
     colorStartKey = BlockTerminalColors.BLOCK_BACKGROUND_START,
@@ -37,10 +47,65 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
       isGreedyToRight = true
       customRenderer = TerminalRightAreaRenderer()
     }
+
+    outputModel.addListener(object : TerminalOutputListener {
+      override fun blockFinalized(block: CommandBlock) {
+        decorations[block]?.let {
+          it.backgroundHighlighter.isGreedyToRight = false
+          it.cornersHighlighter.isGreedyToRight = false
+          (it.bottomInlay as RangeMarkerImpl).isStickingToRight = false
+        }
+      }
+
+      override fun blockRemoved(block: CommandBlock) {
+        decorations[block]?.let {
+          Disposer.dispose(it.topInlay)
+          Disposer.dispose(it.bottomInlay)
+          it.commandToOutputInlay?.let { inlay -> Disposer.dispose(inlay) }
+          editor.markupModel.removeHighlighter(it.backgroundHighlighter)
+          editor.markupModel.removeHighlighter(it.cornersHighlighter)
+        }
+        decorations.remove(block)
+      }
+
+      // Highlight the blocks with non-zero exit code as an error
+      override fun blockInfoUpdated(block: CommandBlock, newInfo: CommandBlockInfo) {
+        updateDecorationState(block)
+      }
+    })
+
+    // Highlight the selected blocks
+    selectionModel.addListener(object : TerminalSelectionListener {
+      override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
+        for (block in oldSelection) {
+          updateDecorationState(block)
+        }
+        updateSelectionDecorationState(newSelection)
+      }
+    })
+
+    // Mark selected blocks as inactive when the terminal loses the focus.
+    // Remove inactive state when the terminal receives focus.
+    focusModel.addListener(object : TerminalFocusListener {
+      override fun activeStateChanged(isActive: Boolean) {
+        // Remove inactive state with a delay to make it after selected blocks change.
+        // Because otherwise, the old selected block will first become active, and then the selection will be removed.
+        // So, it will cause blinking. But with delay, the selection will be removed first, and it won't become active.
+        Alarm().addRequest(Runnable {
+          if (!editor.isDisposed) {
+            updateSelectionDecorationState(selectionModel.selectedBlocks)
+          }
+        }, 150)
+      }
+    })
   }
 
   @RequiresEdt
   fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false) {
+    if (decorations[block] != null) {
+      return
+    }
+
     // add additional empty space on top of the block, if it is the first block
     val topInset = TerminalUi.blockTopInset + if (isFirstBlock) TerminalUi.blocksGap else 0
     val topRenderer = EmptyWidthInlayRenderer(topInset)
@@ -65,15 +130,38 @@ class TerminalBlocksDecorator(private val outputModel: TerminalOutputModel,
     cornersHighlighter.isGreedyToRight = true
 
     val decoration = BlockDecoration(bgHighlighter, cornersHighlighter, topInlay, bottomInlay, commandToOutputInlay)
-    outputModel.putDecoration(block, decoration)
-    outputModel.addBlockState(block, DefaultBlockDecorationState(gradientCache))
+    decorations[block] = decoration
+    setDecorationState(block, DefaultBlockDecorationState(gradientCache))
   }
 
-  override fun blockDecorationStateChanged(block: CommandBlock,
-                                           oldStates: List<BlockDecorationState>,
-                                           newStates: List<BlockDecorationState>) {
-    val decoration = outputModel.getDecoration(block) ?: return
-    val state = newStates.maxByOrNull { it.priority } ?: return
+  private fun updateDecorationState(block: CommandBlock) {
+    val state = calculateDecorationState(block)
+    setDecorationState(block, state)
+  }
+
+  private fun updateSelectionDecorationState(selectedBlocks: List<CommandBlock>) {
+    val state = calculateSelectionDecorationState()
+    for (block in selectedBlocks) {
+      setDecorationState(block, state)
+    }
+  }
+
+  private fun calculateDecorationState(block: CommandBlock): BlockDecorationState {
+    return if (selectionModel.selectedBlocks.contains(block)) {
+      calculateSelectionDecorationState()
+    }
+    else if (outputModel.getBlockInfo(block).let { it != null && it.exitCode != 0 }) {
+      ErrorBlockDecorationState()
+    }
+    else DefaultBlockDecorationState(gradientCache)
+  }
+
+  private fun calculateSelectionDecorationState(): BlockDecorationState {
+    return if (focusModel.isActive) SelectedBlockDecorationState() else InactiveSelectedBlockDecorationState()
+  }
+
+  private fun setDecorationState(block: CommandBlock, state: BlockDecorationState) {
+    val decoration = decorations[block] ?: error("No decoration for block, installDecoration should be called first")
     with(decoration) {
       backgroundHighlighter.customRenderer = state.backgroundRenderer
       cornersHighlighter.customRenderer = state.cornersRenderer

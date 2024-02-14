@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.Alarm
 import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.exp.TerminalFocusModel.TerminalFocusListener
@@ -39,21 +38,6 @@ class TerminalSelectionController(
     focusModel.addListener(object : TerminalFocusListener {
       override fun promptFocused() {
         clearSelection()   // clear selection if user selected the prompt using the mouse
-      }
-
-      /**
-       * Mark selected blocks as inactive when the terminal loses the focus.
-       * Remove inactive state when the terminal receives focus.
-       */
-      override fun activeStateChanged(isActive: Boolean) {
-        // Remove inactive state with a delay to make it after selected blocks change.
-        // Because otherwise, the old selected block will first become active, and then the selection will be removed.
-        // So, it will cause blinking. But with delay, the selection will be removed first, and it won't become active.
-        Alarm().addRequest(Runnable {
-          if (!outputModel.editor.isDisposed) {
-            applyInactiveSelectionDecoration(isActive)
-          }
-        }, 150)
       }
     })
     textSelectionModel.addSelectionListener(object : SelectionListener {
@@ -135,7 +119,6 @@ class TerminalSelectionController(
   }
 
   override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
-    applyActiveSelectionDecoration(oldSelection, newSelection)
     if (newSelection.isNotEmpty()) {
       textSelectionModel.removeSelection()
       focusModel.focusOutput()
@@ -202,29 +185,6 @@ class TerminalSelectionController(
       }
       val offset = MathUtil.clamp(scrollOffset, 0, editor.contentComponent.height)
       editor.scrollingModel.scrollVertically(offset)
-    }
-  }
-
-  private fun applyActiveSelectionDecoration(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
-    for (block in oldSelection) {
-      if (!newSelection.contains(block)) {
-        outputModel.removeBlockState(block, SelectedBlockDecorationState.NAME)
-        outputModel.removeBlockState(block, InactiveSelectedBlockDecorationState.NAME)
-      }
-    }
-    for (block in newSelection) {
-      outputModel.addBlockState(block, SelectedBlockDecorationState())
-    }
-  }
-
-  private fun applyInactiveSelectionDecoration(isActive: Boolean) {
-    for (block in selectedBlocks) {
-      if (isActive) {
-        outputModel.removeBlockState(block, InactiveSelectedBlockDecorationState.NAME)
-      }
-      else {
-        outputModel.addBlockState(block, InactiveSelectedBlockDecorationState())
-      }
     }
   }
 

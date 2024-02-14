@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.RangeMarkerImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
@@ -20,9 +19,8 @@ import kotlin.math.min
 
 class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
-  private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
-  private val blockStates: MutableMap<CommandBlock, List<BlockDecorationState>> = HashMap()
+  private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
   private var allHighlightingsSnapshot: AllHighlightingsSnapshot? = null
 
   private val document: Document = editor.document
@@ -57,11 +55,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     // restrict previous block expansion
     if (lastBlock != null) {
       lastBlock.range.isGreedyToRight = false
-      decorations[lastBlock]?.let {
-        it.backgroundHighlighter.isGreedyToRight = false
-        it.cornersHighlighter.isGreedyToRight = false
-        (it.bottomInlay as RangeMarkerImpl).isStickingToRight = false
-      }
+      listeners.forEach { it.blockFinalized(lastBlock) }
     }
   }
 
@@ -73,19 +67,11 @@ class TerminalOutputModel(val editor: EditorEx) {
       deleteDocumentRangeInHighlightings(blocks[blockInd], TextRange(block.startOffset, block.endOffset))
     }
 
-    decorations[block]?.let {
-      Disposer.dispose(it.topInlay)
-      Disposer.dispose(it.bottomInlay)
-      it.commandToOutputInlay?.let { inlay -> Disposer.dispose(inlay) }
-      editor.markupModel.removeHighlighter(it.backgroundHighlighter)
-      editor.markupModel.removeHighlighter(it.cornersHighlighter)
-    }
-
     blocks.remove(block)
-    decorations.remove(block)
     highlightings.remove(block)
     allHighlightingsSnapshot = null
-    blockStates.remove(block)
+
+    listeners.forEach { it.blockRemoved(block) }
 
     // Remove the text after removing the highlightings because removing text will trigger rehighlight
     // and there should be no highlightings at this moment.
@@ -130,16 +116,6 @@ class TerminalOutputModel(val editor: EditorEx) {
   fun getBlocksSize(): Int = blocks.size
 
   @RequiresEdt
-  fun getDecoration(block: CommandBlock): BlockDecoration? {
-    return decorations[block]
-  }
-
-  @RequiresEdt
-  fun putDecoration(block: CommandBlock, decoration: BlockDecoration) {
-    decorations[block] = decoration
-  }
-
-  @RequiresEdt
   internal fun getHighlightingsSnapshot(): AllHighlightingsSnapshot {
     var snapshot: AllHighlightingsSnapshot? = allHighlightingsSnapshot
     if (snapshot == null) {
@@ -161,29 +137,14 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun getBlockState(block: CommandBlock): List<BlockDecorationState> {
-    return blockStates[block] ?: emptyList()
+  fun setBlockInfo(block: CommandBlock, info: CommandBlockInfo) {
+    blockInfos[block] = info
+    listeners.forEach { it.blockInfoUpdated(block, info) }
   }
 
   @RequiresEdt
-  fun addBlockState(block: CommandBlock, state: BlockDecorationState) {
-    val curStates = blockStates[block] ?: listOf()
-    if (curStates.find { it.name == state.name } == null) {
-      updateBlockStates(block, curStates, curStates.toMutableList() + state)
-    }
-  }
-
-  @RequiresEdt
-  fun removeBlockState(block: CommandBlock, stateName: String) {
-    val curStates = blockStates[block]
-    if (curStates?.find { it.name == stateName } != null) {
-      updateBlockStates(block, curStates, curStates.filter { it.name != stateName })
-    }
-  }
-
-  private fun updateBlockStates(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {
-    blockStates[block] = newStates
-    listeners.forEach { it.blockDecorationStateChanged(block, oldStates, newStates) }
+  fun getBlockInfo(block: CommandBlock): CommandBlockInfo? {
+    return blockInfos[block]
   }
 
   @RequiresEdt
@@ -266,7 +227,10 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   interface TerminalOutputListener {
     fun blockRemoved(block: CommandBlock) {}
-    fun blockDecorationStateChanged(block: CommandBlock, oldStates: List<BlockDecorationState>, newStates: List<BlockDecorationState>) {}
+
+    /** Block length is finalized, so block bounds won't expand if the text is added before or after the block. */
+    fun blockFinalized(block: CommandBlock) {}
+    fun blockInfoUpdated(block: CommandBlock, newInfo: CommandBlockInfo) {}
   }
 }
 
@@ -342,5 +306,7 @@ data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, 
   val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
   val withCommand: Boolean = !command.isNullOrEmpty()
 }
+
+data class CommandBlockInfo(val exitCode: Int)
 
 internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

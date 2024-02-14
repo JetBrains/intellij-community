@@ -29,7 +29,8 @@ import kotlin.math.min
 class TerminalOutputView(
   private val project: Project,
   session: BlockTerminalSession,
-  settings: JBTerminalSystemSettingsProviderBase
+  settings: JBTerminalSystemSettingsProviderBase,
+  focusModel: TerminalFocusModel
 ) : Disposable {
   val controller: TerminalOutputController
   val component: JComponent
@@ -50,7 +51,7 @@ class TerminalOutputView(
 
   init {
     editor = createEditor(settings)
-    controller = TerminalOutputController(project, editor, session, settings)
+    controller = TerminalOutputController(project, editor, session, settings, focusModel)
     component = TerminalOutputPanel()
 
     controller.addDocumentListener(object : DocumentListener {

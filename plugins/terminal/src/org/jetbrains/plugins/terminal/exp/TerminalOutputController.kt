@@ -25,11 +25,12 @@ class TerminalOutputController(
   private val editor: EditorEx,
   private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,
+  focusModel: TerminalFocusModel
 ) : TerminalModel.TerminalListener {
   val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   val selectionModel: TerminalSelectionModel = TerminalSelectionModel(outputModel)
   private val scraper: ShellCommandOutputScraper = ShellCommandOutputScraper(session)
-  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, editor)
+  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(outputModel, focusModel, selectionModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 
   private var caretPainter: TerminalCaretPainter? = null
@@ -127,8 +128,8 @@ class TerminalOutputController(
       if (document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
       }
-      else if (exitCode != 0) {
-        outputModel.addBlockState(block, ErrorBlockDecorationState())
+      else {
+        outputModel.setBlockInfo(block, CommandBlockInfo(exitCode))
       }
     }
   }
@@ -217,9 +218,7 @@ class TerminalOutputController(
     // Install decorations lazily, only if there is some text.
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
     // This hack can be solved by debouncing the update text requests.
-    if (outputModel.getDecoration(block) == null
-        && output.text.isNotBlank()
-        && output.text.trim() != "%") {
+    if (output.text.isNotBlank() && output.text.trim() != "%") {
       blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
     }
 

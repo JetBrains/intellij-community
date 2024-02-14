@@ -36,10 +36,10 @@ class BlockTerminalView(
 ) : TerminalContentView, TerminalCommandExecutor {
   private val controller: BlockTerminalController
   private val selectionController: TerminalSelectionController
-  private val focusModel: TerminalFocusModel
+  private val focusModel: TerminalFocusModel = TerminalFocusModel(project, this)
 
-  private val outputView: TerminalOutputView = TerminalOutputView(project, session, settings)
-  private val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
+  val outputView: TerminalOutputView = TerminalOutputView(project, session, settings, focusModel)
+  val promptView: TerminalPromptView = TerminalPromptView(project, settings, session, this)
   private var alternateBufferView: SimpleTerminalView? = null
 
   override val component: JComponent = BlockTerminalPanel()
@@ -53,7 +53,6 @@ class BlockTerminalView(
     }
 
   init {
-    focusModel = TerminalFocusModel(project, this, outputView, promptView)
     selectionController = TerminalSelectionController(focusModel, outputView.controller.selectionModel, outputView.controller.outputModel)
     controller = BlockTerminalController(project, session, outputView.controller, promptView.controller, selectionController, focusModel)
 
