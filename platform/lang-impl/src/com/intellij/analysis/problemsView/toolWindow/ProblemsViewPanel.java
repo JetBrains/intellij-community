@@ -224,18 +224,11 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myPanel = new JPanel(new BorderLayout());
     JScrollPane scrollPane = createScrollPane(centerComponent, true);
     if (ExperimentalUI.isNewUI()) {
-      scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
-        int orientation = myToolbar.getOrientation();
-        Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
-                                                          : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
-        Border innerBorder = i != null ? JBUI.Borders.empty(i)
-                                       : JBUI.Borders.empty(2);
-
-        Border border = event.getAdjustable().getValue() != 0 ? JBUI.Borders.compound(new CustomLineBorder(myToolbarInsets), innerBorder)
-                                                              : innerBorder;
-        myToolbar.getComponent().setBorder(border);
-        myToolbar.getComponent().repaint();
-      });
+      int orientation = myToolbar.getOrientation();
+      Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
+                                                        : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
+      Border border = i != null ? JBUI.Borders.empty(i) : JBUI.Borders.empty(2);
+      myToolbar.getComponent().setBorder(border);
     }
     else {
       UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
