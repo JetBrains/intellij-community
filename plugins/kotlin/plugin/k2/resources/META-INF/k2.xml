@@ -113,6 +113,12 @@
                  defaultValue="false"
                  restartRequired="false"/>
 
+    <registryKey
+            key="kotlin.k2.j2k.enabled"
+            description="Enable K2 Java to Kotlin converter"
+            defaultValue="false"
+            restartRequired="false"/>
+
     <!-- shared completion -->
     <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.completion.implCommon.LookupCancelService"/>
