@@ -29,6 +29,7 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
              )),
            object : CompletionProvider<CompletionParameters>() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+               val javaResultWithSorting = JavaCompletionSorting.addJavaSorting(parameters, result)
                val module = ModuleUtil.findModuleForFile(parameters.originalFile) ?: return
                val project = module.project
                val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module, true)
@@ -42,7 +43,7 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
 
                for (logger in availableLoggers) {
                  val lookupElement = buildLoggerElement(project, place, logger) ?: continue
-                 result.addElement(lookupElement)
+                 javaResultWithSorting.addElement(lookupElement)
                }
              }
            })
