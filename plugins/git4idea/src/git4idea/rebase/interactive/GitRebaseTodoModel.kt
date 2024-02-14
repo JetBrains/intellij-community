@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.interactive
 
 import git4idea.rebase.GitRebaseEntry
@@ -341,8 +341,8 @@ internal class GitRebaseTodoModel<T : GitRebaseEntry>(initialState: List<Element
         _children.sortBy { it.index }
       }
 
-      fun getUnitedCommitMessage(singleCommitMessageGetter: (T) -> String): String = uniteGroup.joinToString("\n".repeat(3)) { element ->
-        singleCommitMessageGetter(element.entry)
+      fun getUnitedCommitMessage(singleCommitMessageGetter: (T) -> String): String {
+        return uniteGroup.map { element -> singleCommitMessageGetter(element.entry) }.toSet().joinToString("\n".repeat(3))
       }
     }
 
