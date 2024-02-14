@@ -3,6 +3,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -12,20 +13,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UiInterceptors;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -57,8 +59,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import static com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES;
-import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+import static com.intellij.ui.SimpleTextAttributes.*;
+import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBase {
   private static final int SHOW_CONFLICTS_EXIT_CODE = 4;
@@ -177,7 +179,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     JPanel panel = new JPanel(new BorderLayout(0, myUpdatedDialog ? 0 : 2));
     
     if (myUpdatedDialog && myElementConflictDescription != null) {
-      Splitter splitter = new OnePixelSplitter(true);
+      Splitter splitter = new OnePixelSplitter(true, "conflicts.dialog.splitter", 0.4f);
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsages(false);
       presentation.setMergeDupLinesAvailable(false);
@@ -196,11 +198,18 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       }
       splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, true));
 
+      SimpleColoredComponent previewTitle = new SimpleColoredComponent();
+      PopupUtil.applyPreviewTitleInsets(previewTitle);
       UsagePreviewPanel usagePreviewPanel = new UsagePreviewPanel(myProject, presentation);
-      usagePreviewPanel.setShowTooltipBalloon(true);
       Disposer.register(getDisposable(), usagePreviewPanel);
-      myTree.addTreeSelectionListener(e -> previewNode(e.getNewLeadSelectionPath(), usagePreviewPanel));
-      splitter.setSecondComponent(usagePreviewPanel);
+      usagePreviewPanel.setShowTooltipBalloon(true);
+      myTree.addTreeSelectionListener(e -> previewNode(myProject, e.getNewLeadSelectionPath(), usagePreviewPanel, previewTitle));
+      
+      JPanel previewPanel = new JPanel(new BorderLayout());
+      previewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+      previewPanel.add(previewTitle, BorderLayout.NORTH);
+      previewPanel.add(usagePreviewPanel, BorderLayout.CENTER);
+      splitter.setSecondComponent(previewPanel);
 
       panel.add(splitter, BorderLayout.CENTER);
 
@@ -227,7 +236,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       conflictsLabel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
       toolbarPanel.add(conflictsLabel, BorderLayout.EAST);
       panel.add(toolbarPanel, BorderLayout.NORTH);
-      SwingUtilities.invokeLater(() -> previewNode(myTree.getSelectionPath(), usagePreviewPanel));
+      SwingUtilities.invokeLater(() -> previewNode(myProject, myTree.getSelectionPath(), usagePreviewPanel, previewTitle));
     }
     else {
       panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
@@ -325,13 +334,34 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return myUpdatedDialog ? myTree : null;
   }
 
-  private static void previewNode(TreePath path, UsagePreviewPanel usagePreviewPanel) {
+  private static void previewNode(Project project, TreePath path, UsagePreviewPanel usagePreviewPanel, SimpleColoredComponent previewTitle) {
     if (path == null) return;
     Object node = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(node);
     if (userObject instanceof UsageInfo2UsageAdapter adapter) {
+      VirtualFile vFile = adapter.getFile();
+      if (vFile != null) {
+        previewTitle.clear();
+        previewTitle.append(vFile.getPresentableName(), REGULAR_ATTRIBUTES);
+        previewTitle.append(spaceAndThinSpace() + getPresentablePath(project, vFile),
+                            new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getContextHelpForeground()));
+      }
       usagePreviewPanel.updateLayout(List.of(adapter.getUsageInfo()));
     }
+  }
+
+  private static @NlsSafe String getPresentablePath(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    String path;
+    if (ScratchUtil.isScratch(virtualFile)) {
+      path = ScratchUtil.getRelativePath(project, virtualFile);
+    }
+    else {
+      VirtualFile baseDir = project.getBaseDir();
+      path = VfsUtilCore.isAncestor(baseDir, virtualFile, true)
+             ? VfsUtilCore.getRelativeLocation(virtualFile, baseDir)
+             : FileUtil.getLocationRelativeToUserHome(virtualFile.getPath());
+    }
+    return path == null ? null : StringUtil.trimMiddle(path, 120);
   }
 
   @Override
