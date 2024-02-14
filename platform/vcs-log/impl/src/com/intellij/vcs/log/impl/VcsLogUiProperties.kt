@@ -1,63 +1,43 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.impl;
+package com.intellij.vcs.log.impl
 
-import com.intellij.openapi.Disposable;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.Disposable
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.NonNls
+import java.util.*
 
-import java.util.EventListener;
-import java.util.Objects;
-
-public interface VcsLogUiProperties {
+interface VcsLogUiProperties {
   @RequiresEdt
-  @NotNull <T> T get(@NotNull VcsLogUiProperty<T> property);
+  operator fun <T> get(property: VcsLogUiProperty<T>): T
 
   @RequiresEdt
-  <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value);
+  operator fun <T> set(property: VcsLogUiProperty<T>, value: T)
 
-  <T> boolean exists(@NotNull VcsLogUiProperty<T> property);
-
-  @RequiresEdt
-  void addChangeListener(@NotNull PropertiesChangeListener listener);
+  fun <T> exists(property: VcsLogUiProperty<T>): Boolean
 
   @RequiresEdt
-  void addChangeListener(@NotNull PropertiesChangeListener listener, @NotNull Disposable parent);
+  fun addChangeListener(listener: PropertiesChangeListener)
 
   @RequiresEdt
-  void removeChangeListener(@NotNull PropertiesChangeListener listener);
+  fun addChangeListener(listener: PropertiesChangeListener, parent: Disposable)
 
-  class VcsLogUiProperty<T> {
-    private final @NotNull String myName;
+  @RequiresEdt
+  fun removeChangeListener(listener: PropertiesChangeListener)
 
-    public VcsLogUiProperty(@NonNls @NotNull String name) {
-      myName = name;
+  open class VcsLogUiProperty<T>(val name: @NonNls String) {
+    override fun toString() = name
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other == null || javaClass != other.javaClass) return false
+      val property = other as VcsLogUiProperty<*>
+      return name == property.name
     }
 
-    public @NotNull String getName() {
-      return myName;
-    }
-
-    @Override
-    public String toString() {
-      return myName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      VcsLogUiProperty<?> property = (VcsLogUiProperty<?>)o;
-      return Objects.equals(myName, property.myName);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myName);
-    }
+    override fun hashCode(): Int = name.hashCode()
   }
 
-  interface PropertiesChangeListener extends EventListener {
-    <T> void onPropertyChanged(@NotNull VcsLogUiProperty<T> property);
+  interface PropertiesChangeListener : EventListener {
+    fun <T> onPropertyChanged(property: VcsLogUiProperty<T>)
   }
 }

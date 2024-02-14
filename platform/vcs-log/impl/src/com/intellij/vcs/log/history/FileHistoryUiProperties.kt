@@ -32,9 +32,9 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
                                                                       CommonUiProperties.LABELS_LEFT_ALIGNED)
   private var _state = State()
 
-  override fun <T : Any> get(property: VcsLogUiProperty<T>): T {
+  override fun <T> get(property: VcsLogUiProperty<T>): T {
     if (applicationLevelProperties.contains(property)) {
-      return appSettings.get(property)
+      return appSettings[property]
     }
 
     val result: Any = when (property) {
@@ -63,9 +63,9 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
     }
   }
 
-  override fun <T : Any> set(property: VcsLogUiProperty<T>, value: T) {
+  override fun <T> set(property: VcsLogUiProperty<T>, value: T) {
     if (applicationLevelProperties.contains(property)) {
-      appSettings.set(property, value)
+      appSettings[property] = value
       // listeners will be triggered via onApplicationSettingChange
       return
     }
@@ -75,8 +75,8 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
       CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails = value as Boolean
       SHOW_ALL_BRANCHES -> _state.isShowOtherBranches = value as Boolean
       CommonUiProperties.COLUMN_ID_ORDER -> _state.columnIdOrder = value as List<String>
-      is TableColumnWidthProperty -> _state.columnIdWidth[property.getName()] = value as Int
-      is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.getName()] = value as Boolean
+      is TableColumnWidthProperty -> _state.columnIdWidth[property.name] = value as Int
+      is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.name] = value as Boolean
       CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview = value as Boolean
       CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames = value as Boolean
       else -> throw UnsupportedOperationException("Unknown property $property")

@@ -185,13 +185,13 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).appendSecondaryText(
         VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-      ) { uiProperties.set(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS, true) }
+      ) { uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS] = true }
     }
     else if (isShowOnlyAffectedSelected && affectedPaths != null) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
         .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
                              SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-        ) { uiProperties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, false) }
+        ) { uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = false }
     }
     else {
       emptyText.setText("")
@@ -254,9 +254,9 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
   private fun updateUiSettings() {
     isShowChangesFromParents = uiProperties.exists(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS) &&
-                               uiProperties.get(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS)
+                               uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS]
     isShowOnlyAffectedSelected = uiProperties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-                                 uiProperties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)
+                                 uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES]
   }
 
   val directChanges: List<Change>

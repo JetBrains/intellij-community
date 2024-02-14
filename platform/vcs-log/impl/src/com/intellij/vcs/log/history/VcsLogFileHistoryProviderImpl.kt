@@ -56,7 +56,7 @@ class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileH
     if (firstTime) {
       val filters = VcsLogFilterObject.collection(pathsFilter, hashFilter)
       ui = VcsProjectLog.getInstance(project).openLogTab(filters) ?: return
-      ui.properties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, true)
+      ui.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = true
     }
     selectRowWhenOpen(logManager, hash, root, ui!!, firstTime)
   }

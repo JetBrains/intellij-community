@@ -566,7 +566,7 @@ internal object BranchesDashboardActions {
     override fun actionPerformed(e: AnActionEvent) {
       val properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES)
       if (properties != null && properties.exists(SHOW_GIT_BRANCHES_LOG_PROPERTY)) {
-        properties.set(SHOW_GIT_BRANCHES_LOG_PROPERTY, false)
+        properties[SHOW_GIT_BRANCHES_LOG_PROPERTY] = false
       }
     }
   }

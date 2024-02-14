@@ -20,8 +20,8 @@ class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
     if (filters != null) {
       val textFilter = filters.get(VcsLogFilterCollection.TEXT_FILTER)
       if (textFilter != null) {
-        uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE, textFilter.matchesCase())
-        uiProperties.set(MainVcsLogUiProperties.TEXT_FILTER_REGEX, textFilter.isRegex)
+        uiProperties[MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE] = textFilter.matchesCase()
+        uiProperties[MainVcsLogUiProperties.TEXT_FILTER_REGEX] = textFilter.isRegex
       }
     }
     val listener: VcsLogUiProperties.PropertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
@@ -77,8 +77,8 @@ class TextFilterModel internal constructor(properties: MainVcsLogUiProperties,
 
   private fun createTextFilter(text: String): VcsLogTextFilter {
     return VcsLogFilterObject.fromPattern(text,
-                                          uiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
-                                          uiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE))
+                                          uiProperties[MainVcsLogUiProperties.TEXT_FILTER_REGEX],
+                                          uiProperties[MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE])
   }
 
   fun setFilterText(text: String) {

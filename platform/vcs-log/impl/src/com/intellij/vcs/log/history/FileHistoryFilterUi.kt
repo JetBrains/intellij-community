@@ -11,6 +11,6 @@ import com.intellij.vcs.log.history.FileHistoryFilterer.Companion.createFilters
 class FileHistoryFilterUi(private val path: FilePath, private val hash: Hash?, private val root: VirtualFile,
                           private val properties: FileHistoryUiProperties) : VcsLogFilterUi {
   override fun getFilters(): VcsLogFilterCollection {
-    return createFilters(path, hash, root, properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES))
+    return createFilters(path, hash, root, properties[FileHistoryUiProperties.SHOW_ALL_BRANCHES])
   }
 }

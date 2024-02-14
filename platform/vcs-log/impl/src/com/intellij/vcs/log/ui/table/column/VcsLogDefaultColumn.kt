@@ -141,7 +141,7 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
 
   override fun getValue(model: GraphTableModel, commit: VcsCommitMetadata): String {
     val properties = model.properties
-    val preferCommitDate = properties.exists(CommonUiProperties.PREFER_COMMIT_DATE) && properties.get(CommonUiProperties.PREFER_COMMIT_DATE)
+    val preferCommitDate = properties.exists(CommonUiProperties.PREFER_COMMIT_DATE) && properties[CommonUiProperties.PREFER_COMMIT_DATE]
     val timeStamp = if (preferCommitDate) commit.commitTime else commit.authorTime
     return if (timeStamp < 0) "" else DateFormatUtil.formatPrettyDateTime(timeStamp)
   }

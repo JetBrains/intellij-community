@@ -34,7 +34,7 @@ abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
 
     toggleDiffPreviewOnPropertyChange(uiProperties, this, ::showDiffPreview)
     toggleDiffPreviewOrientationOnPropertyChange(uiProperties, this, ::changeDiffPreviewOrientation)
-    invokeLater { showDiffPreview(uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) }
+    invokeLater { showDiffPreview(uiProperties[CommonUiProperties.SHOW_DIFF_PREVIEW]) }
 
     Disposer.register(parentDisposable, this)
   }
@@ -96,7 +96,7 @@ private fun onBooleanPropertyChange(uiProperties: VcsLogUiProperties,
   val propertiesChangeListener: VcsLogUiProperties.PropertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
     override fun <T> onPropertyChanged(p: VcsLogUiProperties.VcsLogUiProperty<T>) {
       if (property == p) {
-        onPropertyChangeAction(uiProperties.get(property))
+        onPropertyChangeAction(uiProperties[property])
       }
     }
   }
