@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * DO NOT STORE any state inside annotator.
  * If you absolutely must, clear the state upon exit from the {@link #annotate(PsiElement, AnnotationHolder)} method.
  * <p/>
- * See <a href="https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support/syntax_highlighting_and_error_highlighting.html#annotator">Syntax Highlighting and Error Highlighting</a> for an overview.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/syntax-highlighting-and-error-highlighting.html#annotator">Syntax Highlighting and Error Highlighting</a> for an overview.
  * <p>
  * Please note: annotators are executed in arbitrary order.
  * <p>

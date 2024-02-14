@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceGetOrSet")
 
 package com.intellij.openapi.extensions
@@ -30,7 +30,9 @@ import java.util.stream.Stream
 import kotlin.streams.asStream
 
 /**
- * Provides access to an [extension point](https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extension_points.html). Instances of this class can be safely stored in static final fields.
+ * Provides access to an [extension point](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html).
+ *
+ * Instances of this class can be safely stored in static final fields.
  *
  * For project-level and module-level extension points use [ProjectExtensionPointName] instead to make it evident that corresponding
  * [AreaInstance] must be passed.

@@ -70,7 +70,7 @@ You can find necessary information about how to write inspections, intentions an
 in the [Code Inspections](https://jetbrains.org/intellij/sdk/docs/tutorials/code_inspections.html) tutorial.
 
 It's essential to know 
-about [PSI](https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/psi.html), the source code model used in IntelliJ IDEA.
+about [PSI](https://plugins.jetbrains.com/docs/intellij/psi.html), the source code model used in IntelliJ IDEA.
 To inspect PSI, you can use either the built-in [Psi Viewer](https://www.jetbrains.com/help/idea/psi-viewer.html) available 
 in the "internal" mode, or an external plugin called [PsiViewer](https://plugins.jetbrains.com/plugin/227-psiviewer).
 For debugging purposes consider using `PsiTreeUtilsKt.printTree` function.

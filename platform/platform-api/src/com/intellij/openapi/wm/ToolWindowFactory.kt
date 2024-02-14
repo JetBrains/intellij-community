@@ -13,7 +13,7 @@ import javax.swing.Icon
  *
  * For localizing the tool window stripe title, add key `toolwindow.stripe.yourToolWindowId.replace(" ", "_")` to plugin's resource bundle.
  *
- * See [Tool Windows](https://www.jetbrains.org/intellij/sdk/docs/user_interface_components/tool_windows.html) in SDK Docs.
+ * See [Tool Windows](https://plugins.jetbrains.com/docs/intellij/tool-windows.html) in SDK Docs.
  */
 interface ToolWindowFactory : PossiblyDumbAware {
   suspend fun isApplicableAsync(project: Project): Boolean {

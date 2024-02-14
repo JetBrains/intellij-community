@@ -1,4 +1,4 @@
-This document is a more like a draft, that will be finally moved to [IntelliJ Platform SDK](https://www.jetbrains.org/intellij/sdk/docs/welcome.html)
+This document is a more like a draft, that will be finally moved to [IntelliJ Platform SDK](https://plugins.jetbrains.com/docs/intellij)
 
 ## Service
 
