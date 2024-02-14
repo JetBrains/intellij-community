@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.settings.SettingsController
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -37,21 +36,24 @@ import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.deleteIfExists
 
-open class FileBasedStorage(
+abstract class FileBasedStorage(
   file: Path,
   fileSpec: String,
   rootElementName: String?,
   pathMacroManager: PathMacroSubstitutor? = null,
   roamingType: RoamingType,
   provider: StreamProvider? = null,
-  override val controller: SettingsController?,
-) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
-  private data class BlockSaving(val reason: String)
-
+) : XmlElementStorage(
+  fileSpec = fileSpec,
+  rootElementName = rootElementName,
+  pathMacroSubstitutor = pathMacroManager,
+  storageRoamingType = roamingType,
+  provider = provider,
+) {
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
-  private var blockSaving: BlockSaving? = null
+  private var blockSaving: String? = null
 
   @Volatile var file: Path = file
     private set
@@ -208,7 +210,7 @@ open class FileBasedStorage(
         }
       }
       else {
-        val (element, separator) = loadDataAndDetectLineSeparator(Files.readAllBytes(file))
+        val (element, separator) = loadDataAndDetectLineSeparator(file)
         lineSeparator = separator ?: if (isUseXmlProlog) LineSeparator.getSystemLineSeparator() else LineSeparator.LF
         return element
       }
@@ -229,7 +231,7 @@ open class FileBasedStorage(
     if (e != null &&
         (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
          fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
-      blockSaving = BlockSaving(reason = e.toString())
+      blockSaving = e.toString()
     }
     else {
       blockSaving = null
@@ -371,8 +373,8 @@ internal class ReadOnlyModificationException(
   @JvmField val session: SaveSession?,
 ) : RuntimeException("File is read-only: $file")
 
-@Internal
-fun loadDataAndDetectLineSeparator(data: ByteArray): Pair<Element, LineSeparator?> {
+private fun loadDataAndDetectLineSeparator(file: Path): Pair<Element, LineSeparator?> {
+  val data = Files.readAllBytes(file)
   val offset = CharsetToolkit.getBOMLength(data, StandardCharsets.UTF_8)
   val text = String(data, offset, data.size - offset, StandardCharsets.UTF_8)
   val xmlStreamReader = createXmlStreamReader(StringReader(text))
@@ -416,7 +418,7 @@ fun loadComponentsAndDetectLineSeparator(
         }
 
         try {
-          val elementLineSeparatorPair = loadDataAndDetectLineSeparator(Files.readAllBytes(file))
+          val elementLineSeparatorPair = loadDataAndDetectLineSeparator(file)
           val element = elementLineSeparatorPair.first
           val componentName = getComponentNameIfValid(element) ?: continue
           if (element.name != ComponentStorageUtil.COMPONENT) {

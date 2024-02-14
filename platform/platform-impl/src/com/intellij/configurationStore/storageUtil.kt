@@ -8,7 +8,6 @@ import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -18,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -148,7 +148,7 @@ fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequest
     }
   }
   // internal .xml files written with BOM can cause problems, see IDEA-219913
-  // (e.g. unable to backport them to 191/unwanted changed files when someone checks File Encodings|create new files with BOM)
+  // (e.g., unable to backport them to 191/unwanted changed files when someone checks File Encodings|create new files with BOM)
   // so we forcibly remove BOM from storage .xmls
   if (virtualFile.bom != null) {
     virtualFile.bom = null
@@ -156,12 +156,13 @@ fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequest
   return virtualFile
 }
 
-// runWriteAction itself cannot do such check because in general case any write action must be tracked regardless of current action
+// runWriteAction itself cannot do such a check because in general case any write action must be tracked regardless of current action
 @ApiStatus.Internal
 fun <T> runAsWriteActionIfNeeded(runnable: () -> T): T {
+  val app = ApplicationManager.getApplication()
   return when {
-    ApplicationManager.getApplication().isWriteAccessAllowed -> runnable()
-    else -> runWriteAction(runnable)
+    app.isWriteAccessAllowed -> runnable()
+    else -> app.runWriteAction(Computable(runnable))
   }
 }
 

@@ -287,7 +287,7 @@ open class StateStorageManagerImpl(
     roamingType: RoamingType,
     pathMacroManager: PathMacroSubstitutor?,
     provider: StreamProvider?,
-    controller: SettingsController?,
+    override val controller: SettingsController?,
   ) : FileBasedStorage(
     file = file,
     fileSpec = fileSpec,
@@ -295,7 +295,6 @@ open class StateStorageManagerImpl(
     pathMacroManager = pathMacroManager,
     roamingType = roamingType,
     provider = provider,
-    controller = controller,
   ), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)

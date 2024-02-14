@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jdom.Element
 import java.io.InputStream
@@ -22,10 +23,11 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   private val storage by lazy {
     val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
-    DefaultProjectStorage(file = file,
-                          fileSpec = PROJECT_DEFAULT_FILE_SPEC,
-                          pathMacroManager = PathMacroManager.getInstance(project),
-                          streamProvider = compoundStreamProvider
+    DefaultProjectStorage(
+      file = file,
+      fileSpec = PROJECT_DEFAULT_FILE_SPEC,
+      pathMacroManager = PathMacroManager.getInstance(project),
+      streamProvider = compoundStreamProvider,
     )
   }
 
@@ -69,35 +71,42 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun toString(): String = "default project"
 
-  private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager, streamProvider: StreamProvider) : FileBasedStorage(
+  private class DefaultProjectStorage(
+    file: Path,
+    fileSpec: String,
+    pathMacroManager: PathMacroManager,
+    streamProvider: StreamProvider,
+  ) : FileBasedStorage(
     file = file,
     fileSpec = fileSpec,
     rootElementName = "defaultProject",
     pathMacroManager = pathMacroManager.createTrackingSubstitutor(),
     roamingType = RoamingType.DISABLED,
     provider = streamProvider,
-    controller = null,
   ) {
+    override val controller: SettingsController?
+      get() = null
+
     public override fun loadLocalData(): Element? {
       return postProcessLoadedData { super.loadLocalData() }
     }
 
-    override fun loadFromStreamProvider(inputStream: InputStream): Element? {
-      return postProcessLoadedData { super.loadFromStreamProvider(inputStream) }
+    override fun loadFromStreamProvider(stream: InputStream): Element? {
+      return postProcessLoadedData { super.loadFromStreamProvider(stream) }
     }
 
     private fun postProcessLoadedData(elementProvider: () -> Element?): Element? {
-      return try {
-        elementProvider()?.getChild("component")?.getChild("defaultProject")
+      try {
+        return elementProvider()?.getChild("component")?.getChild("defaultProject")
       }
       catch (_: NullPointerException) {
         LOG.warn("Cannot read default project")
-        null
+        return null
       }
     }
 
     override fun createSaveSession(states: StateMap): FileSaveSessionProducer {
-      return object : FileSaveSessionProducer(states, this) {
+      return object : FileSaveSessionProducer(storageData = states, storage = this) {
         override fun saveLocally(dataWriter: DataWriter?) {
           super.saveLocally(
             dataWriter = if (dataWriter == null) null
