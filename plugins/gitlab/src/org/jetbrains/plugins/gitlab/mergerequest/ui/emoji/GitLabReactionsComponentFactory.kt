@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.emoji
 
 import com.intellij.collaboration.ui.ComponentListPanelFactory
-import com.intellij.collaboration.ui.codereview.emoji.ReactionLabel
-import com.intellij.collaboration.ui.codereview.emoji.VARIATION_SELECTOR
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil
+import com.intellij.collaboration.ui.codereview.reactions.ReactionLabel
+import com.intellij.collaboration.ui.codereview.reactions.VARIATION_SELECTOR
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.ui.popup.JBPopup

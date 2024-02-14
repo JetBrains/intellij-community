@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.emoji
 
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.codereview.emoji.ReactionLabel
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil
+import com.intellij.collaboration.ui.codereview.reactions.ReactionLabel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.DimensionRestrictions
