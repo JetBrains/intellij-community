@@ -28,6 +28,11 @@ internal abstract class ProjectIndexableFilesFilter(private val checkAllExpected
   abstract fun resetFileIds()
   open fun onProjectClosing(project: Project) = Unit
 
+  /**
+   * This is a temp method
+   */
+  open val wasDataLoadedFromDisk: Boolean = false
+
   protected fun <T> runUpdate(action: () -> T): T {
     parallelUpdatesCounter.update(1)
     try {

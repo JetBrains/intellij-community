@@ -33,4 +33,24 @@ public interface FilesFilterScanningHandler {
       }
     }
   }
+
+  class IdleFilesFilterScanningHandler implements FilesFilterScanningHandler {
+    private final ProjectIndexableFilesFilterHolder myFilterHolder;
+
+    public IdleFilesFilterScanningHandler(@NotNull ProjectIndexableFilesFilterHolder filterHolder) {
+      myFilterHolder = filterHolder;
+    }
+
+    @Override
+    public void addFileId(@NotNull Project project, int fileId) {
+    }
+
+    @Override
+    public void scanningCompleted() {
+    }
+
+    @Override
+    public void scanningStarted(@NotNull Project project, boolean update) {
+    }
+  }
 }

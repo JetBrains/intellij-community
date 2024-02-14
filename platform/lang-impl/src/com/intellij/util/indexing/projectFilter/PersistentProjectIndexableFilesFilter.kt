@@ -27,7 +27,7 @@ internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFi
     try {
       DataInputStream(filtersDir.resolve(project.getProjectCacheFileName()).inputStream().buffered()).use {
         it.readInt() // version
-        return PersistentProjectIndexableFilesFilter(ConcurrentFileIds.readFrom(it))
+        return PersistentProjectIndexableFilesFilter(true, ConcurrentFileIds.readFrom(it))
       }
     }
     catch (ignored: NoSuchFileException) {
@@ -37,11 +37,17 @@ internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFi
     catch (e: IOException) {
       thisLogger().error(e)
     }
-    return PersistentProjectIndexableFilesFilter(ConcurrentFileIds())
+    return PersistentProjectIndexableFilesFilter(false, ConcurrentFileIds())
   }
 }
 
-internal class PersistentProjectIndexableFilesFilter(fileIds: ConcurrentFileIds) : IncrementalProjectIndexableFilesFilter(fileIds) {
+/**
+ * Note about Invalidate Caches:
+ * This filter doesn't require explicit caches invalidation because during invalidation AppIndexingDependenciesService
+ * advances token which then causes filter to be rebuilt during next scanning
+ * (see [com.intellij.util.indexing.UnindexedFilesScanner.isIndexableFilesFilterUpToDate])
+ */
+internal class PersistentProjectIndexableFilesFilter(override val wasDataLoadedFromDisk: Boolean, fileIds: ConcurrentFileIds) : IncrementalProjectIndexableFilesFilter(fileIds) {
 
   override fun onProjectClosing(project: Project) {
     try {
