@@ -3,7 +3,9 @@ package com.intellij.spellchecker.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.*;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -118,7 +120,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
    * Splits element text in tokens according to spell checker strategy of given language
    *
    * @param element  Psi element
-   * @param allowedScopes
    * @param language Usually element.getLanguage()
    * @param consumer the consumer of tokens
    */
