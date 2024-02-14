@@ -34,6 +34,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
   private static final Object lock = new Object();
+  private final Map<VirtualFile, Document> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
 
   @ApiStatus.Experimental
   public static boolean isTrackable(@NotNull VirtualFile file) {
@@ -90,7 +91,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return document;
   }
 
-  protected static void setDocumentTooLarge(Document document, boolean tooLarge) {
+  protected static void setDocumentTooLarge(@NotNull Document document, boolean tooLarge) {
     document.putUserData(BIG_FILE_PREVIEW, tooLarge ? Boolean.TRUE : null);
   }
 
@@ -162,7 +163,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   void unbindFileFromDocument(@NotNull VirtualFile file, @NotNull Document document) {
-    removeDocumentFromCache(file);
+    myDocumentCache.remove(file);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
   }
@@ -178,14 +179,8 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
   }
 
-  private final Map<VirtualFile, Document> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
-
   private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);
-  }
-
-  private void removeDocumentFromCache(@NotNull VirtualFile file) {
-    myDocumentCache.remove(file);
   }
 
   private Document getDocumentFromCache(@NotNull VirtualFile file) {
