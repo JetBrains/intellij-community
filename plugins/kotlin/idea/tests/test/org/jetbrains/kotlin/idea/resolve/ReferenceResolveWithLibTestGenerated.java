@@ -33,6 +33,11 @@ public class ReferenceResolveWithLibTestGenerated extends AbstractReferenceResol
         runTest("testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters/");
     }
 
+    @TestMetadata("enumEntryMethods")
+    public void testEnumEntryMethods() throws Exception {
+        runTest("testData/resolve/referenceWithLib/enumEntryMethods/");
+    }
+
     @TestMetadata("enumSyntheticMethods")
     public void testEnumSyntheticMethods() throws Exception {
         runTest("testData/resolve/referenceWithLib/enumSyntheticMethods/");
