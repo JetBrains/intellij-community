@@ -64,6 +64,6 @@ public final class JavaVersionBasedScope extends DelegatingGlobalSearchScope {
 
   @Override
   public String toString() {
-    return "Java " + myLevel.toJavaVersion().feature + " @ " + myBaseScope;
+    return "Java " + myLevel.feature() + " @ " + myBaseScope;
   }
 }

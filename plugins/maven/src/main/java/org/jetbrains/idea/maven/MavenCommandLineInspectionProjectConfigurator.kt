@@ -157,7 +157,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
       SdkLookup
         .newLookupBuilder()
         .withProgressIndicator(context.progressIndicator)
-        .withVersionFilter { JavaVersion.tryParse(it)?.feature == level.toJavaVersion().feature }
+        .withVersionFilter { JavaVersion.tryParse(it)?.feature == level.feature() }
         .withSdkType(JavaSdk.getInstance())
         .onSdkResolved { sdk ->
           future.complete(sdk)

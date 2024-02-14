@@ -66,7 +66,7 @@ public enum JavaSdkVersion {
     if (languageLevel == LanguageLevel.JDK_X) {
       return values[values.length - 1];
     }
-    int feature = languageLevel.toJavaVersion().feature;
+    int feature = languageLevel.feature();
     if (feature < values.length) {
       return values[feature];
     }

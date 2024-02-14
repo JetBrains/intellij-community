@@ -229,7 +229,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
     LanguageLevel level = JavaMultiReleaseUtil.getVersion(file);
     @Nls StringBuilder info = new StringBuilder();
     if (level != null) {
-      info.append(JavaUiBundle.message("class.file.multi.release.decompiled.text", level.toJavaVersion().feature));
+      info.append(JavaUiBundle.message("class.file.multi.release.decompiled.text", level.feature()));
     } else {
       info.append(JavaUiBundle.message("class.file.decompiled.text"));
     }

@@ -203,7 +203,7 @@ public final class GenerationUtil {
       }
 
       if (member != null) {
-        vc.put("java_version", PsiUtil.getLanguageLevel(member).toJavaVersion().feature);
+        vc.put("java_version", PsiUtil.getLanguageLevel(member).feature());
         final Project project = member.getProject();
         vc.put("settings", CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class));
         vc.put("project", project);

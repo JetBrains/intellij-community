@@ -276,7 +276,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun doTestPreview(compilerArgs: String?) {
-    val feature = LanguageLevel.HIGHEST.toJavaVersion().feature
+    val feature = LanguageLevel.HIGHEST.feature()
     importProjectAsync(("<groupId>test</groupId>" +
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>" +

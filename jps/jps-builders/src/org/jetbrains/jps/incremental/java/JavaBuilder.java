@@ -55,9 +55,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -1039,7 +1037,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
     @NotNull JpsModule module = chunk.representativeTarget().getModule();
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    final int languageLevel = level != null ? level.toJavaVersion().feature : 0;
+    final int languageLevel = level != null ? level.feature() : 0;
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
     int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration,
@@ -1120,7 +1118,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
   private static int getLanguageLevel(@NotNull JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    return level != null ? level.toJavaVersion().feature : 0;
+    return level != null ? level.feature() : 0;
   }
 
   /**

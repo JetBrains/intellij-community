@@ -45,6 +45,13 @@ public enum LanguageLevel {
     return myVersion;
   }
 
+  /**
+   * @return the language level feature number (like 8 for {@link #JDK_1_8}).
+   */
+  public int feature() {
+    return myVersion.feature;
+  }
+
   public boolean isPreview() {
     return name().endsWith("_PREVIEW") || name().endsWith("_X");
   }

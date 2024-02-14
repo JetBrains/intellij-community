@@ -124,7 +124,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testPreviewLanguageLevel() throws Exception {
-    int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
+    int feature = LanguageLevel.HIGHEST.feature();
     importProject(
       "apply plugin: 'java'\n" +
       "java.sourceCompatibility = " + feature+ "\n" +

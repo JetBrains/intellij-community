@@ -38,7 +38,7 @@ public final class ClassPresentationProvider implements ItemPresentationProvider
           if (packageName.isEmpty()) return null;
           LanguageLevel version = JavaMultiReleaseUtil.getVersion(file);
           if (version != null) {
-            packageName += "/" + JavaPsiBundle.message("class.file.version", version.toJavaVersion().feature);
+            packageName += "/" + JavaPsiBundle.message("class.file.version", version.feature());
           }
           return NewUiValue.isEnabled() ? JavaPsiBundle.message("aux.context.display", packageName) : "(" + packageName + ")";
         }

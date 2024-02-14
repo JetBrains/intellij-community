@@ -120,7 +120,7 @@ public final class JavaSdkImpl extends JavaSdk {
   public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
-    if (release > LanguageLevel.HIGHEST.toJavaVersion().feature) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
+    if (release > LanguageLevel.HIGHEST.feature()) return "https://download.java.net/java/early_access/jdk" + release + "/docs/api/";
     if (release >= 11) return "https://docs.oracle.com/en/java/javase/" + release + "/docs/api/";
     if (release >= 6) return "https://docs.oracle.com/javase/" + release + "/docs/api/";
     if (release == 5) return "https://docs.oracle.com/javase/1.5.0/docs/api/";

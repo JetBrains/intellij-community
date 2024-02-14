@@ -47,7 +47,7 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
             feature != JavaFeature.MODULES && !name.equals(PsiKeyword.WHEN) && // Keywords from module-info and 'when' still can be used as class names
             !feature.isSufficient(languageLevel) && parent instanceof PsiClass) {
           return JavaErrorBundle.message("restricted.identifier.warn", name,
-                                         feature.getMinimumLevel().toJavaVersion().feature);
+                                         feature.getMinimumLevel().feature());
         }
         switch (name) {
           case PsiKeyword.ASSERT -> {

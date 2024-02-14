@@ -31,7 +31,7 @@ public class UpgradeSdkFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return JavaBundle.message("intention.name.upgrade.jdk.to", myLevel.toJavaVersion().feature);
+    return JavaBundle.message("intention.name.upgrade.jdk.to", myLevel.feature());
   }
 
   @NotNull

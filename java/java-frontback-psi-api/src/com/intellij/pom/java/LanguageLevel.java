@@ -134,17 +134,37 @@ public enum LanguageLevel {
     return myPresentableText.get();
   }
 
+  /**
+   * @param level level to compare to
+   * @return true, if this language level is at least the same or newer than the level we are comparing to.
+   * A preview level for Java version X is assumed to be between non-preview version X and non-preview version X+1
+   */
   public boolean isAtLeast(@NotNull LanguageLevel level) {
     return compareTo(level) >= 0;
   }
 
+  /**
+   * @param level level to compare to
+   * @return true if this language level is strictly less than the level we are comparing to.
+   * A preview level for Java version X is assumed to be between non-preview version X and non-preview version X+1
+   */
   public boolean isLessThan(@NotNull LanguageLevel level) {
     return compareTo(level) < 0;
   }
 
+  /**
+   * @return the {@link JavaVersion} object that corresponds to this language level 
+   */
   @NotNull
   public JavaVersion toJavaVersion() {
     return myVersion;
+  }
+
+  /**
+   * @return the language level feature number (like 8 for {@link #JDK_1_8}).
+   */
+  public int feature() {
+    return myVersion.feature;
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */
