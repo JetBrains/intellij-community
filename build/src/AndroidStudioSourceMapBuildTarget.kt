@@ -11,6 +11,7 @@ import java.nio.file.Paths
  *
  *   ./platform/jps-bootstrap/jps-bootstrap.sh "$PWD" intellij.idea.community.build AndroidStudioSourceMapBuildTarget /path/to/outfile.json
  */
+@Suppress("RAW_RUN_BLOCKING")
 object AndroidStudioSourceMapBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
@@ -20,7 +21,7 @@ object AndroidStudioSourceMapBuildTarget {
       val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
       val communityRoot = communityHome.communityRoot
       val ideProperties = AndroidStudioProperties(communityRoot)
-      val buildContext = BuildContextImpl.createContext(communityHome, communityRoot, ideProperties)
+      val buildContext = BuildContextImpl.createContext(communityRoot, ideProperties)
       generateProjectStructureMapping(Paths.get(outfile), buildContext)
     }
   }

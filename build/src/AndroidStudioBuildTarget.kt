@@ -1,14 +1,20 @@
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.AndroidStudioBuilder
+import org.jetbrains.intellij.build.AndroidStudioProperties
+import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 
 @Suppress("RAW_RUN_BLOCKING")
 object AndroidStudioBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runBlocking {
-      AndroidStudioBuilder(communityHome).buildDistributions()
+      val home = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+      val properties = AndroidStudioProperties(home.communityRoot)
+      val buildContext = BuildContextImpl.createContext(home.communityRoot, properties)
+      val tasks = BuildTasks.create(buildContext)
+      tasks.buildDistributions()
+      tasks.buildFullUpdaterJar()
     }
   }
 }

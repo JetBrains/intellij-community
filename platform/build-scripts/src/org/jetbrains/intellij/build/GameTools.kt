@@ -60,7 +60,7 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
   private fun getTemplateArgs() : Map<String, String> {
     val map = mutableMapOf<String, String>()
 
-    map["product_full"] = context.applicationInfo.productName + " Game Tools"
+    map["product_full"] = context.applicationInfo.fullProductName + " Game Tools"
     map["product_uc"] = context.productProperties.getEnvironmentVariableBaseName(context.applicationInfo)
     map["product_vendor"] = context.applicationInfo.shortCompanyName
     map["system_selector"] = "AndroidGameDevelopmentTools"

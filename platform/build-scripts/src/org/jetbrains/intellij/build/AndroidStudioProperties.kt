@@ -15,10 +15,8 @@
  */
 package org.jetbrains.intellij.build
 
-import kotlinx.collections.immutable.putAll
 import org.jetbrains.intellij.build.CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
-import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import java.nio.file.Files
 import java.nio.file.Path
@@ -86,7 +84,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
     allLibraryLicenses += AndroidStudioLibraryLicenses.LICENSES_LIST
     includeIntoSourcesArchiveFilter = BiPredicate { _, _ -> true }
-    customJvmMemoryOptions = customJvmMemoryOptions.putAll(arrayOf("-Xms" to "256m", "-Xmx" to "2048m"))
+    customJvmMemoryOptions = customJvmMemoryOptions.plus(arrayOf("-Xms" to "256m", "-Xmx" to "2048m"))
     additionalIdeJvmArguments = mutableListOf(
       // Reduces the chance of truncated JFR stacks (ag/I16b829882).
       "-XX:FlightRecorderOptions=stackdepth=256",
@@ -219,33 +217,33 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     devkitPluginLayout.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
     FileSet(context.paths.communityHomeDir)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
-      .copyToDir(Path.of(targetDirectory))
+      .copyToDir(targetDir)
     FileSet(context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
       .includeAll()
-      .copyToDir(Path.of(targetDirectory, "bin"))
+      .copyToDir(targetDir.resolve("bin"))
     FileSet(context.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers"))
       .includeAll()
-      .copyToDir(Path.of(targetDirectory, "bin/lldb/helpers"))
+      .copyToDir(targetDir.resolve("bin/lldb/helpers"))
     FileSet(context.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/helpers"))
       .includeAll()
-      .copyToDir(Path.of(targetDirectory, "bin/helpers"))
+      .copyToDir(targetDir.resolve("bin/helpers"))
 
     // Copy CIDR license to CIDR plugins.
     FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
-      .copyToDir(Path.of(targetDirectory, "plugins/c-clangd-plugin/lib/LICENSE.txt"))
+      .copyToDir(targetDir.resolve("plugins/c-clangd-plugin/lib/LICENSE.txt"))
     FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
-      .copyToDir(Path.of(targetDirectory, "plugins/c-plugin/lib/LICENSE.txt"))
+      .copyToDir(targetDir.resolve("plugins/c-plugin/lib/LICENSE.txt"))
     FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
-      .copyToDir(Path.of(targetDirectory, "plugins/cidr-base-plugin/lib/LICENSE.txt"))
+      .copyToDir(targetDir.resolve("plugins/cidr-base-plugin/lib/LICENSE.txt"))
 
-    return super.copyAdditionalFiles(context, targetDirectory)
+    return super.copyAdditionalFiles(context, targetDir)
   }
 
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
