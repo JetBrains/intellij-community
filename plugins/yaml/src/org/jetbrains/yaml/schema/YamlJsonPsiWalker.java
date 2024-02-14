@@ -42,6 +42,11 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
+  public boolean isQuotedString(@NotNull PsiElement element) {
+    return element instanceof YAMLQuotedText;
+  }
+
+  @Override
   public ThreeState isName(PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof YAMLDocument || parent instanceof YAMLMapping) {

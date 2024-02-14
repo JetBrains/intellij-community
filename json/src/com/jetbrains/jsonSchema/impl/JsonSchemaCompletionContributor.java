@@ -157,9 +157,14 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       myProject = originalPosition.getProject();
       myResultConsumer = resultConsumer;
       myVariants = new HashSet<>();
-      myWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
-      myWrapInQuotes = !(position.getParent() instanceof JsonStringLiteral);
-      myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
+      JsonLikePsiWalker psiWalker = JsonLikePsiWalker.getWalker(myPosition, myRootSchema);
+      PsiElement positionParent = position.getParent();
+      boolean isInsideQuotedString = positionParent != null
+                               && psiWalker != null
+                               && psiWalker.isQuotedString(positionParent);
+      myWrapInQuotes = !isInsideQuotedString;
+      myWalker = psiWalker;
+      myInsideStringLiteral = isInsideQuotedString;
     }
 
     public void work() {
