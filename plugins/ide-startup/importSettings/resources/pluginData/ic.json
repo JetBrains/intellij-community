@@ -1,172 +1,38 @@
 [
   {
-    "ideaId": "org.intellij.plugins.hcl",
-    "ideaName": "Terraform and HCL",
     "vsCodeId": "4ops.terraform",
-    "builtIn": true
-  },
-  {
-    "ideaId": "gherkin",
-    "ideaName": "Gherkin",
-    "vsCodeId": "alexkrechik.cucumberautocomplete",
-    "builtIn": true
-  },
-  {
-    "ideaId": "aws.toolkit",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.toml.lang",
-    "ideaName": "Toml",
-    "vsCodeId": "bungcip.better-toml",
-    "builtIn": true
-  },
-  {
-    "ideaId": "Dart",
-    "ideaName": "Dart",
-    "vsCodeId": "Dart-Code.dart-code",
-    "builtIn": true
-  },
-  {
-    "ideaId": "io.flutter",
-    "ideaName": "Flutter",
-    "vsCodeId": "Dart-Code.flutter",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "ideaName": "EditorConfig",
-    "vsCodeId": "EditorConfig.EditorConfig",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.google.gct.core",
-    "ideaName": "Google Cloud Code",
-    "vsCodeId": "GoogleCloudTools.cloudcode",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql-syntax",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.intellij.plugins.hcl",
     "ideaName": "Terraform and HCL",
-    "vsCodeId": "HashiCorp.terraform",
+    "ideaId": "org.intellij.plugins.hcl",
     "builtIn": true
   },
   {
-    "ideaId": "Docker",
-    "ideaName": "Docker",
-    "vsCodeId": "ms-azuretools.vscode-docker",
+    "vsCodeId": "alexkrechik.cucumberautocomplete",
+    "ideaName": "Gherkin",
+    "ideaId": "gherkin",
     "builtIn": true
   },
   {
-    "ideaId": "PythonCore",
-    "ideaName": "Python Community Edition",
-    "vsCodeId": "ms-python.python",
+    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
+    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
+    "ideaId": "aws.toolkit",
     "builtIn": true
   },
   {
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "ideaName": "Dev Containers",
-    "vsCodeId": "ms-vscode-remote.remote-containers",
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang",
     "builtIn": true
   },
   {
-    "ideaId": "com.jetbrains.codeWithMe",
-    "ideaName": "Code With Me",
-    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "vsCodeId": "Dart-Code.dart-code",
+    "ideaName": "Dart",
+    "ideaId": "Dart",
     "builtIn": true
   },
   {
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "vsCodeId": "oderwat.indent-rainbow",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "ideaName": "YAML",
-    "vsCodeId": "redhat.vscode-yaml",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.intellij.scala",
-    "ideaName": "Scala",
-    "vsCodeId": "scala-lang.scala",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.sonarlint.idea",
-    "ideaName": "SonarLint",
-    "vsCodeId": "SonarSource.sonarlint-vscode",
-    "builtIn": true
-  },
-  {
-    "ideaId": "PythonCore",
-    "ideaName": "Python Community Edition",
-    "vsCodeId": "tht13.python",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "ideaName": "Lines Sorter",
-    "vsCodeId": "Tyriar.sort-lines",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.gradle",
-    "ideaName": "Gradle",
-    "vsCodeId": "vscjava.vscode-gradle",
-    "builtIn": true
-  },
-  {
-    "ideaId": "Lombook Plugin",
-    "ideaName": "Lombok",
-    "vsCodeId": "vscjava.vscode-lombok",
-    "builtIn": true
-  },
-  {
-    "ideaId": "IdeaVIM",
-    "ideaName": "IdeaVim",
-    "vsCodeId": "vscodevim.vim",
-    "builtIn": true
-  },
-  {
-    "ideaId": "idea.plugin.protoeditor",
-    "ideaName": "Protocol Buffers",
-    "vsCodeId": "zxh404.vscode-proto3",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "vscjava.vscode-lombok",
-    "ideaName": "Lombok",
-    "ideaId": "Lombook Plugin"
-  },
-  {
-    "vsCodeId": "scala-lang.scala",
-    "ideaName": "Scala",
-    "ideaId": "org.intellij.scala"
-  },
-  {
-    "vsCodeId": "fwcd.kotlin",
-    "ideaName": "Kotlin",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "mathiasfrohlich.Kotlin",
-    "ideaName": "Kotlin",
+    "vsCodeId": "Dart-Code.flutter",
+    "ideaName": "Flutter",
+    "ideaId": "io.flutter",
     "builtIn": true
   },
   {
@@ -175,18 +41,73 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "vscjava.vscode-java-debug",
-    "ideaName": "Debugger",
+    "vsCodeId": "EditorConfig.EditorConfig",
+    "ideaName": "EditorConfig",
+    "ideaId": "org.editorconfig.editorconfigjetbrains",
     "builtIn": true
   },
   {
-    "vsCodeId": "vscjava.vscode-gradle",
-    "ideaName": "Gradle",
+    "vsCodeId": "fwcd.kotlin",
+    "ideaName": "Kotlin",
     "builtIn": true
   },
   {
-    "vsCodeId": "vscjava.vscode-maven",
-    "ideaName": "Maven",
+    "vsCodeId": "GoogleCloudTools.cloudcode",
+    "ideaName": "Google Cloud Code",
+    "ideaId": "com.google.gct.core",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql-syntax",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "HashiCorp.terraform",
+    "ideaName": "Terraform and HCL",
+    "ideaId": "org.intellij.plugins.hcl",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mathiasfrohlich.Kotlin",
+    "ideaName": "Kotlin",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-docker",
+    "ideaName": "Docker",
+    "ideaId": "Docker",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-python.python",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-containers",
+    "ideaName": "Dev Containers",
+    "ideaId": "org.jetbrains.plugins.docker.gateway",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "ideaName": "Code With Me",
+    "ideaId": "com.jetbrains.codeWithMe",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "oderwat.indent-rainbow",
+    "ideaName": "Indent Rainbow",
+    "ideaId": "indent-rainbow.indent-rainbow",
     "builtIn": true
   },
   {
@@ -195,8 +116,87 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "redhat.vscode-yaml",
+    "ideaName": "YAML",
+    "ideaId": "org.jetbrains.plugins.yaml",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "scala-lang.scala",
+    "ideaName": "Scala",
+    "ideaId": "org.intellij.scala"
+  },
+  {
+    "vsCodeId": "scala-lang.scala",
+    "ideaName": "Scala",
+    "ideaId": "org.intellij.scala",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "SonarSource.sonarlint-vscode",
+    "ideaName": "SonarLint",
+    "ideaId": "org.sonarlint.idea",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "tht13.python",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Tyriar.sort-lines",
+    "ideaName": "Lines Sorter",
+    "ideaId": "org.sylfra.idea.plugins.linessorter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-gradle",
+    "ideaName": "Gradle",
+    "ideaId": "com.intellij.gradle",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-gradle",
+    "ideaName": "Gradle",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-java-debug",
+    "ideaName": "Debugger",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "vscjava.vscode-java-pack",
     "ideaName": "Java",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-lombok",
+    "ideaName": "Lombok",
+    "ideaId": "Lombook Plugin"
+  },
+  {
+    "vsCodeId": "vscjava.vscode-lombok",
+    "ideaName": "Lombok",
+    "ideaId": "Lombook Plugin",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-maven",
+    "ideaName": "Maven",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscodevim.vim",
+    "ideaName": "IdeaVim",
+    "ideaId": "IdeaVIM",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "zxh404.vscode-proto3",
+    "ideaName": "Protocol Buffers",
+    "ideaId": "idea.plugin.protoeditor",
     "builtIn": true
   }
 ]

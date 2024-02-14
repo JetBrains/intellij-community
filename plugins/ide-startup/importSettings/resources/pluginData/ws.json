@@ -1,218 +1,54 @@
 [
   {
-    "ideaId": "org.intellij.plugins.hcl",
-    "ideaName": "Terraform and HCL",
     "vsCodeId": "4ops.terraform",
-    "builtIn": true
-  },
-  {
-    "ideaId": "github.cweijan.test-theme",
-    "ideaName": "Atom OneDark Theme",
-    "vsCodeId": "akamud.vscode-theme-onedark",
-    "builtIn": true
-  },
-  {
-    "ideaId": "AngularJS",
-    "ideaName": "Angular and AngularJS",
-    "vsCodeId": "Angular.ng-template",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.tailwindcss",
-    "ideaName": "Tailwind CSS",
-    "vsCodeId": "bradlc.vscode-tailwindcss",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.database",
-    "ideaName": "Database Tools and SQL for WebStorm",
-    "vsCodeId": "cweijan.vscode-mysql-client2",
-    "builtIn": true
-  },
-  {
-    "ideaId": "Dart",
-    "ideaName": "Dart",
-    "vsCodeId": "Dart-Code.dart-code",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.vermouthx.idea",
-    "ideaName": "Dracula Theme",
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "builtIn": true
-  },
-  {
-    "ideaId": "intellij.prettierJS",
-    "ideaName": "Prettier",
-    "vsCodeId": "esbenp.prettier-vscode",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.database",
-    "ideaName": "Database Tools and SQL for WebStorm",
-    "vsCodeId": "formulahendry.vscode-mysql",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql-syntax",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.intellij.plugins.hcl",
     "ideaName": "Terraform and HCL",
-    "vsCodeId": "HashiCorp.terraform",
+    "ideaId": "org.intellij.plugins.hcl",
     "builtIn": true
   },
   {
-    "ideaId": "org.jetbrains.plugins.vue",
-    "ideaName": "Vue.js",
-    "vsCodeId": "hollowtree.vue-snippets",
+    "vsCodeId": "akamud.vscode-theme-onedark",
+    "ideaName": "Atom OneDark Theme",
+    "ideaId": "github.cweijan.test-theme",
     "builtIn": true
   },
   {
-    "ideaId": "org.jetbrains.plugins.vue",
-    "ideaName": "Vue.js",
-    "vsCodeId": "jcbuisson.vue",
-    "builtIn": true
-  },
-  {
-    "ideaId": "AngularJS",
+    "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
-    "vsCodeId": "johnpapa.Angular2",
+    "ideaId": "AngularJS",
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.database",
+    "vsCodeId": "bradlc.vscode-tailwindcss",
+    "ideaName": "Tailwind CSS",
+    "ideaId": "com.intellij.tailwindcss",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "vsCodeId": "mongodb.mongodb-vscode",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.jetbrains.plugins.sass",
-    "ideaName": "Sass",
-    "vsCodeId": "mrmlnc.vscode-scss",
-    "builtIn": true
-  },
-  {
-    "ideaId": "Docker",
-    "ideaName": "Docker",
-    "vsCodeId": "ms-azuretools.vscode-docker",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.zh",
-    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.kubernetes",
-    "ideaName": "Kubernetes",
-    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
-    "builtIn": true
-  },
-  {
     "ideaId": "com.intellij.database",
-    "ideaName": "Database Tools and SQL for WebStorm",
-    "vsCodeId": "ms-mssql.mssql",
     "builtIn": true
   },
   {
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "ideaName": "Dev Containers",
-    "vsCodeId": "ms-vscode-remote.remote-containers",
+    "vsCodeId": "Dart-Code.dart-code",
+    "ideaName": "Dart",
+    "ideaId": "Dart"
+  },
+  {
+    "vsCodeId": "Dart-Code.dart-code",
+    "ideaName": "Dart",
+    "ideaId": "Dart",
     "builtIn": true
   },
   {
-    "ideaId": "tslint",
-    "ideaName": "TSLint",
-    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
-    "builtIn": true
+    "vsCodeId": "Dart-Code.flutter",
+    "ideaName": "Flutter",
+    "ideaId": "io.flutter"
   },
   {
-    "ideaId": "com.jetbrains.codeWithMe",
-    "ideaName": "Code With Me",
-    "vsCodeId": "MS-vsliveshare.vsliveshare",
-    "builtIn": true
-  },
-  {
-    "ideaId": "JavaScriptDebugger",
-    "ideaName": "JavaScript Debugger",
-    "vsCodeId": "msjsdiag.vscode-react-native",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.jetbrains.plugins.vue",
-    "ideaName": "Vue.js",
-    "vsCodeId": "octref.vetur",
-    "builtIn": true
-  },
-  {
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "vsCodeId": "oderwat.indent-rainbow",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.mallowigi",
-    "ideaName": "Atom Material Icons",
-    "vsCodeId": "PKief.material-icon-theme",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "ideaName": "YAML",
-    "vsCodeId": "redhat.vscode-yaml",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.plugins.watcher",
-    "ideaName": "File Watchers",
-    "vsCodeId": "ritwickdey.live-sass",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.jetbrains.plugins.vue",
-    "ideaName": "Vue.js",
-    "vsCodeId": "sdras.vue-vscode-snippets",
-    "builtIn": true
-  },
-  {
-    "ideaId": "dev.blachut.svelte.lang",
-    "ideaName": "Svelte",
-    "vsCodeId": "svelte.svelte-vscode",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.jetbrains.plugins.sass",
-    "ideaName": "Sass",
-    "vsCodeId": "Syler.sass-indented",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "ideaName": "Lines Sorter",
-    "vsCodeId": "Tyriar.sort-lines",
-    "builtIn": true
-  },
-  {
-    "ideaId": "IdeaVIM",
-    "ideaName": "IdeaVim",
-    "vsCodeId": "vscodevim.vim",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.css",
-    "ideaName": "CSS",
-    "vsCodeId": "Zignd.html-css-class-completion",
+    "vsCodeId": "dracula-theme.theme-dracula",
+    "ideaName": "Dracula Theme",
+    "ideaId": "com.vermouthx.idea",
     "builtIn": true
   },
   {
@@ -221,14 +57,94 @@
     "ideaId": "intellij.prettierJS"
   },
   {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
+    "vsCodeId": "esbenp.prettier-vscode",
+    "ideaName": "Prettier",
+    "ideaId": "intellij.prettierJS",
+    "builtIn": true
   },
   {
-    "vsCodeId": "Dart-Code.dart-code",
-    "ideaName": "Dart",
-    "ideaId": "Dart"
+    "vsCodeId": "formulahendry.vscode-mysql",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql-syntax",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "HashiCorp.terraform",
+    "ideaName": "Terraform and HCL",
+    "ideaId": "org.intellij.plugins.hcl",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "hollowtree.vue-snippets",
+    "ideaName": "Vue.js",
+    "ideaId": "org.jetbrains.plugins.vue",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "jcbuisson.vue",
+    "ideaName": "Vue.js",
+    "ideaId": "org.jetbrains.plugins.vue",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "johnpapa.Angular2",
+    "ideaName": "Angular and AngularJS",
+    "ideaId": "AngularJS",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mongodb.mongodb-vscode",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mrmlnc.vscode-scss",
+    "ideaName": "Sass",
+    "ideaId": "org.jetbrains.plugins.sass",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-docker",
+    "ideaName": "Docker",
+    "ideaId": "Docker",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
+    "ideaId": "com.intellij.zh",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "ideaName": "Kubernetes",
+    "ideaId": "com.intellij.kubernetes",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-mssql.mssql",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-containers",
+    "ideaName": "Dev Containers",
+    "ideaId": "org.jetbrains.plugins.docker.gateway",
+    "builtIn": true
   },
   {
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
@@ -236,8 +152,92 @@
     "ideaId": "tslint"
   },
   {
+    "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
+    "ideaName": "TSLint",
+    "ideaId": "tslint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "ideaName": "Code With Me",
+    "ideaId": "com.jetbrains.codeWithMe",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "msjsdiag.vscode-react-native",
+    "ideaName": "JavaScript Debugger",
+    "ideaId": "JavaScriptDebugger",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "octref.vetur",
+    "ideaName": "Vue.js",
+    "ideaId": "org.jetbrains.plugins.vue",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "oderwat.indent-rainbow",
+    "ideaName": "Indent Rainbow",
+    "ideaId": "indent-rainbow.indent-rainbow",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "PKief.material-icon-theme",
+    "ideaName": "Atom Material Icons",
+    "ideaId": "com.mallowigi",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "redhat.vscode-yaml",
+    "ideaName": "YAML",
+    "ideaId": "org.jetbrains.plugins.yaml",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ritwickdey.live-sass",
+    "ideaName": "File Watchers",
+    "ideaId": "com.intellij.plugins.watcher",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "sdras.vue-vscode-snippets",
+    "ideaName": "Vue.js",
+    "ideaId": "org.jetbrains.plugins.vue",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "svelte.svelte-vscode",
+    "ideaName": "Svelte",
+    "ideaId": "dev.blachut.svelte.lang",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Syler.sass-indented",
+    "ideaName": "Sass",
+    "ideaId": "org.jetbrains.plugins.sass",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Tyriar.sort-lines",
+    "ideaName": "Lines Sorter",
+    "ideaId": "org.sylfra.idea.plugins.linessorter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscodevim.vim",
+    "ideaName": "IdeaVim",
+    "ideaId": "IdeaVIM",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Zignd.html-css-class-completion",
+    "ideaName": "CSS",
+    "ideaId": "com.intellij.css",
     "builtIn": true
   }
 ]

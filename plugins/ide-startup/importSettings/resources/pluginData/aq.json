@@ -1,44 +1,44 @@
 [
   {
-    "ideaId": "com.intellij.database",
-    "ideaName": "Database Tools and SQL for WebStorm",
     "vsCodeId": "cweijan.vscode-mysql-client2",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaId": "com.intellij.database",
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.database",
-    "ideaName": "Database Tools and SQL for WebStorm",
     "vsCodeId": "formulahendry.vscode-mysql",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql-syntax",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.intellij.plugins.hcl",
-    "ideaName": "Terraform and HCL",
-    "vsCodeId": "HashiCorp.terraform",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.database",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "vsCodeId": "mongodb.mongodb-vscode",
+    "ideaId": "com.intellij.database",
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.css",
-    "ideaName": "CSS",
+    "vsCodeId": "GraphQL.vscode-graphql",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql-syntax",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "HashiCorp.terraform",
+    "ideaName": "Terraform and HCL",
+    "ideaId": "org.intellij.plugins.hcl",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mongodb.mongodb-vscode",
+    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "Zignd.html-css-class-completion",
+    "ideaName": "CSS",
+    "ideaId": "com.intellij.css",
     "builtIn": true
   }
 ]

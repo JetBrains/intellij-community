@@ -1,8 +1,18 @@
 [
   {
-    "vsCodeId": "emilast.LogFileHighlighter",
-    "ideaName": "Ideolog",
-    "ideaId": "com.intellij.ideolog"
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "TOML",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "Git",
+    "builtIn": true
   },
   {
     "vsCodeId": "editorconfig.editorconfig",
@@ -10,13 +20,33 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "wayou.vscode-todo-highlight",
-    "ideaName": "Language Support",
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Run Configurations",
     "builtIn": true
   },
   {
-    "vsCodeId": "streetsidesoftware.code-spell-checker",
-    "ideaName": "Spell Checker",
+    "vsCodeId": "github.vscode-pull-request-github",
+    "ideaName": "GitHub",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "gitLab.gitlab-workflow",
+    "ideaName": "GitLab",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-docker",
+    "ideaName": "Docker",
     "builtIn": true
   },
   {
@@ -35,63 +65,13 @@
     "ideaId": "com.intellij.zh"
   },
   {
-    "vsCodeId": "bungcip.better-toml",
-    "ideaName": "TOML",
-    "builtIn": true
+    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "ideaName": "Kubernetes",
+    "ideaId": "com.intellij.kubernetes"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-wsl",
     "ideaName": "WSL",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "msveden.teamcity-checker",
-    "ideaName": "JetBrains TeamCity Plugin",
-    "ideaId": "TeamCity"
-  },
-  {
-    "vsCodeId": "formulahendry.code-runner",
-    "ideaName": "Run Configurations",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "xinyayang0506.log-analysis",
-    "ideaName": "Ideolog",
-    "ideaId": "com.intellij.ideolog"
-  },
-  {
-    "vsCodeId": "github.vscode-pull-request-github",
-    "ideaName": "GitHub",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-azuretools.vscode-docker",
-    "ideaName": "Docker",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ritwickdey.LiveServer",
-    "ideaName": "Web support",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "mhutchie.git-graph",
-    "ideaName": "Git",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "waderyan.gitblame",
-    "ideaName": "Git",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "eamodio.gitlens",
-    "ideaName": "Git",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "donjayamanne.githistory",
-    "ideaName": "Git",
     "builtIn": true
   },
   {
@@ -100,18 +80,38 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "msveden.teamcity-checker",
+    "ideaName": "JetBrains TeamCity Plugin",
+    "ideaId": "TeamCity"
+  },
+  {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Web support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Spell Checker",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVIM",
     "ideaId": "IdeaVIM"
   },
   {
-    "vsCodeId": "gitLab.gitlab-workflow",
-    "ideaName": "GitLab",
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git",
     "builtIn": true
   },
   {
-    "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
-    "ideaName": "Kubernetes",
-    "ideaId": "com.intellij.kubernetes"
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "Language Support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "xinyayang0506.log-analysis",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
   }
 ]

@@ -1,181 +1,181 @@
 [
   {
-    "ideaId": "org.intellij.plugins.hcl",
-    "ideaName": "Terraform and HCL",
     "vsCodeId": "4ops.terraform",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.igu.plugins.bettercomments",
-    "ideaName": "Better Comments",
-    "vsCodeId": "aaron-bond.better-comments",
-    "builtIn": true
-  },
-  {
-    "ideaId": "Dart",
-    "ideaName": "Dart",
-    "vsCodeId": "Dart-Code.dart-code",
-    "builtIn": true
-  },
-  {
-    "ideaId": "io.flutter",
-    "ideaName": "Flutter",
-    "vsCodeId": "Dart-Code.flutter",
-    "builtIn": true
-  },
-  {
-    "ideaId": "PythonCore",
-    "ideaName": "Python Community Edition",
-    "vsCodeId": "donjayamanne.python-environment-manager",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.vermouthx.idea",
-    "ideaName": "Dracula Theme",
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "ideaName": "EditorConfig",
-    "vsCodeId": "EditorConfig.EditorConfig",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.mallowigi",
-    "ideaName": "Atom Material Icons",
-    "vsCodeId": "Equinusocio.vsc-material-theme-icons",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.github.copilot",
-    "ideaName": "GitHub Copilot",
-    "vsCodeId": "GitHub.copilot",
-    "builtIn": true
-  },
-  {
-    "ideaId": "club.nutsoft.Github3Theme",
-    "ideaName": "GitHub Theme",
-    "vsCodeId": "GitHub.github-vscode-theme",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.intellij.lang.jsgraphql",
-    "ideaName": "GraphQL",
-    "vsCodeId": "GraphQL.vscode-graphql-syntax",
-    "builtIn": true
-  },
-  {
-    "ideaId": "org.intellij.plugins.hcl",
     "ideaName": "Terraform and HCL",
-    "vsCodeId": "HashiCorp.terraform",
+    "ideaId": "org.intellij.plugins.hcl",
     "builtIn": true
   },
   {
-    "ideaId": "ru.adelf.idea.dotenv",
-    "ideaName": ".env files support",
-    "vsCodeId": "mikestead.dotenv",
+    "vsCodeId": "aaron-bond.better-comments",
+    "ideaName": "Better Comments",
+    "ideaId": "org.igu.plugins.bettercomments",
     "builtIn": true
   },
   {
-    "ideaId": "Docker",
-    "ideaName": "Docker",
-    "vsCodeId": "ms-azuretools.vscode-docker",
+    "vsCodeId": "Dart-Code.dart-code",
+    "ideaName": "Dart",
+    "ideaId": "Dart",
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.zh",
-    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "vsCodeId": "Dart-Code.flutter",
+    "ideaName": "Flutter",
+    "ideaId": "io.flutter",
     "builtIn": true
   },
   {
-    "ideaId": "PythonCore",
+    "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
-    "vsCodeId": "ms-python.isort",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.leinardi.pycharm.pylint",
-    "ideaName": "Pylint",
-    "vsCodeId": "ms-python.pylint",
-    "builtIn": true
-  },
-  {
     "ideaId": "PythonCore",
-    "ideaName": "Python Community Edition",
-    "vsCodeId": "ms-python.python",
     "builtIn": true
   },
   {
-    "ideaId": "com.intellij.plugin.adernov.powershell",
-    "ideaName": "PowerShell",
-    "vsCodeId": "ms-vscode.PowerShell",
+    "vsCodeId": "dracula-theme.theme-dracula",
+    "ideaName": "Dracula Theme",
+    "ideaId": "com.vermouthx.idea",
     "builtIn": true
   },
   {
-    "ideaId": "com.jetbrains.codeWithMe",
-    "ideaName": "Code With Me",
-    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "vsCodeId": "EditorConfig.EditorConfig",
+    "ideaName": "EditorConfig",
+    "ideaId": "org.editorconfig.editorconfigjetbrains",
     "builtIn": true
   },
   {
-    "ideaId": "indent-rainbow.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "vsCodeId": "oderwat.indent-rainbow",
-    "builtIn": true
-  },
-  {
-    "ideaId": "com.mallowigi",
+    "vsCodeId": "Equinusocio.vsc-material-theme-icons",
     "ideaName": "Atom Material Icons",
-    "vsCodeId": "PKief.material-icon-theme",
+    "ideaId": "com.mallowigi",
     "builtIn": true
   },
   {
-    "ideaId": "com.tabnine.TabNine",
-    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "vsCodeId": "TabNine.tabnine-vscode",
+    "vsCodeId": "GitHub.copilot",
+    "ideaName": "GitHub Copilot",
+    "ideaId": "com.github.copilot",
     "builtIn": true
   },
   {
-    "ideaId": "in.thekalinga.snippet.intellij",
-    "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
-    "vsCodeId": "thekalinga.bootstrap4-vscode",
+    "vsCodeId": "GitHub.github-vscode-theme",
+    "ideaName": "GitHub Theme",
+    "ideaId": "club.nutsoft.Github3Theme",
     "builtIn": true
   },
   {
-    "ideaId": "PythonCore",
+    "vsCodeId": "GraphQL.vscode-graphql",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GraphQL.vscode-graphql-syntax",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "HashiCorp.terraform",
+    "ideaName": "Terraform and HCL",
+    "ideaId": "org.intellij.plugins.hcl",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mikestead.dotenv",
+    "ideaName": ".env files support",
+    "ideaId": "ru.adelf.idea.dotenv",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-docker",
+    "ideaName": "Docker",
+    "ideaId": "Docker",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
+    "ideaId": "com.intellij.zh",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-python.isort",
     "ideaName": "Python Community Edition",
-    "vsCodeId": "tht13.python",
+    "ideaId": "PythonCore",
     "builtIn": true
   },
   {
-    "ideaId": "org.sylfra.idea.plugins.linessorter",
-    "ideaName": "Lines Sorter",
-    "vsCodeId": "Tyriar.sort-lines",
-    "builtIn": true
-  },
-  {
-    "ideaId": "IdeaVIM",
-    "ideaName": "IdeaVim",
-    "vsCodeId": "vscodevim.vim",
-    "builtIn": true
-  },
-  {
-    "ideaId": "color.scheme.One Dark Pro",
-    "ideaName": "One Dark Pro Color Scheme",
-    "vsCodeId": "zhuangtongfa.Material-theme",
+    "vsCodeId": "ms-python.pylint",
+    "ideaName": "Pylint",
+    "ideaId": "com.leinardi.pycharm.pylint",
     "builtIn": true
   },
   {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
     "ideaId": "com.intellij.python"
+  },
+  {
+    "vsCodeId": "ms-python.python",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.PowerShell",
+    "ideaName": "PowerShell",
+    "ideaId": "com.intellij.plugin.adernov.powershell",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "MS-vsliveshare.vsliveshare",
+    "ideaName": "Code With Me",
+    "ideaId": "com.jetbrains.codeWithMe",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "oderwat.indent-rainbow",
+    "ideaName": "Indent Rainbow",
+    "ideaId": "indent-rainbow.indent-rainbow",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "PKief.material-icon-theme",
+    "ideaName": "Atom Material Icons",
+    "ideaId": "com.mallowigi",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "TabNine.tabnine-vscode",
+    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
+    "ideaId": "com.tabnine.TabNine",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "thekalinga.bootstrap4-vscode",
+    "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
+    "ideaId": "in.thekalinga.snippet.intellij",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "tht13.python",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Tyriar.sort-lines",
+    "ideaName": "Lines Sorter",
+    "ideaId": "org.sylfra.idea.plugins.linessorter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscodevim.vim",
+    "ideaName": "IdeaVim",
+    "ideaId": "IdeaVIM",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "zhuangtongfa.Material-theme",
+    "ideaName": "One Dark Pro Color Scheme",
+    "ideaId": "color.scheme.One Dark Pro",
+    "builtIn": true
   }
 ]
