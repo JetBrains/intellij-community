@@ -14,21 +14,21 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import java.awt.Font
 import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalPromptModel(private val session: BlockTerminalSession) : ShellCommandListener {
+class TerminalPromptModel(private val session: BlockTerminalSession) {
   private val listeners: MutableList<TerminalPromptStateListener> = CopyOnWriteArrayList()
 
   var renderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
     private set
 
   init {
-    session.addCommandListener(this)
-  }
-
-  override fun promptStateUpdated(newState: TerminalPromptState) {
-    runInEdt {
-      renderingInfo = calculateRenderingInfo(newState)
-      listeners.forEach { it.promptStateUpdated(renderingInfo) }
-    }
+    session.addCommandListener(object : ShellCommandListener {
+      override fun promptStateUpdated(newState: TerminalPromptState) {
+        runInEdt {
+          renderingInfo = calculateRenderingInfo(newState)
+          listeners.forEach { it.promptStateUpdated(renderingInfo) }
+        }
+      }
+    })
   }
 
   private fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {
