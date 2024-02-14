@@ -18,6 +18,26 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "adrianwilczynski.add-reference",
+    "ideaName": ".NET Core Add Reference",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "adrianwilczynski.asp-net-core-switcher",
+    "ideaName": "ASP.NET Core Switcher",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "adrianwilczynski.namespace",
+    "ideaName": "C# Namespace Autocompletion",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "akamud.vscode-theme-onedark",
     "ideaName": "Atom OneDark Theme",
     "ideaId": "github.cweijan.test-theme",
@@ -36,6 +56,31 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "austin.code-gnu-global",
+    "ideaName": "C++ Intellisense",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "christian-kohler.npm-intellisense",
+    "ideaName": "npm Intellisense",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "christian-kohler.path-intellisense",
+    "ideaName": "Path Intellisense",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "cschlosser.doxdocgen",
+    "ideaName": "Doxygen Documentation Generator",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
@@ -48,9 +93,49 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "doggy8088.netcore-extension-pack",
+    "ideaName": ".NET Core Extension Pack",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "doggy8088.netcore-snippets",
+    "ideaName": "Essential ASP.NET Core Snippets",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "doggy8088.quicktype-refresh",
+    "ideaName": "Paste JSON as Code (Refresh)",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "DotJoshJohnson.xml",
+    "ideaName": "XML Tools",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "dracula-theme.theme-dracula",
     "ideaName": "Dracula Theme",
     "ideaId": "com.vermouthx.idea",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
     "builtIn": true
   },
   {
@@ -60,9 +145,34 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "eg2.vscode-npm-script",
+    "ideaName": "npm",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
     "ideaId": "intellij.prettierJS",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "fernandoescolar.vscode-solution-explorer",
+    "ideaName": "vscode-solution-explorer",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-close-tag",
+    "ideaName": "Auto Close Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
     "builtIn": true
   },
   {
@@ -72,7 +182,7 @@
   },
   {
     "vsCodeId": "formulahendry.dotnet-test-explorer",
-    "ideaName": "Test Explorer",
+    "ideaName": ".NET Core Test Explorer",
     "builtIn": true
   },
   {
@@ -90,6 +200,11 @@
     "vsCodeId": "GitHub.github-vscode-theme",
     "ideaName": "GitHub Theme",
     "ideaId": "club.nutsoft.Github3Theme",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
     "builtIn": true
   },
   {
@@ -123,7 +238,12 @@
   },
   {
     "vsCodeId": "jchannon.csharpextensions",
-    "ideaName": "C#",
+    "ideaName": "C# Extensions",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "jeff-hykin.better-cpp-syntax",
+    "ideaName": "Better C++ Syntax",
     "builtIn": true
   },
   {
@@ -139,22 +259,27 @@
   },
   {
     "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
-    "ideaName": "Live Templates",
+    "ideaName": "C# Snippets",
     "builtIn": true
   },
   {
     "vsCodeId": "k--kato.docomment",
-    "ideaName": "C#",
+    "ideaName": "C# XML Documentation Comments",
     "builtIn": true
   },
   {
     "vsCodeId": "kleber-swf.unity-code-snippets",
-    "ideaName": "Unity",
+    "ideaName": "Unity Code Snippets",
     "builtIn": true
   },
   {
     "vsCodeId": "kreativ-software.csharpextensions",
-    "ideaName": "C#",
+    "ideaName": "C# Extensions",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
     "builtIn": true
   },
   {
@@ -182,6 +307,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack for Visual Studio Code",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
     "ideaName": "Korean Language Pack / 한국어 언어 팩",
     "ideaId": "com.intellij.ko",
@@ -201,6 +331,16 @@
   {
     "vsCodeId": "ms-dotnettools.csharp",
     "ideaName": "C#",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-dotnettools.vscode-dotnet-pack",
+    "ideaName": ".NET Extension Pack",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-dotnettools.vscode-dotnet-runtime",
+    "ideaName": ".NET Install Tool for Extension Authors",
     "builtIn": true
   },
   {
@@ -228,9 +368,44 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-ssh-edit",
+    "ideaName": "Remote - SSH: Editing Configuration Files",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.vscode-remote-extensionpack",
+    "ideaName": "Remote Development",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.cmake-tools",
+    "ideaName": "CMake Tools",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.cpptools",
+    "ideaName": "C/C++",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.cpptools-extension-pack",
+    "ideaName": "C/C++ Extension Pack",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-vscode.PowerShell",
     "ideaName": "PowerShell",
     "ideaId": "com.intellij.plugin.adernov.powershell",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.remote-explorer",
+    "ideaName": "Remote Explorer",
     "builtIn": true
   },
   {
@@ -252,6 +427,26 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-pg",
+    "ideaName": "SQLTools PostgreSQL/Cockroach Driver",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "naumovs.color-highlight",
+    "ideaName": "Color Highlight",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "neikeq.godot-csharp-vscode",
+    "ideaName": "C# Tools for Godot",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue",
@@ -270,9 +465,44 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "redhat.vscode-xml",
+    "ideaName": "XML",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
     "ideaId": "org.jetbrains.plugins.yaml",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "schneiderpat.aspnet-helper",
+    "ideaName": "ASP.NET Helper",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Shan.code-settings-sync",
+    "ideaName": "Settings Sync",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "shd101wyy.markdown-preview-enhanced",
+    "ideaName": "Markdown Preview Enhanced",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "slevesque.shader",
+    "ideaName": "Shader languages support for VS Code",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Code Spell Checker",
     "builtIn": true
   },
   {
@@ -282,8 +512,18 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "tobiah.unity-tools",
-    "ideaName": "Unity",
+    "vsCodeId": "tintoy.msbuild-project-tools",
+    "ideaName": "MSBuild project tools",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Tobiah.unity-tools",
+    "ideaName": "Unity Tools",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "twxs.cmake",
+    "ideaName": "CMake",
     "builtIn": true
   },
   {
@@ -293,8 +533,8 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "unity.unity-debug",
-    "ideaName": "Unity",
+    "vsCodeId": "Unity.unity-debug",
+    "ideaName": "Debugger for Unity",
     "builtIn": true
   },
   {
@@ -307,6 +547,16 @@
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "YclepticStudios.unity-snippets",
+    "ideaName": "Unity Snippets",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown All in One",
     "builtIn": true
   },
   {

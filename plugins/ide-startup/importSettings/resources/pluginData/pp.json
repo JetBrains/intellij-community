@@ -12,15 +12,35 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "abusaidm.html-snippets",
+    "ideaName": "HTML Snippets",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
     "ideaId": "AngularJS",
     "builtIn": true
   },
   {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "batisteo.vscode-django",
     "ideaName": "Python",
     "ideaId": "Pythonid",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "codezombiech.gitignore",
+    "ideaName": "gitignore",
     "builtIn": true
   },
   {
@@ -42,9 +62,24 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.python-extension-pack",
+    "ideaName": "Python Extension Pack",
     "builtIn": true
   },
   {
@@ -54,9 +89,24 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
     "ideaId": "org.editorconfig.editorconfigjetbrains",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eg2.vscode-npm-script",
+    "ideaName": "npm",
     "builtIn": true
   },
   {
@@ -72,9 +122,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "formulahendry.auto-close-tag",
+    "ideaName": "Auto Close Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "frhtylcn.pythonsnippets",
+    "ideaName": "python snippets",
     "builtIn": true
   },
   {
@@ -93,6 +163,16 @@
     "vsCodeId": "GitHub.github-vscode-theme",
     "ideaName": "GitHub Theme",
     "ideaId": "club.nutsoft.Github3Theme",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab Workflow",
     "builtIn": true
   },
   {
@@ -120,15 +200,35 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "humao.rest-client",
+    "ideaName": "REST Client",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "johnpapa.Angular2",
     "ideaName": "Angular and AngularJS",
     "ideaId": "AngularJS",
     "builtIn": true
   },
   {
+    "vsCodeId": "KevinRose.vsc-python-indent",
+    "ideaName": "Python Indent",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "LittleFoxTeam.vscode-python-test-adapter",
+    "ideaName": "Python Test Explorer for Visual Studio Code",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "liximomo.sftp",
     "ideaName": "FTP/SFTP/WebDAV Connectivity",
     "ideaId": "com.jetbrains.plugins.webDeployment",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "magicstack.MagicPython",
+    "ideaName": "MagicPython",
     "builtIn": true
   },
   {
@@ -156,6 +256,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack for Visual Studio Code",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
     "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
     "ideaId": "com.intellij.zh",
@@ -171,6 +276,11 @@
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Black Formatter",
     "builtIn": true
   },
   {
@@ -192,15 +302,40 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-toolsai.jupyter",
+    "ideaName": "Jupyter",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
     "ideaId": "org.jetbrains.plugins.docker.gateway",
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.vscode-remote-extensionpack",
+    "ideaName": "Remote Development",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-vscode.PowerShell",
     "ideaName": "PowerShell",
     "ideaId": "com.intellij.plugin.adernov.powershell",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.vscode-typescript-next",
+    "ideaName": "JavaScript and TypeScript Nightly",
     "builtIn": true
   },
   {
@@ -222,6 +357,26 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mtxr.sqltools",
+    "ideaName": "SQLTools",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "njpwerner.autodocstring",
+    "ideaName": "autoDocstring - Python Docstring Generator",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "njqdev.vscode-python-typehint",
+    "ideaName": "Python Type Hint",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue",
@@ -240,9 +395,39 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "pranaygp.vscode-css-peek",
+    "ideaName": "CSS Peek",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "redhat.vscode-xml",
+    "ideaName": "XML",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
     "ideaId": "org.jetbrains.plugins.yaml",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Shan.code-settings-sync",
+    "ideaName": "Settings Sync",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "shd101wyy.markdown-preview-enhanced",
+    "ideaName": "Markdown Preview Enhanced",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "sidthesloth.html5-boilerplate",
+    "ideaName": "HTML Boilerplate",
     "builtIn": true
   },
   {
@@ -255,6 +440,16 @@
     "vsCodeId": "TabNine.tabnine-vscode",
     "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
     "ideaId": "com.tabnine.TabNine",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "techer.open-in-browser",
+    "ideaName": "open in browser",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "thebarkman.vscode-djaneiro",
+    "ideaName": "Djaneiro - Django Snippets",
     "builtIn": true
   },
   {
@@ -285,6 +480,11 @@
     "vsCodeId": "wholroyd.jinja",
     "ideaName": "Python",
     "ideaId": "Pythonid",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown All in One",
     "builtIn": true
   },
   {

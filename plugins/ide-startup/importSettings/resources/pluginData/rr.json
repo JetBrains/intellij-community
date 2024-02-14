@@ -6,15 +6,60 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
     "builtIn": true
   },
   {
@@ -66,15 +111,35 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
     "ideaId": "com.jetbrains.codeWithMe",
     "builtIn": true
   },
   {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "oderwat.indent-rainbow",
     "ideaName": "Indent Rainbow",
     "ideaId": "indent-rainbow.indent-rainbow",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "pranaygp.vscode-css-peek",
+    "ideaName": "CSS Peek",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
     "builtIn": true
   },
   {

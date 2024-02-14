@@ -1,14 +1,44 @@
 [
   {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
     "builtIn": true
   },
   {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
     "builtIn": true
   },
   {
@@ -33,6 +63,11 @@
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
     "builtIn": true
   },
   {

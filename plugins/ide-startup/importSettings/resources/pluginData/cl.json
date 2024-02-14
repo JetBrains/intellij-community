@@ -18,6 +18,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "akamud.vscode-theme-onedark",
     "ideaName": "Atom OneDark Theme",
     "ideaId": "github.cweijan.test-theme",
@@ -30,9 +35,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "austin.code-gnu-global",
+    "ideaName": "C++ Intellisense",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "bungcip.better-toml",
     "ideaName": "Toml",
     "ideaId": "org.toml.lang",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "christian-kohler.path-intellisense",
+    "ideaName": "Path Intellisense",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "cschlosser.doxdocgen",
+    "ideaName": "Doxygen Documentation Generator",
     "builtIn": true
   },
   {
@@ -42,15 +67,35 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "danielpinto8zz6.c-cpp-compile-run",
+    "ideaName": "C/C++ Compile Run",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
     "ideaId": "Dart",
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "DotJoshJohnson.xml",
+    "ideaName": "XML Tools",
     "builtIn": true
   },
   {
@@ -66,15 +111,45 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
     "ideaId": "org.editorconfig.editorconfigjetbrains",
     "builtIn": true
   },
   {
+    "vsCodeId": "eg2.vscode-npm-script",
+    "ideaName": "npm",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
     "ideaId": "intellij.prettierJS",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-close-tag",
+    "ideaName": "Auto Close Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
     "builtIn": true
   },
   {
@@ -102,6 +177,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql",
@@ -126,6 +206,16 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "jeff-hykin.better-cpp-syntax",
+    "ideaName": "Better C++ Syntax",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "johnpapa.winteriscoming",
+    "ideaName": "Winter is Coming Theme",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "JScearcy.rust-doc-viewer",
     "ideaName": "Rust",
     "ideaId": "com.jetbrains.rust",
@@ -135,6 +225,11 @@
     "vsCodeId": "mechatroner.rainbow-csv",
     "ideaName": "Rainbow CSV",
     "ideaId": "com.andrey4623.rainbowcsv",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
     "builtIn": true
   },
   {
@@ -165,6 +260,11 @@
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack for Visual Studio Code",
     "builtIn": true
   },
   {
@@ -204,6 +304,46 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-ssh-edit",
+    "ideaName": "Remote - SSH: Editing Configuration Files",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.vscode-remote-extensionpack",
+    "ideaName": "Remote Development",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.cmake-tools",
+    "ideaName": "CMake Tools",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.cpptools",
+    "ideaName": "C/C++",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.cpptools-extension-pack",
+    "ideaName": "C/C++ Extension Pack",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.cpptools-themes",
+    "ideaName": "C/C++ Themes",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-vscode.hexeditor",
     "ideaName": "BinEd - Binary/Hex Editor",
     "ideaId": "org.exbin.deltahex.intellij",
@@ -216,6 +356,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode.remote-explorer",
+    "ideaName": "Remote Explorer",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-vscode.sublime-keybindings",
     "ideaName": "Sublime Text Keymap",
     "ideaId": "com.intellij.plugins.sublimetextkeymap",
@@ -225,6 +370,11 @@
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
     "ideaId": "com.jetbrains.codeWithMe",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
     "builtIn": true
   },
   {
@@ -252,15 +402,40 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "pranaygp.vscode-css-peek",
+    "ideaName": "CSS Peek",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "redhat.vscode-xml",
+    "ideaName": "XML",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
     "ideaId": "org.jetbrains.plugins.yaml",
     "builtIn": true
   },
   {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "rust-lang.rust-analyzer",
     "ideaName": "Rust",
     "ideaId": "com.jetbrains.rust",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "shd101wyy.markdown-preview-enhanced",
+    "ideaName": "Markdown Preview Enhanced",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Code Spell Checker",
     "builtIn": true
   },
   {
@@ -294,6 +469,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "twxs.cmake",
+    "ideaName": "CMake",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "Tyriar.sort-lines",
     "ideaName": "Lines Sorter",
     "ideaId": "org.sylfra.idea.plugins.linessorter",
@@ -303,6 +483,11 @@
     "vsCodeId": "vsciot-vscode.vscode-arduino",
     "ideaName": "Arduino Support",
     "ideaId": "com.vladsch.clionarduinoplugin",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscode-icons-team.vscode-icons",
+    "ideaName": "vscode-icons",
     "builtIn": true
   },
   {
@@ -327,6 +512,11 @@
     "vsCodeId": "wholroyd.jinja",
     "ideaName": "Python",
     "ideaId": "Pythonid",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown All in One",
     "builtIn": true
   },
   {

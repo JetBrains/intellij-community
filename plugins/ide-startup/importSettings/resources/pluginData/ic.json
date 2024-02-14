@@ -24,6 +24,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "codezombiech.gitignore",
+    "ideaName": "gitignore",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
     "ideaId": "Dart",
@@ -36,8 +41,28 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "donjayamanne.javadebugger",
     "ideaName": "Debugger",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
     "builtIn": true
   },
   {
@@ -47,8 +72,33 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "fwcd.kotlin",
     "ideaName": "Kotlin",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "georgewfraser.vscode-javac",
+    "ideaName": "Java Language Support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab Workflow",
     "builtIn": true
   },
   {
@@ -76,14 +126,24 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "kumar-harsh.graphql-for-vscode",
+    "ideaName": "GraphQL for VSCode",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "mathiasfrohlich.Kotlin",
-    "ideaName": "Kotlin",
+    "ideaName": "Kotlin Language",
     "builtIn": true
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Black Formatter",
     "builtIn": true
   },
   {
@@ -99,6 +159,16 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
     "ideaId": "com.jetbrains.codeWithMe",
@@ -111,8 +181,13 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "onecentlin.laravel-blade",
+    "ideaName": "Laravel Blade Snippets",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "redhat.java",
-    "ideaName": "Java",
+    "ideaName": "Language Support for Java(TM) by Red Hat",
     "builtIn": true
   },
   {
@@ -122,9 +197,20 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "scala-lang.scala",
     "ideaName": "Scala",
-    "ideaId": "org.intellij.scala"
+    "ideaId": "org.intellij.scala",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Shan.code-settings-sync",
+    "ideaName": "Settings Sync",
+    "builtIn": true
   },
   {
     "vsCodeId": "SonarSource.sonarlint-vscode",
@@ -147,12 +233,16 @@
   {
     "vsCodeId": "vscjava.vscode-gradle",
     "ideaName": "Gradle",
-    "ideaId": "com.intellij.gradle",
     "builtIn": true
   },
   {
     "vsCodeId": "vscjava.vscode-java-debug",
-    "ideaName": "Debugger",
+    "ideaName": "Debugger for Java",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-java-dependency",
+    "ideaName": "Project Manager for Java",
     "builtIn": true
   },
   {
@@ -161,13 +251,19 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "vscjava.vscode-java-test",
+    "ideaName": "Test Runner for Java",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "vscjava.vscode-lombok",
     "ideaName": "Lombok",
-    "ideaId": "Lombook Plugin"
+    "ideaId": "Lombook Plugin",
+    "builtIn": true
   },
   {
     "vsCodeId": "vscjava.vscode-maven",
-    "ideaName": "Maven",
+    "ideaName": "Maven for Java",
     "builtIn": true
   },
   {

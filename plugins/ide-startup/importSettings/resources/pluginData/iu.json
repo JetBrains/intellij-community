@@ -6,6 +6,16 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "abusaidm.html-snippets",
+    "ideaName": "HTML Snippets",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "alexkrechik.cucumberautocomplete",
     "ideaName": "Gherkin",
     "ideaId": "gherkin",
@@ -21,6 +31,11 @@
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
     "ideaId": "AngularJS",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
     "builtIn": true
   },
   {
@@ -42,6 +57,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "codezombiech.gitignore",
+    "ideaName": "gitignore",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
@@ -60,9 +80,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.javadebugger",
+    "ideaName": "Java Debugger",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.python-extension-pack",
+    "ideaName": "Python Extension Pack",
     "builtIn": true
   },
   {
@@ -72,9 +112,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-spring-boot",
+    "ideaName": "Spring Boot Support",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
     "ideaId": "org.editorconfig.editorconfigjetbrains",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eg2.vscode-npm-script",
+    "ideaName": "npm",
     "builtIn": true
   },
   {
@@ -84,15 +144,45 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "formulahendry.auto-close-tag",
+    "ideaName": "Auto Close Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
     "builtIn": true
   },
   {
+    "vsCodeId": "georgewfraser.vscode-javac",
+    "ideaName": "Java Language Support",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "GitHub.codespaces",
     "ideaName": "GitHub Codespaces",
     "ideaId": "com.github.codespaces.jetbrains.gateway",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab Workflow",
     "builtIn": true
   },
   {
@@ -150,9 +240,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "KevinRose.vsc-python-indent",
+    "ideaName": "Python Indent",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "kumar-harsh.graphql-for-vscode",
+    "ideaName": "GraphQL for VSCode",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "liximomo.sftp",
     "ideaName": "FTP/SFTP/WebDAV Connectivity",
     "ideaId": "com.jetbrains.plugins.webDeployment",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "magicstack.MagicPython",
+    "ideaName": "MagicPython",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mathiasfrohlich.Kotlin",
+    "ideaName": "Kotlin Language",
     "builtIn": true
   },
   {
@@ -186,6 +296,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Black Formatter",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-python.isort",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore",
@@ -198,9 +313,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-toolsai.jupyter",
+    "ideaName": "Jupyter",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
     "ideaId": "org.jetbrains.plugins.docker.gateway",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-ssh-edit",
+    "ideaName": "Remote - SSH: Editing Configuration Files",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
     "builtIn": true
   },
   {
@@ -216,6 +351,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue",
@@ -225,6 +365,16 @@
     "vsCodeId": "oderwat.indent-rainbow",
     "ideaName": "Indent Rainbow",
     "ideaId": "indent-rainbow.indent-rainbow",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "pranaygp.vscode-css-peek",
+    "ideaName": "CSS Peek",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "redhat.java",
+    "ideaName": "Language Support for Java(TM) by Red Hat",
     "builtIn": true
   },
   {
@@ -240,6 +390,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "rust-lang.rust-analyzer",
     "ideaName": "Rust",
     "ideaId": "com.jetbrains.rust",
@@ -249,6 +404,11 @@
     "vsCodeId": "scala-lang.scala",
     "ideaName": "Scala",
     "ideaId": "org.intellij.scala",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Shan.code-settings-sync",
+    "ideaName": "Settings Sync",
     "builtIn": true
   },
   {
@@ -273,6 +433,11 @@
     "vsCodeId": "swellaby.vscode-rust-test-adapter",
     "ideaName": "Rust",
     "ideaId": "com.jetbrains.rust",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "techer.open-in-browser",
+    "ideaName": "open in browser",
     "builtIn": true
   },
   {
@@ -306,9 +471,34 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "vscjava.vscode-java-debug",
+    "ideaName": "Debugger for Java",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-java-dependency",
+    "ideaName": "Project Manager for Java",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-java-pack",
+    "ideaName": "Extension Pack for Java",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-java-test",
+    "ideaName": "Test Runner for Java",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "vscjava.vscode-lombok",
     "ideaName": "Lombok",
     "ideaId": "Lombook Plugin",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "vscjava.vscode-maven",
+    "ideaName": "Maven for Java",
     "builtIn": true
   },
   {

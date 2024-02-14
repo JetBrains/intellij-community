@@ -18,6 +18,16 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "abusaidm.html-snippets",
+    "ideaName": "HTML Snippets",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ajhyndman.jslint",
     "ideaName": "JSLint",
     "ideaId": "com.jetbrains.plugins.jslint",
@@ -27,6 +37,11 @@
     "vsCodeId": "akamud.vscode-theme-onedark",
     "ideaName": "Atom OneDark Theme",
     "ideaId": "github.cweijan.test-theme",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "alexcvzz.vscode-sqlite",
+    "ideaName": "SQLite",
     "builtIn": true
   },
   {
@@ -72,6 +87,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "BazelBuild.vscode-bazel",
     "ideaName": "Bazel for IntelliJ",
     "ideaId": "com.google.idea.bazel.ijwb",
@@ -96,6 +116,21 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "christian-kohler.npm-intellisense",
+    "ideaName": "npm Intellisense",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ckolkman.vscode-postgres",
+    "ideaName": "PostgreSQL",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "codezombiech.gitignore",
+    "ideaName": "gitignore",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "csstools.postcss",
     "ideaName": "PostCSS",
     "ideaId": "org.intellij.plugins.postcss",
@@ -105,6 +140,11 @@
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "cweijan.vscode-redis-client",
+    "ideaName": "Redis",
     "builtIn": true
   },
   {
@@ -120,6 +160,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "denoland.vscode-deno",
     "ideaName": "Deno",
     "ideaId": "deno",
@@ -132,9 +177,19 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "DotJoshJohnson.xml",
+    "ideaName": "XML Tools",
     "builtIn": true
   },
   {
@@ -150,9 +205,24 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
     "ideaId": "org.editorconfig.editorconfigjetbrains",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eg2.vscode-npm-script",
+    "ideaName": "npm",
     "builtIn": true
   },
   {
@@ -171,6 +241,21 @@
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
     "ideaId": "intellij.prettierJS",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-close-tag",
+    "ideaName": "Auto Close Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
     "builtIn": true
   },
   {
@@ -195,6 +280,16 @@
     "vsCodeId": "GitHub.github-vscode-theme",
     "ideaName": "GitHub Theme",
     "ideaId": "club.nutsoft.Github3Theme",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab Workflow",
     "builtIn": true
   },
   {
@@ -264,6 +359,16 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "johnpapa.winteriscoming",
+    "ideaName": "Winter is Coming Theme",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "kumar-harsh.graphql-for-vscode",
+    "ideaName": "GraphQL for VSCode",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "liximomo.sftp",
     "ideaName": "FTP/SFTP/WebDAV Connectivity",
     "ideaId": "com.jetbrains.plugins.webDeployment",
@@ -273,6 +378,11 @@
     "vsCodeId": "mechatroner.rainbow-csv",
     "ideaName": "Rainbow CSV",
     "ideaId": "com.andrey4623.rainbowcsv",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
     "builtIn": true
   },
   {
@@ -300,6 +410,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack for Visual Studio Code",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
     "ideaName": "Korean Language Pack / 한국어 언어 팩",
     "ideaId": "com.intellij.ko",
@@ -318,9 +433,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-mssql.data-workspace-vscode",
+    "ideaName": "Data Workspace",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-mssql.sql-database-projects-vscode",
+    "ideaName": "SQL Database Projects",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-ossdata.vscode-postgresql",
+    "ideaName": "PostgreSQL",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Black Formatter",
     "builtIn": true
   },
   {
@@ -333,6 +468,26 @@
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
     "ideaId": "org.jetbrains.plugins.docker.gateway",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-ssh-edit",
+    "ideaName": "Remote - SSH: Editing Configuration Files",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.vscode-remote-extensionpack",
+    "ideaName": "Remote Development",
     "builtIn": true
   },
   {
@@ -378,6 +533,26 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mtxr.sqltools",
+    "ideaName": "SQLTools",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-pg",
+    "ideaName": "SQLTools PostgreSQL/Cockroach Driver",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-sqlite",
+    "ideaName": "SQLTools SQLite",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue",
@@ -390,9 +565,24 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "Oracle.oracledevtools",
+    "ideaName": "Oracle Developer Tools for VS Code (SQL and PLSQL)",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "PKief.material-icon-theme",
     "ideaName": "Atom Material Icons",
     "ideaId": "com.mallowigi",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "Postman.postman-for-vscode",
+    "ideaName": "Postman",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "pranaygp.vscode-css-peek",
+    "ideaName": "CSS Peek",
     "builtIn": true
   },
   {
@@ -414,6 +604,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "redhat.vscode-xml",
+    "ideaName": "XML",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
     "ideaId": "org.jetbrains.plugins.yaml",
@@ -423,6 +618,11 @@
     "vsCodeId": "ritwickdey.live-sass",
     "ideaName": "File Watchers",
     "ideaId": "com.intellij.plugins.watcher",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
     "builtIn": true
   },
   {
@@ -438,9 +638,19 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "shd101wyy.markdown-preview-enhanced",
+    "ideaName": "Markdown Preview Enhanced",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "SonarSource.sonarlint-vscode",
     "ideaName": "SonarLint",
     "ideaId": "org.sonarlint.idea",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Code Spell Checker",
     "builtIn": true
   },
   {
@@ -471,6 +681,11 @@
     "vsCodeId": "tal7aouy.rainbow-bracket",
     "ideaName": "Rainbow Brackets",
     "ideaId": "izhangzhihao.rainbow.brackets",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "techer.open-in-browser",
+    "ideaName": "open in browser",
     "builtIn": true
   },
   {
@@ -525,6 +740,11 @@
     "vsCodeId": "wix.vscode-import-cost",
     "ideaName": "Import Cost",
     "ideaId": "ImportCost",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown All in One",
     "builtIn": true
   },
   {

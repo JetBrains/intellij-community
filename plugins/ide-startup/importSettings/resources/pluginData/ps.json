@@ -6,6 +6,16 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "adpyke.vscode-sql-formatter",
+    "ideaName": "SQL Formatter",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "bajdzis.vscode-database",
+    "ideaName": "vscode-database",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "bmewburn.vscode-intelephense-client",
     "ideaName": "PHP",
     "builtIn": true
@@ -17,8 +27,28 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "dbaeumer.vscode-eslint",
+    "ideaName": "ESLint",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "DEVSENSE.phptools-vscode",
     "ideaName": "PHP",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "donjayamanne.githistory",
+    "ideaName": "Git History",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "eamodio.gitlens",
+    "ideaName": "GitLens — Git supercharged",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ecmel.vscode-html-css",
+    "ideaName": "HTML CSS Support",
     "builtIn": true
   },
   {
@@ -28,9 +58,29 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "formulahendry.auto-close-tag",
+    "ideaName": "Auto Close Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.auto-rename-tag",
+    "ideaName": "Auto Rename Tag",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "formulahendry.code-runner",
+    "ideaName": "Code Runner",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
     "builtIn": true
   },
   {
@@ -49,6 +99,11 @@
     "vsCodeId": "HashiCorp.terraform",
     "ideaName": "Terraform and HCL",
     "ideaId": "org.intellij.plugins.hcl",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ikappas.phpcs",
+    "ideaName": "phpcs",
     "builtIn": true
   },
   {
@@ -76,9 +131,24 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode-remote.remote-ssh",
+    "ideaName": "Remote - SSH",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode-remote.remote-wsl",
+    "ideaName": "WSL",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
     "ideaId": "com.jetbrains.codeWithMe",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mtxr.sqltools-driver-mysql",
+    "ideaName": "SQLTools MySQL/MariaDB/TiDB",
     "builtIn": true
   },
   {
@@ -94,15 +164,35 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "onecentlin.laravel-blade",
+    "ideaName": "Laravel Blade Snippets",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "onecentlin.laravel5-snippets",
     "ideaName": "Laravel Idea",
     "ideaId": "com.laravel_idea.plugin",
     "builtIn": true
   },
   {
+    "vsCodeId": "pranaygp.vscode-css-peek",
+    "ideaName": "CSS Peek",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
     "ideaId": "org.jetbrains.plugins.yaml",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "rifi2k.format-html-in-php",
+    "ideaName": "Format HTML in PHP",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "ritwickdey.LiveServer",
+    "ideaName": "Live Server",
     "builtIn": true
   },
   {
@@ -126,6 +216,7 @@
   {
     "vsCodeId": "xdebug.php-pack",
     "ideaName": "PHP",
+    "ideaId": "com.jetbrains.php",
     "builtIn": true
   },
   {
