@@ -296,6 +296,13 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return ((YAMLKeyValue)property).getName();
       }
 
+      @Nullable
+      @Override
+      public PsiElement getPropertyNameElement(PsiElement property) {
+        assert property instanceof YAMLKeyValue;
+        return ((YAMLKeyValue)property).getKey();
+      }
+
       private static YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
         if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
           PsiElement prev = element.getPrevSibling();

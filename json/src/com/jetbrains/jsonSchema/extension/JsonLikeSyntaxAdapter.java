@@ -11,6 +11,7 @@ public interface JsonLikeSyntaxAdapter {
   @Nullable PsiElement getPropertyValue(PsiElement property);
   default @NotNull PsiElement adjustValue(@NotNull PsiElement value) { return value; }
   @Nullable String getPropertyName(PsiElement property);
+  @Nullable PsiElement getPropertyNameElement(PsiElement property);
   @NotNull PsiElement createProperty(final @NotNull String name, final @NotNull String value, PsiElement element);
   boolean ensureComma(PsiElement self, PsiElement newElement);
   void removeIfComma(PsiElement forward);

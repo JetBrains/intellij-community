@@ -189,6 +189,12 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       }
 
       @Override
+      public @NotNull PsiElement getPropertyNameElement(PsiElement property) {
+        assert property instanceof JsonProperty;
+        return ((JsonProperty)property).getNameElement();
+      }
+
+      @Override
       public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
         return myGenerator.createProperty(name, value);
       }
