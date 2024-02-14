@@ -34,7 +34,7 @@ interface GitLabProject {
 
   val labels: SharedFlow<Result<List<GitLabLabelDTO>>>
   val members: SharedFlow<Result<List<GitLabUserDTO>>>
-  val defaultBranch: Deferred<String>
+  val defaultBranch: Deferred<String?>
   val allowsMultipleReviewers: SharedFlow<Boolean>
 
   val emojis: Deferred<List<ParsedGitLabEmoji>>
@@ -87,9 +87,9 @@ class GitLabLazyProject(
     api.graphQL.getProject(projectCoordinates).body()
   }
 
-  override val defaultBranch: Deferred<String> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+  override val defaultBranch: Deferred<String?> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     val project = initialData.await()
-    project.repository.rootRef
+    project.repository?.rootRef
   }
 
   override val allowsMultipleReviewers: SharedFlow<Boolean> = channelFlow {
