@@ -342,6 +342,11 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
   }
 
   @Override
+  public boolean hasAnnotation(@NotNull @NonNls String fqn) {
+    return findAnnotation(fqn) != null;
+  }
+
+  @Override
   @NotNull
   public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     throw new IncorrectOperationException();
