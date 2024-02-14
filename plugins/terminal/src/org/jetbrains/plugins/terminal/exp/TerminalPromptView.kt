@@ -100,6 +100,10 @@ class TerminalPromptView(
       append(textPart, attributes)
       curOffset = highlighting.endOffset
     }
+    if (curOffset < renderingInfo.text.length) {
+      val textPart = renderingInfo.text.substring(curOffset)
+      append(textPart)
+    }
   }
 
   override fun commandHistoryStateChanged(showing: Boolean) {
