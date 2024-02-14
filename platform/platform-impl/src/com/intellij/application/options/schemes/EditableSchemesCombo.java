@@ -42,14 +42,22 @@ public final class EditableSchemesCombo<T extends Scheme> {
   public EditableSchemesCombo(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
     myLayout = new CardLayout();
-    myRootPanel = new JPanel(myLayout);
+    myRootPanel = new JPanel(myLayout) {
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), super.getPreferredSize().height);
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        return new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE);
+      }
+    };
     myRootPanel.setOpaque(false);
     createCombo();
     myRootPanel.add(myComboBox);
     myNameEditorField = createNameEditorField();
     myRootPanel.add(myNameEditorField);
-    myRootPanel.setPreferredSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), myNameEditorField.getPreferredSize().height));
-    myRootPanel.setMaximumSize(new Dimension(JBUIScale.scale(COMBO_WIDTH), Short.MAX_VALUE));
   }
 
   private JTextField createNameEditorField() {

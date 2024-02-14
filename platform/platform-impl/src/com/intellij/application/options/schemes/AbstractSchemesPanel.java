@@ -22,6 +22,7 @@ import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
@@ -137,11 +138,29 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
 
-    mySchemesCombo.getComponent().setMaximumSize(mySchemesCombo.getComponent().getPreferredSize());
-
-    int height = mySchemesCombo.getComponent().getPreferredSize().height;
-    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
+    updateComboboxMaximumSize();
     return controlsPanel;
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) {
+      updateComboboxMaximumSize();
+    }
+  }
+
+  private void updateComboboxMaximumSize() {
+    JComponent combobox = mySchemesCombo.getComponent();
+    Dimension preferredSize = combobox.getPreferredSize();
+
+    combobox.setMaximumSize(preferredSize);
+    Container container = combobox.getParent();
+    if (container != null) {
+      container.setMaximumSize(new Dimension(container.getMaximumSize().width,
+                                             preferredSize.height));
+    }
+    myToolbar.setMaximumSize(new Dimension(JBUIScale.scale(22), preferredSize.height));
   }
 
   private void updateActionLinkContainer() {
@@ -166,9 +185,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SchemesPanelToolbar", group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     JComponent toolbarComponent = toolbar.getComponent();
-    Dimension maxSize = toolbarComponent.getMaximumSize();
-    toolbarComponent.setMaximumSize(JBUI.size(22, maxSize.height));
-    toolbarComponent.setBorder(JBUI.Borders.empty(3));
+    toolbarComponent.setBorder(JBUI.Borders.empty());
     return toolbar;
   }
 
