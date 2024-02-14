@@ -44,7 +44,7 @@ fun getJsMdnDocumentation(namespace: MdnApiNamespace, qualifiedName: String): Md
       else -> it
     }
   }.lowercase(Locale.US).let { webApiIndex[it] ?: it }
-  val jsNamespace = qualifiedName.takeWhile { it != '.' }
+  val jsNamespace = qualifiedName.substringBefore(".", "")
   if (jsNamespace.endsWith("EventMap")) {
     getDomEventDocumentation(qualifiedName.substring(jsNamespace.length + 1))?.let { return it }
   }
