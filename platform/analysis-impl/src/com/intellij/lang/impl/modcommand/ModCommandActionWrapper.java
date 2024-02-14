@@ -103,8 +103,6 @@ import java.util.Objects;
     return NewUiValue.isEnabled() || myPresentation == null ? null : myPresentation.icon();
   }
 
-  public @NotNull ModCommandAction action() { return myAction; }
-
   @Override
   public @NotNull List<IntentionAction> getOptions() {
     return myPresentation != null && myPresentation.fixAllOption() != null ?
