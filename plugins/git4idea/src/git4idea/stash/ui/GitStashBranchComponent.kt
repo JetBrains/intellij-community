@@ -6,6 +6,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getBackground
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.RefGroup
@@ -36,9 +38,17 @@ class GitStashBranchComponent(val tree: ChangesTree, iconCache: LabelIconCache) 
 
     val nodeLocation = TreeUtil.getNodeRowX(tree, row) + tree.insets.left
     val availableWidth = tree.width - rightGap - nodeLocation
-    val foreground = if (selected) UIUtil.getLabelForeground() else CurrentBranchComponent.TEXT_COLOR
+    val foreground = getLabelForeground(selected)
     labelPainter.customizePainter(tree.getBackground(row, selected), foreground, selected, availableWidth,
                                   listOf(StashRefGroup(branchName, isCurrentBranch)))
+  }
+
+  private fun getLabelForeground(selected: Boolean): Color {
+    if (selected) return UIUtil.getLabelForeground()
+    if (ExperimentalUI.isNewUI()) {
+      return JBColor.namedColor("VersionControl.Log.Commit.Reference.foreground", CurrentBranchComponent.TEXT_COLOR)
+    }
+    return CurrentBranchComponent.TEXT_COLOR
   }
 
   override fun paintComponent(g: Graphics?) {
