@@ -21,10 +21,17 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.Variance
 
 object LambdaToAnonymousFunctionUtil {
+    /**
+     * Build function signature and body based on provided [lambda].
+     * Returns null for function literals without body.
+     *
+     * NB: to perform required calculations, the whole file with the lambda expression is copied!
+     * So it should not be used during highlighting or other non-explicitly started activities
+     */
     context(KtAnalysisSession)
-    fun prepareSignature(lambda: KtLambdaExpression, functionName: String = "") : String? {
+    fun prepareFunctionText(lambda: KtLambdaExpression, functionName: String = "") : String? {
         val functionLiteral = lambda.functionLiteral
-        val psiFactory = KtPsiFactory(lambda.project)
+        val psiFactory = KtPsiFactory.contextual(lambda)
         val bodyExpression = functionLiteral.bodyExpression ?: return null
 
         val fileCopy = bodyExpression.containingFile.copied()
@@ -72,14 +79,14 @@ object LambdaToAnonymousFunctionUtil {
 
     fun convertLambdaToFunction(
         lambda: KtLambdaExpression,
-        signature: String
+        functionText: String
     ): KtExpression? {
-        val psiFactory = KtPsiFactory(lambda.project)
-        val function = psiFactory.createFunction(signature)
+        val psiFactory = KtPsiFactory.contextual(lambda)
+        val function = psiFactory.createFunction(functionText)
 
         val result = wrapInParenthesisForCallExpression(lambda.replaced(function), psiFactory)
 
-      shortenReferences(result)
+        shortenReferences(result)
 
         return result
     }

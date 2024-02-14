@@ -27,7 +27,8 @@ import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class LambdaToAnonymousFunctionIntention: AbstractKotlinModCommandWithContext<KtLambdaExpression, LambdaToAnonymousFunctionIntention.LambdaToFunctionContext>(
     KtLambdaExpression::class
@@ -47,9 +48,10 @@ internal class LambdaToAnonymousFunctionIntention: AbstractKotlinModCommandWithC
         val declarationSymbol = element.functionLiteral.getSymbol() as? KtAnonymousFunctionSymbol ?: return null
         if (declarationSymbol.valueParameters.any { it.returnType is KtErrorType }) return null
 
+        // anonymous suspend functions are forbidden in Kotlin
         if ((element.functionLiteral.getKtType() as? KtFunctionalType)?.isSuspend == true) return null
 
-        val signature = LambdaToAnonymousFunctionUtil.prepareSignature(element) ?: return null
+        val signature = LambdaToAnonymousFunctionUtil.prepareFunctionText(element) ?: return null
         val parent = element.functionLiteral.parent
         val lambdaArgumentName = if (parent is KtLambdaArgument && shouldLambdaParameterBeNamed(parent)) {
             NamedArgumentUtils.getStableNameFor(parent)
@@ -78,14 +80,18 @@ internal class LambdaToAnonymousFunctionIntention: AbstractKotlinModCommandWithC
     ) {
         val lambdaToFunctionContext = context.analyzeContext
         val resultingFunction = LambdaToAnonymousFunctionUtil.convertLambdaToFunction(element, lambdaToFunctionContext.signature) ?: return
-        val argument: KtLambdaArgument = when (val parent = resultingFunction.parent) {
-            is KtLambdaArgument -> parent
-            is KtLabeledExpression -> parent.replace(resultingFunction).parent as? KtLambdaArgument
-            else -> null
-        } ?: return
+
+        var parent = resultingFunction.parent
+        if (parent is KtLabeledExpression) {
+            parent = parent.replace(resultingFunction).parent
+        }
+
+        val argument = parent as? KtLambdaArgument ?: return
 
         val replacement = argument.getArgumentExpression()
-            ?: throw KotlinExceptionWithAttachments("no argument expression for $argument").withPsiAttachment("lambdaExpression", argument)
+            ?: errorWithAttachment("no argument expression for $argument") {
+                withPsiEntry("lambdaExpression", argument)
+            }
         argument.moveInsideParenthesesAndReplaceWith(replacement, lambdaToFunctionContext.lambdaArgumentName)
     }
 }
