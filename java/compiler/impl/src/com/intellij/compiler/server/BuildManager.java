@@ -49,6 +49,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -954,7 +955,7 @@ public final class BuildManager implements Disposable {
         }
 
         try {
-          Future<?> buildFuture = projectTaskQueue.submit(() -> {
+          Future<?> buildFuture = BackgroundTaskUtil.submitTask(projectTaskQueue, project, () -> {
             Throwable execFailure = null;
             try {
               if (project.isDisposed()) {
@@ -1051,7 +1052,7 @@ public final class BuildManager implements Disposable {
                 });
               }
             }
-          });
+          }).getFuture();
           delegatesToWait = List.of(future, new TaskFutureAdapter<>(buildFuture));
         }
         catch (Throwable e) {
@@ -1217,7 +1218,7 @@ public final class BuildManager implements Disposable {
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue, @Nullable WSLDistribution projectWslDistribution) {
 
     // launching the build process from projectTaskQueue ensures that no other build process for this project is currently running
-    return projectTaskQueue.submit(() -> {
+    return BackgroundTaskUtil.submitTask(projectTaskQueue, project, () -> {
       if (project.isDisposed()) {
         return null;
       }
@@ -1226,7 +1227,8 @@ public final class BuildManager implements Disposable {
                             new CancelBuildSessionAction<>());
       try {
         myMessageDispatcher.registerBuildMessageHandler(future, null);
-        final OSProcessHandler processHandler = launchBuildProcess(project, future.getRequestID(), true, projectWslDistribution, null);
+        ProgressIndicator indicator = Objects.requireNonNull(ProgressManager.getGlobalProgressIndicator());
+        final OSProcessHandler processHandler = launchBuildProcess(project, future.getRequestID(), true, projectWslDistribution, indicator);
         final StringBuffer errors = new StringBuffer();
         processHandler.addProcessListener(new StdOutputCollector(errors));
         STDERR_OUTPUT.set(processHandler, errors);
@@ -1239,7 +1241,7 @@ public final class BuildManager implements Disposable {
         ExceptionUtil.rethrowUnchecked(e);
         throw new RuntimeException(e);
       }
-    });
+    }).getFuture();
   }
 
   private static @Nullable WSLDistribution findWSLDistribution(@NotNull Project project) {
@@ -2043,7 +2045,7 @@ public final class BuildManager implements Disposable {
             return;
           }
 
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          BackgroundTaskUtil.submitTask(project, () -> {  // TODO Proper plugin-level disposable.
             if (project.isDisposed()) {
               return;
             }
@@ -2125,7 +2127,16 @@ public final class BuildManager implements Disposable {
       BuildProcessParametersProvider.EP_NAME.addChangeListener(project, () -> getInstance().cancelAllPreloadedBuilds(), null);
 
       getInstance().runCommand(() -> {
-        updateUsageFile(project, getInstance().getProjectSystemDirectory(project));
+        try {
+          BackgroundTaskUtil
+            .submitTask(project, () -> {  // TODO Proper plugin-level disposable.
+              updateUsageFile(project, getInstance().getProjectSystemDirectory(project));
+            })
+            .awaitCompletion();
+        }
+        catch (java.util.concurrent.ExecutionException e) {
+          ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
+        }
       });
       // run automake after a project opened
       getInstance().scheduleAutoMake();
