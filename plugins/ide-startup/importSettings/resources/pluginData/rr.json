@@ -106,8 +106,8 @@
   },
   {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
+    "ideaName": "Python",
+    "ideaId": "Pythonid",
     "builtIn": true
   },
   {

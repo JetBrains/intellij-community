@@ -212,7 +212,8 @@
   },
   {
     "vsCodeId": "johnpapa.winteriscoming",
-    "ideaName": "Winter is Coming Theme",
+    "ideaName": "Dark-Themes",
+    "ideaId": "com.github.shubham076.darkthemes",
     "builtIn": true
   },
   {
@@ -293,8 +294,8 @@
   },
   {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
+    "ideaName": "Python",
+    "ideaId": "Pythonid",
     "builtIn": true
   },
   {

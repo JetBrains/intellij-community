@@ -360,12 +360,14 @@
   },
   {
     "vsCodeId": "johnpapa.winteriscoming",
-    "ideaName": "Winter is Coming Theme",
+    "ideaName": "Dark-Themes",
+    "ideaId": "com.github.shubham076.darkthemes",
     "builtIn": true
   },
   {
     "vsCodeId": "kumar-harsh.graphql-for-vscode",
-    "ideaName": "GraphQL for VSCode",
+    "ideaName": "GraphQL",
+    "ideaId": "com.intellij.lang.jsgraphql",
     "builtIn": true
   },
   {
@@ -460,8 +462,8 @@
   },
   {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
+    "ideaName": "Python",
+    "ideaId": "Pythonid",
     "builtIn": true
   },
   {
