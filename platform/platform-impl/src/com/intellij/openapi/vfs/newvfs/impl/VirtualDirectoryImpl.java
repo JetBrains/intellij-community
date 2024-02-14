@@ -552,10 +552,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     // ascend phase. If that is not the case -- either something was changed in between (e.g., children were
     // refreshed), or there is an inconsistency in VFS (e.g., children and .parent fall out of sync):
 
-    //Actually, after this point we're already in a gray area: even if we manage to find a child by name
-    // with same id, this is already suspicious: how could we miss it while looking by id beforehand?
-    // 'By name' lookup is scanning the same myData.myChildrenIds array, as was already scanned while looking
-    // for id.
+    //So the branch below is almost surely 'child just not loaded yet'
 
     PersistentFS persistence = owningPersistentFS();
     String name = persistence.getName(id);
