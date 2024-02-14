@@ -25,10 +25,13 @@ private const val version = 1
 internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory {
   override fun create(project: Project): ProjectIndexableFilesFilter {
     try {
-      DataInputStream(filtersDir.resolve(project.getProjectCacheFileName()).inputStream().buffered()).use {
+      val file = filtersDir.resolve(project.getProjectCacheFileName())
+      val filter = DataInputStream(file.inputStream().buffered()).use {
         it.readInt() // version
-        return PersistentProjectIndexableFilesFilter(true, ConcurrentFileIds.readFrom(it))
+        PersistentProjectIndexableFilesFilter(true, ConcurrentFileIds.readFrom(it))
       }
+      file.deleteIfExists()
+      return filter
     }
     catch (ignored: NoSuchFileException) {
     }
