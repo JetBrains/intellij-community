@@ -29,6 +29,7 @@ internal class RepositoriesNode(structure: MavenProjectsStructure, parent: Proje
     myRepositoryNodes.clear()
     myRepositoryNodes.add(RepositoryNode(myMavenProjectsStructure, this, "local", local.absolutePath, true))
     myRepositoryNodes.addAll(remotes.mapSmart { RepositoryNode(myMavenProjectsStructure, this, it.id, it.url, false) })
+    childrenChanged()
   }
 
   fun updateStatus(state: MavenIndexUpdateState) {

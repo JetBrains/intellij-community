@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import icons.MavenIcons;
@@ -9,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 
 class RepositoryNode extends MavenSimpleNode {
   
@@ -23,13 +26,19 @@ class RepositoryNode extends MavenSimpleNode {
     myId = id;
     myUrl = url;
     myLocal = local;
-    getTemplatePresentation().setIcon(getDefaultIcon());
+    PresentationData presentation = getTemplatePresentation();
+    presentation.setIcon(getDefaultIcon());
+    setNameAndTooltip(presentation, myId, null, myLocal ? getPresentablePath(myUrl) : myUrl);
   }
 
   @NotNull
   private Icon getDefaultIcon() {
     return myLocal ? MavenIcons.MavenRepoLocal : MavenIcons.MavenRepoRemote;
   }
+
+  @Override
+  protected void update(@NotNull PresentationData presentation) {
+    setNameAndTooltip(presentation, myId, null, myLocal ? getPresentablePath(myUrl) : myUrl);  }
 
   @Override
   public String getName() {
