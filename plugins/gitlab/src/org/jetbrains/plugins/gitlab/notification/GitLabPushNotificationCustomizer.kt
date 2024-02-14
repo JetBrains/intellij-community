@@ -112,10 +112,10 @@ class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNo
     val token = accountManager.findCredentials(account) ?: return null
     val api = apiManager.getClient(account.server, token)
     val defaultBranch = withContext(Dispatchers.IO) {
-      api.graphQL.getProject(projectMapping.repository).body().repository.rootRef
+      api.graphQL.getProject(projectMapping.repository).body().repository?.rootRef
     }
     val targetBranch = GitBranchUtil.stripRefsPrefix(pushResult.targetBranch)
-    if (targetBranch.endsWith(defaultBranch)) return null
+    if (defaultBranch != null && targetBranch.endsWith(defaultBranch)) return null
     val mrBranch = targetBranch.removePrefix("${projectData.projectMapping.gitRemote.name}/")
 
     val mergeRequest = withContext(Dispatchers.IO) {

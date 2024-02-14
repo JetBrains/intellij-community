@@ -161,7 +161,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     cs.launch {
       val baseRepo = projectData.projectMapping
       val baseGitRepo = baseRepo.gitRepository
-      val defaultBranch = projectData.defaultBranch.await()
+      val defaultBranch = projectData.defaultBranch.await() ?: return@launch
       val baseBranch = baseGitRepo.getBranchTrackInfo(defaultBranch)?.remoteBranch ?: return@launch
       val currentBranch = baseGitRepo.currentBranch ?: return@launch
 

@@ -22,7 +22,7 @@ data class GitLabProjectDTO(
   @SinceGitLab("16.8") val allowsMultipleMergeRequestAssignees: Boolean?,
   @SinceGitLab("16.8") val allowsMultipleMergeRequestReviewers: Boolean?,
   val userPermissions: ProjectUserPermissions,
-  val repository: Repository
+  val repository: Repository?
 ) {
   val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
 
