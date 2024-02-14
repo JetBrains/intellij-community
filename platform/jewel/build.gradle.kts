@@ -33,9 +33,11 @@ tasks {
         group = "release"
 
         doFirst {
-            val tagName = (project.property("tagName") as String?)
+            val rawReleaseVersion = ((project.property("jewel.release.version") as String?)
                 ?.takeIf { it.isNotBlank() }
-                ?: throw GradleException("Please provide a tag name using -PtagName=[value]")
+                ?: throw GradleException("Please provide a jewel.release.version in gradle.properties"))
+
+            val releaseName = "v$rawReleaseVersion"
 
             val stdOut = ByteArrayOutputStream()
 
@@ -53,13 +55,26 @@ tasks {
 
             // Check tag doesn't already exist
             logger.info("Checking current branch is main...")
+            stdOut.reset()
             exec {
                 commandLine = listOf("git", "tag")
                 standardOutput = stdOut
             }.assertNormalExitValue()
 
-            if (stdOut.toString().trim().lines().any { it == tagName }) {
-                throw GradleException("The tag $tagName already exists!")
+            if (stdOut.toString().trim().lines().any { it == releaseName }) {
+                throw GradleException("The tag $releaseName already exists!")
+            }
+
+            // Check there are no uncommitted changes
+            logger.info("Checking all changes have been committed...")
+            stdOut.reset()
+            exec {
+                commandLine = listOf("git", "status", "--porcelain")
+                standardOutput = stdOut
+            }.assertNormalExitValue()
+
+            if (stdOut.toString().isNotBlank()) {
+                throw GradleException("Please commit all changes before tagging a release")
             }
 
             // Get the current HEAD hash
@@ -107,14 +122,14 @@ tasks {
             }
 
             // Tag main branch
-            logger.lifecycle("Tagging head of main branch as $tagName...")
+            logger.lifecycle("Tagging head of main branch as $releaseName...")
             exec {
-                commandLine = listOf("git", "tag", tagName)
+                commandLine = listOf("git", "tag", releaseName)
             }.assertNormalExitValue()
 
             // Tag release branches
             for (branch in releaseBranches) {
-                val branchTagName = "$tagName-$branch"
+                val branchTagName = "$releaseName-$branch"
                 logger.lifecycle("Tagging head of branch releases/$branch as $branchTagName...")
                 stdOut.reset()
 

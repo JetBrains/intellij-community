@@ -26,7 +26,7 @@ publishing {
             from(components["kotlin"])
             artifact(javadocJar)
             artifact(sourcesJar)
-            version = project.version.toString()
+            version = project.properties["jewel.release.version"] as String
             artifactId = "jewel-${project.name}"
             pom { configureJewelPom() }
         }
