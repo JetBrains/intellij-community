@@ -24,7 +24,7 @@ object EditorConfigComplexKeyFullTemplateCompletionProvider : EditorConfigComple
 
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val section = parameters.position.getParentOfType<EditorConfigSection>() ?: return
-    val descriptors = EditorConfigOptionDescriptorManager.instance.getQualifiedKeyDescriptors(true)
+    val descriptors = EditorConfigOptionDescriptorManager.getInstance(parameters.originalFile.project).getQualifiedKeyDescriptors(true)
 
     EditorConfigTemplateUtil
       .buildSameStartClasses(descriptors)

@@ -19,7 +19,7 @@ class EditorConfigMissingRequiredDeclarationInspection : LocalInspectionTool() {
       if (element !is EditorConfigDescribableElement) return
       val descriptor = element.getDescriptor(false) as? EditorConfigDeclarationDescriptor ?: return
       val declarations = EditorConfigIdentifierUtil.findDeclarations(element.section, descriptor.id, element.text)
-      val manager = EditorConfigOptionDescriptorManager.instance
+      val manager = EditorConfigOptionDescriptorManager.getInstance(element.project)
       val errors = manager.getRequiredDeclarationDescriptors(descriptor.id).filter { requiredDescriptor ->
         declarations.none { describable ->
           describable.getDescriptor(false) === requiredDescriptor

@@ -392,7 +392,7 @@ check the documentation for <a href="https://editorconfig.org/">EditorConfig</a>
     </intentionAction>
 
     <!-- Services -->
-    <applicationService
+    <projectService
         serviceInterface="org.editorconfig.language.services.EditorConfigOptionDescriptorManager"
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl"/>
     <projectService
@@ -481,7 +481,7 @@ check the documentation for <a href="https://editorconfig.org/">EditorConfig</a>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigBasicOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsNamingOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsMiscOptionDescriptorProvider"/>
-    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigReSharperOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigIncompleteReSharperOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsFormattingOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsLanguageOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.configmanagement.extended.IntellijConfigOptionDescriptorProvider"/>
