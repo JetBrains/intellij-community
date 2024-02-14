@@ -16,8 +16,11 @@ class EventLogGroup(@NonNls @EventIdName val id: String,
                     val version: Int,
                     val recorder: String,
                     val description: String?) {
-  constructor(@NonNls @EventIdName id: String, version: Int): this(id, version, "FUS", null)
-  constructor(@NonNls @EventIdName id: String, version: Int, recorder: String): this(id, version, recorder, null)
+  // for binary compatibility
+  @JvmOverloads
+  constructor(@NonNls @EventIdName id: String,
+              version: Int,
+              recorder: String = "FUS") : this(id, version, recorder, null)
 
   private val registeredEventIds = mutableSetOf<String>()
   private val registeredEvents = mutableListOf<BaseEventId>()
