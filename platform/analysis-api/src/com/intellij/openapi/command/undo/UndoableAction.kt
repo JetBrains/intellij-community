@@ -10,6 +10,8 @@ interface UndoableAction {
   @get:ApiStatus.Experimental
   @set:ApiStatus.Experimental
   var performedNanoTime: Long
+    get() = 0L
+    set(value) {}
 
   @Throws(UnexpectedUndoException::class)
   fun undo()
