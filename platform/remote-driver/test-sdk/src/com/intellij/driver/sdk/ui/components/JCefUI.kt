@@ -53,7 +53,7 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
 
   fun findElement(@Language("XPath") xpath: String, wait: Duration = 5.seconds): DomElement {
     var elements: List<DomElement> = emptyList()
-    should(message = "Can't find element by '$xpath' in the embedded browes($component)", 5) {
+    should(message = "Can't find element by '$xpath' in the embedded browser($component)", 5) {
       elements = findElements(xpath)
       elements.size == 1
     }

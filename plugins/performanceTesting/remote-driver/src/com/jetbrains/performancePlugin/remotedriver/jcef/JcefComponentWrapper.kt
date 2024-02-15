@@ -1,16 +1,22 @@
 package com.jetbrains.performancePlugin.remotedriver.jcef
 
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.awt.Component
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
+import kotlin.coroutines.resumeWithException
 
 private const val JB_BROWSER_KEY = "JBCefBrowser.instance"
 
 @Suppress("unused")
 internal class JcefComponentWrapper(private val component: Component) {
   private val jbCefBrowser = findBrowser()
-  private val jsExecutor = SyncJsExecutor(jbCefBrowser)
+  private val jsExecutor = JsExecutor(jbCefBrowser)
 
   fun runJs(js: String) = jsExecutor.runJs(js)
 
@@ -23,7 +29,7 @@ internal class JcefComponentWrapper(private val component: Component) {
    * @return the result of the JavaScript code execution
    * @throws IllegalStateException if no result is received from the script within the specified timeout
    */
-  fun callJs(js: String, executeTimeoutMs: Long): String = jsExecutor.callJs(js, executeTimeoutMs)
+  fun callJs(js: String, executeTimeoutMs: Long): String = runBlockingCancellable { jsExecutor.callJs(js, executeTimeoutMs) }
 
   /**
    * Finds the JBCefBrowserBase component associated with the given component.
@@ -48,49 +54,38 @@ internal class JcefComponentWrapper(private val component: Component) {
     return jbCefBrowser
   }
 
-  private class SyncJsExecutor(jbCefBrowser: JBCefBrowserBase) {
-    companion object {
-      private const val JS_IN_PROGRESS = "!!%##IN_PROGRESS##%!!"
-      private const val EXECUTE_JS_POLL_INTERVAL_MS = 50L
-    }
-
+  private class JsExecutor(jbCefBrowser: JBCefBrowserBase) {
     private val cefBrowser = jbCefBrowser.cefBrowser
+    private val runJsContinuation = AtomicReference<CancellableContinuation<String>?>()
 
-    @Volatile
-    private var jsResult: String = ""
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val jsResultQuery = JBCefJSQuery.create(jbCefBrowser).apply {
       addHandler {
-        jsResult = it
+        runJsContinuation.getAndSet(null)?.resume(it) {}
         null
       }
     }
 
+    private val mutex = Mutex()
+
     fun runJs(js: String) {
-      cefBrowser.executeJavaScript(js.toOneLine(), cefBrowser.url, 0)
+      cefBrowser.executeJavaScript(js, cefBrowser.url, 0)
     }
 
-    fun callJs(js: String, executeTimeoutMs: Long = 3000): String = synchronized(this) {
-      cefBrowser.executeJavaScript(jsResultQuery.inject(js), cefBrowser.url, 0)
-      jsResult = JS_IN_PROGRESS
-      val maxTime = System.currentTimeMillis() + executeTimeoutMs
-      while (jsResult == JS_IN_PROGRESS) {
-        if (System.currentTimeMillis() > maxTime) {
-          throw IllegalStateException("""
-            |No result from script '$js' in embedded browser.
-            |Check logs in the browsers devTools(`ide.browser.jcef.contextMenu.devTools.enabled` key in the Registry...)""".trimMargin())
-        }
-        Thread.sleep(EXECUTE_JS_POLL_INTERVAL_MS)
-      }
-      jsResult
-    }
-
-    private fun String.toOneLine(): String = split("\n")
-      .map {
-        StringBuilder(it.trim()).apply {
-          if (isNotEmpty() && endsWith(";").not() && endsWith("{").not() && endsWith("}").not()) {
-            append(";")
+    suspend fun callJs(js: String, executeTimeoutMs: Long = 3000): String = mutex.withLock {
+      withTimeout(executeTimeoutMs) {
+        suspendCancellableCoroutine { continuation ->
+          if (runJsContinuation.compareAndSet(null, continuation).not()) {
+            continuation.resumeWithException(IllegalStateException("Previous call is still running"))
           }
+          continuation.invokeOnCancellation {
+            runJsContinuation.getAndSet(null)?.resumeWithException(IllegalStateException("""
+            |No result from script '$js' in embedded browser in ${executeTimeoutMs}ms.
+            |Check logs in the browsers devTools(`ide.browser.jcef.contextMenu.devTools.enabled` key in the Registry...)""".trimMargin()))
+          }
+          cefBrowser.executeJavaScript(jsResultQuery.inject(js), cefBrowser.url, 0)
         }
-      }.let { buildString { it.forEach { append("$it ") } } }
+      }
+    }
   }
 }
