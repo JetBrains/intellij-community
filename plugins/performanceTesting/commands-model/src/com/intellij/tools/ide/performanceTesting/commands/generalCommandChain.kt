@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.google.gson.Gson
+import com.intellij.tools.ide.performanceTesting.commands.dto.MavenGoalConfigurationDto
 import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
 import java.io.File
 import java.lang.reflect.Modifier
@@ -584,8 +585,20 @@ fun <T : CommandChain> T.createMavenProject(newMavenProjectDto: NewMavenProjectD
   addCommand("${CMD_PREFIX}createMavenProject $json")
 }
 
-fun <T : CommandChain> T.editMavenGoal(): T = apply {
-  addCommand("${CMD_PREFIX}editMavenGoal")
+fun <T : CommandChain> T.updateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
+  val options = gson.toJson(settings)
+  addCommand("${CMD_PREFIX}updateMavenGoal $options")
+}
+
+fun <T : CommandChain> T.validateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
+  val options = gson.toJson(settings)
+  addCommand("${CMD_PREFIX}validateMavenGoal $options")
+}
+
+fun <T : CommandChain> T.executeMavenGoals(settings: MavenGoalConfigurationDto): T {
+  val options = gson.toJson(settings)
+  addCommand("${CMD_PREFIX}executeMavenGoals $options")
+  return this
 }
 
 fun <T : CommandChain> T.inlineRename(to: String): T = apply {

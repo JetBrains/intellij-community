@@ -17,6 +17,7 @@ final class MavenCommandProvider implements CommandProvider {
                   ToggleMavenProfilesCommand.PREFIX, ToggleMavenProfilesCommand::new,
                   DownloadMavenArtifactsCommand.PREFIX, DownloadMavenArtifactsCommand::new,
                   CreateMavenProjectCommand.PREFIX, CreateMavenProjectCommand::new,
-                  EditMavenGoalCommand.PREFIX, EditMavenGoalCommand::new);
+                  UpdateMavenGoalCommand.PREFIX, UpdateMavenGoalCommand::new,
+                  ValidateMavenGoalCommand.PREFIX, ValidateMavenGoalCommand::new);
   }
 }

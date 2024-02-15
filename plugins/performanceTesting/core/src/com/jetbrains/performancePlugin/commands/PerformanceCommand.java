@@ -48,8 +48,4 @@ public abstract class PerformanceCommand extends AbstractCommand {
     SpanBuilder spanBuilder = wrapIfNeed(tracer.spanBuilder(name));
     return spanBuilder.startSpan();
   }
-
-  protected <T> T deserializeOptionsFromJson(String json, Class<T> clazz) {
-    return gson.fromJson(json, clazz);
-  }
 }
