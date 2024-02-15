@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
@@ -8,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.runtime.product.ProductMode
 import java.io.File
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -116,6 +118,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val isHeadless = app != null && app.isHeadlessEnvironment
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
     val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
+    val productMode = ProductLoadingStrategy.strategy.currentModeId.takeIf { it != ProductMode.LOCAL_IDE.id }
     val eventLogConfiguration = EventLogConfiguration.getInstance()
     val config = eventLogConfiguration.getOrCreate(recorderId)
     val writer = StatisticsEventLogFileWriter(recorderId, this, maxFileSizeInBytes, isEap, eventLogConfiguration.build)
@@ -127,7 +130,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
     val logger = StatisticsFileEventLogger(
       recorderId, config.sessionId, isHeadless, eventLogConfiguration.build, config.bucket.toString(), version.toString(),
-      throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy(), ideMode
+      throttledWriter, UsageStatisticsPersistenceComponent.getInstance(), createEventsMergeStrategy(), ideMode, productMode
     )
     Disposer.register(ApplicationManager.getApplication(), logger)
     return logger
