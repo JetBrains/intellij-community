@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
@@ -107,7 +108,7 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
                 }
             }
         } catch (e: Exception) {
-            thisLogger().error(e) // for now log everything
+            DebuggerUtilsImpl.logError(e) // for now log everything
         }
         return null
     }
