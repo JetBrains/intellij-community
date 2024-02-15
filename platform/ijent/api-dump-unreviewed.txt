@@ -4,14 +4,10 @@
 - a:getExec():com.intellij.platform.ijent.IjentExecApi
 - a:getFs():com.intellij.platform.ijent.fs.IjentFileSystemApi
 - a:getId():com.intellij.platform.ijent.IjentId
-- a:getInfo():com.intellij.platform.ijent.IjentApi$Info
+- a:getInfo():com.intellij.platform.ijent.IjentInfo
 - a:getPlatform():com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform
 - a:getTunnels():com.intellij.platform.ijent.IjentTunnelsApi
 - a:isRunning():Z
-*:com.intellij.platform.ijent.IjentApi$Info
-- a:getArchitecture():java.lang.String
-- a:getRemotePid():com.intellij.platform.ijent.IjentApi$Pid
-- a:getVersion():java.lang.String
 *:com.intellij.platform.ijent.IjentApi$Pid
 - a:getValue():J
 f:com.intellij.platform.ijent.IjentBundle
@@ -116,6 +112,10 @@ f:com.intellij.platform.ijent.IjentExecFileProviderKt
 - f:getUri():java.net.URI
 - hashCode():I
 - toString():java.lang.String
+com.intellij.platform.ijent.IjentInfo
+- a:getArchitecture():java.lang.String
+- a:getRemotePid():com.intellij.platform.ijent.IjentApi$Pid
+- a:getVersion():java.lang.String
 f:com.intellij.platform.ijent.IjentMissingBinary
 - java.lang.Exception
 - <init>(com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform):V

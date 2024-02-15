@@ -510,7 +510,7 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 
   override val isRunning: Boolean get() = true
 
-  override val info: IjentApi.Info get() = throw UnsupportedOperationException()
+  override val info: IjentInfo get() = throw UnsupportedOperationException()
 
   override fun close(): Unit = Unit
 

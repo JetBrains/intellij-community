@@ -30,7 +30,7 @@ interface IjentApi : AutoCloseable {
   /**
    * Returns basic info about the process that doesn't change during the lifetime of the process.
    */
-  val info: Info
+  val info: IjentInfo
 
   /**
    * Explicitly terminates the process on the remote machine.
@@ -53,16 +53,5 @@ interface IjentApi : AutoCloseable {
    */
   interface Pid {
     val value: Long
-  }
-
-  /**
-   * [architecture] is the remote architecture of the built binary. Intended to be used for debugging purposes.
-   * [remotePid] is a process ID of IJent running on the remote machine.
-   * [version] is the version of the IJent binary. Intended to be used for debugging purposes.
-   */
-  interface Info {
-    val architecture: String
-    val remotePid: Pid
-    val version: String
   }
 }
