@@ -49,10 +49,10 @@ class CachedModuleDataFinder private constructor(private val project: Project) {
     ExternalSystemApiUtil.getExternalProjectId(module) ?: return null
 
     val externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
-    return findModuleDataImpl(module.project, externalProjectPath)
+    return findMainModuleDataImpl(module.project, externalProjectPath)
   }
 
-  private fun findModuleDataImpl(project: Project, modulePath: String): DataNode<out ModuleData>? {
+  private fun findMainModuleDataImpl(project: Project, modulePath: String): DataNode<out ModuleData>? {
     val cachedNode = getCache(project)[modulePath]
     if (cachedNode != null) return cachedNode
 
@@ -77,8 +77,8 @@ class CachedModuleDataFinder private constructor(private val project: Project) {
     }
 
     @JvmStatic
-    fun findModuleData(project: Project, modulePath: String): DataNode<out ModuleData>? {
-      return CachedModuleDataFinder(project).findModuleDataImpl(project, modulePath)
+    fun findMainModuleData(project: Project, modulePath: String): DataNode<out ModuleData>? {
+      return CachedModuleDataFinder(project).findMainModuleDataImpl(project, modulePath)
     }
 
     @JvmStatic
