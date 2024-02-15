@@ -195,7 +195,8 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (getPopup() != null) {
       return // return here to avoid showing another popup if the current one gets cancelled during the delay
     }
-    if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)) {
+    if (!LookupManagerImpl.isAutoPopupJavadocSupportedBy(lookupElement)
+        || !lookup.component.isShowing) {
       return
     }
     delay(delay)
