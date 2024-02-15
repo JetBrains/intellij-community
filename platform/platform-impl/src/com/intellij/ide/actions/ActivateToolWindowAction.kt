@@ -184,6 +184,9 @@ private fun updatePresentation(presentation: Presentation, toolWindow: ToolWindo
   updatePresentationImpl(presentation, toolWindowId, projectRef, toolWindowRef, fallbackStripeTitleText)
 }
 
+/**
+ * Avoid accidentally capturing more than we need by extracting a method
+ */
 private fun updatePresentationImpl(presentation: Presentation,
                                    toolWindowId: String,
                                    projectRef: Reference<Project>,
