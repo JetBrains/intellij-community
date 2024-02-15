@@ -172,4 +172,9 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     public void testSuspendReturnsResult() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/suspendReturnsResult.kt");
     }
+
+    @TestMetadata("valueClass.kt")
+    public void testValueClass() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/valueClass.kt");
+    }
 }

@@ -5,5 +5,5 @@ public final class Cls : <ErrorType> {
         <anonymous class>(a, a, a)
     }
     public final fun component1() : long = UastEmptyExpression
-    public final fun copy(@org.jetbrains.annotations.NotNull a: long) : Cls = UastEmptyExpression
+    public final fun copy(a: long) : Cls = UastEmptyExpression
 }

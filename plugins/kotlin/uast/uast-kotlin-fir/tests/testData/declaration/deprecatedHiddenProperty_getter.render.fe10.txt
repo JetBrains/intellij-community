@@ -21,6 +21,7 @@ public final class Test {
     }
     @kotlin.Deprecated(message = "no more property", level = DeprecationLevel.HIDDEN)
     public fun setPOld_getter_deprecatedOnProperty(@org.jetbrains.annotations.Nullable <set-?>: java.lang.String) : void = UastEmptyExpression
+    @kotlin.Deprecated(message = "no more getter", level = DeprecationLevel.HIDDEN)
     public fun getPOld_getter_deprecatedOnGetter() : java.lang.String {
         return elvis {
             var var8a4c4878: java.lang.String = field

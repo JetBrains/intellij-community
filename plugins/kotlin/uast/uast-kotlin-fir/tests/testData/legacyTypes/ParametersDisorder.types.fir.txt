@@ -44,7 +44,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         ULiteralExpression (value = 1) [1] : PsiType:int
                         ULiteralExpression (value = 1.2) [1.2] : PsiType:float
                 UQualifiedReferenceExpression [Math.atan2(1.3, 3.4)] : PsiType:double
-                    USimpleNameReferenceExpression (identifier = Math) [Math] : PsiType:Unit
+                    USimpleNameReferenceExpression (identifier = Math) [Math]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [atan2(1.3, 3.4)] : PsiType:double
                         UIdentifier (Identifier (atan2)) [UIdentifier (Identifier (atan2))]
                         USimpleNameReferenceExpression (identifier = atan2, resolvesTo = null) [atan2] : PsiType:double
@@ -58,11 +58,11 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                     UPolyadicExpression (operator = +) ["param2"] : PsiType:String
                         ULiteralExpression (value = "param2") ["param2"] : PsiType:String
                 UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", 1, 2, 3)] : PsiType:String
-                    UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
-                        UQualifiedReferenceExpression [java.lang] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
-                        USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
+                    UQualifiedReferenceExpression [java.lang.String]
+                        UQualifiedReferenceExpression [java.lang]
+                            USimpleNameReferenceExpression (identifier = java) [java]
+                            USimpleNameReferenceExpression (identifier = lang) [lang]
+                        USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4)) [format("%i %i %i", 1, 2, 3)] : PsiType:String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
                         USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:String
@@ -72,11 +72,11 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         ULiteralExpression (value = 2) [2] : PsiType:int
                         ULiteralExpression (value = 3) [3] : PsiType:int
                 UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", arrayOf(1, 2, 3))] : PsiType:String
-                    UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
-                        UQualifiedReferenceExpression [java.lang] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
-                        USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
+                    UQualifiedReferenceExpression [java.lang.String]
+                        UQualifiedReferenceExpression [java.lang]
+                            USimpleNameReferenceExpression (identifier = java) [java]
+                            USimpleNameReferenceExpression (identifier = lang) [lang]
+                        USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", arrayOf(1, 2, 3))] : PsiType:String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
                         USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:String
@@ -89,11 +89,11 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                             ULiteralExpression (value = 2) [2] : PsiType:int
                             ULiteralExpression (value = 3) [3] : PsiType:int
                 UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))] : PsiType:String
-                    UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
-                        UQualifiedReferenceExpression [java.lang] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
-                        USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
+                    UQualifiedReferenceExpression [java.lang.String]
+                        UQualifiedReferenceExpression [java.lang]
+                            USimpleNameReferenceExpression (identifier = java) [java]
+                            USimpleNameReferenceExpression (identifier = lang) [lang]
+                        USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [format("%i %i %i", arrayOf(1, 2, 3), arrayOf(4, 5, 6))] : PsiType:String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
                         USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:String
@@ -112,11 +112,11 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                             ULiteralExpression (value = 5) [5] : PsiType:int
                             ULiteralExpression (value = 6) [6] : PsiType:int
                 UQualifiedReferenceExpression [java.lang.String.format("%i %i %i", "".chunked(2).toTypedArray())] : PsiType:String
-                    UQualifiedReferenceExpression [java.lang.String] : PsiType:Unit
-                        UQualifiedReferenceExpression [java.lang] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                            USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
-                        USimpleNameReferenceExpression (identifier = String) [String] : PsiType:Unit
+                    UQualifiedReferenceExpression [java.lang.String]
+                        UQualifiedReferenceExpression [java.lang]
+                            USimpleNameReferenceExpression (identifier = java) [java]
+                            USimpleNameReferenceExpression (identifier = lang) [lang]
+                        USimpleNameReferenceExpression (identifier = String) [String]
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [format("%i %i %i", "".chunked(2).toTypedArray())] : PsiType:String
                         UIdentifier (Identifier (format)) [UIdentifier (Identifier (format))]
                         USimpleNameReferenceExpression (identifier = format, resolvesTo = null) [format] : PsiType:String

@@ -33,6 +33,11 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
         runTest("testData/libraryModuleResolve/companionObject.kt");
     }
 
+    @TestMetadata("dataClass.kt")
+    public void testDataClass() throws Exception {
+        runTest("testData/libraryModuleResolve/dataClass.kt");
+    }
+
     @TestMetadata("enumEntry.kt")
     public void testEnumEntry() throws Exception {
         runTest("testData/libraryModuleResolve/enumEntry.kt");

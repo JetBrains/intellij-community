@@ -107,7 +107,9 @@ abstract class AbstractKotlinUClass(
                 when (ktDeclaration) {
                     is KtParameter -> {
                         // properties from constructor parameters
-                        if (ktDeclaration.annotationEntries.any { it.isDeprecated() }) {
+                        if (ktDeclaration.annotationEntries.any { it.isDeprecated() } ||
+                            baseResolveProviderService.hasTypeForValueClassInSignature(ktDeclaration)
+                        ) {
                             val fakeAccessors = if (ktDeclaration.hasValOrVar()) {
                                 listOfNotNull(
                                     UastFakeSourceLightDefaultAccessorForConstructorParameter(ktDeclaration, javaPsi, isSetter = false),
@@ -155,8 +157,19 @@ abstract class AbstractKotlinUClass(
         return maybeFakeGetter to maybeFakeSetter
     }
 
-    private fun PropertyAccessorsPsiMethods.needsFakeAccessors(property: KtProperty): Pair<Boolean, Boolean> {
-        if (property.annotationEntries.isEmpty()) return false to false
+    private fun PropertyAccessorsPsiMethods.needsFakeAccessors(property: KtProperty): NeedFakeAccessors {
+
+        fun needsFakeGetter() = getter == null
+
+        fun needsFakeSetter() = property.isVar && setter == null
+
+        // In K2/SLC, declarations whose signature has value class are not modeled.
+        if (baseResolveProviderService.hasTypeForValueClassInSignature(property)) {
+            return NeedFakeAccessors(needsFakeGetter(), needsFakeSetter())
+        }
+
+        // Deprecated
+        if (property.annotationEntries.isEmpty()) return NeedFakeAccessors.none()
         var (needsFakeGetter, needsFakeSetter) = false to false
         for (entry in property.annotationEntries) {
             if (!entry.isDeprecated()) {
@@ -165,19 +178,28 @@ abstract class AbstractKotlinUClass(
             // Instead of checking attribute value for deprecation level, use if LC generates accessors or not.
             when (entry.useSiteTarget?.getAnnotationUseSiteTarget()) {
                 AnnotationUseSiteTarget.PROPERTY_GETTER -> {
-                    needsFakeGetter = getter == null
+                    needsFakeGetter = needsFakeGetter()
                 }
                 AnnotationUseSiteTarget.PROPERTY_SETTER -> {
-                    needsFakeSetter = property.isVar && setter == null
+                    needsFakeSetter = needsFakeSetter()
                 }
                 null -> {
-                    needsFakeGetter = getter == null
-                    needsFakeSetter = property.isVar && setter == null
+                    needsFakeGetter = needsFakeGetter()
+                    needsFakeSetter = needsFakeSetter()
                 }
                 else -> {}
             }
         }
-        return needsFakeGetter to needsFakeSetter
+        return NeedFakeAccessors(needsFakeGetter, needsFakeSetter)
+    }
+
+    private data class NeedFakeAccessors(
+        val needGetter: Boolean,
+        val needSetter: Boolean,
+    ) {
+        companion object {
+            fun none(): NeedFakeAccessors = NeedFakeAccessors(false, false)
+        }
     }
 
     private fun KtAnnotationEntry.isDeprecated(): Boolean {
