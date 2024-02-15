@@ -298,10 +298,7 @@ class JarPackager private constructor(
     readXmlAsModel(file).getChild("content")?.let { content ->
       for (module in content.children("module")) {
         val moduleName = module.attributes.get("name")
-        if (moduleName == null ||
-            moduleName.contains('/') ||
-            addedModules.contains(moduleName) ||
-            layout.excludedModuleLibraries.containsKey(moduleName)) {
+        if (moduleName == null || moduleName.contains('/') || addedModules.contains(moduleName)) {
           continue
         }
 
@@ -416,7 +413,7 @@ class JarPackager private constructor(
     val moduleName = module.name
     val includeProjectLib = layout is PluginLayout && layout.auto
 
-    val excluded = layout.excludedModuleLibraries.get(moduleName)
+    val excluded = (layout.excludedLibraries.get(moduleName) ?: emptyList()) + (layout.excludedLibraries.get(null) ?: emptyList())
     for (element in helper.getLibraryDependencies(module)) {
       var projectLibraryData: ProjectLibraryData? = null
       val libRef = element.libraryReference

@@ -830,7 +830,11 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
   checkModules(layout.resourcePaths.map { it.moduleName }, "resourcePaths in $description", context)
   checkModules(layout.moduleExcludes.keys, "moduleExcludes in $description", context)
 
-  checkProjectLibraries(layout.includedProjectLibraries.map { it.libraryName }, "includedProjectLibraries in $description", context)
+  checkProjectLibraries(
+    names = layout.includedProjectLibraries.map { it.libraryName },
+    fieldName = "includedProjectLibraries in $description",
+    context = context,
+  )
 
   for ((moduleName, libraryName) in layout.includedModuleLibraries) {
     checkModules(listOf(moduleName), "includedModuleLibraries in $description", context)
@@ -839,9 +843,13 @@ private fun checkBaseLayout(layout: BaseLayout, description: String, context: Bu
     }
   }
 
-  checkModules(layout.excludedModuleLibraries.keySet(), "excludedModuleLibraries in $description", context)
-  for ((key, value) in layout.excludedModuleLibraries.entrySet()) {
-    val libraries = context.findRequiredModule(key).libraryCollection.libraries
+  checkModules(
+    modules = layout.excludedLibraries.keys,
+    fieldName = "excludedModuleLibraries in $description",
+    context = context,
+  )
+  for ((key, value) in layout.excludedLibraries.entries) {
+    val libraries = (if (key == null) context.project.libraryCollection else context.findRequiredModule(key).libraryCollection).libraries
     for (libraryName in value) {
       check(libraries.any { getLibraryFileName(it) == libraryName }) {
         "Cannot find library \'$libraryName\' in \'$key\' (used in \'excludedModuleLibraries\' in $description)"
@@ -876,9 +884,9 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>) {
   }
 }
 
-private fun checkModules(modules: Collection<String>?, fieldName: String, context: CompilationContext) {
+private fun checkModules(modules: Collection<String?>?, fieldName: String, context: CompilationContext) {
   if (modules != null) {
-    val unknownModules = modules.filter { context.findModule(it) == null }
+    val unknownModules = modules.filter { it != null && context.findModule(it) == null }
     check(unknownModules.isEmpty()) {
       "The following modules from $fieldName aren\'t found in the project: $unknownModules"
     }
@@ -915,7 +923,7 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
     return
   }
 
-  checkModules(pluginModules, fieldName, context)
+  checkModules(modules = pluginModules, fieldName = fieldName, context = context)
 
   val unknownBundledPluginModules = pluginModules.filter { context.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
   check(unknownBundledPluginModules.isEmpty()) {

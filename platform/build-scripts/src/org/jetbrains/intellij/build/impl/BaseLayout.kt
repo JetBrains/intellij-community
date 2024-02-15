@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.TestOnly
@@ -39,8 +38,9 @@ sealed class BaseLayout {
   internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
   val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
 
-  /** module name to name of the module library */
-  val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
+  /** module name to name of the library */
+  @JvmField
+  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
 
   @JvmField
   internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
@@ -53,6 +53,9 @@ sealed class BaseLayout {
   }
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
+
+  @TestOnly
+  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
 
   @TestOnly
   fun includedProjectLibraryNames(): Sequence<String> = includedProjectLibraries.asSequence().map { it.libraryName }
