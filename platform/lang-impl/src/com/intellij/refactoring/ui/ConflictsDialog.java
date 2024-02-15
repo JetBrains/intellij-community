@@ -503,12 +503,12 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
 
     @Override
     public @NotNull String getNextOccurenceActionName() {
-      return UsageViewBundle.message("action.next.occurrence");
+      return RefactoringBundle.message("action.next.conflict");
     }
 
     @Override
     public @NotNull String getPreviousOccurenceActionName() {
-      return UsageViewBundle.message("action.previous.occurrence");
+      return RefactoringBundle.message("action.previous.conflict");
     }
 
     @Override
