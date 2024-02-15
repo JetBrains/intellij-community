@@ -2,18 +2,23 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
+import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import java.time.Duration
 
 /**
  * This tracker lives from the moment the inline completion appears on the screen until its end.
  * This tracker is not thread-safe.
  */
 internal class InlineCompletionShowTracker(
+  private val request: InlineCompletionRequest,
   private val requestId: Long,
   private val provider: Class<out InlineCompletionProvider>,
   private val invocationTime: Long,
@@ -55,10 +60,10 @@ internal class InlineCompletionShowTracker(
       "Call firstComputed firstly"
     }
     state.lines += (element.text.lines().size - 1).coerceAtLeast(0)
-    if (state.length == 0 && element.text.isNotEmpty()) {
+    if (state.suggestion.isEmpty() && element.text.isNotEmpty()) {
       state.lines++ // first line
     }
-    state.length += element.text.length
+    state.suggestion += element.text
     assert(!showLogSent)
   }
 
@@ -89,7 +94,7 @@ internal class InlineCompletionShowTracker(
     }
     showLogSent = true
     data.add(ShownEvents.LINES.with(variantStates.map { it.lines }))
-    data.add(ShownEvents.LENGTH.with(variantStates.map { it.length }))
+    data.add(ShownEvents.LENGTH.with(variantStates.map { it.suggestion.length }))
     data.add(ShownEvents.LENGTH_CHANGE_DURING_SHOW.with(variantStates.maxOf { it.lengthChange }))
     data.add(ShownEvents.SHOWING_TIME.with(System.currentTimeMillis() - showStartTime))
     data.add(ShownEvents.FINISH_TYPE.with(finishType))
@@ -102,18 +107,40 @@ internal class InlineCompletionShowTracker(
     }
 
     InlineCompletionUsageTracker.SHOWN_EVENT.log(data)
+    if (finishType == FinishType.SELECTED) {
+      potentiallySelectedIndex?.let {
+        service<InsertedStateTracker>().track(requestId,
+                                              language,
+                                              fileLanguage,
+                                              request.editor,
+                                              request.endOffset,
+                                              variantStates[it].suggestion,
+                                              getDuration(),
+        )
+      }
+    }
   }
+
+  private fun getDuration(): Duration =
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS)
+    } else {
+      Duration.ofSeconds(10)
+    }
 
   private fun extendVariantsNumber(atLeast: Int) {
     while (variantStates.size < atLeast) {
-      variantStates += VariantState(0, 0, 0, false)
+      variantStates += VariantState("", 0, 0, false)
     }
   }
 
   private data class VariantState(
-    var length: Int,
+    var suggestion: String,
     var lines: Int,
     var lengthChange: Int,
     var firstComputed: Boolean
   )
 }
+
+
+const val TEST_CHECK_STATE_AFTER_MLS: Long = 100

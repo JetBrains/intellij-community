@@ -20,10 +20,11 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 26)
+  private val GROUP = EventLogGroup("inline.completion", 27)
 
   const val INVOKED_EVENT_ID = "invoked"
   const val SHOWN_EVENT_ID = "shown"
+  const val INSERTED_STATE_EVENT_ID = "inserted_state"
 
   @ApiStatus.Internal
   object InvokedEvents {
@@ -123,6 +124,28 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     ShownEvents.FINISH_TYPE,
     ShownEvents.EXPLICIT_SWITCHING_VARIANTS_TIMES,
     ShownEvents.SELECTED_INDEX
+  )
+
+  @ApiStatus.Internal
+  object InsertedStateEvents {
+    val REQUEST_ID = EventFields.Long("request_id")
+    val DURATION = EventFields.Long("duration")
+    val LENGTH = EventFields.Int("length")
+    val EDIT_DISTANCE = EventFields.Int("edit_distance")
+    val COMMON_PREFIX_LENGTH = EventFields.Int("common_prefix_length")
+    val COMMON_SUFFIX_LENGTH = EventFields.Int("common_suffix_length")
+  }
+
+  internal val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
+    INSERTED_STATE_EVENT_ID,
+    InsertedStateEvents.REQUEST_ID,
+    EventFields.Language,
+    EventFields.CurrentFile,
+    InsertedStateEvents.DURATION,
+    InsertedStateEvents.LENGTH,
+    InsertedStateEvents.EDIT_DISTANCE,
+    InsertedStateEvents.COMMON_PREFIX_LENGTH,
+    InsertedStateEvents.COMMON_SUFFIX_LENGTH,
   )
 
   override fun getGroup() = GROUP

@@ -7,10 +7,12 @@ import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayT
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InsertedStateEvents
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.InvokedEvents.Outcome
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.TEST_CHECK_STATE_AFTER_MLS
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -411,6 +413,73 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     )
   }
 
+  @Test
+  fun `test inserted state logging after changes`() {
+    val state = getLogsState {
+      myFixture.testInlineCompletion {
+        init(PlainTextFileType.INSTANCE)
+        registerSuggestion {
+          variant {
+            emit(InlineCompletionGrayTextElement("one "))
+            emit(InlineCompletionGrayTextElement("three"))
+          }
+        }
+        callInlineCompletion()
+        provider.computeNextElements(2)
+        delay()
+
+        typeChars("one th")
+        assertInlineRender("ree")
+        insert()
+        backSpace()
+        backSpace()
+        typeChars("aa")
+        assertFileContent("one thraa<caret>")
+        delay(200)
+      }
+    }
+    val insertedStateData = state.assertInsertedStateData()
+    assertInsertedStateData(
+      insertedStateData,
+      length = 9,
+      editDistance = 2,
+      commonPrefixLength = 7,
+      commonSuffixLength = 0,
+    )
+  }
+
+  @Test
+  fun `test inserted state logging without changes`() {
+    val state = getLogsState {
+      myFixture.testInlineCompletion {
+        init(PlainTextFileType.INSTANCE)
+        registerSuggestion {
+          variant {
+            emit(InlineCompletionGrayTextElement("one "))
+            emit(InlineCompletionGrayTextElement("three"))
+          }
+        }
+        callInlineCompletion()
+        provider.computeNextElements(2)
+        delay()
+
+        typeChars("one th")
+        assertInlineRender("ree")
+        insert()
+        assertFileContent("one three<caret>")
+        delay(200)
+      }
+    }
+    val insertedStateData = state.assertInsertedStateData()
+    assertInsertedStateData(
+      insertedStateData,
+      length = 9,
+      editDistance = 0,
+      commonPrefixLength = 9,
+      commonSuffixLength = 9,
+    )
+  }
+
   private fun assertRequestId(invokedData: Data, computedData: Data) {
     assertEquals(invokedData[InvokedEvents.REQUEST_ID], computedData[ShownEvents.REQUEST_ID])
   }
@@ -443,6 +512,20 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     assertEquals(selectedIndex, computedData[ShownEvents.SELECTED_INDEX])
   }
 
+  private fun assertInsertedStateData(
+    data: Data,
+    length: Int,
+    editDistance: Int,
+    commonPrefixLength: Int,
+    commonSuffixLength: Int,
+  ) {
+    assertEquals(length, data[InsertedStateEvents.LENGTH])
+    assertEquals(TEST_CHECK_STATE_AFTER_MLS, data[InsertedStateEvents.DURATION])
+    assertEquals(editDistance, data[InsertedStateEvents.EDIT_DISTANCE])
+    assertEquals(commonPrefixLength, data[InsertedStateEvents.COMMON_PREFIX_LENGTH])
+    assertEquals(commonSuffixLength, data[InsertedStateEvents.COMMON_SUFFIX_LENGTH])
+  }
+
   private class LogsState(private val events: List<LogEvent>) {
 
     private fun getData(id: String): Data? {
@@ -454,9 +537,13 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
 
     private fun getComputedData(): Data? = getData(InlineCompletionUsageTracker.SHOWN_EVENT_ID)
 
+    private fun getInsertedStateData(): Data? = getData(InlineCompletionUsageTracker.INSERTED_STATE_EVENT_ID)
+
     fun assertInvokedData(): Data = getInvokedData().also { assertNotNull(it) }!!
 
     fun assertComputedData(): Data = getComputedData().also { assertNotNull(it) }!!
+
+    fun assertInsertedStateData(): Data = getInsertedStateData().also { assertNotNull(it) }!!
 
     fun assertNoInvokedData(): Unit = assertNull(getInvokedData())
 
