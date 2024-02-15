@@ -28,14 +28,28 @@ class StorageParser(private val settings: Settings) {
     private const val OPENED_PATHS = "openedPathsList"
     private const val THEME = "theme"
 
-    internal fun parsePath(uri: String): RecentPathInfo? {
-      val path = Path.of(URI(uri)) ?: return null
+    internal fun parsePath(uri: URI): RecentPathInfo? {
+      fun fromWslPath(uriInternal: String): Path? {
+        if (!SystemInfo.isWindows) return null
+        val wslRelativePath = uriInternal.removePrefix("//wsl+")
+        return Path.of("\\\\wsl.localhost\\" + wslRelativePath.replace('/', '\\'))
+      }
+
+      val path = when (uri.scheme) {
+        "file" -> Path.of(uri)
+        "vscode-remote" -> fromWslPath(uri.schemeSpecificPart)
+        else -> {
+          logger.warn("Unknown scheme: ${uri.scheme}")
+          null
+        }
+      } ?: return null
+
       val modifiedTime = path.toFile().listFiles()?.maxByOrNull { it.lastModified() }?.lastModified()
 
       val info = RecentProjectMetaInfo().apply {
         projectOpenTimestamp = modifiedTime ?: 0
         buildTimestamp = projectOpenTimestamp
-        displayName = path.fileName?.toString()
+        displayName = path.fileName?.toString() ?: path.toString()
       }
 
       if (Registry.`is`("transferSettings.vscode.onlyCargoToml")) {
@@ -93,7 +107,7 @@ class StorageParser(private val settings: Settings) {
 
       workspaces.forEach { uri ->
         try {
-          val res = parsePath(uri)
+          val res = parsePath(URI(uri))
           if (res != null) {
             settings.recentProjects.add(res)
           }

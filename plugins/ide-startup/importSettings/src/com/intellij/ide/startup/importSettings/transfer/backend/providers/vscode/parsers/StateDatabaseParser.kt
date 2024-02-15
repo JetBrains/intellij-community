@@ -10,8 +10,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.LegacySettingsTransferWizard
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
+import java.net.URI
 import java.sql.Connection
 import java.sql.DriverManager
 import kotlin.collections.set
@@ -45,9 +47,11 @@ class StateDatabaseParser(private val settings: Settings) {
     val paths = (root["entries"] as ArrayNode).mapNotNull { it["folderUri"]?.textValue() }
 
     paths.forEach { uri ->
-      val res = StorageParser.parsePath(uri)
-      if (res != null) {
-        settings.recentProjects.add(res)
+      logger.runAndLogException {
+        val res = StorageParser.parsePath(URI(uri))
+        if (res != null) {
+          settings.recentProjects.add(res)
+        }
       }
     }
   }
