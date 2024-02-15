@@ -84,9 +84,14 @@ class TerminalCaretModel(
     }
   }
 
-  private fun calculateCaretPosition(cursorX: Int, cursorY: Int): LogicalPosition {
-    val outputStartOffset = outputModel.getLastBlock()!!.outputStartOffset
+  private fun calculateCaretPosition(cursorX: Int, cursorY: Int): LogicalPosition? {
     // cursor position in the TextBuffer is relative to the output start
+    val outputStartOffset = outputModel.getLastBlock()!!.outputStartOffset
+    // Right after the command start, there can be no line break after the command.
+    // So, the output start offset is out of the document text bounds. Return null in this case.
+    if (outputStartOffset > editor.document.textLength) {
+      return null
+    }
     val blockStartLine = editor.document.getLineNumber(outputStartOffset)
     val historyLines = if (terminalModel.useAlternateBuffer) 0 else terminalModel.historyLinesCount
     val blockLine = historyLines + cursorY - 1
