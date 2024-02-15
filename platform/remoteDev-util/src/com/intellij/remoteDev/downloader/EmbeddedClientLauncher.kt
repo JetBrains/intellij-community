@@ -192,10 +192,11 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
 
     vmParametersList.addAll(customizableOptions)
 
+    val build = ApplicationInfo.getInstance().build
     val jetBrainsClientOptions = listOf(
       "-Djb.vmOptionsFile=${vmOptionsFile.pathString}",
       "-Didea.vendor.name=JetBrains",
-      "-Didea.paths.selector=JetBrainsClient${ApplicationInfo.getInstance().build.withoutProductCode().asString()}",
+      "-Didea.paths.selector=JetBrainsClient${build.withoutProductCode().asString()}",
       "-Didea.platform.prefix=JetBrainsClient",
       "-Dide.no.platform.update=true",
       "-Didea.initially.ask.config=never",
@@ -203,6 +204,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
       "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
+      "-Dintellij.platform.full.ide.product.code=${build.productCode}",
       "-Dintellij.platform.load.app.info.from.resources=true",
       "-Dsplash=true",
     )

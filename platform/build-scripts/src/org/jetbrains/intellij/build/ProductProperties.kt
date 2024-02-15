@@ -340,6 +340,12 @@ abstract class ProductProperties {
   open fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
 
   /**
+   * Override this function to provide additional JVM command line arguments which will be added to launchers along with 
+   * [additionalIdeJvmArguments].
+   */
+  open fun getAdditionalContextDependentIdeJvmArguments(context: BuildContext): List<String> = emptyList()
+
+  /**
    * @return custom properties for [org.jetbrains.intellij.build.impl.productInfo.ProductInfoData].
    */
   open fun generateCustomPropertiesForProductInfo(): List<CustomProperty> = emptyList()

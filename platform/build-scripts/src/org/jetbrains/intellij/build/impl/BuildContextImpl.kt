@@ -318,6 +318,7 @@ class BuildContextImpl(
     }
 
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
+    jvmArgs.addAll(productProperties.getAdditionalContextDependentIdeJvmArguments(this))
 
     if (productProperties.useSplash) {
       @Suppress("SpellCheckingInspection", "RedundantSuppression")

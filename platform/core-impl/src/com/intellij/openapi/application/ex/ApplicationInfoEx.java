@@ -47,6 +47,13 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract boolean isPreview();
 
   /**
+   * Returns the full IDE's product code (as used in build numbers) if this application is a frontend variant (JetBrains Client) of it.
+   * Otherwise, returns {@code null}.
+   */
+  @ApiStatus.Internal
+  public abstract @Nullable String getFullIdeProductCode();
+
+  /**
    * @deprecated use {@link com.intellij.platform.ide.customization.ExternalProductResourceUrls#getDownloadPageUrl()} instead
    */
   @ApiStatus.ScheduledForRemoval
