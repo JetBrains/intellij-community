@@ -12,7 +12,8 @@ data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAt
   init {
     check(startOffset <= endOffset)
   }
-  fun length() = endOffset - startOffset
+  val length: Int
+    get() = endOffset - startOffset
 }
 
 class TerminalTextHighlighter private constructor(

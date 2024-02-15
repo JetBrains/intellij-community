@@ -200,7 +200,7 @@ class TerminalOutputModel(val editor: EditorEx) {
         findIntersectionLength(it, deleteRange) > 0 -> {
           val intersectionLength = findIntersectionLength(it, deleteRange)
           val newRangeStart = min(it.startOffset, deleteRange.startOffset)
-          val newRangeEnd = newRangeStart + it.length() - intersectionLength
+          val newRangeEnd = newRangeStart + it.length - intersectionLength
           if (newRangeStart != newRangeEnd)
             HighlightingInfo(newRangeStart, newRangeEnd, it.textAttributes)
           else
@@ -209,7 +209,7 @@ class TerminalOutputModel(val editor: EditorEx) {
         else -> {
           check(it.startOffset >= deleteRange.endOffset)
           val newRangeStart = it.startOffset - deleteRange.length
-          HighlightingInfo(newRangeStart, newRangeStart + it.length(), it.textAttributes)
+          HighlightingInfo(newRangeStart, newRangeStart + it.length, it.textAttributes)
         }
       }
     }
