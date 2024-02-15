@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.GitRemoteBranchesUtil
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.getSourceRemoteDescriptor
+import org.jetbrains.plugins.gitlab.mergerequest.data.getSpecialRemoteBranchForHead
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -33,7 +35,10 @@ internal class GitLabMergeRequestBranchesViewModel(
   override val sourceBranch: StateFlow<String> = mergeRequest.details.mapState(cs, ::getSourceBranchName)
 
   private fun getSourceBranchName(details: GitLabMergeRequestFullDetails): String {
-    if (details.sourceProject == null) return ""
+    if (details.sourceProject == null) {
+      if (details.diffRefs != null) return DvcsUtil.getShortHash(details.diffRefs.headSha)
+      else return details.sourceBranch
+    }
     if (details.targetProject == details.sourceProject) return details.sourceBranch
     val sourceProjectOwner = details.sourceProject.ownerPath
     return "$sourceProjectOwner:${details.sourceBranch}"
@@ -41,8 +46,14 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
     .combine(mergeRequest.details) { _, details ->
-      val remote = details.getSourceRemoteDescriptor(mapping.repository.serverPath) ?: return@combine false
-      GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.sourceBranch)
+      val sourceRemote = details.getSourceRemoteDescriptor(mapping.repository.serverPath)
+      if (sourceRemote != null) {
+        GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, sourceRemote, details.sourceBranch)
+      }
+      else {
+        val specialRef = details.getSpecialRemoteBranchForHead(mapping.gitRemote)
+        GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, specialRef)
+      }
     }.modelFlow(cs, thisLogger())
 
   private val _showBranchesRequests = MutableSharedFlow<CodeReviewBranches>()
@@ -68,7 +79,11 @@ internal class GitLabMergeRequestBranchesViewModel(
   override fun showBranches() {
     cs.launch {
       val details = mergeRequest.details.first()
-      _showBranchesRequests.emit(CodeReviewBranches(details.sourceBranch, details.targetBranch))
+      _showBranchesRequests.emit(CodeReviewBranches(
+        getSourceBranchName(details),
+        details.targetBranch,
+        details.sourceProject != null
+      ))
     }
   }
 }
