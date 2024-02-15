@@ -13,18 +13,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiFragmentImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 
 public final class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLocalInspectionTool {
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
+  
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitTemplate(@NotNull PsiTemplate template) {

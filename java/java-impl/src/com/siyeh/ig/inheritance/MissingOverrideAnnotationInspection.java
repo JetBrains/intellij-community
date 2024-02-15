@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -83,8 +84,8 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ANNOTATIONS);
   }
 
   @Override

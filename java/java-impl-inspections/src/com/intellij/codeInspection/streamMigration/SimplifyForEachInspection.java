@@ -7,9 +7,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -22,6 +20,8 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -41,15 +41,14 @@ public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspec
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ADVANCED_COLLECTIONS_API);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile file = holder.getFile();
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (!PsiUtil.isAvailable(JavaFeature.ADVANCED_COLLECTIONS_API, file) || virtualFile == null ||
-        !FileIndexFacade.getInstance(holder.getProject()).isInSourceContent(virtualFile)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

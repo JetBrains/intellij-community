@@ -24,10 +24,14 @@ import java.util.*;
 
 public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {

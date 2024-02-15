@@ -20,14 +20,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STRING_TEMPLATES);
+  }
+  
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {

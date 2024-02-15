@@ -14,7 +14,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -24,18 +23,21 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
 public final class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_REPLACE_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_LIST, "replaceAll").parameterTypes("java.util.function.UnaryOperator");
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {

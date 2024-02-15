@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -90,6 +91,13 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
 
     InspectionElementsMerger merger = InspectionElementsMerger.getMerger(getShortName());
     return merger != null && isSuppressedForMerger(element, suppressors, merger);
+  }
+
+  /**
+   * @return a generated user-readable addendum for inspection description. Could be used to list SDK versions where the inspection is available. 
+   */
+  public HtmlChunk getDescriptionAddendum() {
+    return HtmlChunk.empty();
   }
 
   private static boolean isSuppressedForMerger(@NotNull PsiElement element, @NotNull Set<? extends InspectionSuppressor> suppressors, @NotNull InspectionElementsMerger merger) {

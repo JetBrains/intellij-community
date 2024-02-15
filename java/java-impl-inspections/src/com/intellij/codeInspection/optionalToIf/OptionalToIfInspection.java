@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -32,10 +31,14 @@ public final class OptionalToIfInspection extends AbstractBaseJavaLocalInspectio
   private static final Set<String> SUPPORTED_TERMINALS = Set.of(
     "get", "orElse", "ifPresent", "orElseGet", "ifPresentOrElse", "isPresent", "isEmpty", "stream", "orElseThrow");
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression terminalCall) {

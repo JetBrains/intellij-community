@@ -95,12 +95,13 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
       checkbox("USELESS_BOXING_IN_STREAM_MAP", JavaBundle.message("inspection.redundant.stream.optional.call.option.streamboxing")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

@@ -24,8 +24,12 @@ import java.util.*;
 
 public final class SwitchExpressionCanBePushedDownInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.SWITCH_EXPRESSION);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.SWITCH_EXPRESSION, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {

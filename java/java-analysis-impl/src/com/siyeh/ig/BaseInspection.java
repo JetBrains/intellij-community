@@ -161,7 +161,9 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * Useful for e.g. a {@link com.intellij.psi.util.PsiUtil#isLanguageLevel5OrHigher(PsiElement)} check
    * which will be the same for all elements in the specified file.
    * When this method returns false, {@link #buildVisitor()} will not be called.
+   * @deprecated use {@link #isAvailableForFile(PsiFile)} or {@link #requiredFeatures()}
    */
+  @Deprecated
   public boolean shouldInspect(@NotNull PsiFile file) {
     return true;
   }

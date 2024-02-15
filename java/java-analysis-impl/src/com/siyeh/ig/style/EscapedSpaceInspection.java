@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -19,10 +18,16 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public final class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCK_ESCAPES);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.TEXT_BLOCK_ESCAPES, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitFragment(@NotNull PsiFragment fragment) {

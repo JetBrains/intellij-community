@@ -12,11 +12,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
@@ -32,12 +32,13 @@ public final class StaticPseudoFunctionalStyleMethodInspection extends AbstractB
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {

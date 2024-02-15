@@ -64,6 +64,11 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
                JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface")));
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {

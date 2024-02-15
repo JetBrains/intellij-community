@@ -16,7 +16,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
@@ -26,16 +25,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitConditionalExpression(@NotNull PsiConditionalExpression ternary) {

@@ -4,6 +4,7 @@ package com.intellij.pom.java;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -165,6 +166,16 @@ public enum LanguageLevel {
    */
   public int feature() {
     return myVersion.feature;
+  }
+
+  /**
+   * @return short representation of the corresponding language level, like '8', or '21-preview'
+   */
+  public @NlsSafe String getShortText() {
+    if (this == JDK_X) {
+      return "X";
+    }
+    return feature() + (isPreview() ? "-preview" : "");
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LambdaCanBeMethodReferenceInspection.class);
@@ -56,12 +57,13 @@ public final class LambdaCanBeMethodReferenceInspection extends AbstractBaseJava
     return "Convert2MethodRef";
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {

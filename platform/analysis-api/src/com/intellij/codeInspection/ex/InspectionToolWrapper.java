@@ -13,6 +13,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.LocalizationUtil;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.Nls;
@@ -23,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -32,6 +35,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   private static final String INSPECTION_DESCRIPTIONS_FOLDER = "inspectionDescriptions";
 
   private static final Logger LOG = Logger.getInstance(InspectionToolWrapper.class);
+  private static final Pattern ADDENDUM_PLACE = Pattern.compile("<p><small>New in [\\d.]+</small></p>|(</body>)?\\s*</html>", Pattern.CASE_INSENSITIVE);
 
   protected T myTool;
   protected final E myEP;
@@ -176,11 +180,24 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     try {
       InputStream descriptionStream = getDescriptionStream();
       //noinspection HardCodedStringLiteral(IDEA-249976)
-      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
+      return descriptionStream != null ? insertAddendum(ResourceUtil.loadText(descriptionStream),
+                                         getTool().getDescriptionAddendum()) : null;
     }
     catch (IOException ignored) { }
 
     return getTool().loadDescription();
+  }
+
+  private static String insertAddendum(String description, HtmlChunk addendum) {
+    String addendumString = addendum.toString();
+    if (!description.contains("<!-- tooltip end -->")) {
+      addendumString = "<!-- tooltip end -->" + addendumString;
+    }
+    Matcher matcher = ADDENDUM_PLACE.matcher(description);
+    if (matcher.find()) {
+      return description.substring(0, matcher.start()) + addendumString + description.substring(matcher.start());
+    }
+    return description + addendumString;
   }
 
   private @Nullable InputStream getDescriptionStream() {

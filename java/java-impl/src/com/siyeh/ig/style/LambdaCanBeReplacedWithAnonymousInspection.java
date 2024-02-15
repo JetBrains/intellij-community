@@ -40,6 +40,11 @@ public final class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspec
   }
 
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LambdaToAnonymousVisitor();
   }

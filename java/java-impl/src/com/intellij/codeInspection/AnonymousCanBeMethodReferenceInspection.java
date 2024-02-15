@@ -10,6 +10,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -52,6 +54,11 @@ public final class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJ
     return pane(
       checkbox("reportNotAnnotatedInterfaces",
                JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface")));
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.METHOD_REFERENCES);
   }
 
   @NotNull

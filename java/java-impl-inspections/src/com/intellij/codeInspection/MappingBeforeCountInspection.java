@@ -4,12 +4,12 @@ package com.intellij.codeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Set;
 
 public final class MappingBeforeCountInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COUNT =
@@ -19,11 +19,15 @@ public final class MappingBeforeCountInspection extends AbstractBaseJavaLocalIns
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "map", "mapToInt", "mapToLong", "mapToDouble", "mapToObj", "peek").parameterCount(1),
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "boxed", "asLongStream", "asDoubleStream").parameterCount(0)
     );
-  
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

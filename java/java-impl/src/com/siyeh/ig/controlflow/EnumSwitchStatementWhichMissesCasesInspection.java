@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -65,6 +66,11 @@ public final class EnumSwitchStatementWhichMissesCasesInspection extends Abstrac
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("ignoreSwitchStatementsWithDefault", InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.option")));
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ENUMS);
   }
 
   @NotNull

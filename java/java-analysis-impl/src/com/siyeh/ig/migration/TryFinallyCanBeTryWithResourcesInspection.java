@@ -209,8 +209,8 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel7OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TRY_WITH_RESOURCES);
   }
 
   @Override

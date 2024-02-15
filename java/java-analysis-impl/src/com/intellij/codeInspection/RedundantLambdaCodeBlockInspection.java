@@ -10,12 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
 public final class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaCodeBlockInspection.class);
@@ -39,12 +39,13 @@ public final class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLo
     return SHORT_NAME;
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {

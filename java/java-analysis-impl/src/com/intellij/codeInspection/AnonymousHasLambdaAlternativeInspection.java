@@ -10,13 +10,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -46,13 +46,14 @@ public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJ
                                    "new Thread(() -> {…})")
   };
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.THREAD_LOCAL_WITH_INITIAL);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    @NotNull PsiFile context = holder.getFile();
-    if (!PsiUtil.isAvailable(JavaFeature.THREAD_LOCAL_WITH_INITIAL, context)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {

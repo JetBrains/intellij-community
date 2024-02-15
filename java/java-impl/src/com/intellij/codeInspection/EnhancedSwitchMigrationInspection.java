@@ -51,10 +51,14 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
     (statement, branches, isExhaustive, maxNumberStatementsForExpression) -> inspectReplacementWithStatement(statement, branches)
   };
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ENHANCED_SWITCH);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {

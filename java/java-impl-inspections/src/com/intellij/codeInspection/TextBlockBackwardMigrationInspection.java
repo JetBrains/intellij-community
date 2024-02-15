@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -16,11 +17,16 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.StringJoiner;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
 
   @NotNull
   @Override

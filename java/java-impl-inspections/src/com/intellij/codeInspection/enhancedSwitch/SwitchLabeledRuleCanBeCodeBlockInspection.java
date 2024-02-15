@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -16,15 +17,18 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 import static com.intellij.java.JavaBundle.message;
 
-public final class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTool {
-  @NotNull
+public final class SwitchLabeledRuleCanBeCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ENHANCED_SWITCH);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
 
     return new JavaElementVisitor() {
       @Override

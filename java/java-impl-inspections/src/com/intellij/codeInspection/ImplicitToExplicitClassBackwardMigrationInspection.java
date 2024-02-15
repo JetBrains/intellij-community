@@ -10,18 +10,23 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public final class ImplicitToExplicitClassBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final String SHORT_NAME =
-    InspectionProfileEntry.getShortName(ImplicitToExplicitClassBackwardMigrationInspection.class.getSimpleName());
+    getShortName(ImplicitToExplicitClassBackwardMigrationInspection.class.getSimpleName());
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.IMPLICIT_CLASSES);
+  }
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitImplicitClass(@NotNull PsiImplicitClass aClass) {

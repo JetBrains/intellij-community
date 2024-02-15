@@ -66,10 +66,14 @@ public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractB
     );
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.RECORD_PATTERNS_IN_FOR_EACH);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.RECORD_PATTERNS_IN_FOR_EACH, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     boolean useVar = IntroduceVariableBase.createVarType() || forceUseVar;
     return new JavaElementVisitor() {
       private final Options options = new Options(maxNotUsedComponentCounts,

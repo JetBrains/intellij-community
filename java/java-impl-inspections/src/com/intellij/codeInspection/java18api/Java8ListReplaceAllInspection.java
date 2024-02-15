@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -49,12 +50,13 @@ public final class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalIn
       checkbox("dontWarnInCaseOfMultilineLambda", JavaBundle.message("checkbox.don.t.warn.in.case.of.multiline.lambda")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ADVANCED_COLLECTIONS_API);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.ADVANCED_COLLECTIONS_API, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       private static boolean isRedundantOperation(PsiExpression replacement,
                                                   PsiStatement body,

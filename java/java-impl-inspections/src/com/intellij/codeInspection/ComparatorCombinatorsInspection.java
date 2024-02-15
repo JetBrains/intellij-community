@@ -23,10 +23,7 @@ import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -34,12 +31,13 @@ public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocal
   private static final Logger LOG = Logger.getInstance(ComparatorCombinatorsInspection.class);
 
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {

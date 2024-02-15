@@ -68,12 +68,13 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       checkbox("SUGGEST_MAP_OF_ENTRIES", JavaBundle.message("inspection.collection.factories.option.suggest.ofentries")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.COLLECTION_FACTORIES);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

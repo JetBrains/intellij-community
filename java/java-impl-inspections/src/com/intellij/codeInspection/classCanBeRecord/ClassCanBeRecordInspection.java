@@ -13,9 +13,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.BaseInspection;
@@ -26,6 +24,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
@@ -47,8 +46,8 @@ public final class ClassCanBeRecordInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isAvailable(JavaFeature.RECORDS, file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.RECORDS);
   }
 
   @Override

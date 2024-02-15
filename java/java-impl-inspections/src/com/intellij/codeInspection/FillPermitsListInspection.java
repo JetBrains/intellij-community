@@ -17,8 +17,12 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public final class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.SEALED_CLASSES);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass psiClass) {

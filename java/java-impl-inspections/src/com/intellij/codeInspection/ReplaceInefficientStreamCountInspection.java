@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
 public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -62,12 +64,13 @@ public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJ
     return true;
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
 
     return new JavaElementVisitor() {
       @Override

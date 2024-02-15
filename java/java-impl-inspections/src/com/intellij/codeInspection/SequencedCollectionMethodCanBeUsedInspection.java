@@ -17,6 +17,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Set;
 
 public final class SequencedCollectionMethodCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_GET_REMOVE = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "get", "remove")
@@ -29,10 +30,12 @@ public final class SequencedCollectionMethodCanBeUsedInspection extends Abstract
     .parameterCount(0);
 
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.SEQUENCED_COLLECTIONS);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.SEQUENCED_COLLECTIONS, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {

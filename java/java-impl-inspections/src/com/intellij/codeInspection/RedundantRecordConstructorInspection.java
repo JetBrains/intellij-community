@@ -32,10 +32,12 @@ import java.util.Set;
 
 public final class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.RECORDS);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.RECORDS, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(@NotNull PsiMethod method) {

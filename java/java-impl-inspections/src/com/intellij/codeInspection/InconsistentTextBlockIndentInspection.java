@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -23,13 +22,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
+
+  @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {

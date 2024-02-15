@@ -15,7 +15,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
@@ -54,12 +53,13 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       checkbox("ignoreJavaxNullable", TypeMigrationBundle.message("inspection.guava.erase.option")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.STREAM_OPTIONAL, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       private final NotNullLazyValue<Map<String, PsiClass>> myGuavaClassConversions = NotNullLazyValue.atomicLazy(() -> {
         Map<String, PsiClass> map = new HashMap<>();

@@ -15,10 +15,11 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -38,6 +39,8 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public final class WhileCanBeForeachInspection extends BaseInspection {
 
@@ -65,8 +68,8 @@ public final class WhileCanBeForeachInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.FOR_EACH);
   }
 
   @Override

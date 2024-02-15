@@ -18,14 +18,16 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
 
@@ -53,13 +55,12 @@ public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends B
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isLanguageLevel5OrHigher(file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.VARARGS);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[0];
     final PsiType type = (PsiType)infos[1];
     return LocalQuickFix.from(new AddTypeCastFix(type, argument));

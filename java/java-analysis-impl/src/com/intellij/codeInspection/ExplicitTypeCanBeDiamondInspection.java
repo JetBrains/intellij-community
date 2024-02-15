@@ -8,12 +8,15 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(ExplicitTypeCanBeDiamondInspection.class);
@@ -34,6 +37,11 @@ public final class ExplicitTypeCanBeDiamondInspection extends AbstractBaseJavaLo
   @Override
   public String getShortName() {
     return "Convert2Diamond";
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.DIAMOND_TYPES);
   }
 
   @NotNull

@@ -24,6 +24,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -36,7 +37,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public final class ReflectionForUnavailableAnnotationInspection extends BaseInspection {
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ANNOTATIONS);
+  }
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {

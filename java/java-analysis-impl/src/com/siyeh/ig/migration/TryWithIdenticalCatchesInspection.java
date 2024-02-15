@@ -18,7 +18,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -62,8 +61,8 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
   }
 
   @Override
-  public boolean shouldInspect(@NotNull PsiFile file) {
-    return PsiUtil.isAvailable(JavaFeature.MULTI_CATCH, file);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.MULTI_CATCH);
   }
 
   @Override

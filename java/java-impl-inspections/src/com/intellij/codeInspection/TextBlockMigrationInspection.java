@@ -21,6 +21,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -35,10 +37,14 @@ public final class TextBlockMigrationInspection extends AbstractBaseJavaLocalIns
       checkbox("mySuggestLiteralReplacement", JavaBundle.message("inspection.text.block.migration.suggest.literal.replacement")));
   }
 
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {

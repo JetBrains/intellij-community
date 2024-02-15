@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -24,6 +25,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
@@ -37,6 +40,11 @@ public final class OptionalAssignedToNullInspection extends AbstractBaseJavaLoca
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("WARN_ON_COMPARISON", JavaBundle.message("inspection.null.value.for.optional.option.comparisons")));
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
   @NotNull

@@ -21,6 +21,8 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public final class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher PREDICATE_TEST = CallMatcher.instanceCall(
     CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterTypes("T");
@@ -28,12 +30,13 @@ public final class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocal
   private static final CallMatcher MATCHER_MATCHES = CallMatcher.instanceCall("java.util.regex.Matcher", "matches").parameterCount(0);
   private static final CallMatcher PATTERN_MATCHER = CallMatcher.instanceCall("java.util.regex.Pattern", "matcher").parameterCount(1);
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     boolean java11 = PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_11);
     return new JavaElementVisitor() {
       @Override

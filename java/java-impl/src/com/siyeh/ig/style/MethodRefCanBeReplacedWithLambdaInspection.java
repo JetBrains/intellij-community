@@ -14,6 +14,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
@@ -27,12 +28,19 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
     return getDisplayName();
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
   }
 
   @Override
