@@ -13,11 +13,9 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
@@ -40,21 +38,25 @@ class GradleDownloadSourceAction(
 
     @JvmStatic
     @VisibleForTesting
-    fun getSourceArtifactNotation(artifactCoordinates: String,
-                                  artifactIdChecker: Predicate<String>): String = artifactCoordinates.split(":")
-      .let {
+    fun getSourceArtifactNotation(
+      artifactCoordinates: String,
+      artifactIdChecker: Predicate<String>
+    ): String {
+      return artifactCoordinates.split(":").let {
         when {
-          it.size == 4 -> if (artifactIdChecker.test(it[1])) it[0] + ":" + it[1] + ":" + it[3] else artifactCoordinates
+          it.size == 4 && artifactIdChecker.test(it[1]) -> it[0] + ":" + it[1] + ":" + it[3]
           it.size == 5 -> it[0] + ":" + it[1] + ":" + it[4]
           else -> artifactCoordinates
         }
+      }.let {
+        it.removeSuffix(ANDROID_LIBRARY_SUFFIX) + ":sources"
       }
-      .let { it.removeSuffix(ANDROID_LIBRARY_SUFFIX) + ":sources" }
+    }
   }
 
-  override fun getName(): @Nls(capitalization = Nls.Capitalization.Title) String = GradleBundle.message("gradle.action.download.sources")
+  override fun getName(): String = GradleBundle.message("gradle.action.download.sources")
 
-  override fun getBusyText(): @NlsContexts.LinkLabel String = GradleBundle.message("gradle.action.download.sources.busy.text")
+  override fun getBusyText(): String = GradleBundle.message("gradle.action.download.sources.busy.text")
 
   override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry?>): ActionCallback {
     val gradleModules = gradleModuleProvider.get()
