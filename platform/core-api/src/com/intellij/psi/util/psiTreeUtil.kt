@@ -428,3 +428,23 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
 
 
 inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> = PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
+
+//<editor-fold desc="Deprecated Stuff">
+@Suppress("unused")
+@Deprecated("Use firstLeaf() instead", ReplaceWith("firstLeaf()"))
+val PsiElement.firstLeaf: PsiElement
+  @Deprecated("Use firstLeaf() instead", ReplaceWith("firstLeaf()"))
+  get() = firstLeaf()
+
+@Suppress("unused")
+@Deprecated("Use lastLeaf() instead", ReplaceWith("lastLeaf()"))
+val PsiElement.lastLeaf: PsiElement
+  @Deprecated("Use lastLeaf() instead", ReplaceWith("lastLeaf()"))
+  get() = lastLeaf()
+
+@Suppress("unused")
+@Deprecated("Use childLeafs() instead", ReplaceWith("childLeafs()"))
+val PsiElement.childLeafs: Sequence<PsiElement>
+  @Deprecated("Use childLeafs() instead", ReplaceWith("childLeafs()"))
+  get() = childLeafs()
+//</editor-fold>
