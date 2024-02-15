@@ -15,4 +15,4 @@ class A<in I> {
 }
 
 // INVOCATION_COUNT: 1
-// ABSENT: bar, foo
+// EXIST: bar, foo
