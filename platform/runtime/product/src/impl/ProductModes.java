@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.runtime.product;
+package com.intellij.platform.runtime.product.impl;
 
+import com.intellij.platform.runtime.product.ProductMode;
 import com.intellij.platform.runtime.repository.RuntimeModuleId;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * Currently, this is determined by the presence of specific modules in dependencies. We can change this and require to specify modes 
  * a module is compatible with explicitly in the future.
  */
-@ApiStatus.Internal
-public final class ProductModes {
+final class ProductModes {
   private ProductModes() {
   }
 

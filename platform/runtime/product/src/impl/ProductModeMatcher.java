@@ -2,7 +2,6 @@
 package com.intellij.platform.runtime.product.impl;
 
 import com.intellij.platform.runtime.product.ProductMode;
-import com.intellij.platform.runtime.product.ProductModes;
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 
