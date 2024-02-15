@@ -456,22 +456,15 @@ internal class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorO
 
 private fun <E : EditorCaretStopPolicyItem> Panel.caretStopRow(@Nls label: String, mode: CaretOptionMode, values: Array<E>) {
   row(label) {
-    val model: DefaultComboBoxModel<E?> = SeparatorAwareComboBoxModel()
-    var lastWasOsDefault = false
-    for (item in values) {
-      val isOsDefault = item.osDefault !== OsDefault.NONE
-      if (lastWasOsDefault && !isOsDefault) model.addElement(null)
-      lastWasOsDefault = isOsDefault
-      val insertionIndex = if (item.osDefault.isIdeDefault) 0 else model.size
-      model.insertElementAt(item, insertionIndex)
-    }
+    val itemWithSeparator: E = values.first { it.osDefault === OsDefault.NONE }
 
-    comboBox(model, SeparatorAwareListItemRenderer())
+    comboBox(values.sortedBy { if (it.osDefault.isIdeDefault) -1 else 0 }, EditorCaretStopPolicyItemRenderer(itemWithSeparator))
+      .applyToComponent { isSwingPopup = false }
       .align(AlignX.FILL)
       .bind(
         {
-          val item = it.selectedItem as? EditorCaretStopPolicyItem
-          item?.caretStopBoundary ?: mode.get(CaretStopOptionsTransposed.DEFAULT)
+          val item = it.selectedItem as EditorCaretStopPolicyItem
+          item.caretStopBoundary
         },
         { it, value -> it.selectedItem = mode.find(value) },
         MutableProperty(
