@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -101,8 +102,13 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
     }
     final PsiReferenceExpression refExpr = PsiTreeUtil.getParentOfType(element, PsiReferenceExpression.class);
     InlineMode mode;
-    if (refExpr != null && JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS) mode = InlineMode.INLINE_ONE;
-    else mode = InlineMode.CHECK_CONFLICTS;
+    if (refExpr != null && PlatformUtils.isFleetBackend() && JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS) {
+      // Conflicts mode is handled separately in Fleet, for now
+      mode = InlineMode.INLINE_ONE;
+    }
+    else {
+      mode = InlineMode.CHECK_CONFLICTS;
+    }
 
     return doInline(context, (PsiVariable)Objects.requireNonNull(context.element()), refExpr, mode);
   }
