@@ -229,13 +229,15 @@ class JarPackager private constructor(
 
         // sort because projectStructureMapping is a concurrent collection
         // call invariantSeparatorsPathString because the result of Path ordering is platform-dependent
-        list.sortWith(compareBy(
-          { it.path.invariantSeparatorsPathString },
-          { it.type },
-          { (it as? ModuleOutputEntry)?.moduleName },
-          { (it as? LibraryFileEntry)?.libraryFile?.let(::isFromLocalMavenRepo) != true },
-          { (it as? LibraryFileEntry)?.libraryFile?.invariantSeparatorsPathString },
-        ))
+        list.sortWith(
+          compareBy(
+            { it.path.invariantSeparatorsPathString },
+            { it.type },
+            { (it as? ModuleOutputEntry)?.moduleName },
+            { (it as? LibraryFileEntry)?.libraryFile?.let(::isFromLocalMavenRepo) != true },
+            { (it as? LibraryFileEntry)?.libraryFile?.invariantSeparatorsPathString },
+          )
+        )
         list
       }
     }
@@ -380,12 +382,11 @@ class JarPackager private constructor(
 
     val excluded = layout.excludedModuleLibraries.get(moduleName)
     for (element in helper.getLibraryDependencies(module)) {
-      var isModuleLevel = true
-      val libraryReference = element.libraryReference
-      if (libraryReference.parentReference !is JpsModuleReference) {
+      var projectLibraryData: ProjectLibraryData? = null
+      val libRef = element.libraryReference
+      if (libRef.parentReference !is JpsModuleReference) {
         if (includeProjectLib) {
-          val library = element.library!!
-          val name = library.name
+          val name = libRef.libraryName
           if (platformLayout!!.hasLibrary(name) || layout.hasLibrary(name)) {
             continue
           }
@@ -398,8 +399,23 @@ class JarPackager private constructor(
             continue
           }
 
-          libToMetadata.put(library, ProjectLibraryData(libraryName = name, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName"))
-          isModuleLevel = false
+          projectLibraryData = ProjectLibraryData(libraryName = name, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName")
+          libToMetadata.put(element.library!!, projectLibraryData)
+        }
+        else if (isLibraryAlwaysPackedIntoPlugin(libRef.libraryName)) {
+          check(!platformLayout!!.hasLibrary(libRef.libraryName))
+
+          val name = libRef.libraryName
+          if (layout.hasLibrary(name)) {
+            continue
+          }
+
+          projectLibraryData = ProjectLibraryData(
+            libraryName = name,
+            packMode = LibraryPackMode.MERGED,
+            reason = "<- $moduleName (always packed into plugin)",
+          )
+          libToMetadata.put(element.library!!, projectLibraryData)
         }
         else {
           continue
@@ -430,33 +446,35 @@ class JarPackager private constructor(
 
       for (file in files) {
         @Suppress("NAME_SHADOWING")
-        asset.addSource(ZipSource(
-          file = file,
-          distributionFileEntryProducer = { size, hash, targetFile ->
-            if (isModuleLevel) {
-              ModuleLibraryFileEntry(
-                path = targetFile,
-                moduleName = moduleName,
-                libraryName = LibraryLicensesListGenerator.getLibraryName(library),
-                libraryFile = file,
-                hash = hash,
-                size = size,
-                relativeOutputFile = item.relativeOutputFile,
-              )
-            }
-            else {
-              ProjectLibraryEntry(
-                path = targetFile,
-                libraryFile = file,
-                size = size,
-                hash = hash,
-                data = ProjectLibraryData(libraryName, LibraryPackMode.MERGED, reason = "<- $moduleName"),
-                relativeOutputFile = item.relativeOutputFile,
-              )
-            }
-          },
-          isPreSignedAndExtractedCandidate = asset.nativeFiles != null,
-        ))
+        asset.addSource(
+          ZipSource(
+            file = file,
+            distributionFileEntryProducer = { size, hash, targetFile ->
+              if (projectLibraryData == null) {
+                ModuleLibraryFileEntry(
+                  path = targetFile,
+                  moduleName = moduleName,
+                  libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+                  libraryFile = file,
+                  hash = hash,
+                  size = size,
+                  relativeOutputFile = item.relativeOutputFile,
+                )
+              }
+              else {
+                ProjectLibraryEntry(
+                  path = targetFile,
+                  libraryFile = file,
+                  size = size,
+                  hash = hash,
+                  data = projectLibraryData,
+                  relativeOutputFile = item.relativeOutputFile,
+                )
+              }
+            },
+            isPreSignedAndExtractedCandidate = asset.nativeFiles != null,
+          )
+        )
       }
     }
   }
@@ -618,31 +636,33 @@ class JarPackager private constructor(
     val isPreSignedCandidate = asset.nativeFiles != null || (isRootDir && isLibPreSigned(library))
     val libraryName = library.name
     for (file in files) {
-      sources.add(ZipSource(
-        file = file,
-        isPreSignedAndExtractedCandidate = isPreSignedCandidate,
-        optimizeConfigId = libraryName.takeIf { isRootDir && (libraryName == "jsvg") },
-        distributionFileEntryProducer = { size, hash, targetFile ->
-          moduleName?.let {
-            ModuleLibraryFileEntry(
+      sources.add(
+        ZipSource(
+          file = file,
+          isPreSignedAndExtractedCandidate = isPreSignedCandidate,
+          optimizeConfigId = libraryName.takeIf { isRootDir && (libraryName == "jsvg") },
+          distributionFileEntryProducer = { size, hash, targetFile ->
+            moduleName?.let {
+              ModuleLibraryFileEntry(
+                path = targetFile,
+                moduleName = it,
+                libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+                libraryFile = file,
+                hash = hash,
+                size = size,
+                relativeOutputFile = relativeOutputFile,
+              )
+            } ?: ProjectLibraryEntry(
               path = targetFile,
-              moduleName = it,
-              libraryName = LibraryLicensesListGenerator.getLibraryName(library),
+              data = libToMetadata.get(library) ?: throw IllegalStateException("Metadata not found for $libraryName"),
               libraryFile = file,
               hash = hash,
               size = size,
               relativeOutputFile = relativeOutputFile,
             )
-          } ?: ProjectLibraryEntry(
-            path = targetFile,
-            data = libToMetadata.get(library) ?: throw IllegalStateException("Metadata not found for $libraryName"),
-            libraryFile = file,
-            hash = hash,
-            size = size,
-            relativeOutputFile = relativeOutputFile,
-          )
-        },
-      ))
+          },
+        )
+      )
     }
   }
 
@@ -993,12 +1013,16 @@ private fun computeDistributionFileEntries(
     }
 
     val hash = hasher.asLong
-    list.add(ModuleOutputEntry(path = asset.effectiveFile,
-                               moduleName = module.moduleName,
-                               size = size,
-                               hash = hash,
-                               relativeOutputFile = module.relativeOutputFile,
-                               reason = module.reason))
+    list.add(
+      ModuleOutputEntry(
+        path = asset.effectiveFile,
+        moduleName = module.moduleName,
+        size = size,
+        hash = hash,
+        relativeOutputFile = module.relativeOutputFile,
+        reason = module.reason
+      )
+    )
   }
 
   for (source in asset.sources) {

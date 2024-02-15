@@ -320,10 +320,14 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   return layout
 }
 
+internal fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp"
+
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
-  val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(modules = enabledPluginModules,
-                                                                       productLayout = context.productProperties.productLayout)
+  val pluginLayoutsByJpsModuleNames = getPluginLayoutsByJpsModuleNames(
+    modules = enabledPluginModules,
+    productLayout = context.productProperties.productLayout,
+  )
 
   val helper = (context as BuildContextImpl).jarPackagerDependencyHelper
   for (plugin in pluginLayoutsByJpsModuleNames) {
@@ -334,18 +338,18 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
     for (moduleName in plugin.includedModules.asSequence().map { it.moduleName }.distinct()) {
       val module = context.findRequiredModule(moduleName)
       for (element in helper.getLibraryDependencies(module)) {
-        val libraryReference = element.libraryReference
-        if (libraryReference.parentReference is JpsModuleReference) {
+        val libRef = element.libraryReference
+        if (libRef.parentReference is JpsModuleReference) {
           continue
         }
 
-        val libraryName = libraryReference.libraryName
-        if (plugin.hasLibrary(libraryName)) {
+        val libName = libRef.libraryName
+        if (plugin.hasLibrary(libName) || isLibraryAlwaysPackedIntoPlugin(libName)) {
           continue
         }
 
-        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libraryName, LibraryPackMode.MERGED)
-        result.addOrGet(ProjectLibraryData(libraryName, packMode, reason = "<- $moduleName"))
+        val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED)
+        result.addOrGet(ProjectLibraryData(libName, packMode, reason = "<- $moduleName"))
           .dependentModules
           .computeIfAbsent(plugin.directoryName) { mutableListOf() }
           .add(moduleName)
