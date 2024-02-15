@@ -527,6 +527,7 @@
         <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
         <action id="SmartTypeCompletion" class="com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction">
           <synonym key="action.SmartTypeCompletion.synonym"/>
+          <synonym key="action.SmartTypeCompletion.synonym2"/>
         </action>
         <separator/>
         <reference ref="EditorCompleteStatement"/>
