@@ -13,7 +13,7 @@ import java.util.Set;
  * whether a particular features is available in a given context
  */
 public enum JavaFeature {
-  ASSERTIONS(LanguageLevel.JDK_1_4, "feature.generics"),
+  ASSERTIONS(LanguageLevel.JDK_1_4, "feature.assertions"),
   ENUMS(LanguageLevel.JDK_1_5, "feature.enums"),
   GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
   ANNOTATIONS(LanguageLevel.JDK_1_5, "feature.annotations"),
