@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
@@ -65,7 +65,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
         }
     }
 
-    override fun computeAnnotations(annotations: SmartList<PsiAnnotation>) {
+    override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
         analyzeForUast(context) {
             val functionSymbol = original.restoreSymbol() ?: return
             functionSymbol.annotations.forEach { annoApp ->

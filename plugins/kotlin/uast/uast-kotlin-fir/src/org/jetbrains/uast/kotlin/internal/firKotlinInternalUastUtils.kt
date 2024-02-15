@@ -278,6 +278,13 @@ internal fun receiverType(
 }
 
 context(KtAnalysisSession)
+internal val KtType.typeForValueClass: Boolean
+    get() {
+        val symbol = expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return false
+        return symbol.isInline
+    }
+
+context(KtAnalysisSession)
 internal fun isInheritedGenericType(ktType: KtType?): Boolean {
     if (ktType == null) return false
     return ktType is KtTypeParameterType &&

@@ -8,11 +8,12 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.utils.SmartList
+import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
 
@@ -85,15 +86,17 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
         return baseResolveProviderService.nullability(original)
     }
 
-    override fun computeAnnotations(annotations: SmartList<PsiAnnotation>) {
-        original.annotationEntries.mapTo(annotations) { entry ->
-            KtLightAnnotationForSourceEntry(
-                name = entry.shortName?.identifier,
-                lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
-                kotlinOrigin = entry,
-                parent = original,
-            )
-        }
+    override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
+        original.annotationEntries.mapTo(annotations) { it.toPsiAnnotation() }
+    }
+
+    protected fun KtAnnotationEntry.toPsiAnnotation(): PsiAnnotation {
+        return KtLightAnnotationForSourceEntry(
+            name = shortName?.identifier,
+            lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(this) },
+            kotlinOrigin = this,
+            parent = original,
+        )
     }
 
     override fun isConstructor(): Boolean {

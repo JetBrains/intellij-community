@@ -9,13 +9,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtModifierListOwner
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -579,9 +573,9 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         val uFile = myFixture.file.toUElement()!!
         val abstractAlarm = uFile.findElementByTextFromPsi<UClass>("AbstractAlarm", strict = false)
-            .orFail("cant find AbstractAlarm")
+            .orFail("can't find AbstractAlarm")
         val builder = abstractAlarm.innerClasses.find { it.name == "Builder" }
-            .orFail("cant find AbstractAlarm.Builder")
+            .orFail("can't find AbstractAlarm.Builder")
         TestCase.assertEquals(2, builder.javaPsi.typeParameters.size)
         val self = builder.javaPsi.typeParameters[0]
         TestCase.assertEquals(
@@ -616,7 +610,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         val uFile = myFixture.file.toUElement()!!
         val klass = uFile.findElementByTextFromPsi<UClass>("class DisconnectReason", strict = false)
-            .orFail("cant convert to UClass")
+            .orFail("can't convert to UClass")
         val lc = klass.uAnnotations.single().javaPsi!!
         val intValues = (lc.findAttributeValue("value") as? PsiArrayInitializerMemberValue)?.initializers
         TestCase.assertEquals(
@@ -628,6 +622,88 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
 
         val flagValue = (lc.findAttributeValue("flag") as? PsiLiteralExpression)?.value
         TestCase.assertEquals("false", flagValue?.toString())
+    }
+
+    fun checkAnnotationParameterReference(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt",
+            """
+                @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.FIELD)
+                @Retention(AnnotationRetention.SOURCE)
+                annotation class NamedAnno(val name: String)
+                
+                class User {
+                    @NamedAnno(name = "aName") lateinit var fullName: String
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val lc = uFile.findElementByTextFromPsi<UClass>("class User", strict = false)
+            .orFail("can't convert to UClass").javaPsi
+        val fullNameProperty = lc.findFieldByName("fullName", false) ?: error("unable to look up property `fullName`")
+        val annotation = fullNameProperty.modifierList?.annotations?.singleOrNull()
+            ?: error("expected the only one annotation")
+        val annotationMemberValue = annotation.findDeclaredAttributeValue("name") as? PsiLiteralValue ?: error("expected PsiLiteralValue annotation")
+        TestCase.assertEquals("aName", annotationMemberValue.value)
+        TestCase.assertTrue(annotationMemberValue.references.isNotEmpty())
+    }
+
+    fun checkContainingFile(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt", """
+            class A
+            class B
+            fun foo(){}
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        val aClass = uFile.findElementByTextFromPsi<UClass>("A", strict = false).orFail("can't find class A")
+        val bClass = uFile.findElementByTextFromPsi<UClass>("B", strict = false).orFail("can't find class B")
+        val fooFunction = uFile.findElementByTextFromPsi<UMethod>("foo", strict = false).orFail("can't find function foo")
+        val aContainingFile = aClass.javaPsi.containingFile
+        val bContainingFile = bClass.javaPsi.containingFile
+        val fooContainingFile = fooFunction.javaPsi.containingFile
+        TestCase.assertFalse(aContainingFile is KtFile)
+        TestCase.assertFalse(bContainingFile is KtFile)
+        TestCase.assertFalse(fooContainingFile is KtFile)
+        TestCase.assertFalse("different instances of fakeFile are expected", aContainingFile === bContainingFile)
+        TestCase.assertFalse("different instances of fakeFile are expected", aContainingFile === fooContainingFile)
+        TestCase.assertTrue("fakeFiles should be equal to each other", aContainingFile == bContainingFile)
+        TestCase.assertTrue("fakeFiles should be equal to each other", aContainingFile == fooContainingFile)
+    }
+
+    fun checkContainingFileInFacadeFiles(myFixture: JavaCodeInsightTestFixture) {
+        val file1 = myFixture.configureByText(
+            "multifile1.kt", """
+            @file:kotlin.jvm.JvmName("Multifile")
+            @file:kotlin.jvm.JvmMultifileClass
+
+            package declaration
+
+            fun foo(): Int = 42
+            """.trimIndent()
+        )
+        val file2 = myFixture.configureByText(
+            "multifile2.kt", """
+            @file:kotlin.jvm.JvmName("Multifile")
+            @file:kotlin.jvm.JvmMultifileClass
+
+            package declaration
+
+            fun String.buzz(): String = "$this... zzz..."
+            """.trimIndent()
+        )
+        val uFile1 = file1.toUElement()!!
+        val uFile2 = file2.toUElement()!!
+        val aClass = uFile1.findElementByTextFromPsi<UClass>("foo", strict = false).orFail("can't find function foo")
+        val bClass = uFile2.findElementByTextFromPsi<UClass>("buzz", strict = false).orFail("can't find function buzz")
+        val aContainingFile = aClass.javaPsi.containingFile
+        val bContainingFile = bClass.javaPsi.containingFile
+        TestCase.assertFalse(aContainingFile is KtFile)
+        TestCase.assertFalse(bContainingFile is KtFile)
+        TestCase.assertFalse("different instances of fakeFile are expected", aContainingFile === bContainingFile)
+        TestCase.assertTrue("fakeFiles should be equal to each other", aContainingFile == bContainingFile)
     }
 
 }

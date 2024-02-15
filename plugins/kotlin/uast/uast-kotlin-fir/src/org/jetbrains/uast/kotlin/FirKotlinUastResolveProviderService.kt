@@ -604,8 +604,28 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getType(ktExpression: KtExpression, source: UElement): PsiType? {
+        // Analysis API returns [Unit] for statements, but [FirStatement] is too broad,
+        // e.g., that even includes [FirFunctionCall], which definitely has an expression type.
+        // We can't use [KtPsiUtil.isStatement]: https://kotlinlang.org/spec/statements.html
+        // which, again, is too broad as well, e.g., code block, which might be a lambda body
+        // whose return type (if it's [Unit]) might be meaningful (coercion-to-Unit).
+        // Here we bail out syntactical statements that are very obvious.
+        if (ktExpression is KtLoopExpression || ktExpression is KtWhenEntry)
+            return null
+
         analyzeForUast(ktExpression) {
             val ktType = ktExpression.getKtType() ?: return null
+            // Again, Analysis API returns [Unit] for statements, so we need to filter out
+            // some cases that are not actually expression's return type.
+            if (ktType.isUnit) {
+                // E.g., AnnotationTarget.FIELD, reference to enum class is resolved to the constructor call,
+                // and then returned as Unit expression type. Same for path segments in a fully qualified name
+                if (ktExpression.parent is KtQualifiedExpression &&
+                    (ktExpression is KtQualifiedExpression || ktExpression is KtNameReferenceExpression)
+                ) {
+                    return null
+                }
+            }
             return toPsiType(
                 ktType,
                 source,
@@ -647,6 +667,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     isForFake = isForFake,
                 )
             )
+        }
+    }
+
+    override fun hasTypeForValueClassInSignature(ktDeclaration: KtDeclaration): Boolean {
+        analyzeForUast(ktDeclaration) {
+            val symbol = ktDeclaration.getSymbol() as? KtCallableSymbol ?: return false
+            if (symbol.returnType.typeForValueClass) return true
+            if (symbol.receiverType?.typeForValueClass == true) return true
+            if (symbol is KtFunctionLikeSymbol) {
+                return symbol.valueParameters.any { it.returnType.typeForValueClass }
+            }
+            return false
         }
     }
 

@@ -15,9 +15,9 @@ UFile (package = ) [import java.lang.Thread...]
         UField (name = baz) [@org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.Runnable({ ...})]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UQualifiedReferenceExpression [java.lang.Runnable({ ...})] : PsiType:Runnable
-                UQualifiedReferenceExpression [java.lang] : PsiType:Unit
-                    USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Unit
-                    USimpleNameReferenceExpression (identifier = lang) [lang] : PsiType:Unit
+                UQualifiedReferenceExpression [java.lang]
+                    USimpleNameReferenceExpression (identifier = java) [java]
+                    USimpleNameReferenceExpression (identifier = lang) [lang]
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] : PsiType:Runnable
                     UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
                     USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable

@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiImplUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
@@ -140,6 +141,9 @@ interface BaseKotlinUastResolveProviderService {
         containingLightDeclaration: PsiModifierListOwner?,
         isForFake: Boolean = false,
     ): PsiType?
+
+    @ApiStatus.Internal
+    fun hasTypeForValueClassInSignature(ktDeclaration: KtDeclaration): Boolean = false
 
     fun getSuspendContinuationType(
         suspendFunction: KtFunction,
