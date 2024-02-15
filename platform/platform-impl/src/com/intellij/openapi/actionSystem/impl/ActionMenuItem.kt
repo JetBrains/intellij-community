@@ -51,6 +51,9 @@ class ActionMenuItem internal constructor(action: AnAction,
                                           private val useDarkIcons: Boolean) : JBCheckBoxMenuItem() {
 
   private val actionRef = createActionRef(action)
+  // do not expose presentation
+  private val presentation = Presentation.newTemplatePresentation()
+
   val isToggleable: Boolean = action is Toggleable
 
   @JvmField
@@ -112,6 +115,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   }
 
   fun updateFromPresentation(presentation: Presentation) {
+    this.presentation.copyFrom(presentation, null, true)
     // all items must be visible at this point
     //setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled)
@@ -252,19 +256,16 @@ class ActionMenuItem internal constructor(action: AnAction,
   override fun isSelected(): Boolean = isToggled
 
   private fun performAction(modifiers: Int) {
-    val action = actionRef.getAction()
-    val id = ActionManager.getInstance().getId(action)
+    val id = ActionManager.getInstance().getId(actionRef.getAction())
     if (id != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats.${id.replace(' ', '.')}")
     }
     IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context) {
-      val presentation = action.getTemplatePresentation().clone()
-      // action items are created for perform-only groups, set performGroup to true
-      if (action is ActionGroup) presentation.isPerformGroup = true
+      val action = actionRef.getAction()
       val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
       val event = AnActionEvent(
         currentEvent as? InputEvent, context, place,
-        presentation,
+        presentation.clone(),
         ActionManager.getInstance(),
         modifiers, true, false)
       if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {

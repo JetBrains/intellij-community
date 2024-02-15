@@ -581,7 +581,9 @@ object Utils {
         action is ActionGroup && !isSubmenuSuppressed(presentation) -> createMacNativeActionMenu(
           context, place, action, presentationFactory, enableMnemonics, frame, useDarkIcons)
         else -> MacNativeActionMenuItem(
-          action, place, context, enableMnemonics, checked, useDarkIcons, presentation).menuItemPeer
+          action, place, context, enableMnemonics, checked, useDarkIcons).apply {
+          updateFromPresentation(presentation)
+        }.menuItemPeer
       }
       // null peer means `null`
       nativePeer.add(peer)
