@@ -14,13 +14,11 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UCallableReferenceExpression : UReferenceExpression {
   /**
    * Returns the qualifier expression.
-   * Can be null if the [qualifierType] is known.
    */
   val qualifierExpression: UExpression?
 
   /**
    * Returns the qualifier type.
-   * Can be null if the qualifier is an expression.
    */
   val qualifierType: PsiType?
 
