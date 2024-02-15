@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
+import com.google.gson.Gson;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,6 +48,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
   private final @NonNls @NotNull String myText;
   private final int myLine;
   private final boolean executeInAwt;
+  private final Gson gson = new Gson();
 
   private @Nullable File myScriptDir;
 
@@ -134,5 +136,9 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   protected final void dumpError(@NotNull PlaybackContext context, @NotNull String text) {
     context.error(text, getLine());
+  }
+
+  protected <T> T deserializeOptionsFromJson(String json, Class<T> clazz) {
+    return gson.fromJson(json, clazz);
   }
 }
