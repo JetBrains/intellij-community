@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization.impl;
 
-import com.intellij.platform.runtime.product.ModuleImportance;
-import com.intellij.platform.runtime.product.ProductMode;
-import com.intellij.platform.runtime.product.ProductModules;
-import com.intellij.platform.runtime.product.RuntimeModuleGroup;
+import com.intellij.platform.runtime.product.*;
 import com.intellij.platform.runtime.product.impl.MainRuntimeModuleGroup;
 import com.intellij.platform.runtime.product.impl.PluginModuleGroupImpl;
 import com.intellij.platform.runtime.product.impl.ProductModulesImpl;
@@ -30,7 +27,7 @@ public final class ProductModulesXmlLoader {
     ModuleImportance importance = null;
     String moduleName = null;
     List<RawIncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
-    List<RuntimeModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
+    List<PluginModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
     String parentTag = null;
     while (reader.hasNext()) {
       int event = reader.next();

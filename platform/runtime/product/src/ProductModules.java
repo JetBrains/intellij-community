@@ -19,5 +19,5 @@ public interface ProductModules {
    * Returns description of module groups corresponding to the bundled plugins. Modules from these groups may be disabled if the corresponding
    * plugin is disabled by the user.
    */
-  @NotNull List<@NotNull RuntimeModuleGroup> getBundledPluginModuleGroups();
+  @NotNull List<@NotNull PluginModuleGroup> getBundledPluginModuleGroups();
 }

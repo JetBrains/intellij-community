@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.impl;
 
+import com.intellij.platform.runtime.product.PluginModuleGroup;
 import com.intellij.platform.runtime.product.ProductModules;
 import com.intellij.platform.runtime.product.RuntimeModuleGroup;
 import org.jetbrains.annotations.NonNls;
@@ -11,10 +12,10 @@ import java.util.List;
 public final class ProductModulesImpl implements ProductModules {
   private final String myDebugName;
   private final MainRuntimeModuleGroup myMainGroup;
-  private final List<RuntimeModuleGroup> myBundledPluginGroups;
+  private final List<PluginModuleGroup> myBundledPluginGroups;
 
   public ProductModulesImpl(@NotNull @NonNls String debugName, MainRuntimeModuleGroup mainGroup,
-                            @NotNull List<RuntimeModuleGroup> bundledPluginGroups) {
+                            @NotNull List<PluginModuleGroup> bundledPluginGroups) {
     myDebugName = debugName;
     myMainGroup = mainGroup;
     myBundledPluginGroups = bundledPluginGroups;
@@ -26,7 +27,7 @@ public final class ProductModulesImpl implements ProductModules {
   }
 
   @Override
-  public @NotNull List<@NotNull RuntimeModuleGroup> getBundledPluginModuleGroups() {
+  public @NotNull List<@NotNull PluginModuleGroup> getBundledPluginModuleGroups() {
     return myBundledPluginGroups;
   }
 

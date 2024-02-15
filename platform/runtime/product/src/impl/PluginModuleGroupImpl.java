@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.impl;
 
-import com.intellij.platform.runtime.product.IncludedRuntimeModule;
-import com.intellij.platform.runtime.product.ModuleImportance;
-import com.intellij.platform.runtime.product.ProductMode;
-import com.intellij.platform.runtime.product.RuntimeModuleGroup;
+import com.intellij.platform.runtime.product.*;
 import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.product.serialization.impl.PluginXmlReader;
@@ -15,7 +12,7 @@ import java.util.*;
 /**
  * Describes a group of modules corresponding to a plugin.
  */
-public final class PluginModuleGroupImpl implements RuntimeModuleGroup {
+public final class PluginModuleGroupImpl implements PluginModuleGroup {
   private final RuntimeModuleDescriptor myMainModule;
   private final ProductMode myCurrentMode;
   private final RuntimeModuleRepository myRepository;
@@ -26,6 +23,12 @@ public final class PluginModuleGroupImpl implements RuntimeModuleGroup {
     myMainModule = mainModule;
     myCurrentMode = currentMode;
     myRepository = repository;
+  }
+
+  @NotNull
+  @Override
+  public RuntimeModuleDescriptor getMainModule() {
+    return myMainModule;
   }
 
   @Override
