@@ -149,18 +149,11 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     var text = message.getGroup() + "\n" +
                message.getTitle() + "\n" +
                message.getText();
-    if (message.isInternal()) {
-      switch (message.getKind()) {
-        case INFO -> LOG.info(text);
-        case WARNING -> LOG.warn(text);
-        case ERROR -> LOG.error(text, new Throwable());
-      }
+    if (message.isInternal() && message.getKind() == Message.Kind.ERROR) {
+      LOG.error(text, new Throwable());
     }
     else {
-      switch (message.getKind()) {
-        case INFO -> LOG.info(text);
-        case WARNING, ERROR -> LOG.warn(text);
-      }
+      LOG.debug(text);
     }
   }
 
