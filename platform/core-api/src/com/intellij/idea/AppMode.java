@@ -22,7 +22,7 @@ public final class AppMode {
   public static final String SPLIT_MODE_COMMAND = "splitMode";
   public static final String CWM_HOST_NO_LOBBY_COMMAND = "cwmHostNoLobby";
   public static final String REMOTE_DEV_HOST_COMMAND = "remoteDevHost";
-  public static final String REMOTE_DEV_MODE_COMMAND = "remoteMode";
+  public static final String REMOTE_DEV_MODE_COMMAND = "serverMode";
 
   static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   static final String HELP_OPTION = "--help";
