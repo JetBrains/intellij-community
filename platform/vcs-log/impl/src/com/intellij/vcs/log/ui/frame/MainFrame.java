@@ -170,13 +170,17 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myChangesBrowserSplitter.setSecondComponent(myDetailsSplitter);
 
     setLayout(new BorderLayout());
-    DiffEditorViewer processor = myChangesBrowser.createChangeProcessor(false);
-    Disposer.register(this, processor.getDisposable());
-    processor.setToolbarVerticalSizeReferent(getToolbar());
-    myDiffPreview = new FrameDiffPreview(processor,
-                                         myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
+    myDiffPreview = new FrameDiffPreview(myUiProperties, myChangesBrowserSplitter, DIFF_SPLITTER_PROPORTION,
                                          myUiProperties.get(MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT),
-                                         0.7f);
+                                         0.7f, this) {
+      @NotNull
+      @Override
+      protected DiffEditorViewer createViewer() {
+        DiffEditorViewer processor = myChangesBrowser.createChangeProcessor(false);
+        processor.setToolbarVerticalSizeReferent(getToolbar());
+        return processor;
+      }
+    };
     add(myDiffPreview.getMainComponent());
 
     myHistory = VcsLogUiUtil.installNavigationHistory(logUi, myGraphTable);
@@ -416,10 +420,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {
     @Override
     protected @NotNull List<Component> getOrderedComponents() {
-      return List.of(myGraphTable,
-                     myChangesBrowser.getPreferredFocusedComponent(),
-                     myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
-                     myFilterUi.getTextFilterComponent().getFocusedComponent());
+      return ContainerUtil.skipNulls(
+        Arrays.asList(myGraphTable,
+                      myChangesBrowser.getPreferredFocusedComponent(),
+                      myDiffPreview.getPreferredFocusedComponent(),
+                      myFilterUi.getTextFilterComponent().getFocusedComponent())
+      );
     }
   }
 

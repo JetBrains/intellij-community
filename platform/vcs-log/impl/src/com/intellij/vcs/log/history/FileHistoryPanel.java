@@ -140,9 +140,15 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     tablePanel.add(actionsToolbar, BorderLayout.WEST);
 
     setLayout(new BorderLayout());
-    DiffEditorViewer diffPreview = createDiffPreview(false);
-    FrameDiffPreview frameDiffPreview = new FrameDiffPreview(diffPreview, myProperties, tablePanel,
-                                                             "vcs.history.diff.splitter.proportion", false, 0.7f);
+    FrameDiffPreview frameDiffPreview = new FrameDiffPreview(myProperties, tablePanel,
+                                                             "vcs.history.diff.splitter.proportion", false, 0.7f,
+                                                             this) {
+      @NotNull
+      @Override
+      protected DiffEditorViewer createViewer() {
+        return createDiffPreview(false);
+      }
+    };
     add(frameDiffPreview.getMainComponent(), BorderLayout.CENTER);
 
     PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.HISTORY_POPUP_ACTION_GROUP, ActionPlaces.VCS_HISTORY_PLACE);

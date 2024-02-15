@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.Splitter
-import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.log.impl.CommonUiProperties
@@ -16,35 +16,62 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 import kotlin.math.roundToInt
 
-class FrameDiffPreview(val previewDiff: DiffEditorViewer,
-                       uiProperties: VcsLogUiProperties,
-                       mainComponent: JComponent,
-                       @NonNls splitterProportionKey: String,
-                       vertical: Boolean = false,
-                       defaultProportion: Float = 0.7f) {
+abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
+                                mainComponent: JComponent,
+                                @NonNls splitterProportionKey: String,
+                                vertical: Boolean = false,
+                                defaultProportion: Float = 0.7f,
+                                parentDisposable: Disposable) : Disposable {
   private val previewDiffSplitter: Splitter = OnePixelSplitter(vertical, splitterProportionKey, defaultProportion)
 
-  val mainComponent: JComponent
-    get() = previewDiffSplitter
+  val mainComponent: JComponent get() = previewDiffSplitter
+
+  private var isDisposed = false
+  private var diffViewer: DiffEditorViewer? = null
 
   init {
     previewDiffSplitter.firstComponent = mainComponent
 
-    toggleDiffPreviewOnPropertyChange(uiProperties, previewDiff.disposable, ::showDiffPreview)
-    toggleDiffPreviewOrientationOnPropertyChange(uiProperties, previewDiff.disposable, ::changeDiffPreviewOrientation)
+    toggleDiffPreviewOnPropertyChange(uiProperties, this, ::showDiffPreview)
+    toggleDiffPreviewOrientationOnPropertyChange(uiProperties, this, ::changeDiffPreviewOrientation)
     invokeLater { showDiffPreview(uiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW)) }
+
+    Disposer.register(parentDisposable, this)
+  }
+
+  override fun dispose() {
+    isDisposed = true
+
+    diffViewer?.let { Disposer.dispose(it.disposable) }
+    diffViewer = null
+  }
+
+  protected abstract fun createViewer(): DiffEditorViewer
+
+  fun getPreferredFocusedComponent(): JComponent? {
+    return diffViewer?.preferredFocusedComponent
   }
 
   private fun showDiffPreview(state: Boolean) {
-    previewDiffSplitter.secondComponent = if (state) previewDiff.component else null
-    previewDiffSplitter.secondComponent?.let {
-      val defaultMinimumSize = it.minimumSize
+    if (isDisposed) return
+
+    val isShown = diffViewer != null
+    if (state == isShown) return
+
+    if (state) {
+      val newDiffViewer = createViewer()
+      val component = newDiffViewer.component
+      previewDiffSplitter.secondComponent = component
+      val defaultMinimumSize = component.minimumSize
       val actionButtonSize = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE
-      it.minimumSize = JBUI.size(defaultMinimumSize.width.coerceAtMost((actionButtonSize.width * 1.5f).roundToInt()),
-                                 defaultMinimumSize.height.coerceAtMost((actionButtonSize.height * 1.5f).roundToInt()))
+      component.minimumSize = JBUI.size(defaultMinimumSize.width.coerceAtMost((actionButtonSize.width * 1.5f).roundToInt()),
+                                        defaultMinimumSize.height.coerceAtMost((actionButtonSize.height * 1.5f).roundToInt()))
+      diffViewer = newDiffViewer
     }
-    if (!state) {
-      TreeHandlerChangesTreeTracker.clearDiffViewer(previewDiff)
+    else {
+      previewDiffSplitter.secondComponent = null
+      Disposer.dispose(diffViewer!!.disposable)
+      diffViewer = null
     }
   }
 
