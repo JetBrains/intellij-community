@@ -14,34 +14,37 @@ interface IjentExecFileProvider {
     suspend fun getInstance(): IjentExecFileProvider = serviceAsync()
   }
 
-  enum class SupportedPlatform(val os: OS, val arch: Arch) {
-    AARCH64__DARWIN(OS.DARWIN, Arch.AARCH64),
-    AARCH64__LINUX(OS.LINUX, Arch.AARCH64),
-    X86_64__DARWIN(OS.DARWIN, Arch.X86_64),
-    X86_64__LINUX(OS.LINUX, Arch.X86_64),
-    X86_64__WINDOWS(OS.WINDOWS, Arch.X86_64);
+  sealed interface SupportedPlatform {
+    sealed interface Posix : SupportedPlatform
+    sealed interface Linux : Posix
+    sealed interface Darwin : Posix
+    sealed interface Windows : SupportedPlatform
 
-    enum class Arch(internal val names: Set<String>) {
-      AARCH64(setOf("arm64", "aarch64")),
-      X86_64(setOf("amd64", "x86_64", "x86-64")),
-    }
-
-    enum class OS {
-      DARWIN,
-      LINUX,
-      WINDOWS,
-    }
+    data object Arm64Darwin : Darwin
+    data object Aarch64Linux : Linux
+    data object X8664Darwin : Darwin
+    data object X8664Linux : Linux
+    data object X64Windows : Windows
 
     companion object {
-      fun getFor(os: String, arch: String): SupportedPlatform? {
-        val osEnum =
-          OS.entries.find { it.name.equals(os, ignoreCase = true) }
-          ?: return null
-        val archEnum =
-          Arch.entries.find { arch.lowercase() in it.names }
-          ?: return null
-        return entries.find { it.os == osEnum && it.arch == archEnum }
-      }
+      fun getFor(os: String, arch: String): SupportedPlatform? =
+        when (os.lowercase()) {
+          "darwin" -> when (arch.lowercase()) {
+            "arm64", "aarch64" -> Arm64Darwin
+            "amd64", "x86_64", "x86-64" -> X8664Darwin
+            else -> null
+          }
+          "linux" -> when (arch.lowercase()) {
+            "arm64", "aarch64" -> Aarch64Linux
+            "amd64", "x86_64", "x86-64" -> X8664Linux
+            else -> null
+          }
+          "windows" -> when (arch.lowercase()) {
+            "amd64", "x86_64", "x86-64" -> X64Windows
+            else -> null
+          }
+          else -> null
+        }
     }
   }
 
@@ -58,11 +61,11 @@ class IjentMissingBinary(platform: IjentExecFileProvider.SupportedPlatform) : Ex
 
 val IjentExecFileProvider.SupportedPlatform.executableName: String
   get() = when (this) {
-    IjentExecFileProvider.SupportedPlatform.AARCH64__DARWIN -> "ijent-aarch64-apple-darwin-release"
-    IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX -> "ijent-aarch64-unknown-linux-musl-release"
-    IjentExecFileProvider.SupportedPlatform.X86_64__DARWIN -> "ijent-x86_64-apple-darwin-release"
-    IjentExecFileProvider.SupportedPlatform.X86_64__LINUX -> "ijent-x86_64-unknown-linux-musl-release"
-    IjentExecFileProvider.SupportedPlatform.X86_64__WINDOWS -> "ijent-x86_64-pc-windows-gnu-release.exe"
+    IjentExecFileProvider.SupportedPlatform.Arm64Darwin -> "ijent-aarch64-apple-darwin-release"
+    IjentExecFileProvider.SupportedPlatform.X8664Darwin -> "ijent-x86_64-apple-darwin-release"
+    IjentExecFileProvider.SupportedPlatform.Aarch64Linux -> "ijent-aarch64-unknown-linux-musl-release"
+    IjentExecFileProvider.SupportedPlatform.X8664Linux -> "ijent-x86_64-unknown-linux-musl-release"
+    IjentExecFileProvider.SupportedPlatform.X64Windows -> "ijent-x86_64-pc-windows-gnu-release.exe"
   }
 
 internal class DefaultIjentExecFileProvider : IjentExecFileProvider {

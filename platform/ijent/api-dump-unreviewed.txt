@@ -594,7 +594,7 @@ com.intellij.platform.ijent.fs.IjentOpenedFile$Writer$Write$PermissionDenied
 - f:parse(java.lang.String):com.intellij.platform.ijent.fs.IjentPathResult
 f:com.intellij.platform.ijent.fs.IjentPathKt
 - sf:getOrThrow(com.intellij.platform.ijent.fs.IjentPathResult):com.intellij.platform.ijent.fs.IjentPath
-- sf:getPathOs(com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform$OS):com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
+- sf:getPathOs(com.intellij.platform.ijent.IjentExecFileProvider$SupportedPlatform):com.intellij.platform.ijent.fs.IjentPath$Absolute$OS
 *:com.intellij.platform.ijent.fs.IjentPathResult
 *f:com.intellij.platform.ijent.fs.IjentPathResult$Err
 - com.intellij.platform.ijent.fs.IjentPathResult

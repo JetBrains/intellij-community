@@ -2,7 +2,6 @@
 package com.intellij.platform.ijent.fs
 
 import com.intellij.platform.ijent.IjentExecFileProvider
-import com.intellij.platform.ijent.IjentExecFileProvider.SupportedPlatform.OS.*
 import com.intellij.platform.ijent.fs.IjentPath.Absolute.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
@@ -234,8 +233,8 @@ fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
     is IjentPathResult.Err -> throw InvalidPathException(raw, reason)
   }
 
-val IjentExecFileProvider.SupportedPlatform.OS.pathOs: OS
+val IjentExecFileProvider.SupportedPlatform.pathOs: OS
   get() = when (this) {
-    DARWIN, LINUX -> OS.UNIX
-    WINDOWS -> OS.WINDOWS
+    is IjentExecFileProvider.SupportedPlatform.Posix -> OS.UNIX
+    is IjentExecFileProvider.SupportedPlatform.Windows -> OS.WINDOWS
   }

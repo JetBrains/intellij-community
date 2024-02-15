@@ -281,8 +281,8 @@ private suspend fun Commands.getTargetPlatform(shellProcess: ShellProcess): Ijen
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
-    "aarch64" in arch -> IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX
+    "x86_64" in arch -> IjentExecFileProvider.SupportedPlatform.X8664Linux
+    "aarch64" in arch -> IjentExecFileProvider.SupportedPlatform.Aarch64Linux
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform
