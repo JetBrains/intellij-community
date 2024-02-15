@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public final class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
     if (!(root instanceof PsiJavaFile) || quick || !JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings()) {
       return FoldingDescriptor.EMPTY_ARRAY;
     }
-    if (!PsiUtil.isLanguageLevel5OrHigher(root)) {
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, root)) {
       return FoldingDescriptor.EMPTY_ARRAY;
     }
     final List<FoldingDescriptor> result = new ArrayList<>();

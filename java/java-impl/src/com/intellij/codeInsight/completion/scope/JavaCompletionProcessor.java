@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -155,7 +156,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       return true;
     }
 
-    if (element instanceof PsiMethod method && PsiTypesUtil.isGetClass(method) && PsiUtil.isLanguageLevel5OrHigher(myElement)) {
+    if (element instanceof PsiMethod method && PsiTypesUtil.isGetClass(method) && PsiUtil.isAvailable(JavaFeature.GENERICS, myElement)) {
       PsiType patchedType = PsiTypesUtil.createJavaLangClassType(myElement, myQualifierType, false);
       if (patchedType != null) {
         element = new LightMethodBuilder(element.getManager(), method.getName()).

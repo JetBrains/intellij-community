@@ -73,7 +73,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
     SurroundWithQuotesAnnotationParameterValueFix.register(registrar, ref);
 
-    if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
+    if (PsiUtil.isAvailable(JavaFeature.GENERICS, ref)) {
       registrar.register(new CreateTypeParameterFromUsageFix(ref).asIntention());
     }
   }
@@ -103,8 +103,10 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       }
 
       result.add(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
-      if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
+      if (PsiUtil.isAvailable(JavaFeature.ENUMS, ref)) {
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
+      }
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, ref)) {
         result.add(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
       }
       if (PsiUtil.isAvailable(JavaFeature.RECORDS, ref)) {

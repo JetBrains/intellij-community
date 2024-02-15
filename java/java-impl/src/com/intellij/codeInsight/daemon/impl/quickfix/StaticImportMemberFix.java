@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +44,7 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
     myReferencePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
-    if (!PsiUtil.isLanguageLevel5OrHigher(file)
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, file)
         || !(file instanceof PsiJavaFile)
         || getElement() == null
         || !reference.isValid()

@@ -49,7 +49,7 @@ public final class UtilityClassCanBeEnumInspection extends BaseInspection implem
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(element)) {
+      if (!PsiUtil.isAvailable(JavaFeature.ENUMS, element)) {
         return;
       }
       final PsiElement parent = element.getParent();

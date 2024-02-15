@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -510,7 +511,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
       List<LocalQuickFix> fixes = new ArrayList<>();
 
-      if (sourcePsi instanceof PsiLiteralExpression && PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
+      if (sourcePsi instanceof PsiLiteralExpression && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, sourcePsi)) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(myHolder.getProject());
         for (PsiModifierListOwner element : nonNlsTargets) {
           if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {

@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -159,7 +160,7 @@ public final class JavaSuppressionUtil {
 
   @NotNull
   private static Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(owner)) return Collections.emptyList();
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, owner)) return Collections.emptyList();
     PsiModifierList modifierList = owner.getModifierList();
     return getInspectionIdsSuppressedInAnnotation(modifierList);
   }
@@ -292,7 +293,7 @@ public final class JavaSuppressionUtil {
     JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
     if (version == null) return false;
     boolean is_1_5 = version.isAtLeast(JavaSdkVersion.JDK_1_5);
-    return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
+    return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file);
   }
 
   @Nullable

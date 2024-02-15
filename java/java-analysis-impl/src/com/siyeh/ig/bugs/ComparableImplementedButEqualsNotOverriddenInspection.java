@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -58,7 +59,7 @@ public final class ComparableImplementedButEqualsNotOverriddenInspection extends
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       final PsiClass aClass = (PsiClass)startElement.getParent();
       final @NonNls StringBuilder methodText = new StringBuilder();
-      if (PsiUtil.isLanguageLevel5OrHigher(aClass)) {
+      if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, aClass)) {
         methodText.append("@java.lang.Override ");
       }
       methodText.append("public ");

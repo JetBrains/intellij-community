@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -89,7 +90,7 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
       String initializer = MessageFormat.format(pattern, fieldInitializer, elementType.getCanonicalText());
       String modifiers = cls.isInterface() ? "" : "private static final ";
       String type = CommonClassNames.JAVA_UTIL_SET +
-                    (PsiUtil.isLanguageLevel5OrHigher(cls) ? "<" + elementType.getCanonicalText() + ">" : "");
+                    (PsiUtil.isAvailable(JavaFeature.GENERICS, cls) ? "<" + elementType.getCanonicalText() + ">" : "");
       PsiField field = factory.createFieldFromText(modifiers + type + " " + name + "=" + initializer + ";", cls);
       field = (PsiField)cls.add(field);
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(field);
@@ -134,13 +135,13 @@ public final class ExtractSetFromComparisonChainAction implements ModCommandActi
     if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
       return INITIALIZER_ENUM_SET;
     }
-    if (PsiUtil.isLanguageLevel9OrHigher(containingClass)) {
+    if (PsiUtil.isAvailable(JavaFeature.COLLECTION_FACTORIES, containingClass)) {
       return INITIALIZER_FORMAT_JAVA9;
     }
     if (JavaPsiFacade.getInstance(containingClass.getProject()).findClass(GUAVA_IMMUTABLE_SET, containingClass.getResolveScope()) != null) {
       return INITIALIZER_FORMAT_GUAVA;
     }
-    if (PsiUtil.isLanguageLevel5OrHigher(containingClass)) {
+    if (PsiUtil.isAvailable(JavaFeature.GENERICS, containingClass)) {
       return INITIALIZER_FORMAT_JAVA5;
     }
     return INITIALIZER_FORMAT_JAVA2;

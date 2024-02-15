@@ -20,6 +20,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
@@ -95,7 +96,7 @@ public class JavaClassReferenceSet {
 
         if (ch == LT || ch == COMMA) {
           if (!allowGenericsCalculated) {
-            allowGenerics = !isStaticImport && PsiUtil.isLanguageLevel5OrHigher(element);
+            allowGenerics = !isStaticImport && PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element);
             allowGenericsCalculated = true;
           }
 

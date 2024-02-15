@@ -895,7 +895,7 @@ public class JavaKeywordCompletion {
         if (PsiUtil.isAvailable(JavaFeature.RECORDS, myPosition)) {
           keywords.add(PsiKeyword.RECORD);
         }
-        if (PsiUtil.isLanguageLevel5OrHigher(myPosition)) {
+        if (PsiUtil.isAvailable(JavaFeature.ENUMS, myPosition)) {
           keywords.add(PsiKeyword.ENUM);
         }
         String className = recommendClassName();

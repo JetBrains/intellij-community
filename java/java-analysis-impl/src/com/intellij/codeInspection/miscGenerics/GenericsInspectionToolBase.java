@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +22,7 @@ public abstract class GenericsInspectionToolBase extends AbstractBaseJavaLocalIn
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
-    if (!PsiUtil.isLanguageLevel5OrHigher(file)) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!PsiUtil.isAvailable(JavaFeature.GENERICS, file)) return PsiElementVisitor.EMPTY_VISITOR;
 
     return super.buildVisitor(holder, isOnTheFly);
   }

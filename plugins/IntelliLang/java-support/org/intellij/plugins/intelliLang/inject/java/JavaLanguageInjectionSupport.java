@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.patterns.compiler.PatternCompiler;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -237,7 +238,7 @@ public final class JavaLanguageInjectionSupport extends AbstractLanguageInjectio
     };
 
     final boolean addAnnotation = ProgressManager.getInstance().run(task)
-                                  && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
+                                  && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, modifierListOwner)
                                   && modifierListOwner.getModifierList() != null;
     final PsiElement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class, PsiField.class);
     if (!addAnnotation && statement == null) return false;

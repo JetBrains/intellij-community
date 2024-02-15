@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -106,7 +107,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
         LOG.debug("Displaying member chooser dialog");
 
         final MemberChooser<PsiElementClassMember<?>> chooser =
-          new MemberChooser<>(dialogMembers, true, true, project, PsiUtil.isLanguageLevel5OrHigher(clazz), header) {
+          new MemberChooser<>(dialogMembers, true, true, project, PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, clazz), header) {
             @Override
             protected @NotNull String getHelpId() {
               return "editing.altInsert.tostring";

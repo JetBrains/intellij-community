@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -45,7 +46,7 @@ public final class SuspiciousMethodCallUtil {
 
       addSingleParameterMethod(patternMethods, collectionClass, "contains", object);
 
-      if (PsiUtil.isLanguageLevel5OrHigher(collectionClass)) {
+      if (PsiUtil.isAvailable(JavaFeature.GENERICS, collectionClass)) {
         PsiClassType wildcardCollection = javaPsiFacade.getElementFactory().createType(collectionClass, PsiWildcardType.createUnbounded(manager));
         addSingleParameterMethod(patternMethods, collectionClass, "removeAll", wildcardCollection);
         addSingleParameterMethod(patternMethods, collectionClass, "retainAll", wildcardCollection);

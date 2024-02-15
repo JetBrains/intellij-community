@@ -155,7 +155,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
 
   public static boolean isAvailable(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String annotationFQN) {
     if (!modifierListOwner.isValid()) return false;
-    if (!PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, modifierListOwner)) return false;
 
     if (modifierListOwner instanceof PsiParameter && ((PsiParameter)modifierListOwner).getTypeElement() == null) {
       if (modifierListOwner.getParent() instanceof PsiParameterList &&

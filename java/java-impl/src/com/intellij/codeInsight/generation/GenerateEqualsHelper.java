@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -82,7 +83,7 @@ public class GenerateEqualsHelper implements Runnable {
   private static boolean shouldAddOverrideAnnotation(PsiElement context) {
     JavaCodeStyleSettings style = JavaCodeStyleSettings.getInstance(context.getContainingFile());
 
-    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(context);
+    return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, context);
   }
 
   @Override

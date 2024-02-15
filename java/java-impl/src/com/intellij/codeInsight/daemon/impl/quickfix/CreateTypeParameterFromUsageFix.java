@@ -3,8 +3,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -113,7 +117,7 @@ public class CreateTypeParameterFromUsageFix extends PsiBasedModCommandAction<Ps
   private record Context(@NotNull List<PsiNameIdentifierOwner> placesToAdd, @NotNull String typeName) {
     @Nullable
     static Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
-      if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+      if (!PsiUtil.isAvailable(JavaFeature.GENERICS, element)) return null;
       if (element.isQualified()) return null;
       PsiElement container =
         PsiTreeUtil.getParentOfType(element, PsiReferenceList.class, PsiClass.class, PsiMethod.class, PsiClassInitializer.class,

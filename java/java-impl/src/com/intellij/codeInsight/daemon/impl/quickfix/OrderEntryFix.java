@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -324,7 +325,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   private static ThreeState isReferenceToAnnotation(final @NotNull PsiElement psiElement) {
-    if (psiElement.getLanguage() == JavaLanguage.INSTANCE && !PsiUtil.isLanguageLevel5OrHigher(psiElement)) {
+    if (psiElement.getLanguage() == JavaLanguage.INSTANCE && !PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, psiElement)) {
       return ThreeState.NO;
     }
     UElement uElement = UastContextKt.toUElement(psiElement);

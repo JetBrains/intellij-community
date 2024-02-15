@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -59,9 +60,10 @@ public final class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiEx
       if (resolvedClass == null) {
         return false;
       }
-      return (PsiUtil.isLanguageLevel5OrHigher(context) &&
-              (resolvedClass.isEnum() || isSuitablePrimitiveType(PsiPrimitiveType.getUnboxedType(type))))
-             || (PsiUtil.isLanguageLevel7OrHigher(context) && CommonClassNames.JAVA_LANG_STRING.equals(resolvedClass.getQualifiedName()));
+      return (PsiUtil.isAvailable(JavaFeature.ENUMS, context) && 
+              (resolvedClass.isEnum() || isSuitablePrimitiveType(PsiPrimitiveType.getUnboxedType(type)))) || 
+             (PsiUtil.isAvailable(JavaFeature.STRING_SWITCH, context) && 
+              CommonClassNames.JAVA_LANG_STRING.equals(resolvedClass.getQualifiedName()));
     }
     return isSuitablePrimitiveType(type);
   }

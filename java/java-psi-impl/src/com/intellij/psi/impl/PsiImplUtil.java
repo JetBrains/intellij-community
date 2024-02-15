@@ -259,7 +259,7 @@ public final class PsiImplUtil {
     if (classClass == null) {
       return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope), null);
     }
-    if (!PsiUtil.isLanguageLevel5OrHigher(classAccessExpression)) {
+    if (!PsiUtil.isAvailable(JavaFeature.GENERICS, classAccessExpression)) {
       //Raw java.lang.Class
       return JavaPsiFacade.getElementFactory(manager.getProject()).createType(classClass);
     }

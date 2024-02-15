@@ -407,7 +407,7 @@ public class AnnotationUtil {
 
   public static boolean isAnnotatingApplicable(@NotNull PsiElement elt, @NotNull String annotationFQN) {
     final Project project = elt.getProject();
-    return PsiUtil.isLanguageLevel5OrHigher(elt) &&
+    return PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, elt) &&
            JavaPsiFacade.getInstance(project).findClass(annotationFQN, elt.getResolveScope()) != null;
   }
 

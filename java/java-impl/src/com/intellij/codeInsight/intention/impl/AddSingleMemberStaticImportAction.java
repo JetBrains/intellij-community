@@ -10,6 +10,7 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -57,7 +58,7 @@ public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommand
    */
   @Nullable
   public static ImportAvailability getStaticImportClass(@NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) return null;
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodReferenceExpression) return null;

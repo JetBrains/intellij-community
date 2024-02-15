@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -169,7 +170,7 @@ public final class CollapseIntoLoopAction implements ModCommandAction {
 
     static @Nullable LoopModel from(@NotNull ActionContext context) {
       PsiFile file = context.file();
-      if (!(file instanceof PsiJavaFile) || !PsiUtil.isLanguageLevel5OrHigher(file)) return null;
+      if (!(file instanceof PsiJavaFile) || !PsiUtil.isAvailable(JavaFeature.FOR_EACH, file)) return null;
       TextRange range = context.selection();
       boolean mayTrimTail;
       List<PsiStatement> statements;

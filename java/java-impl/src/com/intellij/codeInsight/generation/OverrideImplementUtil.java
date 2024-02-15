@@ -110,7 +110,7 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (superMethod.isConstructor() || superMethod.hasModifierProperty(PsiModifier.STATIC)) {
       return false;
     }
-    if (!PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
+    if (!PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, targetClass)) {
       return false;
     }
     if (targetClass.isRecord() && superMethod.getParameterList().isEmpty()) {

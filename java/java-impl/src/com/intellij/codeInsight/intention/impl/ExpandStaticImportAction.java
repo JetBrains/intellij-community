@@ -2,7 +2,11 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -36,7 +40,7 @@ public final class ExpandStaticImportAction extends PsiBasedModCommandAction<Psi
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element) || !(element.getParent() instanceof PsiJavaCodeReferenceElement referenceElement)) {
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element) || !(element.getParent() instanceof PsiJavaCodeReferenceElement referenceElement)) {
       return null;
     }
     final PsiImportStaticStatement importStatement = getImportStaticStatement(referenceElement);
