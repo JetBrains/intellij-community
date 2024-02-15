@@ -11,6 +11,8 @@ import java.util.List;
 
 /**
  * Represents the set of available modules. 
+ * Use {@link com.intellij.platform.bootstrap.RuntimeModuleIntrospection#getModuleRepository()} to obtain instance of this class inside 
+ * the IDE process.
  */
 @ApiStatus.NonExtendable
 public interface RuntimeModuleRepository {
