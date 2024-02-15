@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTrac
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.text.EditDistance
@@ -27,9 +28,10 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
             suggestion: String,
             duration: Duration) {
     cs.launch {
+      val rangeMarker = readAction { editor.document.createRangeMarker(startOffset, startOffset + suggestion.length) }
       delay(duration.toMillis())
       if (!editor.isDisposed) {
-        val resultText = getResultText(editor.document.text, startOffset, suggestion.length)
+        val resultText = readAction { if (rangeMarker.isValid) rangeMarker.document.getText(rangeMarker.textRange) else "" }
         val commonPrefixLength = resultText.commonPrefixWith(suggestion).length
         val commonSuffixLength = resultText.commonSuffixWith(suggestion).length
         val editDistance = EditDistance.optimalAlignment(suggestion, resultText, true)
@@ -46,11 +48,5 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
         INSERTED_STATE_EVENT.log(data)
       }
     }
-  }
-
-  private fun getResultText(fileText: String, startOffset: Int, length: Int): String = when {
-    fileText.length <= startOffset -> ""
-    fileText.length <= startOffset + length -> fileText.substring(startOffset)
-    else -> fileText.substring(startOffset, startOffset + length)
   }
 }

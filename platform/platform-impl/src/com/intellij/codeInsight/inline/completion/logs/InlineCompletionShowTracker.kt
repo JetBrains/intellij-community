@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
 /**
@@ -143,4 +144,5 @@ internal class InlineCompletionShowTracker(
 }
 
 
+@ApiStatus.Internal
 const val TEST_CHECK_STATE_AFTER_MLS: Long = 100
