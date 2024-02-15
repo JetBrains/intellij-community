@@ -78,7 +78,10 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
                 }
             }
             if (currentCoroutines != null) {
-                return ContinuationIdFilter(currentCoroutines)
+                return when {
+                    currentCoroutines.isEmpty() -> null
+                    else -> ContinuationIdFilter(currentCoroutines)
+                }
             }
             else {
                 useContinuationObjectFilter.set(suspendContext.debugProcess, true)
