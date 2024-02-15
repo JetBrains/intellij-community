@@ -10,6 +10,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.util.filetype.FileType
 import com.jetbrains.util.filetype.FileTypeDetector.DetectFileType
 import io.opentelemetry.api.common.AttributeKey
@@ -249,6 +250,8 @@ class JarPackager private constructor(
     layout: BaseLayout?,
     moduleWithSearchableOptions: Set<String>,
   ) {
+    val addedModules = HashSet<String>()
+
     for (item in includedModules) {
       computeSourcesForModule(
         item = item,
@@ -256,6 +259,8 @@ class JarPackager private constructor(
         layout = layout,
         moduleWithSearchableOptions = moduleWithSearchableOptions,
       )
+
+      addedModules.add(item.moduleName)
     }
 
     if (layout !is PluginLayout || !layout.auto) {
@@ -265,11 +270,12 @@ class JarPackager private constructor(
     // for now, check only direct dependencies of the main plugin module
     val childPrefix = "${layout.mainModule}."
     for (name in helper.getModuleDependencies(layout.mainModule)) {
-      if (includedModules.any { it.moduleName == name } || !name.startsWith(childPrefix)) {
+      if (!name.startsWith(childPrefix) || addedModules.contains(name)) {
         continue
       }
 
       val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+      addedModules.add(name)
       if (platformLayout!!.includedModules.contains(moduleItem)) {
         continue
       }
@@ -280,6 +286,36 @@ class JarPackager private constructor(
         layout = layout,
         moduleWithSearchableOptions = moduleWithSearchableOptions,
       )
+    }
+
+    if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter") {
+      // todo PyCharm team why this module is being incorrectly published
+      return
+    }
+
+    // check content
+    val file = context.findFileInModuleSources(layout.mainModule, "META-INF/plugin.xml") ?: return
+    readXmlAsModel(file).getChild("content")?.let { content ->
+      for (module in content.children("module")) {
+        val moduleName = module.attributes.get("name")
+        if (moduleName == null ||
+            moduleName.contains('/') ||
+            addedModules.contains(moduleName) ||
+            layout.excludedModuleLibraries.containsKey(moduleName)) {
+          continue
+        }
+
+        computeSourcesForModule(
+          item = ModuleItem(
+            moduleName = moduleName,
+            relativeOutputFile = layout.getMainJarName(),
+            reason = "<- ${layout.mainModule} (plugin content)",
+          ),
+          moduleOutputPatcher = moduleOutputPatcher,
+          layout = layout,
+          moduleWithSearchableOptions = moduleWithSearchableOptions,
+        )
+      }
     }
   }
 
