@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "CompanionObjectInExtension")
 
 package com.intellij.diagnostic
 
 import com.intellij.diagnostic.ITNProxy.appInfoString
-import com.intellij.diagnostic.IdeErrorsDialog.Companion.getSubmitter
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManagerCore
@@ -84,9 +83,9 @@ internal class IdeaFreezeReporter : PerformanceListener {
 
     internal fun report(event: IdeaLoggingEvent?) {
       if (event != null) {
-        val t = event.throwable
         // only report to JB
-        if (getSubmitter(t, PluginUtil.getInstance().findPluginId(t)) is ITNReporter) {
+        val plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(event.throwable))
+        if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
           MessagePool.getInstance().addIdeFatalMessage(event)
         }
       }
