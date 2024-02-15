@@ -9,6 +9,7 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 import com.intellij.diff.util.DiffUserDataKeys
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -47,12 +48,14 @@ internal data class GitLabMergeRequestDiffFile(
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
-      return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
+    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
+      project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
     }
     else {
-      return project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(connectionId, mergeRequestIid)
+      project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(connectionId, mergeRequestIid)
     }
+    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
+    return processor
   }
 }
 

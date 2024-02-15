@@ -5,6 +5,7 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.CombinedDiffManager
 import com.intellij.diff.tools.combined.CombinedDiffRegistry
 import com.intellij.diff.tools.combined.DISABLE_LOADING_BLOCKS
+import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
@@ -330,6 +331,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       processor = VcsLogChangeProcessor(place, this, handler, true)
     }
     VcsLogTreeChangeProcessorTracker(this, processor, handler, !isInEditor).track()
+    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CombinedDiffToggle.DEFAULT)
     return processor
   }
 

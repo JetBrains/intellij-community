@@ -133,4 +133,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_BASE_TO_LEFT_ACTION_TEXT = Key.create("Diff.Accept.Base.Left.Action.Text");
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT = Key.create("Diff.Accept.Right.Base.Action.Text");
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT = Key.create("Diff.Accept.Base.Right.Action.Text");
+
+  Key<CombinedDiffToggle> COMBINED_DIFF_TOGGLE = Key.create("Diff.CombinedDiffToggle");
 }

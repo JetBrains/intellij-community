@@ -451,6 +451,9 @@
                 class="com.intellij.openapi.vcs.changes.actions.diff.MoveDiffPreviewToNewWindowAction">
           <add-to-group group-id="Diff.Binary.Settings"/>
         </action>
+        <action id="Vcs.Diff.EnableDisableCombinedDiff"
+                class="com.intellij.diff.actions.impl.CombinedDiffToggleAction">
+        </action>
         <separator/>
         <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
         <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>

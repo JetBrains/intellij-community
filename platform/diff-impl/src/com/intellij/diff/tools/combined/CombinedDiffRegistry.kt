@@ -10,7 +10,15 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
 
 object CombinedDiffRegistry {
-  fun isEnabled(): Boolean = AdvancedSettings.getBoolean("enable.combined.diff") && !AppMode.isRemoteDevHost()
+  internal const val COMBINED_DIFF_SETTING_ID = "enable.combined.diff"
+
+  fun isEnabled(): Boolean {
+    return AdvancedSettings.getBoolean(COMBINED_DIFF_SETTING_ID) && !AppMode.isRemoteDevHost()
+  }
+
+  fun setCombinedDiffEnabled(enabled: Boolean) {
+    AdvancedSettings.setBoolean(COMBINED_DIFF_SETTING_ID, enabled)
+  }
 
   fun getPreloadedBlocksCount(): Int = Registry.intValue("combined.diff.visible.viewport.delta", 3, 1, 100)
 
@@ -21,7 +29,7 @@ object CombinedDiffRegistry {
 
 class CombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-    if (id == "enable.combined.diff") {
+    if (id == CombinedDiffRegistry.COMBINED_DIFF_SETTING_ID) {
       for (project in ProjectManager.getInstance().openProjects) {
         reloadDiffEditorsForFiles(project) { it is DiffViewerVirtualFile }
       }

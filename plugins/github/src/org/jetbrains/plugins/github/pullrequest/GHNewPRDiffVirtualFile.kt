@@ -8,6 +8,7 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.CombinedBlockProducer
 import com.intellij.diff.tools.combined.CombinedDiffManager
 import com.intellij.diff.tools.combined.CombinedPathBlockId
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
@@ -47,6 +48,7 @@ internal data class GHNewPRDiffVirtualFile(private val fileManagerId: String,
           processor.setBlocks(requests)
         }
       }
+      processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
       return processor
     }
     else {
@@ -54,6 +56,7 @@ internal data class GHNewPRDiffVirtualFile(private val fileManagerId: String,
       val diffRequestModel = dataContext.newPRDiffModel
 
       return MutableDiffRequestChainProcessor(project, null).also {
+        it.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
         diffRequestModel.process(it)
       }
     }
