@@ -39,11 +39,10 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    final VcsRevisionNumber revision = getRevisionNumber(event);
-    if (revision == null) {
-      return;
-    }
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsRevisionNumber revision = getRevisionNumber(event);
+    if (revision == null) return;
 
     jumpToRevision(project, HashImpl.build(revision.asString()));
   }

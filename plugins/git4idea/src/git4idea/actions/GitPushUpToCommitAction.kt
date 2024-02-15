@@ -24,9 +24,9 @@ import git4idea.repo.GitRepository
 class GitPushUpToCommitAction : GitLogSingleCommitAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
-    val logData = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return
+    val logData = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as? VcsLogData ?: return
     val commit = selection.commits.first()
     val repository: GitRepository = getRepositoryForRoot(project, commit.root)!!
 

@@ -65,7 +65,7 @@ class GitShowExternalLogAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val vcs = GitVcs.getInstance(project)
     val roots = getGitRootsFromUser(project)
     if (roots.isEmpty()) {

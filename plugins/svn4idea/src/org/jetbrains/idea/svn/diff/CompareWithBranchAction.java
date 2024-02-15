@@ -20,8 +20,10 @@ public class CompareWithBranchAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (file == null) return;
 
     SelectBranchPopup.show(project, file, (p, configuration, url, revision) -> {
       ElementWithBranchComparer comparer = file.isDirectory()

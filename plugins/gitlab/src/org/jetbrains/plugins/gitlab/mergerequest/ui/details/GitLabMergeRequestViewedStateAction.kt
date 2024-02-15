@@ -33,10 +33,10 @@ internal abstract class GitLabViewedStateAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val changeListVm = e.getRequiredData(CodeReviewChangeListViewModel.DATA_KEY)
-                         .asSafely<GitLabMergeRequestChangeListViewModel>() ?: return
+    val changeListVm = e.getData(CodeReviewChangeListViewModel.DATA_KEY) as?
+                         GitLabMergeRequestChangeListViewModel ?: return
 
-    val selectedChanges = e.getRequiredData(SELECTED_CHANGES)
+    val selectedChanges = e.getData(SELECTED_CHANGES) ?: return
 
     changeListVm.setViewedState(selectedChanges, isViewed)
   }

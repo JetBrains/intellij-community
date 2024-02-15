@@ -31,7 +31,7 @@ internal class GHPRReviewEditorCreateCommentAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR).asSafely<EditorEx>() ?: return
+    val editor = e.getData(CommonDataKeys.EDITOR) as? EditorEx ?: return
     val model = editor.getUserData(GHPREditorReviewModel.KEY) ?: return
     val scrollingModel = editor.scrollingModel
 

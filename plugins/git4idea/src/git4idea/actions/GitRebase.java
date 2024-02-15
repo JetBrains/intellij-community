@@ -54,7 +54,8 @@ public class GitRebase extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     ArrayList<GitRepository> repositories = new ArrayList<>(getRepositories(project));
     repositories.removeAll(getRebasingRepositories(project));
     List<VirtualFile> roots = new ArrayList<>(getRootsFromRepositories(sortRepositories(repositories)));

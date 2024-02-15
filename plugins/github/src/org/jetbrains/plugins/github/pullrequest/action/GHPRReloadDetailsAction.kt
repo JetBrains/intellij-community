@@ -20,7 +20,7 @@ class GHPRReloadDetailsAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val vm = e.getRequiredData(GHPRDetailsLoadingViewModel.DATA_KEY)
+    val vm = e.getData(GHPRDetailsLoadingViewModel.DATA_KEY) ?: return
     vm.requestReload()
   }
 }

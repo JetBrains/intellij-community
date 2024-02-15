@@ -37,7 +37,7 @@ abstract class GitOperationActionBase (
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val defaultRepo = GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)
     val repository = chooseRepository(project, getAffectedRepositories(project), defaultRepo)
 

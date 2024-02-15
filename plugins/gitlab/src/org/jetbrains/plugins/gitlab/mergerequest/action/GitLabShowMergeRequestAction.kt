@@ -21,8 +21,9 @@ private class GitLabShowMergeRequestAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val projectVm = e.getRequiredData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as GitLabToolWindowProjectViewModel
-    val selection: GitLabMergeRequestDetails = e.getRequiredData(GitLabMergeRequestsActionKeys.SELECTED)
+    val projectVm = e.getData(ReviewToolwindowDataKeys.REVIEW_TOOLWINDOW_PROJECT_VM) as?
+      GitLabToolWindowProjectViewModel ?: return
+    val selection = e.getData(GitLabMergeRequestsActionKeys.SELECTED) ?: return
 
     projectVm.showTab(GitLabReviewTab.ReviewSelected(selection.iid), GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION)
     projectVm.filesController.openTimeline(selection.iid, false)

@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.util.containers.asJBIterable
 import git4idea.index.ContentVersion
 import git4idea.index.createChange
 import git4idea.index.ui.GitStageDataKeys
@@ -24,21 +23,22 @@ open class GitStageCreatePatchActionProvider private constructor(private val sil
   override fun isActive(e: AnActionEvent): Boolean = e.getData(GitStageDataKeys.GIT_STAGE_TREE) != null
 
   override fun update(e: AnActionEvent) {
-    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
-    e.presentation.isEnabled = e.project != null &&
-                               nodes.filter {
-                                 it.kind == NodeKind.STAGED ||
-                                 it.kind == NodeKind.UNSTAGED ||
-                                 it.kind == NodeKind.UNTRACKED
-                               }.isNotEmpty
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES)
+    e.presentation.isEnabled =
+      e.project != null && nodes != null &&
+      nodes.asSequence().filter {
+        it.kind == NodeKind.STAGED ||
+        it.kind == NodeKind.UNSTAGED ||
+        it.kind == NodeKind.UNTRACKED
+      }.firstOrNull() != null
     e.presentation.isVisible = e.presentation.isEnabled || e.isFromActionToolbar
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
+    val project = e.project ?: return
+    val nodes = e.getData(GitStageDataKeys.GIT_FILE_STATUS_NODES) ?: return
 
-    val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }
+    val stagedNodesMap = nodes.asSequence().filter { it.kind == NodeKind.STAGED }
       .mapTo(mutableSetOf()) { Pair(it.root, it.status) }
     val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED || it.kind == NodeKind.UNTRACKED }
       .mapTo(mutableSetOf()) { Pair(it.root, it.status) }

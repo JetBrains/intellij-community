@@ -21,8 +21,8 @@ private class GHPROpenPullRequestTimelineAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val vm = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
-    val id = e.getRequiredData(GHPRActionKeys.PULL_REQUEST_ID)
+    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM) ?: return
+    val id = e.getData(GHPRActionKeys.PULL_REQUEST_ID) ?: return
 
     vm.openPullRequestTimeline(id, true)
   }

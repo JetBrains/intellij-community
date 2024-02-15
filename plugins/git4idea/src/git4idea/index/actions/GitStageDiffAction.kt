@@ -32,14 +32,14 @@ class GitStageDiffAction : AnActionExtensionProvider {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).listSelection(true)
-      .map {
-        when (it) {
-          is GitFileStatusNode -> createTwoSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
-          is Change -> ChangeDiffRequestProducer.create(project, it)
-          else -> null
-        }
+    val stageTree = e.getData(GitStageDataKeys.GIT_STAGE_TREE) ?: return
+    val producers = stageTree.listSelection(true).map {
+      when (it) {
+        is GitFileStatusNode -> createTwoSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
+        is Change -> ChangeDiffRequestProducer.create(project, it)
+        else -> null
       }
+    }
     DiffManager.getInstance().showDiff(project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 }
@@ -58,8 +58,10 @@ class GitStageThreeSideDiffAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val producers = e.getRequiredData(GitStageDataKeys.GIT_STAGE_TREE).statusNodesListSelection(false)
-      .map { createThreeSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false) }
+    val stageTree = e.getData(GitStageDataKeys.GIT_STAGE_TREE) ?: return
+    val producers = stageTree.statusNodesListSelection(false).map {
+      createThreeSidesDiffRequestProducer(e.project!!, it, forDiffPreview = false)
+    }
     DiffManager.getInstance().showDiff(e.project, ChangeDiffRequestChain(producers), DiffDialogHints.DEFAULT)
   }
 }

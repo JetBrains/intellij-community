@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecut
 
 class GitLabCreateSnippetAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
 
     val editor = e.getData(CommonDataKeys.EDITOR)
     val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)

@@ -706,7 +706,8 @@ internal object BranchesDashboardActions {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      e.getRequiredData(BRANCHES_UI_CONTROLLER).updateLogBranchFilter()
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
+      controller.updateLogBranchFilter()
     }
   }
 
@@ -730,7 +731,8 @@ internal object BranchesDashboardActions {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      e.getRequiredData(BRANCHES_UI_CONTROLLER).navigateLogToSelectedBranch()
+      val controller = e.getData(BRANCHES_UI_CONTROLLER) ?: return
+      controller.navigateLogToSelectedBranch()
     }
   }
 

@@ -35,9 +35,10 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     GitVcs vcs = GitVcs.getInstance(project);
-    final List<VirtualFile> roots = getGitRoots(project, vcs);
+    List<VirtualFile> roots = getGitRoots(project, vcs);
     if (roots == null || roots.isEmpty()) return;
 
     GitRepository selectedRepo = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());

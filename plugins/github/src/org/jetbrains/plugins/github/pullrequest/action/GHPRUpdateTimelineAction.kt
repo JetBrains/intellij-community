@@ -18,6 +18,7 @@ class GHPRUpdateTimelineAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRTimelineViewModel.DATA_KEY).updateAll()
+    val model = e.getData(GHPRTimelineViewModel.DATA_KEY) ?: return
+    model.updateAll()
   }
 }

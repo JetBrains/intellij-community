@@ -21,7 +21,8 @@ class GitLabMergeRequestShowFileDiffAction : DumbAwareAction(CollaborationToolsB
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val model = e.getRequiredData(CommonDataKeys.EDITOR).getUserData(GitLabMergeRequestEditorReviewUIModel.KEY) ?: return
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+    val model = editor.getUserData(GitLabMergeRequestEditorReviewUIModel.KEY) ?: return
     val line = e.getData(CommonDataKeys.CARET)?.logicalPosition?.line
     model.showDiff(line)
   }

@@ -15,7 +15,7 @@ internal class GitLabMergeRequestRefreshAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val ctrl = e.getRequiredData(GitLabMergeRequestViewModel.DATA_KEY)
+    val ctrl = e.getData(GitLabMergeRequestViewModel.DATA_KEY) ?: return
     ctrl.refreshData()
   }
 }

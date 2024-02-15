@@ -256,7 +256,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
 
   private fun createFocusFilterFieldAction(searchField: Component) {
     DumbAwareAction.create { e ->
-      val project = e.getRequiredData(CommonDataKeys.PROJECT)
+      val project = e.getData(CommonDataKeys.PROJECT) ?: return@create
       if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(filteringTree.component) != null) {
         IdeFocusManager.getInstance(project).requestFocus(searchField, true)
       }

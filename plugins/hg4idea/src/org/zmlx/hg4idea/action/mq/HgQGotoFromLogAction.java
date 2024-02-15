@@ -57,8 +57,10 @@ public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
 
     selection.requestFullDetails(selectedDetails -> {
       VcsFullCommitDetails fullCommitDetails = ContainerUtil.getFirstItem(selectedDetails);

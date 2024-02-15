@@ -57,7 +57,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val vm = e.getRequiredData(GHPRReviewViewModel.DATA_KEY)
+    val vm = e.getData(GHPRReviewViewModel.DATA_KEY) ?: return
     val parentComponent = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
 
     vm.submitReviewInputHandler = {

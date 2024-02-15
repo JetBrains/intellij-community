@@ -19,6 +19,7 @@ class GHPRDiffReviewThreadsReloadAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRDiffViewModel.DATA_KEY).reloadReview()
+    val model = e.getData(GHPRDiffViewModel.DATA_KEY) ?: return
+    model.reloadReview()
   }
 }

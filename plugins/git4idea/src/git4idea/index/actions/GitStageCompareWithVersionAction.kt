@@ -37,8 +37,8 @@ abstract class GitStageCompareWithVersionAction(private val currentVersion: Cont
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
+    val project = e.project ?: return
+    val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     val root = getRoot(project, file) ?: return
     val status = GitStageTracker.getInstance(project).status(root, file) ?: return
 

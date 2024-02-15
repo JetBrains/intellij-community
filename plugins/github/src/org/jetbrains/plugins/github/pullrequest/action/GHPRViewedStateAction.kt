@@ -29,8 +29,8 @@ internal abstract class GHPRViewedStateAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val changes = e.getRequiredData(SELECTED_CHANGES)
-    val vm = e.getRequiredData(GHPRChangeListViewModel.DATA_KEY)
+    val changes = e.getData(SELECTED_CHANGES) ?: return
+    val vm = e.getData(GHPRChangeListViewModel.DATA_KEY) ?: return
     vm.setViewedState(changes, isViewed)
   }
 }
