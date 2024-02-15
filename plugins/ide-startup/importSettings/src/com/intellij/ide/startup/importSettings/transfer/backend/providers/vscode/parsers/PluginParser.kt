@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vscode.parsers
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.db.KnownPlugins
@@ -15,9 +12,9 @@ import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode
 import com.intellij.openapi.diagnostic.logger
 import java.io.File
 
-private val logger = logger<PluginsParser>()
+private val logger = logger<PluginParser>()
 
-class PluginsParser(private val settings: Settings) {
+class PluginParser(private val settings: Settings) {
   companion object {
     private const val PUBLISHER = "publisher"
     private const val NAME = "name"
@@ -56,7 +53,7 @@ class PluginsParser(private val settings: Settings) {
   private fun processPluginConfigFile(file: File) {
     logger.debug("Processing a config file: $file")
     try {
-      val root = ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(file) as? ObjectNode
+      val root = vsCodeJsonMapper.readTree(file) as? ObjectNode
                  ?: error("Unexpected JSON data; expected: ${JsonNodeType.OBJECT}")
 
       processPluginId(root)

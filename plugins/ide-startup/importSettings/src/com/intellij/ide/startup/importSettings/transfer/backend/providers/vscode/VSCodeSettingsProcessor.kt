@@ -6,11 +6,7 @@ import com.intellij.ide.startup.importSettings.db.KnownKeymaps
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.db.WindowsEnvVariables
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vscode.parsers.KeyBindingsParser
-import com.intellij.ide.startup.importSettings.providers.vscode.parsers.PluginsParser
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.GeneralSettingsParser
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.StateDatabaseParser
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.StorageParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import java.io.File
@@ -67,7 +63,7 @@ class VSCodeSettingsProcessor {
       KeyBindingsParser(settings).process(keyBindingsFile)
     }
     if (pluginsDirectory.exists()) {
-      PluginsParser(settings).process(pluginsDirectory)
+      PluginParser(settings).process(pluginsDirectory)
     }
     if (storageFile.exists()) {
       StorageParser(settings).process(storageFile)

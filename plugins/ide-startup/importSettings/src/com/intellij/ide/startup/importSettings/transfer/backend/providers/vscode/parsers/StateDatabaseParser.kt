@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
@@ -40,7 +37,7 @@ class StateDatabaseParser(private val settings: Settings) {
   private fun parseRecents(connection: Connection) {
     val recentProjectsRaw = getKey(connection, recentsKey) ?: return
 
-    val root = ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(recentProjectsRaw)
+    val root = vsCodeJsonMapper.readTree(recentProjectsRaw)
                  as? ObjectNode
                ?: error("Unexpected JSON data; expected: ${JsonNodeType.OBJECT}")
 
