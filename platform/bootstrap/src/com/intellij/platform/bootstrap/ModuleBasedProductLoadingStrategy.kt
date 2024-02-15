@@ -71,10 +71,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     context: DescriptorListLoadingContext,
     zipFilePool: ZipFilePool,
   ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-    val mainGroupModules = productModules.mainModuleGroup.includedModules.map { it.moduleDescriptor.moduleId }
+    val mainGroupModulesSet = productModules.mainModuleGroup.includedModules.mapTo(HashSet()) { it.moduleDescriptor.moduleId }
     return productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
-        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModules }) {
+        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet }) {
           loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool)
         }
         else {
