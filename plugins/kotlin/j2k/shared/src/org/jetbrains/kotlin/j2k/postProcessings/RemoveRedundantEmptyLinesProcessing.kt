@@ -1,14 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.j2k.post.processing.processings
+package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
-import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.descendantsOfType
+import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -20,7 +22,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
  * It's easier to remove them all at once in a dedicated processing,
  * because such lines may be introduced rather randomly from various other processings.
  */
-internal class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
+@ApiStatus.Internal
+class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         val containers = runReadAction {
             elements.descendantsOfType<KtBlockExpression>() +

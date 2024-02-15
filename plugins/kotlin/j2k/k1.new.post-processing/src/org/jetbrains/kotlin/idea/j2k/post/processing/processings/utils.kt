@@ -26,9 +26,6 @@ internal fun KtExpression.unpackedReferenceToProperty(): KtProperty? {
         ?.resolve() as? KtProperty
 }
 
-internal inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T> =
-    flatMap { it.collectDescendantsOfType() }
-
 internal fun KtReferenceExpression.resolve(): PsiElement? =
     mainReference.resolve()
 

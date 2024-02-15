@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -174,3 +175,7 @@ fun PsiElement.getContainingClass(): PsiClass? {
     }
     return null
 }
+
+@ApiStatus.Internal
+inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T> =
+    flatMap { it.collectDescendantsOfType() }

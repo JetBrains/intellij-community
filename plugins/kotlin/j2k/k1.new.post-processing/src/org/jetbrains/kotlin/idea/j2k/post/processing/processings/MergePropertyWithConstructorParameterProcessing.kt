@@ -13,12 +13,13 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIEL
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
-import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.descendantsOfType
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.asAssignment
