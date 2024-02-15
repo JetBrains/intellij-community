@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavaHomeFinderBasic {
@@ -48,6 +49,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(this::findJavaInstalledBySdkMan);
     myFinders.add(this::findJavaInstalledByAsdfJava);
     myFinders.add(this::findJavaInstalledByGradle);
+    myFinders.add(this::findJavaInstalledByRTX);
 
     myFinders.add(
       () -> myCheckEmbeddedJava ? scanAll(getJavaHome(), false) : Collections.emptySet()
@@ -247,6 +249,14 @@ public class JavaHomeFinderBasic {
   private @NotNull Set<String> findJavaInstalledByGradle() {
     Path jdks = getPathInUserHome(".gradle/jdks");
     return jdks != null && Files.isDirectory(jdks) ? scanAll(jdks, true) : Collections.emptySet();
+  }
+
+  private @NotNull Set<String> findJavaInstalledByRTX() {
+    Path jdks = getPathInUserHome(".local/share/mise/installs/java/");
+    if (jdks == null || !Files.isDirectory(jdks)) return Collections.emptySet();
+    return scanAll(jdks, true).stream()
+      .filter(path -> !Files.isSymbolicLink(Path.of(path)))
+      .collect(Collectors.toSet());
   }
 
   @Nullable
