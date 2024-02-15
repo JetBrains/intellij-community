@@ -46,20 +46,6 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
   override fun setPropertiesFromAttributes() {
     super.setPropertiesFromAttributes()
 
-    val parentView = parent
-    val index = (0..parentView.viewCount).firstOrNull { parentView.getView(it) === this } ?: -1
-
-
-    // Heuristics to determine whether we are within the same inline (e.g. <span>) element with paddings.
-    // Nested inline element insets are not supported, because hierarchy of inline elements is not preserved.
-    val prevSibling = if (index > 0) parentView.getView(index - 1) else null
-    val nextSibling = if (index < parentView.viewCount - 1) parentView.getView(index + 1) else null
-
-    padding = this.cssPadding
-    margin = this.cssMargin
-
-    startView = prevSibling?.cssPadding != padding || prevSibling.cssMargin != margin
-    endView = nextSibling?.cssPadding != padding || nextSibling.cssMargin != margin
 
     // "caption-side" is used as "border-radius"
     borderRadius = attributes.getAttribute(CAPTION_SIDE)
@@ -69,27 +55,7 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
                      ?.toIntOrNull()
                      ?.let { JBUI.scale(it) }
                    ?: 0
-
-    padding.set(
-      padding.top,
-      if (startView) padding.left else 0,
-      padding.bottom,
-      if (endView) padding.right else 0,
-    )
-
-    margin.set(
-      margin.top,
-      if (startView) margin.left else 0,
-      margin.bottom,
-      if (endView) margin.right else 0,
-    )
-
-    insets = JBInsets(
-      padding.top + margin.top,
-      padding.left + margin.left,
-      padding.bottom + margin.bottom,
-      padding.right + margin.right,
-    )
+    updatePaddingsAndMargins(true)
   }
 
   override fun getPartialSpan(p0: Int, p1: Int): Float {
@@ -103,12 +69,14 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
     return offset + super.getPartialSpan(p0, p1)
   }
 
-  override fun getPreferredSpan(axis: Int): Float =
-    super.getPreferredSpan(axis) + when (axis) {
+  override fun getPreferredSpan(axis: Int): Float {
+    updatePaddingsAndMargins(false)
+    return super.getPreferredSpan(axis) + when (axis) {
       View.X_AXIS -> insets.width()
       View.Y_AXIS -> insets.height()
       else -> throw IllegalArgumentException("Invalid axis: $axis")
     }
+  }
 
   override fun getTabbedSpan(x: Float, e: TabExpander?): Float =
     super.getTabbedSpan(x, e) + insets.width()
@@ -171,6 +139,61 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
       return (insets.top + (contentsAlign * h)) / (insets.height() + h)
     }
     return super.getAlignment(axis)
+  }
+
+  private fun getSibling(parentView: View, curIndex: Int, direction: Int): View? {
+    var siblingIndex = curIndex + direction
+    val viewCount = parentView.viewCount
+    while (siblingIndex in 0..<viewCount) {
+      parentView.getView(siblingIndex)
+        .takeIf { it.element?.name?.equals("wbr", true) != true }
+        ?.let { return it }
+      siblingIndex += direction
+    }
+    return null
+  }
+
+  private fun updatePaddingsAndMargins(force: Boolean) {
+    val parentView = parent
+    val index = (0..<parentView.viewCount).firstOrNull { parentView.getView(it) === this } ?: -1
+
+    // Heuristics to determine whether we are within the same inline (e.g. <span>) element with paddings.
+    // Nested inline element insets are not supported, because hierarchy of inline elements is not preserved.
+    val prevSibling = getSibling(parentView, index, -1)
+    val nextSibling = getSibling(parentView, index, 1)
+
+    val cssPadding = this.cssPadding
+    val cssMargin = this.cssMargin
+
+    val startView = prevSibling?.cssPadding != cssPadding || prevSibling.cssMargin != cssMargin
+    val endView = nextSibling?.cssPadding != cssPadding || nextSibling.cssMargin != cssMargin
+
+    if (!force && startView == this.startView && endView == this.endView) {
+      return
+    }
+    this.startView = startView
+    this.endView = endView
+
+    padding = JBInsets(
+      cssPadding.top,
+      if (startView) cssPadding.left else 0,
+      cssPadding.bottom,
+      if (endView) cssPadding.right else 0,
+    )
+
+    margin = JBInsets(
+      cssMargin.top,
+      if (startView) cssMargin.left else 0,
+      cssMargin.bottom,
+      if (endView) cssMargin.right else 0,
+    )
+
+    insets = JBInsets(
+      padding.top + margin.top,
+      padding.left + margin.left,
+      padding.bottom + margin.bottom,
+      padding.right + margin.right,
+    )
   }
 
 }

@@ -6,9 +6,10 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.html.FitToWidthImageView
 import com.intellij.util.ui.html.HiDpiScalingImageView
 import com.intellij.util.ui.html.InlineViewEx
-import com.intellij.util.ui.html.FitToWidthImageView
+import com.intellij.util.ui.html.WbrView
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -48,7 +49,7 @@ class ExtendableHTMLViewFactory internal constructor(
   companion object {
     @JvmField
     val DEFAULT_EXTENSIONS: List<Extension> = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
-                                                     Extensions.INLINE_VIEW_EX)
+                                                     Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT)
 
     @JvmField
     val DEFAULT: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
@@ -133,6 +134,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val FIT_TO_WIDTH_IMAGES: Extension = FitToWidthImageViewExtension()
+
+    /**
+     * Adds support for `<wbr>` tags
+     */
+    @JvmField
+    val WBR_SUPPORT: Extension = WbrSupportExtension()
 
     private class IconsExtension(private val existingIconsProvider: (key: String) -> Icon?) : Extension {
 
@@ -361,7 +368,7 @@ class ExtendableHTMLViewFactory internal constructor(
     }
   }
 
-  private class InlineViewExExtension: Extension {
+  private class InlineViewExExtension : Extension {
     override fun invoke(element: Element, view: View): View? {
       if (view.javaClass != InlineView::class.java) return null
       val attrs = view.attributes
@@ -381,9 +388,17 @@ class ExtendableHTMLViewFactory internal constructor(
     }
   }
 
-  private class FitToWidthImageViewExtension: Extension {
+  private class FitToWidthImageViewExtension : Extension {
     override fun invoke(element: Element, view: View): View? =
       if (view is ImageView) FitToWidthImageView(element) else null
+  }
+
+  private class WbrSupportExtension : Extension {
+    override fun invoke(elem: Element, defaultView: View): View? =
+      if (elem.name.equals("wbr", true))
+        WbrView(elem)
+      else
+        null
   }
 }
 

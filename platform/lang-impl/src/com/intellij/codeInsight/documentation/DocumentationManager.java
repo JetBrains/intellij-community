@@ -112,6 +112,7 @@ import static com.intellij.lang.documentation.DocumentationMarkup.*;
  *
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
+@SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
@@ -1942,6 +1943,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
         //noinspection HardCodedStringLiteral
         if (!text.startsWith("<p", nextChar) && !text.startsWith("<div", nextChar)) {
+          //noinspection HardCodedStringLiteral
           text = text.substring(0, nextChar) + "<p>" + text.substring(nextChar);
         }
       }
@@ -1970,6 +1972,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
     text = text.replaceAll("<p>\\s*(<(?:[uo]l|h\\d|p|tr|td))", "$1");
     text = addExternalLinksIcon(text);
+    text = DocumentationHtmlUtil.addWordBreaks(text);
     return text;
   }
 

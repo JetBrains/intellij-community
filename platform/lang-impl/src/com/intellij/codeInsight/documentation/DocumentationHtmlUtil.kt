@@ -16,6 +16,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 import java.awt.Color
 import java.util.function.Function
 import javax.swing.Icon
@@ -79,6 +80,7 @@ object DocumentationHtmlUtil {
     val contentSpacing = scale(contentSpacing)
     val contentInnerPadding = scale(contentInnerPadding)
 
+    @Suppress("CssUnusedSymbol")
     @Language("CSS")
     val result = ContainerUtil.newLinkedList(
       """
@@ -115,5 +117,116 @@ object DocumentationHtmlUtil {
     result.addAll(getDefaultDocCodeStyles(globalScheme, background, contentSpacing))
     result.addAll(getDefaultFormattingStyles(contentSpacing))
     return result
+  }
+
+  @JvmStatic
+  @Contract(pure = true)
+  fun addWordBreaks(text: String): String {
+    val codePoints = text.codePoints().iterator()
+    if (!codePoints.hasNext()) return ""
+    val result = StringBuilder(text.length + 50)
+    var codePoint = codePoints.nextInt()
+    val tagName = StringBuilder()
+
+    fun next(builder: StringBuilder = result) {
+      builder.appendCodePoint(codePoint)
+      codePoint = if (codePoints.hasNext())
+        codePoints.nextInt()
+      else
+        -1
+    }
+
+    while (codePoint >= 0) {
+      // break after dot if surrounded by letters
+      when {
+        Character.isLetter(codePoint) -> {
+          next()
+          if (codePoint == '.'.code) {
+            next()
+            if (Character.isLetter(codePoint)) {
+              result.append("<wbr>")
+            }
+          }
+        }
+        // break after ], ) or / followed by a char or digit
+        codePoint == ')'.code || codePoint == ']'.code || codePoint == '/'.code -> {
+          next()
+          if (Character.isLetterOrDigit(codePoint)) {
+            result.append("<wbr>")
+          }
+        }
+        // skip tag
+        codePoint == '<'.code -> {
+          next()
+          if (codePoint == '/'.code)
+            next()
+          if (!Character.isLetter(codePoint))
+            continue
+          tagName.clear()
+          while (Character.isLetterOrDigit(codePoint) || codePoint == '-'.code) {
+            next(tagName)
+          }
+          result.append(tagName)
+          if (tagName.contentEquals("style", true)
+              || tagName.contentEquals("title", true)
+              || tagName.contentEquals("script", true)) {
+            val curTag = tagName.toString()
+            do {
+              if (codePoint == '<'.code) {
+                next()
+                if (codePoint == '/'.code) {
+                  next()
+                  tagName.clear()
+                  while (Character.isLetterOrDigit(codePoint) || codePoint == '-'.code) {
+                    next(tagName)
+                  }
+                  result.append(tagName)
+                  if (tagName.contentEquals(curTag, true)) {
+                    while (codePoint >= 0 && codePoint != '>'.code) {
+                      next()
+                    }
+                    break
+                  }
+                }
+              }
+              else next()
+            }
+            while (true)
+          }
+          else {
+            while (codePoint >= 0) {
+              when (codePoint) {
+                '>'.code -> {
+                  next()
+                  break
+                }
+                '\''.code, '"'.code -> {
+                  val quoteStyle = codePoint
+                  next()
+                  while (codePoint >= 0) {
+                    when (codePoint) {
+                      '\\'.code -> {
+                        next()
+                        if (codePoint >= 0)
+                          next()
+                      }
+                      quoteStyle -> {
+                        next()
+                        break
+                      }
+                      else -> next()
+                    }
+                  }
+                }
+                else -> next()
+              }
+            }
+          }
+        }
+        else -> next()
+      }
+    }
+
+    return result.toString()
   }
 }

@@ -79,6 +79,8 @@ object StyleSheetRulesProviderForCodeHighlighting {
     if (enableInlineCodeBackground) {
       val selectors = inlineCodeParentSelectors.asSequence().map { "$it code" }.joinToString(", ")
       result.add("$selectors $codeColorStyle")
+      // 'caption-side' is a hack to support 'border-radius'.
+      // See also: com.intellij.util.ui.html.InlineViewEx
       result.add("$selectors { padding: 1px 4px; margin: 1px 0px; caption-side: 10px; }")
     }
     if (enableCodeBlocksBackground) {
