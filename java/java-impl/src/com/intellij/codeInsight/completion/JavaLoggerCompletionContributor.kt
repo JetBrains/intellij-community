@@ -2,16 +2,12 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.generation.GenerateLoggerUtil
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.lang.logging.JvmLogger
-import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.openapi.module.ModuleUtil
-import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.*
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiJavaToken
 import com.intellij.util.ProcessingContext
 
 class JavaLoggerCompletionContributor : CompletionContributor() {
@@ -29,7 +25,6 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
              override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
                val javaResultWithSorting = JavaCompletionSorting.addJavaSorting(parameters, result)
                val module = ModuleUtil.findModuleForFile(parameters.originalFile) ?: return
-               val project = module.project
                val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module, true)
 
                val element = parameters.originalPosition ?: return
@@ -40,39 +35,10 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
                val place = possiblePlaces.firstOrNull() ?: return
 
                for (logger in availableLoggers) {
-                 val lookupElement = buildLoggerElement(project, place, logger)
+                 val lookupElement = LoggerLookupElement(logger, place)
                  javaResultWithSorting.addElement(lookupElement)
                }
              }
            })
-  }
-
-  private fun buildLoggerElement(project: Project, place: PsiClass, logger: JvmLogger): LookupElement =
-    LoggerLookupElement(
-      LookupElementBuilder
-        .create(logger.loggerTypeName, JvmLoggerFieldDelegate.LOGGER_IDENTIFIER)
-        .withTailText(" ${logger.loggerTypeName}")
-        .withTypeText(logger.toString())
-        .withInsertHandler { insertionContext, _ ->
-          val loggerText = logger.createLogger(project, place) ?: return@withInsertHandler
-          logger.insertLoggerAtClass(insertionContext.project, place, loggerText)
-          replaceWithStaticReferenceIfCollisions(project, insertionContext, place)
-        },
-      logger.loggerTypeName
-    )
-
-  private fun replaceWithStaticReferenceIfCollisions(project: Project,
-                                                     insertionContext: InsertionContext,
-                                                     place: PsiClass) {
-    val file = insertionContext.file
-    val element = file.findElementAt(insertionContext.startOffset)?.parentOfType<PsiReferenceExpression>(false) ?: return
-    val resolved = element.resolve() as? PsiField
-    val containingClass = resolved?.containingClass
-    if (resolved == null || !PsiManager.getInstance(project).areElementsEquivalent(place, containingClass)) {
-      val factory = JavaPsiFacade.getElementFactory(project)
-      val className = place.qualifiedName ?: return
-      val staticRefExpression = factory.createExpressionFromText("$className.${JvmLoggerFieldDelegate.LOGGER_IDENTIFIER}", place)
-      element.replace(staticRefExpression)
-    }
   }
 }
