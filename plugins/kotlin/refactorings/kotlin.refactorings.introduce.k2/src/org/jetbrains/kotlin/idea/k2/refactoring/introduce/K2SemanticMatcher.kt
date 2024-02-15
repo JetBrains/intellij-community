@@ -81,7 +81,7 @@ object K2SemanticMatcher {
         }
 
         context(KtAnalysisSession)
-        fun getAndAssociateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) {
+        fun associateSymbolsForDeclarations(targetDeclaration: KtDeclaration, patternDeclaration: KtDeclaration) {
             val targetSymbol = targetDeclaration.getSymbol()
             val patternSymbol = patternDeclaration.getSymbol()
 
@@ -95,14 +95,14 @@ object K2SemanticMatcher {
         }
 
         context(KtAnalysisSession)
-        fun getAndAssociateSymbolsForBlockBodyOwners(targetFunction: KtFunction, patternFunction: KtFunction) {
+        fun associateSymbolsForBlockBodyOwners(targetFunction: KtFunction, patternFunction: KtFunction) {
             check(targetFunction.bodyExpression is KtBlockExpression && patternFunction.bodyExpression is KtBlockExpression)
 
             blockBodyOwners[targetFunction.getFunctionLikeSymbol()] = patternFunction.getFunctionLikeSymbol()
         }
 
         context(KtAnalysisSession)
-        fun getAndAssociateSingleParameterSymbolsForAnonymousFunctionsOrDoNothing(
+        fun associateSingleParameterSymbolsForAnonymousFunctions(
             targetFunction: KtFunction,
             patternFunction: KtFunction,
         ) {
@@ -113,7 +113,7 @@ object K2SemanticMatcher {
         }
 
         context(KtAnalysisSession)
-        fun getAndAssociateReceiverParameterSymbolsForCallablesOrDoNothing(
+        fun associateReceiverParameterSymbolsForCallables(
             targetDeclaration: KtCallableDeclaration,
             patternDeclaration: KtCallableDeclaration,
         ) {
@@ -167,7 +167,7 @@ object K2SemanticMatcher {
                 if (dcl.isFunctionLiteralWithoutParameterSpecification() || patternDcl.isFunctionLiteralWithoutParameterSpecification()) {
                     with(analysisSession) {
                         if (!areFunctionsWithZeroOrOneParametersMatchingByResolve(dcl, patternDcl, context)) return false
-                        context.getAndAssociateSingleParameterSymbolsForAnonymousFunctionsOrDoNothing(dcl, patternDcl)
+                        context.associateSingleParameterSymbolsForAnonymousFunctions(dcl, patternDcl)
                     }
                 } else {
                     if (!elementsMatchOrBothAreNull(dcl.valueParameterList, patternDcl.valueParameterList)) return false
@@ -178,12 +178,12 @@ object K2SemanticMatcher {
                 with(analysisSession) {
                     if (!areReceiverParametersMatchingByResolve(dcl, patternDcl, context)) return false
                     if (!areReturnTypesOfDeclarationsMatchingByResolve(dcl, patternDcl, context)) return false
-                    context.getAndAssociateReceiverParameterSymbolsForCallablesOrDoNothing(dcl, patternDcl)
+                    context.associateReceiverParameterSymbolsForCallables(dcl, patternDcl)
                 }
             }
 
             with(analysisSession) {
-                context.getAndAssociateSymbolsForDeclarations(dcl, patternDcl)
+                context.associateSymbolsForDeclarations(dcl, patternDcl)
             }
 
             if (dcl is KtDeclarationWithBody && patternDcl is KtDeclarationWithBody) {
@@ -391,7 +391,7 @@ object K2SemanticMatcher {
             val patternFunction = patternExpression.parent as? KtFunction
             if (targetFunction != null || patternFunction != null) {
                 if (targetFunction == null || patternFunction == null) return false
-                with(analysisSession) { context.getAndAssociateSymbolsForBlockBodyOwners(targetFunction, patternFunction) }
+                with(analysisSession) { context.associateSymbolsForBlockBodyOwners(targetFunction, patternFunction) }
             }
 
             for ((targetStatement, patternStatement) in expression.statements.zip(patternExpression.statements)) {
