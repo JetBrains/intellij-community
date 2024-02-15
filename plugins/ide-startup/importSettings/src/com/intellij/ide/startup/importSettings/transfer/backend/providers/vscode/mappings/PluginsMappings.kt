@@ -61,7 +61,7 @@ internal class CommonPluginMapping : VSCodePluginMapping {
     else -> listOf("general.json")
   }
 
-  val allPlugins by lazy {
+  private val allPlugins by lazy {
     val resourceNames = getResourceMappings()
     val result = mutableMapOf<String, FeatureInfo>()
     for (resourceName in resourceNames) {
