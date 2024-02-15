@@ -886,9 +886,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
         if (schemesToIgnore.contains(scheme.baseName) ||
             scheme.parentBaseName?.let { schemesToIgnore.contains(it) } == true) return@forEach
 
-        val indexWithIsDark = scheme.valueForBaseNameOrParentBaseName(schemeIdToIsDark) ?: return@forEach
+        val isDarkScheme = scheme.valueForBaseNameOrParentBaseName(schemeIdToIsDark)?.second
+                           ?: ColorUtil.isDark(scheme.defaultBackground)
 
-        if (indexWithIsDark.second) {
+        if (isDarkScheme) {
           darkSchemes.add(scheme)
         }
         else {
@@ -908,8 +909,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
           val index1 = o1.valueForBaseNameOrParentBaseName(schemeIdToIsDark)?.first
           val index2 = o2.valueForBaseNameOrParentBaseName(schemeIdToIsDark)?.first
 
-          if (index1 != null && index2 != null && index1 != index2) index1 - index2
-          else o1.baseName.compareTo(o2.baseName)
+          if (index1 != null && index2 != null) {
+            if (index1 != index2) index1 - index2
+            else o1.baseName.compareTo(o2.baseName)
+          }
+          else if (index1 == null) 1
+          else -1
         }
       }
 
