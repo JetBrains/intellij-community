@@ -45,6 +45,23 @@ Not supported, and not on the roadmap:
 * 3D STL models (GitHub Flavored Markdown)
 * Rich rendering of embeds such as videos, YouTube, GitHub Gists/...
 
+## Add the Markdown renderer to your project
+
+You need to add the renderer **alongside** either a `jewel-standalone` or `jewel-ide-laf-bridge-*` dependency in order
+for the renderer to work, as it assumes that the necessary `jewel-ui` and `jewel-foundation` are on the classpath 
+already.
+
+If you want to use extensions, you also need to add them **alongside** the `jewel-markdown-core`:
+
+```kotlin
+dependencies {
+    implementation(libs.jewel.standalone)
+    implementation(libs.jewel.markdown.core)
+    implementation(libs.jewel.markdown.extension.gfm.alerts) // Optional
+    // Et cetera...
+}
+```
+
 ## How to use Jewel's Markdown renderer
 
 The process that leads to rendering Markdown in a native UI is two-pass.

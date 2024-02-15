@@ -6,9 +6,10 @@ plugins {
 }
 
 dependencies {
+    // This extension should get all dependencies from ui and markdown-core
+    compileOnly(projects.ui)
     compileOnly(projects.markdown.core)
-
-    implementation(libs.commonmark.core)
+    compileOnly(libs.commonmark.core)
 
     testImplementation(compose.desktop.uiTestJUnit4)
 }
