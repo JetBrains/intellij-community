@@ -27,10 +27,14 @@ abstract class AbstractReferenceResolveWithCrossLibTest : AbstractReferenceResol
         FileUtil.copyDir(sourcesDir, patchedSourcesDir)
         patchedSourcesDir.walk().filter { it.isFile && it.extension in KOTLIN_FILE_EXTENSIONS }.forEach(::patchSource)
 
-        val compilationClasspath = listOf(mockLibraryFacility.target)
+        val useSiteCompilationClasspath = buildList {
+            add(mockLibraryFacility.target) // the library jar
+            addAll(libCompilationClasspath) // lib compilation classpath, in case the classes from library are used in the module
+        }
+
         val mockLibraryFacility = MockLibraryFacility(
             patchedSourcesDir,
-            classpath = compilationClasspath,
+            classpath = useSiteCompilationClasspath,
             libraryName = USE_SITE_LIBRARY_NAME
         )
 
