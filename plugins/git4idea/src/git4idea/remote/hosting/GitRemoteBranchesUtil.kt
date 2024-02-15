@@ -17,9 +17,11 @@ import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
+import git4idea.branch.GitBrancher
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
+import git4idea.push.GitSpecialRefRemoteBranch
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions
@@ -46,8 +48,16 @@ object GitRemoteBranchesUtil {
   }
 
   fun isRemoteBranchCheckedOut(repository: GitRepository, branch: GitRemoteBranch): Boolean {
-    val localBranch = findLocalBranchTrackingRemote(repository, branch) ?: return false
-    return repository.currentBranchName == localBranch.name
+    return when (branch) {
+      is GitSpecialRefRemoteBranch -> {
+        val hash = Git.getInstance().resolveReference(repository, branch.nameForLocalOperations)?.asString()
+        repository.currentRevision == hash
+      }
+      else -> {
+        val localBranch = findLocalBranchTrackingRemote(repository, branch) ?: return false
+        repository.currentBranchName == localBranch.name
+      }
+    }
   }
 
   private fun findLocalBranchTrackingRemote(repository: GitRepository, branch: GitRemoteBranch): GitLocalBranch? =
@@ -129,18 +139,10 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  private suspend fun findRemoteBranch(repository: GitRepository,
-                                       remote: HostedGitRepositoryRemote,
-                                       remoteBranch: String): GitRemoteBranch? {
-    val headRemote = indeterminateStep {
-      withRawProgressReporter {
-        withContext(Dispatchers.Default) {
-          coroutineToIndicator {
-            Git.getInstance().findOrCreateRemote(repository, remote)
-          }
-        }
-      }
-    }
+  suspend fun findRemoteBranch(repository: GitRepository,
+                               remote: HostedGitRepositoryRemote,
+                               remoteBranch: String): GitRemoteBranch? {
+    val headRemote = findOrCreateRemote(repository, remote)
     if (headRemote == null) {
       notifyRemoteError(repository.project, remote)
       return null
@@ -153,13 +155,23 @@ object GitRemoteBranchesUtil {
                            branch: GitRemoteBranch,
                            newLocalBranchPrefix: String? = null,
                            callInAwtLater: Runnable? = null) {
-    val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
-    val suggestedName = existingLocalBranch?.name
-                        ?: newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" }
-                        ?: branch.nameForRemoteOperations
+    when (branch) {
+      // For special refs, there's no backing remote branch.
+      // We check out in detached HEAD to avoid confusion from pull/push actions.
+      is GitSpecialRefRemoteBranch -> {
+        GitBrancher.getInstance(repository.project)
+          .checkout(branch.name, true, listOf(repository), callInAwtLater)
+      }
+      else -> {
+        val existingLocalBranch = findLocalBranchTrackingRemote(repository, branch)
+        val suggestedName = existingLocalBranch?.name
+                            ?: newLocalBranchPrefix?.let { "$it/${branch.nameForRemoteOperations}" }
+                            ?: branch.nameForRemoteOperations
 
-    GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
-      .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName, callInAwtLater)
+        GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction
+          .checkoutRemoteBranch(repository.project, listOf(repository), branch.name, suggestedName, callInAwtLater)
+      }
+    }
   }
 
 
@@ -195,6 +207,18 @@ object GitRemoteBranchesUtil {
         CollaborationToolsBundle.message("review.details.action.branch.checkout.failed"),
         failedMessage
       )
+    }
+  }
+
+  suspend fun findOrCreateRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? {
+    return indeterminateStep {
+      withRawProgressReporter {
+        withContext(Dispatchers.Default) {
+          coroutineToIndicator {
+            Git.getInstance().findOrCreateRemote(repository, remote)
+          }
+        }
+      }
     }
   }
 
