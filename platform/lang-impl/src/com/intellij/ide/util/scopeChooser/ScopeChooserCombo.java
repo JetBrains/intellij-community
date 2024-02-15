@@ -28,8 +28,10 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Instances of {@code ScopeChooserCombo} <b>must be disposed</b> when the corresponding dialog or settings page is closed. Otherwise,
@@ -165,11 +167,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         super.customize(item, value, index, isSelected, cellHasFocus);
       }
     };
-  }
-
-  @NotNull
-  public static ListCellRenderer<ScopeDescriptor> createDefaultRenderer() {
-    return new MyRenderer();
   }
 
   @Override
