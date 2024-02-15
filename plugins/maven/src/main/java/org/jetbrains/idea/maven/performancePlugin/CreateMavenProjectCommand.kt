@@ -50,6 +50,7 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
     const val PREFIX = "$CMD_PREFIX$NAME"
   }
 
+
   override suspend fun doExecute(context: PlaybackContext) {
     val disposable = Disposer.newDisposable()
 
@@ -58,14 +59,18 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
       val newMavenProjectDto = deserializeOptionsFromJson(extractCommandArgument(PREFIX), NewMavenProjectDto::class.java)
       val parentModule = ModuleManager.getInstance(project).modules.firstOrNull { it.name == newMavenProjectDto.parentModuleName }
       val projectPath = (parentModule?.moduleNioFile?.parent ?: Path.of(project.basePath!!)).resolve(newMavenProjectDto.projectName)
-      val projectStructureConfigurable = ProjectStructureConfigurable.getInstance(project)
-      val modulesConfigurator = if (newMavenProjectDto.asModule) ModulesConfigurator(project, projectStructureConfigurable) else null
+      val modulesConfigurator = if (newMavenProjectDto.asModule)
+        ModulesConfigurator(project, ProjectStructureConfigurable.getInstance(project))
+      else
+        null
       val withArchetype = newMavenProjectDto.mavenArchetypeInfo != null
 
-      val wizardContext = WizardContext(if (newMavenProjectDto.asModule) project else null, disposable)
-      wizardContext.projectJdk = newMavenProjectDto.sdkObject?.let {
-        SetupProjectSdkUtil.setupOrDetectSdk(it.sdkName, it.sdkType, it.sdkPath.toString())
-      } ?: ProjectRootManager.getInstance(project).projectSdk
+      val wizardContext = WizardContext(if (newMavenProjectDto.asModule) project else null, disposable).apply {
+        projectJdk = newMavenProjectDto.sdkObject?.let {
+          @Suppress("TestOnlyProblems")
+          SetupProjectSdkUtil.setupOrDetectSdk(it.sdkName, it.sdkType, it.sdkPath.toString())
+        } ?: ProjectRootManager.getInstance(project).projectSdk
+      }
 
       val moduleBuilder = if (withArchetype)
         ModuleBuilder.getAllBuilders().first { it::class == MavenArchetypeNewProjectWizard.Builder::class }
@@ -100,9 +105,11 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
           baseData?.name = newMavenProjectDto.projectName
           baseData?.path = projectPath.parent.toString()
           if (withArchetype) {
-            archetypeMavenData?.parentData = parentModule?.let { MavenProjectsManager.getInstance(project).findProject(it) }
-            archetypeMavenData?.archetypeItem = MavenArchetypeItem(newMavenProjectDto.mavenArchetypeInfo!!.groupId, newMavenProjectDto.mavenArchetypeInfo.artefactId)
-            archetypeMavenData?.archetypeVersion = newMavenProjectDto.mavenArchetypeInfo.version
+            archetypeMavenData?.apply {
+              parentData = parentModule?.let { MavenProjectsManager.getInstance(project).findProject(it) }
+              archetypeItem = MavenArchetypeItem(newMavenProjectDto.mavenArchetypeInfo!!.groupId, newMavenProjectDto.mavenArchetypeInfo.artefactId)
+              archetypeVersion = newMavenProjectDto.mavenArchetypeInfo.version
+            }
           }
           else {
             javaMavenData?.parentData = parentModule?.let { MavenProjectsManager.getInstance(project).findProject(it) }
