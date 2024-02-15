@@ -24,86 +24,34 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/generateLogger"
 
   fun testSlf4j() {
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface Logger {}
-    """.trimIndent())
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface LoggerFactory{
-       static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doTest()
   }
 
   fun testLog4j2() {
-    myFixture.addClass("""
-      package org.apache.logging.log4j;
-      
-      interface Logger {}
-    """.trimIndent())
-    myFixture.addClass("""
-      package org.apache.logging.log4j;
-      
-      interface LogManager{
-       static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupLog4j2(myFixture)
     doTest()
   }
 
   fun testLog4j() {
-    myFixture.addClass("""
-      package org.apache.log4j;
-      
-      interface Logger {
-      static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupLog4j(myFixture)
     doTest()
   }
 
   fun testApacheCommons() {
-    myFixture.addClass("""
-    package org.apache.commons.logging;
-    
-    interface Log {
-    }
-  """.trimIndent())
-    myFixture.addClass("""
-    package org.apache.commons.logging;
-    
-    interface LogFactory {
-      static Log getLog(Class<?> clazz) {}
-    }
-  """.trimIndent())
+    JvmLoggerTestSetupUtil.setupApacheCommons(myFixture)
     doTest()
   }
 
   fun testAnonymousClass() {
-    myFixture.addClass("""
-      package org.apache.log4j;
-      
-      interface Logger {
-      static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupLog4j(myFixture)
     doTest()
   }
 
   fun testImplicitlyDeclaredClass() {
-    myFixture.addClass("""
-      package org.apache.log4j;
-      
-      interface Logger {
-      static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupLog4j(myFixture)
     myFixture.configureByText("implicitlyDeclaredClass.java",
-                                """
+                              """
                                 void main() {<caret>
                                 }
                                 """.trimIndent())
@@ -117,18 +65,7 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testNestedClassesOuterClass() {
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface Logger {}
-    """.trimIndent())
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface LoggerFactory{
-       static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doTestWithMultiplePlaces(
       listOf(
         "class Outer",
@@ -139,18 +76,7 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testNestedClassesNestedClass() {
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface Logger {}
-    """.trimIndent())
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface LoggerFactory{
-       static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doTestWithMultiplePlaces(
       listOf(
         "class Outer",
@@ -161,18 +87,7 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testMultipleNestedClasses() {
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface Logger {}
-    """.trimIndent())
-    myFixture.addClass("""
-      package org.slf4j;
-      
-      interface LoggerFactory{
-       static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doTestWithMultiplePlaces(
       listOf(
         "class Outer",
@@ -183,13 +98,7 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testSaveSettings() {
-    myFixture.addClass("""
-      package org.apache.log4j;
-      
-      interface Logger {
-      static <T> Logger getLogger(Class<T> clazz) {}
-      }
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupLog4j(myFixture)
     assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
     doTest()
     assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, "Log4j")
