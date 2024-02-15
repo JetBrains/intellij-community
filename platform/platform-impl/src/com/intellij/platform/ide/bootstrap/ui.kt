@@ -153,7 +153,9 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
   @Suppress("SpellCheckingInspection")
   System.setProperty("sun.awt.noerasebackground", "true")
   // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
-  System.setProperty("apple.awt.captureNextAppWinKey", "true")
+  if (System.getProperty("apple.awt.captureNextAppWinKey") == null) {
+    System.setProperty("apple.awt.captureNextAppWinKey", "true")
+  }
 
   span("awt toolkit creating") {
     Toolkit.getDefaultToolkit()
