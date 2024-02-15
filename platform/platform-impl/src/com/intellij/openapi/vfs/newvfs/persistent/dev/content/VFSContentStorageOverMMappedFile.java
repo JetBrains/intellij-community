@@ -145,7 +145,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
           ByteArraySequence bytesToStore;
           int uncompressedSize;
           if (compressingAlgo.shouldCompress(bytes)) {
-            bytesToStore = compressingAlgo.compress(bytes);
+            //returned ByteArraySequence may wrap _reusable_ buffer => must NOT be used outside of this method
+            bytesToStore = compressingAlgo.compress(bytes, /*mayReturnReusableBuffer: */ true);
             uncompressedSize = -bytes.length();//sign bit indicates 'compressed data'
           }
           else {

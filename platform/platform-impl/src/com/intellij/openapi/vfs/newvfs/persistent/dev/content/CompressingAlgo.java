@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
+import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
@@ -29,16 +30,29 @@ public interface CompressingAlgo {
 
   /**
    * @return true if input should be compressed, false otherwise.
-   * If this method returns false -- {@link #compress(ByteArraySequence)} method should NOT be called for the input
+   * If this method returns false -- {@link #compress(ByteArraySequence, boolean)} method should NOT be called for the input
    */
   boolean shouldCompress(@NotNull ByteArraySequence input);
 
-  ByteArraySequence compress(@NotNull ByteArraySequence input) throws IOException;
+  /**
+   * @param mayReturnReusableBufferHint true if it is OK if returned {@link ByteArraySequence} wraps re-usable buffer.
+   *                                    Such a buffer must be fully consumed until next .compress() call, because it
+   *                                    can/will be reused in the next .compress() call.
+   *                                    false if returned buffer must be newly allocated, and not reused.
+   *                                    'true' value of this parameter is just a hint -- implementation is free to
+   *                                    ignore it, and always return non-reusable (i.e. newly allocated) buffer
+   */
+  ByteArraySequence compress(@NotNull ByteArraySequence input,
+                             boolean mayReturnReusableBufferHint) throws IOException;
+
+  default ByteArraySequence compress(@NotNull ByteArraySequence input) throws IOException {
+    return compress(input, /* mayReturnSharedBuffer: */ false);
+  }
 
   /**
    * Decompresses bytes remaining in bufferWithCompressedData (i.e. position..limit) into bufferForDecompression.
    * bufferForDecompression size MUST be enough the decompressed data to fit
-   * TODO RC: what to do if bufferForDecompression is smaller -- throw exception, or return actual bytes decompressed?
+   * @throws IOException if bufferForDecompression is smaller than actual decompressed data size
    */
   void decompress(@NotNull ByteBuffer bufferWithCompressedData,
                   byte[] bufferForDecompression) throws IOException;
@@ -69,7 +83,7 @@ public interface CompressingAlgo {
     //MAYBE RC: use thread-local Inflater/Deflater instances?
 
     @Override
-    public ByteArraySequence compress(@NotNull ByteArraySequence input) throws IOException {
+    public ByteArraySequence compress(@NotNull ByteArraySequence input, boolean mayReturnReusableBufferHint) throws IOException {
       Deflater deflater = new Deflater();
       try {
         deflater.setInput(input.getInternalBuffer(), input.getOffset(), input.length());
@@ -146,23 +160,27 @@ public interface CompressingAlgo {
     }
 
     @Override
-    public ByteArraySequence compress(@NotNull ByteArraySequence input) throws IOException {
+    public ByteArraySequence compress(@NotNull ByteArraySequence input,
+                                      boolean mayReturnReusableBufferHint) throws IOException {
       try {
         LZ4Compressor compressor = CompressionUtil.compressor();
 
         int compressedLengthMax = compressor.maxCompressedLength(input.length());
-        byte[] compressedBytes = new byte[compressedLengthMax];
+        byte[] compressedBytes = mayReturnReusableBufferHint ?
+                                 threadLocalBuffer.getBuffer(compressedLengthMax) :
+                                 new byte[compressedLengthMax];
         int actualCompressedLength = compressor.compress(
           input.getInternalBuffer(), input.getOffset(), input.length(),
           compressedBytes, 0, compressedBytes.length
         );
-        //MAYBE RC: use ThreadLocalCachedByteArray to avoid allocation of large short-lived buffers?
         return new ByteArraySequence(compressedBytes, 0, actualCompressedLength);
       }
       catch (LZ4Exception e) {
         throw new IOException("Compressing " + input.length() + " bytes failed", e);
       }
     }
+
+    private static final ThreadLocalCachedByteArray threadLocalBuffer = new ThreadLocalCachedByteArray();
 
     @Override
     public void decompress(@NotNull ByteBuffer bufferWithCompressedData,
@@ -173,13 +191,15 @@ public interface CompressingAlgo {
       // copying below -- but this method is not implemented for direct 'source' ByteBuffer in our 'fast' LZ4Decompressor
       // (see lz4.kt)
 
-      //MAYBE RC: use ThreadLocalCachedByteArray to avoid allocation of large short-lived buffers?
-      byte[] compressedBytes = new byte[compressedSize];
-      bufferWithCompressedData.get(compressedBytes);
+      //actual buffer returned could be > compressedSize!
+      byte[] compressedBytes = threadLocalBuffer.getBuffer(compressedSize);
+      bufferWithCompressedData.get(compressedBytes, 0, compressedSize);
 
       try {
-        int bytesUsedFromCompressedData = CompressionUtil.decompressor().decompress(compressedBytes, bufferForDecompression);
-
+        int bytesUsedFromCompressedData = CompressionUtil.decompressor().decompress(
+          compressedBytes, 0,
+          bufferForDecompression, 0, bufferForDecompression.length
+        );
         if (bytesUsedFromCompressedData != compressedSize) {
           throw new IOException("Decompressed bytes[" + bytesUsedFromCompressedData + "b out of " + compressedSize + "b] " +
                                 "!= compressed bytes[" + bufferForDecompression.length + "] " +
@@ -214,7 +234,7 @@ public interface CompressingAlgo {
     }
 
     @Override
-    public ByteArraySequence compress(@NotNull ByteArraySequence input) throws IOException {
+    public ByteArraySequence compress(@NotNull ByteArraySequence input, boolean mayReturnReusableBufferHint) throws IOException {
       throw new UnsupportedOperationException("Method should not be called since shouldCompress() returns false");
     }
 
