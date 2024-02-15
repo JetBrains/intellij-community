@@ -352,6 +352,21 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
     assertEquals(array(cs3, cs2), getChangesFor("dir", "*Bar*"));
   }
 
+  @Test
+  public void testDoNotMatchSystemLabels() {
+    String file = "file";
+    String otherFile = "other.file";
+
+    ChangeSet cs1 = addChangeSet(facade, createFile(r, file), putSystemLabel("label1", PROJECT_ID));
+    ChangeSet cs2 = addChangeSet(facade, changeContent(r, file, null), putSystemLabel("label2", PROJECT_ID));
+    ChangeSet cs3 = addChangeSet(facade, createFile(r, otherFile), putSystemLabel("label3", PROJECT_ID));
+    ChangeSet cs4 = addChangeSet(facade, changeContent(r, file, null), putSystemLabel("label4", PROJECT_ID));
+    ChangeSet cs5 = addChangeSet(facade, changeContent(r, otherFile, null), putSystemLabel("label5", PROJECT_ID));
+
+    assertEquals(array(cs4, cs2, cs1), getChangesFor(file));
+    assertEquals(array(cs5, cs3), getChangesFor(otherFile));
+  }
+
   private List<ChangeSet> getChangesFor(String path) {
     return getChangesFor(path, null);
   }

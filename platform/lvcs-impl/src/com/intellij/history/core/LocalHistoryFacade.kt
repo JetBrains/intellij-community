@@ -222,18 +222,25 @@ fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, pat
   var path = startPath
   var pathExists = true
   for (changeSet in changes) {
-    for (change in changeSet.changes.reversed()) {
-      if (!pathExists) {
-        if (change is StructuralChange) path = change.revertPath(path)
-        if (change is DeleteChange && change.isDeletionOf(path)) {
-          processChangeSet(changeSet, change, path)
-          pathExists = true
+    val changeSetChanges = changeSet.changes
+    val singleLabel = changeSetChanges.singleOrNull() as? PutLabelChange
+    if (singleLabel != null) {
+      if (pathExists) processChangeSet(changeSet, singleLabel, path)
+    } else {
+      for (change in changeSetChanges.reversed()) {
+        if (change is PutLabelChange) continue
+        if (!pathExists) {
+          if (change is StructuralChange) path = change.revertPath(path)
+          if (change is DeleteChange && change.isDeletionOf(path)) {
+            processChangeSet(changeSet, change, path)
+            pathExists = true
+          }
         }
-      }
-      else {
-        processChangeSet(changeSet, change, path)
-        if (change is StructuralChange) path = change.revertPath(path)
-        if (change is CreateEntryChange && change.isCreationalFor(path)) pathExists = false
+        else {
+          processChangeSet(changeSet, change, path)
+          if (change is StructuralChange) path = change.revertPath(path)
+          if (change is CreateEntryChange && change.isCreationalFor(path)) pathExists = false
+        }
       }
     }
   }
