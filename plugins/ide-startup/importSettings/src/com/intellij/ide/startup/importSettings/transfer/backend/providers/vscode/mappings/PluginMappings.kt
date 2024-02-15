@@ -19,7 +19,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.inputStream
 
 /**
- * Allows registering plugins of third-party products for importing from VSCode.
+ * Allows customizing the list of plugins for importing from VSCode.
  */
 interface VSCodePluginMapping {
 
