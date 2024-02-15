@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.indexing.FileBasedIndex
@@ -80,6 +81,7 @@ internal abstract class ProjectIndexableFilesFilter(private val checkAllExpected
     val errors = mutableListOf<HealthCheckError>()
 
     val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
 
     for ((fileId, indexable) in fileStatuses) {
       ProgressManager.checkCanceled()
@@ -90,7 +92,9 @@ internal abstract class ProjectIndexableFilesFilter(private val checkAllExpected
         if (checkAllExpectedIndexableFiles) shouldBeIndexable[fileId] = false
       }
       else if (indexable && !shouldBeIndexable[fileId]) {
-        errors.add(NotIndexableFileIsInFilterError(fileId, this))
+        val file = PersistentFS.getInstance().findFileById(fileId)
+        val excluded = file != null && projectFileIndex.isExcluded(file)
+        errors.add(NotIndexableFileIsInFilterError(fileId, excluded, this))
       }
     }
 
@@ -120,11 +124,13 @@ internal abstract class ProjectIndexableFilesFilter(private val checkAllExpected
 
   interface HealthCheckError {
     val presentableText: String
+    val shouldBeReported: Boolean
     fun fix()
   }
 
   class MissingFileIdInFilterError(private val fileId: Int,
                                    private val filter: ProjectIndexableFilesFilter): HealthCheckError {
+    override val shouldBeReported: Boolean = true
     override val presentableText: String
       get() = "file name=${PersistentFS.getInstance().findFileById(fileId)?.name} id=$fileId NOT found in filter"
 
@@ -134,7 +140,9 @@ internal abstract class ProjectIndexableFilesFilter(private val checkAllExpected
   }
 
   class NotIndexableFileIsInFilterError(private val fileId: Int,
+                                        excluded: Boolean,
                                         private val filter: ProjectIndexableFilesFilter) : HealthCheckError {
+    override val shouldBeReported: Boolean = !excluded
     override val presentableText: String
       get() = "file name=${
         PersistentFS.getInstance().findFileById(fileId)?.name

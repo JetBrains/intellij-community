@@ -129,19 +129,28 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
 
     try {
       for ((project, filter) in myProjectFilters) {
-        var errors: List<HealthCheckError>? = null
+        var errors: List<HealthCheckError> = emptyList()
         ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
           if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
           errors = filter.runHealthCheck(project)
         }
 
-        if (errors.isNullOrEmpty()) continue
+        if (errors.isEmpty()) continue
 
-        for (error in errors!!) {
+        for (error in errors) {
           error.fix()
         }
 
-        val summary = errors!!
+        val errorsToReport = errors
+          .filter { it.shouldBeReported }
+
+        if (errors.size > errorsToReport.size) {
+          FileBasedIndexImpl.LOG.info("${errors.size - errorsToReport.size} of ${filter.javaClass.simpleName} health check errors were filtered out")
+        }
+
+        if (errorsToReport.isEmpty()) return
+
+        val summary = errorsToReport
           .groupBy { it::class.java }
           .entries.joinToString("\n") { (clazz, e) ->
             "${e.size} ${clazz.simpleName} errors. Examples:\n" + e.take(10).joinToString("\n") { error ->
@@ -149,7 +158,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
             }
           }
 
-        FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errors!!.size} errors in project ${project.name}:\n$summary")
+        FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errorsToReport.size} errors in project ${project.name}:\n$summary")
       }
     }
     catch (_: ProcessCanceledException) {
