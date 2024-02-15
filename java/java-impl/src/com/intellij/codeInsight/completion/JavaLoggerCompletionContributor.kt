@@ -10,10 +10,8 @@ import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.JavaTokenType
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiExpressionStatement
-import com.intellij.psi.PsiJavaToken
+import com.intellij.psi.*
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ProcessingContext
 
 class JavaLoggerCompletionContributor : CompletionContributor() {
@@ -58,7 +56,23 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
         .withInsertHandler { insertionContext, _ ->
           val loggerText = logger.createLogger(project, place) ?: return@withInsertHandler
           logger.insertLoggerAtClass(insertionContext.project, place, loggerText)
+          replaceWithStaticReferenceIfCollisions(project, insertionContext, place)
         },
       logger.loggerTypeName
     )
+
+  private fun replaceWithStaticReferenceIfCollisions(project: Project,
+                                                     insertionContext: InsertionContext,
+                                                     place: PsiClass) {
+    val file = insertionContext.file
+    val element = file.findElementAt(insertionContext.startOffset)?.parentOfType<PsiReferenceExpression>(false) ?: return
+    val resolved = element.resolve() as? PsiField
+    val containingClass = resolved?.containingClass
+    if (resolved == null || !PsiManager.getInstance(project).areElementsEquivalent(place, containingClass)) {
+      val factory = JavaPsiFacade.getElementFactory(project)
+      val className = place.qualifiedName ?: return
+      val staticRefExpression = factory.createExpressionFromText("$className.${JvmLoggerFieldDelegate.LOGGER_IDENTIFIER}", place)
+      element.replace(staticRefExpression)
+    }
+  }
 }
