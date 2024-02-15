@@ -2,6 +2,7 @@ package com.intellij.java.lomboktest
 
 import com.intellij.codeInsight.generation.GenerateLoggerHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
+import com.intellij.java.codeInsight.JvmLoggerTestSetupUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightProjectDescriptor
@@ -15,42 +16,25 @@ class LombokGenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = "community/plugins/lombok/testData/intention/generateLogger"
 
   fun testSlf4j() {
-    myFixture.addClass("""
-      package org.slf4j;
-
-      interface Logger {}
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
 
     doTest()
   }
 
   fun testLog4j() {
-    myFixture.addClass("""
-      package org.apache.log4j;
-
-      interface Logger {}
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupLog4j(myFixture)
 
     doTest()
   }
 
   fun testLog4j2() {
-    myFixture.addClass("""
-      package org.apache.logging.log4j;
-
-      interface Logger {}
-    """.trimIndent())
+    JvmLoggerTestSetupUtil.setupLog4j2(myFixture)
 
     doTest()
   }
 
   fun testApacheCommons() {
-    myFixture.addClass("""
-    package org.apache.commons.logging;
-
-    interface Log {
-    }
-  """.trimIndent())
+    JvmLoggerTestSetupUtil.setupApacheCommons(myFixture)
 
     doTest("Lombok Apache Commons Logging")
   }
