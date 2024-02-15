@@ -173,6 +173,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/typeAliasActualization2.kt"));
         }
 
+        @TestMetadata("UnitAsTypeAliasActualization.kt")
+        public void testUnitAsTypeAliasActualization() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/UnitAsTypeAliasActualization.kt"));
+        }
+
         @TestMetadata("unresolvedQuialifierInAnnotation.kt")
         public void testUnresolvedQuialifierInAnnotation() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/unresolvedQuialifierInAnnotation.kt"));
@@ -735,6 +740,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("TypePararametersInClass.kt")
         public void testTypePararametersInClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/TypePararametersInClass.kt"));
+        }
+
+        @TestMetadata("UnitAsTypeAlias.kt")
+        public void testUnitAsTypeAlias() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/UnitAsTypeAlias.kt"));
         }
 
         @TestMetadata("ValueClassInParametersWithJvmName.kt")

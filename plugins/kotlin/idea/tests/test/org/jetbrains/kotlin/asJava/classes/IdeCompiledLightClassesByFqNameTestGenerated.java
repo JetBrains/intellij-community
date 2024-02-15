@@ -495,6 +495,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/TypePararametersInClass.kt"));
         }
 
+        @TestMetadata("UnitAsTypeAlias.kt")
+        public void testUnitAsTypeAlias() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/UnitAsTypeAlias.kt"));
+        }
+
         @TestMetadata("ValueClassInParametersWithJvmName.kt")
         public void testValueClassInParametersWithJvmName() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ValueClassInParametersWithJvmName.kt"));
