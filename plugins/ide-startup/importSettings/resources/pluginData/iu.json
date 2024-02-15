@@ -27,8 +27,7 @@
   {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "bajdzis.vscode-database",
@@ -48,8 +47,7 @@
   {
     "vsCodeId": "bungcip.better-toml",
     "ideaName": "Toml",
-    "ideaId": "org.toml.lang",
-    "builtIn": true
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "codezombiech.gitignore",
@@ -59,8 +57,7 @@
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "Dart-Code.dart-code",
@@ -93,10 +90,6 @@
     "ideaId": "PythonCore"
   },
   {
-    "vsCodeId": "donjayamanne.python-extension-pack",
-    "ideaName": "Python Extension Pack"
-  },
-  {
     "vsCodeId": "dustypomerleau.rust-syntax",
     "ideaName": "Rust",
     "ideaId": "com.jetbrains.rust"
@@ -119,8 +112,7 @@
   {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "builtIn": true
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "eg2.vscode-npm-script",
@@ -130,8 +122,7 @@
   {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS",
-    "builtIn": true
+    "ideaId": "intellij.prettierJS"
   },
   {
     "vsCodeId": "formulahendry.auto-close-tag",
@@ -151,8 +142,7 @@
   {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "georgewfraser.vscode-javac",
@@ -207,23 +197,17 @@
   {
     "vsCodeId": "ipedrazas.kubernetes-snippets",
     "ideaName": "Kubernetes",
-    "ideaId": "com.intellij.kubernetes",
-    "builtIn": true
+    "ideaId": "com.intellij.kubernetes"
   },
   {
     "vsCodeId": "jcbuisson.vue",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "JScearcy.rust-doc-viewer",
     "ideaName": "Rust",
     "ideaId": "com.jetbrains.rust"
-  },
-  {
-    "vsCodeId": "KevinRose.vsc-python-indent",
-    "ideaName": "Python Indent"
   },
   {
     "vsCodeId": "kumar-harsh.graphql-for-vscode",
@@ -233,12 +217,7 @@
   {
     "vsCodeId": "liximomo.sftp",
     "ideaName": "FTP/SFTP/WebDAV Connectivity",
-    "ideaId": "com.jetbrains.plugins.webDeployment",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "magicstack.MagicPython",
-    "ideaName": "MagicPython"
+    "ideaId": "com.jetbrains.plugins.webDeployment"
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
@@ -248,36 +227,27 @@
   {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "mrmlnc.vscode-scss",
     "ideaName": "Sass",
-    "ideaId": "org.jetbrains.plugins.sass",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.sass"
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
-    "ideaId": "com.intellij.kubernetes",
-    "builtIn": true
+    "ideaId": "com.intellij.kubernetes"
   },
   {
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-python.black-formatter",
-    "ideaName": "Black Formatter"
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "ms-python.isort",
@@ -297,8 +267,7 @@
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.docker.gateway"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -318,14 +287,12 @@
   {
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
     "ideaName": "TSLint",
-    "ideaId": "tslint",
-    "builtIn": true
+    "ideaId": "tslint"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
@@ -335,8 +302,7 @@
   {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "oderwat.indent-rainbow",
@@ -356,14 +322,12 @@
   {
     "vsCodeId": "redhat.vscode-quarkus",
     "ideaName": "Quarkus",
-    "ideaId": "com.intellij.quarkus",
-    "builtIn": true
+    "ideaId": "com.intellij.quarkus"
   },
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
@@ -393,8 +357,7 @@
   {
     "vsCodeId": "svelte.svelte-vscode",
     "ideaName": "Svelte",
-    "ideaId": "dev.blachut.svelte.lang",
-    "builtIn": true
+    "ideaId": "dev.blachut.svelte.lang"
   },
   {
     "vsCodeId": "swellaby.rust-pack",
@@ -424,20 +387,17 @@
   {
     "vsCodeId": "vmware.vscode-boot-dev-pack",
     "ideaName": "Spring Boot",
-    "ideaId": "com.intellij.spring.boot",
-    "builtIn": true
+    "ideaId": "com.intellij.spring.boot"
   },
   {
     "vsCodeId": "vmware.vscode-spring-boot",
     "ideaName": "Spring Boot",
-    "ideaId": "com.intellij.spring.boot",
-    "builtIn": true
+    "ideaId": "com.intellij.spring.boot"
   },
   {
     "vsCodeId": "vscjava.vscode-gradle",
     "ideaName": "Gradle",
-    "ideaId": "com.intellij.gradle",
-    "builtIn": true
+    "ideaId": "com.intellij.gradle"
   },
   {
     "vsCodeId": "vscjava.vscode-java-debug",
@@ -462,8 +422,7 @@
   {
     "vsCodeId": "vscjava.vscode-lombok",
     "ideaName": "Lombok",
-    "ideaId": "Lombook Plugin",
-    "builtIn": true
+    "ideaId": "Lombook Plugin"
   },
   {
     "vsCodeId": "vscjava.vscode-maven",
@@ -473,14 +432,12 @@
   {
     "vsCodeId": "vscjava.vscode-spring-boot-dashboard",
     "ideaName": "Spring Boot",
-    "ideaId": "com.intellij.spring.boot",
-    "builtIn": true
+    "ideaId": "com.intellij.spring.boot"
   },
   {
     "vsCodeId": "vscjava.vscode-spring-initializr",
     "ideaName": "Spring Initializr",
-    "ideaId": "com.intellij.spring.boot.initializr",
-    "builtIn": true
+    "ideaId": "com.intellij.spring.boot.initializr"
   },
   {
     "vsCodeId": "vscodevim.vim",
@@ -510,13 +467,11 @@
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   },
   {
     "vsCodeId": "zxh404.vscode-proto3",
     "ideaName": "Protocol Buffers",
-    "ideaId": "idea.plugin.protoeditor",
-    "builtIn": true
+    "ideaId": "idea.plugin.protoeditor"
   }
 ]

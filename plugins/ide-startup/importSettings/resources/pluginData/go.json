@@ -110,10 +110,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "codezombiech.gitignore",
-    "ideaName": "gitignore"
-  },
-  {
     "vsCodeId": "csstools.postcss",
     "ideaName": "PostCSS",
     "ideaId": "org.intellij.plugins.postcss"
@@ -121,8 +117,7 @@
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "cweijan.vscode-redis-client",
@@ -192,8 +187,7 @@
   {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "builtIn": true
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "eg2.vscode-npm-script",
@@ -233,8 +227,7 @@
   {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "foxundermoon.next-js",
@@ -264,8 +257,7 @@
   {
     "vsCodeId": "golang.Go",
     "ideaName": "Go",
-    "ideaId": "org.jetbrains.plugins.go",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.go"
   },
   {
     "vsCodeId": "GoogleCloudTools.cloudcode",
@@ -330,8 +322,7 @@
   {
     "vsCodeId": "liximomo.sftp",
     "ideaName": "FTP/SFTP/WebDAV Connectivity",
-    "ideaId": "com.jetbrains.plugins.webDeployment",
-    "builtIn": true
+    "ideaId": "com.jetbrains.plugins.webDeployment"
   },
   {
     "vsCodeId": "mechatroner.rainbow-csv",
@@ -351,8 +342,7 @@
   {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "monokai.theme-monokai-pro-vscode",
@@ -362,12 +352,7 @@
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code"
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
@@ -392,8 +377,7 @@
   {
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "ms-mssql.sql-database-projects-vscode",
@@ -406,10 +390,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "ms-python.black-formatter",
-    "ideaName": "Black Formatter"
-  },
-  {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
     "ideaId": "Pythonid"
@@ -417,8 +397,7 @@
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.docker.gateway"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -463,14 +442,12 @@
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "msjsdiag.vscode-react-native",
     "ideaName": "JavaScript Debugger",
-    "ideaId": "JavaScriptDebugger",
-    "builtIn": true
+    "ideaId": "JavaScriptDebugger"
   },
   {
     "vsCodeId": "mskelton.one-dark-theme",
@@ -550,14 +527,12 @@
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "ritwickdey.live-sass",
     "ideaName": "File Watchers",
-    "ideaId": "com.intellij.plugins.watcher",
-    "builtIn": true
+    "ideaId": "com.intellij.plugins.watcher"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
@@ -583,10 +558,6 @@
     "vsCodeId": "SonarSource.sonarlint-vscode",
     "ideaName": "SonarLint",
     "ideaId": "org.sonarlint.idea"
-  },
-  {
-    "vsCodeId": "streetsidesoftware.code-spell-checker",
-    "ideaName": "Code Spell Checker"
   },
   {
     "vsCodeId": "svelte.svelte-vscode",
@@ -676,13 +647,11 @@
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   },
   {
     "vsCodeId": "zxh404.vscode-proto3",
     "ideaName": "Protocol Buffers",
-    "ideaId": "idea.plugin.protoeditor",
-    "builtIn": true
+    "ideaId": "idea.plugin.protoeditor"
   }
 ]

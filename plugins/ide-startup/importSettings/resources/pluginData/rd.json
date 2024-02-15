@@ -47,8 +47,7 @@
   {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "austin.code-gnu-global",
@@ -78,8 +77,7 @@
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "Dart-Code.dart-code",
@@ -134,8 +132,7 @@
   {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "builtIn": true
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "eg2.vscode-npm-script",
@@ -145,8 +142,7 @@
   {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS",
-    "builtIn": true
+    "ideaId": "intellij.prettierJS"
   },
   {
     "vsCodeId": "fernandoescolar.vscode-solution-explorer",
@@ -181,8 +177,7 @@
   {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "fudge.auto-using",
@@ -192,8 +187,7 @@
   {
     "vsCodeId": "GitHub.github-vscode-theme",
     "ideaName": "GitHub Theme",
-    "ideaId": "club.nutsoft.Github3Theme",
-    "builtIn": true
+    "ideaId": "club.nutsoft.Github3Theme"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -227,7 +221,7 @@
   },
   {
     "vsCodeId": "jchannon.csharpextensions",
-    "ideaName": "C# Extensions",
+    "ideaName": "C#",
     "builtIn": true
   },
   {
@@ -237,28 +231,27 @@
   },
   {
     "vsCodeId": "jmrog.vscode-nuget-package-manager",
-    "ideaName": "NuGet",
+    "ideaName": "NuGet Package Manager",
     "builtIn": true
   },
   {
     "vsCodeId": "johnpapa.Angular2",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
-    "ideaName": "C# Snippets",
+    "ideaName": "Live Templates",
     "builtIn": true
   },
   {
     "vsCodeId": "k--kato.docomment",
-    "ideaName": "C# XML Documentation Comments",
+    "ideaName": "C#",
     "builtIn": true
   },
   {
     "vsCodeId": "kleber-swf.unity-code-snippets",
-    "ideaName": "Unity Code Snippets",
+    "ideaName": "Unity",
     "builtIn": true
   },
   {
@@ -274,30 +267,22 @@
   {
     "vsCodeId": "mikestead.dotenv",
     "ideaName": ".env files support",
-    "ideaId": "ru.adelf.idea.dotenv",
-    "builtIn": true
+    "ideaId": "ru.adelf.idea.dotenv"
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "mrmlnc.vscode-scss",
     "ideaName": "Sass",
-    "ideaId": "org.jetbrains.plugins.sass",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.sass"
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code"
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
@@ -311,7 +296,7 @@
   },
   {
     "vsCodeId": "ms-dotnettools.csdevkit",
-    "ideaName": "C#",
+    "ideaName": "C# Dev Kit",
     "builtIn": true
   },
   {
@@ -337,8 +322,7 @@
   {
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "ms-python.python",
@@ -348,8 +332,7 @@
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.docker.gateway"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -384,8 +367,7 @@
   {
     "vsCodeId": "ms-vscode.PowerShell",
     "ideaName": "PowerShell",
-    "ideaId": "com.intellij.plugin.adernov.powershell",
-    "builtIn": true
+    "ideaId": "com.intellij.plugin.adernov.powershell"
   },
   {
     "vsCodeId": "ms-vscode.remote-explorer",
@@ -400,14 +382,12 @@
   {
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
     "ideaName": "TSLint",
-    "ideaId": "tslint",
-    "builtIn": true
+    "ideaId": "tslint"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
@@ -432,8 +412,7 @@
   {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "oderwat.indent-rainbow",
@@ -453,8 +432,7 @@
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
@@ -524,8 +502,7 @@
   {
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "YclepticStudios.unity-snippets",
@@ -545,7 +522,6 @@
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   }
 ]

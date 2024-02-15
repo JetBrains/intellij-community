@@ -12,8 +12,7 @@
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "donjayamanne.githistory",
@@ -33,8 +32,7 @@
   {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -59,8 +57,7 @@
   {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
@@ -70,7 +67,6 @@
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   }
 ]

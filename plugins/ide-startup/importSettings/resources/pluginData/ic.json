@@ -17,8 +17,7 @@
   {
     "vsCodeId": "bungcip.better-toml",
     "ideaName": "Toml",
-    "ideaId": "org.toml.lang",
-    "builtIn": true
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "codezombiech.gitignore",
@@ -47,7 +46,7 @@
   },
   {
     "vsCodeId": "donjayamanne.javadebugger",
-    "ideaName": "Debugger",
+    "ideaName": "Java Debugger",
     "builtIn": true
   },
   {
@@ -63,8 +62,7 @@
   {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "builtIn": true
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "formulahendry.auto-rename-tag",
@@ -123,17 +121,13 @@
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
-    "ideaName": "Kotlin Language",
+    "ideaName": "Kotlin",
     "builtIn": true
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
-  },
-  {
-    "vsCodeId": "ms-python.black-formatter",
-    "ideaName": "Black Formatter"
   },
   {
     "vsCodeId": "ms-python.python",
@@ -143,8 +137,7 @@
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.docker.gateway"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -159,8 +152,7 @@
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "oderwat.indent-rainbow",
@@ -168,19 +160,14 @@
     "ideaId": "indent-rainbow.indent-rainbow"
   },
   {
-    "vsCodeId": "onecentlin.laravel-blade",
-    "ideaName": "Laravel Blade Snippets"
-  },
-  {
     "vsCodeId": "redhat.java",
-    "ideaName": "Language Support for Java(TM) by Red Hat",
+    "ideaName": "Java",
     "builtIn": true
   },
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
@@ -215,7 +202,7 @@
   {
     "vsCodeId": "vscjava.vscode-gradle",
     "ideaName": "Gradle",
-    "builtIn": true
+    "ideaId": "com.intellij.gradle"
   },
   {
     "vsCodeId": "vscjava.vscode-java-debug",
@@ -244,7 +231,7 @@
   },
   {
     "vsCodeId": "vscjava.vscode-maven",
-    "ideaName": "Maven for Java",
+    "ideaName": "Maven",
     "builtIn": true
   },
   {

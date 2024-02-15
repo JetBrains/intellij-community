@@ -27,8 +27,7 @@
   {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "austin.code-gnu-global",
@@ -43,8 +42,7 @@
   {
     "vsCodeId": "bungcip.better-toml",
     "ideaName": "Toml",
-    "ideaId": "org.toml.lang",
-    "builtIn": true
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "christian-kohler.path-intellisense",
@@ -59,8 +57,7 @@
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "danielpinto8zz6.c-cpp-compile-run",
@@ -85,8 +82,7 @@
   {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "DotJoshJohnson.xml",
@@ -119,10 +115,6 @@
     "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
-    "vsCodeId": "eg2.vscode-npm-script",
-    "ideaName": "npm"
-  },
-  {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
     "ideaId": "intellij.prettierJS"
@@ -145,8 +137,7 @@
   {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "GitHub.codespaces",
@@ -221,8 +212,7 @@
   {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "monokai.theme-monokai-pro-vscode",
@@ -232,18 +222,12 @@
   {
     "vsCodeId": "mrmlnc.vscode-scss",
     "ideaName": "Sass",
-    "ideaId": "org.jetbrains.plugins.sass",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.sass"
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code"
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
@@ -263,20 +247,17 @@
   {
     "vsCodeId": "ms-python.isort",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
     "ideaName": "Dev Containers",
-    "ideaId": "org.jetbrains.plugins.docker.gateway",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.docker.gateway"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -341,8 +322,7 @@
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
@@ -382,8 +362,7 @@
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
@@ -428,8 +407,7 @@
   {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "twxs.cmake",
@@ -459,8 +437,7 @@
   {
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "WallabyJs.quokka-vscode",
@@ -470,8 +447,7 @@
   {
     "vsCodeId": "wholroyd.jinja",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",
@@ -486,7 +462,6 @@
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   }
 ]

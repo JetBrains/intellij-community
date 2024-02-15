@@ -22,8 +22,7 @@
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "dbaeumer.vscode-eslint",
@@ -53,8 +52,7 @@
   {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS",
-    "builtIn": true
+    "ideaId": "intellij.prettierJS"
   },
   {
     "vsCodeId": "formulahendry.auto-close-tag",
@@ -74,8 +72,7 @@
   {
     "vsCodeId": "formulahendry.vscode-mysql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -105,20 +102,17 @@
   {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "mrmlnc.vscode-scss",
     "ideaName": "Sass",
-    "ideaId": "org.jetbrains.plugins.sass",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.sass"
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
@@ -138,8 +132,7 @@
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
@@ -149,8 +142,7 @@
   {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "oderwat.indent-rainbow",
@@ -175,8 +167,7 @@
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "rifi2k.format-html-in-php",
@@ -191,8 +182,7 @@
   {
     "vsCodeId": "svelte.svelte-vscode",
     "ideaName": "Svelte",
-    "ideaId": "dev.blachut.svelte.lang",
-    "builtIn": true
+    "ideaId": "dev.blachut.svelte.lang"
   },
   {
     "vsCodeId": "Tyriar.sort-lines",
@@ -202,20 +192,17 @@
   {
     "vsCodeId": "xdebug.php-debug",
     "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   },
   {
     "vsCodeId": "xdebug.php-pack",
     "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   },
   {
     "vsCodeId": "zobo.php-intellisense",

@@ -32,8 +32,7 @@
   {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "dracula-theme.theme-dracula",
@@ -53,8 +52,7 @@
   {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "builtIn": true
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "Equinusocio.vsc-material-theme-icons",
@@ -132,10 +130,6 @@
     "ideaId": "Docker"
   },
   {
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code"
-  },
-  {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
     "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
     "ideaId": "com.intellij.zh"
@@ -148,8 +142,7 @@
   {
     "vsCodeId": "ms-python.isort",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-python.pylint",
@@ -159,7 +152,7 @@
   {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
-    "ideaId": "com.intellij.python"
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "ms-vscode.PowerShell",
@@ -169,8 +162,7 @@
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "njpwerner.autodocstring",
@@ -208,8 +200,9 @@
     "ideaId": "com.tabnine.TabNine"
   },
   {
-    "vsCodeId": "thebarkman.vscode-djaneiro",
-    "ideaName": "Djaneiro - Django Snippets"
+    "vsCodeId": "techer.open-in-browser",
+    "ideaName": "open in browser",
+    "builtIn": true
   },
   {
     "vsCodeId": "thekalinga.bootstrap4-vscode",
@@ -219,8 +212,7 @@
   {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "Tyriar.sort-lines",

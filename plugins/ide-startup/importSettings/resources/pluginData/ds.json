@@ -12,14 +12,12 @@
   {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "batisteo.vscode-django",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "be5invis.toml",
@@ -54,8 +52,7 @@
   {
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "dracula-theme.theme-dracula",
@@ -75,8 +72,7 @@
   {
     "vsCodeId": "EditorConfig.EditorConfig",
     "ideaName": "EditorConfig",
-    "ideaId": "org.editorconfig.editorconfigjetbrains",
-    "builtIn": true
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "eg2.vscode-npm-script",
@@ -91,8 +87,7 @@
   {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS",
-    "builtIn": true
+    "ideaId": "intellij.prettierJS"
   },
   {
     "vsCodeId": "formulahendry.auto-close-tag",
@@ -157,8 +152,7 @@
   {
     "vsCodeId": "hollowtree.vue-snippets",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "humao.rest-client",
@@ -173,8 +167,7 @@
   {
     "vsCodeId": "johnpapa.Angular2",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "KevinRose.vsc-python-indent",
@@ -204,12 +197,7 @@
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code"
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
@@ -224,8 +212,7 @@
   {
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
-    "ideaId": "com.intellij.database",
-    "builtIn": true
+    "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "ms-python.black-formatter",
@@ -235,8 +222,7 @@
   {
     "vsCodeId": "ms-python.isort",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-python.pylint",
@@ -246,14 +232,12 @@
   {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "ms-toolsai.jupyter",
     "ideaName": "Jupyter",
-    "ideaId": "intellij.jupyter",
-    "builtIn": true
+    "ideaId": "intellij.jupyter"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -293,20 +277,17 @@
   {
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
     "ideaName": "TSLint",
-    "ideaId": "tslint",
-    "builtIn": true
+    "ideaId": "tslint"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "msjsdiag.vscode-react-native",
     "ideaName": "JavaScript Debugger",
-    "ideaId": "JavaScriptDebugger",
-    "builtIn": true
+    "ideaId": "JavaScriptDebugger"
   },
   {
     "vsCodeId": "mtxr.sqltools",
@@ -326,8 +307,7 @@
   {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "oderwat.indent-rainbow",
@@ -347,8 +327,7 @@
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
@@ -386,10 +365,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "thebarkman.vscode-djaneiro",
-    "ideaName": "Djaneiro - Django Snippets"
-  },
-  {
     "vsCodeId": "thekalinga.bootstrap4-vscode",
     "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
     "ideaId": "in.thekalinga.snippet.intellij"
@@ -397,8 +372,7 @@
   {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
-    "ideaId": "PythonCore",
-    "builtIn": true
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "Tyriar.sort-lines",
@@ -413,8 +387,7 @@
   {
     "vsCodeId": "wholroyd.jinja",
     "ideaName": "Python",
-    "ideaId": "Pythonid",
-    "builtIn": true
+    "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",
@@ -429,7 +402,6 @@
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   }
 ]

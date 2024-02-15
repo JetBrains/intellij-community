@@ -10,10 +10,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "adpyke.vscode-sql-formatter",
-    "ideaName": "SQL Formatter"
-  },
-  {
     "vsCodeId": "akamud.vscode-theme-onedark",
     "ideaName": "Atom OneDark Theme",
     "ideaId": "github.cweijan.test-theme"
@@ -21,18 +17,12 @@
   {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "bajdzis.vscode-database",
-    "ideaName": "vscode-database"
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "bradlc.vscode-tailwindcss",
     "ideaName": "Tailwind CSS",
-    "ideaId": "com.intellij.tailwindcss",
-    "builtIn": true
+    "ideaId": "com.intellij.tailwindcss"
   },
   {
     "vsCodeId": "christian-kohler.npm-intellisense",
@@ -87,8 +77,7 @@
   {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
-    "ideaId": "intellij.prettierJS",
-    "builtIn": true
+    "ideaId": "intellij.prettierJS"
   },
   {
     "vsCodeId": "formulahendry.auto-close-tag",
@@ -138,20 +127,17 @@
   {
     "vsCodeId": "hollowtree.vue-snippets",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "jcbuisson.vue",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "johnpapa.Angular2",
     "ideaName": "Angular and AngularJS",
-    "ideaId": "AngularJS",
-    "builtIn": true
+    "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
@@ -161,18 +147,12 @@
   {
     "vsCodeId": "mrmlnc.vscode-scss",
     "ideaName": "Sass",
-    "ideaId": "org.jetbrains.plugins.sass",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.sass"
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
-    "ideaId": "Docker",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
-    "ideaName": "Japanese Language Pack for Visual Studio Code"
+    "ideaId": "Docker"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
@@ -188,10 +168,6 @@
     "vsCodeId": "ms-mssql.mssql",
     "ideaName": "Database Tools and SQL for WebStorm",
     "ideaId": "com.intellij.database"
-  },
-  {
-    "vsCodeId": "ms-mssql.sql-database-projects-vscode",
-    "ideaName": "SQL Database Projects"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -216,30 +192,22 @@
   {
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
     "ideaName": "TSLint",
-    "ideaId": "tslint",
-    "builtIn": true
+    "ideaId": "tslint"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
-    "ideaId": "com.jetbrains.codeWithMe",
-    "builtIn": true
+    "ideaId": "com.jetbrains.codeWithMe"
   },
   {
     "vsCodeId": "msjsdiag.vscode-react-native",
     "ideaName": "JavaScript Debugger",
-    "ideaId": "JavaScriptDebugger",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "mtxr.sqltools-driver-mysql",
-    "ideaName": "SQLTools MySQL/MariaDB/TiDB"
+    "ideaId": "JavaScriptDebugger"
   },
   {
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "oderwat.indent-rainbow",
@@ -264,14 +232,12 @@
   {
     "vsCodeId": "redhat.vscode-yaml",
     "ideaName": "YAML",
-    "ideaId": "org.jetbrains.plugins.yaml",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.yaml"
   },
   {
     "vsCodeId": "ritwickdey.live-sass",
     "ideaName": "File Watchers",
-    "ideaId": "com.intellij.plugins.watcher",
-    "builtIn": true
+    "ideaId": "com.intellij.plugins.watcher"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
@@ -281,8 +247,7 @@
   {
     "vsCodeId": "sdras.vue-vscode-snippets",
     "ideaName": "Vue.js",
-    "ideaId": "org.jetbrains.plugins.vue",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.vue"
   },
   {
     "vsCodeId": "shd101wyy.markdown-preview-enhanced",
@@ -292,14 +257,12 @@
   {
     "vsCodeId": "svelte.svelte-vscode",
     "ideaName": "Svelte",
-    "ideaId": "dev.blachut.svelte.lang",
-    "builtIn": true
+    "ideaId": "dev.blachut.svelte.lang"
   },
   {
     "vsCodeId": "Syler.sass-indented",
     "ideaName": "Sass",
-    "ideaId": "org.jetbrains.plugins.sass",
-    "builtIn": true
+    "ideaId": "org.jetbrains.plugins.sass"
   },
   {
     "vsCodeId": "techer.open-in-browser",
@@ -324,7 +287,6 @@
   {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
-    "ideaId": "com.intellij.css",
-    "builtIn": true
+    "ideaId": "com.intellij.css"
   }
 ]
