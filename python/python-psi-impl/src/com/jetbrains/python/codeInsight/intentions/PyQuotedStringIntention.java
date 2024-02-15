@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -17,8 +15,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -26,17 +22,25 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Intention to convert between single-quoted and double-quoted strings
  */
 public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<PsiElement> {
-  PyQuotedStringIntention() {
+  public PyQuotedStringIntention() {
     super(PsiElement.class);
   }
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
-    if (!isAvailable(context.file(), element)) return null;
+    if (!(context.file() instanceof PyFile)) {
+      return null;
+    }
 
-    PyStringElement stringElement = Objects.requireNonNull(findConvertibleStringElementUnderCaret(element));
+    PyStringElement stringElement = findConvertibleStringElementUnderCaret(element);
+    if (stringElement == null) return null;
+    PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
+    if (stringLiteral == null) return null;
+
+    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteral, PyDocStringOwner.class);
+    if (docStringOwner != null && docStringOwner.getDocStringExpression() == stringLiteral) return null;
+
     String currentQuote = stringElement.getQuote();
-
     if (currentQuote.equals("'")) {
       return Presentation.of(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
     }
@@ -63,42 +67,30 @@ public final class PyQuotedStringIntention extends PsiUpdateModCommandAction<Psi
   protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false, PyExpression.class);
     if (stringElement == null) return;
-    changeQuotesInString(stringElement);
-  }
-
-  public static boolean isAvailable(@NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement elementUnderCaret = file.findElementAt(editor.getCaretModel().getOffset());
-    if (elementUnderCaret == null) return false;
-    return isAvailable(file, elementUnderCaret);
-  }
-
-  private static boolean isAvailable(@NotNull PsiFile file, @NotNull PsiElement element) {
-    if (!(file instanceof PyFile)) return false;
-
-    PyStringElement stringElement = findConvertibleStringElementUnderCaret(element);
-    if (stringElement == null) return false;
-    PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
-    if (stringLiteral == null) return false;
-
-    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteral, PyDocStringOwner.class);
-    if (docStringOwner != null && docStringOwner.getDocStringExpression() == stringLiteral) return false;
-    return true;
-  }
-
-  public static void changeQuotesInString(@NotNull PyStringElement stringElement) {
     PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
     if (stringLiteral == null) return;
 
     String originalQuote = stringElement.getQuote();
     boolean entireLiteralCanBeConverted = ContainerUtil.all(stringLiteral.getStringElements(),
-                                                            s -> s.getQuote().equals(originalQuote) &&
-                                                                 PyQuotesUtil.canBeConverted(s, true));
+                                                            s -> s.getQuote().equals(originalQuote) && PyQuotesUtil.canBeConverted(s, true));
     if (entireLiteralCanBeConverted) {
       stringLiteral.getStringElements().forEach(PyQuotedStringIntention::convertStringElement);
     }
     else {
       convertStringElement(stringElement);
     }
+  }
+
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
+    Presentation presentation = getPresentation(ActionContext.from(editor, file));
+    return presentation != null;
+  }
+
+  public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
+    ActionContext context = ActionContext.from(editor, file);
+    ModCommand command = perform(context);
+    ModCommandExecutor instance = ModCommandExecutor.getInstance();
+    instance.executeInteractively(context, command, editor);
   }
 
   private static void convertStringElement(@NotNull PyStringElement stringElement) {
