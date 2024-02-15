@@ -145,9 +145,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull IntentionContainer cachedIntentions) {
-    IntentionPopupProvider provider = IntentionPopupProvider.Companion.getProvider();
-    AbstractIntentionPopup popup = provider != null ? provider.createPopup(editor, file, project)
-                                                    : new IntentionPopup(project, file, editor, cachedIntentions);
+    AbstractIntentionPopup popup = IntentionPopupProvider.Companion.createPopup(editor, file, project);
+    if(popup == null) {
+      popup = new IntentionPopup(project, file, editor, cachedIntentions);
+    }
     return showIntentionHint(project, file, editor, showExpanded, LightBulbUtil.getIcon(cachedIntentions), popup);
   }
 

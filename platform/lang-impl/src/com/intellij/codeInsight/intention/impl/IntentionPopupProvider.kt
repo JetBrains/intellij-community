@@ -10,10 +10,10 @@ public interface IntentionPopupProvider {
   companion object {
     val EP_NAME = ExtensionPointName.create<IntentionPopupProvider>("com.intellij.intentionPopupProvider")
 
-    fun getProvider(): IntentionPopupProvider? {
-      return EP_NAME.extensionList.firstOrNull()
+    fun createPopup(editor: Editor, file: PsiFile, project: Project): AbstractIntentionPopup? {
+      return EP_NAME.extensionList.firstNotNullOfOrNull { it.createPopup(editor, file, project) }
     }
   }
 
-  fun createPopup(editor: Editor, file: PsiFile, project: Project): AbstractIntentionPopup
+  fun createPopup(editor: Editor, file: PsiFile, project: Project): AbstractIntentionPopup?
 }
