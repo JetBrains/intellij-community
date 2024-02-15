@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.util.paths;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +51,13 @@ public class RootDirtySet {
 
     int startIndex = getParentPrefixOf(myRoot, path, myCaseSensitive);
     if (startIndex == -1) {
-      LOG.error(new Throwable(String.format("Invalid dirty path for root %s: %s", myRoot, path)));
+      if (ApplicationManager.getApplication().isInternal()) {
+        LOG.error(new Throwable(String.format("Invalid dirty path for root %s: %s", myRoot, path)));
+      }
+      else {
+        LOG.warn(new Throwable(String.format("Invalid dirty path for root %s: %s", myRoot, path)));
+      }
+      markEverythingDirty();
       return;
     }
 
