@@ -33,8 +33,8 @@ internal class GenerateTableOfContentsAction: AnAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val file = event.getRequiredData(CommonDataKeys.PSI_FILE) as MarkdownFile
-    val editor = event.getRequiredData(CommonDataKeys.EDITOR)
+    val file = event.getData(CommonDataKeys.PSI_FILE) as? MarkdownFile ?: return
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val content = Manager.obtainToc(file)
     val caretOffset = editor.caretModel.primaryCaret.offset
     val project = event.getData(CommonDataKeys.PROJECT)

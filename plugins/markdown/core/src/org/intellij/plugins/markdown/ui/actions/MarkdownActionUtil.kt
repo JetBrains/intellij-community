@@ -61,12 +61,6 @@ object MarkdownActionUtil {
     }
   }
 
-  @JvmStatic
-  fun findRequiredMarkdownEditor(event: AnActionEvent): Editor {
-    val editor = findMarkdownEditor(event)
-    return checkNotNull(editor) { "Markdown editor was expected to be found in data context" }
-  }
-
   @RequiresEdt
   @JvmStatic
   fun getElementsUnderCaretOrSelection(file: PsiFile, caret: Caret): Pair<PsiElement, PsiElement> {

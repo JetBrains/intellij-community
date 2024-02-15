@@ -70,9 +70,11 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final var editor = MarkdownActionUtil.findRequiredMarkdownEditor(event);
-    final var psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
-    final var commandName = getTemplatePresentation().getText();
+    var editor = MarkdownActionUtil.findMarkdownEditor(event);
+    if (editor == null) return;
+    var psiFile = event.getData(CommonDataKeys.PSI_FILE);
+    if (psiFile == null) return;
+    var commandName = getTemplatePresentation().getText();
     WriteCommandAction.runWriteCommandAction(psiFile.getProject(), commandName, null, () -> {
       if (!psiFile.isValid()) {
         return;
