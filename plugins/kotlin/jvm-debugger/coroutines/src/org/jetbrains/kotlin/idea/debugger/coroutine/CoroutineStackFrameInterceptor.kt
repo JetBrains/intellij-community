@@ -152,6 +152,9 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
         activeExecutionStack?.threadProxy?.frame(0) ?: this.frameProxy
 
     private data class ContinuationIdFilter(val coroutinesRunningOnCurrentThread: Set<Long>) : ContinuationFilter {
+        init {
+            require(coroutinesRunningOnCurrentThread.isNotEmpty()) { "Coroutines set can not be empty" }
+        }
         override fun canRunTo(nextContinuationFilter: ContinuationFilter): Boolean {
             return nextContinuationFilter is ContinuationIdFilter && 
                     coroutinesRunningOnCurrentThread.intersect(nextContinuationFilter.coroutinesRunningOnCurrentThread).isNotEmpty()
