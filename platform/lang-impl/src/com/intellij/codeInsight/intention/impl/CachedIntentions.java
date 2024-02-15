@@ -33,7 +33,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,13 +177,12 @@ public final class CachedIntentions implements IntentionContainer {
     int order = 0;
     for (AnAction action : actions) {
       Presentation presentation = presentationFactory.getPresentation(action);
-      Icon icon = ObjectUtils.notNull(presentation.getIcon(), EmptyIcon.ICON_16);
-      String text = presentation.getText();
-      if (StringUtil.isEmpty(text)) continue;
-      IntentionAction intentionAction = new GutterIntentionAction(action, order++, icon, text);
+      if (StringUtil.isEmpty(presentation.getText())) continue;
+      GutterIntentionAction intentionAction = new GutterIntentionAction(action, order++);
+      intentionAction.updateFromPresentation(presentation);
       if (!filter.test(intentionAction)) continue;
       HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(
-        intentionAction, Collections.emptyList(), text, icon, null, null, null);
+        intentionAction, Collections.emptyList(), intentionAction.getText(), intentionAction.getIcon(0), null, null, null);
       descriptors.add(descriptor);
     }
     wrapActionsTo(descriptors, myGutters, false);

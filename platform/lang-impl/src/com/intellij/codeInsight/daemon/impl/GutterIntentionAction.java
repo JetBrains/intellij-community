@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +14,8 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,32 +26,35 @@ import java.util.function.Supplier;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
-                                                                                    PriorityAction {
-  private final @NotNull Supplier<? extends AnAction> myActionSupplier;
-  private final int myOrder;
-  private final Icon myIcon;
-  private final @IntentionName String myText;
+@ApiStatus.Internal
+public class GutterIntentionAction extends AbstractIntentionAction
+  implements Comparable<IntentionAction>, Iconable, ShortcutProvider, PriorityAction {
 
-  public GutterIntentionAction(@NotNull AnAction action, int order, @NotNull Icon icon, @NotNull @IntentionName String text) {
+  private final @NotNull Supplier<? extends AnAction> myActionSupplier;
+  // do not expose myPresentation
+  private final @NotNull Presentation myPresentation = Presentation.newTemplatePresentation();
+  private final int myOrder;
+
+  public GutterIntentionAction(@NotNull AnAction action, int order) {
     myActionSupplier = () -> action;
     myOrder = order;
-    myIcon = icon;
-    myText = text;
   }
 
-  public GutterIntentionAction(@NotNull Supplier<? extends AnAction> action, int order, @NotNull Icon icon, @NotNull @IntentionName String text) {
+  public GutterIntentionAction(@NotNull Supplier<? extends AnAction> action, int order) {
     myActionSupplier = action;
     myOrder = order;
-    myIcon = icon;
-    myText = text;
+  }
+
+  public void updateFromPresentation(@NotNull Presentation presentation) {
+    myPresentation.copyFrom(presentation, null, true);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     AnActionEvent event = AnActionEvent.createFromInputEvent(
-      relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU, null, EditorUtil.getEditorDataContext(editor));
+      relativePoint.toMouseEvent(), ActionPlaces.INTENTION_MENU,
+      myPresentation.clone(), EditorUtil.getEditorDataContext(editor));
 
     AnAction action = getAction();
     if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) return;
@@ -67,7 +71,8 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public @NotNull String getText() {
-    return myText;
+    //noinspection DialogTitleCapitalization
+    return ObjectUtils.notNull(myPresentation.getText(), "");
   }
 
   @Override
@@ -86,7 +91,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public Icon getIcon(@IconFlags int flags) {
-    return myIcon;
+    return ObjectUtils.notNull(myPresentation.getIcon(), EmptyIcon.ICON_16);
   }
 
   @Override
