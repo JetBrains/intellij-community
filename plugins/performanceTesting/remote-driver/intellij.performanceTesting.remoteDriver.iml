@@ -23,5 +23,6 @@
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.driver.impl" />
     <orderEntry type="module" module-name="intellij.driver.client" />
+    <orderEntry type="library" name="jcef" level="project" />
   </component>
 </module>
