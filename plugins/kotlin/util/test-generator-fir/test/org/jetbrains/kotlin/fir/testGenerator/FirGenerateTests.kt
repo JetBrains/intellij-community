@@ -136,6 +136,18 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/referenceWithLib", pattern = DIRECTORY, isRecursive = false)
         }
 
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsWithLibTest> {
+            model("resolve/referenceWithCompilerPluginsWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsWithCompiledLibTest> {
+            model("resolve/referenceWithCompilerPluginsWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
+        testClass<AbstractFirReferenceResolveWithCompilerPluginsWithCrossLibTest> {
+            model("resolve/referenceWithCompilerPluginsWithLib", pattern = DIRECTORY, isRecursive = false)
+        }
+
         testClass<AbstractReferenceResolveInLibrarySourcesFirTest> {
             model("resolve/referenceInLib", isRecursive = false)
         }
