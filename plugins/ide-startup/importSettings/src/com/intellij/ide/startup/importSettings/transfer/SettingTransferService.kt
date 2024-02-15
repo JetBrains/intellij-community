@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
 import com.intellij.ide.startup.importSettings.providers.PluginInstallationState
@@ -18,6 +20,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.nullize
@@ -184,12 +187,21 @@ class SettingTransferService(private val outerScope: CoroutineScope) : ExternalS
 
   private fun applyPreferences(product: IdeVersion, toApply: List<DataForSave>) {
     val selectedIds = toApply.asSequence().map { it.id }.toSet()
-    val preferences = product.settingsCache.preferences
+    val settings = product.settingsCache
+    val preferences = settings.preferences
     preferences[SettingsPreferencesKind.Laf] = selectedIds.contains(TransferableSetting.UI_ID)
     preferences[SettingsPreferencesKind.SyntaxScheme] = selectedIds.contains(TransferableSetting.UI_ID)
     preferences[SettingsPreferencesKind.Keymap] = selectedIds.contains(TransferableSetting.KEYMAP_ID)
     preferences[SettingsPreferencesKind.Plugins] = selectedIds.contains(TransferableSetting.PLUGINS_ID)
     preferences[SettingsPreferencesKind.RecentProjects] = selectedIds.contains(TransferableSetting.RECENT_PROJECTS_ID)
+
+    val featuresToRemove = settings.plugins.asSequence().filter { (_, feature) ->
+      when (feature) {
+        is PluginFeature -> PluginManagerCore.isPluginInstalled(PluginId.getId(feature.pluginId))
+        else -> true
+      }
+    }.map { it.key }
+    settings.plugins.keys.removeAll(featuresToRemove.toSet())
   }
 }
 
