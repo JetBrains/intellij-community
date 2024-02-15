@@ -105,6 +105,10 @@
         ]
       }
     },
+    "x-intellij-enum-order-sensitive": {
+      "type": "boolean",
+      "description": "If 'true', the enum options' order will be preserved in the completion"
+    },
     "default": {},
     "multipleOf": {
       "type": "number",

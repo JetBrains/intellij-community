@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.effectiveBranchOrNull;
 import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.findPropertiesThatMustNotBePresent;
+import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_ENUM_ORDER_SENSITIVE;
 import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_LANGUAGE_INJECTION;
 import static com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils.guessType;
 
@@ -292,16 +293,20 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue, completionPath);
 
        if (schema.getEnum() != null && completionPath == null) {
-        Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
-        for (Object o : schema.getEnum()) {
-          if (myInsideStringLiteral && !(o instanceof String)) continue;
-          String variant = o.toString();
-          if (!filtered.contains(variant)) {
-            Map<String, String> valueMetadata = metadata == null ? null : metadata.get(StringUtil.unquoteString(variant));
-            String description = valueMetadata == null ? null : valueMetadata.get("description");
-            String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
-            addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null, null);
-          }
+         Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
+         boolean isEnumOrderSensitive = Boolean.parseBoolean(schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE));
+         List<Object> anEnum = schema.getEnum();
+         for (int i = 0; i < anEnum.size(); i++) {
+           Object o = anEnum.get(i);
+           if (myInsideStringLiteral && !(o instanceof String)) continue;
+           String variant = o.toString();
+           if (!filtered.contains(variant)) {
+             Map<String, String> valueMetadata = metadata == null ? null : metadata.get(StringUtil.unquoteString(variant));
+             String description = valueMetadata == null ? null : valueMetadata.get("description");
+             String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
+             Integer order = isEnumOrderSensitive ? i : null;
+             addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null, null, order);
+           }
         }
       }
       else if (isSurelyValue) {
@@ -443,6 +448,14 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                                  @SuppressWarnings("SameParameterValue") final @Nullable String description,
                                  final @Nullable String altText,
                                  @Nullable InsertHandler<LookupElement> handler) {
+      addValueVariant(key, description, altText, handler, null);
+    }
+
+    private void addValueVariant(@NotNull String key,
+                                 @SuppressWarnings("SameParameterValue") final @Nullable String description,
+                                 final @Nullable String altText,
+                                 @Nullable InsertHandler<LookupElement> handler,
+                                 @Nullable Integer order) {
       String unquoted = StringUtil.unquoteString(key);
       LookupElementBuilder builder = LookupElementBuilder.create(!shouldWrapInQuotes(unquoted, true) ? unquoted : key);
       if (altText != null) {
@@ -454,7 +467,12 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       if (handler != null) {
         builder = builder.withInsertHandler(handler);
       }
-      myVariants.add(builder);
+      if (order != null) {
+        myVariants.add(PrioritizedLookupElement.withPriority(builder, -order));
+      }
+      else {
+        myVariants.add(builder);
+      }
     }
 
     private boolean shouldWrapInQuotes(String key, boolean isValue) {
