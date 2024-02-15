@@ -29,6 +29,7 @@ internal class DocumentationBrowser private constructor(
 ) : DocumentationBrowserFacade, Disposable {
 
   var ui: DocumentationUI by lateinitVal()
+  var closeTrigger: (() -> Unit)? = null
 
   private sealed class BrowserRequest {
 
@@ -58,6 +59,10 @@ internal class DocumentationBrowser private constructor(
   override fun dispose() {
     cs.cancel("DocumentationBrowser disposal")
     myHistory.clear()
+  }
+
+  internal fun closeTrigger(close: () -> Unit) {
+    closeTrigger = close
   }
 
   fun resetBrowser(request: DocumentationRequest) {
@@ -154,6 +159,7 @@ internal class DocumentationBrowser private constructor(
     if (file != null) {
       cs.launch {
         DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }?.download(project, file)
+        closeTrigger?.invoke()
       }
     }
   }

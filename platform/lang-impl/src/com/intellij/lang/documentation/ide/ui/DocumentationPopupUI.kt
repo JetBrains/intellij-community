@@ -60,7 +60,11 @@ internal class DocumentationPopupUI(
 
   init {
     val editorPane = ui.editorPane
-
+    browser.closeTrigger {
+      coroutineScope.launch(Dispatchers.EDT) {
+        myPopup.cancel()
+      }
+    }
     val primaryActions = primaryActions().toMutableList()
     val secondaryActions = ArrayList<AnAction>()
     val openInToolwindowAction = OpenInToolwindowAction()
