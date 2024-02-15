@@ -3,6 +3,7 @@ package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
+import com.intellij.platform.runtime.repository.RuntimeModuleId
 
 /**
  * Implementation of [PathResolver] which can load module descriptors not only from the main plugin JAR file, unlike [PluginXmlPathResolver]
@@ -10,6 +11,7 @@ import com.intellij.platform.runtime.product.IncludedRuntimeModule
  */
 internal class ModuleBasedPluginXmlPathResolver(
   private val includedModules: List<IncludedRuntimeModule>,
+  private val optionalModuleIds: Set<RuntimeModuleId>,
   private val fallbackResolver: PathResolver,
 ) : PathResolver {
 
@@ -35,6 +37,9 @@ internal class ModuleBasedPluginXmlPathResolver(
         readInto = readInto,
         locationSource = path,
       )
+    }
+    else if (RuntimeModuleId.module(moduleName) in optionalModuleIds) {
+      return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
     }
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path, readInto = readInto)
   }

@@ -4,6 +4,7 @@ package com.intellij.platform.buildScripts.testFramework
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
+import com.intellij.platform.runtime.product.impl.ServiceModuleMapping
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
@@ -93,13 +94,36 @@ class RuntimeModuleRepositoryChecker private constructor(
   private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
       val productModules = loadProductModules(productModulesModule)
-      val allDependencies = HashMap<RuntimeModuleId, FList<String>>()
-      productModules.mainModuleGroup.includedModules.forEach { 
-        repository.collectDependencies(it.moduleDescriptor, FList.emptyList(), allDependencies)
-      }
+      val serviceModuleMapping = ServiceModuleMapping.buildMapping(productModules, includeDebugInfoInErrorMessage = true)
+      val mainGroupModuleResourceRoots = 
+        productModules.mainModuleGroup.includedModules
+          .asSequence()
+          .map { it.moduleDescriptor }
+          .filter { !it.moduleId.stringId.startsWith(RuntimeModuleId.LIB_NAME_PREFIX) }
+          .flatMap { moduleDescriptor -> moduleDescriptor.resourceRootPaths.map { it to moduleDescriptor.moduleId } }
+          .groupBy({ it.first }, { it.second })
+      
       productModules.bundledPluginModuleGroups.forEach { group ->
-        group.includedModules.forEach { 
-          repository.collectDependencies(it.moduleDescriptor, FList.emptyList(), allDependencies)
+        val allPluginModules = group.includedModules.map { it.moduleDescriptor } + serviceModuleMapping.getAdditionalModules(group)
+        for (pluginModule in allPluginModules) {
+          if (pluginModule.moduleId == RuntimeModuleId.projectLibrary("commons-lang3")) {
+            //ignore this error until IJPL-671 is fixed
+            continue
+          }
+          
+          for (resourcePath in pluginModule.resourceRootPaths) {
+            val mainModules = mainGroupModuleResourceRoots[resourcePath]
+            if (mainModules != null) {
+              val mainModuleListString = 
+                if (mainModules.size < 3) mainModules.joinToString { it.stringId } 
+                else "${mainModules.first().stringId} and ${mainModules.size - 1} more modules" 
+              softly.collectAssertionError(
+                AssertionError("""
+                |Module '${pluginModule.moduleId.stringId}' from plugin '${group.mainModule.moduleId}' has resource root $resourcePath,
+                |which is also added as a resource root of modules from the platform part ($mainModuleListString).
+                """.trimMargin()))
+            }
+          }
         }
       }
     }
