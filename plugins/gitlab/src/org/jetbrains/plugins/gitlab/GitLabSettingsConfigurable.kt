@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafeAndGet
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -12,6 +12,7 @@ import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.plus
@@ -56,11 +57,11 @@ internal class GitLabSettingsConfigurable(private val project: Project)
           .bindSelected({ glSettings.isAutomaticallyMarkAsViewed }, { glSettings.isAutomaticallyMarkAsViewed = it })
       }
 
-      addWarningForMemoryOnlyPasswordSafe(
+      addWarningForMemoryOnlyPasswordSafeAndGet(
         scope,
         service<GitLabAccountManager>().canPersistCredentials,
         ::panel
-      )
+      ).align(AlignX.RIGHT)
     }
   }
 }

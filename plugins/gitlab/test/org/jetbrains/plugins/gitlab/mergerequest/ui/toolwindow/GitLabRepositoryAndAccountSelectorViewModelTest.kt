@@ -55,6 +55,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     val account = GitLabAccount(name = "test", server = GitLabServerPath.DEFAULT_SERVER)
     whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account))
     whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
+    whenever(accountManager.canPersistCredentials) doReturn MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }
@@ -84,6 +85,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     val secondAccount = GitLabAccount(name = "secondAccount", server = GitLabServerPath.DEFAULT_SERVER)
     whenever(accountManager.accountsState) doReturn MutableStateFlow(setOf(account, secondAccount))
     whenever(accountManager.getCredentialsState(any(), any())) doReturn MutableStateFlow("")
+    whenever(accountManager.canPersistCredentials) doReturn MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
     val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mock() }

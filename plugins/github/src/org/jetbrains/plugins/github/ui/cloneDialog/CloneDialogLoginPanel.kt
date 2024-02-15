@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
@@ -22,6 +23,7 @@ import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
@@ -87,8 +89,8 @@ internal class CloneDialogLoginPanel(
       null
     )
 
-  fun setTokenUi() {
-    setupNewUi(false)
+  fun setTokenUi(needsWarning: Boolean = false) {
+    setupNewUi(false, needsWarning)
     loginPanel.setTokenUi()
   }
 
@@ -113,21 +115,27 @@ internal class CloneDialogLoginPanel(
     add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
   }
 
-  private fun setupNewUi(isOAuth: Boolean) {
+  private fun setupNewUi(isOAuth: Boolean, needsWarning: Boolean = false) {
     loginButton.isVisible = !isOAuth
     backLink.text = if (isOAuth) IdeBundle.message("link.cancel") else IdeBundle.message("button.back")
 
-    loginPanel.footer = { if (!isOAuth) buttonPanel() } // footer is used to put buttons in 2-nd column - align under text boxes
+    loginPanel.footer = { if (!isOAuth) buttonPanel(needsWarning) } // footer is used to put buttons in 2-nd column - align under text boxes
     if (isOAuth) inlineCancelPanel.addToCenter(backLink)
     inlineCancelPanel.isVisible = isOAuth
 
     clearErrors()
   }
 
-  private fun Panel.buttonPanel() =
+  private fun Panel.buttonPanel(needsWarning: Boolean) =
     row("") {
       cell(loginButton)
       cell(backLink)
+
+      if (needsWarning) {
+        AccountsPanelFactory
+          .addWarningForPersistentCredentials(cs, accountManager.canPersistCredentials, ::panel)
+          .align(AlignX.RIGHT)
+      }
     }
 
   fun cancelLogin() {

@@ -3,6 +3,7 @@ package git4idea.remote.hosting.ui
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.auth.ServerAccount
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
@@ -23,6 +24,8 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.asSafely
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -130,15 +133,25 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     }
 
 
-    val actionsPanel = JPanel(HorizontalLayout(UI.scale(16))).apply {
-      isOpaque = false
-      add(submitButton)
-      loginButtons.forEach {
-        add(it)
-      }
-      add(busyLabel)
+    val actionsPanel = panel {
+      row {
+        cell(JPanel(HorizontalLayout(UI.scale(16))).apply {
+          isOpaque = false
+          add(submitButton)
+          loginButtons.forEach {
+            add(it)
+          }
+          add(busyLabel)
 
-      putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, submitButton.insets)
+          putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, submitButton.insets)
+        })
+      }
+
+      AccountsPanelFactory.addWarningForMemoryOnlyPasswordSafeAndGet(
+        scope,
+        vm.canPersistCredentials,
+        ::panel
+      ).customize(UnscaledGaps(top = 5))
     }
     val labelTitle = CollaborationToolsBundle.message(if (ExperimentalUI.isNewUI()) "review.login.note.more" else "review.login.note.gear")
 
