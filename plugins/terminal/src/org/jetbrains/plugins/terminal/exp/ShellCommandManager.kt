@@ -50,7 +50,6 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     else {
       fireInitialized()
     }
-    clearTerminal()
   }
 
   private fun processCommandStartedEvent(event: List<String>) {
@@ -103,7 +102,6 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     else {
       fireGeneratorFinished(requestId, result)
     }
-    clearTerminal()
   }
 
   /**
@@ -130,6 +128,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     for (listener in listeners) {
       listener.initialized()
     }
+    clearTerminal()
   }
 
   private fun firePromptShown() {
@@ -179,6 +178,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     for (listener in listeners) {
       listener.generatorFinished(requestId, result)
     }
+    clearTerminal()
   }
 
   private fun fireClearInvoked() {
