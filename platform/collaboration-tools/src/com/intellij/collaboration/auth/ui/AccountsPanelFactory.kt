@@ -200,7 +200,6 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
      * live on for as long as the scope is live. This means the scope needs to be cancelled
      * manually or through a disposing scope.
      */
-    @ApiStatus.Experimental
     fun addWarningForPersistentCredentials(cs: CoroutineScope,
                                            canPersistCredentials: Flow<Boolean>,
                                            panel: (Panel.() -> Unit) -> Panel,
@@ -248,7 +247,6 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
      *
      * This specific function also adds a link to the settings page to solve it.
      */
-    @ApiStatus.Experimental
     fun addWarningForMemoryOnlyPasswordSafe(cs: CoroutineScope,
                                             canPersistCredentials: Flow<Boolean>,
                                             panel: (Panel.() -> Unit) -> Panel) {
