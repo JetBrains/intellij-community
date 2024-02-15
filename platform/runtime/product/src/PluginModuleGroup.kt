@@ -3,6 +3,9 @@ package com.intellij.platform.runtime.product
 
 import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 
+/**
+ * Returned from [ProductModules.getBundledPluginModuleGroups].
+ */
 interface PluginModuleGroup : RuntimeModuleGroup {
   /**
    * Returns the main module of the plugin (which contains META-INF/plugin.xml file).

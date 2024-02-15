@@ -4,10 +4,7 @@ package com.intellij.platform.bootstrap
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.runtime.product.IncludedRuntimeModule
-import com.intellij.platform.runtime.product.ModuleImportance
-import com.intellij.platform.runtime.product.ProductMode
-import com.intellij.platform.runtime.product.RuntimeModuleGroup
+import com.intellij.platform.runtime.product.*
 import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
@@ -152,7 +149,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
           repositoryData.allIds.asSequence()
             .filter { it != mainModuleId }
             .mapTo(descriptors) { moduleRepository.getModule(RuntimeModuleId.raw(it)) }
-          val moduleGroup = CustomPluginModuleGroup(descriptors)
+          val moduleGroup = CustomPluginModuleGroup(descriptors, mainModule)
           loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool)
         }
         catch (t: Throwable) {
@@ -164,24 +161,17 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   private fun loadPluginDescriptorFromRuntimeModule(
-    pluginModuleGroup: RuntimeModuleGroup,
+    pluginModuleGroup: PluginModuleGroup,
     context: DescriptorListLoadingContext,
     zipFilePool: ZipFilePool,
   ): IdeaPluginDescriptorImpl? {
-    val includedModules = pluginModuleGroup.includedModules
-    //we rely on the fact that PluginXmlReader.loadPluginModules adds the main module to the beginning of the list  
-    val mainModule = includedModules.firstOrNull()
-    if (mainModule == null) {
-      thisLogger().warn("No modules are included in $pluginModuleGroup, the plugin won't be loaded")
-      return null
-    }
-
-    val mainResourceRoot = mainModule.moduleDescriptor.resourceRootPaths.singleOrNull()
+    val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull()
     if (mainResourceRoot == null) {
-      thisLogger().warn("Main plugin module must have single resource root, so '${mainModule.moduleDescriptor.moduleId.stringId}' with roots ${mainModule.moduleDescriptor.resourceRootPaths} won't be loaded")
+      thisLogger().warn("Main plugin module must have single resource root, so '${pluginModuleGroup.mainModule.moduleId.stringId}' with roots ${pluginModuleGroup.mainModule.resourceRootPaths} won't be loaded")
       return null
     }
 
+    val includedModules = pluginModuleGroup.includedModules
     val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
     val requiredLibraries = collectRequiredLibraryModules(pluginModuleGroup)
     if (requiredLibraries.isNotEmpty()) {
@@ -246,7 +236,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 }
 
-private class CustomPluginModuleGroup(moduleDescriptors: List<RuntimeModuleDescriptor>) : RuntimeModuleGroup {
+private class CustomPluginModuleGroup(moduleDescriptors: List<RuntimeModuleDescriptor>,
+                                      override val mainModule: RuntimeModuleDescriptor) : PluginModuleGroup {
   private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, ModuleImportance.FUNCTIONAL) } 
   override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules 
   override fun getOptionalModuleIds(): Set<RuntimeModuleId> = emptySet()

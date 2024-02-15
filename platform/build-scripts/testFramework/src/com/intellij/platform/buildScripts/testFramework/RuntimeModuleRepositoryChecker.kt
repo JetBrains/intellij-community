@@ -125,7 +125,7 @@ class RuntimeModuleRepositoryChecker private constructor(
         """.trimMargin()))
         return@forEach
       }
-      val pluginPath = FList.singleton("bundled plugin ${group.includedModules[0].moduleDescriptor.moduleId.stringId}")
+      val pluginPath = FList.singleton("bundled plugin ${group.mainModule.moduleId.stringId}")
       group.includedModules.forEach {
         repository.collectDependencies(it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.stringId), allProductModules)
       }
