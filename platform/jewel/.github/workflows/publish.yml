@@ -56,7 +56,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Gradle
-        run: ./gradlew :ide-laf-bridge:publishMainPublicationToSpaceRepository
+        run: ./gradlew publishMainPublicationToSpaceRepository
         env:
           MAVEN_SPACE_USERNAME: ${{secrets.MAVEN_SPACE_USERNAME}}
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
