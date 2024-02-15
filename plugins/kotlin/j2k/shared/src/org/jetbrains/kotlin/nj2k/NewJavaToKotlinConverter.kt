@@ -2,11 +2,10 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
@@ -55,11 +54,9 @@ class NewJavaToKotlinConverter(
     ): FilesResult {
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
         return withProgressProcessor.process {
-            val (results, externalCodeProcessing, context) =
-                ApplicationManager.getApplication().runReadAction(Computable {
-                    elementsToKotlin(files, withProgressProcessor, bodyFilter)
-                })
-
+            val (results, externalCodeProcessing, context) = runReadAction {
+                elementsToKotlin(files, withProgressProcessor, bodyFilter)
+            }
             val kotlinFiles = results.mapIndexed { i, result ->
                 runUndoTransparentActionInEdt(inWriteAction = true) {
                     val javaFile = files[i]
@@ -67,13 +64,9 @@ class NewJavaToKotlinConverter(
                     KtPsiFactory.contextual(files[i]).createPhysicalFile(javaFile.name.replace(".java", ".kt"), result!!.text)
                         .also { it.addImports(result.importsToAdd) }
                 }
-
             }
 
-            postProcessor.doAdditionalProcessing(
-                JKMultipleFilesPostProcessingTarget(kotlinFiles),
-                context
-            ) { phase, description ->
+            postProcessor.doAdditionalProcessing(JKMultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
                 withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
             }
             FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
