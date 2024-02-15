@@ -275,6 +275,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath) {
+    if (isAbsoluteFilePathAndExists(shellPath)) {
+      return List.of(shellPath);
+    }
     List<String> shellCommand = ParametersListUtil.parse(shellPath, false, !SystemInfo.isWindows);
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellExe == null) return shellCommand;
@@ -288,6 +291,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     return shellCommand;
+  }
+
+  private static boolean isAbsoluteFilePathAndExists(@NotNull String path) {
+    File file = new File(path);
+    return file.isAbsolute() && file.isFile();
   }
 
   private static @NotNull String stringifyProcessInfo(String @NotNull[] command,
