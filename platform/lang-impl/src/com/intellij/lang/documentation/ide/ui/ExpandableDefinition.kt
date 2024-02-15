@@ -3,6 +3,7 @@ package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.lang.LangBundle
 import com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_END
+import com.intellij.lang.documentation.ide.impl.DocumentationUsageCollector
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.ContentUpdater
 import com.intellij.platform.backend.documentation.DocumentationContentData
@@ -13,6 +14,7 @@ internal fun createExpandableDefinition(contentData: DocumentationContentData): 
   val doc = contentData.html
   val end = doc.indexOf(DEFINITION_END)
   if (end == -1) return null
+  DocumentationUsageCollector.EXPANDABLE_DEFINITION_SHOWN.log()
   return ExpandableDefinition(doc.substring(0, end), doc.substring(end), contentData.definitionDetails)
 }
 
@@ -25,6 +27,7 @@ class ExpandableDefinition(private val definition: String, private val content: 
 
   fun toggleExpanded() {
     expanded = !expanded
+    DocumentationUsageCollector.EXPANDABLE_DEFINITION_EXPANDED.log(expanded)
   }
 
   private fun createVariants(definition: String, details: String): Pair<String, String> {

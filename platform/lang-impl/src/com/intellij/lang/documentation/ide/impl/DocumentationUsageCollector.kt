@@ -9,9 +9,12 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 object DocumentationUsageCollector: CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("documentation", 2)
+  private val GROUP = EventLogGroup("documentation", 3)
 
   val QUICK_DOC_SHOWN = GROUP.registerEvent("quick.doc.shown")
+
+  val EXPANDABLE_DEFINITION_SHOWN = GROUP.registerEvent("expandable.definition.shown")
+  val EXPANDABLE_DEFINITION_EXPANDED = GROUP.registerEvent("expandable.definition.expanded", EventFields.Boolean("expand"))
 
   val DOCUMENTATION_LINK_CLICKED: EventId2<DocumentationLinkProtocol, Boolean> = GROUP.registerEvent(
     "quick.doc.link.clicked",
