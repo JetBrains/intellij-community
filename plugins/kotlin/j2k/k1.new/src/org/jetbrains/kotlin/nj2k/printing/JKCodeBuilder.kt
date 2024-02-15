@@ -63,24 +63,8 @@ internal class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
-            val isOpenAndAbstractByDefault = modifiersListOwner.let {
-                (it is JKClass && it.isInterface()) ||
-                        (it is JKDeclaration && it.parentOfType<JKClass>()?.isInterface() == true)
-            }
-
-            val hasOverrideModifier = modifiersListOwner
-                .safeAs<JKOtherModifiersOwner>()
-                ?.hasOtherModifier(OVERRIDE) == true
-
-            fun Modifier.isRedundant(): Boolean = when {
-                this == OPEN && isOpenAndAbstractByDefault -> true
-                this == ABSTRACT && isOpenAndAbstractByDefault -> true
-                (this == FINAL || this == PUBLIC) && !hasOverrideModifier -> true
-                else -> false
-            }
-
             modifiersListOwner.forEachModifier { modifierElement ->
-                if (modifierElement.modifier.isRedundant()) {
+                if (modifierElement.isRedundant()) {
                     printLeftNonCodeElements(modifierElement)
                     printRightNonCodeElements(modifierElement)
                 } else {

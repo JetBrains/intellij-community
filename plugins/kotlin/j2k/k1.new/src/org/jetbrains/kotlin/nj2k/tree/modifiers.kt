@@ -2,6 +2,10 @@
 
 package org.jetbrains.kotlin.nj2k.tree
 
+import org.jetbrains.kotlin.nj2k.isInterface
+import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -138,3 +142,17 @@ internal inline fun JKModifiersListOwner.forEachModifier(action: (JKModifierElem
     safeAs<JKMutabilityOwner>()?.mutabilityElement?.let(action)
 }
 
+internal fun JKModifierElement.isRedundant(): Boolean {
+    val owner = parent ?: return false
+    val hasOverrideModifier = (owner as? JKOtherModifiersOwner)?.hasOtherModifier(OVERRIDE) == true
+    val isOpenAndAbstractByDefault = owner.let {
+        (it is JKClass && it.isInterface()) ||
+                (it is JKDeclaration && it.parentOfType<JKClass>()?.isInterface() == true)
+    }
+
+    return when (modifier) {
+        PUBLIC, FINAL -> !hasOverrideModifier
+        OPEN, ABSTRACT -> isOpenAndAbstractByDefault
+        else -> false
+    }
+}

@@ -27,7 +27,7 @@ internal class InnerClassConversion(context: NewJ2kConverterContext) : Recursive
             static != null ->
                 otherModifierElements -= static
 
-            outerClass.classKind != INTERFACE && classKind != INTERFACE && classKind != ENUM && classKind != RECORD ->
+            outerClass.classKind != INTERFACE && classKind == CLASS ->
                 otherModifierElements += JKOtherModifierElement(INNER)
         }
         return recurseArmed(this, outerClass = this)
