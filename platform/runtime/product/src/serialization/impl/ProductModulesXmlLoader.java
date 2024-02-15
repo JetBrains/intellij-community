@@ -6,7 +6,7 @@ import com.intellij.platform.runtime.product.ProductMode;
 import com.intellij.platform.runtime.product.ProductModules;
 import com.intellij.platform.runtime.product.RuntimeModuleGroup;
 import com.intellij.platform.runtime.product.impl.MainRuntimeModuleGroup;
-import com.intellij.platform.runtime.product.impl.PluginModuleGroup;
+import com.intellij.platform.runtime.product.impl.PluginModuleGroupImpl;
 import com.intellij.platform.runtime.product.impl.ProductModulesImpl;
 import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
@@ -74,7 +74,7 @@ public final class ProductModulesXmlLoader {
                It includes intellij.performanceTesting.async plugin which dependencies aren't available in all IDEs, so we need to skip it.
                Plugins should define which modules from them should be included into JetBrains Client instead. */
             if (module != null) {
-              bundledPluginModuleGroups.add(new PluginModuleGroup(module, currentMode, repository));
+              bundledPluginModuleGroups.add(new PluginModuleGroupImpl(module, currentMode, repository));
             }
           }
           moduleName = null;

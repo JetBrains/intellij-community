@@ -15,14 +15,14 @@ import java.util.*;
 /**
  * Describes a group of modules corresponding to a plugin.
  */
-public final class PluginModuleGroup implements RuntimeModuleGroup {
+public final class PluginModuleGroupImpl implements RuntimeModuleGroup {
   private final RuntimeModuleDescriptor myMainModule;
   private final ProductMode myCurrentMode;
   private final RuntimeModuleRepository myRepository;
   private volatile List<IncludedRuntimeModule> myIncludedModules;
   private volatile Set<RuntimeModuleId> myOptionalModuleIds;
 
-  public PluginModuleGroup(@NotNull RuntimeModuleDescriptor mainModule, @NotNull ProductMode currentMode, @NotNull RuntimeModuleRepository repository) {
+  public PluginModuleGroupImpl(@NotNull RuntimeModuleDescriptor mainModule, @NotNull ProductMode currentMode, @NotNull RuntimeModuleRepository repository) {
     myMainModule = mainModule;
     myCurrentMode = currentMode;
     myRepository = repository;
