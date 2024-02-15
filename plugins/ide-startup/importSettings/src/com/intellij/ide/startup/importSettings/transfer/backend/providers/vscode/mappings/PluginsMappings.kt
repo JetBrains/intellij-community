@@ -47,16 +47,16 @@ internal class CommonPluginMapping : VSCodePluginMapping {
     PlatformUtils.isDataSpell() -> listOf("general.json", "ds.json")
     PlatformUtils.isGoIde() -> listOf("general.json", "ws.json", "dg.json", "go.json")
     PlatformUtils.isPhpStorm() -> listOf("general.json", "ps.json")
-    PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json", "pp.json")
-    PlatformUtils.isPyCharmPro() -> listOf("general.json", "pc.json")
     PlatformUtils.isRider() -> listOf("general.json", "rd.json")
     PlatformUtils.isRubyMine() -> listOf("general.json", "rm.json")
     PlatformUtils.isRustRover() -> listOf("general.json", "rr.json")
     PlatformUtils.isWebStorm() -> listOf("general.json", "ws.json")
 
-    // NOTE: order is important in this section
+    // NOTE: order is important in this subsection
     PlatformUtils.isIdeaUltimate() -> listOf("general.json", "ic.json", "iu.json")
     PlatformUtils.isIntelliJ() -> listOf("general.json", "ic.json")
+    PlatformUtils.isPyCharmPro() -> listOf("general.json", "pc.json", "pp.json")
+    PlatformUtils.isPyCharm() -> listOf("general.json", "pc.json")
 
     else -> listOf("general.json")
   }
