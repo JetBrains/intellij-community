@@ -40,8 +40,7 @@ class NewThemeAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(LangDataKeys.IDE_VIEW) ?: return
     val dir = view.getOrChooseDirectory() ?: return
-
-    val module = e.getRequiredData(PlatformCoreDataKeys.MODULE)
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     val project = module.project
     lateinit var name: Cell<JBTextField>
     lateinit var isDark: Cell<JBCheckBox>
