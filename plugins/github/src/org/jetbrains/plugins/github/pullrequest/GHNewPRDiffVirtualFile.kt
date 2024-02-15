@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
+import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.CombinedBlockProducer
@@ -11,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
-import org.jetbrains.plugins.github.GHRegistry
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
@@ -30,7 +30,7 @@ internal data class GHNewPRDiffVirtualFile(private val fileManagerId: String,
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    if (GHRegistry.isCombinedDiffEnabled()) {
+    if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
       val processor = CombinedDiffManager.getInstance(project).createProcessor()
       val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
       val diffModel: GHPRDiffRequestModel = dataContext.newPRDiffModel

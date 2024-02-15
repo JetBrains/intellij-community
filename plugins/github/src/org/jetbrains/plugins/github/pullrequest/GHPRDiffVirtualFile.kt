@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
+import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
-import org.jetbrains.plugins.github.GHRegistry
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
@@ -29,7 +29,7 @@ internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    if (GHRegistry.isCombinedDiffEnabled()) {
+    if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
       return project.service<GHPRDiffService>().createCombinedDiffProcessor(repository, pullRequest)
     }
     else {

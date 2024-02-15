@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.file
 
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
+import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 import com.intellij.collaboration.util.KeyValuePair
 import com.intellij.diff.impl.DiffEditorViewer
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffView
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
-import org.jetbrains.plugins.gitlab.util.GitLabRegistry
 
 internal data class GitLabMergeRequestDiffFile(
   override val connectionId: String,
@@ -47,7 +47,7 @@ internal data class GitLabMergeRequestDiffFile(
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    if (GitLabRegistry.isCombinedDiffEnabled()) {
+    if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
       return project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
     }
     else {
