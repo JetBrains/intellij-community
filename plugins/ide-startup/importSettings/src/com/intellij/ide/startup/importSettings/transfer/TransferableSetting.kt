@@ -50,9 +50,9 @@ open class TransferableSetting(
         keymap.displayName
       else ImportSettingsBundle.message("transfer.settings.keymap-with-custom-shortcuts", keymap.displayName, customShortcutCount)
       val examples = keymap.demoShortcuts.map { DemoShortcut(it.humanName, it.defaultShortcut) }
-      val custom = customShortcuts?.flatMap {
-        val name = it.originalId ?: it.actionId
-        it.shortcuts.map { DemoShortcut(name, it) }
+      val custom = customShortcuts?.flatMap { shortcut ->
+        val name = shortcut.originalId ?: shortcut.actionId
+        shortcut.shortcuts.map { DemoShortcut(name, it) }
       }
       val items = buildList {
         add(examples)
@@ -158,7 +158,7 @@ private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
 
 private class RecentProjectSetting(item: RecentPathInfo) : ChildSetting {
   override val id = ""
-  override val name = Path(item.path).fileName?.toString() ?: ""
+  override val name = Path(item.path).fileName?.toString() ?: item.path
   override val leftComment = null
   override val rightComment = null
 }
