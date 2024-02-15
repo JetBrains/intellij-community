@@ -36,4 +36,4 @@ fun startMethod(i: Int) { }
 fun endMethod(k: Int) { }
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
-// REGISTRY: debugger.filter.breakpoints.by.coroutine.id.with.evaluation=false
+
