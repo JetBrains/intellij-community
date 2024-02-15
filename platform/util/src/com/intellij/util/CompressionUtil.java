@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
@@ -8,6 +8,7 @@ import com.intellij.util.io.DataOutputStream;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -22,7 +23,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
+
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
+
   private static final LZ4Compressor compressor;
   private static final LZ4FastDecompressor decompressor;
 
@@ -58,11 +61,13 @@ public final class CompressionUtil {
     }
   }
 
-  private static LZ4Compressor compressor() {
+  @ApiStatus.Internal
+  public static LZ4Compressor compressor() {
     return compressor;
   }
 
-  private static LZ4FastDecompressor decompressor() {
+  @ApiStatus.Internal
+  public static LZ4FastDecompressor decompressor() {
     return decompressor;
   }
 

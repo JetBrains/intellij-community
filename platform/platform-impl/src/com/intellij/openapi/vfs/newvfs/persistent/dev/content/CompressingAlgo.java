@@ -2,9 +2,9 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.util.io.LZ4Compressor;
-import com.intellij.util.io.LZ4Decompressor;
+import com.intellij.util.CompressionUtil;
 import com.intellij.util.io.UnsyncByteArrayOutputStream;
+import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Exception;
 import org.jetbrains.annotations.NotNull;
 
@@ -145,14 +145,14 @@ public interface CompressingAlgo {
       return contentBytes.length() > compressContentLargerThan;
     }
 
-    //TODO RC: use compressor/decompressor instances from CompressionUtil
-
     @Override
     public ByteArraySequence compress(@NotNull ByteArraySequence input) throws IOException {
       try {
-        int compressedLengthMax = LZ4Compressor.INSTANCE.maxCompressedLength(input.length());
+        LZ4Compressor compressor = CompressionUtil.compressor();
+
+        int compressedLengthMax = compressor.maxCompressedLength(input.length());
         byte[] compressedBytes = new byte[compressedLengthMax];
-        int actualCompressedLength = LZ4Compressor.INSTANCE.compress(
+        int actualCompressedLength = compressor.compress(
           input.getInternalBuffer(), input.getOffset(), input.length(),
           compressedBytes, 0, compressedBytes.length
         );
@@ -178,10 +178,10 @@ public interface CompressingAlgo {
       bufferWithCompressedData.get(compressedBytes);
 
       try {
-        int decompressedSize = LZ4Decompressor.INSTANCE.decompress(compressedBytes, bufferForDecompression);
+        int bytesUsedFromCompressedData = CompressionUtil.decompressor().decompress(compressedBytes, bufferForDecompression);
 
-        if (decompressedSize != compressedSize) {
-          throw new IOException("Decompressed bytes[" + decompressedSize + "b out of " + compressedSize + "b] " +
+        if (bytesUsedFromCompressedData != compressedSize) {
+          throw new IOException("Decompressed bytes[" + bytesUsedFromCompressedData + "b out of " + compressedSize + "b] " +
                                 "!= compressed bytes[" + bufferForDecompression.length + "] " +
                                 "=> storage is likely corrupted"
           );
