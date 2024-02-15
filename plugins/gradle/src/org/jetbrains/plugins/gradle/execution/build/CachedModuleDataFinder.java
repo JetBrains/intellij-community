@@ -28,16 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Vladislav.Soroka
  */
 public class CachedModuleDataFinder {
-  private final @Nullable Project myProject;
-  private final Map<String, DataNode<? extends ModuleData>> cache = new ConcurrentHashMap<>();
 
-  /**
-   * @deprecated use {@link #getInstance(Project)}
-   */
-  @Deprecated(forRemoval = true)
-  public CachedModuleDataFinder() {
-    myProject = null;
-  }
+  private final @NotNull Project myProject;
 
   private CachedModuleDataFinder(@NotNull Project project) {
     myProject = project;
@@ -115,12 +107,8 @@ public class CachedModuleDataFinder {
   }
 
   private Map<String, DataNode<? extends ModuleData>> getCache() {
-    return myProject == null ? cache : getCache(myProject);
-  }
-
-  private static Map<String, DataNode<? extends ModuleData>> getCache(@NotNull Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      return CachedValueProvider.Result.create(new ConcurrentHashMap<>(), ExternalProjectsDataStorage.getInstance(project));
+    return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
+      return CachedValueProvider.Result.create(new ConcurrentHashMap<>(), ExternalProjectsDataStorage.getInstance(myProject));
     });
   }
 }
