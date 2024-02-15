@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.vscode.parsers
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -39,7 +39,7 @@ class StorageParser(private val settings: Settings) {
       val info = RecentProjectMetaInfo().apply {
         projectOpenTimestamp = modifiedTime ?: 0
         buildTimestamp = projectOpenTimestamp
-        displayName = path.fileName.toString()
+        displayName = path.fileName?.toString()
       }
 
       if (Registry.`is`("transferSettings.vscode.onlyCargoToml")) {
