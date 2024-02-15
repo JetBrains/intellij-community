@@ -8,7 +8,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey key="settingsSync.ui.new.toolwindow.show" defaultValue="false"
+    <registryKey key="settingsSync.ui.new.toolwindow.show" defaultValue="true"
                  description="Use new toolwindow to display Settings Sync history."/>
     <toolWindow id="Settings Sync History" secondary="false" icon="AllIcons.Toolwindows.SettingSync" anchor="left"
                 factoryClass="com.intellij.settingsSync.git.SettingsHistoryToolWindowFactory"/>
