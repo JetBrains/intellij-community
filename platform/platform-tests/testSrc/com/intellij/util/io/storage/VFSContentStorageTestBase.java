@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -362,7 +362,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     storage = openStorage(storagePath);
   }
 
-  protected ByteArraySequence[] generateContents(int count) {
+  protected static ByteArraySequence[] generateContents(int count) {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     IntSupplier sizeGenerator = () -> {
       int mediumContentSize = 1 << 10;
@@ -386,9 +386,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
   private static ByteArraySequence randomContent(@NotNull ThreadLocalRandom rnd,
                                                  int size) {
     final byte[] bytes = new byte[size];
-    for (int i = 0; i < bytes.length; i++) {
-      bytes[i] = (byte)rnd.nextInt(Byte.MIN_VALUE, Byte.MAX_VALUE + 1);
-    }
+    rnd.nextBytes(bytes);
     return new ByteArraySequence(bytes);
   }
 
