@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
+import com.intellij.platform.ijent.fs.IjentFileInfo
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFsResult
 import com.intellij.platform.ijent.fs.IjentOpenedFile
@@ -24,7 +25,7 @@ object IjentFsResultImpl {
   }
 
   object ListDirectoryWithAttrs {
-    data class Ok(override val value: Collection<IjentFileSystemApi.FileInfo>) :
+    data class Ok(override val value: Collection<IjentFileInfo>) :
       IjentFileSystemApi.ListDirectoryWithAttrs.Ok
   }
 
@@ -58,7 +59,7 @@ object IjentFsResultImpl {
   }
 
   object Stat {
-    data class Ok(override val value: IjentFileSystemApi.FileInfo) :
+    data class Ok(override val value: IjentFileInfo) :
       IjentFileSystemApi.Stat.Ok
   }
 }

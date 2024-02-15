@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.community.impl.IjentFileInfoImpl
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
 import com.intellij.platform.ijent.community.impl.nio.MockIjentFileSystemApi.MockResult.Err
 import com.intellij.platform.ijent.community.impl.nio.MockIjentFileSystemApi.MockResult.Ok
@@ -47,11 +48,11 @@ class MockIjentFileSystemApi(
   ): ListDirectoryWithAttrs =
     when (val directoryChildren = getDirectoryChildren(path)) {
       is Ok -> IjentFsResultImpl.ListDirectoryWithAttrs.Ok(directoryChildren.result.map { node ->
-        IjentFileSystemApi.FileInfo(
+        IjentFileInfoImpl(
           path = path.getChild(node.name).getOrThrow(),
-          fileType = when (node) {
-            is ImaginaryFileTree.Node.Directory -> IjentFileSystemApi.FileInfo.Type.Directory
-            is ImaginaryFileTree.Node.RegularFile -> IjentFileSystemApi.FileInfo.Type.Regular
+          type = when (node) {
+            is ImaginaryFileTree.Node.Directory -> IjentFileInfoImpl.Directory
+            is ImaginaryFileTree.Node.RegularFile -> IjentFileInfoImpl.Regular
           }
         )
       })

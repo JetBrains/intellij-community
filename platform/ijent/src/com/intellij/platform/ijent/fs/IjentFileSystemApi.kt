@@ -69,30 +69,11 @@ interface IjentFileSystemApi {
 
   @Suppress("unused")
   sealed interface ListDirectoryWithAttrs : IjentFsResult {
-    interface Ok : ListDirectoryWithAttrs, IjentFsResult.Ok<Collection<FileInfo>>
+    interface Ok : ListDirectoryWithAttrs, IjentFsResult.Ok<Collection<IjentFileInfo>>
     sealed interface DoesNotExist : ListDirectoryWithAttrs, IjentFsResult.Error
     sealed interface PermissionDenied : ListDirectoryWithAttrs, IjentFsResult.Error
     sealed interface NotDirectory : ListDirectoryWithAttrs, IjentFsResult.Error
     sealed interface NotFile : ListDirectoryWithAttrs, IjentFsResult.Error
-  }
-
-  // TODO Interface
-  data class FileInfo(
-    val path: IjentPath.Absolute,
-    val fileType: Type,
-    //val permissions: Permissions,  // TODO There are too many options for a good API. Let's add them as soon as they're needed.
-  ) {
-    sealed interface Type {
-      data object Directory : Type
-      data object Regular : Type
-
-      sealed interface Symlink : Type {
-        data object Unresolved : Symlink
-        data class Resolved(val result: IjentPath.Absolute) : Symlink
-      }
-
-      data object Other : Type
-    }
   }
 
   /**
@@ -109,12 +90,12 @@ interface IjentFileSystemApi {
   }
 
   /**
-   * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [FileInfo.fileType] if [path] points on a symlink.
+   * Similar to stat(2) and lstat(2). [resolveSymlinks] has an impact only on [IjentFileInfo.fileType] if [path] points on a symlink.
    */
   suspend fun stat(path: IjentPath.Absolute, resolveSymlinks: Boolean): Stat
 
   sealed interface Stat : IjentFsResult {
-    interface Ok : Stat, IjentFsResult.Ok<FileInfo>
+    interface Ok : Stat, IjentFsResult.Ok<IjentFileInfo>
     sealed interface DoesNotExist : Stat, IjentFsResult.Error
     sealed interface PermissionDenied : Stat, IjentFsResult.Error
     sealed interface NotDirectory : Stat, IjentFsResult.Error

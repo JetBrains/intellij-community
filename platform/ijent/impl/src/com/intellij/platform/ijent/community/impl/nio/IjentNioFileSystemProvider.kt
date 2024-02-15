@@ -3,8 +3,9 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.IjentSessionRegistry
+import com.intellij.platform.ijent.fs.IjentFileInfo
+import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
-import com.intellij.platform.ijent.fs.IjentFileSystemApi.FileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.SameFile
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Stat
 import com.intellij.platform.ijent.fs.IjentFsResult
@@ -220,15 +221,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureIjentNioPath(path).nioFs
-    val fileInfo: IjentFileSystemApi.FileInfo = fs.fsBlocking {
+    val fileInfo: IjentFileInfo = fs.fsBlocking {
       @Suppress("NAME_SHADOWING") var path: IjentPath.Absolute = ensurePathIsAbsolute(path.ijentPath)
       while (true) {
         val fi = when (val v = fs.ijentFsApi.stat(path, resolveSymlinks = LinkOption.NOFOLLOW_LINKS in options)) {
           is Stat.Ok -> v.value
           is IjentFsResult.Error -> v.throwFileSystemException()
         }
-        when (val t = fi.fileType) {
-          Directory, Other, Regular, Symlink.Unresolved -> return@fsBlocking fi
+        when (val t = fi.type) {
+          is Directory, is Other, is Regular, is Symlink.Unresolved -> return@fsBlocking fi
 
           is Symlink.Resolved -> {
             path = t.result
@@ -252,27 +253,27 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       }
 
       override fun isRegularFile(): Boolean =
-        when (fileInfo.fileType) {
-          Regular -> true
-          Directory, Other, is Symlink -> false
+        when (fileInfo.type) {
+          is Regular -> true
+          is Directory, is Other, is Symlink -> false
         }
 
       override fun isDirectory(): Boolean =
-        when (fileInfo.fileType) {
-          Directory -> true
-          Other, Regular, is Symlink -> false
+        when (fileInfo.type) {
+          is Directory -> true
+          is Other, is Regular, is Symlink -> false
         }
 
       override fun isSymbolicLink(): Boolean =
-        when (fileInfo.fileType) {
+        when (fileInfo.type) {
           is Symlink -> true
-          Directory, Other, Regular -> false
+          is Directory, is Other, is Regular -> false
         }
 
       override fun isOther(): Boolean =
-        when (fileInfo.fileType) {
-          Other -> true
-          Directory, Regular, is Symlink -> false
+        when (fileInfo.type) {
+          is Other -> true
+          is Directory, is Regular, is Symlink -> false
         }
 
       override fun size(): Long {

@@ -1,3 +1,49 @@
+f:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl
+- com.intellij.platform.ijent.fs.IjentFileInfo
+- <init>(com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileInfo$Type):V
+- f:component1():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- f:component2():com.intellij.platform.ijent.fs.IjentFileInfo$Type
+- f:copy(com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileInfo$Type):com.intellij.platform.ijent.community.impl.IjentFileInfoImpl
+- bs:copy$default(com.intellij.platform.ijent.community.impl.IjentFileInfoImpl,com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileInfo$Type,I,java.lang.Object):com.intellij.platform.ijent.community.impl.IjentFileInfoImpl
+- equals(java.lang.Object):Z
+- getPath():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- getType():com.intellij.platform.ijent.fs.IjentFileInfo$Type
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$Directory
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type$Directory
+- sf:INSTANCE:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$Directory
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$Other
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type$Other
+- sf:INSTANCE:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$Other
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$Regular
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type$Regular
+- sf:INSTANCE:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$Regular
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$SymlinkResolved
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type$Symlink$Resolved
+- <init>(com.intellij.platform.ijent.fs.IjentPath$Absolute):V
+- f:component1():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- f:copy(com.intellij.platform.ijent.fs.IjentPath$Absolute):com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$SymlinkResolved
+- bs:copy$default(com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$SymlinkResolved,com.intellij.platform.ijent.fs.IjentPath$Absolute,I,java.lang.Object):com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$SymlinkResolved
+- equals(java.lang.Object):Z
+- getResult():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$SymlinkUnresolved
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type$Symlink$Unresolved
+- sf:INSTANCE:com.intellij.platform.ijent.community.impl.IjentFileInfoImpl$SymlinkUnresolved
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
 f:com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem
 - java.nio.file.FileSystem
 - <init>(com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider,com.intellij.platform.ijent.fs.IjentFileSystemApi):V

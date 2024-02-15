@@ -193,6 +193,23 @@ f:com.intellij.platform.ijent.IjentStartupError$MissingImplPlugin
 - f:getUnixSocketPath():java.lang.String
 - hashCode():I
 - toString():java.lang.String
+com.intellij.platform.ijent.fs.IjentFileInfo
+- a:getPath():com.intellij.platform.ijent.fs.IjentPath$Absolute
+- a:getType():com.intellij.platform.ijent.fs.IjentFileInfo$Type
+com.intellij.platform.ijent.fs.IjentFileInfo$Type
+com.intellij.platform.ijent.fs.IjentFileInfo$Type$Directory
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type
+com.intellij.platform.ijent.fs.IjentFileInfo$Type$Other
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type
+com.intellij.platform.ijent.fs.IjentFileInfo$Type$Regular
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type
+com.intellij.platform.ijent.fs.IjentFileInfo$Type$Symlink
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type
+com.intellij.platform.ijent.fs.IjentFileInfo$Type$Symlink$Resolved
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type$Symlink
+- a:getResult():com.intellij.platform.ijent.fs.IjentPath$Absolute
+com.intellij.platform.ijent.fs.IjentFileInfo$Type$Symlink$Unresolved
+- com.intellij.platform.ijent.fs.IjentFileInfo$Type$Symlink
 *:com.intellij.platform.ijent.fs.IjentFileSystemApi
 - a:canonicalize(com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
 - a:fileReader(com.intellij.platform.ijent.fs.IjentPath$Absolute,kotlin.coroutines.Continuation):java.lang.Object
@@ -225,54 +242,6 @@ f:com.intellij.platform.ijent.IjentStartupError$MissingImplPlugin
 *:com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize$PermissionDenied
 - com.intellij.platform.ijent.fs.IjentFileSystemApi$Canonicalize
 - com.intellij.platform.ijent.fs.IjentFsResult$Error
-*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo
-- <init>(com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type):V
-- f:component1():com.intellij.platform.ijent.fs.IjentPath$Absolute
-- f:component2():com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
-- f:copy(com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo
-- bs:copy$default(com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo,com.intellij.platform.ijent.fs.IjentPath$Absolute,com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type,I,java.lang.Object):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo
-- equals(java.lang.Object):Z
-- f:getFileType():com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
-- f:getPath():com.intellij.platform.ijent.fs.IjentPath$Absolute
-- hashCode():I
-- toString():java.lang.String
-*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
-*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Directory
-- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
-- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Directory
-- equals(java.lang.Object):Z
-- hashCode():I
-- toString():java.lang.String
-*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Other
-- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
-- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Other
-- equals(java.lang.Object):Z
-- hashCode():I
-- toString():java.lang.String
-*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Regular
-- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
-- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Regular
-- equals(java.lang.Object):Z
-- hashCode():I
-- toString():java.lang.String
-*:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink
-- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type
-*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved
-- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink
-- <init>(com.intellij.platform.ijent.fs.IjentPath$Absolute):V
-- f:component1():com.intellij.platform.ijent.fs.IjentPath$Absolute
-- f:copy(com.intellij.platform.ijent.fs.IjentPath$Absolute):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved
-- bs:copy$default(com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved,com.intellij.platform.ijent.fs.IjentPath$Absolute,I,java.lang.Object):com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Resolved
-- equals(java.lang.Object):Z
-- f:getResult():com.intellij.platform.ijent.fs.IjentPath$Absolute
-- hashCode():I
-- toString():java.lang.String
-*f:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Unresolved
-- com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink
-- sf:INSTANCE:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileInfo$Type$Symlink$Unresolved
-- equals(java.lang.Object):Z
-- hashCode():I
-- toString():java.lang.String
 *:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader
 - com.intellij.platform.ijent.fs.IjentFsResult
 *:com.intellij.platform.ijent.fs.IjentFileSystemApi$FileReader$DoesNotExist
