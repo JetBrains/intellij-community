@@ -6,9 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentHashEnumeratorOverDurableEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentStorageAdapter;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.VFSContentStorageOverMMappedFile;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.content.VFSContentStorageOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverMMappedFile;
@@ -701,8 +702,6 @@ public final class PersistentFSLoader {
   private static @NotNull VFSContentStorage createContentStorage_makeStorage(@NotNull Path contentsHashesFile,
                                                                              @NotNull Path contentsFile) throws IOException {
     if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_MMAPPED_FILE) {
-      LOG.info("VFS uses content storage over memory-mapped file (compress if > " + FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN + "b)");
-
       //Use larger pages: content storage is usually quite big.
       int pageSize = 64 * IOUtil.MiB;
 
@@ -712,7 +711,14 @@ public final class PersistentFSLoader {
                  "must be > FileUtilRt.LARGE_FOR_CONTENT_LOADING(=" + FileUtilRt.LARGE_FOR_CONTENT_LOADING + "b), " +
                  "otherwise large content can't fit");
       }
-      return new VFSContentStorageOverMMappedFile(contentsFile, FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN, pageSize);
+      CompressingAlgo compressionAlgo = switch (FSRecordsImpl.COMPRESSION_ALGO) {
+        case "zip" -> new CompressingAlgo.Lz4Algo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
+        case "lz4" -> new CompressingAlgo.ZipAlgo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
+        //"none"
+        default -> new CompressingAlgo.NoCompressionAlgo();
+      };
+      LOG.info("VFS uses content storage over memory-mapped file, with compression algo: " + compressionAlgo);
+      return new VFSContentStorageOverMMappedFile(contentsFile, pageSize, compressionAlgo);
     }
 
     RefCountingContentStorage contentStorage;

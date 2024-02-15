@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -25,9 +25,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 
@@ -54,24 +51,15 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extend
 public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unmappable {
   private static final Logger LOG = Logger.getInstance(VFSContentStorageOverMMappedFile.class);
 
-  private static final String COMPRESSION_KIND = System.getProperty("vfs.content-storage-compression", "lz4");//"zip", "none", "lz4"
-  private static final boolean USE_ZIP_COMPRESSION = "zip".equals(COMPRESSION_KIND);
-  private static final boolean USE_LZ4_COMPRESSION = "lz4".equals(COMPRESSION_KIND);
-  private static final boolean USE_NO_COMPRESSION = "none".equals(COMPRESSION_KIND);
-
-  static {
-    if (USE_NO_COMPRESSION) {
-      throw new ExceptionInInitializerError(
-        "'No compression' ('-Dvfs.content-storage-compression=none') is currently not supported by VFSContentStorage. Use 'zip' or 'lz4' instead.");
-    }
-  }
 
   /**
-   * Version of storage format itself: headers sizes, fields meaning, compression algo used, etc.
+   * Version of storage format itself: headers sizes, fields meaning, etc.
+   * Ctor adds to this some params (compression algo ID).
    * Ctor fails if file-to-open has this version different from current value
    */
-  private static final int STORAGE_FORMAT_VERSION = 1 + (USE_ZIP_COMPRESSION ? 0 : 1);
+  private static final byte STORAGE_FORMAT_VERSION_BASE = 1;
 
+  /** Custom field offset for 'external version' */
   private static final int EXTERNAL_VERSION_FIELD_NO = 0;
 
   private static final int CONTENT_HASH_LENGTH = ContentHashEnumerator.SIGNATURE_LENGTH;
@@ -93,24 +81,20 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   private final AppendOnlyLogOverMMappedFile contentStorage;
 
-  /**
-   * Compresses content if > compressContentLargerThan.
-   * There is usually no reason to compress small content, but large content compression could
-   * win a lot in both disk/memory space, and IO time.
-   */
-  private final int compressContentLargerThan;
+  private final CompressingAlgo compressingAlgo;
 
-  public VFSContentStorageOverMMappedFile(Path storagePath,
-
-                                          int compressContentLargerThan,
-                                          int pageSize) throws IOException {
+  public VFSContentStorageOverMMappedFile(@NotNull Path storagePath,
+                                          int pageSize,
+                                          @NotNull CompressingAlgo compressingAlgo) throws IOException {
     this.storagePath = storagePath;
-    this.compressContentLargerThan = compressContentLargerThan;
+    this.compressingAlgo = compressingAlgo;
+
+    int storageFormatVersion = (((int)STORAGE_FORMAT_VERSION_BASE) << 24) + compressingAlgo.algoID();
 
     contentStorage = AppendOnlyLogFactory.withDefaults()
       .pageSize(pageSize)
       .failFileIfIncompatible()
-      .failIfDataFormatVersionNotMatch(STORAGE_FORMAT_VERSION)
+      .failIfDataFormatVersionNotMatch(storageFormatVersion)
       .open(storagePath);
 
     Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".hashToId");
@@ -160,8 +144,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         _hash -> {
           ByteArraySequence bytesToStore;
           int uncompressedSize;
-          if (shouldCompress(bytes)) {
-            bytesToStore = compress(bytes);
+          if (compressingAlgo.shouldCompress(bytes)) {
+            bytesToStore = compressingAlgo.compress(bytes);
             uncompressedSize = -bytes.length();//sign bit indicates 'compressed data'
           }
           else {
@@ -214,6 +198,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
         buffer.position(CONTENT_HASH_LENGTH + Integer.BYTES);
         byte[] contentBytes;
+        //TODO RC: use threadLocal byte[]?
         if (uncompressedSize >= 0) {
           int contentSize = recordSize - recordHeaderSize;
           contentBytes = new byte[contentSize];
@@ -221,7 +206,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         }
         else {
           int actualUncompressedSize = -uncompressedSize;
-          contentBytes = decompress(buffer, actualUncompressedSize);
+          contentBytes = new byte[actualUncompressedSize];
+          compressingAlgo.decompress(buffer, contentBytes);
         }
 
         byte[] cryptoHashCalculated = PersistentFSContentAccessor.calculateHash(contentBytes, 0, contentBytes.length);
@@ -265,7 +251,9 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       }
       else {// [uncompressedSize<0] => compressed data
         int actualUncompressedSize = -uncompressedSize;
-        return decompress(buffer, actualUncompressedSize);
+        byte[] bufferForDecompression = new byte[actualUncompressedSize];
+        compressingAlgo.decompress(buffer, bufferForDecompression);
+        return bufferForDecompression;
       }
     });
 
@@ -356,94 +344,6 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   }
 
   //===================== implementation infrastructure: ================================
-
-  private boolean shouldCompress(@NotNull ByteArraySequence contentBytes) {
-    return contentBytes.length() > compressContentLargerThan;
-  }
-
-  private static @NotNull ByteArraySequence compress(@NotNull ByteArraySequence bytes) {
-    if (USE_ZIP_COMPRESSION) {
-      Deflater deflater = new Deflater();
-      try {
-        deflater.setInput(bytes.getInternalBuffer(), bytes.getOffset(), bytes.length());
-        deflater.finish();
-        UnsyncByteArrayOutputStream compressedBytesStream = new UnsyncByteArrayOutputStream(bytes.length() / 2);
-        byte[] buffer = new byte[1024];
-        while (!deflater.finished()) {
-          int bytesDeflated = deflater.deflate(buffer);
-          compressedBytesStream.write(buffer, 0, bytesDeflated);
-        }
-        return compressedBytesStream.toByteArraySequence();
-      }
-      finally {
-        deflater.end();
-      }
-    }
-    else if (USE_LZ4_COMPRESSION) {
-      //TODO RC: use compressor/decompressor instances from CompressionUtil
-      int compressedLengthMax = LZ4Compressor.INSTANCE.maxCompressedLength(bytes.length());
-      byte[] compressedBytes = new byte[compressedLengthMax];
-      int actualCompressedLength = LZ4Compressor.INSTANCE.compress(
-        bytes.getInternalBuffer(), bytes.getOffset(), bytes.length(),
-        compressedBytes, 0, compressedBytes.length
-      );
-      //MAYBE RC: use ThreadLocalCachedByteArray to avoid allocation of large short-lived buffers?
-      return new ByteArraySequence(compressedBytes, 0, actualCompressedLength);
-    }
-    else {
-      throw new UnsupportedOperationException("Only zip/lz4 compression are implemented");
-    }
-  }
-
-  /** Respect bufferWithCompressedData.position() -- i.e. part of this buffer was already read before. */
-  private static byte[] decompress(@NotNull ByteBuffer bufferWithCompressedData,
-                                   int uncompressedSize) throws IOException {
-    byte[] bufferForDecompression = new byte[uncompressedSize];
-    int contentSize = bufferWithCompressedData.remaining();
-    if (USE_ZIP_COMPRESSION) {
-      //MAYBE RC: use thread-local Inflater/Deflater instances?
-      Inflater inflater = new Inflater();
-      try {
-        inflater.setInput(bufferWithCompressedData);
-        int bytesInflated = inflater.inflate(bufferForDecompression);
-        if (bytesInflated != bufferForDecompression.length) {
-          throw new IOException("Decompressed bytes[" + bytesInflated + "b out of " + contentSize + "b] " +
-                                "!= compressed bytes[" + bufferForDecompression.length + "] " +
-                                "=> storage is likely corrupted"
-          );
-        }
-        if (!inflater.finished()) {
-          throw new IOException("Decompressed bytes[" + bytesInflated + "b out of " + contentSize + "b] " +
-                                "but compressed stream is not finished yet " +
-                                "=> storage is likely corrupted"
-          );
-        }
-        return bufferForDecompression;
-      }
-      catch (DataFormatException e) {
-        throw new IOException("Decompression [" + contentSize + "b] was failed => storage is likely corrupted", e);
-      }
-      finally {
-        inflater.end();
-      }
-    }
-    else if (USE_LZ4_COMPRESSION) {
-      //There is a .decompress(ByteBuffer,ByteBuffer) method in LZ4Decompressor API -- allows to avoid ByteBuffer to byte[]
-      // copying below -- but this method is not implemented for direct 'source' ByteBuffer in our 'fast' LZ4Decompressor
-      // (see lz4.kt)
-
-      //MAYBE RC: use ThreadLocalCachedByteArray to avoid allocation of large short-lived buffers?
-      byte[] compressedBytes = new byte[contentSize];
-      bufferWithCompressedData.get(compressedBytes);
-
-      LZ4Decompressor.INSTANCE.decompress(compressedBytes, bufferForDecompression, uncompressedSize);
-
-      return bufferForDecompression;
-    }
-    else {
-      throw new UnsupportedOperationException("Only zip/lz4 compression are implemented");
-    }
-  }
 
 
   private static int storageIdToContentId(long storageId) throws IOException {

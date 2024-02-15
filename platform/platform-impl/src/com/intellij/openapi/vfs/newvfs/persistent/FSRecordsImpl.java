@@ -114,6 +114,9 @@ public final class FSRecordsImpl implements Closeable {
    */
   public static final int COMPRESS_CONTENT_IF_LARGER_THAN = SystemProperties.getIntProperty("vfs.content-storage.compress-if-larger", 8000);
 
+  /** Which compression to use for storing content: "zip" (java.util.zip), "lz4", "none" */
+  public static final String COMPRESSION_ALGO = System.getProperty("vfs.content-storage-compression", "lz4");
+
   /**
    * Reuse fileIds deleted in a previous session.
    * It is a quite natural thing to do, but that reuse regularly presents itself in edge-case bugs, so we consider getting rid of it
