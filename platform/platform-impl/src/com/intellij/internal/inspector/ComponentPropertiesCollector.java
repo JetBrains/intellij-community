@@ -140,8 +140,8 @@ public final class ComponentPropertiesCollector {
       }
     }
     if (component instanceof EditorComponentImpl editorComponent) {
-      String placeholder = editorComponent.getEditor().getPlaceholder().toString();
-      if (!placeholder.isEmpty()) {
+      CharSequence placeholder = editorComponent.getEditor().getPlaceholder();
+      if (placeholder != null && !placeholder.isEmpty()) {
         myProperties.add(new PropertyBean("Editor Placeholder", placeholder));
       }
     }
