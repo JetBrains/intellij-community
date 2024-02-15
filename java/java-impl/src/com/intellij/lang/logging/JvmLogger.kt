@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.logging
 
-import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.lang.logging.UnspecifiedLogger.Companion.UNSPECIFIED_LOGGER_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -63,14 +60,6 @@ interface JvmLogger {
   fun isAvailable(module: Module?): Boolean
 
   /**
-   * Determines if the logger is excluded from import in the current project.
-   *
-   * @param project the project context
-   * @return true if the logger class is excluded for import in the project, false otherwise
-   */
-  fun isExcludedFromImport(project: Project?): Boolean
-
-  /**
    * Determines if it is possible to place a logger at the specified class.
    *
    * @param clazz the class where the logger will be placed
@@ -101,15 +90,6 @@ interface JvmLogger {
     fun getLoggerByName(loggerName: String?): JvmLogger? {
       if (loggerName == UNSPECIFIED_LOGGER_NAME) return null
       return EP_NAME.extensionList.find { it.toString() == loggerName }
-    }
-
-    fun areLoggerTypesExcluded(project: Project?, loggerTypes: List<String>): Boolean {
-      if (project == null) return true
-      val facade = JavaPsiFacade.getInstance(project)
-      return loggerTypes.any { classFqn ->
-        val clazz = facade.findClass(classFqn, GlobalSearchScope.everythingScope(project)) ?: return true
-        JavaCompletionUtil.isInExcludedPackage(clazz, false)
-      }
     }
   }
 }

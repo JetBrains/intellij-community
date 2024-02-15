@@ -40,9 +40,6 @@ class JvmLoggerAnnotationDelegate(
     return module != null && JavaLibraryUtil.hasLibraryClass(module, fieldLoggerName) && LombokLibraryUtil.hasLombokClasses(module)
   }
 
-  override fun isExcludedFromImport(project: Project?): Boolean =
-    JvmLogger.areLoggerTypesExcluded(project, listOf(fieldLoggerName, loggerTypeName))
-
   override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz.hasAnnotation(loggerTypeName).not()
 
   override fun createLogger(project: Project, clazz: PsiClass): PsiAnnotation {
