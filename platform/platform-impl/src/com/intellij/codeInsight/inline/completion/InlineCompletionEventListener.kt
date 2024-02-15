@@ -39,9 +39,14 @@ sealed class InlineCompletionEventType {
   class Completion @ApiStatus.Internal constructor(val cause: Throwable?, val isActive: Boolean) : InlineCompletionEventType()
 
   /**
-   * This event is triggered when a user inserts a non-empty inline completion variant.
+   * This event is triggered before a user inserts a non-empty inline completion variant.
    */
   data object Insert : InlineCompletionEventType()
+
+  /**
+   * This event is triggered after a user inserts a non-empty inline completion variant.
+   */
+  data object AfterInsert : InlineCompletionEventType()
 
   /**
    * This event is triggered when an inline completion session is cleared for any reason (see [finishType]).
@@ -135,6 +140,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
       is InlineCompletionEventType.Change -> onChange(event)
       is InlineCompletionEventType.Invalidated -> onInvalidated(event)
       is InlineCompletionEventType.Insert -> onInsert(event)
+      is InlineCompletionEventType.AfterInsert -> afterInsert(event)
       is InlineCompletionEventType.Hide -> onHide(event)
       is InlineCompletionEventType.Completion -> onCompletion(event)
       is InlineCompletionEventType.Empty -> onEmpty(event)
@@ -150,6 +156,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
   fun onChange(event: InlineCompletionEventType.Change) {}
   fun onInvalidated(event: InlineCompletionEventType.Invalidated) {}
   fun onInsert(event: InlineCompletionEventType.Insert) {}
+  fun afterInsert(event: InlineCompletionEventType.AfterInsert) {}
   fun onHide(event: InlineCompletionEventType.Hide) {}
   fun onCompletion(event: InlineCompletionEventType.Completion) {}
   fun onEmpty(event: InlineCompletionEventType.Empty) {}

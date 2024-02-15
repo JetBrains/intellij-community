@@ -190,9 +190,16 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       showTracker?.selected()
     }
 
+    override fun afterInsert(event: InlineCompletionEventType.AfterInsert) {
+      showTracker?.inserted()
+      showTracker = null
+    }
+
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
       showTracker?.canceled(event.finishType)
-      showTracker = null
+      if (event.finishType != ShownEvents.FinishType.SELECTED) {
+        showTracker = null
+      }
     }
 
     override fun onVariantSwitched(event: InlineCompletionEventType.VariantSwitched) {

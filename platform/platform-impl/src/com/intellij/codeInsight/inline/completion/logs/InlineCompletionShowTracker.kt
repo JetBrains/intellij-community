@@ -85,6 +85,19 @@ internal class InlineCompletionShowTracker(
     finish(FinishType.SELECTED)
   }
 
+  fun inserted() {
+    potentiallySelectedIndex?.let {
+      service<InsertedStateTracker>().track(requestId,
+                                            language,
+                                            fileLanguage,
+                                            request.editor,
+                                            request.endOffset,
+                                            variantStates[it].suggestion,
+                                            getDuration(),
+      )
+    }
+  }
+
   fun canceled(finishType: FinishType) {
     finish(finishType)
   }
@@ -108,18 +121,6 @@ internal class InlineCompletionShowTracker(
     }
 
     InlineCompletionUsageTracker.SHOWN_EVENT.log(data)
-    if (finishType == FinishType.SELECTED) {
-      potentiallySelectedIndex?.let {
-        service<InsertedStateTracker>().track(requestId,
-                                              language,
-                                              fileLanguage,
-                                              request.editor,
-                                              request.endOffset,
-                                              variantStates[it].suggestion,
-                                              getDuration(),
-        )
-      }
-    }
   }
 
   private fun getDuration(): Duration =
