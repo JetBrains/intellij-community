@@ -21,22 +21,22 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class CachedModuleDataFinder private constructor(private val project: Project) {
 
-  fun findGradleModuleData(module: Module): GradleModuleData? {
-    val moduleData = findMainModuleData(module) ?: return null
+  private fun findGradleModuleDataImpl(module: Module): GradleModuleData? {
+    val moduleData = findMainModuleDataImpl(module) ?: return null
     return GradleModuleData(moduleData)
   }
 
-  private fun findModuleData(module: Module): DataNode<out ModuleData>? {
+  private fun findModuleDataImpl(module: Module): DataNode<out ModuleData>? {
     val moduleType = ExternalSystemApiUtil.getExternalModuleType(module)
     if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY != moduleType) {
-      return findMainModuleData(module)
+      return findMainModuleDataImpl(module)
     }
 
     val projectId = ExternalSystemApiUtil.getExternalProjectId(module) ?: return null
     val cachedNode = getCache(project)[projectId]
     if (cachedNode != null) return cachedNode
 
-    val mainModuleData = findMainModuleData(module) ?: return null
+    val mainModuleData = findMainModuleDataImpl(module) ?: return null
     return ExternalSystemApiUtil.findChild(mainModuleData, GradleSourceSetData.KEY) {
       val id = it.data.id
       getCache(project)[id] = it
@@ -44,15 +44,15 @@ class CachedModuleDataFinder private constructor(private val project: Project) {
     }
   }
 
-  fun findMainModuleData(module: Module): DataNode<out ModuleData>? {
+  private fun findMainModuleDataImpl(module: Module): DataNode<out ModuleData>? {
     ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return null
     ExternalSystemApiUtil.getExternalProjectId(module) ?: return null
 
     val externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
-    return findModuleData(module.project, externalProjectPath)
+    return findModuleDataImpl(module.project, externalProjectPath)
   }
 
-  fun findModuleData(project: Project, modulePath: String): DataNode<out ModuleData>? {
+  private fun findModuleDataImpl(project: Project, modulePath: String): DataNode<out ModuleData>? {
     val cachedNode = getCache(project)[modulePath]
     if (cachedNode != null) return cachedNode
 
@@ -67,17 +67,23 @@ class CachedModuleDataFinder private constructor(private val project: Project) {
   companion object {
 
     @JvmStatic
-    fun getInstance(project: Project): CachedModuleDataFinder {
-      return CachedModuleDataFinder(project)
+    fun getGradleModuleData(module: Module): GradleModuleData? {
+      return CachedModuleDataFinder(module.project).findGradleModuleDataImpl(module)
     }
 
     @JvmStatic
-    fun getGradleModuleData(module: Module): GradleModuleData? {
-      return getInstance(module.project).findGradleModuleData(module)
+    fun findMainModuleData(module: Module): DataNode<out ModuleData>? {
+      return CachedModuleDataFinder(module.project).findMainModuleDataImpl(module)
     }
 
+    @JvmStatic
     fun findModuleData(project: Project, modulePath: String): DataNode<out ModuleData>? {
-      return getInstance(project).findModuleData(project, modulePath)
+      return CachedModuleDataFinder(project).findModuleDataImpl(project, modulePath)
+    }
+
+    @JvmStatic
+    fun findModuleData(module: Module): DataNode<out ModuleData>? {
+      return CachedModuleDataFinder(module.project).findModuleDataImpl(module)
     }
 
     @JvmStatic

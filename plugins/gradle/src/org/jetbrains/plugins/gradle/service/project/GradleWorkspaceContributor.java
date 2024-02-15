@@ -36,7 +36,7 @@ public class GradleWorkspaceContributor implements ExternalSystemWorkspaceContri
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
       return null;
     }
-    DataNode<? extends ModuleData> moduleData = CachedModuleDataFinder.getInstance(module.getProject()).findModuleData(module);
+    DataNode<? extends ModuleData> moduleData = CachedModuleDataFinder.findModuleData(module);
     return moduleData != null ? moduleData.getData().getPublication() : null;
   }
 }
