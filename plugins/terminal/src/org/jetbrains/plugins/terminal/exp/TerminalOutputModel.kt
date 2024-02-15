@@ -181,6 +181,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     return firstRetainedBlockInd.coerceAtLeast(0)
   }
 
+  @RequiresEdt
   fun deleteDocumentRange(block: CommandBlock, deleteRange: TextRange) {
     val startBlockInd = blocks.indexOf(block)
     check(startBlockInd >= 0)
