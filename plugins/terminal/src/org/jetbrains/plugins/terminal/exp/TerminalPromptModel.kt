@@ -9,9 +9,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jediterm.terminal.TerminalColor
-import com.jediterm.terminal.ui.AwtTransformers
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.getAwtForegroundByIndex
 import java.awt.Font
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -85,11 +84,8 @@ class TerminalPromptModel(private val session: BlockTerminalSession) {
   }
 
   private fun plainAttributes(colorIndex: Int): TextAttributes {
-    val color = if (colorIndex > 0) {
-      session.colorPalette.getForeground(TerminalColor.index(colorIndex))
-    }
-    else session.colorPalette.defaultForeground
-    return TextAttributes(AwtTransformers.toAwtColor(color)!!, null, null, null, Font.PLAIN)
+    val color = session.colorPalette.getAwtForegroundByIndex(colorIndex)
+    return TextAttributes(color, null, null, null, Font.PLAIN)
   }
 
   fun addListener(listener: TerminalPromptStateListener, disposable: Disposable) {

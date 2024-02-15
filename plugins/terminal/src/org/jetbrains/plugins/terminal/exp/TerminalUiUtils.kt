@@ -181,6 +181,14 @@ object TerminalUiUtils {
     }
   }
 
+  fun TerminalColorPalette.getAwtForegroundByIndex(colorIndex: Int): Color {
+    val color = if (colorIndex in 0..15) {
+      getForeground(TerminalColor.index(colorIndex))
+    }
+    else defaultForeground
+    return AwtTransformers.toAwtColor(color)!!
+  }
+
   private fun getForegroundColor(style: TextStyle, palette: TerminalColorPalette): Color {
     val foreground = getEffectiveForegroundColor(style.foregroundForRun, palette)
     return if (style.hasOption(TextStyle.Option.DIM)) {
