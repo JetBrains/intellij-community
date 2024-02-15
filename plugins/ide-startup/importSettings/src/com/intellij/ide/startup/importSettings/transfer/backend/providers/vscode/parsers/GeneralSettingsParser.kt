@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vscode.parsers
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
-import com.fasterxml.jackson.core.JsonFactory
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.json.JsonReadFeature
+import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.db.KnownLafs
@@ -27,7 +26,10 @@ class GeneralSettingsParser(private val settings: Settings) {
   fun process(file: File): Unit = try {
     logger.info("Processing a general settings file: $file")
 
-    val root = ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(file) as? ObjectNode
+    val mapper = JsonMapper.builder()
+      .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS, JsonReadFeature.ALLOW_TRAILING_COMMA)
+      .build()
+    val root = mapper.readTree(file) as? ObjectNode
                ?: error("Unexpected JSON data; expected: ${JsonNodeType.OBJECT}")
 
     processThemeAndScheme(root)
