@@ -8,11 +8,13 @@ import com.intellij.diagnostic.logs.DebugLogLevel
 import com.intellij.diagnostic.logs.LogCategory
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.util.setSuspendPreserveClientId
@@ -58,6 +60,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     fun getDistributedTestPort(): Int? =
       System.getProperty(AgentConstants.protocolPortPropertyName)?.toIntOrNull()
+    
+    /** 
+     * ID of the plugin which contains test code.
+     * Currently, only test code of the client part is put to a separate plugin.
+     */    
+    const val TEST_PLUGIN_ID: String = "com.intellij.tests.plugin"
   }
 
   open fun setUpLogging(sessionLifetime: Lifetime, session: RdTestSession) {
@@ -130,7 +138,16 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           }
 
           // Create test class
-          val testClass = Class.forName(session.testClassName)
+          val testPlugin = PluginManagerCore.getPlugin(PluginId.getId(TEST_PLUGIN_ID))
+          val classLoader = if (testPlugin != null) {
+            LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
+            testPlugin.pluginClassLoader
+          }
+          else {
+            LOG.info("Test class will be loaded by the core classloader.")
+            javaClass.classLoader
+          }
+          val testClass = Class.forName(session.testClassName, true, classLoader)
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
 
           // Tell test we are running it inside an agent
