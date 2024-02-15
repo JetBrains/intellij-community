@@ -1383,7 +1383,7 @@
     <completion.contributor language="JAVA" id="JShell" order="before javaLegacy"
                             implementationClass="com.intellij.codeInsight.completion.JShellCompletionContributor"/>
 
-    <completion.contributor language="JAVA" id="javaLogger" implementationClass="com.intellij.codeInsight.completion.JavaLoggerCompletionContributor"/>
+    <completion.contributor language="JAVA" id="jvmLogger" implementationClass="com.intellij.codeInsight.completion.JvmLoggerCompletionContributor"/>
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 
     <completion.confidence language="JAVA" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionCompletionConfidence" id="javaReflection" />

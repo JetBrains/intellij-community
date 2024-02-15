@@ -10,7 +10,7 @@ import com.intellij.util.Consumer
 
 class ExcludeLoggerFromCompletionLookupActionProvider : LookupActionProvider {
   override fun fillActions(lookupElement: LookupElement, lookup: Lookup, consumer: Consumer<in LookupElementAction>) {
-    if (lookupElement is LoggerLookupElement) {
+    if (lookupElement is JvmLoggerLookupElement) {
       for (s in AddImportAction.getAllExcludableStrings(lookupElement.typeName)) {
         consumer.consume(ExcludeFromCompletionAction(lookup.project, s))
       }

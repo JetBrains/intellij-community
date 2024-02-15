@@ -10,7 +10,7 @@ import com.intellij.psi.PsiExpressionStatement
 import com.intellij.psi.PsiJavaToken
 import com.intellij.util.ProcessingContext
 
-class JavaLoggerCompletionContributor : CompletionContributor() {
+class JvmLoggerCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC,
            psiElement()
@@ -35,7 +35,7 @@ class JavaLoggerCompletionContributor : CompletionContributor() {
                val place = possiblePlaces.firstOrNull() ?: return
 
                for (logger in availableLoggers) {
-                 val lookupElement = LoggerLookupElement(logger, place)
+                 val lookupElement = JvmLoggerLookupElement(logger, place)
                  javaResultWithSorting.addElement(lookupElement)
                }
              }

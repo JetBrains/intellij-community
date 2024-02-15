@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 
 class LoggerWeigher : CompletionWeigher() {
   override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<*> = when (element) {
-    is LoggerLookupElement -> -1
+    is JvmLoggerLookupElement -> -1
     else -> 1
   }
 }
