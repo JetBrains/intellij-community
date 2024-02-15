@@ -14,14 +14,17 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.YAMLLanguage
 
+const val PARSE_DELAY = 1000L
+
+
 fun isGithubActionsFile(virtualFile: VirtualFile, project: Project?): Boolean {
-  project ?: return false
+  if (project == null) return false
   val isYamlFile = FileTypeRegistry.getInstance().isFileOfType(virtualFile, YAMLFileType.YML)
   return isYamlFile && isGithubActionsFile(PsiManager.getInstance(project).findFile(virtualFile) ?: return false)
 }
 
 fun isGithubActionsFile(psiFile: PsiFile?): Boolean {
-  psiFile ?: return false
+  if (psiFile == null) return false
   return CachedValuesManager.getCachedValue(psiFile) {
     CachedValueProvider.Result.create(
       isGithubActionFile(psiFile) || isGithubWorkflowFile(psiFile),
@@ -30,31 +33,31 @@ fun isGithubActionsFile(psiFile: PsiFile?): Boolean {
   }
 }
 
+fun isGithubActionFile(psiFile: PsiFile): Boolean {
+  return isProperActionFile(psiFile, githubActionsFilePattern, GITHUB_ACTION_SCHEMA_NAMES)
+}
+
+fun isGithubWorkflowFile(psiFile: PsiFile): Boolean {
+  return isProperActionFile(psiFile, githubWorkflowsFilePattern, GITHUB_WORKFLOW_SCHEMA_NAMES)
+}
+
 private fun isGithubSchemaAssigned(project: Project?, virtualFile: VirtualFile, schemaNames: Set<String>): Boolean {
-  project ?: return false
+  if (project == null) return false
   val schemaFiles = project.service<JsonSchemaService>().getSchemaFilesForFile(virtualFile)
   val schemaAssigned = schemaFiles.any { schemaNames.contains(it.nameWithoutExtension) }
   return schemaAssigned
 }
 
-fun isGithubActionFile(psiFile: PsiFile): Boolean {
-  val virtualFile = psiFile.originalFile?.virtualFile
+private fun isProperActionFile(psiFile: PsiFile, pattern: Regex, fileNames: Set<String>): Boolean {
+  val virtualFile = psiFile.originalFile.virtualFile
   if (virtualFile == null) return false
-  val schemaAssigned = isGithubSchemaAssigned(psiFile.project, virtualFile, GITHUB_ACTION_SCHEMA_NAMES)
+  val schemaAssigned = isGithubSchemaAssigned(psiFile.project, virtualFile, fileNames)
   return (psiFile.language.`is` (YAMLLanguage.INSTANCE)
-         && githubActionsFilePattern.matches(virtualFile.path)) || schemaAssigned
-}
-
-fun isGithubWorkflowFile(psiFile: PsiFile): Boolean {
-  val virtualFile = psiFile.originalFile?.virtualFile
-  if (virtualFile == null) return false
-  val schemaAssigned = isGithubSchemaAssigned(psiFile.project, virtualFile, GITHUB_WORKFLOW_SCHEMA_NAMES)
-  return (psiFile.language.`is` (YAMLLanguage.INSTANCE)
-         && githubWorkflowsFilePattern.matches(virtualFile.path)) || schemaAssigned
+          && pattern.matches(StringUtil.newBombedCharSequence(virtualFile.path, PARSE_DELAY))) || schemaAssigned
 }
 
 private val githubActionsFilePattern =
-  Regex(StringUtil.newBombedCharSequence("""^.*/\.github/.*/action\.ya?ml${'$'}""", 1000L).toString())
+  Regex("""^.*/\.github/.*/action\.ya?ml${'$'}""")
 
 private val githubWorkflowsFilePattern =
-  Regex(StringUtil.newBombedCharSequence("""^.*/\.github/workflows/.*\.(ya?ml)${'$'}""", 1000L).toString())
+  Regex("""^.*/\.github/workflows/.*\.(ya?ml)${'$'}""")
