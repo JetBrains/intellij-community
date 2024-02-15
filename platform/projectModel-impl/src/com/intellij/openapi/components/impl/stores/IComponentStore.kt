@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -23,7 +22,7 @@ interface IComponentStore {
 
   fun initPersistencePlainComponent(component: Any, @NlsSafe key: String, pluginId: PluginId)
 
-  fun reloadStates(componentNames: Set<String>, messageBus: MessageBus)
+  fun reloadStates(componentNames: Set<String>)
 
   fun reloadState(componentClass: Class<out PersistentStateComponent<*>>)
 

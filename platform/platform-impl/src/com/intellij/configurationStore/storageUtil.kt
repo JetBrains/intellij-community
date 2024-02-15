@@ -54,7 +54,7 @@ fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: M
   val title = IdeBundle.message("notification.title.unknown.macros.error")
   UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros).apply {
     addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
-      checkUnknownMacros(project, true, macros, substitutorToStore)
+      checkUnknownMacros(project = project, showDialog = true, unknownMacros = macros, substitutorToStore = substitutorToStore)
     })
   }.notify(project)
 }
@@ -64,9 +64,9 @@ fun checkUnknownMacros(project: Project, notify: Boolean) {
   // use linked set/map to get stable results
   val unknownMacros = LinkedHashSet<String>()
   val substitutorToStore = LinkedHashMap<TrackingPathMacroSubstitutor, IComponentStore>()
-  collect(project, unknownMacros, substitutorToStore)
+  collect(componentManager = project, unknownMacros = unknownMacros, substitutorToStore = substitutorToStore)
   for (module in ModuleManager.getInstance(project).modules) {
-    collect(module, unknownMacros, substitutorToStore)
+    collect(componentManager = module, unknownMacros = unknownMacros, substitutorToStore = substitutorToStore)
   }
 
   if (unknownMacros.isEmpty()) {
@@ -74,17 +74,19 @@ fun checkUnknownMacros(project: Project, notify: Boolean) {
   }
 
   if (notify) {
-    doNotify(unknownMacros, project, substitutorToStore)
+    doNotify(macros = unknownMacros, project = project, substitutorToStore = substitutorToStore)
     return
   }
 
-  checkUnknownMacros(project, false, unknownMacros, substitutorToStore)
+  checkUnknownMacros(project = project, showDialog = false, unknownMacros = unknownMacros, substitutorToStore = substitutorToStore)
 }
 
-private fun checkUnknownMacros(project: Project,
-                               showDialog: Boolean,
-                               unknownMacros: MutableSet<String>,
-                               substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
+private fun checkUnknownMacros(
+  project: Project,
+  showDialog: Boolean,
+  unknownMacros: MutableSet<String>,
+  substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>,
+) {
   if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(project, HashSet(unknownMacros)))) {
     return
   }
@@ -108,7 +110,7 @@ private fun checkUnknownMacros(project: Project,
         }
       }
 
-      store.reloadStates(components, project.messageBus)
+      store.reloadStates(components)
     }
     else if (Messages.showYesNoDialog(project, IdeBundle.message("dialog.message.component.could.not.be.reloaded"),
                                       IdeBundle.message("dialog.title.configuration.changed"),
@@ -166,12 +168,14 @@ fun <T> runAsWriteActionIfNeeded(runnable: () -> T): T {
   }
 }
 
-class UnknownMacroNotification(groupId: String,
-                               title: @NlsContexts.NotificationTitle String,
-                               content: @NlsContexts.NotificationContent String,
-                               type: NotificationType,
-                               listener: NotificationListener?,
-                               val macros: Collection<String>) : Notification(groupId, title, content, type) {
+class UnknownMacroNotification(
+  groupId: String,
+  title: @NlsContexts.NotificationTitle String,
+  content: @NlsContexts.NotificationContent String,
+  type: NotificationType,
+  listener: NotificationListener?,
+  val macros: Collection<String>,
+) : Notification(groupId, title, content, type) {
   init {
     listener?.let {
       @Suppress("DEPRECATION")

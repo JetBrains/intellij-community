@@ -37,7 +37,6 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -690,7 +689,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet()
   }
 
-  override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+  override fun reloadStates(componentNames: Set<String>) {
     reinitComponents(componentNames = componentNames, changedStorages = emptySet(), notReloadableComponents = emptySet())
   }
 
@@ -750,7 +749,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     LOG.debug { "Reload components: $componentNames" }
 
     val notReloadableComponents = getNotReloadableComponents(componentNames)
-    reinitComponents(componentNames, changedStorages, notReloadableComponents)
+    reinitComponents(componentNames = componentNames, changedStorages = changedStorages, notReloadableComponents = notReloadableComponents)
     return notReloadableComponents.ifEmpty { null }
   }
 
@@ -836,7 +835,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     }
 
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
-    doNotify(macros = macros, project = project, substitutorToStore = Collections.singletonMap(substitutor, store))
+    doNotify(macros = macros, project = project, substitutorToStore = java.util.Map.of(substitutor, store))
   }
 }
 

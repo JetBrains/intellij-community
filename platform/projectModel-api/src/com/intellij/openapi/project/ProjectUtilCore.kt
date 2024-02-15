@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
@@ -18,7 +18,13 @@ import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 
 @NlsSafe
-fun displayUrlRelativeToProject(file: VirtualFile, @NlsSafe url: String, project: Project, isIncludeFilePath: Boolean, moduleOnTheLeft: Boolean): String {
+fun displayUrlRelativeToProject(
+  file: VirtualFile,
+  @NlsSafe url: String,
+  project: Project,
+  isIncludeFilePath: Boolean,
+  moduleOnTheLeft: Boolean,
+): String {
   var result = url
 
   if (isIncludeFilePath) {
@@ -29,7 +35,7 @@ fun displayUrlRelativeToProject(file: VirtualFile, @NlsSafe url: String, project
     }
   }
 
-  val urlWithLibraryName = decorateWithLibraryName(file, project, result)
+  val urlWithLibraryName = decorateWithLibraryName(file = file, project = project, result = result)
   if (urlWithLibraryName != null) {
     return urlWithLibraryName
   }
@@ -39,7 +45,7 @@ fun displayUrlRelativeToProject(file: VirtualFile, @NlsSafe url: String, project
     return result
   }
 
-  return appendModuleName(file, project, result, moduleOnTheLeft)
+  return appendModuleName(file = file, project = project, result = result, moduleOnTheLeft = moduleOnTheLeft)
 }
 
 fun decorateWithLibraryName(file: VirtualFile, project: Project, result: String): String? {

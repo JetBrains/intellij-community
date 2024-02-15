@@ -8,7 +8,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -27,7 +26,7 @@ internal class NonPersistentModuleStore : ModuleStore {
 
   override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {}
 
-  override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {}
+  override fun reloadStates(componentNames: Set<String>) {}
 
   override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {}
 

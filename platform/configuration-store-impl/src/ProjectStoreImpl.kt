@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.Ksuid
-import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jdom.Element
@@ -278,6 +277,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     if (!file.isInLocalFileSystem || !ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
       return false
     }
+
     val filePath = file.path
     if (!isDirectoryBased) {
       return filePath == projectFilePath.invariantSeparatorsPathString || filePath == workspacePath.invariantSeparatorsPathString
@@ -287,8 +287,8 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   final override fun getDirectoryStorePath(): Path? = dotIdea
 
-  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
-    batchReloadStates(componentNames, messageBus)
+  final override fun reloadStates(componentNames: Set<String>) {
+    batchReloadStates(componentNames, project.messageBus)
   }
 
   override fun getProjectName(): String {

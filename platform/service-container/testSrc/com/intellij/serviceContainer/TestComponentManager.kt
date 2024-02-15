@@ -9,7 +9,6 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.messages.MessageBus
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
@@ -56,7 +55,7 @@ private class TestComponentStore : IComponentStore {
   override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {
   }
 
-  override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+  override fun reloadStates(componentNames: Set<String>) {
   }
 
   override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
