@@ -47,6 +47,8 @@ public final class PathManager {
   private static final String CONFIG_DIRECTORY = "config";
   private static final String SYSTEM_DIRECTORY = "system";
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
+  private static final String COMMUNITY_MARKER = "intellij.idea.community.main.iml";
+  private static final String ULTIMATE_MARKER = ".ultimate.root.marker";
 
   private static final class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
@@ -171,10 +173,10 @@ public final class PathManager {
   }
 
   private static boolean isIdeaHome(Path root) {
-    for (Path binDir : getBinDirectories(root)) {
-      if (Files.isRegularFile(binDir.resolve(PROPERTIES_FILE_NAME))) {
-        return true;
-      }
+    if (Files.isRegularFile(root.resolve(BIN_DIRECTORY).resolve(PROPERTIES_FILE_NAME))
+        || Files.isRegularFile(root.resolve(COMMUNITY_MARKER))
+        || Files.isRegularFile(root.resolve(ULTIMATE_MARKER))) {
+      return true;
     }
     return false;
   }
@@ -692,19 +694,21 @@ public final class PathManager {
     return getCommunityHomePath(getHomePath());
   }
 
+  private static boolean isDevServer() {
+    return Boolean.getBoolean("idea.use.dev.build.server");
+  }
+
   private static @NotNull String getCommunityHomePath(@NotNull String homePath) {
     boolean isRunningFromSources = Files.isDirectory(Paths.get(homePath, ".idea"));
-    if (!isRunningFromSources) return homePath;
-
-    if (Files.isDirectory(Paths.get(homePath, "community/.idea"))) {
-      return homePath + "/community";
-    }
-    if (Files.isDirectory(Paths.get(homePath, "ultimate/community/.idea"))) {
-      return homePath + "/ultimate/community";
-    }
-    if (Files.isDirectory(Paths.get(homePath, "../../../community/.idea"))) {
-      // support projects in ULTIMATE_REPO/remote-dev/extras/SUBDIR
-      return homePath + "/../../../community";
+    if (!isRunningFromSources && !isDevServer()) return homePath;
+    ArrayList<Path> possibleCommunityPathList = new ArrayList<>();
+    possibleCommunityPathList.add(Paths.get(homePath, "community"));
+    possibleCommunityPathList.add(Paths.get(homePath, "..", "..", "..", "community"));
+    possibleCommunityPathList.add(Paths.get(homePath, "..", "..", "..", "..", "community"));
+    for (Path possibleCommunityPath : possibleCommunityPathList) {
+      if (Files.isRegularFile(possibleCommunityPath.resolve(COMMUNITY_MARKER))) {
+        return possibleCommunityPath.normalize().toString();
+      }
     }
     return homePath;
   }
