@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,7 @@ import java.util.stream.Stream;
 public final class InspectionViewSuppressActionHolder {
   private final Map<String, Map<ContextDescriptor, SuppressIntentionAction[]>> mySuppressActions =
     FactoryMap.create(__ -> new HashMap<>());
-  private final Interner<Set<SuppressIntentionAction>> myActionSetInterner = new HashSetInterner<>();
+  private final Interner<Set<SuppressIntentionAction>> myActionSetInterner = Interner.createInterner();
 
   public synchronized SuppressIntentionAction @NotNull [] getSuppressActions(@NotNull InspectionToolWrapper wrapper, @NotNull PsiElement context) {
     ContextDescriptor descriptor = ContextDescriptor.from(context);

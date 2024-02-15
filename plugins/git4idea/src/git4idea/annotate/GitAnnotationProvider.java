@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate;
 
 import com.intellij.idea.ActionsBundle;
@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.CacheableAnnotationProvider;
@@ -353,7 +352,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                              @NotNull VirtualFile file,
                                                              @NotNull VirtualFile root,
                                                              @NotNull String output) throws VcsException {
-    Interner<FilePath> pathInterner = new HashSetInterner<>();
+    Interner<FilePath> pathInterner = Interner.createInterner();
 
     if (StringUtil.isEmpty(output)) {
       LOG.warn("Git annotations are empty for file " + file.getPath() + " in revision " + revision);

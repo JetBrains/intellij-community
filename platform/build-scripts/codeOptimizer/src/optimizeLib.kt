@@ -16,7 +16,7 @@ internal data class OptimizeLibraryContext(@JvmField val tempDir: Path, @JvmFiel
 
 private data class LibDescriptor(@JvmField val id: String, @JvmField val version: String, @JvmField val jbVersion: Int)
 
-private val fastUtil = LibDescriptor(id = "fastutil", version = "8.5.13", jbVersion = 3)
+private val fastUtil = LibDescriptor(id = "fastutil", version = "8.5.13", jbVersion = 4)
 
 @Suppress("unused")
 internal object FastutilInstall {
@@ -133,11 +133,6 @@ internal fun optimizeLibrary(name: String, input: Path, output: Path, javaHome: 
   ConfigurationParser(configText, configFileName, output.parent.toFile(), properties).use {
     it.parse(configuration)
   }
-
-  configuration.allowAccessModification = true
-  configuration.optimizationPasses = 5
-  configuration.optimizeConservatively = false
-  configuration.keepParameterNames = true
 
   configuration.printMapping = mapping?.toFile()
 

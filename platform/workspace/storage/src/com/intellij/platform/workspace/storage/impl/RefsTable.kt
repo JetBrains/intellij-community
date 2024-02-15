@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.impl.containers.*
 import com.intellij.platform.workspace.storage.impl.references.*
 import com.intellij.platform.workspace.storage.instrumentation.Modification
-import com.intellij.util.containers.HashSetInterner
+import com.intellij.util.containers.Interner
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
@@ -97,7 +97,7 @@ public class ConnectionId private constructor(
       return interner.intern(connectionId)
     }
 
-    private val interner = HashSetInterner<ConnectionId>()
+    private val interner = Interner.createInterner<ConnectionId>()
   }
 }
 
