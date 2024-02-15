@@ -5351,6 +5351,109 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature")
+    public static class SpecifyExplicitLambdaSignature extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymous.kt")
+        public void testAnonymous() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/anonymous.kt");
+        }
+
+        @TestMetadata("coercionToUnit.kt")
+        public void testCoercionToUnit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/coercionToUnit.kt");
+        }
+
+        @TestMetadata("cursorOnRightBrace.kt")
+        public void testCursorOnRightBrace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/cursorOnRightBrace.kt");
+        }
+
+        @TestMetadata("definitelyNonNullTypeMultipleParam.kt")
+        public void testDefinitelyNonNullTypeMultipleParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/definitelyNonNullTypeMultipleParam.kt");
+        }
+
+        @TestMetadata("definitelyNonNullTypeSingleParam.kt")
+        public void testDefinitelyNonNullTypeSingleParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/definitelyNonNullTypeSingleParam.kt");
+        }
+
+        @TestMetadata("delegate.kt")
+        public void testDelegate() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/delegate.kt");
+        }
+
+        @TestMetadata("destructuring.kt")
+        public void testDestructuring() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/destructuring.kt");
+        }
+
+        @TestMetadata("emptyParamListWithBrackets.kt")
+        public void testEmptyParamListWithBrackets() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/emptyParamListWithBrackets.kt");
+        }
+
+        @TestMetadata("emptyParamListWithIt.kt")
+        public void testEmptyParamListWithIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/emptyParamListWithIt.kt");
+        }
+
+        @TestMetadata("emptyParamListWithWhiteSpace.kt")
+        public void testEmptyParamListWithWhiteSpace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/emptyParamListWithWhiteSpace.kt");
+        }
+
+        @TestMetadata("emptyParamListWithoutItWithArrow.kt")
+        public void testEmptyParamListWithoutItWithArrow() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/emptyParamListWithoutItWithArrow.kt");
+        }
+
+        @TestMetadata("lambdaWithLambdaAsParam.kt")
+        public void testLambdaWithLambdaAsParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/lambdaWithLambdaAsParam.kt");
+        }
+
+        @TestMetadata("manyNewlines.kt")
+        public void testManyNewlines() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/manyNewlines.kt");
+        }
+
+        @TestMetadata("multipleParam.kt")
+        public void testMultipleParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/multipleParam.kt");
+        }
+
+        @TestMetadata("noParameters.kt")
+        public void testNoParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/noParameters.kt");
+        }
+
+        @TestMetadata("shortenReferencesForParams.kt")
+        public void testShortenReferencesForParams() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/shortenReferencesForParams.kt");
+        }
+
+        @TestMetadata("singleParam.kt")
+        public void testSingleParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/singleParam.kt");
+        }
+
+        @TestMetadata("typesAlreadyExplicit.kt")
+        public void testTypesAlreadyExplicit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/typesAlreadyExplicit.kt");
+        }
+
+        @TestMetadata("typesNotInferable.kt")
+        public void testTypesNotInferable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature/typesNotInferable.kt");
+        }
+    }
+
 
 
 
@@ -5429,8 +5532,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/mergeIfs/simple.kt");
         }
     }
-
-
 
 
 

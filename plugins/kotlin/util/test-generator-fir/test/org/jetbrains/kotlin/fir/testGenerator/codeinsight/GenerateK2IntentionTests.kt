@@ -51,6 +51,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/invertIfCondition", pattern = pattern)
             model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
             model("${idea}intentions/removeExplicitTypeArguments", pattern = pattern)
+            model("${idea}intentions/specifyExplicitLambdaSignature", pattern = pattern)
 
             //
             model("${idea}intentions/addJvmOverloads", pattern = pattern, isIgnored = true)
@@ -91,7 +92,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/branched", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertVariableAssignmentToExpression", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertNullablePropertyToLateinit", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/specifyExplicitLambdaSignature", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceSizeCheckWithIsNotEmpty", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceTypeArgumentWithUnderscore", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertSecondaryConstructorToPrimary", pattern = pattern, isIgnored = true)
