@@ -153,4 +153,12 @@ tasks {
             logger.info("All done!")
         }
     }
+
+    register<Delete>("cleanTestPublishArtifacts") {
+        delete(rootProject.layout.buildDirectory.dir("maven-test"))
+    }
+
+    register<Delete>("clean") {
+        delete(rootProject.layout.buildDirectory)
+    }
 }
