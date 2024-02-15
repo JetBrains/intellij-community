@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.font.TextHitInfo;
 import java.awt.im.InputMethodRequests;
 import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
 
 abstract public class SpeedSearchInputMethodRequests implements InputMethodRequests {
   abstract protected InputMethodRequests getDelegate();
@@ -45,18 +46,28 @@ abstract public class SpeedSearchInputMethodRequests implements InputMethodReque
 
   @Override
   public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
-    ensurePopupIsShown();
     InputMethodRequests delegate = getDelegate();
+
+    if (delegate == null) {
+      if (beginIndex == 0 && endIndex == 0) {
+        return (new AttributedString("")).getIterator();
+      }
+    }
+
+    ensurePopupIsShown();
+    delegate = getDelegate();
     assert delegate != null;
     return delegate.getCommittedText(beginIndex, endIndex, attributes);
   }
 
   @Override
   public int getCommittedTextLength() {
-    ensurePopupIsShown();
     InputMethodRequests delegate = getDelegate();
-    assert delegate != null;
-    return delegate.getCommittedTextLength();
+    if (delegate == null) {
+      return 0;
+    } else {
+      return delegate.getCommittedTextLength();
+    }
   }
 
   @Nullable
