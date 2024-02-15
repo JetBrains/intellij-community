@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Locale;
 
 public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWithText {
   public PsiFileNode(Project project, @NotNull PsiFile value, ViewSettings viewSettings) {
@@ -149,7 +150,15 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     if (file != null) {
       VirtualFile vFile = file.getVirtualFile();
       if (vFile != null) {
-        return vFile.getFileType().getDefaultExtension();
+        var defaultExtension = vFile.getFileType().getDefaultExtension();
+        if (!defaultExtension.isEmpty()) {
+          // If the type defines a default extension, use it to group files of the same type together,
+          // regardless of their actual extension (e.g. *.htm, *.html...).
+          return defaultExtension;
+        }
+        // Otherwise, fall back to the actual extension, convert it to lower case, again, to group things together.
+        var extension = vFile.getExtension();
+        return extension == null || extension.isEmpty() ? defaultExtension : extension.toLowerCase(Locale.ROOT);
       }
     }
 
