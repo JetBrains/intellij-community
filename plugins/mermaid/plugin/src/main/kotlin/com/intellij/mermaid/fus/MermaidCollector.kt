@@ -12,7 +12,7 @@ internal class MermaidCollector: CounterUsagesCollector() {
   }
 
   companion object {
-    private val group = createEventLogGroup("mermaid.count", 1)
+    private val group = EventLogGroup("mermaid.count", 1)
 
     private val diagramUsed = group.registerEvent(
       "diagram.used",
