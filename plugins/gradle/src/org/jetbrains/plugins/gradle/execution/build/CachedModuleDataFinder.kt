@@ -4,17 +4,17 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * @author Vladislav.Soroka
@@ -33,15 +33,8 @@ class CachedModuleDataFinder private constructor(private val project: Project) {
     }
 
     val projectId = ExternalSystemApiUtil.getExternalProjectId(module) ?: return null
-    val cachedNode = getCache(project)[projectId]
-    if (cachedNode != null) return cachedNode
-
-    val mainModuleData = findMainModuleDataImpl(module) ?: return null
-    return ExternalSystemApiUtil.findChild(mainModuleData, GradleSourceSetData.KEY) {
-      val id = it.data.id
-      getCache(project)[id] = it
-      StringUtil.equals(projectId, id)
-    }
+    val cache = getDataStorageCachedValue(project, module, ::collectAllSourceSetData)
+    return cache[projectId]
   }
 
   private fun findMainModuleDataImpl(module: Module): DataNode<out ModuleData>? {
@@ -53,15 +46,8 @@ class CachedModuleDataFinder private constructor(private val project: Project) {
   }
 
   private fun findMainModuleDataImpl(project: Project, modulePath: String): DataNode<out ModuleData>? {
-    val cachedNode = getCache(project)[modulePath]
-    if (cachedNode != null) return cachedNode
-
-    val projectNode = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, modulePath) ?: return null
-    return ExternalSystemApiUtil.findChild(projectNode, ProjectKeys.MODULE) {
-      val externalProjectPath = it.data.linkedExternalProjectPath
-      getCache(project)[externalProjectPath] = it
-      modulePath == externalProjectPath
-    }
+    val cache = getDataStorageCachedValue(project, project, ::collectAllModuleData)
+    return cache[modulePath]
   }
 
   companion object {
@@ -87,9 +73,25 @@ class CachedModuleDataFinder private constructor(private val project: Project) {
     }
 
     @JvmStatic
-    private fun getCache(project: Project): ConcurrentHashMap<String, DataNode<out ModuleData>> {
-      return CachedValuesManager.getManager(project).getCachedValue(project) {
-        CachedValueProvider.Result.create(ConcurrentHashMap(), ExternalProjectsDataStorage.getInstance(project))
+    private fun collectAllSourceSetData(module: Module): Map<String, DataNode<out GradleSourceSetData>> {
+      val mainModuleDataNode = findMainModuleData(module) ?: return emptyMap()
+      val sourceSetDataNodes = ExternalSystemApiUtil.getChildren(mainModuleDataNode, GradleSourceSetData.KEY)
+      return sourceSetDataNodes.associateBy { it.data.id }
+    }
+
+    @JvmStatic
+    private fun collectAllModuleData(project: Project): Map<String, DataNode<out ModuleData>> {
+      val projectDataManager = ProjectDataManager.getInstance()
+      val projectInfos = projectDataManager.getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
+      val projectDataNodes = projectInfos.mapNotNull { it.externalProjectStructure }
+      val moduleDataNodes = projectDataNodes.flatMap { ExternalSystemApiUtil.getChildren(it, ProjectKeys.MODULE) }
+      return moduleDataNodes.associateBy { it.data.linkedExternalProjectPath }
+    }
+
+    @JvmStatic
+    private fun <H : UserDataHolder, T> getDataStorageCachedValue(project: Project, dataHolder: H, createValue: (H) -> T): T {
+      return CachedValuesManager.getManager(project).getCachedValue(dataHolder) {
+        CachedValueProvider.Result.create(createValue(dataHolder), ExternalProjectsDataStorage.getInstance(project))
       }
     }
   }

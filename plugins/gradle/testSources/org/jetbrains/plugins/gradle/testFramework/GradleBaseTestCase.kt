@@ -58,7 +58,7 @@ abstract class GradleBaseTestCase {
     gradleTestFixture.linkProject(project, relativePath)
   }
 
-  suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit) {
+  suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit = {}) {
     gradleTestFixture.reloadProject(project, relativePath, configure)
   }
 
