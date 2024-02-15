@@ -1046,6 +1046,10 @@ public final class PsiUtil extends PsiUtilCore {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_5);
   }
 
+  /**
+   * @deprecated inline or use {@code PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, element)}
+   */
+  @Deprecated
   public static boolean isLanguageLevel6OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_6);
   }

@@ -252,7 +252,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
           (PsiMethod)(anchor != null ? myTargetSuperClass.addBefore(methodCopy, anchor) : myTargetSuperClass.add(methodCopy));
       }
       OverrideImplementUtil.annotateOnOverrideImplement(method, mySourceClass, movedElement);
-      if (!PsiUtil.isLanguageLevel6OrHigher(mySourceClass) && myIsTargetInterface) {
+      if (!PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, mySourceClass) && myIsTargetInterface) {
         if (isOriginalMethodAbstract) {
           for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
             deleteOverrideAnnotationIfFound(oMethod);

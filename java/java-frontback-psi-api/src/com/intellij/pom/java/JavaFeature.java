@@ -20,6 +20,7 @@ public enum JavaFeature {
   STATIC_IMPORTS(LanguageLevel.JDK_1_5, "feature.static.imports"),
   FOR_EACH(LanguageLevel.JDK_1_5, "feature.for.each"),
   VARARGS(LanguageLevel.JDK_1_5, "feature.varargs"),
+  OVERRIDE_INTERFACE(LanguageLevel.JDK_1_6, "feature.override.interface"),
   HEX_FP_LITERALS(LanguageLevel.JDK_1_5, "feature.hex.fp.literals"),
   DIAMOND_TYPES(LanguageLevel.JDK_1_7, "feature.diamond.types"),
   MULTI_CATCH(LanguageLevel.JDK_1_7, "feature.multi.catch", true),
@@ -147,16 +148,19 @@ public enum JavaFeature {
   /**
    * @return true if the availability of this feature can be additionally filtered using {@link LanguageFeatureProvider}.
    */
+  @Contract(pure = true)
   public boolean canBeCustomized() {
     return myCanBeCustomized;
   }
 
+  @Contract(pure = true)
   public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
     return (useSiteLevel.isAtLeast(myLevel) || 
             useSiteLevel.isUnsupported() && myObsoletePreviewLevels.contains(useSiteLevel)) &&
            (!myLevel.isPreview() || useSiteLevel.isPreview());
   }
 
+  @Contract(pure = true)
   public boolean isLimited() {
     return false;
   }
@@ -164,6 +168,7 @@ public enum JavaFeature {
   /**
    * Override if feature was preview and then accepted as standard
    */
+  @Contract(pure = true)
   public LanguageLevel getStandardLevel() {
     return myLevel.isPreview() ? null : myLevel;
   }

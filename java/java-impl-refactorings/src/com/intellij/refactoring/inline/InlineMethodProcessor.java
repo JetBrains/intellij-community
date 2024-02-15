@@ -190,7 +190,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
         if (JavaLanguage.INSTANCE == method.getLanguage() &&
             Objects.requireNonNull(superMethod.getContainingClass()).isInterface()) {
-          return !PsiUtil.isLanguageLevel6OrHigher(method);
+          return !PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, method);
         }
         return false;
       });

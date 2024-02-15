@@ -241,7 +241,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
       JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(method.getContainingFile());
       if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
         if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, mySourceClass) && !myTargetSuperClass.isInterface() ||
-            PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
+            PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, mySourceClass)) {
           new AddAnnotationFix(CommonClassNames.JAVA_LANG_OVERRIDE, method)
             .invoke(method.getProject(), null, mySourceClass.getContainingFile());
         }

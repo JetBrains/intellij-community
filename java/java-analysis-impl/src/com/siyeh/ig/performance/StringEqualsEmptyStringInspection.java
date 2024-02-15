@@ -24,6 +24,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -198,7 +199,7 @@ public final class StringEqualsEmptyStringInspection extends BaseInspection {
         return;
       }
       final PsiElement context = call.getParent();
-      final boolean useIsEmpty = PsiUtil.isLanguageLevel6OrHigher(call);
+      final boolean useIsEmpty = PsiUtil.getLanguageLevel(call).isAtLeast(LanguageLevel.JDK_1_6);
       if (!useIsEmpty && context instanceof PsiExpressionStatement) {
         // cheesy, but necessary, because otherwise the quickfix will
         // produce uncompilable code (out of merely incorrect code).

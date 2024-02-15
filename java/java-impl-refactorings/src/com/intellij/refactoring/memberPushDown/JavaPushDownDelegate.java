@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -408,8 +409,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     if (methodBySignature == null) return false;
     final PsiMethod[] superMethods = methodBySignature.findDeepestSuperMethods();
     if (superMethods.length == 0) return false;
-    final boolean is15 = !PsiUtil.isLanguageLevel6OrHigher(methodBySignature);
-    if (is15) {
+    if (!PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, methodBySignature)) {
       for (PsiMethod psiMethod : superMethods) {
         final PsiClass psiClass = psiMethod.getContainingClass();
         if (psiClass != null && psiClass.isInterface()) {

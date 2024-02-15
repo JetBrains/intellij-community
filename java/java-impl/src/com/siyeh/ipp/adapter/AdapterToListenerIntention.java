@@ -2,6 +2,7 @@
 package com.siyeh.ipp.adapter;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -155,8 +156,7 @@ public final class AdapterToListenerIntention extends MCIntention {
     modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
     final Project project = aClass.getProject();
     final JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(aClass.getContainingFile());
-    if (codeStyleSettings.INSERT_OVERRIDE_ANNOTATION &&
-        PsiUtil.isLanguageLevel6OrHigher(aClass)) {
+    if (codeStyleSettings.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, aClass)) {
       modifierList.addAnnotation("java.lang.Override");
     }
     final PsiElementFactory factory =

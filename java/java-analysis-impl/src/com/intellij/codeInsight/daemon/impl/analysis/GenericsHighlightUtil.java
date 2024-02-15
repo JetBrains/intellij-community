@@ -1146,15 +1146,9 @@ public final class GenericsHighlightUtil {
         return builder;
       }
       PsiClass superClass = superMethod.getMethod().getContainingClass();
-      if (languageLevel == LanguageLevel.JDK_1_5 &&
-          superClass != null &&
-          superClass.isInterface()) {
-        String description = JavaErrorBundle.message("override.not.allowed.in.interfaces");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(overrideAnnotation).descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_6);
-        info.registerFix(action, null, null, null, null);
-        return info;
+      if (superClass != null && superClass.isInterface()) {
+        return HighlightUtil.checkFeature(overrideAnnotation, JavaFeature.OVERRIDE_INTERFACE, languageLevel,
+                                   overrideAnnotation.getContainingFile());
       }
       return null;
     }
