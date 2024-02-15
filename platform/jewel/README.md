@@ -308,10 +308,10 @@ API:
 ```kotlin
 val myAwtFamily = myFont.asComposeFontFamily()
 
-// This will attempt to resolve the logical AWT font 
+// This will attempt to resolve the logical AWT font
 val myLogicalFamily = Font("Dialog").asComposeFontFamily()
 
-// This only works in the IntelliJ Platform, 
+// This only works in the IntelliJ Platform,
 // since JBFont is only available there
 val myLabelFamily = JBFont.label().asComposeFontFamily()
 ```

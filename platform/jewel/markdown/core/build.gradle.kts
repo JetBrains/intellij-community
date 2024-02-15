@@ -7,10 +7,10 @@ plugins {
 
 dependencies {
     compileOnly(projects.ui)
-
-    implementation(libs.commonmark.core)
+    api(libs.commonmark.core)
 
     testImplementation(compose.desktop.uiTestJUnit4)
+    testImplementation(projects.ui)
 }
 
 publicApiValidation {

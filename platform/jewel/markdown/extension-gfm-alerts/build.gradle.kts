@@ -12,6 +12,8 @@ dependencies {
     compileOnly(libs.commonmark.core)
 
     testImplementation(compose.desktop.uiTestJUnit4)
+    testImplementation(projects.markdown.core)
+    testImplementation(projects.ui)
 }
 
 publicApiValidation {
