@@ -252,7 +252,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return bestIndex == -1 ? 0 : bestIndex;
   }
 
-  private static <T> @Nullable T getClosestBreakpoint(int caretOffset, Iterator<@NotNull T> breakpoints, Function<T, @Nullable TextRange> rangeProvider) {
+  private static <T> @Nullable T getBestMatchingBreakpoint(int caretOffset, Iterator<@NotNull T> breakpoints, Function<T, @Nullable TextRange> rangeProvider) {
     // Best matching = closest to the insertion point and minimal by range of all breakpoints or breakpoint variants
     T bestBreakpoint = null;
     int bestDistance = Integer.MAX_VALUE;
@@ -295,7 +295,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       return variantsAsync.then(variantsWithAll -> {
         var variants = variantsWithAll.stream().filter(v -> !v.isMultiVariant()).toList();
 
-        var breakpointOrVariant = getClosestBreakpoint(caretOffset,
+        var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,
                                                             Stream.concat(
                                                               types.stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()),
                                                               variants.stream()).iterator(),
@@ -316,7 +316,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           return addLineBreakpoint(breakpointManager, variant, file, line, temporary);
         }
 
-        // No breakpoints and no possible variants. Return nothing
+        assert !variants.isEmpty();
+        LOG.error("Unexpected breakpoint toggle state, any variant would be considered as the best one");
         return null;
       });
       // FIXME[inline-bp]: review code below, I was able to loose something non-trivial there
