@@ -31,13 +31,12 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   var scopeVisualLine: Int = -1
   private var offsetOnClick: Int = -1
   private var debugText: String? = null
-
   private var dumbTextImage: BufferedImage? = null
   private var isHovered: Boolean = false
+  private val mouseListener = StickyMouseListener()
 
   init {
     border = null
-    val mouseListener = StickyMouseListener()
     addMouseListener(mouseListener)
     addMouseMotionListener(mouseListener)
     addMouseWheelListener(mouseListener)
@@ -66,6 +65,10 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     this.scopeVisualLine = scopeVisualLine
     this.offsetOnClick = offsetOnClick
     this.debugText = debugText
+    this.dumbTextImage = null
+    this.isHovered = false
+    this.mouseListener.isPopup = false
+    this.mouseListener.isGutterHovered = false
   }
 
   fun isEmpty(): Boolean {
@@ -166,8 +169,8 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
 
   private inner class StickyMouseListener : MouseListener, MouseMotionListener, MouseWheelListener {
     private val popMenu: JPopupMenu
-    private var isPopup = false
-    private var isGutterHovered = false
+    var isPopup = false
+    var isGutterHovered = false
 
     init {
       val actionManager = ActionManager.getInstance()
