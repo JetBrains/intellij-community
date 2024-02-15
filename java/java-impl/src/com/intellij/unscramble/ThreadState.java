@@ -23,6 +23,7 @@ public class ThreadState {
   private boolean isDaemon;
   private final Set<ThreadState> myThreadsWaitingForMyLock = new HashSet<>();
   private final Set<ThreadState> myDeadlockedThreads = new HashSet<>();
+  private String ownableSynchronizers;
 
   @Nullable
   private ThreadOperation myOperation;
@@ -151,6 +152,14 @@ public class ThreadState {
   public boolean isEDT() {
     final String name = getName();
     return isEDT(name);
+  }
+
+  public String getOwnableSynchronizers() {
+    return ownableSynchronizers;
+  }
+
+  public void setOwnableSynchronizers(String ownableSynchronizers) {
+    this.ownableSynchronizers = ownableSynchronizers;
   }
 
   public static boolean isEDT(String name) {

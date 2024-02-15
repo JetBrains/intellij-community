@@ -28,6 +28,8 @@ public final class ThreadDumpParser {
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at java\\.util\\.TimerThread\\.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "at java.lang.Object.wait(";
+  private static final Pattern ourLockedOwnableSynchronizersPattern = Pattern.compile("- <(0x[\\da-f]+)> \\(.*\\)");
+
 
   private ThreadDumpParser() {
   }
@@ -83,7 +85,8 @@ public final class ThreadDumpParser {
     }
     for(ThreadState threadState: result) {
       inferThreadStateDetail(threadState);
-
+    }
+    for(ThreadState threadState: result) {
       String lockId = findWaitingForLock(threadState.getStackTrace());
       ThreadState lockOwner = findLockOwner(result, lockId, true);
       if (lockOwner == null) {
@@ -117,11 +120,25 @@ public final class ThreadDumpParser {
         return lockOwner;
       }
     }
+    for(ThreadState lockOwner : result) {
+      if(lockOwner.getOwnableSynchronizers() != null && lockOwner.getOwnableSynchronizers().equals(lockId)){
+        return lockOwner;
+      }
+    }
     return null;
   }
 
   public static void sortThreads(List<? extends ThreadState> result) {
     result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
+  }
+
+  @Nullable
+  private static String findLockedOwnableSynchronizers(final String stackTrace) {
+    Matcher m = ourLockedOwnableSynchronizersPattern.matcher(stackTrace);
+    if (m.find()) {
+      return m.group(1);
+    }
+    return null;
   }
 
   @Nullable
@@ -190,6 +207,7 @@ public final class ThreadDumpParser {
       }
       threadState.setExtraState("modality level " + modality);
     }
+    threadState.setOwnableSynchronizers(findLockedOwnableSynchronizers(threadState.getStackTrace()));
   }
 
   @Nullable

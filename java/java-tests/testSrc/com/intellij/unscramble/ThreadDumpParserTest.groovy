@@ -369,6 +369,27 @@ Thread 7381: (state = BLOCKED)
     assert threads.last().name == "Coroutine dump"
   }
 
+  void "test ownable locks"() {
+    String text = '''\
+"DefaultDispatcher-worker-4" #47 daemon prio=5 os_prio=0 cpu=4308.76ms elapsed=599.17s tid=0x00007f82b41796c0 nid=0x14907 runnable  [0x00007f8280bb4000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+\tat jdk.internal.misc.Unsafe.park(java.base@17.0.10/Native Method)
+\t- parking to wait for  <0x00000000810e4748> (a com.intellij.openapi.application.impl.ReadMostlyRWLock)
+\tat java.util.concurrent.locks.LockSupport.parkNanos(java.base@17.0.10/LockSupport.java:252)
+\tat com.intellij.openapi.application.impl.ReadMostlyRWLock.waitABit(ReadMostlyRWLock.java:162)
+\tat kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:584)
+\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:793)
+\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:697)
+\tat kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:684)
+
+   Locked ownable synchronizers:
+\t- <0x00000000a7140250> (a java.util.concurrent.locks.ReentrantReadWriteLock$NonfairSync)
+'''
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.size() == 1
+    assert threads.get(0).getOwnableSynchronizers() == "0x00000000a7140250"
+  }
+
   @CompileStatic
   void "test very long line parsing performance"() {
     def spaces = ' ' * 1_000_000
