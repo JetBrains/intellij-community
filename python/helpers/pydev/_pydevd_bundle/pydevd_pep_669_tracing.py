@@ -30,7 +30,10 @@ global_cache_skips = {}
 global_cache_frame_skips = {}
 
 
-monitoring = sys.monitoring
+try:
+    monitoring = sys.monitoring
+except AttributeError:
+    pass
 
 
 def _make_frame_cache_key(code):
