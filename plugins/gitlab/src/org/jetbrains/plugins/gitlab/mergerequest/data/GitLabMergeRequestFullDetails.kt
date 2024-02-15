@@ -86,7 +86,7 @@ val GitLabMergeRequestFullDetails.reviewState: ReviewRequestState
       else -> ReviewRequestState.OPENED // to avoid null state
     }
 
-fun GitLabMergeRequestFullDetails.getRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote? =
+fun GitLabMergeRequestFullDetails.getSourceRemoteDescriptor(server: GitLabServerPath): HostedGitRepositoryRemote? =
   sourceProject?.let {
     HostedGitRepositoryRemote(
       it.ownerPath,

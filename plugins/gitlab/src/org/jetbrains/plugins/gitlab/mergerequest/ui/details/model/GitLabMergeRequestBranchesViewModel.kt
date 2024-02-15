@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
-import org.jetbrains.plugins.gitlab.mergerequest.data.getRemoteDescriptor
+import org.jetbrains.plugins.gitlab.mergerequest.data.getSourceRemoteDescriptor
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -41,7 +41,7 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
     .combine(mergeRequest.details) { _, details ->
-      val remote = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@combine false
+      val remote = details.getSourceRemoteDescriptor(mapping.repository.serverPath) ?: return@combine false
       GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.sourceBranch)
     }.modelFlow(cs, thisLogger())
 
