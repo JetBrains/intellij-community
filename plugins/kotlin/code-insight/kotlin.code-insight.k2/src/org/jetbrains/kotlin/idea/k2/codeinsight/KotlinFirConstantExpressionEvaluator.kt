@@ -36,7 +36,7 @@ class KotlinFirConstantExpressionEvaluator : ConstantExpressionEvaluator {
             }
         }
 
-        if (!Registry.`is`("kotlin.fir.allow.constant.computation.on.EDT")) {
+        if (!Registry.`is`("kotlin.k2.allow.constant.computation.on.EDT")) {
             return analyze()
         }
 
