@@ -17,11 +17,14 @@ import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExec
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -169,6 +172,7 @@ class InlineCompletionHandler(
 
     val context = session.context
     val result = Result.runCatching {
+      ensureDocumentAndFileSynced(request.file.project, request.document)
       var variants = request(session.provider, request).getVariants()
       if (variants.size > InlineCompletionSuggestion.MAX_VARIANTS_NUMBER) {
         val provider = session.provider
@@ -301,6 +305,21 @@ class InlineCompletionHandler(
       }
     }?.also {
       LOG.trace("Selected inline provider: $it")
+    }
+  }
+
+  private suspend fun ensureDocumentAndFileSynced(project: Project, document: Document) {
+    val documentManager = PsiDocumentManager.getInstance(project)
+    val isCommitted = readAction { documentManager.isCommitted(document) }
+    if (isCommitted) {
+      // We do not need one big readAction: it's enough to have them synced at this moment
+      return
+    }
+    coroutineToIndicator {
+      // documentManager.commitAllDocuments/commitDocument takes too much EDT and non-cancellable: performance tests fail
+      // constrainedReadAction takes too much time to finish (because no explicit call of 'commit')
+      // This method is the best choice I've found: cancellable, doesn't occupy EDT, fast
+      documentManager.commitAndRunReadAction { }
     }
   }
 

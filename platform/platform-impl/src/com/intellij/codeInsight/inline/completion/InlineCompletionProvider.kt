@@ -64,11 +64,6 @@ interface InlineCompletionProvider {
    * Suggestion now can return multiple variants,
    * and they might be rendered as streaming using [Flow].
    *
-   *
-   * **Note**: at this moment, [InlineCompletionRequest.file] and [InlineCompletionRequest.document] **might be unsynchronized**
-   * (performance reasons).
-   * Use `PsiDocumentManager` to commit the document.
-   *
    * @param request The inline completion request containing information about the event, file, editor, document,
    * startOffset, endOffset, and lookupElement.
    * @return The inline completion suggestion. Use [InlineCompletionSuggestion.Empty] to return empty suggestion.
