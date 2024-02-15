@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.vscode.parsers
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
@@ -23,13 +23,9 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 
 class StorageParser(private val settings: Settings) {
-  private val logger = logger<StorageParser>()
 
   companion object {
     private const val OPENED_PATHS = "openedPathsList"
-    private const val WORKSPACES = "workspaces"
-    private const val WORKSPACES_2 = "${WORKSPACES}2"
-    private const val WORKSPACES_3 = "${WORKSPACES}3"
     private const val THEME = "theme"
 
     internal fun parsePath(uri: String): RecentPathInfo? {
@@ -130,3 +126,5 @@ class StorageParser(private val settings: Settings) {
     }
   }
 }
+
+private val logger = logger<StorageParser>()

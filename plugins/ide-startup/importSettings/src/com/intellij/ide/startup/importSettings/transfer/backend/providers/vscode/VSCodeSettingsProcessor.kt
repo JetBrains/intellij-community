@@ -9,8 +9,8 @@ import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.providers.vscode.parsers.KeyBindingsParser
 import com.intellij.ide.startup.importSettings.providers.vscode.parsers.PluginsParser
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.GeneralSettingsParser
-import com.intellij.ide.startup.importSettings.vscode.parsers.StateDatabaseParser
-import com.intellij.ide.startup.importSettings.vscode.parsers.StorageParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.StateDatabaseParser
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.StorageParser
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import java.io.File

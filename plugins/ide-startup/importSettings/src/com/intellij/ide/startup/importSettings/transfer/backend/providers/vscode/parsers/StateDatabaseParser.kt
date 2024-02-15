@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.vscode.parsers
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
@@ -14,8 +14,6 @@ import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
-import kotlin.collections.forEach
-import kotlin.collections.mapNotNull
 import kotlin.collections.set
 
 private val logger = logger<StateDatabaseParser>()
@@ -54,7 +52,7 @@ class StateDatabaseParser(private val settings: Settings) {
     }
   }
 
-  private fun getKey(connection: Connection, key: String): String? {
+  private fun getKey(connection: Connection, @Suppress("SameParameterValue") key: String): String? {
     val query = "SELECT value FROM ItemTable WHERE key is '$key' LIMIT 1"
 
     val res = connection.createStatement().executeQuery(query)
