@@ -29,8 +29,10 @@ public class OpenDiffInEditorAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    DiffRequest request = e.getRequiredData(DiffDataKeys.DIFF_REQUEST);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
+    if (request == null) return;
 
     VirtualFile file = new SimpleDiffVirtualFile(request);
     FileEditorManager.getInstance(project).openFile(file, true);

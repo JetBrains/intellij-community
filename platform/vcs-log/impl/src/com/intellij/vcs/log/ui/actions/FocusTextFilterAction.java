@@ -30,9 +30,9 @@ public final class FocusTextFilterAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    MainVcsLogUi logUi = (MainVcsLogUi)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     Project project = e.getProject();
-
+    MainVcsLogUi logUi = (MainVcsLogUi)e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (logUi == null) return;
     if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(logUi.getToolbar()) != null) {
       IdeFocusManager.getInstance(project).requestFocus(logUi.getTable(), true);
     }

@@ -42,7 +42,8 @@ public final class SwitchToFind extends DumbAwareAction implements LightEditComp
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
+    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    if (search == null) return;
     if (KeymapUtil.isEmacsKeymap()) {
       // Emacs users are accustomed to the editor that executes 'find next' on subsequent pressing of shortcut that
       // activates 'incremental search'. Hence, we do the similar hack here for them.

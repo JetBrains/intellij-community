@@ -17,7 +17,7 @@ internal sealed class CodeReviewShowDiffActionProvider : AnActionExtensionProvid
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val vm = e.getRequiredData(CodeReviewChangeListViewModel.DATA_KEY)
+    val vm = e.getData(CodeReviewChangeListViewModel.DATA_KEY) ?: return
     vm.doShowDiff()
   }
 

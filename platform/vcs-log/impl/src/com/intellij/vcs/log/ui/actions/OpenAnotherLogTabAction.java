@@ -66,7 +66,8 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
 
     VcsLogFilterCollection filters;

@@ -28,8 +28,10 @@ import java.awt.*;
 public class AddLineBreakpointAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) return;
     XSourcePosition position = getLineBreakpointPosition(e);
     assert position != null;
     XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, true, true)

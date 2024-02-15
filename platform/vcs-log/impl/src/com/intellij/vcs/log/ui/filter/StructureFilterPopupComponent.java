@@ -364,7 +364,8 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
       Set<VirtualFile> roots = myFilterModel.getRoots();
 
       // for now, ignoring non-existing paths
@@ -396,7 +397,8 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
 
       Collection<FilePath> filesPaths = ContainerUtil.sorted(getStructureFilterPaths(), HierarchicalFilePathComparator.NATURAL);
 

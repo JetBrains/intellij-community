@@ -4,7 +4,9 @@ package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,9 +30,9 @@ public final class MoveModulesToSubGroupAction extends MoveModulesToGroupAction 
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
-    final List<String> newGroup;
+    Module[] modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    if (modules == null || modules.length == 0) return;
+    List<String> newGroup;
     if (myModuleGroup != null) {
       String message = IdeBundle.message("prompt.specify.name.of.module.subgroup", myModuleGroup.presentableText(), whatToMove(modules));
       String subgroup = Messages.showInputDialog(message, IdeBundle.message("title.module.sub.group"), Messages.getQuestionIcon());
@@ -44,6 +46,6 @@ public final class MoveModulesToSubGroupAction extends MoveModulesToGroupAction 
       newGroup = Collections.singletonList(group);
     }
 
-    doMove(modules, new ModuleGroup(newGroup), dataContext);
+    doMove(modules, new ModuleGroup(newGroup), e.getDataContext());
   }
 }

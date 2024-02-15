@@ -35,7 +35,7 @@ private class InvalidateVcsLogCaches : DumbAwareAction(actionText(VcsLogBundle.m
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val projectLog = VcsProjectLog.getInstance(project)
     val logManager = projectLog.logManager ?: return
 

@@ -212,9 +212,9 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
-    val viewer = e.getRequiredData(DiffDataKeys.DIFF_VIEWER)
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+    val viewer = e.getData(DiffDataKeys.DIFF_VIEWER) ?: return
+    val helper = MutableDiffRequestChain.createHelper(e.dataContext) ?: return
     perform(editor, viewer, helper)
   }
 
@@ -274,8 +274,8 @@ internal class BlankToggleThreeSideModeAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val helper = MutableDiffRequestChain.createHelper(e.dataContext)!!
-    val viewer = e.getRequiredData(DiffDataKeys.DIFF_VIEWER) as DiffViewerBase
+    val viewer = e.getData(DiffDataKeys.DIFF_VIEWER) as? DiffViewerBase ?: return
+    val helper = MutableDiffRequestChain.createHelper(e.dataContext) ?: return
 
     if (helper.chain.baseContent != null) {
       helper.chain.baseContent = null

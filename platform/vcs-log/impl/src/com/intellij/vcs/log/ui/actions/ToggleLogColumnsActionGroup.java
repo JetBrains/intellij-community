@@ -89,7 +89,8 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-      VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+      VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+      if (properties == null) return;
       assert supportsColumnsToggling(properties);
 
       if (state) {

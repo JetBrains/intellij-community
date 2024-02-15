@@ -48,7 +48,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     triggerUsage(e)
 
-    val ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI) as VcsLogUiEx
+    val ui = e.getData(VcsLogDataKeys.VCS_LOG_UI) as? VcsLogUiEx ?: return
     val rows = getRowsToJump(ui)
 
     if (rows.isEmpty()) {

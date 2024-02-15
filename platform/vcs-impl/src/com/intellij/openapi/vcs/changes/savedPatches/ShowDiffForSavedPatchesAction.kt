@@ -38,16 +38,17 @@ abstract class AbstractShowDiffForSavedPatchesAction : AnActionExtensionProvider
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val changesBrowser = e.getRequiredData(SavedPatchesUi.SAVED_PATCHES_UI).changesBrowser
+    val project = e.project ?: return
+    val browser = e.getData(SavedPatchesUi.SAVED_PATCHES_UI)?.changesBrowser ?: return
 
     val selection = if (e.getData(ChangesBrowserBase.DATA_KEY) == null) {
-      ListSelection.createAt(VcsTreeModelData.all(changesBrowser.viewer).userObjects(), 0)
+      ListSelection.createAt(VcsTreeModelData.all(browser.viewer).userObjects(), 0)
     }
     else {
-      VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer)
+      VcsTreeModelData.getListSelectionOrAll(browser.viewer)
     }
-    ChangesBrowserBase.showStandaloneDiff(e.project!!, changesBrowser, selection) { change ->
-      getDiffRequestProducer(changesBrowser, change)
+    ChangesBrowserBase.showStandaloneDiff(project, browser, selection) { change ->
+      getDiffRequestProducer(browser, change)
     }
   }
 

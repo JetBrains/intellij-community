@@ -31,8 +31,12 @@ public final class RestorePreviousSettingsAction extends AnAction implements Sho
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FindModel findModel = e.getRequiredData(EditorSearchSession.SESSION_KEY).getFindModel();
-    findModel.copyFrom(FindManager.getInstance(e.getProject()).getPreviousFindModel());
+    Project project = e.getProject();
+    if (project == null) return;
+    EditorSearchSession session = e.getData(EditorSearchSession.SESSION_KEY);
+    if (session == null) return;
+    FindModel findModel = session.getFindModel();
+    findModel.copyFrom(FindManager.getInstance(project).getPreviousFindModel());
   }
 
   @Nullable

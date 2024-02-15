@@ -62,7 +62,8 @@ public abstract class CompareRevisionsFromFileHistoryActionProvider implements A
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     if (changes == null || changes.length != 1 || changes[0] == null) return;
 

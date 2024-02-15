@@ -39,7 +39,9 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    actionPerformed(e.getRequiredData(CommonDataKeys.PROJECT), Objects.requireNonNull(getGateway()), e);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    actionPerformed(project, Objects.requireNonNull(getGateway()), e);
   }
 
   protected abstract void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e);

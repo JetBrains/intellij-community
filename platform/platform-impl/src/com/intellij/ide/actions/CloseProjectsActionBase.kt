@@ -20,7 +20,7 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val currentProject = e.getRequiredData(CommonDataKeys.PROJECT)
+    val currentProject = e.getData(CommonDataKeys.PROJECT) ?: return
     ProjectManager.getInstance().openProjects
       .filter { canClose(it, currentProject) }
       .forEach {

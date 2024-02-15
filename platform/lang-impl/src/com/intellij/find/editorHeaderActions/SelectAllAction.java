@@ -29,9 +29,10 @@ public final class SelectAllAction extends OccurrenceAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
-    search.selectAllOccurrences();
-    search.close();
+    EditorSearchSession session = e.getData(EditorSearchSession.SESSION_KEY);
+    if (session == null) return;
+    session.selectAllOccurrences();
+    session.close();
   }
 
   @Override

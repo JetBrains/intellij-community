@@ -39,10 +39,12 @@ public class RefreshLogAction extends RefreshAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
+    VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
+    if (logManager == null) return;
+    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (ui == null) return;
 
     // diagnostic for possible refresh problems
-    VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     if (ui instanceof VcsLogUiEx) {
       VisiblePackRefresher refresher = ((VcsLogUiEx)ui).getRefresher();
       if (!refresher.isValid()) {

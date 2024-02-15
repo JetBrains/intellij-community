@@ -79,8 +79,10 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    ChangesListView view = e.getData(ChangesListView.DATA_KEY);
+    if (view == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     List<Change> changes = view.getSelectedChanges().toList();

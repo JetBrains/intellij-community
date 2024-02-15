@@ -49,7 +49,8 @@ public class ShowQuickActionPopupAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    QuickActionProvider provider = e.getRequiredData(QuickActionProvider.KEY);
+    QuickActionProvider provider = e.getData(QuickActionProvider.KEY);
+    if (provider == null) return;
     List<AnAction> actions = provider.getActions(true);
 
     DefaultActionGroup group = new DefaultActionGroup(actions);

@@ -210,7 +210,8 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      CompareBranchesDiffPanel panel = e.getRequiredData(DATA_KEY);
+      CompareBranchesDiffPanel panel = e.getData(DATA_KEY);
+      if (panel == null) return;
 
       Presentation presentation = e.getPresentation();
       presentation.setText(DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action"));
@@ -225,7 +226,8 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      CompareBranchesDiffPanel panel = e.getRequiredData(DATA_KEY);
+      CompareBranchesDiffPanel panel = e.getData(DATA_KEY);
+      if (panel == null) return;
 
       Project project = panel.myProject;
       List<Change> changes = panel.myChangesBrowser.getSelectedChanges();

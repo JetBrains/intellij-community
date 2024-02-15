@@ -30,8 +30,8 @@ class ShowCombinedDiffAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val changes = e.getRequiredData(VcsDataKeys.CHANGES)
+    val project = e.project ?: return
+    val changes = e.getData(VcsDataKeys.CHANGES) ?: return
 
     showDiff(project, changes.toList())
   }

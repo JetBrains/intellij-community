@@ -14,6 +14,8 @@ public final class RemoveOccurrenceAction extends OccurrenceAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    e.getRequiredData(EditorSearchSession.SESSION_KEY).removeOccurrence();
+    EditorSearchSession session = e.getData(EditorSearchSession.SESSION_KEY);
+    if (session == null) return;
+    session.removeOccurrence();
   }
 }

@@ -79,7 +79,9 @@ public class GetVersionFromHistoryAction implements AnActionExtensionProvider {
       VcsFileRevision revision = model.createRevision(detail);
 
       if (!VcsHistoryUtil.isEmpty(revision)) {
-        GetVersionAction.doGet(project, revision, e.getRequiredData(VcsDataKeys.FILE_PATH));
+        FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+        if (filePath == null) return;
+        GetVersionAction.doGet(project, revision, filePath);
       }
     }
   }

@@ -38,8 +38,10 @@ final class OpenHtmlInEmbeddedBrowserAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
-    PsiFile psiFile = event.getRequiredData(CommonDataKeys.PSI_FILE);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    PsiFile psiFile = event.getData(CommonDataKeys.PSI_FILE);
+    if (psiFile == null) return;
     VirtualFile virtualFile = psiFile.getVirtualFile();
     boolean preferLocalFileUrl = BitUtil.isSet(event.getModifiers(), ActionEvent.SHIFT_MASK);
 

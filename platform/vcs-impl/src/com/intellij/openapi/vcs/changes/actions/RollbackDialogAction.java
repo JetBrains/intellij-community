@@ -23,8 +23,10 @@ public class RollbackDialogAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    if (changes == null) return;
     RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes));
   }
 

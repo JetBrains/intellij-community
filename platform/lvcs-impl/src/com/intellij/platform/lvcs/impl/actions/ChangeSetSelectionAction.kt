@@ -30,8 +30,8 @@ abstract class ChangeSetSelectionAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val activityScope = e.getRequiredData(ActivityViewDataKeys.SCOPE)
-    val activitySelection = e.getRequiredData(ActivityViewDataKeys.SELECTION)
+    val activityScope = e.getData(ActivityViewDataKeys.SCOPE) ?: return
+    val activitySelection = e.getData(ActivityViewDataKeys.SELECTION) ?: return
 
     val localHistoryImpl = LocalHistoryImpl.getInstanceImpl()
     val facade = localHistoryImpl.facade ?: return

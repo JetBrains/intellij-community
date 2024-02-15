@@ -48,9 +48,10 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
-    if (project.isDisposed()) return;
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    if (search == null) return;
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(search.getEditor().getDocument());
     if (file == null) return;
 

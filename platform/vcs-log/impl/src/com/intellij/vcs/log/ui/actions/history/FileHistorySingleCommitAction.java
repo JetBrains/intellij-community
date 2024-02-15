@@ -63,8 +63,10 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    FileHistoryUi ui = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
+    if (ui == null) return;
 
     List<CommitId> commits = ui.getTable().getSelection().getCommits();
     if (commits.size() != 1) return;

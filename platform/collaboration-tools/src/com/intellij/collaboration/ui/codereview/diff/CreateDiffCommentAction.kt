@@ -28,7 +28,7 @@ abstract class CreateDiffCommentAction : DumbAwareAction(messagePointer("action.
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     val action = findRendererActionUnderCaret(editor) ?: return
 
     val scrollingModel = editor.scrollingModel

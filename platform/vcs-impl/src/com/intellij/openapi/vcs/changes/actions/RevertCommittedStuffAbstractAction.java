@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
   private final boolean myReverse;
@@ -42,9 +43,9 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    final VirtualFile baseDir = project.getBaseDir();
-    assert baseDir != null;
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VirtualFile baseDir = Objects.requireNonNull(project.getBaseDir());
     final Change[] changes = getChanges(e, false);
     if (changes == null || changes.length == 0) return;
     final List<Change> changesList = new ArrayList<>();

@@ -56,8 +56,10 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
 
     List<CommitId> commits = selection.getCommits();
     if (commits.size() != 1) return;
@@ -65,7 +67,8 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    if (handler == null) return;
     handler.showDiffForPaths(commit.getRoot(), VcsLogUtil.getAffectedPaths(commit.getRoot(), e), commit.getHash(), null);
   }
 }

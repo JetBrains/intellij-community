@@ -36,7 +36,8 @@ public class ConvertSvgToPngAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VirtualFile svgFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile svgFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (svgFile == null) return;
     String path = svgFile.getPath();
     File inputFile = new File(svgFile.getPath());
     File outputFile = new File(path + ".png");

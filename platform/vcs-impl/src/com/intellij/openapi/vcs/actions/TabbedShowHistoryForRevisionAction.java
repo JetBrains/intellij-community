@@ -28,7 +28,6 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     boolean visible = isVisible(e);
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && isEnabled(e));
@@ -36,7 +35,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     AbstractVcs vcs = Objects.requireNonNull(getVcs(project, event.getData(VcsDataKeys.VCS)));
 
     Pair<FilePath, VcsRevisionNumber> fileAndRevision = Objects.requireNonNull(getFileAndRevision(event));

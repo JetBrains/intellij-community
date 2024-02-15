@@ -44,10 +44,10 @@ abstract class FileHistoryOneCommitAction<T : VcsCommitMetadata> : AnAction(), D
 
   override fun actionPerformed(e: AnActionEvent) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val logData = e.getRequiredData(VcsLogInternalDataKeys.LOG_DATA)
-    val selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
-    val model = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
+    val logData = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: return
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return
+    val model = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL) ?: return
 
     if (selection.size != 1) return
 

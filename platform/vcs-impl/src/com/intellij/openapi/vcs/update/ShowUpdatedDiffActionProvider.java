@@ -79,14 +79,16 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dc = e.getDataContext();
+    DataContext dc = e.getDataContext();
     if ((!isVisible(dc)) || (!isEnabled(dc))) return;
 
-    final Project project = CommonDataKeys.PROJECT.getData(dc);
-    final Iterable<Pair<FilePath, FileStatus>> iterable = e.getRequiredData(UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE);
-    final Label before = e.getRequiredData(UpdateInfoTree.LABEL_BEFORE);
-    final Label after = e.getRequiredData(UpdateInfoTree.LABEL_AFTER);
-    final FilePath selectedUrl = UpdateInfoTree.UPDATE_VIEW_SELECTED_PATH.getData(dc);
+    Project project = CommonDataKeys.PROJECT.getData(dc);
+    Iterable<Pair<FilePath, FileStatus>> iterable = e.getData(UpdateInfoTree.UPDATE_VIEW_FILES_ITERABLE);
+    if (iterable == null) return;
+    Label before = e.getData(UpdateInfoTree.LABEL_BEFORE);
+    Label after = e.getData(UpdateInfoTree.LABEL_AFTER);
+    if (before == null || after == null) return;
+    FilePath selectedUrl = UpdateInfoTree.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
     DiffRequestChain requestChain = createDiffRequestChain(project, before, after, iterable, selectedUrl);
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.FRAME);

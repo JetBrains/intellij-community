@@ -3,7 +3,10 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +28,8 @@ public final class MoveModulesOutsideGroupAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
-    MoveModulesToGroupAction.doMove(modules, null, dataContext);
+    Module[] modules = e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    if (modules == null || modules.length == 0) return;
+    MoveModulesToGroupAction.doMove(modules, null, e.getDataContext());
   }
 }

@@ -69,9 +69,12 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
-    String commitMessage = e.getRequiredData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
+    String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    if (commitMessage == null) return;
 
     selection.requestFullDetails(detailsList -> {
       List<Change> changes = VcsLogUtil.collectChanges(detailsList);

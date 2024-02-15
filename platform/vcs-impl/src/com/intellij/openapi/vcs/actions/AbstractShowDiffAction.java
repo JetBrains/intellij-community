@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
-import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractShowDiffAction extends DumbAwareAction {
   @Override
@@ -82,14 +81,19 @@ public abstract class AbstractShowDiffAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) {
       return;
     }
 
-    VirtualFile file = requireNonNull(VcsContextUtil.selectedFile(e.getDataContext()));
-    AbstractVcs vcs = requireNonNull(ChangesUtil.getVcsForFile(file, project));
-    DiffProvider provider = requireNonNull(vcs.getDiffProvider());
+    VirtualFile file = VcsContextUtil.selectedFile(e.getDataContext());
+    if (file == null) return;
+    AbstractVcs vcs = ChangesUtil.getVcsForFile(file, project);
+    if (vcs == null) return;
+    DiffProvider provider = vcs.getDiffProvider();
+    if (provider == null) return;
     Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     getExecutor(provider, file, project, editor).showDiff();

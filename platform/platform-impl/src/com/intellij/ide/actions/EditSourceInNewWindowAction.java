@@ -20,8 +20,9 @@ import java.util.Arrays;
 public final class EditSourceInNewWindowAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    final FileEditorManager manager = FileEditorManager.getInstance(project);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    FileEditorManager manager = FileEditorManager.getInstance(project);
     ((FileEditorManagerImpl)manager).openFileInNewWindow(getVirtualFiles(e)[0]);
   }
 

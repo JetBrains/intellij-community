@@ -345,8 +345,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ChangesBrowserBase changesBrowser = e.getRequiredData(DATA_KEY);
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      ChangesBrowserBase changesBrowser = e.getData(DATA_KEY);
+      if (changesBrowser == null) return;
 
       showStandaloneDiff(project, changesBrowser);
     }
