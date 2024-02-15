@@ -449,6 +449,45 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
   }
 
   @Test
+  fun `test inserted state logging after changes before suggestion`() {
+    val state = getLogsState {
+      myFixture.testInlineCompletion {
+        init(PlainTextFileType.INSTANCE)
+        typeChars("before ")
+        registerSuggestion {
+          variant {
+            emit(InlineCompletionGrayTextElement("one "))
+            emit(InlineCompletionGrayTextElement("three"))
+          }
+        }
+        callInlineCompletion()
+        provider.computeNextElements(2)
+        delay()
+
+        typeChars("one th")
+        assertInlineRender("ree")
+        insert()
+        assertFileContent("before one three<caret>")
+
+        navigateOnlyCaretTo(6)
+        backSpace()
+        backSpace()
+        backSpace()
+        assertFileContent("bef<caret> one three")
+        delay(200)
+      }
+    }
+    val insertedStateData = state.assertInsertedStateData()
+    assertInsertedStateData(
+      insertedStateData,
+      length = 9,
+      editDistance = 0,
+      commonPrefixLength = 9,
+      commonSuffixLength = 9,
+    )
+  }
+
+  @Test
   fun `test inserted state logging without changes`() {
     val state = getLogsState {
       myFixture.testInlineCompletion {
