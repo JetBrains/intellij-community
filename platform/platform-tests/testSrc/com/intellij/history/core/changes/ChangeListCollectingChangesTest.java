@@ -21,6 +21,8 @@ import org.junit.Test;
 import java.util.List;
 
 public class ChangeListCollectingChangesTest extends ChangeListTestCase {
+  private static final String PROJECT_ID = "project";
+
   @Test
   public void testChangesForFile() {
     addChangeSet(facade, "1", createFile(r, "file"));
@@ -145,7 +147,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
 
   @Test
   public void testDoesNotIncludePreviousLabels() {
-    facade.putUserLabel("label", "project");
+    facade.putUserLabel("label", PROJECT_ID);
     add(facade, createFile(r, "file"));
     assertEquals(1, getChangesFor("file").size());
   }
@@ -251,7 +253,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   @Test
   public void testIncludingChangeSetsWithLabelsInside() {
     ChangeSet cs1 = addChangeSet(facade, createFile(r, "f"));
-    ChangeSet cs2 = addChangeSet(facade, new PutLabelChange(nextId(), "label", "project"));
+    ChangeSet cs2 = addChangeSet(facade, putLabel("label", PROJECT_ID));
 
     assertEquals(array(cs2, cs1), getChangesFor("f"));
   }
@@ -259,8 +261,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   @Test
   public void testDoesNotSplitChangeSetsWithLabelsInside() {
     ChangeSet cs1 = addChangeSet(facade, createFile(r, "f"));
-    ChangeSet cs2 =
-      addChangeSet(facade, changeContent(r, "f", null, -1), new PutLabelChange(nextId(), "label", "project"), changeContent(r, "f", null, -1));
+    ChangeSet cs2 = addChangeSet(facade, changeContent(r, "f", null, -1), putLabel("label", PROJECT_ID), changeContent(r, "f", null, -1));
 
     assertEquals(array(cs2, cs1), getChangesFor("f"));
   }
@@ -269,7 +270,7 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   public void testDoesNotIncludeChangesMadeBetweenDeletionAndRestore() {
     ChangeSet cs1 = addChangeSet(facade, createFile(r, "file"));
     ChangeSet cs2 = addChangeSet(facade, delete(r, "file"));
-    ChangeSet cs3 = addChangeSet(facade, new PutLabelChange(nextId(), "", "project"));
+    ChangeSet cs3 = addChangeSet(facade, putLabel("", PROJECT_ID));
     ChangeSet cs4 = addChangeSet(facade, createFile(r, "file"));
 
     assertEquals(array(cs4, cs2, cs1), getChangesFor("file"));
@@ -356,6 +357,6 @@ public class ChangeListCollectingChangesTest extends ChangeListTestCase {
   }
 
   private List<ChangeSet> getChangesFor(String path, String pattern) {
-    return collectChanges(facade, path, "project", pattern);
+    return collectChanges(facade, path, PROJECT_ID, pattern);
   }
 }
