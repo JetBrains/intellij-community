@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.AstAccessControl.execute
+import java.io.File
 
 abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTest() {
     protected lateinit var mockLibraryFacility: MockLibraryFacility
@@ -20,6 +21,18 @@ abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTes
     protected open val attachLibrarySources: Boolean
         get() = true
 
+    /**
+     * Additional classpath for the library compilation.
+     */
+    protected open val libCompilationClasspath: List<File>
+        get() = emptyList()
+
+    /**
+     * Additional compilation flags for library compilation.
+     */
+    protected open val libCompilationOptions: List<String>
+        get() = emptyList()
+
     override fun fileName(): String {
         return KotlinTestUtils.getTestDataFileName(this::class.java, this.name) + "/src/" + getTestName(true) + ".kt"
     }
@@ -28,7 +41,12 @@ abstract class AbstractReferenceResolveWithLibTest : AbstractReferenceResolveTes
         super.setUp()
 
         val libraryDir = testDataDirectory.resolve(testDirectoryPath).resolve("lib")
-        mockLibraryFacility = MockLibraryFacility(libraryDir, attachLibrarySources).apply { setUp(module) }
+        mockLibraryFacility = MockLibraryFacility(
+            libraryDir,
+            attachLibrarySources,
+            classpath = libCompilationClasspath,
+            options = libCompilationOptions,
+        ).apply { setUp(module) }
     }
 
     override fun tearDown() {
