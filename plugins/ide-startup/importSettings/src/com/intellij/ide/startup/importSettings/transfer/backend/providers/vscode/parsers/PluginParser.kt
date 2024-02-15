@@ -8,7 +8,7 @@ import com.intellij.ide.startup.importSettings.models.FeatureInfo
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.UnknownFeature
 import com.intellij.ide.startup.importSettings.providers.vscode.mappings.KeymapPluginsMappings
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.PluginsMappings
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.PluginMappings
 import com.intellij.openapi.diagnostic.logger
 import java.io.File
 
@@ -73,7 +73,7 @@ class PluginParser(private val settings: Settings) {
     if (keymapPlugin != null) {
       settings.keymap = keymapPlugin
     }
-    val featureInfo = PluginsMappings.pluginIdMap(foreignPluginId) ?: UnknownFeature
+    val featureInfo = PluginMappings.pluginIdMap(foreignPluginId) ?: UnknownFeature
     val originalPluginName = root["displayName"]?.textValue()
 
     if (originalPluginName == null && (featureInfo == KnownPlugins.DummyPlugin || featureInfo == KnownPlugins.DummyBuiltInFeature)) {

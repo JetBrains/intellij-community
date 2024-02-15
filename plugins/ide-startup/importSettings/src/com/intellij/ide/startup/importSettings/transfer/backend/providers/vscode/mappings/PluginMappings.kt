@@ -8,10 +8,15 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.PlatformUtils
+import com.intellij.util.text.nullize
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import java.io.InputStream
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.inputStream
 
 /**
  * Allows registering plugins of third-party products for importing from VSCode.
@@ -35,6 +40,8 @@ private data class FeatureData(
 )
 
 private val logger = logger<CommonPluginMapping>()
+
+private const val ALTERNATE_JSON_FILE_PROPERTY = "intellij.vscode.plugin.json"
 
 internal class CommonPluginMapping : VSCodePluginMapping {
 
@@ -62,46 +69,62 @@ internal class CommonPluginMapping : VSCodePluginMapping {
   }
 
   private val allPlugins by lazy {
+    System.getProperty(ALTERNATE_JSON_FILE_PROPERTY)?.nullize(nullizeSpaces = true)?.let {
+      loadFromFile(Path(it))
+    } ?: loadFromResources()
+  }
+
+  private fun loadFromFile(path: Path): Map<String, FeatureInfo> {
+    val result = mutableMapOf<String, FeatureInfo>()
+    path.inputStream().use { loadFromStream(it, result) }
+    return result
+  }
+
+  private fun loadFromResources(): Map<String, FeatureInfo> {
     val resourceNames = getResourceMappings()
     val result = mutableMapOf<String, FeatureInfo>()
     for (resourceName in resourceNames) {
       logger.runAndLogException {
-        @OptIn(ExperimentalSerializationApi::class)
-        val features = this.javaClass.classLoader.getResourceAsStream("pluginData/$resourceName").use { file ->
+        this.javaClass.classLoader.getResourceAsStream("pluginData/$resourceName").use { file ->
           if (file == null) {
             logger.error("Cannot find resource $resourceName")
             return@runAndLogException
           }
-          Json.decodeFromStream<List<FeatureData>>(file)
-        }
-        for (data in features) {
-          val key = data.vsCodeId.lowercase()
-          if (data.disabled) {
-            result.remove(key)
-            continue
-          }
-
-          val feature =
-            if (data.builtIn) BuiltInFeature(null, data.ideaName)
-            else {
-              if (data.ideaId == null) {
-                logger.error("Cannot determine IntelliJ plugin id for feature $data.")
-                continue
-              }
-              PluginFeature(null, data.ideaId, data.ideaName)
-            }
-          result[key] = feature
+          loadFromStream(file, result)
         }
       }
     }
 
-    result
+    return result
+  }
+
+  private fun loadFromStream(input: InputStream, result: MutableMap<String, FeatureInfo>) {
+    @OptIn(ExperimentalSerializationApi::class)
+    val features = Json.decodeFromStream<List<FeatureData>>(input)
+    for (data in features) {
+      val key = data.vsCodeId.lowercase()
+      if (data.disabled) {
+        result.remove(key)
+        continue
+      }
+
+      val feature =
+        if (data.builtIn) BuiltInFeature(null, data.ideaName)
+        else {
+          if (data.ideaId == null) {
+            logger.error("Cannot determine IntelliJ plugin id for feature $data.")
+            continue
+          }
+          PluginFeature(null, data.ideaId, data.ideaName)
+        }
+      result[key] = feature
+    }
   }
 
   override fun mapPlugin(pluginId: String) = allPlugins[pluginId.lowercase()]
 }
 
-object PluginsMappings {
+object PluginMappings {
 
   fun pluginIdMap(pluginId: String): FeatureInfo? {
 
