@@ -7,9 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.vcs.log.impl.CommonUiProperties
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings
-import com.intellij.vcs.log.impl.VcsLogUiProperties
+import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.impl.isColumnVisible
@@ -44,6 +42,7 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
       CommonUiProperties.SHOW_DETAILS -> _state.isShowDetails
       SHOW_ALL_BRANCHES -> _state.isShowOtherBranches
       CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview
+      MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.isDiffPreviewVerticalSplit
       CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames
       else -> throw UnsupportedOperationException("Unknown property $property")
     }
@@ -78,6 +77,7 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
       is TableColumnWidthProperty -> _state.columnIdWidth[property.name] = value as Int
       is TableColumnVisibilityProperty -> _state.columnIdVisibility[property.name] = value as Boolean
       CommonUiProperties.SHOW_DIFF_PREVIEW -> _state.isShowDiffPreview = value as Boolean
+      MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT -> _state.isDiffPreviewVerticalSplit = value as Boolean
       CommonUiProperties.SHOW_ROOT_NAMES -> _state.isShowRootNames = value as Boolean
       else -> throw UnsupportedOperationException("Unknown property $property")
     }
@@ -89,6 +89,7 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
            SHOW_ALL_BRANCHES == property ||
            CommonUiProperties.COLUMN_ID_ORDER == property ||
            CommonUiProperties.SHOW_DIFF_PREVIEW == property ||
+           MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT == property ||
            CommonUiProperties.SHOW_ROOT_NAMES == property ||
            applicationLevelProperties.contains(property) ||
            property is TableColumnWidthProperty ||
@@ -145,6 +146,9 @@ class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<Fil
 
     @get:OptionTag("SHOW_DIFF_PREVIEW")
     var isShowDiffPreview = true
+
+    @get:OptionTag("DIFF_PREVIEW_VERTICAL_SPLIT")
+    var isDiffPreviewVerticalSplit = false
 
     @get:OptionTag("SHOW_ROOT_NAMES")
     var isShowRootNames = false

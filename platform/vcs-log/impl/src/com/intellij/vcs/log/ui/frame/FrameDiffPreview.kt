@@ -20,10 +20,10 @@ import kotlin.math.roundToInt
 abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
                                 mainComponent: JComponent,
                                 @NonNls splitterProportionKey: String,
-                                vertical: Boolean = false,
                                 defaultProportion: Float = 0.7f,
                                 parentDisposable: Disposable) : Disposable {
-  private val previewDiffSplitter: Splitter = OnePixelSplitter(vertical, splitterProportionKey, defaultProportion)
+  private val previewDiffSplitter: Splitter = OnePixelSplitter(uiProperties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT],
+                                                               splitterProportionKey, defaultProportion)
 
   val mainComponent: JComponent get() = previewDiffSplitter
 
