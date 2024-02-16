@@ -10,6 +10,7 @@ import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -24,6 +25,7 @@ class TerminalInterruptCommandAction : DumbAwareAction(TerminalBundle.message("a
 
   override fun actionPerformed(e: AnActionEvent) {
     val session = e.terminalSession?.takeIf { it.model.isCommandRunning } ?: return
+    e.selectionController?.clearSelection()
     session.terminalStarterFuture.thenAccept {
       // Send Ctrl+C
       it?.sendString("\u0003", false)
