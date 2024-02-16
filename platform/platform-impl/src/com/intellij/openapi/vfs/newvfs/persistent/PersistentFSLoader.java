@@ -712,8 +712,8 @@ public final class PersistentFSLoader {
                  "otherwise large content can't fit");
       }
       CompressingAlgo compressionAlgo = switch (FSRecordsImpl.COMPRESSION_ALGO) {
-        case "zip" -> new CompressingAlgo.Lz4Algo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
-        case "lz4" -> new CompressingAlgo.ZipAlgo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
+        case "zip" -> new CompressingAlgo.ZipAlgo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
+        case "lz4" -> new CompressingAlgo.Lz4Algo(FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
         //"none"
         default -> new CompressingAlgo.NoCompressionAlgo();
       };
