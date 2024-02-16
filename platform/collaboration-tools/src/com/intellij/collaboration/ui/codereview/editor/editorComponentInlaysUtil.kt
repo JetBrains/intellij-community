@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
+import com.intellij.collaboration.async.cancelledWith
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
@@ -14,10 +15,10 @@ import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
@@ -77,17 +78,16 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
   try {
     combine(vm.line, vm.isVisible, ::Pair)
       .distinctUntilChanged()
-      .collectLatest { (line, isVisible) ->
+      .collect { (line, isVisible) ->
         val currentInlay = inlay
         if (line != null && isVisible) {
           runCatching {
             val offset = editor.document.getLineEndOffset(line)
             if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
               currentInlay?.let(Disposer::dispose)
-              inlay = editor.insertComponent(offset, rendererFactory(vm))
+              insertComponent(vm, rendererFactory, editor, offset)
             }
           }.getOrLogException(LOG)
-          awaitCancellation()
         }
         else if (currentInlay != null) {
           Disposer.dispose(currentInlay)
@@ -99,6 +99,26 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
     withContext(NonCancellable + ModalityState.any().asContextElement()) {
       inlay?.let(Disposer::dispose)
       inlay = null
+    }
+  }
+}
+
+private fun <VM : EditorMapped> CoroutineScope.insertComponent(
+  vm: VM,
+  rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer,
+  editor: EditorEx,
+  offset: Int
+) {
+  val inlayScope = childScope(CoroutineName("Scope for code review component editor inlay at $offset"))
+  var newInlay: Inlay<*>? = null
+  try {
+    newInlay = editor.insertComponent(offset, inlayScope.rendererFactory(vm))?.also {
+      inlayScope.cancelledWith(it)
+    }
+  }
+  finally {
+    if (newInlay == null) {
+      inlayScope.cancel()
     }
   }
 }
@@ -121,7 +141,7 @@ fun EditorEx.insertComponentAfter(lineIndex: Int,
 }
 
 @RequiresEdt
-fun EditorEx.insertComponent(offset: Int, renderer: ComponentInlayRenderer<JComponent>, priority: Int = 0): Inlay<*>? {
+private fun EditorEx.insertComponent(offset: Int, renderer: ComponentInlayRenderer<JComponent>, priority: Int = 0): Inlay<*>? {
   val props = InlayProperties().priority(priority).relatesToPrecedingText(true)
   return addComponentInlay(offset, props, renderer)
 }
