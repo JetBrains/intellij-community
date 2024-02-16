@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -2597,11 +2597,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragOnGutterSelectionStartLine = -1;
     }
 
+    EditorGutter gutter = getGutter();
+    boolean isDraggingGutterIcon = gutter instanceof EditorGutterComponentImpl &&
+                                   ((EditorGutterComponentImpl)gutter).getGutterRenderer(e.getPoint()) != null;
     if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA &&
         NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
-        getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED) {
-      //IDEA-305975
-      selectLineAtCaret(true);
+        getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED &&
+        //IDEA-295653 We should not select a line if we are dragging an object. For example, a breakpoint
+        !isDraggingGutterIcon) {
+      selectLineAtCaret(true); //IDEA-305975
       getGutterComponentEx().putClientProperty("active.line.number", null); //clear hovered breakpoint
     }
 
