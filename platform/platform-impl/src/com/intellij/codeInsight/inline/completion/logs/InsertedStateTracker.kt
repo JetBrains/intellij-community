@@ -38,11 +38,14 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
         val commonPrefixLength = resultText.commonPrefixWith(suggestion).length
         val commonSuffixLength = resultText.commonSuffixWith(suggestion).length
         val editDistance = EditDistance.optimalAlignment(suggestion, resultText, true)
+        val editDistanceNoAdd = editDistance - maxOf(resultText.length - suggestion.length, 0)
         val data = mutableListOf<EventPair<*>>(
           InlineCompletionUsageTracker.InsertedStateEvents.REQUEST_ID.with(requestId),
           InlineCompletionUsageTracker.InsertedStateEvents.DURATION.with(duration.toMillis()),
-          InlineCompletionUsageTracker.InsertedStateEvents.LENGTH.with(suggestion.length),
+          InlineCompletionUsageTracker.InsertedStateEvents.SUGGESTION_LENGTH.with(suggestion.length),
+          InlineCompletionUsageTracker.InsertedStateEvents.RESULT_LENGTH.with(resultText.length),
           InlineCompletionUsageTracker.InsertedStateEvents.EDIT_DISTANCE.with(editDistance),
+          InlineCompletionUsageTracker.InsertedStateEvents.EDIT_DISTANCE_NO_ADD.with(editDistanceNoAdd),
           InlineCompletionUsageTracker.InsertedStateEvents.COMMON_PREFIX_LENGTH.with(commonPrefixLength),
           InlineCompletionUsageTracker.InsertedStateEvents.COMMON_SUFFIX_LENGTH.with(commonSuffixLength),
         )

@@ -130,8 +130,10 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   object InsertedStateEvents {
     val REQUEST_ID = EventFields.Long("request_id")
     val DURATION = EventFields.Long("duration")
-    val LENGTH = EventFields.Int("length")
+    val SUGGESTION_LENGTH = EventFields.Int("suggestion_length")
+    val RESULT_LENGTH = EventFields.Int("result_length")
     val EDIT_DISTANCE = EventFields.Int("edit_distance")
+    val EDIT_DISTANCE_NO_ADD = EventFields.Int("edit_distance_no_add")
     val COMMON_PREFIX_LENGTH = EventFields.Int("common_prefix_length")
     val COMMON_SUFFIX_LENGTH = EventFields.Int("common_suffix_length")
   }
@@ -142,8 +144,10 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     EventFields.Language,
     EventFields.CurrentFile,
     InsertedStateEvents.DURATION,
-    InsertedStateEvents.LENGTH,
+    InsertedStateEvents.SUGGESTION_LENGTH,
+    InsertedStateEvents.RESULT_LENGTH,
     InsertedStateEvents.EDIT_DISTANCE,
+    InsertedStateEvents.EDIT_DISTANCE_NO_ADD,
     InsertedStateEvents.COMMON_PREFIX_LENGTH,
     InsertedStateEvents.COMMON_SUFFIX_LENGTH,
   )

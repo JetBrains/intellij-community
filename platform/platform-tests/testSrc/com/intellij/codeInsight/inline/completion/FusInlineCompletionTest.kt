@@ -441,8 +441,10 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     val insertedStateData = state.assertInsertedStateData()
     assertInsertedStateData(
       insertedStateData,
-      length = 9,
+      suggestionLength = 9,
+      resultLength = 7,
       editDistance = 2,
+      editDistanceNoAdd = 2,
       commonPrefixLength = 7,
       commonSuffixLength = 0,
     )
@@ -480,8 +482,10 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     val insertedStateData = state.assertInsertedStateData()
     assertInsertedStateData(
       insertedStateData,
-      length = 9,
+      suggestionLength = 9,
+      resultLength = 9,
       editDistance = 0,
+      editDistanceNoAdd = 0,
       commonPrefixLength = 9,
       commonSuffixLength = 9,
     )
@@ -512,10 +516,87 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
     val insertedStateData = state.assertInsertedStateData()
     assertInsertedStateData(
       insertedStateData,
-      length = 9,
+      suggestionLength = 9,
+      resultLength = 9,
       editDistance = 0,
+      editDistanceNoAdd = 0,
       commonPrefixLength = 9,
       commonSuffixLength = 9,
+    )
+  }
+
+  @Test
+  fun `test inserted state logging after ctrl+z`() {
+    val state = getLogsState {
+      myFixture.testInlineCompletion {
+        init(PlainTextFileType.INSTANCE)
+        registerSuggestion {
+          variant {
+            emit(InlineCompletionGrayTextElement("one "))
+            emit(InlineCompletionGrayTextElement("three"))
+          }
+        }
+        callInlineCompletion()
+        provider.computeNextElements(2)
+        delay()
+
+        typeChars("one th")
+        assertInlineRender("ree")
+        insert()
+        assertFileContent("one three<caret>")
+
+        callAction("\$Undo")
+        assertFileContent("one th<caret>")
+        delay(200)
+      }
+    }
+    val insertedStateData = state.assertInsertedStateData()
+    assertInsertedStateData(
+      insertedStateData,
+      suggestionLength = 9,
+      resultLength = 6,
+      editDistance = 3,
+      editDistanceNoAdd = 3,
+      commonPrefixLength = 6,
+      commonSuffixLength = 0,
+    )
+  }
+
+  @Test
+  fun `test inserted state logging after insertions inside suggestion`() {
+    val state = getLogsState {
+      myFixture.testInlineCompletion {
+        init(PlainTextFileType.INSTANCE)
+        registerSuggestion {
+          variant {
+            emit(InlineCompletionGrayTextElement("one "))
+            emit(InlineCompletionGrayTextElement("three"))
+          }
+        }
+        callInlineCompletion()
+        provider.computeNextElements(2)
+        delay()
+
+        typeChars("one th")
+        assertInlineRender("ree")
+        insert()
+        assertFileContent("one three<caret>")
+
+        navigateOnlyCaretTo(7)
+        typeChars("bb")
+        assertFileContent("one thrbb<caret>ee")
+        delay(200)
+      }
+    }
+    val insertedStateData = state.assertInsertedStateData()
+    assertInsertedStateData(
+      insertedStateData,
+      suggestionLength = 9,
+      resultLength = 11,
+      editDistance = 2,
+      editDistanceNoAdd = 0,
+      commonPrefixLength = 7,
+      commonSuffixLength = 2,
     )
   }
 
@@ -553,14 +634,18 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
 
   private fun assertInsertedStateData(
     data: Data,
-    length: Int,
+    suggestionLength: Int,
+    resultLength: Int,
     editDistance: Int,
+    editDistanceNoAdd: Int,
     commonPrefixLength: Int,
     commonSuffixLength: Int,
   ) {
-    assertEquals(length, data[InsertedStateEvents.LENGTH])
+    assertEquals(suggestionLength, data[InsertedStateEvents.SUGGESTION_LENGTH])
+    assertEquals(resultLength, data[InsertedStateEvents.RESULT_LENGTH])
     assertEquals(TEST_CHECK_STATE_AFTER_MLS, data[InsertedStateEvents.DURATION])
     assertEquals(editDistance, data[InsertedStateEvents.EDIT_DISTANCE])
+    assertEquals(editDistanceNoAdd, data[InsertedStateEvents.EDIT_DISTANCE_NO_ADD])
     assertEquals(commonPrefixLength, data[InsertedStateEvents.COMMON_PREFIX_LENGTH])
     assertEquals(commonSuffixLength, data[InsertedStateEvents.COMMON_SUFFIX_LENGTH])
   }
