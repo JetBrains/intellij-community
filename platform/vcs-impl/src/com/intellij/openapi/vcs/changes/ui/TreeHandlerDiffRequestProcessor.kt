@@ -268,7 +268,9 @@ private fun refreshCombinedDiffProcessor(tree: ChangesTree,
     processor.context.putUserData(COMBINED_DIFF_SCROLL_TO_BLOCK, newSelectedBlockId)
 
     val changes = handler.iterateAllChanges(tree).toList()
-    processor.setBlocks(prepareCombinedDiffModelRequests(tree.project, changes))
+    if (changes.isNotEmpty()) {
+      processor.setBlocks(prepareCombinedDiffModelRequests(tree.project, changes))
+    }
   }
 }
 
