@@ -519,6 +519,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     assertFalse(EDT.isCurrentThreadEdt());
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject)
       .attachVirtualMachine(new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection));
+    assertNotNull(debuggerSession);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
