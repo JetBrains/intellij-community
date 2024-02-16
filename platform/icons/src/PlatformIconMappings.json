@@ -528,7 +528,8 @@
       "webServiceClient.svg": "javaee/WebServiceClient.svg"
     },
     "language": {
-      "php.svg": "language/php.svg"
+      "php.svg": "language/php.svg",
+      "scala.svg": "language/scala.svg"
     },
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",
