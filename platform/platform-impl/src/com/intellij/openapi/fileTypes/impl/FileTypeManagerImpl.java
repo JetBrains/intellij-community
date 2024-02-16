@@ -739,6 +739,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType requestedFileType) {
+    //MAYBE RC: shouldn't we first check file.isValid() and return false eagerly?
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
     if (temporarilyFixedFileType != null) return temporarilyFixedFileType.equals(requestedFileType);
 
