@@ -450,7 +450,8 @@ public final class FindUsagesManager {
                          @NotNull FindUsagesHandlerBase handler,
                          @NotNull FindUsagesOptions findUsagesOptions,
                          boolean toSkipUsagePanelWhenOneUsage) {
-    ReadAction.nonBlocking(() -> createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()))
+    boolean shouldedOpenInNewTab = shouldOpenInNewTab();
+    ReadAction.nonBlocking(() -> createPresentation(primaryElements[0], findUsagesOptions, shouldedOpenInNewTab))
       .expireWith(handler.getProject())
       .finishOnUiThread(ModalityState.nonModal(),
                         presentation -> doFindUsages(primaryElements, secondaryElements, handler, findUsagesOptions, toSkipUsagePanelWhenOneUsage, presentation))
