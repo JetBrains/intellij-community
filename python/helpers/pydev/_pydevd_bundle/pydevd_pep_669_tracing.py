@@ -138,6 +138,12 @@ def _should_enable_line_events_for_code(frame, code, filename, info):
     return True
 
 
+def _clear_run_state(info):
+    info.pydev_step_stop = None
+    info.pydev_step_cmd = -1
+    info.pydev_state = STATE_RUN
+
+
 def _stop_monitoring():
     monitoring.set_events(monitoring.DEBUGGER_ID, 0)
 
@@ -257,6 +263,166 @@ def py_start_callback(code, instruction_offset):
         _stop_monitoring()
 
 
+def py_line_callback(code, line_number):
+    frame = sys._getframe(1)
+    thread = threadingCurrentThread()
+    info = _get_additional_info(thread)
+
+    # print('LINE %s %s %s %s' % (frame.f_lineno, code.co_name, code.co_filename, info.pydev_step_cmd))
+
+    if info.is_tracing:
+        return
+
+    try:
+        info.is_tracing = True
+
+        py_db = GlobalDebuggerHolder.global_dbg
+
+        if py_db._finish_debugging_session:
+            return monitoring.DISABLE
+
+        stop_frame = info.pydev_step_stop
+        step_cmd = info.pydev_step_cmd
+
+        filename = _get_abs_path_real_path_and_base_from_frame(frame)[1]
+        breakpoints_for_file = py_db.breakpoints.get(filename)
+
+        frame_cache_key = _make_frame_cache_key(code)
+        line_cache_key = (frame_cache_key, line_number)
+
+        try:
+            breakpoint = None
+            stop = False
+            smart_stop_frame = info.pydev_smart_step_context.smart_step_stop
+            context_start_line = info.pydev_smart_step_context.start_line
+            context_end_line = info.pydev_smart_step_context.end_line
+            is_within_context = (context_start_line <= line_number
+                                 <= context_end_line)
+
+            if breakpoints_for_file and line_number in breakpoints_for_file:
+                breakpoint = breakpoints_for_file[line_number]
+                new_frame = frame
+                stop = True
+                if step_cmd == CMD_STEP_OVER:
+                    if stop_frame is frame:
+                        stop = False
+                    elif step_cmd == CMD_SMART_STEP_INTO and (
+                            frame.f_back is smart_stop_frame and is_within_context):
+                        stop = False
+
+            if breakpoint:
+                if stop:
+                    eval_result = False
+                    if breakpoint.has_condition:
+                        eval_result = handle_breakpoint_condition(
+                            py_db, info, breakpoint, new_frame)
+
+                    if breakpoint.expression is not None:
+                        handle_breakpoint_expression(breakpoint, info, new_frame)
+                        if (breakpoint.is_logpoint
+                                and info.pydev_message is not None
+                                and len(info.pydev_message) > 0):
+                            cmd = py_db.cmd_factory.make_io_message(
+                                info.pydev_message + os.linesep, '1')
+                            py_db.writer.add_command(cmd)
+
+                    if breakpoint.has_condition and not eval_result:
+                        return
+            else:
+                if step_cmd != -1:
+                    if (py_db.is_filter_enabled
+                            and py_db.is_ignored_by_filters(filename)):
+                        # ignore files matching stepping filters
+                        return
+                    if (py_db.is_filter_libraries
+                            and not py_db.in_project_scope(filename)):
+                        # ignore library files while stepping
+                        return
+
+            if stop:
+                py_db.set_suspend(
+                    thread,
+                    CMD_SET_BREAK,
+                    suspend_other_threads=breakpoint
+                                          and breakpoint.suspend_policy == "ALL",
+                )
+
+            # if thread has a suspend flag, we suspend with a busy wait
+            if info.pydev_state == STATE_SUSPEND:
+                py_db.do_wait_suspend(thread, frame, 'line', None)
+            elif not breakpoint:
+                # No stop from anyone and no breakpoint found in line (cache that).
+                global_cache_frame_skips[line_cache_key] = 0
+        except KeyboardInterrupt:
+            _clear_run_state(info)
+            raise
+        except:
+            traceback.print_exc()
+            raise
+
+        # Step handling. We stop when we hit the right frame.
+        try:
+            stop = False
+
+            if step_cmd == CMD_SMART_STEP_INTO:
+                if smart_stop_frame is frame:
+                    if not is_within_context:
+                        # We don't stop on jumps in multiline statements, which
+                        # the Python interpreter does in some cases, if we they
+                        # happen in smart step into context.
+                        info.pydev_func_name = '.invalid.'  # Must match the type in cython
+                        stop = True  # act as if we did a step into
+
+                curr_func_name = frame.f_code.co_name
+
+                if curr_func_name in ('?', '<module>') or curr_func_name is None:
+                    curr_func_name = ''
+
+                if smart_stop_frame and smart_stop_frame is frame.f_back:
+                    try:
+                        if curr_func_name != info.pydev_func_name and frame.f_back:
+                            # try to find function call name using bytecode analysis
+                            curr_func_name = find_last_call_name(frame.f_back)
+                        if curr_func_name == info.pydev_func_name:
+                            stop = (find_last_func_call_order(
+                                frame.f_back, context_start_line)
+                                    == info.pydev_smart_step_context.call_order)
+                    except:
+                        pydev_log.debug("Exception while handling smart step into "
+                                        "in frame tracer, step into will be "
+                                        "performed instead.")
+                        info.pydev_smart_step_context.reset()
+                        stop = True  # act as if we did a step into
+
+            elif step_cmd == CMD_STEP_INTO:
+                stop = True
+
+            elif step_cmd == CMD_STEP_INTO_MY_CODE:
+                stop = py_db.in_project_scope(frame.f_code.co_filename)
+
+            elif step_cmd in (CMD_STEP_OVER, CMD_STEP_INTO_COROUTINE):
+                stop = stop_frame is frame
+                if stop:
+                    # The only case we shouldn't stop on a line, is when
+                    # we are traversing though asynchronous framework machinery
+                    if step_cmd == CMD_STEP_INTO_COROUTINE:
+                        stop = py_db.in_project_scope(frame.f_code.co_filename)
+
+            if stop:
+                py_db.set_suspend(thread, step_cmd)
+                py_db.do_wait_suspend(thread, frame, 'line', None)
+
+        except KeyboardInterrupt:
+            _clear_run_state(info)
+            raise
+        except:
+            traceback.print_exc()
+            raise
+
+    finally:
+        info.is_tracing = False
+
+
 class PEP669CallbackBase:
     def __init__(self, py_db):
         self.py_db = py_db
@@ -283,12 +449,6 @@ class PEP669CallbackBase:
                 = get_abs_path_real_path_and_base_from_frame(frame)
 
         return abs_path_real_path_and_base
-
-    @staticmethod
-    def clear_run_state(info):
-        info.pydev_step_stop = None
-        info.pydev_step_cmd = -1
-        info.pydev_state = STATE_RUN
 
 
 class PyStartCallback(PEP669CallbackBase):
@@ -599,7 +759,7 @@ class PyLineCallback(PEP669CallbackBase):
                     # No stop from anyone and no breakpoint found in line (cache that).
                     global_cache_frame_skips[line_cache_key] = 0
             except KeyboardInterrupt:
-                self.clear_run_state(info)
+                _clear_run_state(info)
                 raise
             except:
                 traceback.print_exc()
@@ -658,7 +818,7 @@ class PyLineCallback(PEP669CallbackBase):
                     self.py_db.do_wait_suspend(thread, frame, 'line', None)
 
             except KeyboardInterrupt:
-                self.clear_run_state(info)
+                _clear_run_state(info)
                 raise
             except:
                 traceback.print_exc()
@@ -731,7 +891,7 @@ class PyRaiseCallback(PEP669CallbackBase):
                 if should_stop:
                     handle_exception(args, frame, 'exception', exc_info)
         except KeyboardInterrupt:
-            self.clear_run_state(info)
+            _clear_run_state(info)
             raise
 
     def _stop_on_unhandled_exception(self, exc_info):
@@ -774,7 +934,7 @@ class PyReturnCallback(PEP669CallbackBase):
                         if back_code.co_name != '<module>':
                             PyReturnCallback.start_monitoring(back_code)
         except KeyboardInterrupt:
-            self.clear_run_state(info)
+            _clear_run_state(info)
             raise
         finally:
             self.stop_monitoring(code)
