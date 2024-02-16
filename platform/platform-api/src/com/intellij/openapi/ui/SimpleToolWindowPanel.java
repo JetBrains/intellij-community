@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExperimentalUI;
@@ -9,7 +11,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -26,8 +27,6 @@ import java.util.List;
 
 public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, DataProvider {
   public static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
-
-  private final List<DataProvider> myDataProviders = new SmartList<>();
 
   private JComponent myToolbar;
   private JComponent myContent;
@@ -202,7 +201,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
   public static @NotNull List<AnAction> collectActions(@Nullable JComponent component) {
     JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(component).traverse().filter(ActionToolbar.class);
-    if (toolbars.size() == 0) {
+    if (toolbars.isEmpty()) {
       return Collections.emptyList();
     }
     return toolbars.flatten(ActionToolbar::getActions).toList();
