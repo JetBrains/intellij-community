@@ -6,7 +6,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
+import com.jetbrains.performancePlugin.commands.PerformanceCommand
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
@@ -20,9 +20,10 @@ import org.jetbrains.idea.maven.performancePlugin.utils.MavenConfigurationUtils.
  * Argument is serialized [MavenGoalConfigurationDto] as json
  * @see [MavenConstants.PHASES]
  */
-class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, line) {
+class ExecuteMavenGoalCommand(text: String, line: Int) : PerformanceCommand(text, line) {
   companion object {
-    const val PREFIX = "%executeMavenGoals"
+    const val NAME = "executeMavenGoals"
+    const val PREFIX = "$CMD_PREFIX$NAME"
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
@@ -57,5 +58,9 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, l
 
     }
     return promise
+  }
+
+  override fun getName(): String {
+    return NAME
   }
 }

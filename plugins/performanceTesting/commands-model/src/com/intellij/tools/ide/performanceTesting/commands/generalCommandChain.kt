@@ -1,6 +1,6 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.performanceTesting.commands.dto.MavenGoalConfigurationDto
 import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
 import java.io.File
@@ -16,8 +16,7 @@ private const val CMD_PREFIX = '%'
 
 const val WARMUP = "WARMUP"
 const val ENABLE_SYSTEM_METRICS = "ENABLE_SYSTEM_METRICS"
-
-val gson = Gson()
+val objectMapper = jacksonObjectMapper()
 
 fun <T : CommandChain> T.waitForSmartMode(): T = apply {
   addCommand("${CMD_PREFIX}waitForSmart")
@@ -581,22 +580,22 @@ fun <T : CommandChain> T.downloadMavenArtifacts(sources: Boolean = true, docs: B
 }
 
 fun <T : CommandChain> T.createMavenProject(newMavenProjectDto: NewMavenProjectDto): T = apply {
-  val json = gson.toJson(newMavenProjectDto)
-  addCommand("${CMD_PREFIX}createMavenProject $json")
+  val options = objectMapper.writeValueAsString(newMavenProjectDto)
+  addCommand("${CMD_PREFIX}createMavenProject $options")
 }
 
 fun <T : CommandChain> T.updateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
-  val options = gson.toJson(settings)
+  val options = objectMapper.writeValueAsString(settings)
   addCommand("${CMD_PREFIX}updateMavenGoal $options")
 }
 
 fun <T : CommandChain> T.validateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
-  val options = gson.toJson(settings)
+  val options = objectMapper.writeValueAsString(settings)
   addCommand("${CMD_PREFIX}validateMavenGoal $options")
 }
 
 fun <T : CommandChain> T.executeMavenGoals(settings: MavenGoalConfigurationDto): T {
-  val options = gson.toJson(settings)
+  val options = objectMapper.writeValueAsString(settings)
   addCommand("${CMD_PREFIX}executeMavenGoals $options")
   return this
 }
