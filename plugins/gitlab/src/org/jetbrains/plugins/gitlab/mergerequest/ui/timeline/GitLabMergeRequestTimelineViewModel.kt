@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.async.mapModelsToViewModels
+import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.util.ChangesSelection
@@ -63,7 +63,7 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
     mergeRequest.createTimelineItemsFlow(showEvents)
       .transformConsecutiveSuccesses {
-        mapModelsToViewModels { createItemVm(mergeRequest, it) }
+        mapDataToModel({ it.id }, { createItemVm(mergeRequest, it) }, {})
       }
       .modelFlow(cs, LOG)
 
