@@ -10,6 +10,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.jps.api.CanceledStatus
@@ -151,7 +152,13 @@ internal object CompiledClasses {
         return
       }
     }
-    context.options.useCompiledClassesFromProjectOutput = true
+    if (!context.options.useCompiledClassesFromProjectOutput) {
+      CompilationTasks.create(context).generateRuntimeModuleRepository()
+      context.options.useCompiledClassesFromProjectOutput = true
+    }
+    else {
+      context.compilationData.runtimeModuleRepositoryGenerated = true
+    }
   }
 
   private fun unpackCompiledClasses(classOutput: Path, context: CompilationContext) {

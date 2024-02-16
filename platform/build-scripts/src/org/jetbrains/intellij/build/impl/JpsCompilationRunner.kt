@@ -95,6 +95,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     runBuild(
       moduleSet = names, allModules = false, artifactNames = emptyList(),
       includeTests = false, resolveProjectDependencies = false,
+      generateRuntimeModuleRepository = true,
       canceledStatus = canceledStatus
     )
   }
@@ -139,6 +140,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              artifactNames = emptyList(),
              includeTests = true,
              resolveProjectDependencies = false,
+             generateRuntimeModuleRepository = true,
              canceledStatus = canceledStatus)
   }
 
@@ -148,6 +150,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              artifactNames = emptyList(),
              includeTests = false,
              resolveProjectDependencies = false,
+             generateRuntimeModuleRepository = true,
              canceledStatus = canceledStatus)
   }
 
