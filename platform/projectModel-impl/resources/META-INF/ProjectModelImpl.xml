@@ -86,6 +86,7 @@
                  description="Enable workspace model consistency checking after every update"/>
 
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>
 
     <persistentFsConnectionListener implementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexCleaner"/>
   </extensions>
