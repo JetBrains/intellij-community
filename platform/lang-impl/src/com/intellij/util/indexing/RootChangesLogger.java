@@ -23,7 +23,13 @@ final class RootChangesLogger {
   private final List<Report> myReports = new ArrayList<>(BATCH_CAPACITY);
 
   void info(@NotNull Project project, boolean fullReindex) {
-    if (!fullReindex) return;
+    if (!fullReindex) {
+      if (myLogger.isTraceEnabled()) {
+        myLogger.trace("New rootsChanged event for \"" + project.getName() + "\" project with " +
+                       "partial rescanning:\n" + ExceptionUtil.getThrowableText(new Throwable()));
+      }
+      return;
+    }
     Throwable stacktrace = new Throwable();
     int hash = ThrowableInterner.computeAccurateTraceHashCode(stacktrace);
     boolean isNew;
