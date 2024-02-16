@@ -152,6 +152,7 @@ class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.
   }
 
   private fun setSelectedState(item: T?, selectedState: Boolean) {
+    if (item == null) return
     val componentIndex = items.indexOf(item)
     val segmentedButton = components.getOrNull(componentIndex) as? SegmentedButton<*>
     segmentedButton?.selectedState = selectedState
