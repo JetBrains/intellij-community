@@ -91,7 +91,7 @@ __jetbrains_intellij_debug_log() {
 }
 
 __jetbrains_intellij_command_started() {
-  builtin local bash_command="$1"
+  builtin local bash_command="$BASH_COMMAND"
   if __jetbrains_intellij_is_generator_command "$bash_command"
   then
     return 0
