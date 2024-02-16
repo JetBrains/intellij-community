@@ -10,14 +10,14 @@ import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.providers.vscode.mappings.ThemesMappings
+import com.intellij.ide.startup.importSettings.transfer.ExternalProjectImportChecker
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
 
 class StorageParser(private val settings: Settings) {
 
@@ -49,9 +49,14 @@ class StorageParser(private val settings: Settings) {
         displayName = path.fileName?.toString() ?: path.toString()
       }
 
-      if (Registry.`is`("transferSettings.vscode.onlyCargoToml")) {
-        if (!path.resolve("Cargo.toml").exists()) {
-          return null
+      for (checker in ExternalProjectImportChecker.EP_NAME.extensionList) {
+        val shouldImport = logger.runAndLogException {
+          checker.shouldImportProject(path)
+        }
+        when (shouldImport) {
+          true -> break
+          false -> return null
+          null -> {}
         }
       }
 

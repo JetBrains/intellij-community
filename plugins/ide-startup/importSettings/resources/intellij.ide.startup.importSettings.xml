@@ -13,6 +13,9 @@
     <extensionPoint name="transferSettings.vscode.pluginMapping"
                     interface="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.VSCodePluginMapping"
                     dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.externalProjectImportChecker"
+                    interface="com.intellij.ide.startup.importSettings.transfer.ExternalProjectImportChecker"
+                    dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,6 +33,7 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
+    <transferSettings.externalProjectImportChecker implementation="com.intellij.ide.startup.importSettings.transfer.backend.CargoExternalProjectImportChecker"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.startup.importSettings.jb.JbAfterRestartSettingsApplier" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
