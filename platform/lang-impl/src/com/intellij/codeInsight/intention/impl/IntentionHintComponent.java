@@ -622,7 +622,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         ApplicationManager.getApplication().invokeLater(this::showPreview);
       }
 
-      IntentionFUSCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage());
+      IntentionFUSCollector.reportShownIntentions(myFile.getProject(), myListPopup, myFile.getLanguage(), myEditor);
       myPopupShown = true;
     }
 

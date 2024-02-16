@@ -320,13 +320,13 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static void invokeCommandAction(@NotNull PsiFile hostFile,
                                           @Nullable Editor hostEditor,
                                           @NotNull @NlsContexts.Command String commandName,
-                                          @NotNull ModCommandAction commandAction, int problemOffset) {
+                                          @NotNull ModCommandAction commandAction, int fixOffset) {
     record ContextAndCommand(@NotNull ActionContext context, @NotNull ModCommand command) { }
     ThrowableComputable<ContextAndCommand, RuntimeException> computable =
       () -> ReadAction.nonBlocking(() -> {
           ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
           if (context == null) return null;
-          ActionContext adjusted = problemOffset >= 0 ? context.withOffset(problemOffset) : context;
+          ActionContext adjusted = fixOffset >= 0 ? context.withOffset(fixOffset) : context;
           return new ContextAndCommand(adjusted, commandAction.perform(adjusted));
         })
         .expireWhen(() -> hostFile.getProject().isDisposed())
@@ -336,7 +336,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (contextAndCommand == null) return;
     ActionContext context = contextAndCommand.context();
     Project project = context.project();
-    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
+    IntentionFUSCollector.record(project, commandAction, context.file().getLanguage(), hostEditor, fixOffset);
     CommandProcessor.getInstance().executeCommand(project, () -> {
       ModCommandExecutor.getInstance().executeInteractively(context, contextAndCommand.command(), hostEditor);
     }, commandName, null);
@@ -379,7 +379,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file, int fixOffset) {
-    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage());
+    IntentionFUSCollector.record(file.getProject(), action, file.getLanguage(), editor, fixOffset);
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;
