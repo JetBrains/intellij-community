@@ -198,7 +198,12 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
 
   @ICUtil
   suspend fun delay(ms: Int) {
-    kotlinx.coroutines.delay(ms.toLong())
+    delay(ms.toLong())
+  }
+
+  @ICUtil
+  suspend fun delay(ms: Long) {
+    kotlinx.coroutines.delay(ms)
   }
 
   @ICUtil

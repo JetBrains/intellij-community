@@ -201,6 +201,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onHide(event: InlineCompletionEventType.Hide): Unit = lock.withLock {
       showTracker?.canceled(event.finishType)
+      // If the suggestion is selected, 'showTracker' will be used in 'onAfterInsert' and nullified there
       if (event.finishType != ShownEvents.FinishType.SELECTED) {
         showTracker = null
       }

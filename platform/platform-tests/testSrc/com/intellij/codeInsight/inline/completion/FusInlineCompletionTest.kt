@@ -435,7 +435,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
         backSpace()
         typeChars("aa")
         assertFileContent("one thraa<caret>")
-        delay(200)
+        delay(TEST_CHECK_STATE_AFTER_MLS * 3)
       }
     }
     val insertedStateData = state.assertInsertedStateData()
@@ -476,7 +476,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
         backSpace()
         backSpace()
         assertFileContent("bef<caret> one three")
-        delay(200)
+        delay(TEST_CHECK_STATE_AFTER_MLS * 3)
       }
     }
     val insertedStateData = state.assertInsertedStateData()
@@ -510,7 +510,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
         assertInlineRender("ree")
         insert()
         assertFileContent("one three<caret>")
-        delay(200)
+        delay(TEST_CHECK_STATE_AFTER_MLS * 3)
       }
     }
     val insertedStateData = state.assertInsertedStateData()
@@ -547,7 +547,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
 
         callAction("\$Undo")
         assertFileContent("one th<caret>")
-        delay(200)
+        delay(TEST_CHECK_STATE_AFTER_MLS * 3)
       }
     }
     val insertedStateData = state.assertInsertedStateData()
@@ -585,7 +585,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
         navigateOnlyCaretTo(7)
         typeChars("bb")
         assertFileContent("one thrbb<caret>ee")
-        delay(200)
+        delay(TEST_CHECK_STATE_AFTER_MLS * 3)
       }
     }
     val insertedStateData = state.assertInsertedStateData()
