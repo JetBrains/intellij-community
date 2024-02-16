@@ -50,7 +50,7 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
   @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testLoggerAlreadyExists() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
-    val name = getTestName(false)
+    val name = getTestName(true)
     configureByFile("$name.java")
     assertStringItems("log", "long", "clone")
 
