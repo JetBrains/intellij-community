@@ -36,7 +36,7 @@ bill-to:  &id001
     БОЛЬШИЕ БУКВЫ.
     Актуальный плагин.
     На конференции работали советы по секциям: химия, история.
-  city:   "It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>"
+  city:   "It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>. And here are some correct English words to make the language detector work."
 
 ship-to:  *id001
 

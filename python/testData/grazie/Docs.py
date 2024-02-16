@@ -11,7 +11,7 @@ class ExampleClassWithNoTypos:
         name (str): the name of this group. And another sentence.
 
     Attributes:
-        name (str): the name of this group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence.
+        name (str): the name of this group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence. And here are some correct English words to make the language detector work.
 
     """
 
@@ -33,7 +33,7 @@ class ExampleClassWithNoTypos:
 
 
 class ExampleClassWithTypos:
-    """It <warning descr="IT_VBZ">are</warning> friend there
+    """It <warning descr="IT_VBZ">are</warning> friend there. And here are some correct English words to make the language detector work.
 
     Args:
         name (str): the <warning descr="COMMA_WHICH">name which</warning> group and some other English text
@@ -48,16 +48,16 @@ class ExampleClassWithTypos:
 
     def bad_function(self, member):
         """
-        It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
+        It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>. And here are some correct English words to make the language detector work.
 
         Args:
             member (str): member to add to the group.
 
         Returns:
-            int: the new size of <warning descr="DT_DT">a the</warning> group.
+            int: the new size of <warning descr="DT_DT">a the</warning> group. And here are some correct English words to make the language detector work.
 
         """
-        return 1  # It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> comment
+        return 1  # It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> comment. And here are some correct English words to make the language detector work.
 
 
 class ForMultiLanguageSupport:
