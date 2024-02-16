@@ -1,0 +1,20 @@
+fragment project on Project {
+  name
+  nameWithNamespace
+  path
+  fullPath
+  httpUrlToRepo
+  sshUrlToRepo
+
+  onlyAllowMergeIfAllDiscussionsAreResolved
+  onlyAllowMergeIfPipelineSucceeds
+  allowMergeOnSkippedPipeline
+
+  userPermissions {
+    createSnippet
+  }
+
+  repository {
+    rootRef
+  }
+}
