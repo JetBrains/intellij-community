@@ -209,10 +209,10 @@ fun isInSuspendMethod(location: Location): Boolean {
     val method = location.method()
     val signature = method.signature()
     val continuationAsmType = continuationAsmType()
-    return signature.contains(continuationAsmType.toString()) || isSuspendMethod(method)
+    return signature.contains(continuationAsmType.toString()) || isInvokeSuspendMethod(method)
 }
 
-fun isSuspendMethod(method: Method): Boolean {
+fun isInvokeSuspendMethod(method: Method): Boolean {
     return method.name() == INVOKE_SUSPEND_METHOD_NAME && method.signature() == INVOKE_SUSPEND_SIGNATURE
 }
 

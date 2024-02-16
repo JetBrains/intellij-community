@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.core.filter
 
-import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.ExtraSteppingFilter
 import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.settings.DebuggerSettings
@@ -28,7 +27,7 @@ class KotlinExtraSteppingFilter : ExtraSteppingFilter {
 
         //stepped out from suspend function
         val method = location.safeMethod()
-        if (method != null && isSuspendMethod(method) && location.safeLineNumber() < 0) {
+        if (method != null && isInvokeSuspendMethod(method) && location.safeLineNumber() < 0) {
             return true
         }
 
