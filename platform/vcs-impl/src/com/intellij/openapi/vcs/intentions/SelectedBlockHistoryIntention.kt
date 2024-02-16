@@ -6,8 +6,11 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction
 import com.intellij.psi.PsiFile
+import com.intellij.vcsUtil.VcsSelection
 import com.intellij.vcsUtil.VcsSelectionUtil
 
 class SelectedBlockHistoryIntention : IntentionAction, LowPriorityAction {
@@ -19,12 +22,22 @@ class SelectedBlockHistoryIntention : IntentionAction, LowPriorityAction {
   override fun getText(): String = familyName
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-    val selection = VcsSelectionUtil.getSelection(editor) ?: return false
+    val selection = getSelection(editor) ?: return false
     return SelectedBlockHistoryAction.isEnabled(project, selection)
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val selection = VcsSelectionUtil.getSelection(editor) ?: return
+    val selection = getSelection(editor) ?: return
     SelectedBlockHistoryAction.showHistoryForSelection(selection, project)
+  }
+
+  private fun getSelection(editor: Editor): VcsSelection? {
+    val selectionModel = editor.selectionModel
+    if (selectionModel.hasSelection()) {
+      return VcsSelection(editor.document,
+                          TextRange(selectionModel.selectionStart, selectionModel.selectionEnd),
+                          VcsBundle.message("action.name.show.history.for.selection"))
+    }
+    return null
   }
 }

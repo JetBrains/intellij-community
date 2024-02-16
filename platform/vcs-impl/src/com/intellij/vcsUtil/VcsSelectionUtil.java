@@ -42,31 +42,6 @@ public final class VcsSelectionUtil {
                             VcsBundle.message("action.name.show.history.for.selection"));
   }
 
-  public static VcsSelection getSelection(@NotNull Editor editor) {
-    SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      return new VcsSelection(editor.getDocument(),
-                              new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()),
-                              VcsBundle.message("action.name.show.history.for.selection"));
-    }
-    DataContext dataContext = new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        if (CommonDataKeys.EDITOR.is(dataId)) {
-          return editor;
-        }
-        return null;
-      }
-    };
-    VcsSelection vcsSelection = getSelectionFromExtensions(dataContext);
-    if (vcsSelection != null) return vcsSelection;
-    Caret caret = editor.getCaretModel().getPrimaryCaret();
-    return new VcsSelection(editor.getDocument(),
-                            new TextRange(caret.getOffset(), caret.getOffset()),
-                            VcsBundle.message("action.name.show.history.for.selection"));
-  }
-
-
   private static @Nullable VcsSelection getSelectionFromExtensions(@NotNull DataContext dataContext) {
     for (VcsSelectionProvider provider : VcsSelectionProvider.EP_NAME.getExtensionList()) {
       try {
