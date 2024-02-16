@@ -18,6 +18,7 @@ import org.assertj.core.api.Condition
 import org.junit.Rule
 import org.junit.Test
 import java.io.FileOutputStream
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -502,6 +503,99 @@ class DecompressorTest {
     val symlink = dir.resolve("symlink")
     assertThat(symlink).isSymbolicLink()
     assertThat(Files.readSymbolicLink(symlink)).isEqualTo(dir.resolve("root"))
+  }
+
+  @Test fun retryStrategyErrorHandler() {
+    val zip = tempDir.newFile("retryStrategyErrorHandler.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "good-file.txt")
+      writeEntry(it, "bad-file.txt", link = "")
+      writeEntry(it, "good-file-too.md")
+    }
+    var retries = 3 // to make sure if we really make retrying
+    val dir = tempDir.newDirectory("unpacked").toPath()
+
+    Decompressor.Zip(zip).withZipExtensions().errorHandler { _, _ ->
+      if (retries == 0) {
+        return@errorHandler Decompressor.ErrorHandlerChoice.SKIP
+      }
+      retries--
+      Decompressor.ErrorHandlerChoice.RETRY
+    }.extract(dir)
+
+    assertThat(retries).isEqualTo(0)
+    assertThat(dir.resolve("good-file.txt")).exists()
+    assertThat(dir.resolve("bad-file.txt")).doesNotExist()
+    assertThat(dir.resolve("good-file-too.md")).exists()
+  }
+
+  @Test fun abortStrategyErrorHandlerDeletingFiles() {
+    val zip = tempDir.newFile("abortStrategyErrorHandlerDeletingFiles.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "good-file.txt")
+      writeEntry(it, "very-good-file.java")
+      writeEntry(it, "bad-file.txt", link = "")
+    }
+
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    Decompressor.Zip(zip).withZipExtensions().errorHandler { _, _ -> Decompressor.ErrorHandlerChoice.ABORT }.extract(dir)
+
+    assertThat(dir.resolve("good-file.txt")).doesNotExist()
+    assertThat(dir.resolve("very-good-file.java")).doesNotExist()
+  }
+
+  @Test fun skipStrategyErrorHandlerNotDeletingFiles() {
+    val zip = tempDir.newFile("skipStrategyErrorHandlerNotDeletingFiles.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "good-file.txt")
+      writeEntry(it, "bad-file.txt", link = "")
+      writeEntry(it, "very-good-file.java")
+    }
+
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    Decompressor.Zip(zip).withZipExtensions().errorHandler { _, _ -> Decompressor.ErrorHandlerChoice.SKIP }.extract(dir)
+
+    assertThat(dir.resolve("good-file.txt")).exists()
+    assertThat(dir.resolve("very-good-file.java")).exists()
+  }
+
+  @Test fun doNothingStrategyErrorHandlerNotDeletingFilesBeforeSkipAfter() {
+    val zip = tempDir.newFile("doNothingStrategyErrorHandlerNotDeletingFilesBeforeSkipAfter.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "good-file.txt")
+      writeEntry(it, "very-good-file.java")
+      writeEntry(it, "bad-file.txt", link = "")
+      writeEntry(it, "good-but-unlucky-file.kt")
+    }
+
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    assertThatThrownBy {
+      Decompressor.Zip(zip).withZipExtensions().errorHandler { _, _ -> Decompressor.ErrorHandlerChoice.BAIL_OUT }.extract(dir)
+    }.isInstanceOf(IOException::class.java)
+
+    assertThat(dir.resolve("good-file.txt")).exists()
+    assertThat(dir.resolve("very-good-file.java")).exists()
+    assertThat(dir.resolve("good-but-unlucky-file.kt")).doesNotExist()
+  }
+
+  @Test fun skipAllStrategyCalledOnlyOnce() {
+    val zip = tempDir.newFile("skipAllStrategyCalledOnlyOnce.zip")
+    ZipArchiveOutputStream(FileOutputStream(zip)).use {
+      writeEntry(it, "bad-file.txt", link = "")
+      writeEntry(it, "another-bad-file.txt", link = "")
+      writeEntry(it, "another-bad-file.cpp", link = "")
+    }
+    var isCalled = false
+    val dir = tempDir.newDirectory("unpacked").toPath()
+
+    Decompressor.Zip(zip).withZipExtensions().errorHandler { _, _ ->
+      if (!isCalled) {
+        isCalled = true
+        Decompressor.ErrorHandlerChoice.SKIP_ALL
+      } else {
+        throw AssertionError("SKIP_ALL strategy can't be called twice")
+      }
+    }.extract(dir)
   }
 
   //<editor-fold desc="Helpers.">

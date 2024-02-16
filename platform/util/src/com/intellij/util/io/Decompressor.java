@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,15 +19,14 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.function.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class Decompressor {
+  private static final Logger LOG = Logger.getInstance(Decompressor.class);
+
   /**
    * The Tar decompressor automatically detects the compression of an input file/stream.
    * <p>
@@ -275,6 +275,8 @@ public abstract class Decompressor {
   }
 
   private @Nullable Predicate<? super Entry> myFilter = null;
+  private @NotNull BiFunction<? super Entry, ? super IOException, ErrorHandlerChoice> myErrorHandler = (__, ___) -> ErrorHandlerChoice.BAIL_OUT;
+  private boolean myIgnoreIOExceptions = false;
   private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
   private EscapingSymlinkPolicy myEscapingSymlinkPolicy = EscapingSymlinkPolicy.ALLOW;
@@ -287,6 +289,11 @@ public abstract class Decompressor {
 
   public Decompressor entryFilter(@Nullable Predicate<? super Entry> filter) {
     myFilter = filter;
+    return this;
+  }
+
+  public Decompressor errorHandler(@NotNull BiFunction<? super Entry, ? super IOException, ErrorHandlerChoice> errorHandler) {
+    myErrorHandler = errorHandler;
     return this;
   }
 
@@ -333,13 +340,50 @@ public abstract class Decompressor {
   public final void extract(@NotNull Path outputDir) throws IOException {
     openStream();
     try {
-      Entry entry;
-      while ((entry = nextEntry()) != null) {
-        if (myFilter != null && !myFilter.test(entry)) {
+      Deque<Path> extractedPaths = new ArrayDeque<>();
+
+      // we'd like to keep a contact to invoke filter once per entry
+      // since it was something implicit, and the introduction of
+      // retry breaks the contract
+      boolean proceedToNext = true;
+
+      Entry entry = null;
+      while (!proceedToNext || (entry = nextEntry()) != null) {
+        if (proceedToNext && myFilter != null && !myFilter.test(entry)) {
           continue;
         }
 
-        processEntry(outputDir, entry);
+        proceedToNext = true; // will be set to false if EH returns RETRY
+        try {
+          Path processedEntry = processEntry(outputDir, entry);
+          if (processedEntry != null) {
+            extractedPaths.push(processedEntry);
+          }
+        }
+        catch (IOException ioException) {
+          if (myIgnoreIOExceptions) {
+            LOG.debug("Skipped exception because "  + ErrorHandlerChoice.SKIP_ALL + " was selected earlier", ioException);
+          } else {
+            switch (myErrorHandler.apply(entry, ioException)) {
+              case ABORT:
+                while (!extractedPaths.isEmpty()) {
+                  Files.delete(extractedPaths.pop());
+                }
+                return;
+              case BAIL_OUT:
+                throw ioException;
+              case RETRY:
+                proceedToNext = false;
+                break;
+              case SKIP:
+                LOG.debug("Skipped exception", ioException);
+                break;
+              case SKIP_ALL:
+                myIgnoreIOExceptions = true;
+                LOG.debug("SKIP_ALL is selected", ioException);
+            }
+          }
+        }
       }
     }
     finally {
@@ -347,10 +391,13 @@ public abstract class Decompressor {
     }
   }
 
-  private void processEntry(@NotNull Path outputDir, Entry entry) throws IOException {
+  /**
+   * @return Path to an extracted entity
+   */
+  private @Nullable Path processEntry(@NotNull Path outputDir, Entry entry) throws IOException {
     if (myPathPrefix != null) {
       entry = mapPathPrefix(entry, myPathPrefix);
-      if (entry == null) return;
+      if (entry == null) return null;
     }
 
     Path outputFile = entryFile(outputDir, entry.name);
@@ -414,6 +461,8 @@ public abstract class Decompressor {
     if (myPostProcessor != null) {
       myPostProcessor.accept(entry, outputFile);
     }
+
+    return outputFile;
   }
 
   private static void verifySymlinkTarget(String entryName, String linkTarget, Path outputDir, Path outputFile) throws IOException {
@@ -482,5 +531,35 @@ public abstract class Decompressor {
   public static @NotNull Path entryFile(@NotNull Path outputDir, @NotNull String entryName) throws IOException {
     ensureValidPath(entryName);
     return outputDir.resolve(StringUtil.trimLeading(entryName, '/'));
+  }
+
+  /**
+   * Speficies action to be taken from the {@code com.intellij.util.io.Decompressor#errorHandler}
+   */
+  public enum ErrorHandlerChoice {
+    /**
+     * Extraction should be aborted and already extracted entities should be cleaned
+     */
+    ABORT,
+
+    /**
+     * Do not handle error, just rethrow the exception
+     */
+    BAIL_OUT,
+
+    /**
+     * Retry failed entry extraction
+     */
+    RETRY,
+
+    /**
+     * Skip this entry from extraction
+     */
+    SKIP,
+
+    /**
+     * Skip this entry for extraction and ignore any further IOExceptions during this archive extraction
+     */
+    SKIP_ALL
   }
 }
