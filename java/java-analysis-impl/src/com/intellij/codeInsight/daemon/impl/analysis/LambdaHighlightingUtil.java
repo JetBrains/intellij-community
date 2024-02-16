@@ -223,7 +223,7 @@ public final class LambdaHighlightingUtil {
       return info;
     }
 
-    final ErrorWithFixes moduleProblem = HighlightUtil.getModuleProblem(psiClass, expression, resolveResult);
+    final ErrorWithFixes moduleProblem = HighlightUtil.checkModuleAccess(psiClass, expression, resolveResult);
     if (moduleProblem != null) {
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(moduleProblem.message);

@@ -2204,14 +2204,14 @@ public final class HighlightUtil {
     }
 
     String containerName = getContainerName(refElement, result.getSubstitutor());
-    ErrorWithFixes problem = getModuleProblem(resolved, ref, symbolName, containerName);
+    ErrorWithFixes problem = checkModuleAccess(resolved, ref, symbolName, containerName);
     if (problem != null) return Pair.pair(problem.message, problem.fixes);
     return Pair.pair(JavaErrorBundle.message("visibility.access.problem", symbolName, containerName), null);
   }
 
   @Nullable
   @Nls
-  static ErrorWithFixes getModuleProblem(@NotNull PsiElement resolved, @NotNull PsiElement ref, @NotNull JavaResolveResult result) {
+  static ErrorWithFixes checkModuleAccess(@NotNull PsiElement resolved, @NotNull PsiElement ref, @NotNull JavaResolveResult result) {
     PsiElement refElement = resolved;
     PsiClass packageLocalClass = HighlightFixUtil.getPackageLocalClassInTheMiddle(ref);
     if (packageLocalClass != null) {
@@ -2222,23 +2222,23 @@ public final class HighlightUtil {
     String containerName = (resolved instanceof PsiModifierListOwner modifierListOwner)
                            ? getContainerName(modifierListOwner, result.getSubstitutor())
                            : null;
-    return getModuleProblem(resolved, ref, symbolName, containerName);
+    return checkModuleAccess(resolved, ref, symbolName, containerName);
   }
 
   @Nullable
   @Nls
-  private static ErrorWithFixes getModuleProblem(@NotNull PsiElement target,
-                                                 @NotNull PsiElement place,
-                                                 @Nullable String symbolName,
-                                                 @Nullable String containerName) {
+  private static ErrorWithFixes checkModuleAccess(@NotNull PsiElement target,
+                                                  @NotNull PsiElement place,
+                                                  @Nullable String symbolName,
+                                                  @Nullable String containerName) {
     for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensionList()) {
       if (moduleSystem instanceof JavaModuleSystemEx system) {
         if (target instanceof PsiClass targetClass) {
-          final ErrorWithFixes problem = system.getProblem(targetClass, place);
+          final ErrorWithFixes problem = system.checkAccess(targetClass, place);
           if (problem != null) return problem;
         }
         if (target instanceof PsiPackage targetPackage) {
-          final ErrorWithFixes problem = system.getProblem(targetPackage.getQualifiedName(), null, place);
+          final ErrorWithFixes problem = system.checkAccess(targetPackage.getQualifiedName(), null, place);
           if (problem != null) return problem;
         }
       }
@@ -3499,7 +3499,7 @@ public final class HighlightUtil {
       PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null ||
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
 
-    final ErrorWithFixes moduleProblem = getModuleProblem(resolved, ref, result);
+    final ErrorWithFixes moduleProblem = checkModuleAccess(resolved, ref, result);
     if (!skipValidityChecks && !(result.isValidResult() && moduleProblem == null)) {
       if (moduleProblem != null) {
         HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(findPackagePrefix(ref))

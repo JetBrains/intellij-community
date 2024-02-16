@@ -46,7 +46,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return getProblem(targetPackageName, targetFile, place, true, this::isExported) == null
   }
 
-  override fun getProblem(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? {
+  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? {
     return getProblem(targetPackageName, targetFile, place, false) { use, _, target, _, _ -> JavaModuleGraphUtil.reads(use, target) }
   }
 

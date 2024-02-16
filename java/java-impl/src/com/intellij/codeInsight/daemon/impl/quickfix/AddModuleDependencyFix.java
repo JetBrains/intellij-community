@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -186,7 +185,11 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
   @NotNull
   private String getModuleName(@NotNull Module module) {
-    final PsiJavaModule javaModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(module, myScope == TEST));
-    return javaModule != null ? javaModule.getName() : module.getName();
+    final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(module, myScope == TEST);
+    if (javaModule != null && PsiNameHelper.isValidModuleName(javaModule.getName(), javaModule)) {
+      return javaModule.getName();
+    } else {
+      return module.getName();
+    }
   }
 }

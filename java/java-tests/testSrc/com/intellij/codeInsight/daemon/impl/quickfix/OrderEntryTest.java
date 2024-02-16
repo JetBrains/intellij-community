@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -168,8 +167,12 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   @NotNull
   private static String getModuleName(@NotNull Module module) {
-    final PsiJavaModule javaModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(module, false));
-    return javaModule != null ? javaModule.getName() : module.getName();
+    final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(module, false);
+    if (javaModule != null && PsiNameHelper.isValidModuleName(javaModule.getName(), javaModule)) {
+      return javaModule.getName();
+    } else {
+      return module.getName();
+    }
   }
 
   public void testAddJunit() {

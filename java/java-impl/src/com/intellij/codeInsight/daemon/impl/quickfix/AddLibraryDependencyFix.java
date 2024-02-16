@@ -19,11 +19,12 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReference;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -140,9 +141,13 @@ class AddLibraryDependencyFix extends OrderEntryFix {
     return new IntentionPreviewInfo.Html(HtmlChunk.text(message));
   }
 
-  @NlsContexts.Label
+  @NlsSafe
   private String getLibraryName(@NotNull Library library) {
-    final PsiJavaModule javaModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, myCurrentModule.getProject()));
-    return javaModule != null ? javaModule.getName() : library.getPresentableName();
+    final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByLibrary(library, myCurrentModule.getProject());
+    if (javaModule != null && PsiNameHelper.isValidModuleName(javaModule.getName(), javaModule)) {
+      return javaModule.getName();
+    } else {
+      return library.getPresentableName();
+    }
   }
 }
