@@ -460,13 +460,13 @@ private val colorPaletteNewDark: @NonNls Map<String, String> = java.util.Map.ofE
   java.util.Map.entry("Yellow.Stroke", "#D6AE58"), // Yellow6
 
   java.util.Map.entry("Orange.Fill", "#45322B"), // Orange1
-  java.util.Map.entry("Orange.Stroke", "#C27A53"), // Orange5
+  java.util.Map.entry("Orange.Stroke", "#C77D55"), // Orange5
 
   java.util.Map.entry("Purple.Fill", "#2F2936"), // Purple1
   java.util.Map.entry("Purple.Stroke", "#A571E6"), // Purple8
 
   java.util.Map.entry("Teal.Fill", "#1D3838"), // Teal1
-  java.util.Map.entry("Teal.Stroke", "#238E82") // Teal6
+  java.util.Map.entry("Teal.Stroke", "#24A394") // Teal6
 )
 
 private fun addPattern(key: String?, value: Any?, defaults: UIDefaults) {
