@@ -6,8 +6,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter.HealthCheckError
@@ -15,11 +15,8 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-@JvmField
-val USE_CACHING_FILTER = SystemProperties.getBooleanProperty("idea.index.use.caching.indexable.files.filter", false)
-
-@JvmField
-val USE_PERSISTENT_FILTER = SystemProperties.getBooleanProperty("idea.index.use.persistent.indexable.files.filter", true)
+fun useCachingFilesFilter() = Registry.`is`("caching.index.files.filter.enabled")
+fun usePersistentFilesFilter() = Registry.`is`("persistent.index.files.filter.enabled")
 
 internal sealed interface ProjectIndexableFilesFilterHolder {
   fun getProjectIndexableFiles(project: Project): IdFilter?
@@ -59,8 +56,8 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun onProjectOpened(project: Project) {
-    val factory = if (USE_PERSISTENT_FILTER) PersistentProjectIndexableFilesFilterFactory()
-    else if (USE_CACHING_FILTER) CachingProjectIndexableFilesFilterFactory()
+    val factory = if (usePersistentFilesFilter()) PersistentProjectIndexableFilesFilterFactory()
+    else if (useCachingFilesFilter()) CachingProjectIndexableFilesFilterFactory()
     else IncrementalProjectIndexableFilesFilterFactory()
 
     myProjectFilters[project] = factory.create(project)

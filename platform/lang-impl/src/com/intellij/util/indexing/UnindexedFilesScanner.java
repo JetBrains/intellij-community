@@ -60,7 +60,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldScanInSmartMode;
-import static com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderKt.USE_PERSISTENT_FILTER;
+import static com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderKt.usePersistentFilesFilter;
 
 @ApiStatus.Internal
 public class UnindexedFilesScanner extends FilesScanningTaskBase {
@@ -550,7 +550,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                  @NotNull ProjectIndexableFilesFilterHolder filterHolder,
                                                  @NotNull ScanningRequestToken scanningRequest,
                                                  @NotNull ProjectIndexingDependenciesService service) {
-    return myOnProjectOpen && myAllowSkippingFilterFilling && USE_PERSISTENT_FILTER &&
+    return myOnProjectOpen && myAllowSkippingFilterFilling && usePersistentFilesFilter() &&
            filterHolder.wasDataLoadedFromDisk(project) &&
            scanningRequest.getAppIndexingRequestId().toInt() == service.getAppIndexingRequestIdOfLastScanning();
   }
