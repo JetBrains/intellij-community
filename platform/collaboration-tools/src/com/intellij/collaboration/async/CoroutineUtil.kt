@@ -206,12 +206,21 @@ fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?>
 }
 
 @ApiStatus.Experimental
-suspend fun <T> StateFlow<T>.collectScoped(collector: (CoroutineScope, T) -> Unit) {
-  collectLatest { state ->
-    coroutineScope {
-      val nestedScope = this
-      collector(nestedScope, state)
-      awaitCancellation()
+suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit) {
+  coroutineScope {
+    var lastJob: Job? = null
+    try {
+      collect { state ->
+        lastJob?.cancelAndJoinSilently()
+        lastJob = launchNow {
+          block(state)
+        }
+      }
+    }
+    finally {
+      withContext(NonCancellable) {
+        lastJob?.cancelAndJoinSilently()
+      }
     }
   }
 }

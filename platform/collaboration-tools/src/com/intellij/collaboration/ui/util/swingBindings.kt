@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.util
 
+import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.setHtmlBody
@@ -23,7 +24,6 @@ import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.*
@@ -260,19 +260,17 @@ fun Wrapper.bindContentIn(scope: CoroutineScope, contentFlow: Flow<JComponent?>)
 fun <D> Wrapper.bindContentIn(scope: CoroutineScope, dataFlow: Flow<D>,
                               componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    dataFlow.collectLatest {
-      coroutineScope {
-        val component = componentFactory(it) ?: return@coroutineScope
-        setContent(component)
-        repaint()
+    dataFlow.collectScoped {
+      val component = componentFactory(it) ?: return@collectScoped
+      setContent(component)
+      repaint()
 
-        try {
-          awaitCancellation()
-        }
-        finally {
-          setContent(null)
-          repaint()
-        }
+      try {
+        awaitCancellation()
+      }
+      finally {
+        setContent(null)
+        repaint()
       }
     }
   }
@@ -298,26 +296,24 @@ fun <D> JPanel.bindChildIn(scope: CoroutineScope, dataFlow: Flow<D>,
                            constraints: Any? = null, index: Int? = null,
                            componentFactory: CoroutineScope.(D) -> JComponent?) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    dataFlow.collectLatest {
-      coroutineScope {
-        val component = componentFactory(it) ?: return@coroutineScope
-        if (index != null) {
-          add(component, constraints, index)
-        }
-        else {
-          add(component, constraints)
-        }
-        validate()
-        repaint()
+    dataFlow.collectScoped {
+      val component = componentFactory(it) ?: return@collectScoped
+      if (index != null) {
+        add(component, constraints, index)
+      }
+      else {
+        add(component, constraints)
+      }
+      validate()
+      repaint()
 
-        try {
-          awaitCancellation()
-        }
-        finally {
-          remove(component)
-          revalidate()
-          repaint()
-        }
+      try {
+        awaitCancellation()
+      }
+      finally {
+        remove(component)
+        revalidate()
+        repaint()
       }
     }
   }
