@@ -6,40 +6,48 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.JvmLoggerLookupElement
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.java.codeInsight.JvmLoggerTestSetupUtil
+import com.intellij.testFramework.NeedsIndex
 import junit.framework.TestCase
 
 class LoggerCompletionTest : LightFixtureCompletionTestCase() {
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testSlf4j() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doTest(1, "long", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testLog4j2() {
     JvmLoggerTestSetupUtil.setupLog4j2(myFixture)
     doTest(1, "long", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testLog4j() {
     JvmLoggerTestSetupUtil.setupLog4j(myFixture)
     doTest(1, "long", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testApacheCommons() {
     JvmLoggerTestSetupUtil.setupApacheCommons(myFixture)
     doTest(1, "long", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testNestedClasses() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doTest(1, "long", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testMultipleLoggers() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     JvmLoggerTestSetupUtil.setupLog4j2(myFixture)
     doTest(2, "long", "log", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testLoggerAlreadyExists() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     val name = getTestName(false)
@@ -53,11 +61,13 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
     )
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testStaticQualifierWithLocalVariable() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
     doTest(2, "log", "long", "log", "clone")
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
   fun testAutoCompletionAfterDot() {
     var isAutoComplete = true
     try {
