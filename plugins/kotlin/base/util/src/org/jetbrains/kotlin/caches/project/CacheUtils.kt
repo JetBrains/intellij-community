@@ -9,6 +9,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KProperty
 
 fun <T> Module.cacheByClass(classForKey: Class<*>, vararg dependencies: Any, provider: () -> T): T {
@@ -35,6 +36,7 @@ fun <T> Project.cacheByClass(classForKey: Class<*>, vararg dependencies: Any, pr
 }
 
 @Deprecated("consider to use WorkspaceModelChangeListener")
+@ApiStatus.ScheduledForRemoval
 fun <T> Project.cacheByClassInvalidatingOnRootModifications(classForKey: Class<*>, provider: () -> T): T {
     return cacheByClass(classForKey, ProjectRootModificationTracker.getInstance(this), provider = provider)
 }

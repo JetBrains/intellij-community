@@ -264,6 +264,7 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.deleteSingle()", "org.jetbrains.kotlin.idea.base.psi.deleteSingle")
 )
+@ApiStatus.ScheduledForRemoval
 fun PsiElement.deleteSingle() {
     CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }
@@ -558,6 +559,7 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
     "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
     ReplaceWith("this.setDefaultValue(newDefaultValue)", "org.jetbrains.kotlin.idea.base.psi.setDefaultValue")
 )
+@ApiStatus.ScheduledForRemoval
 fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement = setDefaultValue(newDefaultValue)
 
 fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {

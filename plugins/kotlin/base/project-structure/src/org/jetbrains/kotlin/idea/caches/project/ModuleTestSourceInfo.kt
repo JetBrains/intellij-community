@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.module.Module
+import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo' instead")
+@ApiStatus.ScheduledForRemoval
 interface ModuleTestSourceInfo {
     val module: Module
 }

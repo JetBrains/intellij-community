@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
@@ -16,6 +17,7 @@ class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension
         @JvmStatic
         @Suppress("DeprecatedCallableAddReplaceWith")
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
+        @ApiStatus.ScheduledForRemoval
         fun getInstance(): KotlinFullClassNameIndex {
             return KotlinFullClassNameIndex()
         }
