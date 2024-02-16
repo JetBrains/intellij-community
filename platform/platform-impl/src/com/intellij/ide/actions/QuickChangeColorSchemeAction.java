@@ -137,6 +137,6 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
 
   @Override
   protected boolean isEnabled() {
-    return EditorColorsManager.getInstance().getAllSchemes().length > 1;
+    return EditorColorsManager.getInstance().getAllSchemes().length > 1 && !LafManager.getInstance().getAutodetect();
   }
 }
