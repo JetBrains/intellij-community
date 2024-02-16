@@ -1236,7 +1236,7 @@ public final class HighlightUtil {
   /**
    * @deprecated use {@link #checkLiteralExpressionParsingError(PsiLiteralExpression, LanguageLevel, PsiFile, Ref)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static HighlightInfo checkLiteralExpressionParsingError(@NotNull PsiLiteralExpression expression,
                                                                  @NotNull LanguageLevel level,
                                                                  @Nullable PsiFile file) {

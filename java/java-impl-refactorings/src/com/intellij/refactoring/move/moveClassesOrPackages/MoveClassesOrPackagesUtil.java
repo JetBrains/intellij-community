@@ -286,7 +286,7 @@ public final class MoveClassesOrPackagesUtil {
   /**
    * @deprecated use CommonMoveClassesOrPackagesUtil.buildDirectoryList
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void buildDirectoryList(@NotNull PackageWrapper aPackage,
                                         @NotNull List<? extends VirtualFile> contentSourceRoots,
                                         @NotNull LinkedHashSet<? super PsiDirectory> targetDirectories,

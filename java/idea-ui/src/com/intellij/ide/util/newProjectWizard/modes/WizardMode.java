@@ -31,7 +31,7 @@ import javax.swing.*;
  * @see <a href="https://youtrack.jetbrains.com/issue/IDEA-302097"/>IDEA-302097</a>
  * @deprecated No usages, only implementations
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @SuppressWarnings("unused")
 public abstract class WizardMode implements Disposable {
 

@@ -157,7 +157,7 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
    * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   protected PsiTestData createData() {
     return new PsiTestData();
@@ -191,7 +191,7 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
    * @deprecated printing text to {@code System.out} is discouraged, use other methods instead 
    */
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected static void printText(@NotNull String text) {
     final String q = "\"";
     System.out.print(q);
@@ -219,7 +219,7 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   /**
    * @deprecated use {@link ModuleRootModificationUtil#addModuleLibrary} directly instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void addLibraryToRoots(@NotNull VirtualFile jarFile, @NotNull OrderRootType rootType) {
     addLibraryToRoots(myModule, jarFile, rootType);
   }
@@ -227,7 +227,7 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   /**
    * @deprecated use {@link ModuleRootModificationUtil#addModuleLibrary} directly instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected static void addLibraryToRoots(@NotNull Module module, @NotNull VirtualFile root, @NotNull OrderRootType rootType) {
     assertEquals(OrderRootType.CLASSES, rootType);
     ModuleRootModificationUtil.addModuleLibrary(module, root.getUrl());
@@ -254,13 +254,13 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
    * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
    */
   @SuppressWarnings("DeprecatedIsStillUsed") 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected PsiTestData myTestDataBefore;
   
   /**
    * @deprecated use other methods to configure the files, data.xml files aren't supported anymore
    */
   @SuppressWarnings("DeprecatedIsStillUsed") 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected PsiTestData myTestDataAfter;
 }
