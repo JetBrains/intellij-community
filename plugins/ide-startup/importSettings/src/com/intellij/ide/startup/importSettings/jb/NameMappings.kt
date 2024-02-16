@@ -51,7 +51,7 @@ enum class IDEData(val code: String,
                            val icon48: Icon?
                             ) {
   APPCODE("AC", "AppCode", "AppCode", AC_20, AC_24, AC_48),
-  AQUA("Aqua", "Aqua", "Aqua", Aqua_20, Aqua_24, Aqua_48),
+  AQUA("QA", "Aqua", "Aqua", Aqua_20, Aqua_24, Aqua_48),
   CLION("CL", "CLion", "CLion", CL_20, CL_24, CL_48),
   CLION_NOVA("CL", "CLionNova", "CLion Nova", CL_20, CL_24, CL_48),
   DATAGRIP("DG", "DataGrip", "DataGrip", DG_20, DG_24, DG_48),
@@ -66,7 +66,8 @@ enum class IDEData(val code: String,
   RIDER("RD", "Rider", "Rider", RD_20, RD_24, RD_48),
   RUBYMINE("RM", "RubyMine", "RubyMine", RM_20, RM_24, RM_48),
   RUSTROVER("RR", "RustRover", "RustRover", RR_20, RR_24, RR_48),
-  WEBSTORM("WS", "WebStorm", "WebStorm", WS_20, WS_24, WS_48)
+  WEBSTORM("WS", "WebStorm", "WebStorm", WS_20, WS_24, WS_48),
+  WRITERSIDE("Writerside", "Writerside", "Writerside", Writerside_20, Writerside_24, Writerside_48)
   ;
 
   companion object {

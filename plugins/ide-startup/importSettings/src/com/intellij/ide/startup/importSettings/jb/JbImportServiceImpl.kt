@@ -384,8 +384,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
             var restartRequired = false
             if (!plugins2import.isNullOrEmpty()) {
               LOG.info("Started importing plugins...")
-              importer.installPlugins(progressIndicator, plugins2import)
               restartRequired = true
+              importer.installPlugins(progressIndicator, plugins2import)
             }
             if (progressIndicator.isCanceled()) {
               LOG.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")

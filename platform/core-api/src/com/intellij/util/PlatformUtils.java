@@ -50,6 +50,7 @@ public final class PlatformUtils {
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String RUSTROVER_PREFIX = "RustRover";
+  public static final String WRITERSIDE_PREFIX = "Writerside";
 
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
@@ -174,6 +175,10 @@ public final class PlatformUtils {
 
   public static boolean isWebStorm() {
     return is(WEB_PREFIX);
+  }
+
+  public static boolean isWriterSide() {
+    return is(WRITERSIDE_PREFIX);
   }
 
   public static boolean isDataGrip() {
