@@ -62,6 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -235,8 +237,8 @@ public final class JavaCompletionUtil {
 
     PsiScopesUtil.processTypeDeclarations(qualifierType, member, new MyProcessor());
 
-    PsiType rawType = member instanceof PsiField ? ((PsiField) member).getType() :
-                      member instanceof PsiMethod ? ((PsiMethod) member).getReturnType() :
+    PsiType rawType = member instanceof PsiField ? ((PsiField)member).getType() :
+                      member instanceof PsiMethod ? ((PsiMethod)member).getReturnType() :
                       JavaPsiFacade.getElementFactory(member.getProject()).createType((PsiClass)member);
     return subst.get().substitute(rawType);
   }
@@ -351,7 +353,7 @@ public final class JavaCompletionUtil {
 
   @NotNull
   static PsiReferenceExpression createReference(@NotNull String text, @NotNull PsiElement context) {
-    return (PsiReferenceExpression) JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
+    return (PsiReferenceExpression)JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
   }
 
   @NotNull
@@ -390,9 +392,9 @@ public final class JavaCompletionUtil {
           HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
           PsiMethod plainMethod = plainClass == null ? null :
                                   StreamEx.ofTree(signature, s -> StreamEx.of(s.getSuperSignatures()))
-                                          .map(sig -> MethodSignatureUtil.findMethodBySignature(plainClass, sig, true))
-                                          .filter(Objects::nonNull)
-                                          .findFirst().orElse(null);
+                                    .map(sig -> MethodSignatureUtil.findMethodBySignature(plainClass, sig, true))
+                                    .filter(Objects::nonNull)
+                                    .findFirst().orElse(null);
           if (plainMethod != null) {
             PsiClassType.ClassResolveResult castResult = ((PsiClassType)castType).resolveGenerics();
             PsiClass castClass = castResult.getElement();
@@ -490,79 +492,57 @@ public final class JavaCompletionUtil {
 
     @NotNull
     LookupElement highlightIfNeeded(@Nullable PsiType qualifierType, @NotNull LookupElement item, @NotNull Object object) {
-      final MarkProblem problem = getProblemType(qualifierType, object);
-      return switch (problem.type()) {
-        case RED -> PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
+      LookupElement element = generateLookupElementDecorator(qualifierType, object, presentationDecorator ->
+        LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
           @Override
           public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
             element.getDelegate().renderElement(presentation);
-            presentation.setItemTextForeground(JBColor.RED);
+            presentationDecorator.accept(presentation);
           }
-        }), -1);
-        case BOLD -> {
-          LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
-            @Override
-            public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-              element.getDelegate().renderElement(presentation);
-              presentation.setItemTextBold(true);
-            }
-          });
-          yield object instanceof PsiField ? bold : PrioritizedLookupElement.withExplicitProximity(bold, 1);
-        }
-        case MODULE_REQUIRED -> PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
-          @Override
-          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-            element.getDelegate().renderElement(presentation);
-            presentation.setItemTextForeground(JBColor.RED);
-            presentation.setTailText(problem.message(), true);
-          }
-        }), -1);
-        default -> item;
-      };
+        }));
+      return element == null ? item : element;
     }
 
-    @NotNull
-    private MarkProblem getProblemType(@Nullable PsiType qualifierType, @NotNull Object object) {
+    @Nullable
+    private LookupElement generateLookupElementDecorator(@Nullable PsiType qualifierType, @NotNull Object object,
+                                                         @NotNull Function<Consumer<LookupElementPresentation>, LookupElementDecorator<LookupElement>> generator) {
       if (object instanceof PsiMember) {
         if (LanguageLevelUtil.getLastIncompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
-          return new MarkProblem(MarkType.RED, null);
+          LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
+          return PrioritizedLookupElement.withExplicitProximity(element, -1);
         }
         if (object instanceof PsiEnumConstant psiEnumConstant &&
             myConstantsUsedInSwitch.contains(CompletionUtil.getOriginalOrSelf(psiEnumConstant))) {
-          return new MarkProblem(MarkType.RED, null);
+          LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
+          return PrioritizedLookupElement.withExplicitProximity(element, -1);
         }
         if (object instanceof PsiClass psiClass) {
           if (ReferenceListWeigher.INSTANCE.getApplicability(psiClass, myPlace) == inapplicable) {
-            return new MarkProblem(MarkType.RED, null);
+            LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
+            return PrioritizedLookupElement.withExplicitProximity(element, -1);
           }
           if (PsiUtil.isAvailable(JavaFeature.MODULES, myPlace)) {
-            final PsiJavaModule currentModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
+            final PsiJavaModule currentModule =
+              ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
             if (currentModule != null) {
-              final PsiJavaModule targetModule =  ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));
+              final PsiJavaModule targetModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));
               if (targetModule != null && targetModule != currentModule &&
                   !JavaModuleGraphUtil.reads(currentModule, targetModule)) {
-                return new MarkProblem(MarkType.MODULE_REQUIRED,
-                                       JavaBundle.message("completion.requires.module.tail.text", targetModule.getName()));
+                LookupElementDecorator<LookupElement> element = generator.apply(presentation -> {
+                  presentation.setItemTextForeground(JBColor.RED);
+                  presentation.setTailText(JavaBundle.message("completion.requires.module.tail.text", targetModule.getName()), true);
+                });
+                return PrioritizedLookupElement.withExplicitProximity(element, -1);
               }
             }
           }
         }
       }
       if (containsMember(qualifierType, object, false) && !qualifierType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-        return new MarkProblem(MarkType.BOLD, null);
+        LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextBold(true));
+        return object instanceof PsiField ? element : PrioritizedLookupElement.withExplicitProximity(element, 1);
       }
-      return new MarkProblem(MarkType.NONE, null);
-    }
-
-    record MarkProblem(@NotNull MarkType type, @Nullable String message) {
-    }
-
-    enum MarkType {
-      NONE,
-      RED,
-      BOLD,
-      MODULE_REQUIRED,
-      MODULE_CLOSED
+      return null;
     }
   }
 
@@ -812,7 +792,7 @@ public final class JavaCompletionUtil {
   @Nullable
   public static RangeMarker insertTemporary(int endOffset, Document document, String temporary) {
     CharSequence chars = document.getCharsSequence();
-    if (endOffset < chars.length() && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
+    if (endOffset < chars.length() && Character.isJavaIdentifierPart(chars.charAt(endOffset))) {
       document.insertString(endOffset, temporary);
       RangeMarker toDelete = document.createRangeMarker(endOffset, endOffset + 1);
       toDelete.setGreedyToLeft(true);
@@ -852,8 +832,8 @@ public final class JavaCompletionUtil {
       hasParams = ThreeState.NO;
     }
     boolean needRightParenth = forceClosingParenthesis ||
-                                     !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET ||
-                                                hasParams == ThreeState.NO && completionChar != '(');
+                               !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET ||
+                                          hasParams == ThreeState.NO && completionChar != '(');
 
     context.commitDocument();
 
