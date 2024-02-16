@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
  */
 internal class PyInterpreterUsagesCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project) =
-    project.sdks
+    project.sdks.toSet()
       .mapTo(mutableSetOf()) { sdk ->
         PYTHON_SDK_USED.metric(getPythonSpecificInfo(sdk))
       }
