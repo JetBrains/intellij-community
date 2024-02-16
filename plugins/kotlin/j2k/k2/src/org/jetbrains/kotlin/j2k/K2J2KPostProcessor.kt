@@ -27,7 +27,7 @@ internal class K2J2KPostProcessor : PostProcessor {
     }
 
     override fun doAdditionalProcessing(
-        target: JKPostProcessingTarget,
+        target: PostProcessingTarget,
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     ) {

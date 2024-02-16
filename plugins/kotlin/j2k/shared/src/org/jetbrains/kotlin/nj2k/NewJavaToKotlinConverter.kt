@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.productionOrTestSourceModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
@@ -66,7 +67,7 @@ class NewJavaToKotlinConverter(
                 }
             }
 
-            postProcessor.doAdditionalProcessing(JKMultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
+            postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
                 withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
             }
             FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)

@@ -13,7 +13,7 @@ interface PostProcessor {
     val phasesCount: Int
 
     fun doAdditionalProcessing(
-        target: JKPostProcessingTarget,
+        target: PostProcessingTarget,
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     )

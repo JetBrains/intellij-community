@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -48,13 +50,13 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
     }
 
     override fun doAdditionalProcessing(
-        target: JKPostProcessingTarget,
+        target: PostProcessingTarget,
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     ) {
         val (file, rangeMarker) = when (target) {
-            is JKPieceOfCodePostProcessingTarget -> target.file to target.rangeMarker
-            is JKMultipleFilesPostProcessingTarget -> target.files.single() to null
+            is PieceOfCodePostProcessingTarget -> target.file to target.rangeMarker
+            is MultipleFilesPostProcessingTarget -> target.files.single() to null
         }
 
         val disposable = KotlinPluginDisposable.getInstance(file.project)

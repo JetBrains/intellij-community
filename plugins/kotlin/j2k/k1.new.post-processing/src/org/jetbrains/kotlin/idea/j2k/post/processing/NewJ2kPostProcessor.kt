@@ -28,7 +28,7 @@ class NewJ2kPostProcessor : PostProcessor {
     override val phasesCount = allProcessings.size
 
     override fun doAdditionalProcessing(
-        target: JKPostProcessingTarget,
+        target: PostProcessingTarget,
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     ) {

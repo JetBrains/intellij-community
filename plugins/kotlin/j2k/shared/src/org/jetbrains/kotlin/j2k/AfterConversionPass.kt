@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
@@ -18,10 +20,9 @@ class AfterConversionPass(val project: Project, private val postProcessor: PostP
         range: TextRange?,
         onPhaseChanged: ((Int, String) -> Unit)? = null
     ) {
-        val target = when {
-            range != null -> JKPieceOfCodePostProcessingTarget(kotlinFile, range.toRangeMarker(kotlinFile))
-            else -> JKMultipleFilesPostProcessingTarget(listOf(kotlinFile))
-        }
+        val target =
+            if (range != null) PieceOfCodePostProcessingTarget(kotlinFile, range.toRangeMarker(kotlinFile))
+            else MultipleFilesPostProcessingTarget(listOf(kotlinFile))
         postProcessor.doAdditionalProcessing(target, converterContext, onPhaseChanged)
     }
 }
