@@ -6,6 +6,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -13,7 +14,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class ScrollToTheEndToolbarAction extends ToggleAction implements DumbAware {
+public class ScrollToTheEndToolbarAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   private final Editor myEditor;
 
   public ScrollToTheEndToolbarAction(final @NotNull Editor editor) {

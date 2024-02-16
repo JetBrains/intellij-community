@@ -127,7 +127,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private MyDiffContainer myJLayeredPane;
   private JPanel myMainPanel;
   private boolean myAllowHeavyFilters;
-  private boolean myCancelStickToEnd; // accessed in EDT only
+  protected boolean myCancelStickToEnd; // accessed in EDT only
 
   private final Alarm myFlushAlarm = new Alarm(this);
 
@@ -1198,7 +1198,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       typeOffset = editor.getCaretModel().getOffset();
       assert typeOffset <= document.getTextLength() : "typeOffset="+typeOffset+"; document.getTextLength()="+document.getTextLength()+"; caret model="+editor.getCaretModel();
     }
-    insertUserText(typeOffset, textToUse);
+    insertUserText(editor, typeOffset, textToUse);
   }
 
   abstract static class ConsoleActionHandler extends EditorActionHandler {
@@ -1461,18 +1461,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this);
   }
 
-  private void insertUserText(int offset, @NotNull String text) {
+  private void insertUserText(@NotNull Editor editor, int offset, @NotNull String text) {
     ThreadingAssertions.assertEventDispatchThread();
     List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, ConsoleViewContentType.USER_INPUT);
     if (result == null) {
-      doInsertUserInput(offset, text);
+      doInsertUserInput(editor, offset, text);
     }
     else {
       for (Pair<String, ConsoleViewContentType> pair : result) {
         String chunkText = pair.getFirst();
         ConsoleViewContentType chunkType = pair.getSecond();
         if (chunkType.equals(ConsoleViewContentType.USER_INPUT)) {
-          doInsertUserInput(offset, chunkText);
+          doInsertUserInput(editor, offset, chunkText);
           offset += chunkText.length();
         }
         else {
@@ -1482,9 +1482,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private void doInsertUserInput(int offset, @NotNull String text) {
+  private void doInsertUserInput(@NotNull Editor editor, int offset, @NotNull String text) {
     ThreadingAssertions.assertEventDispatchThread();
-    Editor editor = getEditor();
     Document document = editor.getDocument();
 
     int oldDocLength = document.getTextLength();
