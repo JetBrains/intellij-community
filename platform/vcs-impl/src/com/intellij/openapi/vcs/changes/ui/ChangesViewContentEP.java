@@ -134,7 +134,7 @@ public final class ChangesViewContentEP implements PluginAware {
     this.isInCommitToolWindow = isInCommitToolWindow;
   }
 
-  public ChangesViewContentProvider getInstance(@NotNull Project project) {
+  public @Nullable ChangesViewContentProvider getInstance(@NotNull Project project) {
     if (myInstance == null) {
       myInstance = (ChangesViewContentProvider)newClassInstance(project, className);
     }
