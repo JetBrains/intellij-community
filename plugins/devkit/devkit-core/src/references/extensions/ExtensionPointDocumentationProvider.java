@@ -24,6 +24,9 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
+
 final class ExtensionPointDocumentationProvider implements DocumentationProvider {
 
   @Override
@@ -111,7 +114,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     }
 
     HtmlBuilder builder = new HtmlBuilder();
-    builder.append(defBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT));
+    builder.append(defBuilder.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT));
 
     HtmlBuilder platformExplorerLink = new HtmlBuilder();
     platformExplorerLink.appendLink("https://jb.gg/ipe?extensions=" + extensionPoint.getEffectiveQualifiedName(),

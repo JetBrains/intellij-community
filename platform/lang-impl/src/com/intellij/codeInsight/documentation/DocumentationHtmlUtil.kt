@@ -102,7 +102,7 @@ object DocumentationHtmlUtil {
           margin-bottom: ${contentSpacing}px;
           border-bottom: thin solid $borderColor;
         }
-        .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION { 
+        .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION, .$CLASS_TOP { 
           padding: 0 ${contentInnerPadding}px ${contentSpacing}px ${contentInnerPadding}px;
         }
         .$CLASS_GRAYED { color: #909090; display: inline;}

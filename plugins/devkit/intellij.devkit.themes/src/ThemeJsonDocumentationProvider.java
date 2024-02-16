@@ -20,6 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
+
 final class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider {
 
   @Nullable
@@ -51,7 +54,7 @@ final class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider
     definitionBuilder.append(HtmlChunk.text(uiKeyMetadata.getKey()).bold());
     definitionBuilder.br().append("[").append(uiThemeMetadata.getName()).append("] - ");
     definitionBuilder.append("[").append(uiThemeMetadata.getPluginId()).append("]");
-    HtmlChunk.Element definition = definitionBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT);
+    HtmlChunk.Element definition = definitionBuilder.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT);
     builder.append(definition);
 
 

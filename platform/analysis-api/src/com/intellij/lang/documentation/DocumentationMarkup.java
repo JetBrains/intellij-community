@@ -20,6 +20,7 @@ public interface DocumentationMarkup {
   @ApiStatus.Internal String CLASS_GRAYED = "grayed";
   @ApiStatus.Internal String CLASS_CENTERED = "centered";
   @ApiStatus.Internal String CLASS_BOTTOM = "bottom";
+  @ApiStatus.Internal String CLASS_TOP = "top";
   @ApiStatus.Internal String CLASS_DOWNLOAD_DOCUMENTATION = "download-documentation";
 
   @NlsSafe String DEFINITION_START = "<div class='" + CLASS_DEFINITION + "'><pre>";
@@ -40,6 +41,9 @@ public interface DocumentationMarkup {
   HtmlChunk.Element SECTIONS_TABLE = HtmlChunk.tag("table").setClass(CLASS_SECTIONS);
   HtmlChunk.Element CONTENT_ELEMENT = HtmlChunk.div().setClass(CLASS_CONTENT);
   HtmlChunk.Element DEFINITION_ELEMENT = HtmlChunk.div().setClass(CLASS_DEFINITION);
+  HtmlChunk.Element TOP_ELEMENT = HtmlChunk.div().setClass(CLASS_TOP);
+  HtmlChunk.Element BOTTOM_ELEMENT = HtmlChunk.div().setClass(CLASS_BOTTOM);
+  HtmlChunk.Element PRE_ELEMENT = HtmlChunk.tag("pre");
   HtmlChunk.Element GRAYED_ELEMENT = HtmlChunk.span().setClass(CLASS_GRAYED);
   HtmlChunk.Element CENTERED_ELEMENT = HtmlChunk.p().setClass(CLASS_CENTERED);
   HtmlChunk.Element EXTERNAL_LINK_ICON = HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow");

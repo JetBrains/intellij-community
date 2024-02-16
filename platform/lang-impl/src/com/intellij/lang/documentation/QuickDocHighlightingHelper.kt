@@ -305,8 +305,10 @@ object QuickDocHighlightingHelper {
     spacing: Int,
   ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
     colorScheme, editorPaneBackgroundColor,
-    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_SECTIONS"),
-    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code", ".$CLASS_DEFINITION_SEPARATED pre", ".$CLASS_BOTTOM code"),
+    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_CONTENT div:not(.$CLASS_TOP)",
+           ".$CLASS_SECTIONS"),
+    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code", ".$CLASS_DEFINITION_SEPARATED pre",
+           ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
     DocumentationSettings.isCodeBackgroundEnabled()
     && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
     DocumentationSettings.isCodeBackgroundEnabled()

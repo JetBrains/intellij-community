@@ -84,7 +84,7 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import static com.intellij.codeInsight.javadoc.SnippetMarkup.*;
-import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_BOTTOM;
+import static com.intellij.lang.documentation.DocumentationMarkup.BOTTOM_ELEMENT;
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.*;
 
 
@@ -726,8 +726,7 @@ public class JavaDocInfoGenerator {
     String ownerIcon = null;
 
     if (element instanceof PsiPackage pkg) {
-      return HtmlChunk.div()
-        .setClass(CLASS_BOTTOM)
+      return BOTTOM_ELEMENT
         .children(
           HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.Package"),
           HtmlChunk.nbsp(),
@@ -774,8 +773,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (ownerLink != null) {
-      return HtmlChunk.div()
-        .setClass(CLASS_BOTTOM)
+      return BOTTOM_ELEMENT
         .children(
           HtmlChunk.tag("icon").attr("src", ownerIcon),
           HtmlChunk.nbsp(),
