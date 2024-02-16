@@ -243,6 +243,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return
     }
 
+    rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
+
     val currentTheme = currentTheme
     val currentIsDark = currentTheme == null || currentTheme.isDark
     val expectedTheme = if (systemIsDark) {
@@ -261,11 +263,15 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return
     }
 
-    val expectedScheme = ((if (systemIsDark) preferredDarkEditorSchemeId else preferredLightEditorSchemeId)
-                          ?: defaultEditorSchemeName(systemIsDark)).let {
-      EditorColorsManager.getInstance().getScheme(it)
-    } ?: return
+    validatePreferredSchemes()
 
+    val expectedScheme =
+      (if (systemIsDark) preferredDarkEditorSchemeId else preferredLightEditorSchemeId)?.let {
+        EditorColorsManager.getInstance().getScheme(it)
+      }
+      ?: associatedToPreferredLafOrDefaultEditorColorSchemeName(systemIsDark).let {
+        EditorColorsManager.getInstance().getScheme(it)
+      }
 
     SwingUtilities.invokeLater {
       val currentScheme = EditorColorsManager.getInstance().globalScheme
@@ -274,6 +280,36 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
     }
   }
+
+  private fun validatePreferredSchemes() {
+    preferredDarkEditorSchemeId?.let {
+      if (EditorColorsManager.getInstance().getScheme(it) == null) {
+        preferredDarkEditorSchemeId = null
+      }
+    }
+
+    preferredLightEditorSchemeId?.let {
+      if (EditorColorsManager.getInstance().getScheme(it) == null) {
+        preferredLightEditorSchemeId = null
+      }
+    }
+  }
+
+  private fun associatedToPreferredLafOrDefaultEditorColorSchemeName(isDark: Boolean): String {
+    val theme = preferredOrDefaultLaf(isDark)
+
+    return getPreviousSchemeForLaf(theme)?.takeIf { isDark == ColorUtil.isDark(it.defaultBackground) }?.baseName
+           ?: theme.editorSchemeId
+           ?: defaultNonLaFSchemeName(isDark)
+  }
+
+  private fun preferredOrDefaultLaf(isDark: Boolean): UIThemeLookAndFeelInfo =
+    if (isDark) {
+      preferredDarkThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultDarkLaf
+    }
+    else {
+      preferredLightThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultLightLaf
+    }
 
   override fun loadState(element: Element) {
     autodetect = element.getAttributeBooleanValue(ATTRIBUTE_AUTODETECT)
@@ -756,12 +792,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun setPreferredDarkLaf(value: UIThemeLookAndFeelInfo) {
     preferredDarkThemeId = value.id
-    preferredDarkEditorSchemeId = value.defaultSchemeName
   }
 
   override fun setPreferredLightLaf(value: UIThemeLookAndFeelInfo) {
     preferredLightThemeId = value.id
-    preferredLightEditorSchemeId = value.defaultSchemeName
   }
 
   private fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
@@ -939,26 +973,20 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     private inner class SchemeToggleAction(val scheme: EditorColorsScheme, private val isDark: Boolean) : ToggleAction(scheme.displayName) {
-      private val defaultEditorSchemeName: String get() = defaultEditorSchemeName(isDark)
-
       override fun isSelected(e: AnActionEvent): Boolean {
-        return if (isDark) {
-          (preferredDarkEditorSchemeId ?: defaultEditorSchemeName) == scheme.baseName
-        }
-        else {
-          (preferredLightEditorSchemeId ?: defaultEditorSchemeName) == scheme.baseName
-        }
+        return ((if (isDark) preferredDarkEditorSchemeId else preferredLightEditorSchemeId)
+                ?: associatedToPreferredLafOrDefaultEditorColorSchemeName(isDark)) == scheme.baseName
       }
 
       override fun setSelected(e: AnActionEvent, state: Boolean) {
         if (isDark) {
           if (preferredDarkEditorSchemeId != scheme.baseName) {
-            preferredDarkEditorSchemeId = scheme.baseName.takeIf { it != defaultEditorSchemeName }
+            preferredDarkEditorSchemeId = scheme.baseName
             detectAndSyncLaf()
           }
         }
         else if (preferredLightThemeId != scheme.baseName) {
-          preferredLightEditorSchemeId = scheme.baseName.takeIf { it != defaultEditorSchemeName }
+          preferredLightEditorSchemeId = scheme.baseName
           detectAndSyncLaf()
         }
       }
@@ -991,13 +1019,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       if (isDark) {
         if (preferredDarkThemeId != themeId) {
           preferredDarkThemeId = themeId.takeIf { it != defaultDarkLaf.id }
-          preferredDarkEditorSchemeId = editorSchemeId.takeIf { preferredDarkThemeId != null }
           detectAndSyncLaf()
         }
       }
       else if (preferredLightThemeId != themeId) {
         preferredLightThemeId = themeId.takeIf { it != defaultLightLaf.id }
-        preferredLightEditorSchemeId = editorSchemeId.takeIf { preferredLightThemeId != null }
         detectAndSyncLaf()
       }
     }
