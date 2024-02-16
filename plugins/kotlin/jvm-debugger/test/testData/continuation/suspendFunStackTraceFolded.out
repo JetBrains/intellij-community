@@ -6,13 +6,11 @@ Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt$main$1 (continuation)
 		($result, this)
 CoroutineInfo: 1 coroutine RUNNING
-	HiddenStackFramesItem FRAME:8 hidden frames
-		()
+	<hidden frames>
 	CoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt (continuation)
 		()
 Coroutine Creation Stack Trace
-	HiddenStackFramesItem FRAME:3 hidden frames
-		()
+	<hidden frames>
 	CreationCoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt (continuation)
 		($result, this)
 	CreationCoroutineStackFrame FRAME:main:-1, SuspendFunStackTraceFoldedKt (continuation)

@@ -33,6 +33,11 @@ public class K1IdeK2CodeContinuationStackTraceTestGenerated extends AbstractK1Id
         runTest("testData/continuation/suspendFunStackTraceFolded.kt");
     }
 
+    @TestMetadata("suspendFunStackTraceFoldedIDEA345945.kt")
+    public void testSuspendFunStackTraceFoldedIDEA345945() throws Exception {
+        runTest("testData/continuation/suspendFunStackTraceFoldedIDEA345945.kt");
+    }
+
     @TestMetadata("suspendFunStackTraceHidden.kt")
     public void testSuspendFunStackTraceHidden() throws Exception {
         runTest("testData/continuation/suspendFunStackTraceHidden.kt");

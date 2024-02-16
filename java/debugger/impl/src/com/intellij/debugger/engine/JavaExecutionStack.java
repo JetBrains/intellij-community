@@ -237,7 +237,7 @@ public class JavaExecutionStack extends XExecutionStack {
     /**
      * Current hidden frames since the last shown one.
      */
-    private List<XStackFrame> myHiddenFrames;
+    private final List<XStackFrame> myHiddenFrames;
 
     private AppendFrameCommand(SuspendContextImpl suspendContext,
                        @Nullable Iterator<StackFrameProxyImpl> stackFramesIterator,
@@ -412,17 +412,20 @@ public class JavaExecutionStack extends XExecutionStack {
               mySeparator = false;
             }
           }
-          else if (XFramesView.shouldFoldHiddenFrames()) {
-            if (mySeparator) {
-              flushHiddenFrames();
-              // The separator for this hidden frame will be used as the placeholder separator.
-              StackFrameItem.setWithSeparator(newFrame);
-              mySeparator = false;
+          else { // Hidden frame case.
+            var frameHasSeparator = StackFrameItem.hasSeparatorAbove(newFrame);
+            if (XFramesView.shouldFoldHiddenFrames()) {
+              if (mySeparator || frameHasSeparator) {
+                flushHiddenFrames();
+                if (!frameHasSeparator) {
+                  // The separator for this hidden frame will be used as the placeholder separator.
+                  StackFrameItem.setWithSeparator(newFrame);
+                }
+                mySeparator = false;
+              }
+              rememberHiddenFrame(newFrame);
             }
-            rememberHiddenFrame(newFrame);
-          }
-          else {
-            if (!mySeparator && StackFrameItem.hasSeparatorAbove(newFrame)) {
+            else if (!mySeparator && frameHasSeparator) {
               // Frame has a separator, but it wasn't added; we need to propagate the separator further.
               mySeparator = true;
             }

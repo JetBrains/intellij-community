@@ -8,7 +8,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
+import com.intellij.xdebugger.impl.frame.XFramesView
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutinePreflightFrame
 import org.jetbrains.kotlin.idea.debugger.test.util.XDebuggerTestUtil
 import org.jetbrains.kotlin.idea.debugger.test.util.iterator
@@ -19,11 +19,6 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
     private companion object {
         const val INDENT_FRAME = 1
         const val INDENT_VARIABLES = 2
-    }
-
-    private fun out(frame: XStackFrame) {
-        out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))
-        outVariables(frame)
     }
 
     private fun outVariables(stackFrame: XStackFrame) {
@@ -50,14 +45,18 @@ abstract class KotlinDescriptorTestCaseWithStackFrames : KotlinDescriptorTestCas
     }
 
     private fun printStackFrame(frame: XStackFrame?) {
-        if (frame == null) {
-            return
-        } else if (frame is XDebuggerFramesList.ItemWithSeparatorAbove &&
-                   frame.hasSeparatorAbove()) {
+        if (frame == null) return
+
+        if (frame is XDebuggerFramesList.ItemWithSeparatorAbove && frame.hasSeparatorAbove()) {
             out(0, frame.captionAboveOf)
         }
 
-        out(frame)
+        if (frame is XFramesView.HiddenStackFramesItem) {
+            out(INDENT_FRAME, "<hidden frames>")
+        } else {
+            out(INDENT_FRAME, frame.javaClass.simpleName + " FRAME:" + XDebuggerTestUtil.getFramePresentation(frame))
+            outVariables(frame)
+        }
     }
 
     private fun printStackTrace(executionStack: JavaExecutionStack) {
