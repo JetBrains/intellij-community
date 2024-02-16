@@ -121,6 +121,7 @@ class ColumnVisualisationType:
     UNIQUE = "unique"
     PERCENTAGE = "percentage"
 
+
 class ColumnVisualisationUtils:
     NUM_BINS = 20
     MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 3
@@ -130,6 +131,7 @@ class ColumnVisualisationUtils:
     TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
     TABLE_OCCURRENCES_COUNT_DICT_SEPARATOR = '__pydev_table_occurrences_count_dict__'
     TABLE_OCCURRENCES_COUNT_OTHER = '__pydev_table_other__'
+
 
 def get_value_occurrences_count(table):
     df = __convert_to_df(table)
@@ -186,7 +188,14 @@ def analyze_categorical_column(column):
 
 
 def analyze_numeric_column(column):
-    unique_values = column.nunique()
+    # todo: add tests for that
+    if column.dtype.kind in ['i', 'u']:
+        bins = np.bincount(column)
+        unique_values = np.count_nonzero(bins)
+    else:
+        # for float type we don't compute number of unique values because it's an
+        # expensive operation, just take number of elements in a column
+        unique_values = column.size
     if unique_values <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
