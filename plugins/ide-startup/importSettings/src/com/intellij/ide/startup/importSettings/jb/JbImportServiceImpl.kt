@@ -25,7 +25,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.*
 import org.jdom.Element
-import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDate
@@ -56,6 +55,7 @@ internal data class JbProductInfo(
   val activeKeymap: String?
     get() = keymapRef.get()
 
+  val nonDefaultName: Boolean = !JbImportServiceImpl.IDE_NAME_PATTERN.matcher(configDir.name).matches()
 
   internal fun prefetchData(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
     prefetchPluginDescriptors(coroutineScope, context)
@@ -170,7 +170,13 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   private val warmUpComplete = CompletableDeferred<Boolean>()
 
   override suspend fun hasDataToImport(): Boolean {
-    return hasDataProcessed.await()
+    val startTime = System.currentTimeMillis()
+    try {
+      return hasDataProcessed.await()
+    }
+    finally {
+      LOG.info("Checking for JB IDE data to import took ${System.currentTimeMillis() - startTime}ms.")
+    }
   }
 
   override fun getOldProducts(): List<Product> {
@@ -210,7 +216,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val products = products.values.toList()
     val newProducts = hashMapOf<String, String>()
     for (product in products) {
-      if (ConfigImportHelper.isConfigOld(product.lastUsageTime))
+      if (ConfigImportHelper.isConfigOld(product.lastUsageTime) || product.nonDefaultName)
         continue
       val version = newProducts[product.codeName]
       if (version == null || version < product.version) {
@@ -232,60 +238,75 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   override suspend fun warmUp() {
-    val parentDir = Path.of(PathManager.getDefaultConfigPathFor(""))
+    val parentDirs = listOf(
+      PathManager.getConfigDir().parent,
+      PathManager.getConfigDir().fileSystem.getPath(PathManager.getDefaultConfigPathFor("X")).parent
+    )
     val context = DescriptorListLoadingContext(customDisabledPlugins = Collections.emptySet(),
                                                customBrokenPluginVersions = emptyMap(),
                                                productBuildNumber = { PluginManagerCore.buildNumber })
-    val configDirectoriesCandidates = parentDir
-      .listDirectoryEntries()
-      .filter { it.isDirectory(LinkOption.NOFOLLOW_LINKS) }
-      .sortedByDescending { it.getLastModifiedTime() }
-    for (confDir in configDirectoriesCandidates) {
-      LOG.info("Found ${confDir.name} under ${parentDir.pathString}")
-      val pluginsDir = Path.of(PathManager.getDefaultPluginPathFor(confDir.name))
-      val dirName = confDir.name
-      val matcher = IDE_NAME_PATTERN.matcher(dirName)
-      if (!matcher.matches()) {
-        LOG.info("${confDir.name} doesn't match IDE_NAME_PATTERN, skipping it")
-        continue
+    for (parentDir in parentDirs) {
+      val configDirectoriesCandidates = parentDir
+        .listDirectoryEntries()
+        .filter { it.isDirectory() }
+        .sortedByDescending { it.getLastModifiedTime() }
+      for (confDir in configDirectoriesCandidates) {
+        if (PathManager.getConfigDir() == confDir) continue
+        LOG.info("Found ${confDir.name} under ${parentDir.pathString}")
+        val jbProductInfo: JbProductInfo = toJbProductInfo(confDir) ?: continue
+        jbProductInfo.prefetchData(coroutineScope, context)
+        products[confDir.name] = jbProductInfo
+        hasDataProcessed.completeWith(Result.success(true))
       }
-      val optionsDir = confDir / PathManager.OPTIONS_DIRECTORY
-      if (!optionsDir.isDirectory()) {
-        LOG.info("${confDir.name} doesn't contain options directory, skipping it")
-        continue
-      }
-      var lastModified: FileTime? = null
-      for (fileName in DEFAULT_SETTINGS_FILES) {
-        val optionXml = (optionsDir / fileName)
-        if (!optionXml.isRegularFile())
-          continue
-        if (lastModified == null || optionXml.getLastModifiedTime() > lastModified) {
-          lastModified = optionXml.getLastModifiedTime()
-        }
-      }
-      if (lastModified == null) {
-        LOG.info("${confDir.name}/options has no xml files, skipping it")
-        continue
-      }
-
-      LOG.info("${optionsDir}' newest file is dated $lastModified")
-      val ideName = matcher.group(1)
-      val ideVersion = matcher.group(2)
-      val fullName = NameMappings.getFullName(ideName)
-      if (fullName == null) {
-        continue
-      }
-      val fullNameWithVersion = "$fullName $ideVersion"
-      val jbProductInfo = JbProductInfo(ideVersion, lastModified, dirName, fullNameWithVersion, ideName,
-                                        confDir, pluginsDir)
-      jbProductInfo.prefetchData(coroutineScope, context)
-      products[dirName] = jbProductInfo
-      hasDataProcessed.completeWith(Result.success(true))
     }
     warmUpComplete.completeWith(Result.success(true))
     if (!hasDataProcessed.isCompleted) {
       hasDataProcessed.completeWith(Result.success(products.isNotEmpty()))
     }
+  }
+
+  private fun toJbProductInfo(confDir: Path): JbProductInfo? {
+    val ideName: String = IDEData.IDE_MAP.keys
+                            .filter { confDir.name.startsWith(it) }
+                            .sortedByDescending { it.length }
+                            .firstOrNull() ?: run {
+      LOG.info("$confDir is not prefixed with with any known IDE name. Skipping it")
+      return null
+    }
+    val ideVersion = confDir.name.substring(ideName.length)
+    if (ideVersion.isEmpty()) {
+      LOG.info("$confDir doesn't contain any version info. Skipping it")
+      return null
+    }
+    val optionsDir = confDir / PathManager.OPTIONS_DIRECTORY
+    if (!optionsDir.isDirectory()) {
+      LOG.info("${confDir.name} doesn't contain options directory, skipping it")
+      return null
+    }
+    var lastModified: FileTime? = null
+    for (fileName in DEFAULT_SETTINGS_FILES) {
+      val optionXml = (optionsDir / fileName)
+      if (!optionXml.isRegularFile())
+        continue
+      if (lastModified == null || optionXml.getLastModifiedTime() > lastModified) {
+        lastModified = optionXml.getLastModifiedTime()
+      }
+    }
+    if (lastModified == null) {
+      LOG.info("${confDir.name}/options has no xml files, skipping it")
+      return null
+    }
+
+    LOG.info("${optionsDir}' newest file is dated $lastModified")
+    val fullName = NameMappings.getFullName(ideName)
+    if (fullName == null) {
+      return null
+    }
+    val fullNameWithVersion = "$fullName $ideVersion"
+    val pluginsDir = Path.of(PathManager.getDefaultPluginPathFor(confDir.name))
+    val jbProductInfo = JbProductInfo(ideVersion, lastModified, confDir.name, fullNameWithVersion, ideName,
+                                      confDir, pluginsDir)
+    return jbProductInfo
   }
 
   override fun getSettings(itemId: String): List<JbSettingsCategory> {
@@ -451,7 +472,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
   companion object {
     internal val LOG = logger<JbImportServiceImpl>()
-    private val IDE_NAME_PATTERN = Pattern.compile("""([a-zA-Z]+)(20\d\d\.\d)""")
+    internal val IDE_NAME_PATTERN = Pattern.compile("""([a-zA-Z]+)(20\d\d\.\d)""")
     private val DEFAULT_SETTINGS_FILES = setOf(
       GeneralSettings.IDE_GENERAL_XML,
       StoragePathMacros.NON_ROAMABLE_FILE

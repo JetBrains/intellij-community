@@ -78,6 +78,7 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
     else SettingTransferService.getInstance()
 
   override suspend fun shouldShowImport(): Boolean {
+    val startTime = System.currentTimeMillis()
     return coroutineScope {
       val importFromJetBrainsAvailable = async { getJbService().hasDataToImport() }
       val importFromExternalAvailable = async { getExternalService().hasDataToImport() }
@@ -86,6 +87,7 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
         importFromExternalAvailable.onAwait { it || importFromJetBrainsAvailable.await() }
       }
       coroutineContext.job.cancelChildren()
+      thisLogger().info("Took ${System.currentTimeMillis() - startTime}ms. to calculate shouldShowImport")
       result
     }
   }
