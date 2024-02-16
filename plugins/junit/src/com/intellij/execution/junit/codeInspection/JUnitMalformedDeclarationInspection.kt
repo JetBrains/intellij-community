@@ -340,7 +340,7 @@ private class JUnitMalformedSignatureVisitor(
     override fun getActions(project: Project): List<(JvmModifiersOwner) -> List<IntentionAction>> {
       val list = super.getActions(project).toMutableList()
       list.add { owner ->
-        val outerClass = owner.sourceElement?.toUElementOfType<UClass>()?.nestedClassHierarchy()?.last()!!
+        val outerClass = owner.sourceElement?.toUElementOfType<UClass>()?.nestedClassHierarchy()?.lastOrNull() ?: return@add emptyList()
         val request = annotationRequest(ORG_JUNIT_RUNNER_RUN_WITH, classAttribute(
           PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME,
           ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED
