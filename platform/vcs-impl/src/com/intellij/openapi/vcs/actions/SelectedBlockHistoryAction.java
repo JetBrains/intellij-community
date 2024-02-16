@@ -28,6 +28,36 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final Project project = event.getProject();
+    assert project != null;
+
+    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
+    assert selection != null;
+
+    showHistoryForSelection(selection, project);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    if (editor == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
+
+    presentation.setEnabled(isEnabled(project, selection));
+    if (selection != null) {
+      presentation.setText(selection.getActionName());
+    }
+  }
+
   private static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
     if (project == null || selection == null) return false;
 
@@ -67,35 +97,5 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
                                                                      Math.max(selectionStart, selectionEnd),
                                                                      selection.getDialogTitle());
     dialog.show();
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getProject();
-    assert project != null;
-
-    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
-    assert selection != null;
-
-    showHistoryForSelection(selection, project);
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-
-    Editor editor = event.getData(CommonDataKeys.EDITOR);
-    if (editor == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-
-    Project project = event.getData(CommonDataKeys.PROJECT);
-    VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
-
-    presentation.setEnabled(isEnabled(project, selection));
-    if (selection != null) {
-      presentation.setText(selection.getActionName());
-    }
   }
 }
