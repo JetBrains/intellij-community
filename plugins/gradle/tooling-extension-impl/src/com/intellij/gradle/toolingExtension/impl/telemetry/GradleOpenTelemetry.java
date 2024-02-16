@@ -100,6 +100,7 @@ public final class GradleOpenTelemetry {
       // the data should be exported only after OpenTelemetry was closed to prevent data loss
       if (mySpanDataCollector != null) {
         Collection<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
+        mySpanDataCollector.clear();
         return SpanDataSerializer.serialize(collectedSpans);
       }
     }
