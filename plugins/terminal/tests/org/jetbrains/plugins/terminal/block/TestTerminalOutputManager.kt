@@ -27,7 +27,7 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
   val document: DocumentEx
     get() = editor.document
 
-  fun createBlock(command: String, output: TestCommandOutput): Pair<CommandBlock, TestCommandOutput> {
+  fun createBlock(command: String?, output: TestCommandOutput): Pair<CommandBlock, TestCommandOutput> {
     val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
     Assert.assertEquals(lastBlockEndOffset, document.textLength)
     val updatedHighlightings = output.highlightings.map {

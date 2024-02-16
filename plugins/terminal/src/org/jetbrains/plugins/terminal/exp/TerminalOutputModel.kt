@@ -63,8 +63,9 @@ class TerminalOutputModel(val editor: EditorEx) {
   fun removeBlock(block: CommandBlock) {
     val startBlockInd = blocks.indexOf(block)
     check(startBlockInd >= 0)
+    val rangeToDelete = findBlockRangeToDelete(block)
     for (blockInd in startBlockInd + 1 until blocks.size) {
-      deleteDocumentRangeInHighlightings(blocks[blockInd], TextRange(block.startOffset, block.endOffset))
+      deleteDocumentRangeInHighlightings(blocks[blockInd], rangeToDelete)
     }
 
     blocks.remove(block)
@@ -75,8 +76,25 @@ class TerminalOutputModel(val editor: EditorEx) {
 
     // Remove the text after removing the highlightings because removing text will trigger rehighlight
     // and there should be no highlightings at this moment.
-    document.deleteString(block.startOffset, block.endOffset)
+    document.deleteString(rangeToDelete.startOffset, rangeToDelete.endOffset)
     block.range.dispose()
+  }
+
+  private fun findBlockRangeToDelete(block: CommandBlock): TextRange {
+    val blockRange = TextRange(block.startOffset, block.endOffset)
+    return if (blockRange.startOffset > 0) {
+      check(document.charsSequence[blockRange.startOffset - 1] == '\n')
+      // also remove the block separator between this block and the previous one
+      TextRange(blockRange.startOffset - 1, blockRange.endOffset)
+    }
+    else if (blockRange.endOffset < document.textLength) {
+      check(document.charsSequence[blockRange.endOffset] == '\n')
+      // also remove the block separator between this block and the next one
+      TextRange(blockRange.startOffset, blockRange.endOffset + 1)
+    }
+    else {
+      blockRange
+    }
   }
 
   @RequiresEdt
