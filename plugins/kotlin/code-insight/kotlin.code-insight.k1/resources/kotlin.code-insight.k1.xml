@@ -60,7 +60,7 @@
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.k1.codeinsight.handlers.fixers.KotlinLastLambdaParameterFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtLastLambdaParameterFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
@@ -68,7 +68,7 @@
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.k1.codeinsight.handlers.fixers.KotlinClassBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtClassBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"

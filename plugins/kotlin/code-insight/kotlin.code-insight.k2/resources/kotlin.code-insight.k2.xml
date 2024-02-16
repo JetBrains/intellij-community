@@ -57,14 +57,21 @@
     <smartEnterProcessorFixer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinFinallyBodyFixer"/>
-
+    <smartEnterProcessorFixer
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtLastLambdaParameterFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinClassInitializerFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtClassBodyFixer"/>
+
+    <smartEnterProcessorFixer
+            language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
