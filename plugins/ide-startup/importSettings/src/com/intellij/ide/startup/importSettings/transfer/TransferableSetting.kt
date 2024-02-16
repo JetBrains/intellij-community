@@ -80,12 +80,13 @@ open class TransferableSetting(
       val limitForPreview = 3
       val items = features.asSequence().filter { !it.isHidden }.map(::FeatureSetting).toList()
       val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.nameForPreview })
+      val itemGroups = if (items.size > limitForPreview) listOf(items) else emptyList()
       return TransferableSettingGroup(
         PLUGINS_ID,
         ImportSettingsBundle.message("transfer.settings.plugins"),
         StartupImportIcons.Icons.Plugin,
         comment,
-        listOf(items)
+        itemGroups
       )
     }
 
@@ -93,12 +94,13 @@ open class TransferableSetting(
       val limitForPreview = 6
       val items = projects.map(::RecentProjectSetting)
       val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.name })
+      val itemGroups = if (items.size > limitForPreview) listOf(items) else emptyList()
       return TransferableSettingGroup(
         RECENT_PROJECTS_ID,
         ImportSettingsBundle.message("transfer.settings.recent-projects"),
         StartupImportIcons.Icons.Recent,
         comment,
-        listOf(items)
+        itemGroups
       )
     }
   }
