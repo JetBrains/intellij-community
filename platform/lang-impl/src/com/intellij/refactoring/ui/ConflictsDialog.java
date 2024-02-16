@@ -6,10 +6,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -180,12 +177,11 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
 
     @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout(0, myUpdatedDialog ? 0 : 2));
+    JPanel panel;
     
     if (myUpdatedDialog && myElementConflictDescription != null) {
-      Splitter splitter = new OnePixelSplitter(true, "conflicts.dialog.splitter", 0.4f);
+      panel = new JPanel(new BorderLayout());
       UsageViewPresentation presentation = new UsageViewPresentation();
-      presentation.setCodeUsages(false);
       presentation.setMergeDupLinesAvailable(false);
       presentation.setExcludeAvailable(false);
       presentation.setNonCodeUsageAvailable(false);
@@ -200,7 +196,6 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
           break;
         }
       }
-      splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, true));
 
       SimpleColoredComponent previewTitle = new SimpleColoredComponent();
       PopupUtil.applyPreviewTitleInsets(previewTitle);
@@ -213,15 +208,27 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       previewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
       previewPanel.add(previewTitle, BorderLayout.NORTH);
       previewPanel.add(usagePreviewPanel, BorderLayout.CENTER);
-      splitter.setSecondComponent(previewPanel);
 
-      panel.add(splitter, BorderLayout.CENTER);
+      class MySplitter extends OnePixelSplitter implements DataProvider {
+
+        MySplitter() {
+          super(true, "conflicts.dialog.splitter", 0.4f);
+        }
+
+        @Override
+        public @Nullable Object getData(@NotNull String dataId) {
+          return UsageView.USAGE_VIEW_SETTINGS_KEY.is(dataId) ? usageView.getUsageViewSettings() : null;
+        }
+      }
+      Splitter splitter = new MySplitter();
+      splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, true));
+      splitter.setSecondComponent(previewPanel);
 
       CommonActionsManager actionsManager = CommonActionsManager.getInstance();
       JPanel toolbarPanel = new JPanel(new BorderLayout());
       Border line = new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 0, 1, 0);
       toolbarPanel.setBorder(line);
-      DefaultActionGroup groupBy = new DefaultActionGroup(createGroupingActions(usageView));
+      DefaultActionGroup groupBy = new DefaultActionGroup(createGroupingActions(usageView, splitter));
       groupBy.setPopup(true);
       groupBy.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
       groupBy.getTemplatePresentation().setText(UsageViewBundle.messagePointer("action.group.by.title"));
@@ -241,16 +248,18 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       ActionManager actionManager = ActionManager.getInstance();
       ActionToolbarImpl toolbar = (ActionToolbarImpl)actionManager.createActionToolbar("ConflictsDialog", toolbarGroup, true);
       toolbar.setTargetComponent(myTree);
-      toolbar.setAdditionalDataProvider(dataId -> UsageView.USAGE_VIEW_SETTINGS_KEY.is(dataId) ? usageView.getUsageViewSettings() : null);
 
       toolbarPanel.add(toolbar.getComponent(), BorderLayout.WEST);
       JLabel conflictsLabel = new JLabel(RefactoringBundle.message("conflicts.count.label", myElementConflictDescription.values().size()));
       conflictsLabel.setBorder(new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS));
       toolbarPanel.add(conflictsLabel, BorderLayout.EAST);
-      panel.add(toolbarPanel, BorderLayout.NORTH);
       SwingUtilities.invokeLater(() -> previewNode(myProject, myTree.getSelectionPath(), usagePreviewPanel, previewTitle));
+      
+      panel.add(splitter, BorderLayout.CENTER);
+      panel.add(toolbarPanel, BorderLayout.NORTH);
     }
     else {
+      panel = new JPanel(new BorderLayout(0, 2));
       panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
 
       HtmlBuilder buf = new HtmlBuilder();
@@ -283,13 +292,16 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return panel;
   }
 
-  private static List<AnAction> createGroupingActions(UsageView usageView) {
+  private List<AnAction> createGroupingActions(UsageView usageView, JComponent component) {
     List<AnAction> list = new ArrayList<>();
     ActionManager actionManager = ActionManager.getInstance();
     AnAction groupByUsageTypeAction = actionManager.getAction("UsageGrouping.UsageType");
     for (UsageGroupingRuleProvider provider : UsageGroupingRuleProvider.EP_NAME.getExtensionList()) {
       for (@NotNull AnAction action : provider.createGroupingActions(usageView)) {
-        if (action != groupByUsageTypeAction) list.add(action);
+        if (action != groupByUsageTypeAction) {
+          action.registerCustomShortcutSet(component, getDisposable());
+          list.add(action);
+        }
       }
     }
     AnAction groupByModuleAction = ActionManager.getInstance().getAction("UsageGrouping.Module");
