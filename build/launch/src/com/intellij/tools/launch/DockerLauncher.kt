@@ -87,6 +87,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     dockerCmd.addReadonly(paths.javaHomeFolder)
     dockerCmd.addReadonly(paths.outputRootFolder)
 
+    // Required to ultimate root detection
+    dockerCmd.addReadonly(paths.ultimateRootMarker)
+
     // jars
     dockerCmd.addReadonly(paths.communityBinFolder)
     dockerCmd.addReadonly(paths.communityRootFolder.resolve("lib"))
