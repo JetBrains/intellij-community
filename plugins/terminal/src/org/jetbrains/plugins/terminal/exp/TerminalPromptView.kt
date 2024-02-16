@@ -183,6 +183,8 @@ class TerminalPromptView(
       }
     }
     component.background = TerminalUi.terminalBackground
+    component.myBorder = JBUI.Borders.emptyBottom(2)
+    component.ipad = JBInsets.emptyInsets()
     return component
   }
 
