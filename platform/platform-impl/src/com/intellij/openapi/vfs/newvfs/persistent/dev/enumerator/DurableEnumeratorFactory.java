@@ -114,11 +114,24 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             // durable maps
             //If hashToId is really non-durable (see DEFAULT_IN_MEMORY_MAP_FACTORY) than this branch refill the map.
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
-              LOG.warn("[" + name + "]: .valueHashToId map is out-of-sync with .valuesLog data (records count don't match) " +
-                       "-> rebuilding the map (impl: " + valueHashToId.getClass() + ")");
+
+              boolean durableMap = !(valueHashToId instanceof NonDurableNonParallelIntToMultiIntMap);
+
+              //this branch is a warning for durable maps, but regular for non-durable:
+              if (durableMap) {
+                LOG.warn("[" + name + "]: .valueHashToId map is out-of-sync with .valuesLog data (records count don't match) " +
+                         "-> rebuilding the map (impl: " + valueHashToId.getClass() + ")");
+              }
+
               //MAYBE RC: valueHashToId could be build/load async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
-              LOG.warn("[" + name + "]: .valueHashToId was rebuilt (" + valueHashToId.size() + " records)");
+
+              if (durableMap) {
+                LOG.warn("[" + name + "]: .valueHashToId was rebuilt (" + valueHashToId.size() + " records)");
+              }
+              else {
+                LOG.info("[" + name + "]: .valueHashToId (in memory) was filled (" + valueHashToId.size() + " records)");
+              }
             }
             //TODO RC: what if valuesLog was recovered? -- could it be the .hashToId map is somehow wasClosedProperly,
             //         but still is inconsistent with valuesLog? It seems it could: current implementation of append-only-log
