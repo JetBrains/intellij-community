@@ -8,8 +8,11 @@ import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.SameFile
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Stat
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import com.intellij.platform.ijent.fs.IjentFsResult
 import com.intellij.platform.ijent.fs.IjentPath
+import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import com.intellij.platform.ijent.fs.getOrThrow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -89,8 +92,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun getPath(uri: URI): IjentNioPath =
     getFileSystem(uri).run {
       getPath(
-        if (isWindows) uri.path.trimStart('/')
-        else uri.path
+        when (ijentFsApi) {
+          is IjentFileSystemPosixApi -> uri.path
+          is IjentFileSystemWindowsApi -> uri.path.trimStart('/')
+        }
       )
     }
 

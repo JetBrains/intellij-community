@@ -6,8 +6,28 @@ package com.intellij.platform.ijent
  * [remotePid] is a process ID of IJent running on the remote machine.
  * [version] is the version of the IJent binary. Intended to be used for debugging purposes.
  */
-interface IjentInfo {
+sealed interface IjentInfo {
   val architecture: String
   val remotePid: IjentApi.Pid
   val version: String
+  val user: User
+
+  sealed interface User
+}
+
+interface IjentPosixInfo : IjentInfo {
+  override val user: User
+
+  interface User : IjentInfo.User {
+    val uid: Int
+    val gid: Int
+  }
+}
+
+interface IjentWindowsInfo : IjentInfo {
+  override val user: User
+
+  interface User : IjentInfo.User {
+    // TODO https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers
+  }
 }

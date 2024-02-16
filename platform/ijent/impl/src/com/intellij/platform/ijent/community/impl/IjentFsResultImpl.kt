@@ -25,8 +25,8 @@ object IjentFsResultImpl {
   }
 
   object ListDirectoryWithAttrs {
-    data class Ok(override val value: Collection<IjentFileInfo>) :
-      IjentFileSystemApi.ListDirectoryWithAttrs.Ok
+    data class Ok<FI : IjentFileInfo>(override val value: Collection<FI>) :
+      IjentFileSystemApi.ListDirectoryWithAttrs.Ok<FI>
   }
 
  object SameFile {
@@ -59,7 +59,7 @@ object IjentFsResultImpl {
   }
 
   object Stat {
-    data class Ok(override val value: IjentFileInfo) :
-      IjentFileSystemApi.Stat.Ok
+    data class Ok<FI : IjentFileInfo>(override val value: FI) :
+      IjentFileSystemApi.Stat.Ok<FI>
   }
 }

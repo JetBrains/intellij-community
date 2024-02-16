@@ -83,6 +83,20 @@ suspend fun connectToRunningIjent(ijentName: String, platform: IjentPlatform, pr
     IjentSessionProvider.instanceAsync().connect(ijentId, platform, mediator)
   }
 
+suspend fun connectToRunningIjent(
+  ijentName: String,
+  platform: IjentPlatform.Posix,
+  process: Process,
+): IjentPosixApi =
+  connectToRunningIjent(ijentName, platform as IjentPlatform, process) as IjentPosixApi
+
+suspend fun connectToRunningIjent(
+  ijentName: String,
+  platform: IjentPlatform.Windows,
+  process: Process,
+): IjentWindowsApi =
+  connectToRunningIjent(ijentName, platform as IjentPlatform, process) as IjentWindowsApi
+
 /**
  * Interactively requests IJent through a running POSIX-compliant command interpreter: sh, bash, ash, ksh, zsh.
  *
@@ -120,7 +134,7 @@ suspend fun bootstrapOverShellSession(
   ijentName: String,
   shellProcess: Process,
   pathMapper: suspend (Path) -> String?,
-): Pair<String, IjentApi> {
+): Pair<String, IjentPosixApi> {
   val remoteIjentPath: String
   val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(shellProcess, ijentId)
@@ -156,7 +170,7 @@ suspend fun bootstrapOverShellSession(
       throw err
     }
   }
-  return remoteIjentPath to ijentApi
+  return remoteIjentPath to (ijentApi as IjentPosixApi)
 }
 
 @OptIn(DelicateCoroutinesApi::class)

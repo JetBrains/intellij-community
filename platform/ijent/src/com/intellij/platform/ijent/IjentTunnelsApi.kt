@@ -9,7 +9,9 @@ import org.jetbrains.annotations.ApiStatus
  * Methods for launching tunnels for TCP sockets, Unix sockets, etc.
  */
 @ApiStatus.Experimental
-interface IjentTunnelsApi {
+sealed interface IjentTunnelsApi
+
+interface IjentTunnelsPosixApi : IjentTunnelsApi {
   /**
    * Creates a remote UNIX socket forwarding, i.e. IJent listens waits for a connection on the remote machine, and when the connection
    * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
@@ -47,3 +49,5 @@ interface IjentTunnelsApi {
     data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
   }
 }
+
+interface IjentTunnelsWindowsApi : IjentTunnelsApi

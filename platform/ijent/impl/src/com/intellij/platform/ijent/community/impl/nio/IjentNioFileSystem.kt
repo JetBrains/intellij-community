@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.ijent.fs.IjentFileSystemApi
-import com.intellij.platform.ijent.fs.IjentPath
-import com.intellij.platform.ijent.fs.getOrThrow
+import com.intellij.platform.ijent.fs.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import java.nio.file.FileStore
@@ -16,8 +14,6 @@ class IjentNioFileSystem(
   private val fsProvider: IjentNioFileSystemProvider,
   internal val ijentFsApi: IjentFileSystemApi,
 ) : FileSystem() {
-  internal val isWindows = ijentFsApi.isWindows
-
   override fun close() {
     // Seems that there should be nothing.
   }
@@ -30,25 +26,37 @@ class IjentNioFileSystem(
   override fun isReadOnly(): Boolean = false
 
   override fun getSeparator(): String =
-    if (ijentFsApi.isWindows) "\\" else "/"
+    when (ijentFsApi) {
+      is IjentFileSystemPosixApi -> "/"
+      is IjentFileSystemWindowsApi -> "\\"
+    }
 
   override fun getRootDirectories(): Iterable<IjentNioPath> = fsBlocking {
-    ijentFsApi.getRootDirectories().map { it.toNioPath() }
+    when (ijentFsApi) {
+      is IjentFileSystemPosixApi -> listOf(getPath("/"))
+      is IjentFileSystemWindowsApi -> ijentFsApi.getRootDirectories().map { it.toNioPath() }
+    }
   }
 
   override fun getFileStores(): Iterable<FileStore> =
     listOf(IjentNioFileStore(ijentFsApi))
 
   override fun supportedFileAttributeViews(): Set<String> =
-    if (isWindows)
-      setOf("basic", "dos", "acl", "owner", "user")
-    else setOf(
-      "basic", "posix", "unix", "owner",
-      "user",  // TODO Works only on BSD/macOS.
-    )
+    when (ijentFsApi) {
+      is IjentFileSystemWindowsApi ->
+        setOf("basic", "dos", "acl", "owner", "user")
+      is IjentFileSystemPosixApi ->
+        setOf(
+          "basic", "posix", "unix", "owner",
+          "user",  // TODO Works only on BSD/macOS.
+        )
+    }
 
   override fun getPath(first: String, vararg more: String): IjentNioPath {
-    val os = if (isWindows) IjentPath.Absolute.OS.WINDOWS else IjentPath.Absolute.OS.UNIX
+    val os = when (ijentFsApi) {
+      is IjentFileSystemPosixApi -> IjentPath.Absolute.OS.UNIX
+      is IjentFileSystemWindowsApi -> IjentPath.Absolute.OS.WINDOWS
+    }
     return IjentPath.parse(first, os)
       .getOrThrow()
       .resolve(IjentPath.Relative.build(*more).getOrThrow())

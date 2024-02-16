@@ -2,7 +2,6 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.community.impl.IjentFileInfoImpl
 import com.intellij.platform.ijent.community.impl.IjentFsResultImpl
 import com.intellij.platform.ijent.community.impl.nio.MockIjentFileSystemApi.MockResult.Err
 import com.intellij.platform.ijent.community.impl.nio.MockIjentFileSystemApi.MockResult.Ok
@@ -18,18 +17,12 @@ import kotlin.reflect.KMutableProperty0
 class MockIjentFileSystemApi(
   override val coroutineScope: CoroutineScope,
   override val id: IjentId,
-  override val isWindows: Boolean,
   val fileTree: ImaginaryFileTree = ImaginaryFileTree(),
-) : IjentFileSystemApi {
+) : IjentFileSystemPosixApi {
   private fun <P : IjentPath> IjentPathResult<P>.getOrThrow(): P =
     when (this) {
       is IjentPathResult.Ok -> path
       is IjentPathResult.Err -> error(toString())
-    }
-
-  override suspend fun getRootDirectories(): Collection<IjentPath.Absolute> =
-    fileTree.roots.map { dir ->
-      IjentPath.Absolute.build(dir.name).getOrThrow()
     }
 
   private var userHome: IjentPath.Absolute? = null
@@ -45,18 +38,18 @@ class MockIjentFileSystemApi(
   override suspend fun listDirectoryWithAttrs(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean,
-  ): ListDirectoryWithAttrs =
+  ): ListDirectoryWithAttrs<IjentPosixFileInfo> =
     when (val directoryChildren = getDirectoryChildren(path)) {
       is Ok -> IjentFsResultImpl.ListDirectoryWithAttrs.Ok(directoryChildren.result.map { node ->
-        IjentFileInfoImpl(
+        IjentPosixFileInfoImpl(
           path = path.getChild(node.name).getOrThrow(),
           type = when (node) {
-            is ImaginaryFileTree.Node.Directory -> IjentFileInfoImpl.Directory
-            is ImaginaryFileTree.Node.RegularFile -> IjentFileInfoImpl.Regular
+            is ImaginaryFileTree.Node.Directory -> IjentPosixFileInfoImpl.Directory
+            is ImaginaryFileTree.Node.RegularFile -> IjentPosixFileInfoImpl.Regular
           }
         )
       })
-      is Err -> directoryChildren.error as ListDirectoryWithAttrs
+      is Err -> @Suppress("UNCHECKED_CAST") (directoryChildren.error as ListDirectoryWithAttrs<IjentPosixFileInfo>)
     }
 
   private fun getDirectoryChildren(
@@ -109,7 +102,7 @@ class MockIjentFileSystemApi(
   override suspend fun stat(
     path: IjentPath.Absolute,
     resolveSymlinks: Boolean,
-  ): IjentFileSystemApi.Stat {
+  ): IjentFileSystemApi.Stat<IjentPosixFileInfo> {
     TODO("Not yet implemented")
   }
 
@@ -128,13 +121,15 @@ class MockIjentFileSystemApi(
   override suspend fun fileReader(path: IjentPath.Absolute): IjentFileSystemApi.FileReader =
     when (val maybeNode = getNode(path)) {
       is Ok ->
-        IjentFsResultImpl.FileReader.Ok(when (val node = maybeNode.result) {
-          is ImaginaryFileTree.Node.Directory ->
-            AlwaysFailingMockNodeIjentOpenedFile(path) { IjentFsResultImpl.NotFile(path, "") }
+        IjentFsResultImpl.FileReader.Ok(
+          when (val node = maybeNode.result) {
+            is ImaginaryFileTree.Node.Directory ->
+              AlwaysFailingMockNodeIjentOpenedFile(path) { IjentFsResultImpl.NotFile(path, "") }
 
-          is ImaginaryFileTree.Node.RegularFile ->
-            MockNodeIjentOpenedFile(path, node::contents)
-        })
+            is ImaginaryFileTree.Node.RegularFile ->
+              MockNodeIjentOpenedFile(path, node::contents)
+          }
+        )
 
       is Err ->
         maybeNode.error as IjentFileSystemApi.FileReader  // TODO Can these type casts be avoided?

@@ -3,6 +3,8 @@ package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.fs.IjentFileSystemApi.Canonicalize
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import com.intellij.platform.ijent.fs.IjentFsResult
 import com.intellij.platform.ijent.fs.IjentPath
 import com.intellij.platform.ijent.fs.getOrThrow
@@ -26,7 +28,10 @@ class IjentNioPath internal constructor(
 ) : Path {
   val ijentId: IjentId get() = nioFs.ijentFsApi.id
 
-  private val isWindows get() = nioFs.isWindows
+  private val isWindows get() = when (nioFs.ijentFsApi) {
+    is IjentFileSystemPosixApi -> false
+    is IjentFileSystemWindowsApi -> true
+  }
 
   override fun getFileSystem(): FileSystem = nioFs
 

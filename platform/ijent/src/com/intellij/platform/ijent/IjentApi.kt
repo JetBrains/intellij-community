@@ -2,6 +2,8 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -12,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * Usually, [IjentSessionProvider] creates instances of [IjentApi].
  */
 @ApiStatus.Experimental
-interface IjentApi : AutoCloseable {
+sealed interface IjentApi : AutoCloseable {
   val id: IjentId
 
   val platform: IjentPlatform
@@ -54,4 +56,16 @@ interface IjentApi : AutoCloseable {
   interface Pid {
     val value: Long
   }
+}
+
+interface IjentPosixApi : IjentApi {
+  override val info: IjentPosixInfo
+  override val fs: IjentFileSystemPosixApi
+  override val tunnels: IjentTunnelsPosixApi
+}
+
+interface IjentWindowsApi : IjentApi {
+  override val info: IjentWindowsInfo
+  override val fs: IjentFileSystemWindowsApi
+  override val tunnels: IjentTunnelsWindowsApi
 }
