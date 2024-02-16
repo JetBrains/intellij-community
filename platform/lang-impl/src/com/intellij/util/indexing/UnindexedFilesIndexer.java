@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
@@ -23,6 +24,7 @@ import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
+import com.intellij.util.indexing.events.FileIndexingRequest;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import it.unimi.dsi.fastutil.longs.LongArraySet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -110,7 +112,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
 
   private List<IndexUpdateRunner.FileSet> getRefreshedFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
     String filesetName = "Refreshed files";
-    Collection<VirtualFile> files =
+    Collection<FileIndexingRequest> files =
       new ProjectChangedFilesScanner(myProject).scan(projectDumbIndexingHistory);
     return Collections.singletonList(new IndexUpdateRunner.FileSet(myProject, filesetName, files));
   }
@@ -123,7 +125,9 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
       Collection<VirtualFile> providerFiles = providerToFiles.getOrDefault(provider, Collections.emptyList());
       if (!providerFiles.isEmpty()) {
         String progressText = provider.getIndexingProgressText();
-        fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(), providerFiles, progressText));
+        fileSets.add(new IndexUpdateRunner.FileSet(myProject, provider.getDebugName(),
+                                                   // TODO: don't copy. Map iterators instead
+                                                   ContainerUtil.map(providerFiles, FileIndexingRequest::updateRequest), progressText));
       }
     }
     return fileSets;
