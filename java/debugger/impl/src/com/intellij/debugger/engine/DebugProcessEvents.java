@@ -15,9 +15,7 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
@@ -775,20 +773,26 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void notifySkippedBreakpoints(@Nullable LocatableEvent event, SkippedBreakpointReason reason) {
-    if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
-      var message = switch (reason) {
-        case EVALUATION -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.evaluation", event.location());
-        case OTHER_VM -> JavaDebuggerBundle.message("message.breakpoint.skipped.other.vm", event.location());
-        case STEPPING -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.stepping.in.another.thread", event.location());
-      };
-      XDebuggerManagerImpl.getNotificationGroup()
-        .createNotification(message, MessageType.WARNING)
-        .addAction(NotificationAction.createSimpleExpiring(JavaDebuggerBundle.message("message.breakpoint.skipped.learn.more"), () -> {
-          BrowserUtil.browse("https://www.jetbrains.com/help/idea/?skipped.breakpoints");
-        }))
-        .notify(getProject());
-    }
+    if (event == null) return;
+
+    // IDE user is not intended to see notifications about our synthetic breakpoints.
+    final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
+    if (requestor instanceof SyntheticBreakpoint) return;
+
+    if (!myNotificationsCoolDown.compareAndSet(false, true)) return;
+
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
+    var message = switch (reason) {
+      case EVALUATION -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.evaluation", event.location());
+      case OTHER_VM -> JavaDebuggerBundle.message("message.breakpoint.skipped.other.vm", event.location());
+      case STEPPING -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.stepping.in.another.thread", event.location());
+    };
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification(message, MessageType.WARNING)
+      .addAction(NotificationAction.createSimpleExpiring(JavaDebuggerBundle.message("message.breakpoint.skipped.learn.more"), () -> {
+        BrowserUtil.browse("https://www.jetbrains.com/help/idea/?skipped.breakpoints");
+      }))
+      .notify(getProject());
   }
 
   @Nullable

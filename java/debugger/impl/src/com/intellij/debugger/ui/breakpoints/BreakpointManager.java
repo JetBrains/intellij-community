@@ -638,7 +638,7 @@ public class BreakpointManager {
     for (T request : requests) {
       try {
         // skip synthetic
-        if (RequestManagerImpl.findRequestor(request) instanceof SyntheticLineBreakpoint) {
+        if (RequestManagerImpl.findRequestor(request) instanceof SyntheticBreakpoint) {
           continue;
         }
         boolean wasEnabled = request.isEnabled();
