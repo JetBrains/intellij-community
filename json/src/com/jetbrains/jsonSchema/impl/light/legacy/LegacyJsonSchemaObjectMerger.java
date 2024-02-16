@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.light.legacy;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObjectImpl;
@@ -121,6 +122,7 @@ public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
 
     Set<JsonSchemaType> resultSet = EnumSet.noneOf(JsonSchemaType.class);
     for (JsonSchemaType type : self) {
+      ProgressManager.checkCanceled();
       var mergedExclusionAndType = computeMergedExclusionAndType(type, null, other);
       if (mergedExclusionAndType != null && mergedExclusionAndType.type != null) resultSet.add(mergedExclusionAndType.type);
       exclusionType = mergedExclusionAndType != null ? mergedExclusionAndType.isValidByExclusion : exclusionType;
@@ -141,6 +143,7 @@ public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
       if (otherTypeVariants != null && !otherTypeVariants.isEmpty()) {
         Set<JsonSchemaType> filteredVariants = EnumSet.noneOf(JsonSchemaType.class);
         for (JsonSchemaType variant : otherTypeVariants) {
+          ProgressManager.checkCanceled();
           JsonSchemaType subtype = getSubtypeOfBoth(selfType, variant);
           if (subtype != null) filteredVariants.add(subtype);
         }
