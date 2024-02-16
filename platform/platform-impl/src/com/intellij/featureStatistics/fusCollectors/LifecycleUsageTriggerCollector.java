@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
@@ -26,7 +26,8 @@ import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlug
 
 public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(LifecycleUsageTriggerCollector.class);
-  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 69);
+
+  private static final EventLogGroup LIFECYCLE = new EventLogGroup("lifecycle", 70);
 
   private static final EventField<Boolean> eapField = EventFields.Boolean("eap");
   private static final EventField<Boolean> testField = EventFields.Boolean("test");
@@ -82,6 +83,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private enum ProjectOpenMode { New, Same, Attach }
   private static final EventField<ProjectOpenMode> projectOpenModeField = EventFields.Enum("mode", ProjectOpenMode.class, (mode) -> StringUtil.toLowerCase(mode.name()));
   private static final EventId1<ProjectOpenMode> PROJECT_FRAME_SELECTED = LIFECYCLE.registerEvent("project.frame.selected", projectOpenModeField);
+
+  private static final EventId1<Integer> EARLY_ERRORS =
+    LIFECYCLE.registerEvent("early.errors", EventFields.Int("errors_ignored"));
 
   private static final EventsRateThrottle ourErrorRateThrottle = new EventsRateThrottle(100, 5L * 60 * 1000); // 100 errors per 5 minutes
   private static final EventsIdentityThrottle ourErrorIdentityThrottle = new EventsIdentityThrottle(50, 60L * 60 * 1000); // 1 unique error per 1 hour
@@ -206,5 +210,9 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
       }
     }
     PROJECT_FRAME_SELECTED.log(optionValue);
+  }
+
+  public static void onEarlyErrorsIgnored(int numErrors) {
+    EARLY_ERRORS.log(numErrors);
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
@@ -65,9 +66,7 @@ class DialogAppender : Handler() {
   }
 
   private fun processEarlyEventsIfNeeded() {
-    if (earlyEventCounter == 0) {
-      return
-    }
+    if (earlyEventCounter == 0) return
 
     while (true) {
       val queued = earlyEvents.poll() ?: break
@@ -76,7 +75,8 @@ class DialogAppender : Handler() {
     }
 
     if (earlyEventCounter > 0) {
-      queueAppend(IdeaLoggingEvent(DiagnosticBundle.message("error.monitor.early.errors.skipped", earlyEventCounter), Throwable()))
+      LifecycleUsageTriggerCollector.onEarlyErrorsIgnored(earlyEventCounter)
+      earlyEventCounter = 0
     }
   }
 
@@ -97,7 +97,7 @@ class DialogAppender : Handler() {
 @Volatile
 private var delay = false
 
-private const val MAX_EARLY_LOGGING_EVENTS = 5
+private const val MAX_EARLY_LOGGING_EVENTS = 20
 
 private fun extractLoggingEvent(messageObject: Any?, throwable: Throwable): IdeaLoggingEvent {
   var message: String? = null
