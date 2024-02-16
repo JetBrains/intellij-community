@@ -34,11 +34,8 @@ public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInsp
         final PsiExpression condition = statement.getCondition();
         if (condition == null) return;
 
-        PsiElement highlightElement = statement.getFirstChild();
-        while (highlightElement != null && highlightElement.getNode().getElementType() != WHILE_KEYWORD) {
-          highlightElement = highlightElement.getNextSibling();
-        }
-        highlightElement = highlightElement != null ? highlightElement : condition;
+        final PsiElement highlightElement = statement.getFirstChild();
+        if (highlightElement == null || highlightElement.getNode().getElementType() != WHILE_KEYWORD) return;
 
         final DiffRange duplicateElements;
         if (body != null) {
@@ -76,17 +73,12 @@ public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInsp
       if (statement == null) return;
 
       final PsiStatement body = statement.getBody();
+      if (body == null) return;
       final PsiExpression condition = statement.getCondition();
       final boolean infiniteLoop = BoolUtils.isTrue(condition);
 
-      final DiffRange duplicateElements;
-      if (body != null) {
-        final Block bodyBlock = Block.init(body);
-        duplicateElements = bodyBlock.getDiffRange(Block.find(statement, bodyBlock.statements.size()));
-      }
-      else {
-        duplicateElements = null;
-      }
+      final Block bodyBlock = Block.init(body);
+      final DiffRange duplicateElements = bodyBlock.getDiffRange(Block.find(statement, bodyBlock.statements.size()));
       final StringBuilder result = new StringBuilder();
       final CommentTracker tracker = new CommentTracker();
       if (!infiniteLoop && duplicateElements == null) {
@@ -108,7 +100,7 @@ public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInsp
         }
         result.append('}');
       }
-      else if (body != null) {
+      else {
         result.append("do ").append(tracker.text(body)).append('\n');
       }
       result.append("while(");
