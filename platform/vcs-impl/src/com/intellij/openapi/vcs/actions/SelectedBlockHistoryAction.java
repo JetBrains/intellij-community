@@ -58,7 +58,7 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     }
   }
 
-  private static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
+  public static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
     if (project == null || selection == null) return false;
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
