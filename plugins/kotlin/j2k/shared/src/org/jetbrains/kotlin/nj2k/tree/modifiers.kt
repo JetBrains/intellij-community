@@ -3,6 +3,10 @@
 package org.jetbrains.kotlin.nj2k.tree
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.nj2k.isInterface
+import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
+import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
