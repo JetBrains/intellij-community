@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import java.time.Duration
 
@@ -33,7 +34,7 @@ class IJShellRuntimeDataProvider(
     // For example, the current directory can change and the file cache is no more valid.
     // Or some aliases added and the cached shell env is no more valid.
     session.addCommandListener(object : ShellCommandListener {
-      override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
+      override fun commandFinished(event: CommandFinishedEvent) {
         clearCaches()
       }
     })

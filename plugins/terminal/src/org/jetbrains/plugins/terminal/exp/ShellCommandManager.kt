@@ -10,7 +10,9 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 class ShellCommandManager(private val session: BlockTerminalSession) {
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
@@ -55,7 +57,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
   private fun processCommandStartedEvent(event: List<String>) {
     val command = Param.COMMAND.getDecodedValue(event.getOrNull(1))
     val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(2))
-    val startedCommand = StartedCommand(System.nanoTime(), currentDirectory, command)
+    val startedCommand = StartedCommand(command, currentDirectory, TimeSource.Monotonic.markNow())
     this.startedCommand = startedCommand
     fireCommandStarted(startedCommand)
   }
@@ -150,10 +152,10 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
       LOG.info("Shell event: received command_finished without preceding command_started - skipping")
     }
     else {
-      debug { "Shell event: command_finished - $startedCommand, exit code: $exitCode" }
+      val event = CommandFinishedEvent(startedCommand.command, exitCode, startedCommand.commandStarted.elapsedNow())
+      debug { "Shell event: command_finished - $event" }
       for (listener in listeners) {
-        val duration = startedCommand.commandStartedNano.let { TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - it) }
-        listener.commandFinished(startedCommand.command, exitCode, duration)
+        listener.commandFinished(event)
       }
     }
     clearTerminal()
@@ -260,7 +262,7 @@ interface ShellCommandListener {
   fun commandStarted(command: String) {}
 
   /** Fired after command is executed and before prompt is printed */
-  fun commandFinished(command: String?, exitCode: Int, duration: Long?) {}
+  fun commandFinished(event: CommandFinishedEvent) {}
 
   fun promptStateUpdated(newState: TerminalPromptState) {}
 
@@ -271,8 +273,6 @@ interface ShellCommandListener {
   fun clearInvoked() {}
 }
 
-private class StartedCommand(val commandStartedNano: Long, val currentDirectory: String, val command: String) {
-  override fun toString(): String {
-    return "command: $command, currentDirectory: $currentDirectory"
-  }
-}
+data class CommandFinishedEvent(val command: String, val exitCode: Int, val duration: Duration)
+
+private data class StartedCommand(val command: String, val currentDirectory: String, val commandStarted: TimeMark)

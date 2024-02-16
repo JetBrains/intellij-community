@@ -142,7 +142,7 @@ class BlockTerminalView(
       }
     })
     session.commandManager.addListener(object: ShellCommandListener {
-      override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
+      override fun commandFinished(event: CommandFinishedEvent) {
         SaveAndSyncHandler.getInstance().scheduleRefresh()
       }
     }, this)

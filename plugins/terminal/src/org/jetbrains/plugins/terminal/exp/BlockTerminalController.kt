@@ -69,8 +69,8 @@ class BlockTerminalController(
     finishCommandBlock(exitCode = 0)
   }
 
-  override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
-    finishCommandBlock(exitCode)
+  override fun commandFinished(event: CommandFinishedEvent) {
+    finishCommandBlock(event.exitCode)
   }
 
   private fun finishCommandBlock(exitCode: Int) {

@@ -101,10 +101,10 @@ object TerminalSessionTestUtil {
     }, disposable)
     val result: CompletableFuture<CommandResult> = CompletableFuture()
     session.commandManager.addListener(object : ShellCommandListener {
-      override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
+      override fun commandFinished(event: CommandFinishedEvent) {
         val (text, commandEndMarkerFound) = scraper.scrapeOutput()
         Assert.assertEquals(session.commandBlockIntegration.commandEndMarker != null, commandEndMarkerFound)
-        result.complete(CommandResult(exitCode, text))
+        result.complete(CommandResult(event.exitCode, text))
         Disposer.dispose(disposable)
       }
     }, disposable)

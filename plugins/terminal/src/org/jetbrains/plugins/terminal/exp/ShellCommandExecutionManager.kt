@@ -31,7 +31,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   init {
     commandManager.addListener(object : ShellCommandListener {
-      override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
+      override fun commandFinished(event: CommandFinishedEvent) {
         lock.withLock { withoutLock ->
           if (!isCommandRunning) {
             LOG.warn("Received command_finished event, but command wasn't started")
