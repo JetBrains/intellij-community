@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
+import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
@@ -24,8 +25,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -60,17 +63,15 @@ internal object GitLabDiscussionComponentFactory {
       add(notesPanel)
 
       cs.launchNow {
-        vm.replyVm.collectLatest { replyVm ->
-          if (replyVm == null) return@collectLatest
+        vm.replyVm.collectScoped { replyVm ->
+          if (replyVm == null) return@collectScoped
 
-          coroutineScope {
-            bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
-              newNoteVm?.let {
-                createReplyField(ComponentType.COMPACT, project, this, vm, newNoteVm, avatarIconsProvider, place,
-                                 swingAction("") { replyVm.stopWriting() })
-              } ?: createReplyActionsPanel(vm, replyVm, project, place).apply {
-                border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
-              }
+          bindChildIn(this, replyVm.newNoteVm) { newNoteVm ->
+            newNoteVm?.let {
+              createReplyField(ComponentType.COMPACT, project, this, vm, newNoteVm, avatarIconsProvider, place,
+                               swingAction("") { replyVm.stopWriting() })
+            } ?: createReplyActionsPanel(vm, replyVm, project, place).apply {
+              border = JBUI.Borders.empty(8, ComponentType.COMPACT.fullLeftShift)
             }
           }
         }

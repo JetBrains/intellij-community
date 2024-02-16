@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
+import com.intellij.collaboration.async.collectScoped
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
@@ -13,8 +15,13 @@ import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
@@ -97,25 +104,28 @@ internal object GitLabNoteComponentFactory {
   fun createActions(cs: CoroutineScope, note: Flow<GitLabNoteViewModel>,
                     project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
-      cs.launch {
-        note.mapNotNull { it.actionsVm }.collectLatest {
-          removeAll()
-          coroutineScope {
+      cs.launchNow {
+        note.map { it.actionsVm }.collectScoped {
+          if (it != null) try {
+            val buttonsCs = this
             CodeReviewCommentUIUtil.createEditButton { _ -> it.startEditing() }.apply {
               isEnabled = false
               if (it.canEdit()) {
-                bindDisabledIn(this@coroutineScope, it.busy)
+                bindDisabledIn(buttonsCs, it.busy)
               }
             }.also(::add)
             CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ ->
               it.delete()
               GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE, place)
             }.apply {
-              bindDisabledIn(this@coroutineScope, it.busy)
+              bindDisabledIn(buttonsCs, it.busy)
             }.also(::add)
-            repaint()
             revalidate()
+            repaint()
             awaitCancellation()
+          }
+          finally {
+            removeAll()
           }
         }
       }
