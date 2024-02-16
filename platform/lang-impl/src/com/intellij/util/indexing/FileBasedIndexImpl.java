@@ -94,7 +94,6 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -111,7 +110,8 @@ import static com.intellij.util.indexing.FileBasedIndexDataInitialization.readAl
 import static com.intellij.util.indexing.IndexingFlag.cleanProcessingFlag;
 import static com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag;
 import static com.intellij.util.indexing.StaleIndexesChecker.shouldCheckStaleIndexesOnStartup;
-import static java.util.concurrent.TimeUnit.*;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
@@ -152,7 +152,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private @Nullable Runnable myShutDownTask;
   private @Nullable AutoCloseable myFlushingTask;
-  private @Nullable ScheduledFuture<?> myHealthCheckFuture;
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final IntSet myStaleIds = new IntOpenHashSet();
@@ -334,16 +333,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   void addStaleIds(@NotNull IntSet staleIds) {
     synchronized (myStaleIds) {
       myStaleIds.addAll(staleIds);
-    }
-  }
-
-  void setUpHealthCheck() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myHealthCheckFuture = AppExecutorUtil
-        .getAppScheduledExecutorService()
-        .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index Healthcheck", () -> {
-          myIndexableFilesFilterHolder.runHealthCheck();
-        }), 5, 5, MINUTES);
     }
   }
 
@@ -620,10 +609,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           LOG.error("Error cancelling flushing task", e);
         }
         myFlushingTask = null;
-      }
-      if (myHealthCheckFuture != null) {
-        myHealthCheckFuture.cancel(false);
-        myHealthCheckFuture = null;
       }
     }
     finally {

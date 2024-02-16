@@ -1,17 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.projectFilter
 
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SmartList
 import com.intellij.util.containers.SmartHashSet
-import com.intellij.util.indexing.*
-import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter.HealthCheckError
-import java.util.concurrent.Callable
+import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.UnindexedFilesScanner
+import com.intellij.util.indexing.UnindexedFilesUpdater
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -36,8 +32,6 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
 
   fun findProjectsForFile(fileId: Int): Set<Project>
 
-  fun runHealthCheck()
-
   fun onProjectClosing(project: Project)
 
   fun onProjectOpened(project: Project)
@@ -49,10 +43,12 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder {
-  private val myProjectFilters: ConcurrentMap<Project, ProjectIndexableFilesFilter> = ConcurrentHashMap()
+  private val myProjectFilters: ConcurrentMap<Project, Pair<ProjectIndexableFilesFilter, ProjectIndexableFilesFilterHealthCheck>> = ConcurrentHashMap()
 
   override fun onProjectClosing(project: Project) {
-    myProjectFilters.remove(project)?.onProjectClosing(project)
+    val pair = myProjectFilters.remove(project)
+    pair?.first?.onProjectClosing(project)
+    pair?.second?.stopHealthCheck()
   }
 
   override fun onProjectOpened(project: Project) {
@@ -60,11 +56,14 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     else if (useCachingFilesFilter()) CachingProjectIndexableFilesFilterFactory()
     else IncrementalProjectIndexableFilesFilterFactory()
 
-    myProjectFilters[project] = factory.create(project)
+    val filter = factory.create(project)
+    val healthCheck = factory.createHealthCheck(project, filter)
+    healthCheck.setUpHealthCheck()
+    myProjectFilters[project] = Pair(filter, healthCheck)
   }
 
   override fun wasDataLoadedFromDisk(project: Project): Boolean {
-    return myProjectFilters[project]?.wasDataLoadedFromDisk ?: false
+    return myProjectFilters[project]?.first?.wasDataLoadedFromDisk ?: false
   }
 
   override fun getProjectIndexableFiles(project: Project): IdFilter? {
@@ -80,12 +79,12 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     getFilter(project)?.resetFileIds()
   }
 
-  private fun getFilter(project: Project) = myProjectFilters[project]
+  private fun getFilter(project: Project) = myProjectFilters[project]?.first
 
   override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): List<Project> {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
-    return myProjectFilters.mapNotNullTo(SmartList()) { (p, filter) ->
-      val fileIsInProject = filter.ensureFileIdPresent(fileId) {
+    return myProjectFilters.mapNotNullTo(SmartList()) { (p, pair) ->
+      val fileIsInProject = pair.first.ensureFileIdPresent(fileId) {
         matchedProjects.contains(p)
       }
       if (fileIsInProject) p else null
@@ -93,18 +92,18 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun addFileId(fileId: Int, project: Project) {
-    myProjectFilters[project]?.ensureFileIdPresent(fileId) { true }
+    myProjectFilters[project]?.first?.ensureFileIdPresent(fileId) { true }
   }
 
   override fun removeFile(fileId: Int) {
-    for (filter in myProjectFilters.values) {
+    for ((filter, _) in myProjectFilters.values) {
       filter.removeFileId(fileId)
     }
   }
 
   override fun findProjectForFile(fileId: Int): Project? {
     for ((project, filter) in myProjectFilters) {
-      if (filter.containsFileId(fileId)) {
+      if (filter.first.containsFileId(fileId)) {
         return project
       }
     }
@@ -114,55 +113,10 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   override fun findProjectsForFile(fileId: Int): Set<Project> {
     val projects = SmartHashSet<Project>()
     for ((project, filter) in myProjectFilters) {
-      if (filter.containsFileId(fileId)) {
+      if (filter.first.containsFileId(fileId)) {
         projects.add(project)
       }
     }
     return projects
-  }
-
-  override fun runHealthCheck() {
-    if (!IndexInfrastructure.hasIndices()) return
-
-    try {
-      for ((project, filter) in myProjectFilters) {
-        var errors: List<HealthCheckError> = emptyList()
-        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
-          if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
-          errors = filter.runHealthCheck(project)
-        }
-
-        if (errors.isEmpty()) continue
-
-        for (error in errors) {
-          error.fix()
-        }
-
-        val errorsToReport = errors
-          .filter { it.shouldBeReported }
-
-        if (errors.size > errorsToReport.size) {
-          FileBasedIndexImpl.LOG.info("${errors.size - errorsToReport.size} of ${filter.javaClass.simpleName} health check errors were filtered out")
-        }
-
-        if (errorsToReport.isEmpty()) return
-
-        val summary = errorsToReport
-          .groupBy { it::class.java }
-          .entries.joinToString("\n") { (clazz, e) ->
-            "${e.size} ${clazz.simpleName} errors. Examples:\n" + e.take(10).joinToString("\n") { error ->
-              ReadAction.nonBlocking(Callable { error.presentableText }).executeSynchronously()
-            }
-          }
-
-        FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errorsToReport.size} errors in project ${project.name}:\n$summary")
-      }
-    }
-    catch (_: ProcessCanceledException) {
-
-    }
-    catch (e: Exception) {
-      FileBasedIndexImpl.LOG.error(e)
-    }
   }
 }
