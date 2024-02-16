@@ -932,7 +932,7 @@ public final class GitUtil {
   /**
    * @deprecated Prefer using {@link #isGitRoot(Path)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
     try {
       return isGitRoot(Paths.get(rootDir));
