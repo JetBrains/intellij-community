@@ -99,7 +99,7 @@ public final class JavaModuleGraphUtil {
         return CachedValuesManager.getCachedValue(rootPsi, () -> {
           VirtualFile _root = rootPsi.getVirtualFile();
           LightJavaModule result = LightJavaModule.create(rootPsi.getManager(), _root, LightJavaModule.moduleName(_root));
-          return Result.create(result, _root, ProjectRootModificationTracker.getInstance(rootPsi.getProject()));
+            return Result.create(result, _root, ProjectRootModificationTracker.getInstance(rootPsi.getProject()));
         });
       }
     }
@@ -169,7 +169,7 @@ public final class JavaModuleGraphUtil {
       List<VirtualFile> roots = new ArrayList<>(rootManager.getSourceRoots(resourceRootType));
       roots.addAll(sourceRoots);
       files = ContainerUtil.mapNotNull(roots, root -> root.findFileByRelativePath(JarFile.MANIFEST_NAME));
-      if (files.size() == 1) {
+      if (files.size() == 1 || new HashSet<>(files).size() == 1) {
         VirtualFile manifest = files.get(0);
         PsiFile manifestPsi = PsiManager.getInstance(project).findFile(manifest);
         assert manifestPsi != null : manifest;
@@ -184,7 +184,8 @@ public final class JavaModuleGraphUtil {
       if (virtualAutoModuleName != null && !sourceSourceRoots.isEmpty()) {
         return LightJavaModule.create(PsiManager.getInstance(project), sourceSourceRoots.get(0), virtualAutoModuleName);
       }
-    } else {
+    }
+    else {
       final VirtualFile file = files.get(0);
       if (ContainerUtil.and(files, f -> f.equals(file))) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -257,7 +258,7 @@ public final class JavaModuleGraphUtil {
   }
 
   private static boolean isExported(@NotNull PsiJavaModule from, @NotNull PsiJavaModule to) {
-    VirtualFile toFile = to.getContainingFile().getVirtualFile();
+    VirtualFile toFile = getVirtualFile(to);
     if (toFile == null) return false;
 
     Module fromModule = ModuleUtilCore.findModuleForPsiElement(from);
@@ -276,6 +277,13 @@ public final class JavaModuleGraphUtil {
     return false;
   }
 
+  @Nullable
+  private static VirtualFile getVirtualFile(@NotNull PsiJavaModule module) {
+    if (module instanceof LightJavaModule light) {
+      return light.getRootVirtualFile();
+    }
+    return PsiUtilCore.getVirtualFile(module);
+  }
 
   private static boolean alreadyContainsRequires(@NotNull PsiJavaModule module, @NotNull String dependency) {
     for (PsiRequiresStatement requiresStatement : module.getRequires()) {
@@ -306,7 +314,7 @@ public final class JavaModuleGraphUtil {
 
       if (descriptors.size() == 2) {
         if (descriptors.stream()
-              .map(d -> PsiUtilCore.getVirtualFile(d))
+              .map(d -> getVirtualFile(d))
               .filter(Objects::nonNull)
               .map(moduleRootManager.getFileIndex()::isInTestSourceContent).count() < 2) {
           return Collections.emptyList();

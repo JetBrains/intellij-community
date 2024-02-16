@@ -59,7 +59,7 @@ public class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor 
     myPath = path;
     myMainModuleName = mainModuleName;
     myProcess = process;
-    myProjectPath = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME);
+    myProjectPath = TemporaryDirectory.generateTemporaryPath("project/before/" + ProjectImpl.LIGHT_PROJECT_NAME);
   }
 
   public Path getBeforePath() {

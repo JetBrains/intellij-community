@@ -1,0 +1,11 @@
+<body>
+Reports an empty <code>module-info.java</code> file, indicating unresolved module dependencies. Automatically adds necessary <code>requires</code> statements by inspecting imports.
+To suppress this warning, include the following in <code>module-info.java</code>:
+<pre><code>
+module module.name {
+    // no dependencies
+}
+</code></pre>
+<b>Quick Fix:</b> <i>Auto-add module requirements</i> fills in missing <code>requires</code> based on source code imports.
+<small>New in 2024.1</small>
+</body>
