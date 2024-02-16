@@ -131,7 +131,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
                     super.visitElement(element)
 
                     if (rangeResult == RangeFilterResult.PROCESS) {
-                        val postProcessingRegistrar = J2KPostProcessingRegistrar.instance
+                        val postProcessingRegistrar = OldJ2KPostProcessingRegistrar.instance
                         postProcessingRegistrar.processings.forEach { processing ->
                             val action = processing.createAction(element, diagnostics)
                             if (action != null) {

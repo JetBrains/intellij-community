@@ -6,18 +6,18 @@ import com.intellij.openapi.components.service
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
-interface J2kPostProcessing {
+interface OldJ2kPostProcessing {
     fun createAction(element: KtElement, diagnostics: Diagnostics): (() -> Unit)?
     val writeActionNeeded: Boolean
 }
 
-interface J2KPostProcessingRegistrar {
-    val processings: Collection<J2kPostProcessing>
+interface OldJ2KPostProcessingRegistrar {
+    val processings: Collection<OldJ2kPostProcessing>
 
-    fun priority(processing: J2kPostProcessing): Int
+    fun priority(processing: OldJ2kPostProcessing): Int
 
     companion object {
-        val instance: J2KPostProcessingRegistrar
+        val instance: OldJ2KPostProcessingRegistrar
             get() = service()
     }
 }
