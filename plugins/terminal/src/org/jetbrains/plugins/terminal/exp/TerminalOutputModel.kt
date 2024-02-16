@@ -216,19 +216,19 @@ class TerminalOutputModel(val editor: EditorEx) {
     val updatedHighlightings: List<HighlightingInfo> = highlightings.mapNotNull {
       when {
         it.endOffset <= deleteRange.startOffset -> it
-        findIntersectionLength(it, deleteRange) > 0 -> {
+        it.startOffset >= deleteRange.endOffset -> {
+          val newRangeStart = it.startOffset - deleteRange.length
+          HighlightingInfo(newRangeStart, newRangeStart + it.length, it.textAttributes)
+        }
+        else -> {
           val intersectionLength = findIntersectionLength(it, deleteRange)
+          check(intersectionLength > 0)
           val newRangeStart = min(it.startOffset, deleteRange.startOffset)
           val newRangeEnd = newRangeStart + it.length - intersectionLength
           if (newRangeStart != newRangeEnd)
             HighlightingInfo(newRangeStart, newRangeEnd, it.textAttributes)
           else
             null // the whole highlighting is deleted
-        }
-        else -> {
-          check(it.startOffset >= deleteRange.endOffset)
-          val newRangeStart = it.startOffset - deleteRange.length
-          HighlightingInfo(newRangeStart, newRangeStart + it.length, it.textAttributes)
         }
       }
     }
