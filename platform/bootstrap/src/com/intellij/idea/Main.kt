@@ -175,7 +175,9 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
 internal var customTargetDirectoryToImportConfig: Path? = null
 
 internal fun isConfigImportNeeded(configPath: Path): Boolean {
-  return ConfigImportHelper.isConfigImportExpected(configPath) || customTargetDirectoryToImportConfig != null
+  return !Files.exists(configPath) ||
+         Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
+         customTargetDirectoryToImportConfig != null
 }
 
 private fun initRemoteDev(args: List<String>) {

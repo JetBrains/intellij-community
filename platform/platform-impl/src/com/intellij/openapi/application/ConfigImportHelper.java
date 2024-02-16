@@ -80,7 +80,6 @@ import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
-  public static final String ALLOW_HEADLESS_AUTOMATIC_CONFIG_IMPORT = "intellij.allow.headless.auto.config.import";
   public static final String CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY = "intellij.config.imported.from.other.product";
   public static final String CONFIG_IMPORTED_FROM_PREVIOUS_VERSION_KEY = "intellij.config.imported.from.previous.version";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
@@ -104,66 +103,16 @@ public final class ConfigImportHelper {
 
   private ConfigImportHelper() { }
 
-  public static boolean isConfigImportExpected(@NotNull Path configPath) {
-    return !Files.exists(configPath) || Files.exists(configPath.resolve(CUSTOM_MARKER_FILE_NAME));
-  }
-
-  public static boolean isHeadlessAutomaticConfigImportAllowed() {
-    return SystemProperties.getBooleanProperty(ALLOW_HEADLESS_AUTOMATIC_CONFIG_IMPORT, false);
-  }
-
   public static void importConfigsTo(boolean veryFirstStartOnThisComputer,
                                      @NotNull Path newConfigDir,
                                      @NotNull List<String> args,
                                      @NotNull Logger log) {
-    try {
-      importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log, false);
-    }
-    catch (UnsupportedOperationException e) {
-      throw new AssertionError("unexpected fail of importConfigs with mustBeAutomaticMigration=false", e);
-    }
-  }
-
-  /**
-   * @throws UnsupportedOperationException only if {@param mustBeAutomaticMigration} is true and config import without interaction with user is not possible
-   */
-  public static void importConfigsTo(boolean veryFirstStartOnThisComputer,
-                                     @NotNull Path newConfigDir,
-                                     @NotNull List<String> args,
-                                     @NotNull Logger log,
-                                     boolean mustBeAutomaticMigration) throws UnsupportedOperationException {
     log.info("Importing configs to " + newConfigDir);
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     var customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
     log.info("Custom migration option: " + customMigrationOption);
 
-    try {
-      importConfigsToImpl(veryFirstStartOnThisComputer, newConfigDir, args, log, mustBeAutomaticMigration, customMigrationOption);
-    }
-    catch (UnsupportedOperationException e) {
-      // return marker if failed
-      log.error("UnsupportedOperationException during importConfigsTo " + newConfigDir, e);
-      try {
-        if (customMigrationOption != null) {
-          log.info("Automatic migration has failed, returning the marker back");
-          customMigrationOption.writeConfigMarkerFile(newConfigDir);
-        }
-      }
-      catch (Exception ex) {
-        e.addSuppressed(ex);
-      }
-      assert mustBeAutomaticMigration;
-      throw e;
-    }
-  }
-
-  private static void importConfigsToImpl(boolean veryFirstStartOnThisComputer,
-                                          @NotNull Path newConfigDir,
-                                          @NotNull List<String> args,
-                                          @NotNull Logger log,
-                                          boolean mustBeAutomaticMigration,
-                                          CustomConfigMigrationOption customMigrationOption) throws UnsupportedOperationException {
     if (customMigrationOption instanceof CustomConfigMigrationOption.SetProperties sp) {
       List<String> properties = sp.getProperties();
       log.info("Enabling system properties after restart: " + properties);
@@ -223,7 +172,7 @@ public final class ConfigImportHelper {
       else {
         boolean askForConfig = shouldAskForConfig();
         if (askForConfig) {
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths(), mustBeAutomaticMigration);
+          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
           importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
         }
         else if (guessedOldConfigDirs.isEmpty()) {
@@ -237,7 +186,7 @@ public final class ConfigImportHelper {
             }
           }
           if (!importedFromCloud && !veryFirstStartOnThisComputer) {
-            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths(), mustBeAutomaticMigration);
+            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
             importScenarioStatistics = SHOW_DIALOG_NO_CONFIGS_FOUND;
           }
         }
@@ -245,7 +194,7 @@ public final class ConfigImportHelper {
           Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
           if (isConfigOld(bestConfigGuess.second)) {
             log.info("The best config guess [" + bestConfigGuess.first + "] is too old, it won't be used for importing.");
-            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths(), mustBeAutomaticMigration);
+            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
             importScenarioStatistics = SHOW_DIALOG_CONFIGS_ARE_TOO_OLD;
           }
           else {
@@ -442,13 +391,7 @@ public final class ConfigImportHelper {
            "true".equals(showImportDialog);
   }
 
-  /**
-   * @param automaticMigrationIsExpected this parameter is to remember about {@link ConfigImportHelper#isHeadlessAutomaticConfigImportAllowed()}
-   *                                     case with automatic migration.
-   * @throws UnsupportedOperationException if {@param automaticMigrationIsExpected} is true
-   */
-  private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs, boolean automaticMigrationIsExpected) {
-    if (automaticMigrationIsExpected) throw new UnsupportedOperationException("User decision is required for config import");
+  private static @Nullable Pair<Path, Path> showDialogAndGetOldConfigPath(List<Path> guessedOldConfigDirs) {
     String showImportDialog = System.getProperty(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
     if ("never".equals(showImportDialog)) {
       return null;

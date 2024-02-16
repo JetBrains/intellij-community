@@ -31,11 +31,7 @@ internal suspend fun importConfigIfNeeded(isHeadless: Boolean,
   if (isHeadless) {
     importConfigHeadless(configImportNeededDeferred = configImportNeededDeferred,
                          lockSystemDirsJob = lockSystemDirsJob,
-                         logDeferred = logDeferred,
-                         args = args,
-                         targetDirectoryToImportConfig = targetDirectoryToImportConfig,
-                         appStarterDeferred = appStarterDeferred,
-                         euaDocumentDeferred = euaDocumentDeferred)
+                         logDeferred = logDeferred)
     return null
   }
 
@@ -75,25 +71,7 @@ private suspend fun importConfig(args: List<String>,
                                  targetDirectoryToImportConfig: Path,
                                  log: Logger,
                                  appStarter: AppStarter,
-                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>,
-                                 headlessAutoImport: Boolean = false) {
-  if (headlessAutoImport) {
-    // headless AppStarters are not notified about config import
-    val veryFirstStartOnThisComputer = euaDocumentDeferred.await() != null
-    withContext(RawSwingDispatcher) {
-      try {
-        ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, targetDirectoryToImportConfig, args, log, true)
-        log.info("Automatic config import completed")
-      }
-      catch (e: UnsupportedOperationException) {
-        log.info("Automatic config import is not possible", e)
-      }
-    }
-    EarlyAccessRegistryManager.invalidate()
-    IconLoader.clearCache()
-    return
-  }
-
+                                 euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
   span("screen reader checking") {
     runCatching {
       enableScreenReaderSupportIfNecessary()
@@ -129,32 +107,11 @@ private suspend fun enableNewUi(logDeferred: Deferred<Logger>) {
 
 private suspend fun importConfigHeadless(configImportNeededDeferred: Deferred<Boolean>,
                                          lockSystemDirsJob: Job,
-                                         logDeferred: Deferred<Logger>,
-                                         args: List<String>,
-                                         targetDirectoryToImportConfig: Path?,
-                                         appStarterDeferred: Deferred<AppStarter>,
-                                         euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
+                                         logDeferred: Deferred<Logger>) {
   if (!configImportNeededDeferred.await()) {
     return
   }
-
   // make sure we lock the dir before writing
   lockSystemDirsJob.join()
-  if (!ConfigImportHelper.isHeadlessAutomaticConfigImportAllowed()) {
-    enableNewUi(logDeferred)
-  }
-  else {
-    val log = logDeferred.await()
-    importConfig(
-      args = args,
-      targetDirectoryToImportConfig = targetDirectoryToImportConfig ?: PathManager.getConfigDir(),
-      log = log,
-      appStarter = appStarterDeferred.await(),
-      euaDocumentDeferred = euaDocumentDeferred,
-      headlessAutoImport = true
-    )
-    if (ConfigImportHelper.isNewUser()) {
-      enableNewUi(logDeferred)
-    }
-  }
+  enableNewUi(logDeferred)
 }
