@@ -160,13 +160,13 @@
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [15, 29, 22, 30],
+      "includeGroups": [15, 24, 22, 30],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
       "experimentBucketsCount": 2,
-      "includeGroups": [ 8, 24 ],
+      "includeGroups": [ 8, 22 ],
       "shouldLogElementFeatures": true
     },
     {
@@ -190,13 +190,13 @@
     {
       "id": "ruby",
       "experimentBucketsCount": 1,
-      "includeGroups": [ 24 ],
+      "includeGroups": [ 22 ],
       "shouldLogElementFeatures": true
     },
     {
       "id": "go",
       "experimentBucketsCount": 2,
-      "includeGroups": [ 8, 24 ],
+      "includeGroups": [ 8, 22 ],
       "shouldLogElementFeatures": true
     },
     {
