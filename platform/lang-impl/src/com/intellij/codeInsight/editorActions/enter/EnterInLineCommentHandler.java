@@ -15,11 +15,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public final class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
   private static final String WHITESPACE = " \t";
@@ -93,20 +94,21 @@ public final class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter
     if (offset < 1) return Pair.pair(-1, null);
     EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    String possiblePrefix = tryToFindCommentPrefix(editor, offset, commenter);
+    int startOffset = iterator.getStart();
+    String possiblePrefix = tryToFindCommentPrefix(editor.getDocument(), startOffset, offset, commenter.getLineCommentPrefixes());
     String prefix = possiblePrefix != null ? possiblePrefix : commenter.getLineCommentPrefix();
-    for (IElementType tokenType : commenter.getLineCommentTokenTypes()) {
-      if (iterator.getTokenType() == tokenType && (iterator.getStart() + (prefix == null ? 0 : prefix.length())) <= offset) {
-        return Pair.pair(iterator.getStart(), prefix);
-      }
+    if (commenter.getLineCommentTokenTypes().contains(iterator.getTokenType())
+        && (startOffset + (prefix == null ? 0 : prefix.length())) <= offset) {
+      return Pair.pair(startOffset, prefix);
     }
     return Pair.pair(-1, null);
   }
 
-  private static String tryToFindCommentPrefix(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
-    Document document = editor.getDocument();
-    int lineNumber = document.getLineNumber(offset);
-    String commentedLineText = document.getText(new TextRange(document.getLineStartOffset(lineNumber), offset));
-    return ContainerUtil.find(commenter.getLineCommentPrefixes(), commentedLineText::contains);
+  private static String tryToFindCommentPrefix(@NotNull Document document,
+                                               int startOffset,
+                                               int endOffset,
+                                               @NotNull List<String> prefixes) {
+    String commentedLineText = document.getText(new TextRange(startOffset, endOffset));
+    return ContainerUtil.find(prefixes, commentedLineText::contains);
   }
 }
