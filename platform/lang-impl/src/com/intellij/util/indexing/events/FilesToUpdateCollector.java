@@ -88,7 +88,7 @@ public class FilesToUpdateCollector {
     int fileId = FileBasedIndex.getFileId(file);
     VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
     if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
-      VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
+      VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", fileId);
       myFilesToUpdate.remove(fileId);
       myDirtyFiles.removeFile(fileId);
     }

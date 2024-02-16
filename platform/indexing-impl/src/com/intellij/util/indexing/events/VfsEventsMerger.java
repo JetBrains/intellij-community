@@ -224,6 +224,13 @@ public final class VfsEventsMerger {
     tryLog(eventName, file, null);
   }
 
+  public static void tryLog(@NotNull String eventName, int fileId) {
+    tryLog(() -> {
+      return "event=" + eventName +
+             ",id=" + fileId;
+    });
+  }
+
   public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file, @Nullable Supplier<String> additionalMessage) {
     tryLog(() -> {
       return "event=" + eventName +
