@@ -5,6 +5,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
+import com.intellij.util.ObjectUtils;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,6 +148,11 @@ public abstract class SingleRowLayout extends TabLayout {
       data.insets.left += myTabs.getFirstTabOffset();
     }
 
+    JBTabsImpl.Toolbar selectedForeToolbar = myTabs.getInfoToForeToolbar().get(selected);
+    data.hfToolbar =
+      new WeakReference<>(
+        selectedForeToolbar != null && myTabs.getHorizontalSide() && !selectedForeToolbar.isEmpty() ? selectedForeToolbar : null);
+
     final JBTabsImpl.Toolbar selectedToolbar = myTabs.getInfoToToolbar().get(selected);
     data.hToolbar =
       new WeakReference<>(selectedToolbar != null && myTabs.getHorizontalSide() && !selectedToolbar.isEmpty() ? selectedToolbar : null);
@@ -199,7 +205,21 @@ public abstract class SingleRowLayout extends TabLayout {
   }
 
   protected boolean applyTabLayout(SingleRowPassInfo data, TabLabel label, int length) {
+    TabLabel.TabLabelLayout layout = ObjectUtils.tryCast(label.getLayout(), TabLabel.TabLabelLayout.class);
+    if (layout != null) {
+      layout.setRightAlignment(false);
+    }
     final Rectangle rec = getStrategy().getLayoutRect(data, data.position, length);
+    if (data.hfToolbar.get() != null) {
+      int startPosition = getStrategy().getStartPosition(data);
+      if (rec.x < startPosition) {
+        rec.width -= startPosition - rec.x;
+        rec.x = startPosition;
+        if (layout != null) {
+          layout.setRightAlignment(true);
+        }
+      }
+    }
     myTabs.layout(label, rec);
 
     label.setAlignmentToCenter(myTabs.isEditorTabs() && getStrategy().isToCenterTextWhenStretched());
@@ -216,7 +236,7 @@ public abstract class SingleRowLayout extends TabLayout {
       data.requiredLength += getRequiredLength(eachInfo);
       data.toLayout.add(eachInfo);
     }
-    data.requiredLength += getStrategy().getAdditionalLength();
+    data.requiredLength += getStrategy().getAdditionalLength(data);
   }
 
   protected int getRequiredLength(TabInfo eachInfo) {

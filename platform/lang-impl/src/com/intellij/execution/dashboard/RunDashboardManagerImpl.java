@@ -37,6 +37,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.IdeBorderFactory;
@@ -647,6 +648,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         ui.setLeftToolbarVisible(visible);
       }
       ui.setContentToolbarBefore(visible);
+      if (Registry.is("ide.services.debugger.left.toolbar", true)) {
+        ui.setTopLeftActionsBefore(!visible);
+      }
     }
     else {
       ActionToolbar toolbar = findActionToolbar(descriptor);

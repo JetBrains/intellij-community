@@ -147,6 +147,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private boolean myContentToolbarBefore = true;
   private boolean myTopLeftActionsVisible = true;
+  private boolean myTopLeftActionsBefore = false;
 
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
@@ -232,6 +233,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
     myComponent.revalidate();
     myComponent.repaint();
+  }
+
+  void setTopLeftActionsBefore(boolean value) {
+    myTopLeftActionsBefore = value;
+    rebuildCommonActions();
   }
 
   void setContentToolbarBefore(boolean value) {
@@ -944,10 +950,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText(ExecutionBundle.message("runner.context.tab"));
 
+    Wrapper foreWrapper = new Wrapper();
     Wrapper leftWrapper = new Wrapper();
     Wrapper middleWrapper = new Wrapper();
     Wrapper rightWrapper = new Wrapper();
-    myCommonActionsPlaceholder.put(grid, new TopToolbarWrappers(leftWrapper, middleWrapper, rightWrapper));
+    myCommonActionsPlaceholder.put(grid, new TopToolbarWrappers(foreWrapper, leftWrapper, middleWrapper, rightWrapper));
 
     Wrapper minimizedToolbar = new Wrapper();
     myMinimizedButtonsPlaceholder.put(grid, minimizedToolbar);
@@ -973,6 +980,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     NonOpaquePanel sideComponent = new TwoSideComponent(leftWrapper, new TwoSideComponent(middleWrapper, new TwoSideComponent(right, rightWrapper)));
     sideComponent.setVisible(!myTabs.isHideTopPanel());
     tab.setSideComponent(sideComponent);
+    foreWrapper.setVisible(!myTabs.isHideTopPanel());
+    tab.setForeSideComponent(foreWrapper);
 
     tab.setTabLabelActions((ActionGroup)myActionManager.getAction(VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);
 
@@ -1049,6 +1058,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private boolean rebuildCommonActions() {
     boolean hasToolbarContent = false;
     for (Map.Entry<GridImpl, TopToolbarWrappers> entry : myCommonActionsPlaceholder.entrySet()) {
+      Wrapper forePlaceHolder = entry.getValue().fore;
       Wrapper leftPlaceHolder = entry.getValue().left;
       Wrapper middlePlaceHolder = entry.getValue().middle;
       Wrapper rightPlaceHolder = entry.getValue().right;
@@ -1061,8 +1071,18 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       }
       final AnAction[] leftActions = leftGroupToBuild.getChildren(null);
 
-      if (topToolbarContextActions == null || !Arrays.equals(leftActions, topToolbarContextActions.left)) {
-        setActions(leftPlaceHolder, myTopLeftActionsPlace, leftGroupToBuild);
+      if (topToolbarContextActions == null ||
+          !Arrays.equals(leftActions, topToolbarContextActions.left) ||
+          (myTopLeftActionsBefore && forePlaceHolder.getTargetComponent() == forePlaceHolder) ||
+          (!myTopLeftActionsBefore && leftPlaceHolder.getTargetComponent() == leftPlaceHolder)) {
+        if (myTopLeftActionsBefore) {
+          leftPlaceHolder.setContent(null);
+          setActions(forePlaceHolder, myTopLeftActionsPlace, leftGroupToBuild);
+        }
+        else {
+          forePlaceHolder.setContent(null);
+          setActions(leftPlaceHolder, myTopLeftActionsPlace, leftGroupToBuild);
+        }
       }
 
       DefaultActionGroup middleGroupToBuild = new DefaultActionGroup();
@@ -1420,9 +1440,10 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   public void updateActionsImmediately() {
     Collection<TopToolbarWrappers> values = myCommonActionsPlaceholder.values();
+    Stream<Wrapper> foreWrappers = values.stream().map(it -> it.fore);
     Stream<Wrapper> leftWrappers = values.stream().map(it -> it.left);
     Stream<Wrapper> rightWrappers = values.stream().map(it -> it.right);
-    StreamEx.of(myToolbar).append(leftWrappers).append(rightWrappers)
+    StreamEx.of(myToolbar).append(foreWrappers).append(leftWrappers).append(rightWrappers)
       .map(Wrapper::getTargetComponent)
       .select(ActionToolbar.class)
       .distinct()
@@ -2105,11 +2126,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   private static final class TopToolbarWrappers {
+    public final Wrapper fore;
     public final Wrapper left;
     public final Wrapper middle;
     public final Wrapper right;
 
-    private TopToolbarWrappers(Wrapper left, Wrapper middle, Wrapper right) {
+    private TopToolbarWrappers(Wrapper fore, Wrapper left, Wrapper middle, Wrapper right) {
+      this.fore = fore;
       this.left = left;
       this.middle = middle;
       this.right = right;

@@ -32,7 +32,7 @@ public abstract class SingleRowLayoutStrategy {
 
   public abstract int getLengthIncrement(final Dimension dimension);
 
-  public abstract int getAdditionalLength();
+  public abstract int getAdditionalLength(SingleRowPassInfo data);
 
   public abstract int getMinPosition(final Rectangle bounds);
 
@@ -106,13 +106,14 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getToFitLength(final SingleRowPassInfo data) {
+      int length = myTabs.getWidth() - data.insets.left - data.insets.right;
       JComponent hToolbar = data.hToolbar.get();
-      int length;
       if (hToolbar != null) {
-        length = myTabs.getWidth() - data.insets.left - data.insets.right - hToolbar.getMinimumSize().width;
+        length -= hToolbar.getMinimumSize().width;
       }
-      else {
-        length = myTabs.getWidth() - data.insets.left - data.insets.right;
+      JComponent hfToolbar = data.hfToolbar.get();
+      if (hfToolbar != null) {
+        length -= hfToolbar.getPreferredSize().width;
       }
       length += getStartPosition(data);
       int entryPointWidth = myTabs.getEntryPointPreferredSize().width;
@@ -128,8 +129,9 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     @Override
-    public int getAdditionalLength() {
-      return 0;
+    public int getAdditionalLength(SingleRowPassInfo data) {
+      JComponent hfToolbar = data.hfToolbar.get();
+      return hfToolbar == null ? 0 : hfToolbar.getPreferredSize().width;
     }
 
     @Override
@@ -158,7 +160,8 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public int getStartPosition(final SingleRowPassInfo data) {
-      return data.insets.left;
+      JComponent hfToolbar = data.hfToolbar.get();
+      return hfToolbar == null ? data.insets.left : data.insets.left + hfToolbar.getPreferredSize().width;
     }
 
     @Override
@@ -229,11 +232,19 @@ public abstract class SingleRowLayoutStrategy {
         final int vSeparatorWidth = vToolbarWidth > 0 ? myTabs.separatorWidth : 0;
         final int x = vToolbarWidth > 0 ? vToolbarWidth + vSeparatorWidth : 0;
         JComponent hToolbar = data.hToolbar.get();
+        JComponent hfToolbar = data.hfToolbar.get();
         final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && hToolbar != null ? hToolbar.getPreferredSize().height : 0;
         final int y = myTabs.getHeaderFitSize().height +
                       (Math.max(hToolbarHeight, 0));
 
         JComponent comp = data.component.get();
+        if (hfToolbar != null && myTabs.isSideComponentOnTabs()) {
+          final Rectangle rec = new Rectangle(data.insets.left, data.insets.top,
+                                              hfToolbar.getPreferredSize().width,
+                                              // reduce toolbar height by 1 pixel to properly paint the border between tabs and the content
+                                              myTabs.getHeaderFitSize().height - JBUI.scale(1));
+          myTabs.layout(hfToolbar, rec);
+        }
         if (hToolbar != null) {
           final Rectangle compBounds = myTabs.layoutComp(x, y, comp, 0, 0);
           if (myTabs.isSideComponentOnTabs()) {
@@ -373,7 +384,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     @Override
-    public int getAdditionalLength() {
+    public int getAdditionalLength(SingleRowPassInfo data) {
       return ExperimentalUI.isNewUI() ? JBUI.scale(32) : 0;
     }
 

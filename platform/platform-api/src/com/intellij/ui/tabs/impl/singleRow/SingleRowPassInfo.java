@@ -24,6 +24,7 @@ public final class SingleRowPassInfo extends LayoutPassInfo {
   final int entryPointAxisSize;
   final int moreRectAxisSize;
 
+  public WeakReference<JComponent> hfToolbar;
   public WeakReference<JComponent> hToolbar;
   public WeakReference<JComponent> vToolbar;
 
