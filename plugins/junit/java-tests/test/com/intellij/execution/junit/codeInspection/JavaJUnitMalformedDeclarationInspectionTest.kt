@@ -884,6 +884,35 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     """.trimIndent())
     }
 
+    fun `test no highlighting on inherited parameter resolver`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        import org.junit.jupiter.api.extension.*;
+        import org.junit.jupiter.api.Test;
+        
+        class MyParameterResolver implements ParameterResolver {
+            @Override
+            public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+                return true;
+            }
+
+            @Override
+            public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+                return new Integer(0);
+            }
+        }        
+        
+        @ExtendWith(MyParameterResolver.class)
+        abstract class BaseTest { }
+        
+        class SubBaseTest extends BaseTest { }
+        
+        public class SomeTest extends SubBaseTest {
+            @Test
+            void someTest(Integer parameter) { }
+        }
+      """.trimIndent(), fileName = "SomeTest")
+    }
+
     /* Malformed Datapoint(s) */
     fun `test malformed dataPoint no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
