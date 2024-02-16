@@ -205,7 +205,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       myTree.addTreeSelectionListener(e -> previewNode(myProject, e.getNewLeadSelectionPath(), usagePreviewPanel, previewTitle));
       
       JPanel previewPanel = new JPanel(new BorderLayout());
-      previewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+      if (ExperimentalUI.isNewUI()) previewPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
       previewPanel.add(previewTitle, BorderLayout.NORTH);
       previewPanel.add(usagePreviewPanel, BorderLayout.CENTER);
 
