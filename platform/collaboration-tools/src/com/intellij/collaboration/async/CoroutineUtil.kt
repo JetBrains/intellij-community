@@ -165,16 +165,34 @@ private class DerivedStateFlow<T>(
   }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> {
-  return transformLatest { newValue ->
+fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(mapper)
+
+@ApiStatus.Experimental
+private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
+  flow {
     coroutineScope {
-      emit(mapper(newValue))
-      awaitCancellation()
+      var lastScope: CoroutineScope? = null
+      val breaker = MutableSharedFlow<R>(1)
+      try {
+        launchNow {
+          collect { state ->
+            lastScope?.cancelAndJoinSilently()
+            lastScope = childScope().apply {
+              launchNow {
+                val result = mapper(state)
+                breaker.emit(result)
+              }
+            }
+          }
+        }
+        breaker.collect(this@flow)
+      }
+      finally {
+        lastScope?.cancelAndJoinSilently()
+      }
     }
   }
-}
 
 /**
  * Performs mapping only if the source value is not null
@@ -191,39 +209,11 @@ fun <T, R> Flow<T?>.mapNullableLatest(mapper: suspend (T) -> R): Flow<R?> = mapL
   if (it != null) mapper(it) else null
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @ApiStatus.Experimental
-fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> {
-  return transformLatest { newValue ->
-    if (newValue == null) {
-      emit(null)
-    }
-    else coroutineScope {
-      emit(mapper(newValue))
-      awaitCancellation()
-    }
-  }
-}
+fun <T, R> Flow<T?>.mapNullableScoped(mapper: CoroutineScope.(T) -> R): Flow<R?> = mapScoped2 { if (it == null) null else mapper(it) }
 
 @ApiStatus.Experimental
-suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit) {
-  coroutineScope {
-    var lastJob: Job? = null
-    try {
-      collect { state ->
-        lastJob?.cancelAndJoinSilently()
-        lastJob = launchNow {
-          block(state)
-        }
-      }
-    }
-    finally {
-      withContext(NonCancellable) {
-        lastJob?.cancelAndJoinSilently()
-      }
-    }
-  }
-}
+suspend fun <T> Flow<T>.collectScoped(block: suspend CoroutineScope.(T) -> Unit) = mapScoped2(block).collect()
 
 @ApiStatus.Experimental
 suspend fun <T> Flow<T>.collectWithPrevious(initial: T, collector: suspend (prev: T, current: T) -> Unit) {
