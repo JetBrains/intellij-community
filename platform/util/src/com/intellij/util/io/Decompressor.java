@@ -339,76 +339,80 @@ public abstract class Decompressor {
           continue;
         }
 
-        if (myPathPrefix != null) {
-          entry = mapPathPrefix(entry, myPathPrefix);
-          if (entry == null) continue;
-        }
-
-        Path outputFile = entryFile(outputDir, entry.name);
-        switch (entry.type) {
-          case DIR:
-            NioFiles.createDirectories(outputFile);
-            break;
-
-          case FILE:
-            if (myOverwrite || !Files.exists(outputFile)) {
-              InputStream inputStream = openEntryStream(entry);
-              try {
-                NioFiles.createDirectories(outputFile.getParent());
-                try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
-                  StreamUtil.copy(inputStream, outputStream);
-                }
-                if (entry.mode != 0) {
-                  setAttributes(entry.mode, outputFile);
-                }
-              }
-              finally {
-                closeEntryStream(inputStream);
-              }
-            }
-            break;
-
-          case SYMLINK:
-            if (entry.linkTarget == null || entry.linkTarget.isEmpty()) {
-              throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
-            }
-
-            String target = entry.linkTarget;
-
-            switch (myEscapingSymlinkPolicy) {
-              case DISALLOW: {
-                verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
-                break;
-              }
-              case RELATIVIZE_ABSOLUTE: {
-                if (OSAgnosticPathUtil.isAbsolute(target)) {
-                  target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
-                }
-                break;
-              }
-            }
-
-            if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
-              try {
-                Path outputTarget = Paths.get(target);
-                NioFiles.createDirectories(outputFile.getParent());
-                Files.deleteIfExists(outputFile);
-                Files.createSymbolicLink(outputFile, outputTarget);
-              }
-              catch (InvalidPathException e) {
-                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
-              }
-            }
-            break;
-        }
-
-        if (myPostProcessor != null) {
-          myPostProcessor.accept(entry, outputFile);
-        }
+        processEntry(outputDir, entry);
       }
     }
     finally {
       closeStream();
+    }
+  }
+
+  private void processEntry(@NotNull Path outputDir, Entry entry) throws IOException {
+    if (myPathPrefix != null) {
+      entry = mapPathPrefix(entry, myPathPrefix);
+      if (entry == null) return;
+    }
+
+    Path outputFile = entryFile(outputDir, entry.name);
+    switch (entry.type) {
+      case DIR:
+        NioFiles.createDirectories(outputFile);
+        break;
+
+      case FILE:
+        if (myOverwrite || !Files.exists(outputFile)) {
+          InputStream inputStream = openEntryStream(entry);
+          try {
+            NioFiles.createDirectories(outputFile.getParent());
+            try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
+              StreamUtil.copy(inputStream, outputStream);
+            }
+            if (entry.mode != 0) {
+              setAttributes(entry.mode, outputFile);
+            }
+          }
+          finally {
+            closeEntryStream(inputStream);
+          }
+        }
+        break;
+
+      case SYMLINK:
+        if (entry.linkTarget == null || entry.linkTarget.isEmpty()) {
+          throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
+        }
+
+        String target = entry.linkTarget;
+
+        switch (myEscapingSymlinkPolicy) {
+          case DISALLOW: {
+            verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+            break;
+          }
+          case RELATIVIZE_ABSOLUTE: {
+            if (OSAgnosticPathUtil.isAbsolute(target)) {
+              target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
+            }
+            break;
+          }
+        }
+
+        if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
+          try {
+            Path outputTarget = Paths.get(target);
+            NioFiles.createDirectories(outputFile.getParent());
+            Files.deleteIfExists(outputFile);
+            Files.createSymbolicLink(outputFile, outputTarget);
+          }
+          catch (InvalidPathException e) {
+            throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
+          }
+        }
+        break;
+    }
+
+    if (myPostProcessor != null) {
+      myPostProcessor.accept(entry, outputFile);
     }
   }
 
