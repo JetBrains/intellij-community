@@ -23,34 +23,31 @@ class TerminalOutputModelTest {
 
   @Test
   fun `trim top block output when editor max capacity reached`() {
-    val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
-    val maxCapacityKB = 1
-    setNewTerminalOutputCapacityKB(maxCapacityKB)
-    val (_, firstBlockOutput) = outputManager.createBlock(
-      "echo foo", TestCommandOutput("foo".repeat(200), listOf(HighlightingInfo(1, 2, green()))))
-    val (_, secondBlockOutput) = outputManager.createBlock(
-      "echo bar", TestCommandOutput("bar".repeat(200), listOf(HighlightingInfo(1, 2, green()))))
-    val expectedOutput = (firstBlockOutput.text + "\n" + secondBlockOutput.text).takeLast(maxCapacityKB * 1024)
-    Assert.assertEquals(expectedOutput, outputManager.document.text)
+    checkOutputTrimming(listOf(TestCommandOutput("foo".repeat(200), listOf(HighlightingInfo(1, 2, green()))),
+                               TestCommandOutput("bar".repeat(200), listOf(HighlightingInfo(1, 2, green())))))
   }
 
   @Test
   fun `remove several top blocks when trimming output`() {
+    val firstCharHighlighting = listOf(HighlightingInfo(0, 1, green()))
+    val outputs = (0..1000).map {
+      TestCommandOutput(it.toString(), firstCharHighlighting)
+    } + (0..100).map {
+      TestCommandOutput(it.toString().repeat(100), firstCharHighlighting)
+    } + TestCommandOutput("a".repeat(2000), firstCharHighlighting)
+
+    checkOutputTrimming(outputs, 1)
+  }
+
+  private fun checkOutputTrimming(outputs: List<TestCommandOutput>, outputCapacityKB: Int = 1) {
     val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
-    val maxCapacityKB = 1
-    setNewTerminalOutputCapacityKB(maxCapacityKB)
-
-    val outputs = (0 .. 1000).map {
-      TestCommandOutput(it.toString(), listOf(HighlightingInfo(0, 1, green())))
-    } + (0 .. 100).map {
-      TestCommandOutput(it.toString().repeat(100), listOf(HighlightingInfo(0, 1, green())))
-    } + listOf(TestCommandOutput("a".repeat(maxCapacityKB), listOf(HighlightingInfo(0, 1, green()))))
-
+    setNewTerminalOutputCapacityKB(outputCapacityKB)
+    Assert.assertEquals("", outputManager.document.text)
     val addedOutputs = mutableListOf<TestCommandOutput>()
     for (output in outputs) {
       outputManager.createBlock(null, output)
       addedOutputs.add(output)
-      val expectedOutput = addedOutputs.joinToString("\n") { it.text }.takeLast(maxCapacityKB * 1024).removePrefix("\n")
+      val expectedOutput = addedOutputs.joinToString("\n") { it.text }.takeLast(outputCapacityKB * 1024).removePrefix("\n")
       Assert.assertEquals(expectedOutput, outputManager.document.text)
     }
   }
