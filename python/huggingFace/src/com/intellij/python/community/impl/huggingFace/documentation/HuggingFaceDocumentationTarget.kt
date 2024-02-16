@@ -74,14 +74,14 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
 
       if (entityDataApiContent == null) { return@asyncDocumentation DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.could.not.fetch")) }
       val modelCardContent = fetchOrRetrieveModelCard(entityDataApiContent, entityId, entityKind)
+      val project = myElement.project
 
-      val builder = HuggingFaceHtmlBuilder(
+      val htmlContent = HuggingFaceHtmlBuilder(
+        project,
         entityDataApiContent,
         modelCardContent,
         entityKind
-      )
-
-      val htmlContent = builder.build()
+      ).build()
       DocumentationResult.documentation(html = htmlContent)
     } catch (e: Exception) {
       e.printStackTrace()

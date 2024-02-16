@@ -4,6 +4,7 @@ package com.intellij.python.community.impl.huggingFace.documentation
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
@@ -17,6 +18,7 @@ private val LIKES_ICON = HtmlChunk.tag("icon").attr(".src", "com.intellij.python
 
 
 class HuggingFaceHtmlBuilder(
+  private val project: Project,
   private val modelDataApiContent: HuggingFaceEntityBasicApiData,
   private val modelCardContent: String,
   private val entityKind: HuggingFaceEntityKind
@@ -25,7 +27,7 @@ class HuggingFaceHtmlBuilder(
   suspend fun build(): String {
     val headChunk = HtmlChunk.tag("head").child(HuggingFaceQuickDocStyles.styleChunk())
     val cardHeaderChunk = generateCardHeader(modelDataApiContent)
-    val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter().convert(modelCardContent) }
+    val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter(project).convert(modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
       .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)

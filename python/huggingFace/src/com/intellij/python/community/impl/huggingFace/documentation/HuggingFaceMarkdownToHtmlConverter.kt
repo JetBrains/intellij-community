@@ -6,9 +6,21 @@ import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.Nls
 import com.intellij.markdown.utils.convertMarkdownToHtml
+import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.PythonLanguage
 
 
-class HuggingFaceMarkdownToHtmlConverter {
+/**
+ * Justification for the complexity of the HuggingFaceMarkdownToHtmlConverter class:
+ * it is driven by the unique rendering needs within the quickDoc display context.
+ * Specifically, pre-tags were enhanced with a subclass to ensure they adapt to the quickDoc window width.
+ * Similarly, processing for blockquotes and tables was customized to  respect the display area's constraints.
+ * These adjustments guarantee that the converted HTML content seamlessly fits within the quickDoc environment,
+ * enhancing readability and user interaction.
+ */
+class HuggingFaceMarkdownToHtmlConverter(private val project: Project) {
   @NlsSafe
   @Nls
   fun convert(markdown: String): String {
@@ -27,7 +39,7 @@ class HuggingFaceMarkdownToHtmlConverter {
     )
     val htmlWithFixedQuotes = addDivToBlockquotes(htmlWithFixedPTags)
     val htmlFixedTables = formatTablesInHtml(htmlWithFixedQuotes)
-    return wrapPythonCodeInContainer(htmlFixedTables)
+    return wrapCodeBlocks(htmlFixedTables, project)
   }
 
   private fun addDivToBlockquotes(html: String): String {
@@ -51,18 +63,46 @@ class HuggingFaceMarkdownToHtmlConverter {
     }
   }
 
-  private fun wrapPythonCodeInContainer(html: String): String {
+  private fun wrapCodeBlocks(html: String, project: Project?): String {
     val codePattern = Regex("(?s)<pre class=word-break-pre-class><code([^>]*)>(.*?)</code></pre>")
     var modifiedHtml = html
 
     codePattern.findAll(html).forEach { matchResult ->
       val originalCodeHtml = matchResult.value
       val codeAttributes = matchResult.groups[1]?.value ?: ""
-      val extractedCode = matchResult.groups[2]?.value ?: ""
-      val wrappedCodeHtml = "<div class=\"${HuggingFaceQuickDocStyles.CODE_DIV_CLASS}\"><code$codeAttributes><pre class=\"${HuggingFaceQuickDocStyles.HF_PRE_TAG_CLASS}\">$extractedCode</pre></code></div>"
+      var rawCode = matchResult.groups[2]?.value ?: ""
+      rawCode = decodeHtmlEntities(rawCode)
+
+      val language = when {
+        "language-python" in codeAttributes -> PythonLanguage.INSTANCE
+        else -> null  // it seems like only python is crucial
+      }
+
+      val highlightedHtmlChunk = if (language != null) {
+        HtmlSyntaxHighlighter.colorHtmlChunk(project, language, rawCode).toString()
+      } else {
+        StringUtil.escapeXmlEntities(rawCode)
+      }
+
+      val wrappedCodeHtml = """
+          <div class="${HuggingFaceQuickDocStyles.CODE_DIV_CLASS}">
+            <code$codeAttributes>
+              <pre class="${HuggingFaceQuickDocStyles.HF_PRE_TAG_CLASS}">$highlightedHtmlChunk</pre>
+            </code>
+          </div>
+        """.trimIndent()
       modifiedHtml = modifiedHtml.replace(originalCodeHtml, wrappedCodeHtml)
     }
 
     return modifiedHtml
+  }
+
+  private fun decodeHtmlEntities(text: String): String {
+    return text
+      .replace("&lt;", "<")
+      .replace("&gt;", ">")
+      .replace("&quot;", "\"")
+      .replace("&apos;", "'")
+      .replace("&amp;", "&")
   }
 }

@@ -54,7 +54,7 @@ class HuggingFaceReadmeCleaner(
       .replace(Regex("<summary>.*</summary>"), "")
   }
 
-  private fun cleanupImages() {
+  private fun cleanupImages() {  // See PY-70539
     // Pattern to match ![alt text](url)
     val markdownImgPattern = Regex(MD_IMG_PATTERN)
     markdown = markdownImgPattern.replace(markdown) { matchResult ->
