@@ -14,9 +14,11 @@ import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager.appendBasicMappings
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @Deprecated("Use Path for localPath")
+@ApiStatus.ScheduledForRemoval
 fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvironmentRequest,
                                            project: Project,
                                            sdk: Sdk?,
