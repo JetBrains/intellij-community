@@ -15,14 +15,13 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     public static final KotlinWithJdkAndRuntimeLightProjectDescriptor JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR =
       new KotlinWithJdkAndRuntimeLightProjectDescriptor(
         List.of(TestKotlinArtifacts.getKotlinStdlib()),
-        List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources())
+        List.of(TestKotlinArtifacts.getKotlinStdlibSources())
       );
 
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor JDK8_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR =
       new KotlinWithJdkAndRuntimeLightProjectDescriptor(
         List.of(TestKotlinArtifacts.getKotlinStdlib(), TestKotlinArtifacts.getKotlinStdlibJdk8()),
         List.of(TestKotlinArtifacts.getKotlinStdlibSources(),
-                TestKotlinArtifacts.getKotlinStdlibCommonSources(),
                 TestKotlinArtifacts.getKotlinStdlibJdk8Sources())
       );
  
@@ -32,19 +31,19 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR_WITH_TESTS =
       new KotlinWithJdkAndRuntimeLightProjectDescriptor(
         List.of(TestKotlinArtifacts.getKotlinStdlib(), TestKotlinArtifacts.getKotlinTest()),
-        List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources())
+        List.of(TestKotlinArtifacts.getKotlinStdlibSources())
       );
  
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor
       JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR_WITH_SCRIPT_RUNTIME = new KotlinWithJdkAndRuntimeLightProjectDescriptor(
       List.of(TestKotlinArtifacts.getKotlinStdlib(), TestKotlinArtifacts.getKotlinScriptRuntime()),
-      List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources())
+      List.of(TestKotlinArtifacts.getKotlinStdlibSources())
     );
  
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR_WITH_REFLECT =
       new KotlinWithJdkAndRuntimeLightProjectDescriptor(
         List.of(TestKotlinArtifacts.getKotlinStdlib(), TestKotlinArtifacts.getKotlinReflect()),
-        List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources())
+        List.of(TestKotlinArtifacts.getKotlinStdlibSources())
       );
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor FULL_JDK_DESCRIPTOR =
             new KotlinWithJdkAndRuntimeLightProjectDescriptor() {
@@ -57,7 +56,7 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     public KotlinWithJdkAndRuntimeLightProjectDescriptor() {
         super(
                 List.of(TestKotlinArtifacts.getKotlinStdlib()),
-                List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources()),
+                List.of(TestKotlinArtifacts.getKotlinStdlibSources()),
                 null
         );
     }
@@ -98,7 +97,7 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     private static final KotlinWithJdkAndRuntimeLightProjectDescriptor JDK10_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR =
             new KotlinWithJdkAndRuntimeLightProjectDescriptor(
                     List.of(TestKotlinArtifacts.getKotlinStdlib(), TestKotlinArtifacts.getKotlinStdlibJdk8()),
-                    List.of(TestKotlinArtifacts.getKotlinStdlibSources(), TestKotlinArtifacts.getKotlinStdlibCommonSources(),
+                    List.of(TestKotlinArtifacts.getKotlinStdlibSources(),
                             TestKotlinArtifacts.getKotlinStdlibJdk8Sources()),
                     LanguageLevel.JDK_10
             );
