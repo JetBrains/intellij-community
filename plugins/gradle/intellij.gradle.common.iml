@@ -44,5 +44,6 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
   </component>
 </module>
