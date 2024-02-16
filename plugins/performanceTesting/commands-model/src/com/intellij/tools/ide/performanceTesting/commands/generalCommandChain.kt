@@ -475,6 +475,7 @@ fun <T : CommandChain> T.recordStateCollectors(): T = apply {
   addCommand("${CMD_PREFIX}recordStateCollectors")
 }
 
+@Suppress("unused")
 fun <T : CommandChain> T.flushFusEvents(): T = apply {
   addCommand("${CMD_PREFIX}flushFusEvents")
 }
@@ -726,8 +727,8 @@ fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T = apply 
   executeEditorAction("GotoDeclaration expectedOpenedFile $expectedOpenedFile")
 }
 
-fun <T : CommandChain> T.collectAllFiles(extension: String): T = apply {
-  addCommand("${CMD_PREFIX}collectAllFiles $extension")
+fun <T : CommandChain> T.collectAllFiles(extension: String, fromSources: Boolean = true): T = apply {
+  addCommand("${CMD_PREFIX}collectAllFiles $extension $fromSources")
 }
 
 fun <T : CommandChain> T.recompileFiles(relativeFilePaths: List<String>): T = apply {
@@ -801,6 +802,7 @@ fun <T : CommandChain> T.waitForCodeAnalysisFinished(): T = apply {
   addCommand("${CMD_PREFIX}waitForFinishedCodeAnalysis")
 }
 
+@Suppress("unused")
 fun <T : CommandChain> T.checkChatBotResponse(textToCheck: String): T = apply {
   addCommand("${CMD_PREFIX}checkResponseContains ${textToCheck}")
 }
@@ -939,6 +941,7 @@ fun <T : CommandChain> T.startNewLine(): T = apply {
   executeEditorAction("EditorStartNewLine")
 }
 
+@Suppress("unused")
 fun <T : CommandChain> T.captureMemoryMetrics(suffix: String): T = apply {
   addCommand("${CMD_PREFIX}captureMemoryMetrics $suffix")
 }
