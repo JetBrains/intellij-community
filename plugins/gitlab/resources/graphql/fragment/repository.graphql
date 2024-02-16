@@ -1,3 +1,0 @@
-fragment repository on Repository {
-  rootRef
-}
