@@ -1,5 +1,4 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import numpy as np
 import polars as pl
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
@@ -161,6 +160,7 @@ def analyze_numeric_column(column, col_name):
     column = column.fill_nan(None).drop_nulls()
     unique_values = column.n_unique()
     if unique_values > ColumnVisualisationUtils.NUM_BINS:
+        import numpy as np
         format_function = int if column.is_integer() else lambda x: round(x, 1)
         counts, bin_edges = np.histogram(column, bins=ColumnVisualisationUtils.NUM_BINS)
         # so the long dash will be correctly viewed both on Mac and Windows
