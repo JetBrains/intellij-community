@@ -45,10 +45,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.inputStream
-import kotlin.io.path.isDirectory
-import kotlin.io.path.isRegularFile
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
 
@@ -135,6 +132,10 @@ private fun checkIdeHome(workIdeHome: String): String? {
 
   if (!Files.isDirectory(homeDir)) {
     return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.directory")
+  }
+
+  if (homeDir.listDirectoryEntries().isEmpty()) {
+    return null
   }
 
   val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt" // NON-NLS
