@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
+import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.IndexingRequestToken
 import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
@@ -125,22 +126,33 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
   @Throws(ProcessCanceledException::class)
   private fun indexOneFileOfJob(indexingJob: IndexingJob) {
     val startTime = System.nanoTime()
-    val contentLoadingTime: Long
-    val loadingResult: ContentLoadingResult
 
     val fileIndexingJob = indexingJob.myQueueOfFiles.poll()
     if (fileIndexingJob == null) {
       return
     }
+    indexingJob.setLocationBeingIndexed(fileIndexingJob)
 
     val file = fileIndexingJob.file
     // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
     val indexingStamp = indexingRequest.getFileIndexingStamp(file)
+
+    if (file.isDirectory) {
+      LOG.info("Directory was passed for indexing unexpectedly: " + file.path)
+    }
+
     try {
-      // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
-      loadingResult = loadContent(file, indexingJob.myContentLoader)
+      val (applier, contentLoadingTime, length) = getApplierForFileIndexUpdateOrDelete(indexingStamp, startTime, file, indexingJob)
+      try {
+        writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime)
+      }
+      catch (t: Throwable) {
+        releaseFile(file) // the file is "locked" in the applier constructor
+        throw t
+      }
     }
     catch (e: ProcessCanceledException) {
+      // Push back the file.
       indexingJob.myQueueOfFiles.add(fileIndexingJob)
       throw e
     }
@@ -151,26 +163,30 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
         statistics.addTooLargeForIndexingFile(e.file)
       }
       FileBasedIndexImpl.LOG.info("File: " + e.file.url + " is too large for indexing")
-      return
     }
     catch (e: FailedToLoadContentException) {
       indexingJob.oneMoreFileProcessed()
       logFailedToLoadContentException(e)
-      return
     }
-    finally {
-      contentLoadingTime = System.nanoTime() - startTime
+    catch (e: Throwable) {
+      indexingJob.oneMoreFileProcessed()
+      FileBasedIndexImpl.LOG.error("""
+  Error while indexing ${file.presentableUrl}
+  To reindex this file IDEA has to be restarted
+  """.trimIndent(), e)
     }
+  }
+
+  private fun getApplierForFileIndexUpdateOrDelete(indexingStamp: FileIndexingStamp, startTime: Long, file: VirtualFile,
+                                                   indexingJob: IndexingJob): Triple<FileIndexesValuesApplier, Long, Long> {
+    // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
+    val loadingResult: ContentLoadingResult = loadContent(file, indexingJob.myContentLoader)
+    val contentLoadingTime: Long = System.nanoTime() - startTime
 
     val fileContent = loadingResult.cachedFileContent
     val length = loadingResult.fileLength
 
-    if (file.isDirectory) {
-      LOG.info("Directory was passed for indexing unexpectedly: " + file.path)
-    }
-
     try {
-      indexingJob.setLocationBeingIndexed(fileIndexingJob)
       val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
       val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
       val applier = ReadAction
@@ -183,26 +199,11 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
         .executeSynchronously()
       myIndexingSuccessfulCount.incrementAndGet()
       if (LOG.isTraceEnabled && myIndexingSuccessfulCount.toLong() % 10000 == 0L) {
-        LOG.trace(
-          "File indexing attempts = " + myIndexingAttemptCount.toLong() + ", indexed file count = " + myIndexingSuccessfulCount.toLong())
+        LOG.trace("File indexing attempts = ${myIndexingAttemptCount.get()}, indexed file count = ${myIndexingSuccessfulCount.get()}")
       }
-
-      writeIndexesForFile(indexingJob, fileIndexingJob, applier, startTime, length, contentLoadingTime)
+      return Triple(applier, contentLoadingTime, length)
     }
-    catch (e: ProcessCanceledException) {
-      // Push back the file.
-      indexingJob.myQueueOfFiles.add(fileIndexingJob)
-      releaseFile(file)
-      throw e
-    }
-    catch (e: Throwable) {
-      indexingJob.oneMoreFileProcessed()
-      releaseFile(file)
-      FileBasedIndexImpl.LOG.error("""
-  Error while indexing ${file.presentableUrl}
-  To reindex this file IDEA has to be restarted
-  """.trimIndent(), e)
-    } finally {
+    finally {
       signalThatFileIsUnloaded(length)
     }
   }
