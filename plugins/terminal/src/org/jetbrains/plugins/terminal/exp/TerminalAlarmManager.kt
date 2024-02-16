@@ -17,7 +17,7 @@ class TerminalAlarmManager(private val settings: JBTerminalSystemSettingsProvide
     commandIsRunning = true
   }
 
-  override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
+  override fun commandFinished(event: CommandFinishedEvent) {
     commandIsRunning = false
   }
 }
