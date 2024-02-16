@@ -11,10 +11,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.asSafely
 import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -136,7 +138,7 @@ val Sdk.interpreterType: InterpreterType
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> PIPENV
     isPoetry -> POETRY
-    PythonSdkUtil.isConda(this) || this.sdkFlavor is CondaEnvSdkFlavor -> CONDAVENV
+    PythonSdkUtil.isConda(this) || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
     PythonSdkUtil.isVirtualEnv(this) -> VIRTUALENV
     else -> REGULAR
   }
