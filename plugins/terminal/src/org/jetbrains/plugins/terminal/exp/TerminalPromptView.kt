@@ -14,13 +14,17 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.ListLayout
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
 import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -58,7 +62,15 @@ class TerminalPromptView(
                                          TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
                                          TerminalUi.promptBottomInset,
                                          TerminalUi.blockRightInset + TerminalUi.cornerToBlockInset)
-    val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+    val outerBorder = object : CustomLineBorder(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(),
+                                                JBInsets(1, 0, 0, 0)) {
+      override fun paintBorder(c: Component, g: Graphics?, x: Int, y: Int, w: Int, h: Int) {
+        // Paint the border only if the component is not on the top
+        if (c.y != 0) {
+          super.paintBorder(c, g, x, y, w, h)
+        }
+      }
+    }
     component.border = JBUI.Borders.compound(outerBorder, innerBorder)
 
     component.background = TerminalUi.terminalBackground
