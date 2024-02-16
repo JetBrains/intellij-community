@@ -45,14 +45,7 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     return true;
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getProject();
-    assert project != null;
-
-    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
-    assert selection != null;
-
+  public static void showHistoryForSelection(VcsSelection selection, Project project) {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
     assert file != null;
 
@@ -74,6 +67,17 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
                                                                      Math.max(selectionStart, selectionEnd),
                                                                      selection.getDialogTitle());
     dialog.show();
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final Project project = event.getProject();
+    assert project != null;
+
+    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
+    assert selection != null;
+
+    showHistoryForSelection(selection, project);
   }
 
   @Override
