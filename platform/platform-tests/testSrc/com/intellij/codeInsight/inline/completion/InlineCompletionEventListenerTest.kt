@@ -247,7 +247,8 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       variantSwitched(0, 1, true),
       show(1, "yes", 0),
       EventAsserter.insert(),
-      hide(FinishType.SELECTED, true)
+      hide(FinishType.SELECTED, true),
+      EventAsserter.afterInsert(),
     )
   }
 
@@ -647,6 +648,8 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
       }
 
       fun insert() = assert<InlineCompletionEventType.Insert> { }
+
+      fun afterInsert() = assert<InlineCompletionEventType.AfterInsert> { }
 
       fun variantSwitched(
         fromVariantIndex: Int,
