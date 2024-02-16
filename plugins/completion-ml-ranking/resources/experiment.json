@@ -225,8 +225,8 @@
     },
     {
       "id": "objectivec",
-      "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 8, 12 ],
+      "experimentBucketsCount": 2,
+      "includeGroups": [ 7, 22 ],
       "shouldLogElementFeatures": false
     },
     {
