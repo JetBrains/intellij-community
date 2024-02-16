@@ -12,5 +12,8 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core" />
+    <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.ext" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
   </component>
 </module>
