@@ -64,7 +64,9 @@ internal class ModuleBridgeImpl(
   }
 
   override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTime {
-    event.getChanges(ModuleEntity::class.java).asSequence().filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
+    val moduleEntityChanges = event.getChanges(ModuleEntity::class.java)
+    moduleEntityChanges.forEach {
+      if (it !is EntityChange.Removed<ModuleEntity>) return@forEach
       if (it.entity.symbolicId != moduleEntityId) return@forEach
 
       if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
