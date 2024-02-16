@@ -17,16 +17,18 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.bindApplicationTitle
 import com.intellij.ui.util.preferredHeight
+import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalControllerListener
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
-import java.awt.BorderLayout
 import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.*
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.math.max
 
 class BlockTerminalView(
   private val project: Project,
@@ -77,6 +79,12 @@ class BlockTerminalView(
         if (promptView.component.preferredHeight != promptView.component.height) {
           component.revalidate()
         }
+      }
+    })
+
+    outputView.controller.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        component.revalidate()
       }
     })
 
@@ -167,7 +175,7 @@ class BlockTerminalView(
 
     with(component) {
       removeAll()
-      add(view.component, BorderLayout.CENTER)
+      add(view.component)
       revalidate()
     }
   }
@@ -175,8 +183,8 @@ class BlockTerminalView(
   private fun installPromptAndOutput() {
     with(component) {
       removeAll()
-      add(outputView.component, BorderLayout.CENTER)
-      add(promptView.component, BorderLayout.SOUTH)
+      add(outputView.component)
+      add(promptView.component)
       revalidate()
     }
   }
@@ -231,7 +239,6 @@ class BlockTerminalView(
   private inner class BlockTerminalPanel : JPanel(), DataProvider {
     init {
       background = TerminalUi.terminalBackground
-      layout = BorderLayout()
     }
 
     override fun getData(dataId: String): Any? {
@@ -245,6 +252,38 @@ class BlockTerminalView(
         BlockTerminalSession.DATA_KEY.name -> session
         else -> null
       }
+    }
+
+    override fun doLayout() {
+      val rect = bounds
+      JBInsets.removeFrom(rect, insets)
+      when (componentCount) {
+        1 -> {
+          // it is an alternate buffer editor
+          val component = getComponent(0)
+          component.bounds = rect
+        }
+        2 -> layoutPromptAndOutput(rect)
+        else -> error("Maximum 2 components expected")
+      }
+    }
+
+    /**
+     * Place output at the top and the prompt (bottomComponent) below it.
+     * Always honor the preferred height of the prompt, decrease the height of the output in favor of prompt.
+     * So, initially, when output is empty, the prompt is on the top.
+     * But when there is a long output, the prompt is stick to the bottom.
+     */
+    private fun layoutPromptAndOutput(rect: Rectangle) {
+      val topComponent = getComponent(0)
+      val bottomComponent = getComponent(1)
+      val topPrefSize = if (topComponent.isVisible) topComponent.preferredSize else Dimension()
+      val bottomPrefSize = if (bottomComponent.isVisible) bottomComponent.preferredSize else Dimension()
+
+      val bottomHeight = max(rect.height - topPrefSize.height, bottomPrefSize.height)
+      val topHeight = rect.height - bottomHeight
+      topComponent.bounds = Rectangle(rect.x, rect.y, rect.width, topHeight)
+      bottomComponent.bounds = Rectangle(rect.x, rect.y + topHeight, rect.width, bottomHeight)
     }
   }
 }
