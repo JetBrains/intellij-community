@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.filter
 
+import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.ExtraSteppingFilter
 import com.intellij.debugger.engine.SuspendContext
 import com.intellij.debugger.settings.DebuggerSettings
@@ -9,29 +10,31 @@ import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.Location
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
-import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
-import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
-import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
-import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
 
 class KotlinExtraSteppingFilter : ExtraSteppingFilter {
     override fun isApplicable(context: SuspendContext?): Boolean {
         val debugProcess = context?.debugProcess ?: return false
         val location = context.frameProxy?.safeLocation() ?: return false
-        val defaultStratum = location.declaringType()?.defaultStratum() ?: return false
 
-        if (defaultStratum != "Kotlin") {
+        if (!location.isInKotlinSources()) {
             return false
+        }
+
+        if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !isOneLineMethod(location)) {
+            return true
+        }
+
+        //stepped out from suspend function
+        val method = location.safeMethod()
+        if (method != null && isSuspendMethod(method) && location.safeLineNumber() < 0) {
+            return true
         }
 
         return runReadAction {
             val positionManager = KotlinPositionManager(debugProcess)
             val sourcePosition = positionManager.safeGetSourcePosition(location) ?: return@runReadAction false
-
-            if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !isOneLineMethod(location)) {
-                return@runReadAction true
-            }
 
             val settings = DebuggerSettings.getInstance()
             if (settings.TRACING_FILTERS_ENABLED) {

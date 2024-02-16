@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("DebuggerUtil")
 
@@ -209,8 +209,11 @@ fun isInSuspendMethod(location: Location): Boolean {
     val method = location.method()
     val signature = method.signature()
     val continuationAsmType = continuationAsmType()
-    return signature.contains(continuationAsmType.toString()) ||
-          (method.name() == INVOKE_SUSPEND_METHOD_NAME && signature == INVOKE_SUSPEND_SIGNATURE)
+    return signature.contains(continuationAsmType.toString()) || isSuspendMethod(method)
+}
+
+fun isSuspendMethod(method: Method): Boolean {
+    return method.name() == INVOKE_SUSPEND_METHOD_NAME && method.signature() == INVOKE_SUSPEND_SIGNATURE
 }
 
 private fun continuationAsmType() =
