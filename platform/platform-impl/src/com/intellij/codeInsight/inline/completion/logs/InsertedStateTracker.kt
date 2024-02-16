@@ -34,6 +34,7 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
       delay(duration.toMillis())
       if (!editor.isDisposed) {
         val resultText = readAction { if (rangeMarker.isValid) rangeMarker.document.getText(rangeMarker.textRange) else "" }
+        rangeMarker.dispose()
         val commonPrefixLength = resultText.commonPrefixWith(suggestion).length
         val commonSuffixLength = resultText.commonSuffixWith(suggestion).length
         val editDistance = EditDistance.optimalAlignment(suggestion, resultText, true)

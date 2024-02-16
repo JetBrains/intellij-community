@@ -46,6 +46,7 @@ sealed class InlineCompletionEventType {
   /**
    * This event is triggered after a user inserts a non-empty inline completion variant.
    */
+  @ApiStatus.Experimental
   data object AfterInsert : InlineCompletionEventType()
 
   /**
@@ -140,7 +141,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
       is InlineCompletionEventType.Change -> onChange(event)
       is InlineCompletionEventType.Invalidated -> onInvalidated(event)
       is InlineCompletionEventType.Insert -> onInsert(event)
-      is InlineCompletionEventType.AfterInsert -> afterInsert(event)
+      is InlineCompletionEventType.AfterInsert -> onAfterInsert(event)
       is InlineCompletionEventType.Hide -> onHide(event)
       is InlineCompletionEventType.Completion -> onCompletion(event)
       is InlineCompletionEventType.Empty -> onEmpty(event)
@@ -156,7 +157,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
   fun onChange(event: InlineCompletionEventType.Change) {}
   fun onInvalidated(event: InlineCompletionEventType.Invalidated) {}
   fun onInsert(event: InlineCompletionEventType.Insert) {}
-  fun afterInsert(event: InlineCompletionEventType.AfterInsert) {}
+  fun onAfterInsert(event: InlineCompletionEventType.AfterInsert) {}
   fun onHide(event: InlineCompletionEventType.Hide) {}
   fun onCompletion(event: InlineCompletionEventType.Completion) {}
   fun onEmpty(event: InlineCompletionEventType.Empty) {}

@@ -141,8 +141,8 @@ class InlineCompletionHandler(
     editor.document.insertString(offset, textToInsert)
     editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
     PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
-    traceBlocking(InlineCompletionEventType.AfterInsert)
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
+    traceBlocking(InlineCompletionEventType.AfterInsert)
 
     LookupManager.getActiveLookup(editor)?.hideLookup(false) //TODO: remove this
   }

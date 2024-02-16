@@ -190,7 +190,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       showTracker?.selected()
     }
 
-    override fun afterInsert(event: InlineCompletionEventType.AfterInsert) {
+    override fun onAfterInsert(event: InlineCompletionEventType.AfterInsert) {
       showTracker?.inserted()
       showTracker = null
     }
