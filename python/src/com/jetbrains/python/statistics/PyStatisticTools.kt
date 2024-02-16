@@ -43,6 +43,7 @@ fun getPythonSpecificInfo(module: Module) =
  */
 fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   val data = ArrayList<EventPair<*>>()
+  if (!PythonSdkUtil.isPythonSdk(sdk)) return data
   data.add(EventFields.Language.with(PythonLanguage.INSTANCE))
   data.add(PYTHON_VERSION.with(sdk.version.toPythonVersion()))
   data.add(PYTHON_IMPLEMENTATION.with(sdk.pythonImplementation))

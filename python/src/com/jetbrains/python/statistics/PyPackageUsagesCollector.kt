@@ -12,6 +12,7 @@ import com.jetbrains.python.packaging.PyPIPackageCache
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.PythonSdkUtil
 
 /**
  * Reports usages of packages and versions
@@ -43,6 +44,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
     val pypiPackages = PyPIPackageCache.getInstance()
     for (module in project.modules) {
       val sdk = module.getSdk() ?: continue
+      if (!PythonSdkUtil.isPythonSdk(sdk)) continue
       val usageData = getPythonSpecificInfo(sdk)
       PyPackageManager.getInstance(sdk).getRequirements(module).orEmpty()
         .filter { pypiPackages.containsPackage(it.name) }
@@ -63,6 +65,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
     val pypiPackages = PyPIPackageCache.getInstance()
     for (module in project.modules) {
       val sdk = module.getSdk() ?: continue
+      if (!PythonSdkUtil.isPythonSdk(sdk)) continue
       if (sdk.sdkAdditionalData !is PythonSdkAdditionalData) continue
       val executionType = sdk.executionType
       val interpreterType = sdk.interpreterType
