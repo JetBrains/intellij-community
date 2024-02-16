@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.ToolbarSettings;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
@@ -310,7 +311,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   public static class ExecutorAction extends AnAction implements DumbAware,
-                                                                 ActionRemotePermissionRequirements.RunAccess {
+                                                                 ActionRemotePermissionRequirements.RunAccess,
+                                                                 ActionIdProvider {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
 
     protected final Executor myExecutor;
@@ -502,6 +504,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
 
       return RunCurrentFileActionStatus.createEnabled(myExecutor.getStartActionText(psiFile.getName()), icon, runnableConfigs);
+    }
+
+    @Override
+    public String getId() {
+      return myExecutor.getId();
     }
 
     @ApiStatus.Internal
