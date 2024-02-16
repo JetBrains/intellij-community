@@ -461,7 +461,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   /**
    * @deprecated moved to {@link TestApplicationKt#clearEncodingManagerDocumentQueue(Application)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void clearEncodingManagerDocumentQueue() {
     TestApplicationKt.clearEncodingManagerDocumentQueue(ApplicationManager.getApplication());
   }

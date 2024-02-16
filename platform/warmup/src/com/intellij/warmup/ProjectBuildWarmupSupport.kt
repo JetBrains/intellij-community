@@ -31,6 +31,7 @@ interface ProjectBuildWarmupSupport {
    * @return build status message
    */
   @Deprecated("Return type is not descriptive enough")
+  @ApiStatus.ScheduledForRemoval
   suspend fun buildProject(rebuild: Boolean = false): String
 
   /**

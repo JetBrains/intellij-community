@@ -203,7 +203,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @deprecated use other methods from this class to obtain the information you need to get from {@link SourceFolder} instance, e.g. 
    * {@link #getContainingSourceRootType} or {@link #isInGeneratedSources}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresReadLock
   default @Nullable SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return null;

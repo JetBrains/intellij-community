@@ -243,7 +243,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void showConsole();
 
   /**
@@ -264,7 +264,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated Use {@link com.intellij.vcs.console.VcsConsoleTabService}
    */
   @RequiresEdt
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract boolean isConsoleVisible();
 
   /**

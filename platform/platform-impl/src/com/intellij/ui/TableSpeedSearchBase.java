@@ -33,7 +33,7 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
    * Also, note that non-deprecated constructor is side effect free, and you should call for {@link SpeedSearchBase#setupListeners()}
    * method to enable speed search
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TableSpeedSearchBase(Comp component) {
     super(component);
   }

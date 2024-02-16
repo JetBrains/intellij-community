@@ -55,6 +55,7 @@ public final class PlatformUtils {
    * @deprecated Code With Me Guest is an old name for JetBrains Client
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";

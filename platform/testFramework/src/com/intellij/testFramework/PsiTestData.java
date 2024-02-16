@@ -15,7 +15,7 @@ import java.io.IOException;
 /**
  * @deprecated use other to configure test data files
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class PsiTestData implements JDOMExternalizable {
   public String TEXT_FILE = "";
   private String myText;

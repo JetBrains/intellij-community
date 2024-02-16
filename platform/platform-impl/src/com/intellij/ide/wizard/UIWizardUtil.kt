@@ -39,6 +39,7 @@ val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.ge
     "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
   )
 )
+@ApiStatus.ScheduledForRemoval
 fun <T1, T2> T1.chain(f1: (T1) -> T2): NewProjectWizardStep
   where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep {
   return nextStep(f1)
@@ -78,6 +79,7 @@ fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): N
     "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
   )
 )
+@ApiStatus.ScheduledForRemoval
 fun <T1, T2, T3, T4, T5> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4, f4: (T4) -> T5): NewProjectWizardStep
   where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep, T4 : NewProjectWizardStep, T5 : NewProjectWizardStep {
   return nextStep(f1)
@@ -87,6 +89,7 @@ fun <T1, T2, T3, T4, T5> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4
 }
 
 @Deprecated("Use NewProjectWizardChainStep.nextStep instead")
+@ApiStatus.ScheduledForRemoval
 fun stepSequence(first: NewProjectWizardStep, vararg rest: NewProjectWizardStep): NewProjectWizardStep {
   val steps = listOf(first) + rest
   return object : AbstractNewProjectWizardStep(first) {

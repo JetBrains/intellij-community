@@ -13,7 +13,7 @@ public interface ErrorQuickFixProvider extends PossiblyDumbAware {
   /**
    * @deprecated implement {@link #registerErrorQuickFix(PsiErrorElement, HighlightInfo.Builder)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo highlightInfo) {
 
   }

@@ -164,7 +164,7 @@ public class PsiElement2UsageTargetAdapter
   /**
    * @deprecated use {@link #convert(PsiElement[], boolean)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
     return convert(psiElements, true);
   }

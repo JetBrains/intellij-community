@@ -143,7 +143,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable Collection<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,

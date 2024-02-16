@@ -1033,7 +1033,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
   /**
    * @deprecated do not use
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setRootImmediately(@NotNull Object object) {
     Node node = new Node(object, LeafState.NEVER);
     node.insertPath(new CachingTreePath(object));

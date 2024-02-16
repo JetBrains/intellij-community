@@ -402,7 +402,7 @@ public class ConfigurationContext {
     return myRuntimeConfiguration == null || myRuntimeConfiguration.getType() == type;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
       myPreferredProducers = PreferredProducerFind.findPreferredProducers(myLocation, this, true);

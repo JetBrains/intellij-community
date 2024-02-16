@@ -11,7 +11,7 @@ public class BooleanTableCellEditor extends DefaultCellEditor {
    * @deprecated there seems to be no need to change default options, use {@link #BooleanTableCellEditor()} instead.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public BooleanTableCellEditor(boolean isStringEditor) {
     super(new JCheckBox());
     myStringEditor = isStringEditor;

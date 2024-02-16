@@ -50,7 +50,7 @@ public class ImportSpecBuilder {
   /**
    * @deprecated see {@link ImportSpecBuilder#forceWhenUptodate(boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public ImportSpecBuilder forceWhenUptodate() {
     return forceWhenUptodate(true);
   }

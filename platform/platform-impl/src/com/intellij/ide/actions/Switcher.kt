@@ -66,6 +66,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -90,6 +91,7 @@ object Switcher : BaseSwitcherAction(null) {
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
+  @ApiStatus.ScheduledForRemoval
   @JvmStatic
   fun createAndShowSwitcher(e: AnActionEvent, title: @Nls String, pinned: Boolean, vFiles: Array<VirtualFile?>?): SwitcherPanel? {
     val project = e.project ?: return null

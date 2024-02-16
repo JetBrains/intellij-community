@@ -30,7 +30,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
    * @param file PsiFile to apply the action to (unused)
    * @deprecated use {@link IntentionWrapper#IntentionWrapper(IntentionAction)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public IntentionWrapper(@NotNull IntentionAction action, @NotNull PsiFile file) {
     myAction = action;
   }

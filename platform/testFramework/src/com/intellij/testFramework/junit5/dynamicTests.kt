@@ -2,6 +2,7 @@
 @file:JvmName("DynamicTests")
 package com.intellij.testFramework.junit5
 
+import org.jetbrains.annotations.ApiStatus
 import org.junit.AssumptionViolatedException
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.assertAll
@@ -33,6 +34,7 @@ fun List<NamedFailure>.asDynamicTests(problemMessage: String, threshold: Int = 5
 }
 
 @Deprecated("Use a simplified version 'asDynamicTests(String, Int)' instead")
+@ApiStatus.ScheduledForRemoval
 @JvmOverloads
 fun List<NamedFailure>.asDynamicTests(testNameForSuccess: String, testNameForManyFailures: String, threshold: Int = 50): List<DynamicTest> {
   if (isEmpty()) {

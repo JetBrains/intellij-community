@@ -238,7 +238,7 @@ public final class IntentionDescriptionPanel {
   /**
    * @deprecated Used in an older version of intention configuration UI.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void init(int preferredWidth) {
   }
 }

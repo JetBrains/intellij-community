@@ -28,7 +28,7 @@ public final class OpenSourceUtil {
    * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation
    * @deprecated check instanceof/null on the caller side
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean canNavigate(@Nullable Object object) {
     return object instanceof Navigatable && ((Navigatable)object).canNavigate();
   }
@@ -37,7 +37,7 @@ public final class OpenSourceUtil {
    * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation to source
    * @deprecated check instanceof/null on the caller side
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean canNavigateToSource(@Nullable Object object) {
     return object instanceof Navigatable && ((Navigatable)object).canNavigateToSource();
   }

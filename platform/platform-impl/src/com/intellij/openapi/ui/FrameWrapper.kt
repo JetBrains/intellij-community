@@ -37,6 +37,7 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -91,6 +92,7 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   protected fun getStatusBar(): StatusBar? = statusBar
 
   @Deprecated("Pass project to constructor")
+  @ApiStatus.ScheduledForRemoval
   fun setProject(@Suppress("UNUSED_PARAMETER") project: Project) {
   }
 

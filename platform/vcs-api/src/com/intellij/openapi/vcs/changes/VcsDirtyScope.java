@@ -73,13 +73,13 @@ public abstract class VcsDirtyScope {
   /**
    * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void iterate(Processor<? super FilePath> iterator);
 
   /**
    * @deprecated Prefer not walking the VFS, or using {@link com.intellij.openapi.vcs.impl.VcsRootIterator} directly if necessary.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract void iterateExistingInsideScope(Processor<? super VirtualFile> vf);
 
   public abstract boolean isEmpty();

@@ -64,6 +64,7 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
     @JvmStatic
     @Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt.showInlaySettings",
                 ReplaceWith("showInlaySettings(project, language, selector)"))
+    @ApiStatus.ScheduledForRemoval
     fun showSettingsDialogForLanguage(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
       if (showInlaySettings(project, language, selector)) {
         return

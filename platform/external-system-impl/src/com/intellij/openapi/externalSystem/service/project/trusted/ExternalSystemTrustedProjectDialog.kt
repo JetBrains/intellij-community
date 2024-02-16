@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object ExternalSystemTrustedProjectDialog {
@@ -47,6 +48,7 @@ object ExternalSystemTrustedProjectDialog {
   @JvmStatic
   @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Use async method instead")
+  @ApiStatus.ScheduledForRemoval
   fun confirmLinkingUntrustedProject(
     project: Project,
     systemId: ProjectSystemId,
