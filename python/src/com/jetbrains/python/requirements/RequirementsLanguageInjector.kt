@@ -3,6 +3,8 @@ package com.jetbrains.python.requirements
 
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiLanguageInjectionHost
@@ -11,6 +13,10 @@ import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.TomlTable
 
 class RequirementsLanguageInjector : MultiHostInjector {
+
+  companion object {
+    private val LOGGER: Logger = logger<RequirementsLanguageInjector>()
+  }
   override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
     val parent = (context as TomlLiteral).parent.parent
     if (parent is TomlKeyValue) {
@@ -28,6 +34,7 @@ class RequirementsLanguageInjector : MultiHostInjector {
       return mutableListOf(TomlLiteral::class.java)
     }
     catch (exception: NoClassDefFoundError) {
+      LOGGER.warn("Failed to inject Requirements language into TomlLiteral")
       return mutableListOf()
     }
   }
