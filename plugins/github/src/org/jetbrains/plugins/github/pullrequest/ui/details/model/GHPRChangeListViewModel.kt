@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.values
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDetails
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
+import com.intellij.collaboration.ui.codereview.details.model.*
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.actionSystem.DataKey
@@ -40,6 +37,7 @@ internal class GHPRChangeListViewModelImpl(
   override val project: Project,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  changes: CodeReviewChangesContainer,
   changeList: CodeReviewChangeList
 ) : GHPRChangeListViewModel, CodeReviewChangeListViewModelBase(parentCs, changeList) {
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
@@ -47,12 +45,12 @@ internal class GHPRChangeListViewModelImpl(
   private val _isUpdating = MutableStateFlow(false)
   override val isUpdating: StateFlow<Boolean> = _isUpdating.asStateFlow()
 
-  override val isOnLatest: Boolean = changeList.commitSha == null
+  override val isOnLatest: Boolean = changeList.commitSha == null || changes.commits.size == 1
 
   private val viewedStateData = dataProvider.viewedStateData
 
   override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
-    if (changeList.commitSha == null) {
+    if (isOnLatest) {
       createDetailsByChangeFlow().stateIn(cs, SharingStarted.Eagerly, emptyMap())
     }
     else {
