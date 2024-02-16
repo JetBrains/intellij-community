@@ -55,6 +55,10 @@ public class JavaEmptyModuleInfoFileInspectionTest extends LightMultiFileTestCas
     doTest("test/module-info.java");
   }
 
+  public void testInvalidLibraryName() {
+    doTest("test/module-info.java");
+  }
+
   public void testMultiModuleProject() {
     doTest("src/module-info.java", "main/");
   }
@@ -76,6 +80,6 @@ public class JavaEmptyModuleInfoFileInspectionTest extends LightMultiFileTestCas
       myFixture.launchAction(intention);
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     }
-    myFixture.checkResultByFile(getTestName(false) + "/after/" + dir + path);
+    myFixture.checkResultByFile(getTestName(true) + "/after/" + dir + path);
   }
 }

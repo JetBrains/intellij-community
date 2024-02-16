@@ -99,7 +99,7 @@ public final class JavaModuleGraphUtil {
         return CachedValuesManager.getCachedValue(rootPsi, () -> {
           VirtualFile _root = rootPsi.getVirtualFile();
           LightJavaModule result = LightJavaModule.create(rootPsi.getManager(), _root, LightJavaModule.moduleName(_root));
-            return Result.create(result, _root, ProjectRootModificationTracker.getInstance(rootPsi.getProject()));
+          return Result.create(result, _root, ProjectRootModificationTracker.getInstance(rootPsi.getProject()));
         });
       }
     }
@@ -249,6 +249,7 @@ public final class JavaModuleGraphUtil {
                                       @Nullable DependencyScope scope) {
     if (to.getName().equals(JAVA_BASE)) return false;
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
+    if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
     if (alreadyContainsRequires(from, to.getName())) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +

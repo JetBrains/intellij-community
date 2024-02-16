@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -254,7 +254,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
 
   public static @Nullable String claimedModuleName(@NotNull VirtualFile manifest) {
     try (InputStream stream = manifest.getInputStream()) {
-      return new Manifest(stream).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
+      return new Manifest(stream).getMainAttributes().getValue(AUTO_MODULE_NAME);
     }
     catch (IOException e) {
       Logger.getInstance(LightJavaModule.class).warn(manifest.getPath(), e);
@@ -274,7 +274,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
    * <p>Implements a name deriving for automatic modules as described in ModuleFinder.of(Path...) method documentation.</p>
    *
    * <p>Please note that the result may not be a valid module name when the source contains a sequence that starts with a digit
-   * (e.g. "org.7gnomes..."). One may validate the result with {@link PsiNameHelper#isValidModuleName}.</p>
+   * (e.g. "org.7gnomes...", "module.for...."). One may validate the result with {@link PsiNameHelper#isValidModuleName}.</p>
    *
    * @param name a .jar file name without the extension
    * @see <a href="http://docs.oracle.com/javase/9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
