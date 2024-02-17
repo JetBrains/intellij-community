@@ -14,6 +14,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
@@ -106,7 +108,11 @@ public class GitHubAlertBlockRenderer(
                     LocalContentColor provides
                         styling.titleTextStyle.color.takeOrElse { LocalContentColor.current },
                 ) {
-                    Text(block.javaClass.simpleName, style = styling.titleTextStyle)
+                    Text(
+                        text = block.javaClass.simpleName,
+                        style = styling.titleTextStyle,
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                    )
                 }
             }
             CompositionLocalProvider(

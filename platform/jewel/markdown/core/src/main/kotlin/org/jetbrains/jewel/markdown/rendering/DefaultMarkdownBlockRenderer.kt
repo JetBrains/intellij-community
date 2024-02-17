@@ -290,7 +290,8 @@ public open class DefaultMarkdownBlockRenderer(
                     Text(
                         text = "$number${block.delimiter}",
                         style = styling.numberStyle,
-                        modifier = Modifier.widthIn(min = styling.numberMinWidth),
+                        modifier = Modifier.widthIn(min = styling.numberMinWidth)
+                            .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                         textAlign = styling.numberTextAlign,
                     )
 
@@ -317,7 +318,11 @@ public open class DefaultMarkdownBlockRenderer(
         ) {
             for (item in block.items) {
                 Row {
-                    Text(text = styling.bullet.toString(), style = styling.bulletStyle)
+                    Text(
+                        text = styling.bullet.toString(),
+                        style = styling.bulletStyle,
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                    )
 
                     Spacer(Modifier.width(styling.bulletContentGap))
 
@@ -348,10 +353,14 @@ public open class DefaultMarkdownBlockRenderer(
             isScrollable = styling.scrollsHorizontally,
             Modifier.background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
-                .pointerHoverIcon(PointerIcon.Default, true)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
-            Text(block.content, style = styling.textStyle, modifier = Modifier.padding(styling.padding))
+            Text(
+                text = block.content,
+                style = styling.textStyle,
+                modifier = Modifier.padding(styling.padding)
+                    .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+            )
         }
     }
 
@@ -361,7 +370,6 @@ public open class DefaultMarkdownBlockRenderer(
             isScrollable = styling.scrollsHorizontally,
             Modifier.background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
-                .pointerHoverIcon(PointerIcon.Default, true)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
             Column(Modifier.padding(styling.padding)) {
@@ -375,7 +383,11 @@ public open class DefaultMarkdownBlockRenderer(
                     )
                 }
 
-                Text(block.content, style = styling.textStyle)
+                Text(
+                    text = block.content,
+                    style = styling.textStyle,
+                    modifier = Modifier.pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                )
 
                 if (block.mimeType != null && styling.infoPosition.verticalAlignment == Alignment.Bottom) {
                     FencedBlockInfo(
@@ -407,7 +419,9 @@ public open class DefaultMarkdownBlockRenderer(
         // TODO implement image rendering support (will require image loading)
         Text(
             "⚠️ Images are not supported yet",
-            Modifier.border(1.dp, Color.Red).padding(horizontal = 8.dp, vertical = 4.dp),
+            Modifier.border(1.dp, Color.Red)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
             color = Color.Red,
         )
     }
