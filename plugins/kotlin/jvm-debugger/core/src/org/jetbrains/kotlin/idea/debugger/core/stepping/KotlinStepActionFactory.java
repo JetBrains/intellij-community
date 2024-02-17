@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.stepping;
 
 import com.intellij.debugger.engine.*;
@@ -8,10 +8,13 @@ import com.intellij.debugger.statistics.Engine;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.statistics.SteppingAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle;
+
+import static org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil.isInSuspendMethod;
 
 public final class KotlinStepActionFactory {
     private final static Logger LOG = Logger.getInstance(KotlinStepActionFactory.class);
@@ -32,7 +35,12 @@ public final class KotlinStepActionFactory {
 
             @Override
             public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
-                LightOrRealThreadInfo lightFilter = CoroutineJobInfo.extractJobInfo(suspendContext);
+                LightOrRealThreadInfo lightFilter = null;
+                // for now use coroutine filtering only in suspend functions
+                Location location = suspendContext.getLocation();
+                if (location != null && isInSuspendMethod(location)) {
+                    lightFilter = CoroutineJobInfo.extractJobInfo(suspendContext);
+                }
                 return lightFilter != null ? lightFilter : super.getThreadFilterFromContext(suspendContext);
             }
 
