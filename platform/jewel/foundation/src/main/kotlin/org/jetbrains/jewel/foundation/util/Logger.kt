@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.foundation.utils
+package org.jetbrains.jewel.foundation.util
 
 internal enum class LogLevel(val color: String) {
     Trace("\u001b[38;5;33m"),

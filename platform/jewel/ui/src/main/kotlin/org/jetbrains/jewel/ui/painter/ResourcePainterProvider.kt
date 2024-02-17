@@ -15,7 +15,7 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.loadXmlImageVector
 import androidx.compose.ui.unit.Density
-import org.jetbrains.jewel.ui.util.inDebugMode
+import org.jetbrains.jewel.foundation.util.inDebugMode
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
 import java.io.IOException
@@ -126,7 +126,7 @@ public class ResourcePainterProvider(
             when (extension) {
                 "svg" -> createSvgPainter(chosenScope, url)
                 "xml" -> createVectorDrawablePainter(chosenScope, url)
-                else -> createBitmapPainter(chosenScope, url)
+                else -> createBitmapPainter(url)
             }
 
         for (hint in scope.acceptedHints) {
@@ -166,7 +166,7 @@ public class ResourcePainterProvider(
                     loadSvgPainter(inputStream, scope)
                 }
             },
-            rememberAction = { remember(url, scope.density) { it } },
+            paintAction = { it },
         )
 
     private fun patchSvg(
@@ -205,12 +205,11 @@ public class ResourcePainterProvider(
             loadingAction = { resourceUrl ->
                 resourceUrl.openStream().use { loadXmlImageVector(InputSource(it), scope) }
             },
-            rememberAction = { rememberVectorPainter(it) },
+            paintAction = { rememberVectorPainter(it) },
         )
 
     @Composable
     private fun createBitmapPainter(
-        scope: Scope,
         url: URL,
     ) = tryLoadingResource(
         url = url,
@@ -218,14 +217,14 @@ public class ResourcePainterProvider(
             val bitmap = resourceUrl.openStream().use { loadImageBitmap(it) }
             BitmapPainter(bitmap)
         },
-        rememberAction = { remember(url, scope.density) { it } },
+        paintAction = { it },
     )
 
     @Composable
     private fun <T> tryLoadingResource(
         url: URL,
         loadingAction: (URL) -> T,
-        rememberAction: @Composable (T) -> Painter,
+        paintAction: @Composable (T) -> Painter,
     ): Painter {
         @Suppress("TooGenericExceptionCaught") // This is a last-resort fallback when icons fail to load
         val painter =
@@ -241,7 +240,7 @@ public class ResourcePainterProvider(
                 return errorPainter
             }
 
-        return rememberAction(painter)
+        return paintAction(painter)
     }
 
     private class Scope(

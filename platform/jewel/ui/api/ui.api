@@ -2378,10 +2378,6 @@ public final class org/jetbrains/jewel/ui/util/ColorExtensionsKt {
 	public static final fun toRgbaHexString-8_81llA (J)Ljava/lang/String;
 }
 
-public final class org/jetbrains/jewel/ui/util/DebugKt {
-	public static final fun getInDebugMode ()Z
-}
-
 public final class org/jetbrains/jewel/ui/util/ModifierExtensionsKt {
 	public static final fun thenIf (Landroidx/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 }

@@ -8,13 +8,13 @@ import com.intellij.ui.NewUI
 import org.jetbrains.jewel.bridge.theme.isNewUiTheme
 import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.foundation.util.inDebugMode
 import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PalettePainterHintsProvider
 import org.jetbrains.jewel.ui.painter.hints.ColorBasedPaletteReplacement
 import org.jetbrains.jewel.ui.painter.hints.Dark
 import org.jetbrains.jewel.ui.painter.hints.HiDpi
 import org.jetbrains.jewel.ui.painter.hints.KeyBasedPaletteReplacement
-import org.jetbrains.jewel.ui.util.inDebugMode
 import org.jetbrains.jewel.ui.util.toRgbaHexString
 
 /**

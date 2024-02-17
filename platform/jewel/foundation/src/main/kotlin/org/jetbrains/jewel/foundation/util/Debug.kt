@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.ui.util
+package org.jetbrains.jewel.foundation.util
 
 import org.jetbrains.jewel.foundation.InternalJewelApi
 

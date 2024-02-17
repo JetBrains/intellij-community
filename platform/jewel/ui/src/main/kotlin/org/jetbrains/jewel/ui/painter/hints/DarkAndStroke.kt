@@ -60,6 +60,19 @@ private class StrokeImpl(private val color: Color) : PainterSuffixHint(), Painte
         Color(0xFFF28C35),
         Color(0xFF955AE0),
     )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is StrokeImpl) return false
+
+        if (color != other.color) return false
+
+        return true
+    }
+
+    override fun toString(): String = "Stroke(color=$color)"
+
+    override fun hashCode(): Int = color.hashCode()
 }
 
 /**
