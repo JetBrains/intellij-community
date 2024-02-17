@@ -360,6 +360,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     assertTrue(isApplicable("<caret>xxx package foo; class Foo {}", template));
     assertTrue(isApplicable("record R(<caret>xxx int i) {}", template));
     assertTrue(isApplicable("record R(<caret>xxx) {}", template));
+    assertTrue(isApplicable("record Foo(nu<caret>String bar)", template));
     assertFalse(isApplicable("record R(int <caret>xxx)", template));
   }
 

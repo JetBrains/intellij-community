@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.JavaKeywordCompletion;
@@ -211,16 +211,23 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) {
-        PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiTypeElement && grandParent.getParent() instanceof PsiRecordHeader) {
-          return true;
-        }
-      }
-      return JavaKeywordCompletion.isSuitableForClass(element) ||
+      return isInRecordHeader(element) || 
+             JavaKeywordCompletion.isSuitableForClass(element) ||
              JavaKeywordCompletion.isInsideParameterList(element) ||
              PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
+    }
+
+    private static boolean isInRecordHeader(@NotNull PsiElement element) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+        return false;
+      }
+      PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiTypeElement)) {
+        return false;
+      }
+      PsiElement greatGrandParent = grandParent.getParent();
+      return greatGrandParent instanceof PsiRecordHeader || greatGrandParent instanceof PsiRecordComponent;
     }
   }
 }
