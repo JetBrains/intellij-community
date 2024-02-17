@@ -199,7 +199,6 @@
   <action id="ParameterInfo"/>
   <action id="TodoViewGroupByShowPackages"/>
   <action id="ServiceView.GroupByContributor"/>
-  <action id="ServiceView.GroupByServiceGroups"/>
   <action id="FileStructurePopup">
     <keyboard-shortcut first-keystroke="meta r"/>
   </action>

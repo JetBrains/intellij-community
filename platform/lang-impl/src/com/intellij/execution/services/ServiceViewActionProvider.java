@@ -86,23 +86,21 @@ final class ServiceViewActionProvider {
   ActionToolbar createMasterComponentToolbar(@NotNull JComponent component) {
     DefaultActionGroup group = new DefaultActionGroup();
 
+    AnAction treeActions = ActionManager.getInstance().getAction(SERVICE_VIEW_TREE_TOOLBAR);
+    treeActions.registerCustomShortcutSet(component, null);
+    group.add(treeActions);
+
     if (component instanceof JTree) {
+      group.addSeparator();
       TreeExpander treeExpander = new ServiceViewTreeExpander((JTree)component);
       AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(treeExpander, component);
       group.add(expandAllAction);
       AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, component);
       group.add(collapseAllAction);
-      group.addSeparator();
     }
-
-    group.addSeparator();
-    AnAction treeActions = ActionManager.getInstance().getAction(SERVICE_VIEW_TREE_TOOLBAR);
-    treeActions.registerCustomShortcutSet(component, null);
-    group.add(treeActions);
 
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
     treeActionsToolBar.setTargetComponent(component);
-
     return treeActionsToolBar;
   }
 

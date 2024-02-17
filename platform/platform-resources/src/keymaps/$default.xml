@@ -1246,9 +1246,6 @@
   <action id="ServiceView.GroupByContributor">
     <keyboard-shortcut first-keystroke="control alt T"/>
   </action>
-  <action id="ServiceView.GroupByServiceGroups">
-    <keyboard-shortcut first-keystroke="control alt P"/>
-  </action>
 
   <action id="ToggleFindInSelection">
     <keyboard-shortcut first-keystroke="control alt E"/>

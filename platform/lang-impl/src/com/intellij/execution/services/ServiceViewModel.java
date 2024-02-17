@@ -27,7 +27,7 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
   protected final ServiceModelFilter myModelFilter;
   private final ServiceViewFilter myFilter;
   private final List<ServiceViewModelListener> myListeners = new CopyOnWriteArrayList<>();
-  private volatile boolean myShowGroups;
+  private volatile boolean myShowGroups = true;
   private volatile boolean myShowContributorRoots;
 
   protected ServiceViewModel(@NotNull ServiceModel model, @NotNull ServiceModelFilter modelFilter, @NotNull ServiceViewFilter filter) {
@@ -67,7 +67,6 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
   protected abstract List<? extends ServiceViewItem> doGetRoots();
 
   void saveState(ServiceViewState viewState) {
-    viewState.groupByServiceGroups = myShowGroups;
     viewState.groupByContributor = myShowContributorRoots;
   }
 
@@ -105,17 +104,6 @@ abstract class ServiceViewModel implements Disposable, InvokerSupplier, ServiceM
 
   void removeModelListener(@NotNull ServiceViewModelListener listener) {
     myListeners.remove(listener);
-  }
-
-  boolean isGroupByServiceGroups() {
-    return myShowGroups;
-  }
-
-  void setGroupByServiceGroups(boolean value) {
-    if (myShowGroups != value) {
-      myShowGroups = value;
-      notifyListeners();
-    }
   }
 
   boolean isGroupByContributor() {

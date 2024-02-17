@@ -24,7 +24,6 @@ final class ServiceViewState {
   @Tag("treeState")
   public Element treeStateElement;
 
-  public boolean groupByServiceGroups = true;
   public boolean groupByContributor;
   public boolean isSelected;
 

@@ -1535,23 +1535,19 @@
     </group>
 
     <group id="ServiceViewTreeToolbar">
-      <group id="ServiceView.GroupBy" popup="true" icon="AllIcons.Actions.GroupBy"
+      <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
+             class="com.intellij.execution.services.AddServiceActionGroup">
+      </group>
+      <group id="ServiceView.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy"
              class="com.intellij.ide.actions.NonEmptyActionGroup">
         <action id="ServiceView.GroupByContributor" class="com.intellij.execution.services.GroupByContributorAction"/>
-        <action id="ServiceView.GroupByServiceGroups" class="com.intellij.execution.services.GroupByServiceGroupsAction"/>
         <separator/>
       </group>
-      <group id="ServiceView.Filter" popup="true" icon="AllIcons.General.Filter"
-             class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
              class="com.intellij.execution.services.OpenInNewTabActionGroup">
         <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
         <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
         <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
-      </group>
-      <separator/>
-      <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
-             class="com.intellij.execution.services.AddServiceActionGroup">
       </group>
     </group>
     <group id="ServiceViewItemToolbar">
@@ -1574,14 +1570,14 @@
     <action id="ServiceView.SelectActiveService" class="com.intellij.execution.services.SelectActiveServiceAction"/>
     <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
     <action id="ServiceView.ConfigureServices" class="com.intellij.execution.services.ConfigureServicesAction" icon="AllIcons.General.GearPlain"/>
-    <group id="RunDashboard.GroupBy" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+      <separator key="separator.RunDashboard.GroupBy"/>
       <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
       <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
-      <add-to-group group-id="ServiceView.GroupBy"/>
-    </group>
-    <group id="RunDashboard.Filter" popup="true"
-           class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup">
-      <add-to-group group-id="ServiceView.Filter"/>
+      <separator/>
+      <separator key="separator.RunDashboard.Filter"/>
+      <group id="RunDashboard.Filter" class="com.intellij.execution.dashboard.actions.RunDashboardFilterActionGroup"/>
+      <add-to-group group-id="ServiceView.ViewOptions"/>
     </group>
     <action id="RunDashboard.AddType" class="com.intellij.execution.dashboard.actions.AddRunConfigurationTypeAction">
       <add-to-group group-id="ServiceView.AddService"/>
