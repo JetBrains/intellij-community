@@ -6,6 +6,7 @@ import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
@@ -256,15 +257,24 @@ public class TestAll implements Test {
     List<Class<?>> classes = myTestCaseLoader.getClasses();
 
     // to make it easier to reproduce order-dependent failures locally
-    System.out.println("------");
-    System.out.println("Running tests classes:");
+    final List<Class<?>> testsToRun = new ArrayList<>(classes.size());
     for (Class<?> aClass : classes) {
+      // Eagerly tests initialization may create problems, so we use a simplified version of `getTest`.
+      if (isPotentiallyATest(aClass)) {
+        testsToRun.add(aClass);
+      }
+    }
+    System.out.println("------");
+    System.out.println("Running tests classes (list may contain classes which will not be actually run):");
+    for (Class<?> aClass : testsToRun) {
       System.out.println(aClass.getName());
     }
     System.out.println("------");
+    dumpSuite(testsToRun);
+    System.out.println("------");
 
     int totalTests = classes.size();
-    for (Class<?> aClass : classes) {
+    for (Class<?> aClass : testsToRun) {
       runNextTest(testResult, totalTests, aClass);
       if (testResult.shouldStop()) break;
     }
@@ -287,6 +297,36 @@ public class TestAll implements Test {
     }
 
     TestCaseLoader.sendTestRunResultsToNastradamus();
+  }
+
+  private static void dumpSuite(List<Class<?>> testsToRun) {
+    try {
+      File suite = FileUtil.createTempFile("TestAllSuite", ".java");
+      String suiteName = FileUtil.getNameWithoutExtension(suite);
+      StringBuilder sb = new StringBuilder();
+      sb.append("import org.junit.runner.RunWith;\n");
+      sb.append("import org.junit.runners.Suite;\n");
+      sb.append("@RunWith(Suite.class)\n");
+      sb.append("@Suite.SuiteClasses({\n");
+      for (Class<?> aClass : testsToRun) {
+        String name = aClass.getName();
+        sb.append("  ").append(name.replace('$', '.')).append(".class,\n");
+      }
+      sb.append("})\n");
+      sb.append("public class ").append(suiteName).append(" {}\n");
+      FileUtil.writeToFile(suite, sb.toString());
+      if (TeamCityLogger.isUnderTC) {
+        System.out.println("Generated suite file: '" + suite.getName() + "'. Could be found in 'suites' artifacts directory");
+        System.out.println("##teamcity[publishArtifacts '" + suite.getAbsolutePath() + "=>suites/']");
+      }
+      else {
+        System.out.println("Generated suite file: " + suite.getAbsolutePath());
+      }
+      System.out.println("Place it in `tests/integration/testSrc/` or similar directory");
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Cannot dump test suite for reproducibility", e);
+    }
   }
 
   private boolean hasRealTests() {
@@ -423,6 +463,49 @@ public class TestAll implements Test {
       System.err.println("Failed to load test: " + testCaseClass.getName());
       t.printStackTrace(System.err);
       return null;
+    }
+  }
+
+  private static boolean isPotentiallyATest(@NotNull final Class<?> testCaseClass) {
+    try {
+      if (!Modifier.isPublic(testCaseClass.getModifiers())) {
+        return false;
+      }
+
+      if (safeFindMethod(testCaseClass, "suite") != null && !isPerformanceTestsRun()) {
+        return true;
+      }
+
+      // Maybe JUnit 4 test?
+      if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
+        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
+        if (runEverything) return true;
+
+        final RunWith runWithAnnotation = testCaseClass.getAnnotation(RunWith.class);
+        if (runWithAnnotation != null && Parameterized.class.isAssignableFrom(runWithAnnotation.value())) {
+          if (isPerformanceTestsRun() != isPerformanceTest) {
+            // do not create JUnit4TestAdapter for @Parameterized tests to avoid @Parameters computation - just skip the test
+            return false;
+          }
+        }
+        return true;
+      }
+
+      // Maybe JUnit 3 test?
+      // Simplified version of `junit.framework.TestSuite.addTestsFromTestCase`
+      try {
+        if (TestSuite.getTestConstructor(testCaseClass) == null) return false;
+      }
+      catch (NoSuchMethodException e) {
+        return false;
+      }
+      return Test.class.isAssignableFrom(testCaseClass);
+    }
+    catch (Throwable t) {
+      System.err.println("Failed to load test: " + testCaseClass.getName());
+      t.printStackTrace(System.err);
+      return false;
     }
   }
 
