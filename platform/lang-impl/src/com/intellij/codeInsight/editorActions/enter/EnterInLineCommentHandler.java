@@ -20,8 +20,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public final class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
   private static final String WHITESPACE = " \t";
 
@@ -94,21 +92,15 @@ public final class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter
     if (offset < 1) return Pair.pair(-1, null);
     EditorHighlighter highlighter = editor.getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
+    if (!commenter.getLineCommentTokenTypes().contains(iterator.getTokenType())) return Pair.pair(-1, null);
+
     int startOffset = iterator.getStart();
-    String possiblePrefix = tryToFindCommentPrefix(editor.getDocument(), startOffset, offset, commenter.getLineCommentPrefixes());
+    String commentedLineText = editor.getDocument().getText(new TextRange(startOffset, offset));
+    String possiblePrefix = ContainerUtil.find(commenter.getLineCommentPrefixes(), commentedLineText::contains);
     String prefix = possiblePrefix != null ? possiblePrefix : commenter.getLineCommentPrefix();
-    if (commenter.getLineCommentTokenTypes().contains(iterator.getTokenType())
-        && (startOffset + (prefix == null ? 0 : prefix.length())) <= offset) {
+    if (startOffset + (prefix == null ? 0 : prefix.length()) <= offset) {
       return Pair.pair(startOffset, prefix);
     }
     return Pair.pair(-1, null);
-  }
-
-  private static String tryToFindCommentPrefix(@NotNull Document document,
-                                               int startOffset,
-                                               int endOffset,
-                                               @NotNull List<String> prefixes) {
-    String commentedLineText = document.getText(new TextRange(startOffset, endOffset));
-    return ContainerUtil.find(prefixes, commentedLineText::contains);
   }
 }
