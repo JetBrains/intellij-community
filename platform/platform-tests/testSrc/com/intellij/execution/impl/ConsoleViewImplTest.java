@@ -13,7 +13,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -38,7 +37,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -169,6 +167,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testTypeInEmptyConsole() {
     ConsoleViewImpl console = myConsole;
     console.clear();
+    console.waitAllRequests();
     EditorActionManager.getInstance();
     DataContext dataContext = DataManager.getInstance().getDataContext(console.getComponent());
     TypedAction action = TypedAction.getInstance();
@@ -491,10 +490,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   private void backspace(ConsoleViewImpl consoleView) {
     Editor editor = consoleView.getEditor();
-    Set<Shortcut> backShortcuts = Set.of(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE).getShortcutSet().getShortcuts());
-    List<AnAction> actions = ActionUtil.getActions(consoleView.getEditor().getContentComponent());
-    AnAction handler = ContainerUtil.find(actions,
-      a -> Set.of(a.getShortcutSet().getShortcuts()).equals(backShortcuts));
+    AnAction handler = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE);
     CommandProcessor.getInstance().executeCommand(getProject(),
                                                   () -> EditorTestUtil.executeAction(editor, true, handler),
                                                   "", null, editor.getDocument());
