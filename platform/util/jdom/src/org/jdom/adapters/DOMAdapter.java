@@ -56,7 +56,6 @@ package org.jdom.adapters;
 
 import org.jdom.DocType;
 import org.jdom.JDOMException;
-import org.jdom.output.DOMOutputter;
 import org.w3c.dom.Document;
 
 /**
