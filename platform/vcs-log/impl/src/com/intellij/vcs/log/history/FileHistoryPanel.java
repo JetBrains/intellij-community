@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.vcs.log.UnsupportedHistoryFiltersException;
@@ -77,6 +78,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private final @NotNull JBSplitter myDetailsSplitter;
   private final @NotNull JComponent myToolbar;
 
+  private final @NotNull FrameDiffPreview myFrameDiffPreview;
   private final @NotNull FileHistoryEditorDiffPreview myEditorDiffPreview;
 
   private final @NotNull History myHistory;
@@ -148,7 +150,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     tablePanel.add(myToolbar, BorderLayout.NORTH);
 
     setLayout(new BorderLayout());
-    FrameDiffPreview frameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
+    myFrameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
                                                              0.7f, this) {
       @NotNull
       @Override
@@ -158,7 +160,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         return processor;
       }
     };
-    add(frameDiffPreview.getMainComponent(), BorderLayout.CENTER);
+    add(myFrameDiffPreview.getMainComponent(), BorderLayout.CENTER);
 
     PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.HISTORY_POPUP_ACTION_GROUP, ActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
@@ -166,6 +168,15 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myHistory = VcsLogUiUtil.installNavigationHistory(logUi, myGraphTable);
 
     Disposer.register(disposable, this);
+
+    myGraphTable.resetDefaultFocusTraversalKeys();
+    setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy() {
+      @Override
+      protected @NotNull List<Component> getOrderedComponents() {
+        return ContainerUtil.skipNulls(Arrays.asList(myGraphTable, myFrameDiffPreview.getPreferredFocusedComponent(), myToolbar));
+      }
+    });
   }
 
   private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {
