@@ -11,10 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
-import com.intellij.platform.settings.GetResult
-import com.intellij.platform.settings.RawSettingSerializerDescriptor
-import com.intellij.platform.settings.SettingDescriptor
-import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.*
 import com.intellij.serialization.SerializationException
 import com.intellij.util.xmlb.BeanBinding
 import com.intellij.util.xmlb.NotNullDeserializeBinding
@@ -178,7 +175,12 @@ private fun deserializeAsJdomElement(
   stateElement: Element?,
 ): Element? {
   try {
-    val item = controller?.doGetItem(createSettingDescriptor(key = componentName, pluginId = pluginId)) ?: GetResult.inapplicable()
+    val key = createSettingDescriptor(
+      key = componentName,
+      pluginId = pluginId,
+      tags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName)),
+    )
+    val item = controller?.doGetItem(key) ?: GetResult.inapplicable()
     if (item.isResolved) {
       val xmlData = item.get() ?: return null
       return buildNsUnawareJdom(xmlData)
@@ -201,9 +203,10 @@ private fun <T : Any> getXmlSerializationState(
   var result = mergeInto
   val bindings = rootBinding.bindings!!
 
+  val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
   for ((index, binding) in bindings.withIndex()) {
     val data = getXmlDataFromController(
-      key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}", pluginId = pluginId),
+      key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}", pluginId = pluginId, tags = keyTags),
       controller = controller,
     )
     if (!data.isResolved) {
@@ -246,11 +249,11 @@ private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controll
   return GetResult.inapplicable()
 }
 
-private fun createSettingDescriptor(key: String, pluginId: PluginId): SettingDescriptor<ByteArray> {
+private fun createSettingDescriptor(key: String, pluginId: PluginId, tags: Collection<SettingTag>): SettingDescriptor<ByteArray> {
   return SettingDescriptor(
     key = key,
     pluginId = pluginId,
-    tags = java.util.List.of(),
+    tags = tags,
     serializer = RawSettingSerializerDescriptor,
   )
 }

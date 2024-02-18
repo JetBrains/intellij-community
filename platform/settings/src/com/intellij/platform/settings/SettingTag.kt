@@ -34,6 +34,6 @@ object CacheTag : SettingTag {
   override fun toString(): String = this::class.java.simpleName
 }
 
-class PersistenceStateComponentProperty(val componentName: String) : SettingTag {
-  override fun toString(): String = "PersistenceStateComponentProperty(componentName=$componentName)"
+class PersistenceStateComponentPropertyTag(val componentName: String) : SettingTag {
+  override fun toString(): String = "PersistenceStateComponentPropertyTag(componentName=$componentName)"
 }

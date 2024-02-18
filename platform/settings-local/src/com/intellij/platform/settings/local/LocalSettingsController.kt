@@ -77,7 +77,7 @@ private class LocalSettingsController : DelegatedSettingsController {
         is NonShareableInternalTag -> {
           return internalOperation(storageManager.value.internalMap, componentName)
         }
-        is PersistenceStateComponentProperty -> {
+        is PersistenceStateComponentPropertyTag -> {
           // this tag is expected to be first
           componentName = tag.componentName
         }

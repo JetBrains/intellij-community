@@ -61,10 +61,12 @@ class ControllerBackedStoreTest {
       controller = SettingsControllerMediator(
         controllers = listOf(object : DelegatedSettingsController {
           override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
-            data.get(key.key)?.let {
+            data.get(key.key)?.let { data ->
+              assertThat(key.tags.first { it is PersistenceStateComponentPropertyTag && it.componentName == "TestState" })
               @Suppress("UNCHECKED_CAST")
-              return GetResult.resolved(it as T?)
+              return GetResult.resolved(data as T?)
             }
+
             return GetResult.inapplicable()
           }
 
