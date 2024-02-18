@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.configurationStore
 
 import com.intellij.diagnostic.PluginException
@@ -20,8 +22,6 @@ import com.intellij.util.xmlb.XmlSerializationException
 import com.intellij.util.xmlb.deserializeBeanInto
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
   internal fun <S : Any> createGetSession(
@@ -115,11 +115,7 @@ internal fun <T : Any> deserializeStateWithController(
       LOG.error("State is ${stateClass.name}, merge into is $mergeInto, state element text is ${JDOMUtil.writeElement(stateElement)}")
     }
 
-    val t = MethodHandles.privateLookupIn(stateClass, MethodHandles.lookup())
-      .findConstructor(stateClass, MethodType.methodType(Void.TYPE))
-      .invoke() as com.intellij.openapi.util.JDOMExternalizable
-    t.readExternal(stateElement)
-    return t as T
+    return deserializeJdomExternalizable(stateClass, stateElement)
   }
 
   if (stateElement == null && controller == null) {
@@ -250,11 +246,11 @@ private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controll
   return GetResult.inapplicable()
 }
 
-internal fun createSettingDescriptor(key: String, pluginId: PluginId): SettingDescriptor<ByteArray> {
+private fun createSettingDescriptor(key: String, pluginId: PluginId): SettingDescriptor<ByteArray> {
   return SettingDescriptor(
     key = key,
     pluginId = pluginId,
-    tags = emptyList(),
+    tags = java.util.List.of(),
     serializer = RawSettingSerializerDescriptor,
   )
 }
