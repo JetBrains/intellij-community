@@ -7,7 +7,6 @@ import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.PropertyCollector
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
-import com.intellij.util.xmlb.NotNullDeserializeBinding.LOG
 import com.intellij.util.xmlb.XmlSerializerUtil.getAccessors
 import com.intellij.util.xmlb.annotations.*
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
@@ -27,7 +26,7 @@ private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollec
 fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
 
 @ApiStatus.Internal
-open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding() {
+open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding {
   private val tagName: String
   @JvmField
   var bindings: Array<NestedBinding>? = null
@@ -45,15 +44,16 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
   @Synchronized
   override fun init(originalType: Type, serializer: Serializer) {
     assert(bindings == null)
-    val classAnnotation = beanClass.getAnnotation(
-      Property::class.java)
+    val classAnnotation = beanClass.getAnnotation(Property::class.java)
 
     val accessors = getAccessors(beanClass)
     val result = if (accessors.isEmpty()) NestedBinding.EMPTY_ARRAY else arrayOfNulls(accessors.size)
     for (i in result.indices) {
-      val binding = createBinding(accessors[i],
-                                  serializer,
-                                  classAnnotation?.style ?: Property.Style.OPTION_TAG)
+      val binding = createBinding(
+        accessor = accessors[i],
+        serializer = serializer,
+        propertyStyle = classAnnotation?.style ?: Property.Style.OPTION_TAG,
+      )
       binding.init(originalType, serializer)
       result[i] = binding
     }
@@ -61,7 +61,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
   }
 
   override fun serialize(o: Any, context: Any?, filter: SerializationFilter?): Any? {
-    return serializeInto(o, if (context == null) null else Element(tagName), filter)
+    return serializeInto(o = o, preCreatedElement = if (context == null) null else Element(tagName), filter = filter)
   }
 
   fun serialize(bean: Any, createElementIfEmpty: Boolean, filter: SerializationFilter?): Element? {

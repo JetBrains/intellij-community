@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization.xml
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.serialization.LOG
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.NotNullDeserializeBinding
 import com.intellij.util.xmlb.SerializationFilter
@@ -25,7 +27,7 @@ private val lookup = MethodHandles.lookup()
 private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
 
 @Internal
-class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding() {
+class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding {
   @JvmField
   val serializer: KSerializer<Any>
 
@@ -47,7 +49,7 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding(
 
   private fun encodeToJson(o: Any): String = json.encodeToString(serializer, o)
 
-  fun decodeFromJson(data: String): Any = json.decodeFromString(serializer, data)
+  private fun decodeFromJson(data: String): Any = json.decodeFromString(serializer, data)
 
   override fun isBoundTo(element: Element): Boolean {
     throw UnsupportedOperationException("Only root object is supported")
@@ -60,7 +62,7 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding(
   override fun deserialize(context: Any?, element: Element): Any {
     val cdata = element.content.firstOrNull() as? Text
     if (cdata == null) {
-      LOG.debug("incorrect data (old format?) for $serializer")
+      LOG.debug { "incorrect data (old format?) for $serializer" }
       return json.decodeFromString(serializer, "{}")
     }
     return decodeFromJson(cdata.text)

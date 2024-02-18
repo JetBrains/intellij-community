@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.MutableAccessor;
@@ -11,26 +11,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-final class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding, NestedBinding {
-  private final String myTagName;
-  private final MutableAccessor myAccessor;
+final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding {
+  private final String tagName;
+  private final MutableAccessor accessor;
 
   JDOMElementBinding(@NotNull MutableAccessor accessor) {
-    myAccessor = accessor;
+    this.accessor = accessor;
 
-    Tag tag = myAccessor.getAnnotation(Tag.class);
+    Tag tag = this.accessor.getAnnotation(Tag.class);
     String tagName = tag == null ? null : tag.value();
-    myTagName = tagName == null || tagName.isEmpty() ? myAccessor.getName() : tagName;
+    this.tagName = tagName == null || tagName.isEmpty() ? this.accessor.getName() : tagName;
   }
 
   @Override
   public @NotNull MutableAccessor getAccessor() {
-    return myAccessor;
+    return accessor;
   }
 
   @Override
   public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = myAccessor.read(o);
+    Object value = accessor.read(o);
     if (value == null) {
       return null;
     }
@@ -38,13 +38,13 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
     if (value instanceof Element) {
       Element targetElement = ((Element)value).clone();
       assert targetElement != null;
-      targetElement.setName(myTagName);
+      targetElement.setName(tagName);
       return targetElement;
     }
     if (value instanceof Element[]) {
       ArrayList<Element> result = new ArrayList<>();
       for (Element element : ((Element[])value)) {
-        result.add(element.clone().setName(myTagName));
+        result.add(element.clone().setName(tagName));
       }
       return result;
     }
@@ -53,11 +53,11 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
 
   @Override
   public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
-    if (myAccessor.getValueClass().isArray()) {
-      myAccessor.set(context, elements.toArray(new Element[0]));
+    if (accessor.getValueClass().isArray()) {
+      accessor.set(context, elements.toArray(new Element[0]));
     }
     else {
-      myAccessor.set(context, elements.get(0));
+      accessor.set(context, elements.get(0));
     }
     return context;
   }
@@ -74,7 +74,7 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
 
   @Override
   public @NotNull Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull Element element) {
-    myAccessor.set(context, element);
+    accessor.set(context, element);
     return context;
   }
 
@@ -85,11 +85,11 @@ final class JDOMElementBinding extends NotNullDeserializeBinding implements Mult
 
   @Override
   public boolean isBoundTo(@NotNull Element element) {
-    return element.getName().equals(myTagName);
+    return element.getName().equals(tagName);
   }
 
   @Override
   public boolean isBoundTo(@NotNull XmlElement element) {
-    return element.name.equals(myTagName);
+    return element.name.equals(tagName);
   }
 }

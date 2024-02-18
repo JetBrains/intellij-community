@@ -112,7 +112,7 @@ internal fun <T : Any> deserializeStateWithController(
       LOG.error("State is ${stateClass.name}, merge into is $mergeInto, state element text is ${JDOMUtil.writeElement(stateElement)}")
     }
 
-    return deserializeJdomExternalizable(stateClass, stateElement)
+    return deserializeJdomExternalizable(stateClass = stateClass, stateElement = stateElement)
   }
 
   if (stateElement == null && controller == null) {
@@ -128,7 +128,7 @@ internal fun <T : Any> deserializeStateWithController(
         if (stateElement == null) {
           return null
         }
-        return rootBinding.deserialize(null, stateElement) as T
+        return rootBinding.deserialize(context = null, element = stateElement) as T
       }
 
       return getXmlSerializationState<T>(
@@ -145,7 +145,7 @@ internal fun <T : Any> deserializeStateWithController(
         if (stateElement == null) {
           return mergeInto
         }
-        (rootBinding as BeanBinding).deserializeInto(mergeInto, stateElement)
+        (rootBinding as BeanBinding).deserializeInto(result = mergeInto, element = stateElement)
       }
       else {
         return getXmlSerializationState(

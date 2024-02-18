@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -22,7 +22,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-abstract class AbstractCollectionBinding extends NotNullDeserializeBinding implements MultiNodeBinding, NestedBinding {
+import static com.intellij.util.xmlb.NotNullDeserializeBindingKt.LOG;
+
+abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding {
   private final MutableAccessor myAccessor;
   private List<Binding> itemBindings;
 
