@@ -61,6 +61,10 @@ class BuildContextImpl(
     val snapshotBuildNumber = readSnapshotBuildNumber(paths.communityHomeDirRoot)
     val baseBuildNumber = snapshotBuildNumber.removeSuffix(".SNAPSHOT")
     if (suppliedBuildNumber != null) {
+      check(suppliedBuildNumber.startsWith(baseBuildNumber)) {
+        "Supplied build number '$suppliedBuildNumber' is expected to start with '$baseBuildNumber' base build number " +
+        "defined in ${paths.communityHomeDirRoot.snapshotBuildNumberFile}"
+      }
       suppliedBuildNumber
     }
     else {
