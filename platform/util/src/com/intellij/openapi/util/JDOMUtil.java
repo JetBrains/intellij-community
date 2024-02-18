@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.fasterxml.aalto.UncheckedStreamException;
@@ -210,7 +210,7 @@ public final class JDOMUtil {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream);
       try {
-        return SafeStAXStreamBuilder.buildDocument(xmlStreamReader);
+        return SafeStAXStreamBuilderKt.buildJdomDocument(xmlStreamReader);
       }
       finally {
         xmlStreamReader.close();
@@ -224,11 +224,11 @@ public final class JDOMUtil {
     }
   }
 
-  private static @NotNull Element loadUsingStaX(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException {
+  private static @NotNull Element loadUsingStaX(@NotNull InputStream stream) throws JDOMException {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream);
       try {
-        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, factory == null ? SafeStAXStreamBuilder.FACTORY : factory);
+        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true, true, null);
       }
       finally {
         xmlStreamReader.close();
@@ -252,27 +252,12 @@ public final class JDOMUtil {
   }
 
   public static @NotNull Element load(@NotNull File file) throws JDOMException, IOException {
-    return loadUsingStaX(new FileInputStream(file), null);
+    return loadUsingStaX(new FileInputStream(file));
   }
 
   public static @NotNull Element load(@NotNull Path file) throws JDOMException, IOException {
     try {
-      return loadUsingStaX(Files.newInputStream(file), null);
-    }
-    catch (ClosedFileSystemException e) {
-      throw new IOException("Cannot read file from closed file system: " + file, e);
-    }
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Element load(@NotNull File file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
-    return loadUsingStaX(new FileInputStream(file), factory);
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Element load(@NotNull Path file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
-    try {
-      return loadUsingStaX(Files.newInputStream(file), factory);
+      return loadUsingStaX(Files.newInputStream(file));
     }
     catch (ClosedFileSystemException e) {
       throw new IOException("Cannot read file from closed file system: " + file, e);
@@ -282,7 +267,7 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link #load(CharSequence)}
    * <p>
-   * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
+   * Direct usage of an element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
   public static @NotNull Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
@@ -298,7 +283,7 @@ public final class JDOMUtil {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(reader);
       try {
-        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, SafeStAXStreamBuilder.FACTORY);
+        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true, true, null);
       }
       finally {
         xmlStreamReader.close();
@@ -311,14 +296,14 @@ public final class JDOMUtil {
 
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
-    return stream == null ? null : loadUsingStaX(stream, null);
+    return stream == null ? null : loadUsingStaX(stream);
   }
 
   public static @NotNull Element load(byte @NotNull [] data) throws JDOMException, IOException {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(data);
       try {
-        return SafeStAXStreamBuilder.build(xmlStreamReader, true, true, SafeStAXStreamBuilder.FACTORY);
+        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true, true, null);
       }
       finally {
         xmlStreamReader.close();
@@ -327,11 +312,6 @@ public final class JDOMUtil {
     catch (XMLStreamException | UncheckedStreamException e) {
       throw new JDOMException(e.getMessage(), e);
     }
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Element load(@NotNull InputStream stream, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
-    return loadUsingStaX(stream, factory);
   }
 
   public static @NotNull Element load(@NotNull Class<?> clazz, @NotNull String resource) throws JDOMException, IOException {

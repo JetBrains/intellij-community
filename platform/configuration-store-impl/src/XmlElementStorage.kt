@@ -9,8 +9,8 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.loadComponents
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SafeStAXStreamBuilder
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.buildNsUnawareJdomAndClose
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.util.LineSeparator
@@ -103,7 +103,7 @@ abstract class XmlElementStorage protected constructor(
     try {
       val xmlStreamReader = createXmlStreamReader(stream)
       try {
-        return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
+        return buildNsUnawareJdomAndClose(xmlStreamReader)
       }
       finally {
         xmlStreamReader.close()
@@ -353,7 +353,7 @@ internal class XmlDataWriter(
         writer.append('"')
         var value = entry.value
         if (replacePathMap != null) {
-          value = replacePathMap.substitute(value, SystemInfo.isFileSystemCaseSensitive)
+          value = replacePathMap.substitute(value, SystemInfoRt.isFileSystemCaseSensitive)
         }
         writer.append(JDOMUtil.escapeText(value, false, true))
         writer.append('"')

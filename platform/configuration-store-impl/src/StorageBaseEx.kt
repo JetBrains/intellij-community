@@ -8,13 +8,12 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SafeStAXStreamBuilder
+import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.platform.settings.GetResult
 import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serialization.SerializationException
-import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.util.xmlb.BeanBinding
 import com.intellij.util.xmlb.NotNullDeserializeBinding
 import com.intellij.util.xmlb.XmlSerializationException
@@ -186,14 +185,8 @@ private fun <T : Any> deserializeAsJdomElement(
     val item = controller?.doGetItem(createSettingDescriptor(key = componentName, pluginId = pluginId)) ?: GetResult.inapplicable()
     if (item.isResolved) {
       val xmlData = item.get() ?: return null
-      val xmlStreamReader = createXmlStreamReader(xmlData)
-      try {
-        @Suppress("UNCHECKED_CAST")
-        return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader) as T
-      }
-      finally {
-        xmlStreamReader.close()
-      }
+      @Suppress("UNCHECKED_CAST")
+      return buildNsUnawareJdom(xmlData) as T
     }
   }
   catch (e: Throwable) {
@@ -250,13 +243,7 @@ private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controll
     val item = controller.doGetItem(key)
     if (item.isResolved) {
       val xmlData = item.get() ?: return GetResult.resolved(null)
-      val xmlStreamReader = createXmlStreamReader(xmlData)
-      try {
-        return GetResult.resolved(SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader))
-      }
-      finally {
-        xmlStreamReader.close()
-      }
+      return GetResult.resolved(buildNsUnawareJdom(xmlData))
     }
   }
   catch (e: Throwable) {

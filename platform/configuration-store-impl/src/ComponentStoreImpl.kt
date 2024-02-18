@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SafeStAXStreamBuilder
+import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -29,7 +29,6 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -622,13 +621,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val classLoader = component.javaClass.classLoader
     val data = ResourceUtil.getResourceAsBytes("$componentName.xml", classLoader) ?: return null
     try {
-      val xmlStreamReader = createXmlStreamReader(data)
-      val element = try {
-        SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
-      }
-      finally {
-        xmlStreamReader.close()
-      }
+      val element = buildNsUnawareJdom(data)
       getPathMacroManagerForDefaults()?.expandPaths(element)
       return deserializeState(stateElement = element, stateClass = stateClass)
     }

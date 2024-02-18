@@ -16,7 +16,8 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.getComponentNameIfValid
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.util.SafeStAXStreamBuilder
+import com.intellij.openapi.util.buildNsUnawareJdom
+import com.intellij.openapi.util.buildNsUnawareJdomAndClose
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -203,7 +204,7 @@ abstract class FileBasedStorage(
         lineSeparator = LineSeparator.LF
         val xmlStreamReader = createXmlStreamReader(Files.newInputStream(file))
         try {
-          return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
+          return buildNsUnawareJdomAndClose(xmlStreamReader)
         }
         finally {
           xmlStreamReader.close()
@@ -377,14 +378,7 @@ private fun loadDataAndDetectLineSeparator(file: Path): Pair<Element, LineSepara
   val data = Files.readAllBytes(file)
   val offset = CharsetToolkit.getBOMLength(data, StandardCharsets.UTF_8)
   val text = String(data, offset, data.size - offset, StandardCharsets.UTF_8)
-  val xmlStreamReader = createXmlStreamReader(StringReader(text))
-  val element = try {
-    SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
-  }
-  finally {
-    xmlStreamReader.close()
-  }
-
+  val element = buildNsUnawareJdom(StringReader(text))
   return Pair(element, detectLineSeparator(text))
 }
 
