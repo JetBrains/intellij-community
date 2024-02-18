@@ -46,12 +46,7 @@ fun buildJdomDocument(stream: XMLStreamReader2): Document {
       }
       XMLStreamConstants.DTD, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION, XMLStreamConstants.SPACE -> {}
       XMLStreamConstants.START_ELEMENT -> {
-        document.setRootElement(processElementFragment(
-          reader = stream,
-          isIgnoreBoundaryWhitespace = true,
-          isNsSupported = true,
-          factory = JDOM_FACTORY,
-        ))
+        document.setRootElement(processElementFragment(reader = stream, isNsSupported = true, factory = JDOM_FACTORY))
       }
       XMLStreamConstants.CHARACTERS -> {
         val badTxt = stream.text
@@ -107,13 +102,12 @@ fun buildNsUnawareJdom(file: Path): Element {
 
 @Throws(XMLStreamException::class)
 fun buildNsUnawareJdomAndClose(stream: XMLStreamReader2): Element {
-  return buildJdom(stream = stream, isIgnoreBoundaryWhitespace = true, isNsSupported = false, factory = JDOM_FACTORY)
+  return buildJdom(stream = stream, isNsSupported = false, factory = JDOM_FACTORY)
 }
 
 @Throws(XMLStreamException::class)
 fun buildJdom(
   stream: XMLStreamReader2,
-  isIgnoreBoundaryWhitespace: Boolean,
   isNsSupported: Boolean,
   factory: SafeJdomFactory?,
 ): Element {
@@ -135,7 +129,6 @@ fun buildJdom(
       XMLStreamConstants.START_ELEMENT -> {
         rootElement = processElementFragment(
           reader = stream,
-          isIgnoreBoundaryWhitespace = isIgnoreBoundaryWhitespace,
           isNsSupported = isNsSupported,
           factory = factory ?: JDOM_FACTORY,
         )
@@ -158,11 +151,9 @@ fun buildJdom(
   return rootElement
 }
 
-
 @Throws(XMLStreamException::class)
 private fun processElementFragment(
   reader: XMLStreamReader2,
-  isIgnoreBoundaryWhitespace: Boolean,
   isNsSupported: Boolean,
   factory: SafeJdomFactory,
 ): Element {
@@ -183,12 +174,9 @@ private fun processElementFragment(
       }
       XMLStreamConstants.CDATA -> current.addContent(factory.cdata(reader.text))
       XMLStreamConstants.SPACE -> {
-        if (!isIgnoreBoundaryWhitespace) {
-          current.addContent(factory.text(reader.text))
-        }
       }
       XMLStreamConstants.CHARACTERS -> {
-        if (!isIgnoreBoundaryWhitespace || !reader.isWhiteSpace) {
+        if (!reader.isWhiteSpace) {
           current.addContent(factory.text(reader.text))
         }
       }
