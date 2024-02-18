@@ -27,11 +27,11 @@ final class ActionStepBuilder {
   private final DataContext myDataContext;
   private final boolean                         myShowNumbers;
   private final boolean                         myUseAlphaAsNumbers;
-  private final PresentationFactory presentationFactory;
+  private final PresentationFactory             myPresentationFactory;
   private final boolean                         myShowDisabled;
   private       int                             myCurrentNumber;
   private       boolean                         myPrependWithSeparator;
-  private @NlsContexts.Separator String mySeparatorText;
+  private @NlsContexts.Separator String         mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
   private final String                          myActionPlace;
   private int myMaxIconWidth  = -1;
@@ -45,12 +45,7 @@ final class ActionStepBuilder {
                     @Nullable String actionPlace,
                     @Nullable PresentationFactory presentationFactory) {
     myUseAlphaAsNumbers = useAlphaAsNumbers;
-    if (presentationFactory == null) {
-      this.presentationFactory = new PresentationFactory();
-    }
-    else {
-      this.presentationFactory = Objects.requireNonNull(presentationFactory);
-    }
+    myPresentationFactory = presentationFactory == null ? new PresentationFactory() : presentationFactory;
     myListModel = new ArrayList<>();
     myDataContext = dataContext;
     myShowNumbers = showNumbers;
@@ -81,7 +76,7 @@ final class ActionStepBuilder {
         continue;
       }
 
-      Presentation presentation = presentationFactory.getPresentation(action);
+      Presentation presentation = myPresentationFactory.getPresentation(action);
       Pair<Icon, Icon> icons = calcRawIcons(action, presentation, true);
       Icon icon = icons.first == null ? icons.second : icons.first;
       if (icon == null) {
@@ -102,9 +97,9 @@ final class ActionStepBuilder {
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     boolean multiChoicePopup = Utils.isMultiChoiceGroup(actionGroup);
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
-      actionGroup, presentationFactory, myDataContext, myActionPlace);
+      actionGroup, myPresentationFactory, myDataContext, myActionPlace);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
-      newVisibleActions, o -> o instanceof Separator || presentationFactory.getPresentation(o).isEnabled());
+      newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
     calcMaxIconSize(filtered);
     for (AnAction action : filtered) {
       if (action instanceof Separator) {
@@ -112,7 +107,7 @@ final class ActionStepBuilder {
         mySeparatorText = ((Separator)action).getText();
       }
       else {
-        Presentation presentation = presentationFactory.getPresentation(action);
+        Presentation presentation = myPresentationFactory.getPresentation(action);
         if (multiChoicePopup && action instanceof Toggleable) {
           presentation.setMultiChoice(true);
         }
@@ -154,7 +149,7 @@ final class ActionStepBuilder {
     if (inlineActions == null) return Collections.emptyList();
     List<PopupFactoryImpl.ActionItem> res = new ArrayList<>();
     for (AnAction a : inlineActions) {
-      Presentation p = presentationFactory.getPresentation(a);
+      Presentation p = myPresentationFactory.getPresentation(a);
       if (!p.isVisible()) continue;
       PopupFactoryImpl.ActionItem item = PopupFactoryImpl.createInlineActionItem(a, myMaxIconWidth, myMaxIconHeight);
       item.updateFromPresentation(p, myActionPlace);
