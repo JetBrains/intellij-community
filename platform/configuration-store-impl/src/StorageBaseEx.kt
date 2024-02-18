@@ -104,7 +104,7 @@ internal fun <T : Any> deserializeStateWithController(
       componentName = componentName,
       pluginId = pluginId,
       stateElement = stateElement,
-    )
+    ) as T? ?: mergeInto
   }
   else if (com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
     if (stateElement == null) {
@@ -175,25 +175,23 @@ internal fun <T : Any> deserializeStateWithController(
   }
 }
 
-private fun <T : Any> deserializeAsJdomElement(
+private fun deserializeAsJdomElement(
   controller: SettingsController?,
   componentName: String,
   pluginId: PluginId,
   stateElement: Element?,
-): T? {
+): Element? {
   try {
     val item = controller?.doGetItem(createSettingDescriptor(key = componentName, pluginId = pluginId)) ?: GetResult.inapplicable()
     if (item.isResolved) {
       val xmlData = item.get() ?: return null
-      @Suppress("UNCHECKED_CAST")
-      return buildNsUnawareJdom(xmlData) as T
+      return buildNsUnawareJdom(xmlData)
     }
   }
   catch (e: Throwable) {
     LOG.error("Cannot deserialize value for $componentName", e)
   }
-  @Suppress("UNCHECKED_CAST")
-  return stateElement as T?
+  return stateElement
 }
 
 private fun <T : Any> getXmlSerializationState(

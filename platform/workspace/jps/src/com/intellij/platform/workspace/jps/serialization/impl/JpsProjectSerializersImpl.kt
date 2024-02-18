@@ -910,7 +910,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                               unloadedEntityStorage: EntityStorage,
                               writer: JpsFileContentWriter) {
     LOG.trace("saving modules list")
-    it.saveEntitiesList(storage.entities(ModuleEntity::class.java) + unloadedEntityStorage.entities(ModuleEntity::class.java), writer)
+    it.saveEntityList(storage.entities(ModuleEntity::class.java) + unloadedEntityStorage.entities(ModuleEntity::class.java), writer)
   }
 
   companion object {

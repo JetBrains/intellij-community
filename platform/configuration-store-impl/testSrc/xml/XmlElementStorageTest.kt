@@ -49,7 +49,7 @@ class XmlElementStorageTest {
     val storage = MyXmlElementStorage(Element("root").addContent(Element("component").setAttribute("name", "test").addContent(Element("foo"))))
     val newState = Element("component").setAttribute("name", "test").addContent(Element("bar"))
     val externalizationSession = storage.createSaveSessionProducer()!!
-    externalizationSession.setState(null, "test", newState)
+    externalizationSession.setState(component = null, componentName = "test", pluginId = PluginManagerCore.CORE_ID, state = newState)
     externalizationSession.createSaveSession()!!.saveBlocking()
     assertThat(storage.savedElement).isNotNull
     assertThat(storage.savedElement!!.getChild("component").getChild("bar")).isNotNull

@@ -321,16 +321,19 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
-    val storages = getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)
+    val storages = getStorageSpecs(component = component, stateSpec = stateSpec, operation = StateStorageOperation.WRITE)
     val storage = storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
     val absolutePath = storageManager.expandMacro(storage.path).toString()
+
+    val componentInfo = components.get(stateSpec.name)
+
     Disposer.newDisposable().use {
       VfsRootAccess.allowRootAccess(it, absolutePath)
       @Suppress("DEPRECATION")
       runUnderModalProgressIfIsEdt {
         commitComponent(
           sessionManager = saveManager,
-          info = ComponentInfoImpl(
+          info = componentInfo ?: ComponentInfoImpl(
             pluginId = PluginManager.getPluginByClass(component::class.java)?.pluginId ?: PluginManagerCore.CORE_ID,
             component = component,
             stateSpec = stateSpec,
@@ -371,7 +374,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (component is com.intellij.openapi.util.JDOMExternalizable) {
       val effectiveComponentName = componentName ?: getComponentName(component)
       storageManager.getOldStorage(component, effectiveComponentName, StateStorageOperation.WRITE)?.let {
-        sessionManager.getProducer(it)?.setState(component = component, componentName = effectiveComponentName, state = component)
+        sessionManager.getProducer(it)?.setState(
+          component = component,
+          componentName = effectiveComponentName,
+          pluginId = info.pluginId,
+          state = component,
+        )
       }
       return
     }
@@ -385,7 +393,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateStorageChooser = component as? StateStorageChooserEx
 
     @Suppress("UNCHECKED_CAST")
-    val storageSpecs = getStorageSpecs(component as PersistentStateComponent<Any>, stateSpec, StateStorageOperation.WRITE)
+    val storageSpecs = getStorageSpecs(
+      component = component as PersistentStateComponent<Any>,
+      stateSpec = stateSpec,
+      operation = StateStorageOperation.WRITE,
+    )
     for (storageSpec in storageSpecs) {
       var resolution = stateStorageChooser?.getResolution(storageSpec, StateStorageOperation.WRITE) ?: Resolution.DO
       if (resolution == Resolution.SKIP) {
@@ -404,7 +416,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       val sessionProducer = sessionManager.getProducer(storage) ?: continue
       if (resolution == Resolution.CLEAR ||
           (storageSpec.deprecated && storageSpecs.none { !it.deprecated && it.value == storageSpec.value })) {
-        sessionProducer.setState(component = component, componentName = effectiveComponentName, state = null)
+        sessionProducer.setState(component = component, componentName = effectiveComponentName, pluginId = info.pluginId, state = null)
       }
       else {
         if (!stateRequested) {
@@ -428,11 +440,13 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   // method is not called if storage is deprecated or clear was requested
   // (state in these cases is null), but called if state is null if returned so from a component
-  protected open fun setStateToSaveSessionProducer(state: Any?,
-                                                   info: ComponentInfo,
-                                                   effectiveComponentName: String,
-                                                   sessionProducer: SaveSessionProducer) {
-    sessionProducer.setState(component = info.component, componentName = effectiveComponentName, state = state)
+  protected open fun setStateToSaveSessionProducer(
+    state: Any?,
+    info: ComponentInfo,
+    effectiveComponentName: String,
+    sessionProducer: SaveSessionProducer,
+  ) {
+    sessionProducer.setState(component = info.component, componentName = effectiveComponentName, pluginId = info.pluginId, state = state)
   }
 
   private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {

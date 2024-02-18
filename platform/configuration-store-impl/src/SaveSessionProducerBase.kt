@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
@@ -11,7 +12,7 @@ import com.intellij.util.xmlb.XmlSerializationException
 import org.jdom.Element
 
 abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
-  final override fun setState(component: Any?, componentName: String, state: Any?) {
+  final override fun setState(component: Any?, componentName: String, pluginId: PluginId, state: Any?) {
     if (state == null) {
       setSerializedState(componentName = componentName, element = null)
       return

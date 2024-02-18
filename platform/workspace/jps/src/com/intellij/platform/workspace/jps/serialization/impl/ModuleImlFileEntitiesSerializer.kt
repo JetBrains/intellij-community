@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.*
@@ -1031,7 +1031,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     }
   }
 
-  override fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter) {
+  override fun saveEntityList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter) {
     val entitiesToSave = entities
       .filter { moduleEntity ->
         entitySourceFilter(moduleEntity.entitySource)

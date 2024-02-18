@@ -93,28 +93,34 @@ open class StateStorageManagerImpl(
   }
 
   // storageCustomizer - to ensure that other threads will use fully constructed and configured storage (invoked under the same lock as created)
-  fun getOrCreateStorage(collapsedPath: String,
-                         roamingType: RoamingType,
-                         storageClass: Class<out StateStorage> = StateStorage::class.java,
-                         @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java,
-                         exclusive: Boolean = false,
-                         storageCustomizer: (StateStorage.() -> Unit)? = null,
-                         storageCreator: StorageCreator? = null,
-                         usePathMacroManager: Boolean = true): StateStorage {
+  fun getOrCreateStorage(
+    collapsedPath: String,
+    roamingType: RoamingType,
+    storageClass: Class<out StateStorage> = StateStorage::class.java,
+    @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter> = StateSplitterEx::class.java,
+    exclusive: Boolean = false,
+    storageCustomizer: (StateStorage.() -> Unit)? = null,
+    storageCreator: StorageCreator? = null,
+    usePathMacroManager: Boolean = true,
+  ): StateStorage {
     val normalizedCollapsedPath = normalizeFileSpec(collapsedPath)
-    val key = computeStorageKey(storageClass = storageClass,
-                                normalizedCollapsedPath = normalizedCollapsedPath,
-                                collapsedPath = collapsedPath,
-                                storageCreator = storageCreator)
+    val key = computeStorageKey(
+      storageClass = storageClass,
+      normalizedCollapsedPath = normalizedCollapsedPath,
+      collapsedPath = collapsedPath,
+      storageCreator = storageCreator,
+    )
     val storage = storageLock.read { storages.get(key) } ?: return storageLock.write {
       storages.getOrPut(key) {
         val storage = when (storageCreator) {
-          null -> createStateStorage(storageClass = storageClass,
-                                     collapsedPath = normalizedCollapsedPath,
-                                     roamingType = roamingType,
-                                     stateSplitter = stateSplitter,
-                                     usePathMacroManager = usePathMacroManager,
-                                     exclusive = exclusive)
+          null -> createStateStorage(
+            storageClass = storageClass,
+            collapsedPath = normalizedCollapsedPath,
+            roamingType = roamingType,
+            stateSplitter = stateSplitter,
+            usePathMacroManager = usePathMacroManager,
+            exclusive = exclusive,
+          )
           else -> storageCreator.create(this)
         }
         storageCustomizer?.let { storage.it() }

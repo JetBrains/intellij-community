@@ -149,10 +149,9 @@ abstract class XmlElementStorage protected constructor(
 
   abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(
     private val originalStates: StateMap,
-    protected val storage: T
+    @JvmField protected val storage: T
   ) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
-
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
 
     protected open fun isSaveAllowed(): Boolean = !storage.checkIsSavingDisabled()
@@ -269,19 +268,26 @@ abstract class XmlElementStorage protected constructor(
 
       val normalized = element?.normalizeRootName()
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeeded(componentName, normalized, originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeeded(
+          key = componentName,
+          newState = normalized,
+          oldStates = originalStates,
+          newLiveStates = newLiveStates,
+        )
       }
       else {
-        updateState(copiedStates!!, componentName, normalized, newLiveStates)
+        updateState(states = copiedStates!!, key = componentName, newState = normalized, newLiveStates = newLiveStates)
       }
     }
 
     protected abstract fun saveLocally(dataWriter: DataWriter?)
   }
 
-  protected open fun beforeElementLoaded(element: Element) { }
+  protected open fun beforeElementLoaded(element: Element) {
+  }
 
-  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
+  }
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     val newElement = if (deleted) null else loadElement()
