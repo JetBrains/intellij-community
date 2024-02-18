@@ -40,7 +40,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.icons.toStrokeIcon
-import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
@@ -65,8 +64,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     const val ACTION_BUTTON_SIZE = 22
 
     @JvmStatic
-    val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") &&
-                                                   !PlatformUtils.isPyCharm()
+    val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor")
   }
 
   private var currentJob: Job? = null
