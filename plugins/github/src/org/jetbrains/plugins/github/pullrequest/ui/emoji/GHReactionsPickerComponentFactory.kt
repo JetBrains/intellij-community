@@ -5,15 +5,17 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.util.ui.InlineIconButton
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHReactionContent
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 
 object GHReactionsPickerComponentFactory {
-  private const val EMOJI_PICKER_GAP = 2
-  private const val EMOJI_PICKER_BORDER = 2
+  private const val EMOJI_PICKER_GAP = 7
+  private const val EMOJI_PICKER_BORDER = 7
   private const val EMOJI_SIZE = 26
+  private const val EMOJI_PADDING = 5
 
   fun showPopup(reactionsVm: GHReactionsViewModel, parentComponent: JComponent) {
     var popup: JBPopup? = null
@@ -54,6 +56,7 @@ object GHReactionsPickerComponentFactory {
       isFocusable = false
       withBackgroundHover = true
       actionListener = ActionListener { onClick(reaction) }
+      margin = JBInsets.create(EMOJI_PADDING, EMOJI_PADDING)
     }
   }
 }
