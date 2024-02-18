@@ -131,7 +131,10 @@ internal class StateStorageBackedByController(
           result = beanBinding.newInstance() as T
         }
 
-        deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = true)
+        val l = deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = true)
+        if (l != null) {
+          (binding as MultiNodeBinding).deserializeJdomList(result, l)
+        }
       }
     }
     return result

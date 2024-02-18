@@ -42,22 +42,33 @@ interface SettingsController {
 value class GetResult<out T : Any?> @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
   companion object {
     @Suppress("INAPPLICABLE_JVM_NAME")
-    @JvmName("success")
     fun <T> resolved(value: T?): GetResult<T> = GetResult(value)
 
-    @JvmName("failure")
-    fun <T : Any> inapplicable(): GetResult<T> = GetResult(Inapplicable)
+    // partial is supported only for PersistentStateComponent adapter
+    fun <T : Any> partial(value: T): GetResult<T> = GetResult(Partial(value))
+
+    fun <T> inapplicable(): GetResult<T> = GetResult(Inapplicable)
   }
 
   val isResolved: Boolean
     get() = value !is Inapplicable
 
+  val isPartial: Boolean
+    get() = value is Partial
+
   @Suppress("UNCHECKED_CAST")
-  fun get(): T? = if (value is Inapplicable) null else value as T
+  fun get(): T? {
+    return when (value) {
+      is Inapplicable -> null
+      is Partial -> value.value as T
+      else -> value as T
+    }
+  }
 
   override fun toString(): String = if (value is Inapplicable) "Inapplicable" else "Applicable($value)"
 
   private object Inapplicable
+  private class Partial(@JvmField val value: Any)
 }
 
 @Internal

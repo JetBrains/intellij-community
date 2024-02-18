@@ -10,6 +10,7 @@ import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.settings.*
 import com.intellij.platform.settings.local.SettingsControllerMediator
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -18,6 +19,9 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Text
+import com.intellij.util.xmlb.annotations.XCollection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
@@ -60,10 +64,15 @@ class ControllerBackedStoreTest {
       testAppConfigPath = testAppConfig,
       controller = SettingsControllerMediator(
         controllers = listOf(object : DelegatedSettingsController {
+          @Suppress("UNCHECKED_CAST")
           override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
             data.get(key.key)?.let { data ->
               assertThat(key.tags.first { it is PersistenceStateComponentPropertyTag && it.componentName == "TestState" })
-              @Suppress("UNCHECKED_CAST")
+
+              if (key.key == "TestState.list") {
+                return GetResult.partial(data as T)
+              }
+
               return GetResult.resolved(data as T?)
             }
 
@@ -82,15 +91,23 @@ class ControllerBackedStoreTest {
     assertThat(component.state.foo).isEmpty()
     assertThat(component.state.bar).isEmpty()
 
-    component.state = TestState(bar = "42")
+    component.state = ControllerTestState(bar = "42")
 
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
-    assertThat(component.state.bar).isEqualTo("42")
+    assertThat(component.state.bar).isEmpty()
+
+    component.state = ControllerTestState(list = listOf("d", "c"))
+    componentStore.save(forceSavingAllSettings = true)
 
     val propertyName = "bar"
     data.put("TestState.$propertyName", "12".toByteArray())
+    data.put("TestState.text", "a long sad story".toByteArray())
+    data.put("TestState.list", JDOMUtil.write(serializeForController(ControllerTestState(list = listOf("a", "b")))!!).toByteArray())
+
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("12")
+    assertThat(component.state.text).isEqualTo("a long sad story")
+    assertThat(component.state.list).containsExactlyElementsOf(listOf("a", "b"))
   }
 
   @Test
@@ -167,7 +184,7 @@ class ControllerBackedStoreTest {
     assertThat(component.state.foo).isEqualTo("old")
     assertThat(component.state.bar).isEmpty()
 
-    component.state = TestState(bar = "42")
+    component.state = ControllerTestState(bar = "42")
     componentStore.save(forceSavingAllSettings = true)
 
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
@@ -201,5 +218,16 @@ private class ControllerBackedTestComponentStore(
   }
 }
 
-@State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
-private class TestComponent : SerializablePersistentStateComponent<TestState>(TestState())
+@State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
+private class TestComponent : SerializablePersistentStateComponent<ControllerTestState>(ControllerTestState()) {
+  override fun noStateLoaded() {
+    loadState(ControllerTestState())
+  }
+}
+
+private data class ControllerTestState(
+  @JvmField @Attribute var foo: String = "",
+  @JvmField @Attribute var bar: String = "",
+  @JvmField @Text var text: String = "",
+  @JvmField @XCollection val list: List<String> = emptyList(),
+)

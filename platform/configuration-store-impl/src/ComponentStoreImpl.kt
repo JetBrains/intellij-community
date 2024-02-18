@@ -156,37 +156,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         component.initializeComponent()
       }
       else if (loadPolicy == StateLoadPolicy.LOAD && component is com.intellij.openapi.util.JDOMExternalizable) {
-        if (component.javaClass.name !in ignoredDeprecatedJDomExternalizableComponents) {
-          LOG.error(PluginException("""
-          |Component ${component.javaClass.name} implements deprecated JDOMExternalizable interface to serialize its state.
-          |IntelliJ Platform will stop supporting such components in the future, so it must be migrated to use PersistentStateComponent.
-          |See https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html for details.
-          """.trimMargin(), pluginId))
-        }
-        componentName = getComponentName(component)
-        val componentInfo = createComponentInfo(
-          component = component,
-          stateSpec = null,
-          serviceDescriptor = null,
-          pluginId = pluginId,
-        )
-        val element = storageManager.getOldStorage(
-          component = component,
-          componentName = componentName,
-          operation = StateStorageOperation.READ,
-        )
-          ?.getState(
-            component = component,
-            componentName = componentName,
-            pluginId = pluginId,
-            stateClass = Element::class.java,
-            mergeInto = null,
-            reload = false,
-          )
-        if (element != null) {
-          component.readExternal(element)
-        }
-        registerComponent(name = componentName, info = componentInfo)
+        componentName = initJdom(component = component, pluginId = pluginId)
       }
     }
     catch (e: CancellationException) {
@@ -199,6 +169,41 @@ abstract class ComponentStoreImpl : IComponentStore {
       LOG.error(PluginException("Cannot init component state " +
                                 "(componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
     }
+  }
+
+  private fun initJdom(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, pluginId: PluginId): String {
+    if (component.javaClass.name !in ignoredDeprecatedJDomExternalizableComponents) {
+      LOG.error(PluginException("""
+            |Component ${component.javaClass.name} implements deprecated JDOMExternalizable interface to serialize its state.
+            |IntelliJ Platform will stop supporting such components in the future, so it must be migrated to use PersistentStateComponent.
+            |See https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html for details.
+            """.trimMargin(), pluginId))
+    }
+
+    val componentName = getComponentName(component)
+    val componentInfo = createComponentInfo(
+      component = component,
+      stateSpec = null,
+      serviceDescriptor = null,
+      pluginId = pluginId,
+    )
+    val element = storageManager.getOldStorage(
+      component = component,
+      componentName = componentName,
+      operation = StateStorageOperation.READ,
+    ) ?.getState(
+      component = component,
+      componentName = componentName,
+      pluginId = pluginId,
+      stateClass = Element::class.java,
+      mergeInto = null,
+      reload = false,
+    )
+    if (element != null) {
+      component.readExternal(element)
+    }
+    registerComponent(name = componentName, info = componentInfo)
+    return componentName
   }
 
   override fun unloadComponent(component: Any) {
@@ -508,10 +513,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     return null
   }
 
-  private fun doInitComponent(info: ComponentInfo,
-                              component: PersistentStateComponent<Any>,
-                              changedStorages: Set<StateStorage>?,
-                              reloadData: ThreeState) {
+  private fun doInitComponent(
+    info: ComponentInfo,
+    component: PersistentStateComponent<Any>,
+    changedStorages: Set<StateStorage>?,
+    reloadData: ThreeState,
+  ) {
     @Suppress("UNCHECKED_CAST")
     val stateClass: Class<Any> = when (component) {
       is PersistenceStateAdapter -> component.component::class.java as Class<Any>
@@ -544,11 +551,13 @@ abstract class ComponentStoreImpl : IComponentStore {
           reloadData.toBoolean()
         }
 
-        val stateGetter = doCreateStateGetter(reloadData = isReloadDataForStorage,
-                                              storage = storage,
-                                              info = info,
-                                              name = name,
-                                              stateClass = stateClass)
+        val stateGetter = doCreateStateGetter(
+          reloadData = isReloadDataForStorage,
+          storage = storage,
+          info = info,
+          name = name,
+          stateClass = stateClass,
+        )
         var state = stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && isStorageChanged(changedStorages, storage)) {

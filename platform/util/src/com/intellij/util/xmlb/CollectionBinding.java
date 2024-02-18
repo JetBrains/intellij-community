@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
@@ -18,7 +18,7 @@ final class CollectionBinding extends AbstractCollectionBinding  {
 
   @SuppressWarnings("DuplicatedCode")
   @Override
-  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+  protected @NotNull Object doDeserializeJdomList(@Nullable Object context, @NotNull List<Element> elements) {
     Collection<Object> result;
     boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
     if (isContextMutable) {
@@ -39,7 +39,7 @@ final class CollectionBinding extends AbstractCollectionBinding  {
 
   @SuppressWarnings("DuplicatedCode")
   @Override
-  protected @NotNull Object doDeserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements) {
+  protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<XmlElement> elements) {
     Collection<Object> result;
     boolean isContextMutable = context != null && ClassUtil.isMutableCollection(context);
     if (isContextMutable) {

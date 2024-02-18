@@ -4,9 +4,8 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -17,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.util.xmlb.NotNullDeserializeBindingKt.LOG;
 
@@ -71,7 +67,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     if (newAnnotation != null) {
       return newAnnotation.elementTypes();
     }
-    return annotation == null ? ArrayUtil.EMPTY_CLASS_ARRAY : annotation.elementTypes();
+    return annotation == null ? ArrayUtilRt.EMPTY_CLASS_ARRAY : annotation.elementTypes();
   }
 
   private @Nullable Binding getItemBinding(@NotNull Class<?> aClass) {
@@ -79,27 +75,30 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   }
 
   private synchronized @NotNull List<Binding> getItemBindings() {
-    if (itemBindings == null) {
-      Binding binding = getItemBinding(itemType);
-      Class<?>[] elementTypes = getElementTypes();
-      if (elementTypes.length == 0) {
-        itemBindings = ContainerUtil.createMaybeSingletonList(binding);
-      }
-      else {
-        itemBindings = new SmartList<>();
-        if (binding != null) {
-          itemBindings.add(binding);
-        }
+    if (itemBindings != null) {
+      return itemBindings;
+    }
 
-        for (Class<?> aClass : elementTypes) {
-          Binding b = getItemBinding(aClass);
-          if (b != null && !itemBindings.contains(b)) {
-            itemBindings.add(b);
-          }
+    Binding binding = getItemBinding(itemType);
+    Class<?>[] elementTypes = getElementTypes();
+    if (elementTypes.length == 0) {
+      //noinspection SSBasedInspection
+      itemBindings = binding == null ? Collections.emptyList() : Collections.singletonList(binding);
+    }
+    else {
+      itemBindings = new SmartList<>();
+      if (binding != null) {
+        itemBindings.add(binding);
+      }
+
+      for (Class<?> aClass : elementTypes) {
+        Binding b = getItemBinding(aClass);
+        if (b != null && !itemBindings.contains(b)) {
+          itemBindings.add(b);
         }
-        if (itemBindings.isEmpty()) {
-          itemBindings = Collections.emptyList();
-        }
+      }
+      if (itemBindings.isEmpty()) {
+        itemBindings = Collections.emptyList();
       }
     }
     return itemBindings;
@@ -134,7 +133,10 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
       List<Object> result = new SmartList<>();
       if (!collection.isEmpty()) {
         for (Object item : collection) {
-          ContainerUtil.addAllNotNull(result, serializeItem(item, result, filter));
+          Object element = serializeItem(item, result, filter);
+          if (element != null) {
+            result.add(element);
+          }
         }
       }
       return result;
@@ -156,7 +158,17 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   @Override
   public final @NotNull Object deserialize(@Nullable Object context, @NotNull Element element) {
     if (isSurroundWithTag()) {
-      return doDeserializeList(context, element.getChildren());
+      return doDeserializeJdomList(context, element.getChildren());
+    }
+    else {
+      return doDeserializeJdomList(context, Collections.singletonList(element));
+    }
+  }
+
+  @Override
+  public final @NotNull Object deserialize(@Nullable Object context, @NotNull XmlElement element) {
+    if (isSurroundWithTag()) {
+      return doDeserializeList(context, element.children);
     }
     else {
       return doDeserializeList(context, Collections.singletonList(element));
@@ -164,40 +176,40 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   }
 
   @Override
-  public final @NotNull Object deserialize(@Nullable Object context, @NotNull XmlElement element) {
-    if (isSurroundWithTag()) {
-      return doDeserializeList2(context, element.children);
-    }
-    else {
-      return doDeserializeList2(context, Collections.singletonList(element));
-    }
-  }
-
-  @Override
   public final @NotNull Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements) {
     if (!isSurroundWithTag()) {
-      return doDeserializeList(context, elements);
+      return doDeserializeJdomList(context, elements);
     }
 
-    assert elements.size() == 1;
-    Element element = elements.get(0);
-    return doDeserializeList(context == null && element.getName().equals(Constants.SET) ? new HashSet<>() : context, element.getChildren());
+    if (elements.size() == 1) {
+      Element element = elements.get(0);
+      Object effectiveHost = context == null && element.getName().equals(Constants.SET) ? new HashSet<>() : context;
+      return doDeserializeJdomList(effectiveHost, element.getChildren());
+    }
+    else {
+      List<Element> merged = new ArrayList<>();
+      for (Element element : elements) {
+        merged.addAll(element.getChildren());
+      }
+      Object effectiveHost = context == null && elements.get(0).getName().equals(Constants.SET) ? new HashSet<>() : context;
+      return doDeserializeJdomList(effectiveHost, merged);
+    }
   }
 
   @Override
   public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<XmlElement> elements) {
     if (!isSurroundWithTag()) {
-      return doDeserializeList2(context, elements);
+      return doDeserializeList(context, elements);
     }
 
     assert elements.size() == 1;
     XmlElement element = elements.get(0);
-    return doDeserializeList2(context == null && element.name.equals(Constants.SET) ? new HashSet<>() : context, element.children);
+    return doDeserializeList(context == null && element.name.equals(Constants.SET) ? new HashSet<>() : context, element.children);
   }
 
-  protected abstract @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<? extends Element> elements);
+  protected abstract @NotNull Object doDeserializeJdomList(@Nullable Object context, @NotNull List<Element> elements);
 
-  protected abstract @NotNull Object doDeserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements);
+  protected abstract @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<XmlElement> elements);
 
   private @Nullable Object serializeItem(@Nullable Object value, Object context, @Nullable SerializationFilter filter) {
     if (value == null) {

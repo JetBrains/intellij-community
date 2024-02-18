@@ -22,6 +22,7 @@ import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
 
+@SuppressWarnings("LoggingSimilarMessage")
 final class MapBinding implements MultiNodeBinding, NestedBinding {
   private static final Logger LOG = Logger.getInstance(MapBinding.class);
 
@@ -127,10 +128,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   private boolean isSurroundWithTag() {
-    if (annotation != null) {
-      return false;
-    }
-    return oldAnnotation == null || oldAnnotation.surroundWithTag();
+    return annotation == null && (oldAnnotation == null || oldAnnotation.surroundWithTag());
   }
 
   @NotNull
@@ -159,8 +157,15 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   public @Nullable Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements) {
     List<Element> childNodes;
     if (isSurroundWithTag()) {
-      assert elements.size() == 1;
-      childNodes = elements.get(0).getChildren();
+      if (elements.size() == 1) {
+        childNodes = elements.get(0).getChildren();
+      }
+      else {
+        childNodes = new ArrayList<>();
+        for (Element element : elements) {
+          childNodes.addAll(element.getChildren());
+        }
+      }
     }
     else {
       childNodes = elements;
@@ -246,7 +251,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
 
   @SuppressWarnings({"rawtypes", "DuplicatedCode"})
   private @Nullable Map<?, ?> deserialize2(@Nullable Object context, @NotNull List<XmlElement> childNodes) {
-    // if accessor is null, it is sub-map and we must not use context
+    // if accessor is null, it is sub-map, and we must not use context
     Map map = accessor == null ? null : (Map<?, ?>)context;
     if (map != null) {
       if (ClassUtil.isMutableMap(map)) {

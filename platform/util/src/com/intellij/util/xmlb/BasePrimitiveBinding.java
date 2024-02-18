@@ -14,7 +14,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 @ApiStatus.Internal
-public abstract class BasePrimitiveBinding implements NestedBinding {
+abstract class BasePrimitiveBinding implements PrimitiveValueBinding {
   protected final MutableAccessor accessor;
   protected final String name;
 
@@ -70,8 +70,6 @@ public abstract class BasePrimitiveBinding implements NestedBinding {
   protected final @Nullable Converter<Object> getConverter() {
     return converter;
   }
-
-  public abstract void setValue(@NotNull Object host, @NotNull String value);
 
   static void addContent(@NotNull Element targetElement, Object node) {
     if (node instanceof Content) {

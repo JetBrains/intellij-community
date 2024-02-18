@@ -37,7 +37,11 @@ fun Element.deserializeInto(bean: Any) {
 }
 
 @JvmOverloads
-fun <T : Any> deserializeAndLoadState(component: PersistentStateComponent<T>, element: Element, clazz: Class<T> = ComponentSerializationUtil.getStateClass(component::class.java)) {
+fun <T : Any> deserializeAndLoadState(
+  component: PersistentStateComponent<T>,
+  element: Element,
+  clazz: Class<T> = ComponentSerializationUtil.getStateClass(component::class.java),
+) {
   val state = jdomSerializer.deserialize(element, clazz)
   (state as? BaseState)?.resetModificationCount()
   component.loadState(state)

@@ -3,12 +3,14 @@ package com.intellij.util.xmlb;
 
 import com.intellij.util.xml.dom.XmlElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-interface MultiNodeBinding extends Binding {
+@ApiStatus.Internal
+public interface MultiNodeBinding extends Binding {
   @Nullable Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements);
 
   @Nullable Object deserializeList(@Nullable Object context, @NotNull List<XmlElement> elements);

@@ -21,6 +21,14 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Type
 import java.util.*
 
+interface NestedBinding : Binding {
+  val accessor: MutableAccessor
+}
+
+interface PrimitiveValueBinding : NestedBinding {
+  fun setValue(host: Any, value: String)
+}
+
 private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
 private val EMPTY_BINDINGS = arrayOf<NestedBinding>()
 
@@ -298,7 +306,7 @@ fun deserializeBeanInto(
     if (attribute.namespaceURI.isNullOrEmpty()) {
       for (binding in bindings) {
         if (binding is AttributeBinding && binding.name == attribute.name) {
-          accessorNameTracker?.add(binding.getAccessor().name)
+          accessorNameTracker?.add((binding as PrimitiveValueBinding).accessor.name)
           binding.setValue(result, attribute.value)
           continue@nextAttribute
         }
@@ -347,7 +355,7 @@ fun deserializeBeanInto(
   }
 }
 
-fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, checkAttributes: Boolean) {
+fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, checkAttributes: Boolean): List<Element>? {
   if (checkAttributes) {
     for (attribute in element.attributes) {
       if (binding is AttributeBinding && binding.name == attribute.name) {
@@ -363,18 +371,16 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
       if (binding is TextBinding) {
         binding.setValue(result, content.getValue())
       }
-      break
+      return null
     }
 
     val child = content as Element
     if (binding.isBoundTo(child)) {
-      @Suppress("DuplicatedCode")
       if (binding is MultiNodeBinding && binding.isMulti) {
         if (data == null) {
           data = ArrayList()
         }
         data.add(child)
-        continue@nextNode
       }
       else {
         binding.deserializeUnsafe(result, child)
@@ -387,9 +393,7 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
     binding.deserializeUnsafe(result, element)
   }
 
-  if (data != null) {
-    (binding as MultiNodeBinding).deserializeJdomList(result, data)
-  }
+  return data
 }
 
 // must be static class and not anonymous

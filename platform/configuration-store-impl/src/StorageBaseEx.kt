@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.platform.settings.*
+import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.SerializationException
 import com.intellij.util.xmlb.*
 import org.jdom.Element
@@ -189,6 +190,17 @@ private fun deserializeAsJdomElement(
   return stateElement
 }
 
+internal fun serializeForController(obj: Any): Element? {
+  val serializer = __platformSerializer()
+  val binding = serializer.getRootBinding(obj.javaClass)
+  if (binding is BeanBinding) {
+    return binding.serializeInto(host = obj, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
+  }
+  else {
+    return binding.serialize(obj, null, jdomSerializer.getDefaultSerializationFilter()) as Element
+  }
+}
+
 private fun <T : Any> getXmlSerializationState(
   oldData: Element?,
   mergeInto: T?,
@@ -220,12 +232,23 @@ private fun <T : Any> getXmlSerializationState(
         result = rootBinding.newInstance() as T
       }
 
-      if (binding is BasePrimitiveBinding) {
+      if (binding is PrimitiveValueBinding && ClassUtil.isPrimitive(binding.accessor.valueClass)) {
         binding.setValue(result, valueData.decodeToString())
       }
       else {
         val element = buildNsUnawareJdom(valueData)
-        deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = false)
+        val l = deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = false)
+        if (l != null) {
+          var effectiveL = l
+          if (value.isPartial && oldData != null) {
+            val oldL = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = false)
+            if (oldL != null) {
+              // XML serialization framework is aware about multi-list, even if an old format (surrounded by a tag) is used
+              effectiveL = l + oldL
+            }
+          }
+          (binding as MultiNodeBinding).deserializeJdomList(result, effectiveL)
+        }
       }
     }
     else if (oldData != null) {
@@ -234,7 +257,10 @@ private fun <T : Any> getXmlSerializationState(
         @Suppress("UNCHECKED_CAST")
         result = rootBinding.newInstance() as T
       }
-      deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = true)
+      val l = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = true)
+      if (l != null) {
+        (binding as MultiNodeBinding).deserializeJdomList(result, l)
+      }
     }
   }
   return result

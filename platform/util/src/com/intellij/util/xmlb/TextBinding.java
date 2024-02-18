@@ -9,7 +9,7 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class TextBinding implements NestedBinding {
+final class TextBinding implements PrimitiveValueBinding {
   private final Class<?> valueClass;
   private final MutableAccessor accessor;
 
@@ -49,7 +49,8 @@ final class TextBinding implements NestedBinding {
     return context;
   }
 
-  void setValue(@NotNull Object context, @NotNull String value) {
+  @Override
+  public void setValue(@NotNull Object context, @NotNull String value) {
     XmlSerializerImpl.doSet(context, value, accessor, valueClass);
   }
 }

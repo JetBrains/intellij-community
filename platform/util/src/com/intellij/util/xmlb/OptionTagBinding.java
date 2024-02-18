@@ -8,34 +8,36 @@ import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-final class OptionTagBinding extends BasePrimitiveBinding {
-  private final String myTagName;
-  private final String myNameAttribute;
+@ApiStatus.Internal
+public final class OptionTagBinding extends BasePrimitiveBinding {
+  private final String tagName;
+  private final String nameAttribute;
   private final String valueAttribute;
 
   OptionTagBinding(@NotNull MutableAccessor accessor, @Nullable OptionTag optionTag) {
     super(accessor, optionTag == null ? null : optionTag.value(), optionTag == null ? null : optionTag.converter());
 
     if (optionTag == null) {
-      myTagName = Constants.OPTION;
-      myNameAttribute = Constants.NAME;
+      tagName = Constants.OPTION;
+      nameAttribute = Constants.NAME;
       valueAttribute = Constants.VALUE;
     }
     else {
-      myNameAttribute = optionTag.nameAttribute();
+      nameAttribute = optionTag.nameAttribute();
       valueAttribute = optionTag.valueAttribute();
 
       String tagName = optionTag.tag();
-      if ((myNameAttribute == null || myNameAttribute.isEmpty()) && Constants.OPTION.equals(tagName)) {
+      if ((nameAttribute == null || nameAttribute.isEmpty()) && Constants.OPTION.equals(tagName)) {
         tagName = this.accessor.getName();
       }
-      myTagName = tagName;
+      this.tagName = tagName;
     }
   }
 
@@ -57,10 +59,10 @@ final class OptionTagBinding extends BasePrimitiveBinding {
   @Override
   public @NotNull Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = accessor.read(o);
-    Element targetElement = new Element(myTagName);
+    Element targetElement = new Element(tagName);
 
-    if (myNameAttribute != null && !myNameAttribute.isEmpty()) {
-      targetElement.setAttribute(myNameAttribute, name);
+    if (nameAttribute != null && !nameAttribute.isEmpty()) {
+      targetElement.setAttribute(nameAttribute, name);
     }
 
     if (value == null) {
@@ -147,7 +149,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
         if (children.isEmpty()) {
           if (binding instanceof CollectionBinding || binding instanceof MapBinding) {
             Object oldValue = accessor.read(context);
-            // do nothing if field is already null
+            // do nothing if the field is already null
             if (oldValue != null) {
               Object newValue = ((MultiNodeBinding)binding).deserializeList(oldValue, children);
               if (oldValue != newValue) {
@@ -187,12 +189,12 @@ final class OptionTagBinding extends BasePrimitiveBinding {
 
   @Override
   public boolean isBoundTo(@NotNull Element element) {
-    if (!element.getName().equals(myTagName)) {
+    if (!element.getName().equals(tagName)) {
       return false;
     }
 
-    String name = element.getAttributeValue(myNameAttribute);
-    if (myNameAttribute == null || myNameAttribute.isEmpty()) {
+    String name = element.getAttributeValue(nameAttribute);
+    if (nameAttribute == null || nameAttribute.isEmpty()) {
       return name == null || name.equals(this.name);
     }
     else {
@@ -202,12 +204,12 @@ final class OptionTagBinding extends BasePrimitiveBinding {
 
   @Override
   public boolean isBoundTo(@NotNull XmlElement element) {
-    if (!element.name.equals(myTagName)) {
+    if (!element.name.equals(tagName)) {
       return false;
     }
 
-    String name = element.getAttributeValue(myNameAttribute);
-    if (myNameAttribute.isEmpty()) {
+    String name = element.getAttributeValue(nameAttribute);
+    if (nameAttribute.isEmpty()) {
       return name == null || name.equals(this.name);
     }
     else {
