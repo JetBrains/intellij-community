@@ -8,14 +8,14 @@ class Passenger {
     }
 
     fun test1() {
-        val pass = provideNullable(1)!!
+        val pass = checkNotNull(provideNullable(1))
         accept1(pass as PassChild)
     }
 
     fun test2() {
         val pass = provideNullable(1)
         if (1 == 2) {
-            assert(pass != null)
+            checkNotNull(pass)
             accept2(pass as PassChild?)
         }
         accept2(pass as PassChild?)
