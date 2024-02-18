@@ -38,9 +38,15 @@ import java.util.concurrent.Callable;
  */
 public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   private final VirtualFile myFile;
+  protected final VirtualFile myDiffRoot;
+
+  public VirtualFileDiffElement(@NotNull VirtualFile file, @Nullable VirtualFile diffRoot) {
+    myFile = file;
+    myDiffRoot = diffRoot;
+  }
 
   public VirtualFileDiffElement(@NotNull VirtualFile file) {
-    myFile = file;
+    this(file, null);
   }
 
   @Override
@@ -74,6 +80,10 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     return myFile.isDirectory();
   }
 
+  public VirtualFile getDiffRoot() {
+    return myDiffRoot;
+  }
+
   @Override
   @Nullable
   public Navigatable getNavigatable(@Nullable Project project) {
@@ -90,7 +100,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     final ArrayList<VirtualFileDiffElement> elements = new ArrayList<>();
     for (VirtualFile file : files) {
       if (!FileTypeManager.getInstance().isFileIgnored(file) && file.isValid()) {
-        elements.add(new VirtualFileDiffElement(file));
+        elements.add(new VirtualFileDiffElement(file, myDiffRoot));
       }
     }
     return elements.toArray(new VirtualFileDiffElement[0]);
@@ -122,20 +132,43 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     return () -> {
       final FileChooserDescriptor descriptor = getChooserDescriptor();
       final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, getValue());
-      return result.length == 1 ? createElement(result[0]) : null;
+      return result.length == 1 ? createElement(result[0], myDiffRoot) : null;
     };
   }
 
   @NotNull
-  public static VirtualFileDiffElement createElement(VirtualFile file) {
+  public static VirtualFileDiffElement createElement(VirtualFile file, VirtualFile diffRoot) {
     if (file.getFileType() instanceof ArchiveFileType &&
         file.getFileSystem() != JarFileSystem.getInstance()) {
       VirtualFile jar = JarFileSystem.getInstance().getJarRootForLocalFile(file);
       if (jar != null) {
-        return new VirtualFileDiffElement(jar);
+        return new VirtualFileDiffElement(jar, diffRoot);
       }
     }
-    return new VirtualFileDiffElement(file);
+    return new VirtualFileDiffElement(file, diffRoot);
+  }
+
+  @Override
+  public String getFilterablePath() {
+    if (myDiffRoot == null) {
+      return super.getFilterablePath();
+    }
+    String path = myFile.getPath();
+    if (myFile.equals(myDiffRoot)) {
+      return path;
+    }
+    String rootPath = myDiffRoot.getPath();
+    String relativePath = path;
+    if (path.startsWith(rootPath) && rootPath.length() + 1 <= path.length()) {
+      String rawRelativePath = path.substring(rootPath.length());
+      if (rawRelativePath.startsWith("!")) {
+        relativePath = rawRelativePath.substring(2);
+      }
+      else {
+        relativePath = rawRelativePath.substring(1);
+      }
+    }
+    return relativePath;
   }
 
   protected FileChooserDescriptor getChooserDescriptor() {
@@ -171,7 +204,8 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       FileUtil.copy(src, trg);
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(trg);
       if (virtualFile != null) {
-        return new VirtualFileDiffElement(virtualFile);
+        VirtualFile diffRoot = container instanceof VirtualFileDiffElement ? ((VirtualFileDiffElement)container).getDiffRoot() : null;
+        return new VirtualFileDiffElement(virtualFile, diffRoot);
       }
     }
     catch (IOException e) {//

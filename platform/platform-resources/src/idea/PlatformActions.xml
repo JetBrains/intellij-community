@@ -1403,6 +1403,7 @@
         <action id="DirDiffMenu.MirrorToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.MirrorToLeftAction"
                 icon="AllIcons.Diff.Arrow"/>
         <separator/>
+        <action id="DirDiffMenu.Exclude" class="com.intellij.openapi.diff.impl.dir.actions.popup.ExcludeAction"/>
         <action id="DirDiffMenu.SetDefault" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDefault"/>
         <action id="DirDiffMenu.WarnOnDeletion" class="com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion"/>
       </group>
