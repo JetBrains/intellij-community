@@ -339,10 +339,9 @@ object KotlinPluginBuilder {
 
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|\\d+\\.SNAPSHOT.*)\$").matcher(ideBuildVersion)
+          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
           if (ijBuildNumber.matches()) {
             // IJ installer configurations.
-            // In this environment, ideBuildVersion matches ^(\d+)\.([\d.]+|\d+\.SNAPSHOT.*)\$
             return "$ideBuildVersion-$kind"
           }
 

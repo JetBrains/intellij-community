@@ -42,7 +42,6 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
@@ -375,12 +374,6 @@ suspend fun buildNonBundledPlugins(
     val stageDir = context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
     NioFiles.deleteRecursively(stageDir)
     val dirToJar = ConcurrentLinkedQueue<NonBundledPlugin>()
-    val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
-      "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
-    }
-    else {
-      context.buildNumber
-    }
 
     // buildPlugins pluginBuilt listener is called concurrently
     val pluginSpecs = ConcurrentLinkedQueue<PluginRepositorySpec>()
@@ -400,10 +393,10 @@ suspend fun buildNonBundledPlugins(
       val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
       val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
       val pluginVersion = if (Files.exists(pluginXmlPath)) {
-        plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context)
+        plugin.versionEvaluator.evaluate(pluginXmlPath, context.buildNumber, context)
       }
       else {
-        defaultPluginVersion
+        context.buildNumber
       }
       val destFile = targetDirectory.resolve("${plugin.directoryName}-$pluginVersion.zip")
       val pluginXml = moduleOutputPatcher.getPatchedPluginXml(plugin.mainModule)
@@ -413,7 +406,7 @@ suspend fun buildNonBundledPlugins(
 
     archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context = context)
 
-    val helpPlugin = buildHelpPlugin(pluginVersion = defaultPluginVersion, context = context)
+    val helpPlugin = buildHelpPlugin(pluginVersion = context.buildNumber, context = context)
     if (helpPlugin != null) {
       val spec = buildHelpPlugin(
         helpPlugin = helpPlugin,

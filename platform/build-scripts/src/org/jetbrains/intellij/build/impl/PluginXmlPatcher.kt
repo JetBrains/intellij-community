@@ -7,7 +7,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
 import java.nio.file.Files
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 internal val pluginDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -58,15 +57,7 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val snapshotSuffix = ".SNAPSHOT"
-  val defaultPluginVersion = if (context.buildNumber.endsWith(snapshotSuffix)) {
-    "${context.buildNumber.removeSuffix(snapshotSuffix)}.${pluginDateFormat.format(ZonedDateTime.now())}$snapshotSuffix"
-  }
-  else {
-    context.buildNumber
-  }
-
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, defaultPluginVersion, context)
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, context.buildNumber, context)
   val sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
   @Suppress("TestOnlyProblems") val content = try {
     plugin.pluginXmlPatcher(

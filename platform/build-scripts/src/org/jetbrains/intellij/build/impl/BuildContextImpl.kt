@@ -26,6 +26,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
@@ -53,7 +56,18 @@ class BuildContextImpl(
   override val systemSelector: String
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-  override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDirRoot)
+  override val buildNumber: String by lazy {
+    val suppliedBuildNumber = options.buildNumber
+    val snapshotBuildNumber = readSnapshotBuildNumber(paths.communityHomeDirRoot)
+    val baseBuildNumber = snapshotBuildNumber.removeSuffix(".SNAPSHOT")
+    if (suppliedBuildNumber != null) {
+      suppliedBuildNumber
+    }
+    else {
+      val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(options.buildDateInSeconds), ZoneOffset.UTC)
+      "$baseBuildNumber.${pluginDateFormat.format(buildDate)}"
+    }
+  }
 
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
@@ -394,6 +408,14 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
     }
 }
 
+private val BuildDependenciesCommunityRoot.snapshotBuildNumberFile: Path
+  get() = communityRoot.resolve("build.txt")
+
 internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
-  return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim()
+  val snapshotBuildNumber = Files.readString(communityHome.snapshotBuildNumberFile).trim()
+  val snapshotSuffix = ".SNAPSHOT"
+  check(snapshotBuildNumber.endsWith(snapshotSuffix)) {
+    "$snapshotBuildNumber is expected to have a '$snapshotSuffix' suffix"
+  }
+  return snapshotBuildNumber
 }
