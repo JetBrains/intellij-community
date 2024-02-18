@@ -5,10 +5,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.Gray;
-import com.intellij.util.Function;
-import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.RetinaImage;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import org.cef.browser.CefBrowser;
@@ -58,9 +55,8 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   private volatile @Nullable VolatileImage myVolatileImage;
   private volatile boolean myContentOutdated = false;
-  private volatile CefRange mySelectionRange = new CefRange(0, 0);
-  private volatile String mySelectedText = "";
-  private volatile @Nullable Rectangle[] myCompositionCharactersBBoxes;
+
+  private volatile @Nullable JBCefCarriageListener myCarriageListener;
 
   JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
@@ -190,14 +186,18 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void OnImeCompositionRangeChanged(CefBrowser browser, CefRange selectionRange, Rectangle[] characterBounds) {
-    this.mySelectionRange = selectionRange;
-    this.myCompositionCharactersBBoxes = characterBounds;
+    JBCefCarriageListener listener = myCarriageListener;
+    if (listener != null) {
+      listener.onImeCompositionRangeChanged(selectionRange, characterBounds);
+    }
   }
 
   @Override
   public void OnTextSelectionChanged(CefBrowser browser, String selectedText, CefRange selectionRange) {
-    this.mySelectedText = selectedText;
-    this.mySelectionRange = selectionRange;
+    JBCefCarriageListener listener = myCarriageListener;
+    if (listener != null) {
+      listener.onTextSelectionChanged(selectedText, selectionRange);
+    }
   }
 
   public void paint(Graphics2D g) {
@@ -239,18 +239,6 @@ class JBCefOsrHandler implements CefRenderHandler {
   private void updateLocation() {
     // getLocationOnScreen() is an expensive op, so do not request it on every mouse move, but cache
     myLocationOnScreenRef.set(myComponent.getLocationOnScreen());
-  }
-
-  public CefRange getSelectionRange() {
-    return mySelectionRange;
-  }
-
-  public @Nullable Rectangle[] getCompositionCharactersBBoxes() {
-    return myCompositionCharactersBBoxes;
-  }
-
-  public String getSelectedText() {
-    return mySelectedText;
   }
 
   private @NotNull Point getLocation() {
@@ -323,5 +311,9 @@ class JBCefOsrHandler implements CefRenderHandler {
       .createCompatibleVolatileImage(myComponent.getWidth(), myComponent.getHeight(), Transparency.TRANSLUCENT);
     drawVolatileImage(image);
     return image;
+  }
+
+  void addCarriageListener(JBCefCarriageListener listener) {
+    myCarriageListener = listener;
   }
 }

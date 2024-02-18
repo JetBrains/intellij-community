@@ -9,24 +9,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import org.cef.browser.CefBrowser;
-import org.cef.input.CefCompositionUnderline;
 import org.cef.input.CefTouchEvent;
-import org.cef.misc.CefRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.font.TextHitInfo;
 import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
-import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
-import java.text.CharacterIterator;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.CEIL;
@@ -43,8 +35,8 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 class JBCefOsrComponent extends JPanel {
   static final int RESIZE_DELAY_MS = Integer.getInteger("ide.browser.jcef.resize_delay_ms", 100);
   private volatile @NotNull JBCefOsrHandler myRenderHandler;
-  private final @NotNull InputMethodAdapter myInputMethodAdapter = new InputMethodAdapter();
   private volatile @NotNull CefBrowser myBrowser;
+  private final @NotNull JBCefInputMethodAdapter myInputMethodAdapter = new JBCefInputMethodAdapter(this);
   private final @NotNull MyScale myScale = new MyScale();
 
   private final @NotNull AtomicLong myScheduleResizeMs = new AtomicLong(-1);
@@ -88,10 +80,12 @@ class JBCefOsrComponent extends JPanel {
 
   public void setBrowser(@NotNull CefBrowser browser) {
     myBrowser = browser;
+    myInputMethodAdapter.setBrowser(browser);
   }
 
   public void setRenderHandler(@NotNull JBCefOsrHandler renderHandler) {
     myRenderHandler = renderHandler;
+    myRenderHandler.addCarriageListener(myInputMethodAdapter);
   }
 
   @Override
@@ -260,119 +254,6 @@ class JBCefOsrComponent extends JPanel {
     public double getJreBiased() {
       // JRE-managed HiDPI
       return JreHiDpiUtil.isJreHiDPIEnabled() ? myScale : 1;
-    }
-  }
-
-  class InputMethodAdapter implements InputMethodRequests, InputMethodListener {
-    @Override
-    public void inputMethodTextChanged(InputMethodEvent event) {
-      int committedCharacterCount = event.getCommittedCharacterCount();
-
-      AttributedCharacterIterator text = event.getText();
-      if (text == null) {
-        return;
-      }
-      char c = text.first();
-      if (committedCharacterCount > 0) {
-        StringBuilder textBuffer = new StringBuilder();
-        while (committedCharacterCount-- > 0) {
-          textBuffer.append(c);
-          c = text.next();
-        }
-
-        String committedText = textBuffer.toString();
-        // Vladimir.Kharitonov@jetbrains.com:
-        // The second argument `replacementRange` is actually not needed. The invalid range shall be passed here. It's not possible because
-        // of https://github.com/chromiumembedded/cef/issues/3422
-        // To be fixed after updating CEF
-        myBrowser.ImeCommitText(committedText, myRenderHandler.getSelectionRange(), 0);
-      }
-
-      StringBuilder textBuffer = new StringBuilder();
-      while (c != CharacterIterator.DONE) {
-        textBuffer.append(c);
-        c = text.next();
-      }
-
-      var compositionText = textBuffer.toString();
-      if (!compositionText.isEmpty()) {
-        CefCompositionUnderline underline =
-          new CefCompositionUnderline(new CefRange(0, compositionText.length()), new Color(0, true), new Color(0, true), 0,
-                                      CefCompositionUnderline.Style.SOLID);
-        // Vladimir.Kharitonov@jetbrains.com:
-        // The third argument `replacementRange` is actually not needed. The invalid range shall be passed here. It's not possible because
-        // of https://github.com/chromiumembedded/cef/issues/3422
-        // To be fixed after updating CEF
-        myBrowser.ImeSetComposition(compositionText, List.of(underline), myRenderHandler.getSelectionRange(),
-                                    new CefRange(compositionText.length(), compositionText.length()));
-      }
-      event.consume();
-    }
-
-    @Override
-    public void caretPositionChanged(InputMethodEvent event) { }
-
-    @Override
-    public Rectangle getTextLocation(TextHitInfo offset) {
-      Rectangle[] boxes =
-        ObjectUtils.notNull(myRenderHandler.getCompositionCharactersBBoxes(), new Rectangle[]{getDefaultImePositions()});
-      Rectangle candidateWindowPosition = boxes.length == 0 ? getDefaultImePositions() : new Rectangle(boxes[0]);
-
-      var componentLocation = getLocationOnScreen();
-      candidateWindowPosition.translate(componentLocation.x, componentLocation.y);
-      return candidateWindowPosition;
-    }
-
-    @Override
-    public @Nullable TextHitInfo getLocationOffset(int x, int y) {
-      Point p = new Point(x, y);
-      var componentLocation = getLocationOnScreen();
-      p.translate(-componentLocation.x, -componentLocation.y);
-
-      Rectangle[] boxes = myRenderHandler.getCompositionCharactersBBoxes();
-      if (boxes == null) {
-        return null;
-      }
-      TextHitInfo result = null;
-      for (int i = 0; i < boxes.length; i++) {
-        Rectangle r = boxes[i];
-        if (r.contains(p)) {
-          result = TextHitInfo.leading(i);
-          break;
-        }
-      }
-
-      return result;
-    }
-
-    @Override
-    public int getInsertPositionOffset() {
-      return 0;
-    }
-
-    @Override
-    public AttributedCharacterIterator getCommittedText(int beginIndex, int endIndex, AttributedCharacterIterator.Attribute[] attributes) {
-      return new AttributedString("").getIterator();
-    }
-
-    @Override
-    public int getCommittedTextLength() {
-      return 0;
-    }
-
-    @Override
-    public @Nullable AttributedCharacterIterator cancelLatestCommittedText(AttributedCharacterIterator.Attribute[] attributes) {
-      myBrowser.ImeCancelComposing();
-      return null;
-    }
-
-    @Override
-    public @Nullable AttributedCharacterIterator getSelectedText(AttributedCharacterIterator.Attribute[] attributes) {
-      return new AttributedString(myRenderHandler.getSelectedText()).getIterator();
-    }
-
-    private Rectangle getDefaultImePositions() {
-      return new Rectangle(0, getHeight(), 0, 0);
     }
   }
 
