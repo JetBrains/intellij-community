@@ -13,10 +13,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.platform.settings.*
 import com.intellij.serialization.SerializationException
-import com.intellij.util.xmlb.BeanBinding
-import com.intellij.util.xmlb.NotNullDeserializeBinding
-import com.intellij.util.xmlb.XmlSerializationException
-import com.intellij.util.xmlb.deserializeBeanInto
+import com.intellij.util.xmlb.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -215,15 +212,21 @@ private fun <T : Any> getXmlSerializationState(
     }
 
     if (value.isResolved) {
-      val elementXml = value.get() ?: continue
-      val element = buildNsUnawareJdom(elementXml)
+      val valueData = value.get() ?: continue
+
       if (result == null) {
         // create a result only if we have some data - do not return empty state class
         @Suppress("UNCHECKED_CAST")
         result = rootBinding.newInstance() as T
       }
 
-      deserializeBeanInto(result = result, element = element, binding = binding)
+      if (binding is BasePrimitiveBinding) {
+        binding.setValue(result, valueData.decodeToString())
+      }
+      else {
+        val element = buildNsUnawareJdom(valueData)
+        deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = false)
+      }
     }
     else if (oldData != null) {
       if (result == null) {
@@ -231,7 +234,7 @@ private fun <T : Any> getXmlSerializationState(
         @Suppress("UNCHECKED_CAST")
         result = rootBinding.newInstance() as T
       }
-      deserializeBeanInto(result = result, element = oldData, binding = binding)
+      deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = true)
     }
   }
   return result

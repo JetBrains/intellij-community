@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
@@ -14,18 +14,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
-  private final String myTextIfEmpty;
+  private final String textIfEmpty;
 
   TagBinding(@NotNull MutableAccessor accessor, @NotNull Tag tagAnnotation) {
     super(accessor, tagAnnotation.value(), null);
 
-    myTextIfEmpty = tagAnnotation.textIfEmpty();
+    textIfEmpty = tagAnnotation.textIfEmpty();
   }
 
   TagBinding(@NotNull MutableAccessor accessor, @NotNull String suggestedName) {
     super(accessor, suggestedName, null);
 
-    myTextIfEmpty = "";
+    textIfEmpty = "";
+  }
+
+  @Override
+  public void setValue(@NotNull Object host, @NotNull String value) {
+    XmlSerializerImpl.doSet(host, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
   }
 
   @Override
@@ -92,7 +97,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
   @Override
   public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
     if (binding == null) {
-      String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
+      String value = XmlSerializerImpl.getTextValue(element, textIfEmpty);
       XmlSerializerImpl.doSet(context, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
     }
     else {
@@ -106,7 +111,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
     if (binding == null) {
       String value = element.content;
       if (value == null) {
-        value = myTextIfEmpty;
+        value = textIfEmpty;
       }
       XmlSerializerImpl.doSet(context, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
     }

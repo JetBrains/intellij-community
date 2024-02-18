@@ -55,7 +55,7 @@ class ControllerBackedStoreTest {
   }
 
   @Test
-  fun `cache storage`() = runBlocking<Unit>(Dispatchers.Default) {
+  fun `get`() = runBlocking<Unit>(Dispatchers.Default) {
     componentStore = ControllerBackedTestComponentStore(
       testAppConfigPath = testAppConfig,
       controller = SettingsControllerMediator(
@@ -88,9 +88,7 @@ class ControllerBackedStoreTest {
     assertThat(component.state.bar).isEqualTo("42")
 
     val propertyName = "bar"
-    data.put("TestState.$propertyName", """
-      <s $propertyName="12" />
-    """.trimIndent().toByteArray())
+    data.put("TestState.$propertyName", "12".toByteArray())
     componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("12")
   }

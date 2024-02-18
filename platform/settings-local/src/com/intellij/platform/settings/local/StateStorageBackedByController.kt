@@ -117,7 +117,6 @@ internal class StateStorageBackedByController(
   ): T? {
     var result = mergeInto
     val bindings = (beanBinding as BeanBinding).bindings!!
-
     for (binding in bindings) {
       val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}", pluginId))
       if (!data.isResolved) {
@@ -132,7 +131,7 @@ internal class StateStorageBackedByController(
           result = beanBinding.newInstance() as T
         }
 
-        deserializeBeanInto(result = result, element = element, binding = binding)
+        deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = true)
       }
     }
     return result
@@ -208,7 +207,7 @@ private class ControllerBackedSaveSessionProducer(
 
             val element = beanBinding.serializePropertyInto(
               binding = binding,
-              o = state,
+              host = state,
               preCreatedElement = null,
               filter = filter,
               isFilterPropertyItself = true,

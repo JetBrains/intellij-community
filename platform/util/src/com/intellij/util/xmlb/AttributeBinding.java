@@ -49,7 +49,8 @@ final class AttributeBinding extends BasePrimitiveBinding {
     return context;
   }
 
-  void setValue(@NotNull Object host, @NotNull String value) {
+  @Override
+  public void setValue(@NotNull Object host, @NotNull String value) {
     if (converter == null) {
       XmlSerializerImpl.doSet(host, value, accessor, valueClass);
     }

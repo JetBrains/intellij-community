@@ -5,7 +5,5 @@ import com.intellij.serialization.MutableAccessor;
 import org.jetbrains.annotations.NotNull;
 
 public interface NestedBinding extends Binding {
-  NestedBinding[] EMPTY_ARRAY = {};
-
   @NotNull MutableAccessor getAccessor();
 }

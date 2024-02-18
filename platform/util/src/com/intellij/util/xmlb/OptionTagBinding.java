@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -17,7 +17,7 @@ import java.util.List;
 final class OptionTagBinding extends BasePrimitiveBinding {
   private final String myTagName;
   private final String myNameAttribute;
-  private final String myValueAttribute;
+  private final String valueAttribute;
 
   OptionTagBinding(@NotNull MutableAccessor accessor, @Nullable OptionTag optionTag) {
     super(accessor, optionTag == null ? null : optionTag.value(), optionTag == null ? null : optionTag.converter());
@@ -25,17 +25,32 @@ final class OptionTagBinding extends BasePrimitiveBinding {
     if (optionTag == null) {
       myTagName = Constants.OPTION;
       myNameAttribute = Constants.NAME;
-      myValueAttribute = Constants.VALUE;
+      valueAttribute = Constants.VALUE;
     }
     else {
       myNameAttribute = optionTag.nameAttribute();
-      myValueAttribute = optionTag.valueAttribute();
+      valueAttribute = optionTag.valueAttribute();
 
       String tagName = optionTag.tag();
       if ((myNameAttribute == null || myNameAttribute.isEmpty()) && Constants.OPTION.equals(tagName)) {
         tagName = this.accessor.getName();
       }
       myTagName = tagName;
+    }
+  }
+
+  @Override
+  public void setValue(@NotNull Object host, @NotNull String value) {
+    if (converter == null) {
+      try {
+        XmlSerializerImpl.doSet(host, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Cannot set value for field " + name, e);
+      }
+    }
+    else {
+      accessor.set(host, converter.fromString(value));
     }
   }
 
@@ -55,9 +70,9 @@ final class OptionTagBinding extends BasePrimitiveBinding {
     Converter<Object> converter = getConverter();
     if (converter == null) {
       if (binding == null) {
-        targetElement.setAttribute(myValueAttribute, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
+        targetElement.setAttribute(valueAttribute, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
       }
-      else if (binding instanceof BeanBinding && myValueAttribute.isEmpty()) {
+      else if (binding instanceof BeanBinding && valueAttribute.isEmpty()) {
         ((BeanBinding)binding).serializeInto(value, targetElement, filter);
       }
       else {
@@ -70,7 +85,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
     else {
       String text = converter.toString(value);
       if (text != null) {
-        targetElement.setAttribute(myValueAttribute, JDOMUtil.removeControlChars(text));
+        targetElement.setAttribute(valueAttribute, JDOMUtil.removeControlChars(text));
       }
     }
     return targetElement;
@@ -79,9 +94,9 @@ final class OptionTagBinding extends BasePrimitiveBinding {
   @SuppressWarnings("DuplicatedCode")
   @Override
   public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
-    Attribute valueAttribute = element.getAttribute(myValueAttribute);
+    Attribute valueAttribute = element.getAttribute(this.valueAttribute);
     if (valueAttribute == null) {
-      if (myValueAttribute.isEmpty()) {
+      if (this.valueAttribute.isEmpty()) {
         assert binding != null;
         accessor.set(context, binding.deserializeUnsafe(context, element));
       }
@@ -90,7 +105,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
         if (children.isEmpty()) {
           if (binding instanceof CollectionBinding || binding instanceof MapBinding) {
             Object oldValue = accessor.read(context);
-            // do nothing if field is already null
+            // do nothing if the field is already null
             if (oldValue != null) {
               Object newValue = ((MultiNodeBinding)binding).deserializeList(oldValue, children);
               if (oldValue != newValue) {
@@ -113,18 +128,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
       }
     }
     else {
-      String value = valueAttribute.getValue();
-      if (converter == null) {
-        try {
-          XmlSerializerImpl.doSet(context, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
-        }
-        catch (Exception e) {
-          throw new RuntimeException("Cannot set value for field " + name, e);
-        }
-      }
-      else {
-        accessor.set(context, converter.fromString(value));
-      }
+      setValue(context, valueAttribute.getValue());
     }
     return context;
   }
@@ -132,9 +136,9 @@ final class OptionTagBinding extends BasePrimitiveBinding {
   @SuppressWarnings("DuplicatedCode")
   @Override
   public @NotNull Object deserialize(@NotNull Object context, @NotNull XmlElement element) {
-    String value = element.getAttributeValue(myValueAttribute);
+    String value = element.getAttributeValue(valueAttribute);
     if (value == null) {
-      if (myValueAttribute.isEmpty()) {
+      if (valueAttribute.isEmpty()) {
         assert binding != null;
         accessor.set(context, binding.deserializeUnsafe(context, element));
       }

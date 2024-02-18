@@ -1,16 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.dom.XmlElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
-abstract class BasePrimitiveBinding implements NestedBinding {
+@ApiStatus.Internal
+public abstract class BasePrimitiveBinding implements NestedBinding {
   protected final MutableAccessor accessor;
   protected final String name;
 
@@ -18,7 +20,11 @@ abstract class BasePrimitiveBinding implements NestedBinding {
 
   protected @Nullable Binding binding;
 
-  protected BasePrimitiveBinding(@NotNull MutableAccessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
+  protected BasePrimitiveBinding(
+    @NotNull MutableAccessor accessor,
+    @Nullable String suggestedName,
+    @SuppressWarnings("rawtypes") @Nullable Class<? extends Converter> converterClass
+  ) {
     this.accessor = accessor;
 
     name = (suggestedName == null || suggestedName.isEmpty()) ? this.accessor.getName() : suggestedName;
@@ -62,4 +68,6 @@ abstract class BasePrimitiveBinding implements NestedBinding {
   protected final @Nullable Converter<Object> getConverter() {
     return converter;
   }
+
+  public abstract void setValue(@NotNull Object host, @NotNull String value);
 }

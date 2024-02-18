@@ -36,10 +36,10 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
     return -1
   }
 
-  override fun serializeInto(o: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
-    return when (o) {
-      is BaseState -> serializeBaseStateInto(o = o, _element = preCreatedElement, filter = filter)
-      else -> super.serializeInto(o = o, preCreatedElement = preCreatedElement, filter = filter)
+  override fun serializeInto(host: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+    return when (host) {
+      is BaseState -> serializeBaseStateInto(o = host, _element = preCreatedElement, filter = filter)
+      else -> super.serializeInto(host = host, preCreatedElement = preCreatedElement, filter = filter)
     }
   }
 

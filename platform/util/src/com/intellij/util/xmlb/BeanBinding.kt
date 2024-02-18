@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
+@file:ApiStatus.Internal
 
 package com.intellij.util.xmlb
 
@@ -7,7 +8,6 @@ import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.PropertyCollector
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
-import com.intellij.util.xmlb.XmlSerializerUtil.getAccessors
 import com.intellij.util.xmlb.annotations.*
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
@@ -22,10 +22,10 @@ import java.lang.reflect.Type
 import java.util.*
 
 private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
+private val EMPTY_BINDINGS = arrayOf<NestedBinding>()
 
 fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
 
-@ApiStatus.Internal
 open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding {
   private val tagName: String
   @JvmField
@@ -44,45 +44,50 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
   @Synchronized
   override fun init(originalType: Type, serializer: Serializer) {
     assert(bindings == null)
-    val classAnnotation = beanClass.getAnnotation(Property::class.java)
-
-    val accessors = getAccessors(beanClass)
-    val result = if (accessors.isEmpty()) NestedBinding.EMPTY_ARRAY else arrayOfNulls(accessors.size)
-    for (i in result.indices) {
-      val binding = createBinding(
-        accessor = accessors[i],
-        serializer = serializer,
-        propertyStyle = classAnnotation?.style ?: Property.Style.OPTION_TAG,
-      )
-      binding.init(originalType, serializer)
-      result[i] = binding
+    val accessors = PROPERTY_COLLECTOR.collect(beanClass)
+    if (accessors.isEmpty()) {
+      bindings = EMPTY_BINDINGS
     }
-    bindings = result
+    else {
+      val propertyStyle = beanClass.getAnnotation(Property::class.java)?.style ?: Property.Style.OPTION_TAG
+      val result = Array(accessors.size) { i ->
+        val binding = createBinding(accessor = accessors[i], serializer = serializer, propertyStyle = propertyStyle)
+        binding.init(originalType, serializer)
+        binding
+      }
+      bindings = result
+    }
   }
 
   override fun serialize(o: Any, context: Any?, filter: SerializationFilter?): Any? {
-    return serializeInto(o = o, preCreatedElement = if (context == null) null else Element(tagName), filter = filter)
+    return serializeInto(host = o, preCreatedElement = if (context == null) null else Element(tagName), filter = filter)
   }
 
   fun serialize(bean: Any, createElementIfEmpty: Boolean, filter: SerializationFilter?): Element? {
-    return serializeInto(o = bean, preCreatedElement = if (createElementIfEmpty) Element(tagName) else null, filter = filter)
+    return serializeInto(host = bean, preCreatedElement = if (createElementIfEmpty) Element(tagName) else null, filter = filter)
   }
 
-  open fun serializeInto(o: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+  open fun serializeInto(host: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
     var element = preCreatedElement
     for (binding in bindings!!) {
-      if (o is SerializationFilter && !o.accepts(binding.accessor, o)) {
+      if (host is SerializationFilter && !host.accepts(binding.accessor, host)) {
         continue
       }
 
-      element = serializePropertyInto(binding = binding, o = o, preCreatedElement = element, filter = filter, isFilterPropertyItself = true)
+      element = serializePropertyInto(
+        binding = binding,
+        host = host,
+        preCreatedElement = element,
+        filter = filter,
+        isFilterPropertyItself = true,
+      )
     }
     return element
   }
 
   fun serializePropertyInto(
     binding: NestedBinding,
-    o: Any,
+    host: Any,
     preCreatedElement: Element?,
     filter: SerializationFilter?,
     isFilterPropertyItself: Boolean,
@@ -93,11 +98,11 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     if (property == null || !property.alwaysWrite) {
       if (filter != null && isFilterPropertyItself) {
         if (filter is SkipDefaultsSerializationFilter) {
-          if (filter.equal(binding, o)) {
+          if (filter.equal(binding, host)) {
             return element
           }
         }
-        else if (!filter.accepts(accessor, o)) {
+        else if (!filter.accepts(accessor, host)) {
           return element
         }
       }
@@ -105,7 +110,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
       //todo: optimize. Cache it.
       if (property != null) {
         val propertyFilter = XmlSerializerUtil.getPropertyFilter(property)
-        if (propertyFilter != null && !propertyFilter.accepts(accessor, o)) {
+        if (propertyFilter != null && !propertyFilter.accepts(accessor, host)) {
           return element
         }
       }
@@ -115,7 +120,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
       element = Element(tagName)
     }
 
-    val node = binding.serialize(o, element, filter)
+    val node = binding.serialize(host, element, filter)
     if (node != null) {
       if (node is Attribute) {
         element.setAttribute(node as Attribute?)
@@ -183,7 +188,8 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     return true
   }
 
-  fun computeBindingWeights(accessorNameTracker: Set<String>): Object2FloatMap<String> {
+  @Suppress("unused")
+  internal fun computeBindingWeights(accessorNameTracker: Set<String>): Object2FloatMap<String> {
     val weights = Object2FloatOpenHashMap<String>(accessorNameTracker.size)
     var weight = 0f
     val step = bindings!!.size.toFloat() / accessorNameTracker.size.toFloat()
@@ -300,7 +306,7 @@ fun deserializeBeanInto(
     }
   }
 
-  var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
+  var data: LinkedHashMap<NestedBinding, MutableList<Element>>? = null
   nextNode@ for (content in element.content) {
     for (binding in bindings) {
       if (content is Text) {
@@ -341,15 +347,17 @@ fun deserializeBeanInto(
   }
 }
 
-fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding) {
-  for (attribute in element.attributes) {
-    if (binding is AttributeBinding && binding.name == attribute.name) {
-      binding.setValue(result, attribute.value)
-      break
+fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, checkAttributes: Boolean) {
+  if (checkAttributes) {
+    for (attribute in element.attributes) {
+      if (binding is AttributeBinding && binding.name == attribute.name) {
+        binding.setValue(result, attribute.value)
+        break
+      }
     }
   }
 
-  var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
+  var data: MutableList<Element>? = null
   nextNode@ for (content in element.content) {
     if (content is Text) {
       if (binding is TextBinding) {
@@ -363,9 +371,9 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding) {
       @Suppress("DuplicatedCode")
       if (binding is MultiNodeBinding && binding.isMulti) {
         if (data == null) {
-          data = LinkedHashMap()
+          data = ArrayList()
         }
-        data.computeIfAbsent(binding) { ArrayList() }.add(child)
+        data.add(child)
         continue@nextNode
       }
       else {
@@ -380,7 +388,7 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding) {
   }
 
   if (data != null) {
-    (binding as MultiNodeBinding).deserializeList(result, data.get(binding)!!)
+    (binding as MultiNodeBinding).deserializeList(result, data)
   }
 }
 
@@ -495,7 +503,7 @@ private class XmlSerializerPropertyCollectorListClassValue(
 
     LOG.warn("No accessors for ${aClass.name}. " +
              "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc")
-    return result
+    return Collections.emptyList()
   }
 }
 
