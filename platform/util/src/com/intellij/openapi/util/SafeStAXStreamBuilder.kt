@@ -1,193 +1,162 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util;
+package com.intellij.openapi.util
 
-import org.codehaus.stax2.XMLStreamReader2;
-import org.jdom.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
-import javax.xml.stream.XMLStreamException;
-
-import static javax.xml.stream.XMLStreamConstants.*;
+import org.codehaus.stax2.XMLStreamReader2
+import org.jdom.Document
+import org.jdom.Element
+import org.jdom.Namespace
+import org.jdom.Verifier
+import org.jetbrains.annotations.ApiStatus
+import javax.xml.stream.XMLStreamConstants
+import javax.xml.stream.XMLStreamException
 
 // DTD, COMMENT and PROCESSING_INSTRUCTION are ignored
 @ApiStatus.Internal
-public final class SafeStAXStreamBuilder {
-  public static final SafeJdomFactory FACTORY = new SafeJdomFactory.BaseSafeJdomFactory();
+object SafeStAXStreamBuilder {
+  val FACTORY: SafeJdomFactory = SafeJdomFactory.BaseSafeJdomFactory()
 
-  static Document buildDocument(@NotNull XMLStreamReader2 stream) throws XMLStreamException {
-    int state = stream.getEventType();
+  @Throws(XMLStreamException::class)
+  fun buildDocument(stream: XMLStreamReader2): Document {
+    var state = stream.eventType
 
-    if (START_DOCUMENT != state) {
-      throw new XMLStreamException("JDOM requires that XMLStreamReaders are at their beginning when being processed.");
+    if (XMLStreamConstants.START_DOCUMENT != state) {
+      throw XMLStreamException("JDOM requires that XMLStreamReaders are at their beginning when being processed.")
     }
 
-    Document document = new Document();
+    val document = Document()
 
-    while (state != END_DOCUMENT) {
-      switch (state) {
-        case START_DOCUMENT:
+    while (state != XMLStreamConstants.END_DOCUMENT) {
+      when (state) {
+        XMLStreamConstants.START_DOCUMENT -> {
           // for the <?xml version="..." standalone=".."?>
-          document.setBaseURI(stream.getLocation().getSystemId());
-          document.setProperty("ENCODING_SCHEME", stream.getCharacterEncodingScheme());
-          document.setProperty("STANDALONE", String.valueOf(stream.isStandalone()));
-          document.setProperty("ENCODING", stream.getEncoding());
-          break;
-
-        case DTD:
-        case COMMENT:
-        case PROCESSING_INSTRUCTION:
-        case SPACE:
-          break;
-
-        case START_ELEMENT:
-          document.setRootElement(processElementFragment(stream, true, true, FACTORY));
-          break;
-
-        case CHARACTERS:
-          String badTxt = stream.getText();
+          document.baseURI = stream.location.systemId
+          document.setProperty("ENCODING_SCHEME", stream.characterEncodingScheme)
+          document.setProperty("STANDALONE", stream.isStandalone.toString())
+          document.setProperty("ENCODING", stream.encoding)
+        }
+        XMLStreamConstants.DTD, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION, XMLStreamConstants.SPACE -> {}
+        XMLStreamConstants.START_ELEMENT -> document.setRootElement(processElementFragment(stream, true, true, FACTORY))
+        XMLStreamConstants.CHARACTERS -> {
+          val badTxt = stream.text
           if (!Verifier.isAllXMLWhitespace(badTxt)) {
-            throw new XMLStreamException("Unexpected XMLStream event at Document level: CHARACTERS (" + badTxt + ")");
+            throw XMLStreamException("Unexpected XMLStream event at Document level: CHARACTERS ($badTxt)")
           }
-          // otherwise, ignore the chars
-          break;
-
-        default:
-          throw new XMLStreamException("Unexpected XMLStream event at Document level:" + state);
+        }
+        else -> throw XMLStreamException("Unexpected XMLStream event at Document level:$state")
       }
-
       if (stream.hasNext()) {
-        state = stream.next();
+        state = stream.next()
       }
       else {
-        throw new XMLStreamException("Unexpected end-of-XMLStreamReader");
+        throw XMLStreamException("Unexpected end-of-XMLStreamReader")
       }
     }
-    return document;
+    return document
   }
 
-  public static @NotNull Element buildNsUnawareAndClose(@NotNull XMLStreamReader2 stream) throws XMLStreamException {
-    return build(stream, true, false, FACTORY);
+  @Throws(XMLStreamException::class)
+  fun buildNsUnawareAndClose(stream: XMLStreamReader2): Element {
+    return build(stream, true, false, FACTORY)
   }
 
-  public static Element build(@NotNull XMLStreamReader2 stream,
-                              @SuppressWarnings("SameParameterValue") boolean isIgnoreBoundaryWhitespace,
-                              boolean isNsSupported,
-                              @NotNull SafeJdomFactory factory) throws XMLStreamException {
-    int state = stream.getEventType();
+  @Throws(XMLStreamException::class)
+  fun build(stream: XMLStreamReader2,
+            isIgnoreBoundaryWhitespace: Boolean,
+            isNsSupported: Boolean,
+            factory: SafeJdomFactory): Element {
+    var state = stream.eventType
 
-    if (state != START_DOCUMENT) {
-      throw new XMLStreamException("JDOM requires that XMLStreamReaders are at their beginning when being processed");
+    if (state != XMLStreamConstants.START_DOCUMENT) {
+      throw XMLStreamException("JDOM requires that XMLStreamReaders are at their beginning when being processed")
     }
 
-    Element rootElement = null;
-    while (state != END_DOCUMENT) {
-      switch (state) {
-        case START_DOCUMENT:
-        case SPACE:
-        case CHARACTERS:
-        case COMMENT:
-        case PROCESSING_INSTRUCTION:
-        case DTD:
-          break;
-
-        case START_ELEMENT:
-          rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, isNsSupported, factory);
-          break;
-
-        default:
-          throw new XMLStreamException("Unexpected XMLStream event " + state);
+    var rootElement: Element? = null
+    while (state != XMLStreamConstants.END_DOCUMENT) {
+      when (state) {
+        XMLStreamConstants.START_DOCUMENT, XMLStreamConstants.SPACE, XMLStreamConstants.CHARACTERS, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION, XMLStreamConstants.DTD -> {}
+        XMLStreamConstants.START_ELEMENT -> rootElement = processElementFragment(stream, isIgnoreBoundaryWhitespace, isNsSupported, factory)
+        else -> throw XMLStreamException("Unexpected XMLStream event $state")
       }
-
       if (stream.hasNext()) {
-        state = stream.next();
+        state = stream.next()
       }
       else {
-        throw new XMLStreamException("Unexpected end-of-XMLStreamReader");
+        throw XMLStreamException("Unexpected end-of-XMLStreamReader")
       }
     }
 
     if (rootElement == null) {
       // to avoid NPE
-      return new Element("empty");
+      return Element("empty")
     }
-    return rootElement;
+    return rootElement
   }
 
-  public static @NotNull Element processElementFragment(@NotNull XMLStreamReader2 reader,
-                                                        boolean isIgnoreBoundaryWhitespace,
-                                                        boolean isNsSupported,
-                                                        @NotNull SafeJdomFactory factory) throws XMLStreamException {
-    Element fragment = processElement(reader, isNsSupported, factory);
-    Element current = fragment;
-    int depth = 1;
+  @Throws(XMLStreamException::class)
+  fun processElementFragment(reader: XMLStreamReader2,
+                             isIgnoreBoundaryWhitespace: Boolean,
+                             isNsSupported: Boolean,
+                             factory: SafeJdomFactory): Element {
+    val fragment = processElement(reader, isNsSupported, factory)
+    var current = fragment
+    var depth = 1
     while (depth > 0 && reader.hasNext()) {
-      switch (reader.next()) {
-        case START_ELEMENT:
-          Element tmp = processElement(reader, isNsSupported, factory);
-          current.addContent(tmp);
-          current = tmp;
-          depth++;
-          break;
-        case END_ELEMENT:
-          current = current.getParentElement();
-          depth--;
-          break;
-        case CDATA:
-          current.addContent(factory.cdata(reader.getText()));
-          break;
-
-        case SPACE:
-          if (!isIgnoreBoundaryWhitespace) {
-            current.addContent(factory.text(reader.getText()));
-          }
-          break;
-
-        case CHARACTERS:
-          if (!isIgnoreBoundaryWhitespace || !reader.isWhiteSpace()) {
-            current.addContent(factory.text(reader.getText()));
-          }
-          break;
-
-        case ENTITY_REFERENCE:
-        case COMMENT:
-        case PROCESSING_INSTRUCTION:
-          break;
-
-        default:
-          throw new XMLStreamException("Unexpected XMLStream event " + reader.getEventType(), reader.getLocation());
+      when (reader.next()) {
+        XMLStreamConstants.START_ELEMENT -> {
+          val tmp = processElement(reader, isNsSupported, factory)
+          current.addContent(tmp)
+          current = tmp
+          depth++
+        }
+        XMLStreamConstants.END_ELEMENT -> {
+          current = current.parentElement
+          depth--
+        }
+        XMLStreamConstants.CDATA -> current.addContent(factory.cdata(reader.text))
+        XMLStreamConstants.SPACE -> if (!isIgnoreBoundaryWhitespace) {
+          current.addContent(factory.text(reader.text))
+        }
+        XMLStreamConstants.CHARACTERS -> if (!isIgnoreBoundaryWhitespace || !reader.isWhiteSpace) {
+          current.addContent(factory.text(reader.text))
+        }
+        XMLStreamConstants.ENTITY_REFERENCE, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION -> {}
+        else -> throw XMLStreamException("Unexpected XMLStream event " + reader.eventType, reader.location)
       }
     }
 
-    return fragment;
+    return fragment
   }
 
-  private static @NotNull Element processElement(@NotNull XMLStreamReader2 reader,
-                                                 boolean isNsSupported,
-                                                 @NotNull SafeJdomFactory factory) {
-    Element element = factory.element(reader.getLocalName(), isNsSupported
-                                                             ? Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI())
-                                                             : Namespace.NO_NAMESPACE);
+  private fun processElement(reader: XMLStreamReader2,
+                             isNsSupported: Boolean,
+                             factory: SafeJdomFactory): Element {
+    val element = factory.element(reader.localName, if (isNsSupported
+    ) Namespace.getNamespace(reader.prefix, reader.namespaceURI)
+    else Namespace.NO_NAMESPACE)
     // handle attributes
-    int attributeCount = reader.getAttributeCount();
+    val attributeCount = reader.attributeCount
     if (attributeCount != 0) {
-      AttributeList list = element.initAttributeList(attributeCount);
-      for (int i = 0; i < attributeCount; i++) {
+      val list = element.initAttributeList(attributeCount)
+      for (i in 0 until attributeCount) {
         list.doAdd(factory.attribute(
           reader.getAttributeLocalName(i),
           reader.getAttributeValue(i),
-          isNsSupported ? Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) : Namespace.NO_NAMESPACE
-        ));
+          if (isNsSupported) Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i))
+          else Namespace.NO_NAMESPACE
+        ))
       }
     }
 
     if (isNsSupported) {
       // handle namespaces
-      for (int i = 0, len = reader.getNamespaceCount(); i < len; i++) {
-        element.addNamespaceDeclaration(Namespace.getNamespace(reader.getNamespacePrefix(i), reader.getNamespaceURI(i)));
+      var i = 0
+      val len = reader.namespaceCount
+      while (i < len) {
+        element.addNamespaceDeclaration(Namespace.getNamespace(reader.getNamespacePrefix(i), reader.getNamespaceURI(i)))
+        i++
       }
     }
 
-    return element;
+    return element
   }
 }

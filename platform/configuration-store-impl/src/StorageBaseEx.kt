@@ -100,23 +100,12 @@ internal fun <T : Any> deserializeStateWithController(
   pluginId: PluginId,
 ): T? {
   if (stateClass === Element::class.java) {
-    try {
-      val item = controller?.doGetItem(createSettingDescriptor(key = componentName, pluginId = pluginId)) ?: GetResult.inapplicable()
-      if (item.isResolved) {
-        val xmlData = item.get() ?: return null
-        val xmlStreamReader = createXmlStreamReader(xmlData)
-        try {
-          return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader) as T
-        }
-        finally {
-          xmlStreamReader.close()
-        }
-      }
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot deserialize value for $componentName", e)
-    }
-    return stateElement as T?
+    return deserializeAsJdomElement(
+      controller = controller,
+      componentName = componentName,
+      pluginId = pluginId,
+      stateElement = stateElement,
+    )
   }
   else if (com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
     if (stateElement == null) {
@@ -185,6 +174,33 @@ internal fun <T : Any> deserializeStateWithController(
   catch (e: Exception) {
     throw XmlSerializationException("Cannot deserialize class ${stateClass.name}", e)
   }
+}
+
+private fun <T : Any> deserializeAsJdomElement(
+  controller: SettingsController?,
+  componentName: String,
+  pluginId: PluginId,
+  stateElement: Element?,
+): T? {
+  try {
+    val item = controller?.doGetItem(createSettingDescriptor(key = componentName, pluginId = pluginId)) ?: GetResult.inapplicable()
+    if (item.isResolved) {
+      val xmlData = item.get() ?: return null
+      val xmlStreamReader = createXmlStreamReader(xmlData)
+      try {
+        @Suppress("UNCHECKED_CAST")
+        return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader) as T
+      }
+      finally {
+        xmlStreamReader.close()
+      }
+    }
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot deserialize value for $componentName", e)
+  }
+  @Suppress("UNCHECKED_CAST")
+  return stateElement as T?
 }
 
 private fun <T : Any> getXmlSerializationState(
