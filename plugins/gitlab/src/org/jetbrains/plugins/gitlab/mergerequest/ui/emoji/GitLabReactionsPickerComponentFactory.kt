@@ -63,7 +63,7 @@ internal object GitLabReactionsPickerComponentFactory {
   }
 
   private fun createReactionsBlock(reactions: List<GitLabReaction>, onClick: (GitLabReaction) -> Unit): JComponent {
-    return JPanel(WrapLayout(FlowLayout.LEFT, 0, 0)).apply {
+    return JPanel(WrapLayout(FlowLayout.LEFT, JBUI.scale(5), JBUI.scale(5))).apply {
       isOpaque = false
       border = JBUI.Borders.empty(
         CodeReviewReactionsUIUtil.Picker.BLOCK_PADDING,
