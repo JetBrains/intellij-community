@@ -454,7 +454,7 @@ public final class GradleDependencyResolver {
    * @return best match, null otherwise
    */
   @VisibleForTesting
-  public static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
+  static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
     Iterator<File> auxiliariesIterator = auxiliaries.iterator();
     if (!auxiliariesIterator.hasNext()) {
       return null;
