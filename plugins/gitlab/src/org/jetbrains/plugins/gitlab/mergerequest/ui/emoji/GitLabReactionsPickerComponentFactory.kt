@@ -9,11 +9,15 @@ import com.intellij.collaboration.ui.codereview.reactions.VARIATION_SELECTOR
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.DimensionRestrictions
+import com.intellij.collaboration.ui.util.popup.awaitClose
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WrapLayout
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReaction
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReactionImpl
 import java.awt.FlowLayout
 import java.util.*
 import javax.swing.JComponent
@@ -21,7 +25,25 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal object GitLabReactionsPickerComponentFactory {
-  fun create(reactions: List<GitLabReaction>, onClick: (GitLabReaction) -> Unit): JComponent {
+  suspend fun showPopup(reactionsVm: GitLabReactionsViewModel, component: JComponent) {
+    val availableReactions = reactionsVm.availableParsedEmojis.await().map(::GitLabReactionImpl)
+    var popup: JBPopup? = null
+    val reactionPicker = create(availableReactions) { reaction ->
+      reactionsVm.toggle(reaction)
+      popup?.cancel()
+    }
+    popup = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(reactionPicker, reactionPicker)
+      .setResizable(false)
+      .setFocusable(true)
+      .setRequestFocus(true)
+      .createPopup()
+
+    popup.showUnderneathOf(component)
+    popup.awaitClose()
+  }
+
+  private fun create(reactions: List<GitLabReaction>, onClick: (GitLabReaction) -> Unit): JComponent {
     val reactionsWithCategory = VerticalListPanel().apply {
       reactions
         .groupBy({ it.category.orEmpty() }, { it })

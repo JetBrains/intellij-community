@@ -7,8 +7,6 @@ import com.intellij.collaboration.ui.codereview.reactions.ReactionLabel
 import com.intellij.collaboration.ui.codereview.reactions.VARIATION_SELECTOR
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.*
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.ui.hover.addHoverAndPressStateListener
@@ -18,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReaction
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReactionImpl
 import javax.swing.JComponent
 
 internal object GitLabReactionsComponentFactory {
@@ -108,20 +105,7 @@ internal object GitLabReactionsComponentFactory {
 
   private fun showReactionPickerPopup(cs: CoroutineScope, reactionsVm: GitLabReactionsViewModel, component: JComponent) {
     cs.launch {
-      val availableReactions = reactionsVm.availableParsedEmojis.await().map(::GitLabReactionImpl)
-      var popup: JBPopup? = null
-      val reactionPicker = GitLabReactionsPickerComponentFactory.create(availableReactions) { reaction ->
-        reactionsVm.toggle(reaction)
-        popup?.cancel()
-      }
-      popup = JBPopupFactory.getInstance()
-        .createComponentPopupBuilder(reactionPicker, reactionPicker)
-        .setResizable(false)
-        .setFocusable(true)
-        .setRequestFocus(true)
-        .createPopup()
-
-      popup.showUnderneathOf(component)
+      GitLabReactionsPickerComponentFactory.showPopup(reactionsVm, component)
     }
   }
 }
