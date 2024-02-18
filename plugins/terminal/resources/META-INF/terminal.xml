@@ -31,7 +31,7 @@
     <registryKey key="terminal.new.ui.show.promotion" defaultValue="false"
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
 
-    <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
+    <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="0"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
