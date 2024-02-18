@@ -7,6 +7,8 @@ import org.codehaus.stax2.XMLStreamReader2
 import org.jdom.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.Reader
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 
@@ -84,6 +86,17 @@ fun buildNsUnawareJdom(reader: Reader): Element {
 @Throws(XMLStreamException::class)
 fun buildNsUnawareJdom(data: ByteArray): Element {
   val xmlStreamReader = createXmlStreamReader(data)
+  try {
+    return buildNsUnawareJdomAndClose(xmlStreamReader)
+  }
+  finally {
+    xmlStreamReader.close()
+  }
+}
+
+@Throws(XMLStreamException::class)
+fun buildNsUnawareJdom(file: Path): Element {
+  val xmlStreamReader = createXmlStreamReader(Files.newInputStream(file))
   try {
     return buildNsUnawareJdomAndClose(xmlStreamReader)
   }

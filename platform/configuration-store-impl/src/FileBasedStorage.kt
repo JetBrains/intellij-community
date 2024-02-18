@@ -17,7 +17,6 @@ import com.intellij.openapi.components.impl.stores.getComponentNameIfValid
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
-import com.intellij.openapi.util.buildNsUnawareJdomAndClose
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
-import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -202,13 +200,7 @@ abstract class FileBasedStorage(
       if (isUseUnixLineSeparator) {
         // do not load the whole data into memory if there is no need to detect line separators
         lineSeparator = LineSeparator.LF
-        val xmlStreamReader = createXmlStreamReader(Files.newInputStream(file))
-        try {
-          return buildNsUnawareJdomAndClose(xmlStreamReader)
-        }
-        finally {
-          xmlStreamReader.close()
-        }
+        return buildNsUnawareJdom(file)
       }
       else {
         val (element, separator) = loadDataAndDetectLineSeparator(file)
