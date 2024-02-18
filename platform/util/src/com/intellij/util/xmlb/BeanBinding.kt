@@ -139,8 +139,6 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
       element = element,
       accessorNameTracker = null,
       bindings = bindings!!,
-      start = 0,
-      end = bindings!!.size,
     )
   }
 
@@ -288,14 +286,11 @@ fun deserializeBeanInto(
   result: Any,
   element: Element,
   bindings: Array<NestedBinding>,
-  start: Int = 0,
-  end: Int,
   accessorNameTracker: MutableSet<String>? = null,
 ) {
   nextAttribute@ for (attribute in element.attributes) {
     if (attribute.namespaceURI.isNullOrEmpty()) {
-      for (i in start until end) {
-        val binding = bindings[i]
+      for (binding in bindings) {
         if (binding is AttributeBinding && binding.name == attribute.name) {
           accessorNameTracker?.add(binding.getAccessor().name)
           binding.setValue(result, attribute.value)
@@ -307,8 +302,7 @@ fun deserializeBeanInto(
 
   var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
   nextNode@ for (content in element.content) {
-    for (i in start until end) {
-      val binding = bindings[i]
+    for (binding in bindings) {
       if (content is Text) {
         if (binding is TextBinding) {
           binding.setValue(result, content.getValue())
@@ -333,8 +327,7 @@ fun deserializeBeanInto(
     }
   }
 
-  for (i in start until end) {
-    val binding = bindings[i]
+  for (binding in bindings) {
     if (binding is AccessorBindingWrapper && binding.isFlat) {
       binding.deserializeUnsafe(result, element)
     }
@@ -343,16 +336,57 @@ fun deserializeBeanInto(
   if (data != null) {
     for (binding in data.keys) {
       accessorNameTracker?.add(binding.accessor.name)
-      (binding as MultiNodeBinding).deserializeList(result, data[binding]!!)
+      (binding as MultiNodeBinding).deserializeList(result, data.get(binding)!!)
     }
+  }
+}
+
+fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding) {
+  for (attribute in element.attributes) {
+    if (binding is AttributeBinding && binding.name == attribute.name) {
+      binding.setValue(result, attribute.value)
+      break
+    }
+  }
+
+  var data: LinkedHashMap<NestedBinding, MutableList<Element?>>? = null
+  nextNode@ for (content in element.content) {
+    if (content is Text) {
+      if (binding is TextBinding) {
+        binding.setValue(result, content.getValue())
+      }
+      break
+    }
+
+    val child = content as Element
+    if (binding.isBoundTo(child)) {
+      @Suppress("DuplicatedCode")
+      if (binding is MultiNodeBinding && binding.isMulti) {
+        if (data == null) {
+          data = LinkedHashMap()
+        }
+        data.computeIfAbsent(binding) { ArrayList() }.add(child)
+        continue@nextNode
+      }
+      else {
+        binding.deserializeUnsafe(result, child)
+        break
+      }
+    }
+  }
+
+  if (binding is AccessorBindingWrapper && binding.isFlat) {
+    binding.deserializeUnsafe(result, element)
+  }
+
+  if (data != null) {
+    (binding as MultiNodeBinding).deserializeList(result, data.get(binding)!!)
   }
 }
 
 // must be static class and not anonymous
 private class MyPropertyCollectorConfiguration : PropertyCollector.Configuration(true, false, false) {
-  override fun isAnnotatedAsTransient(element: AnnotatedElement): Boolean {
-    return element.isAnnotationPresent(Transient::class.java)
-  }
+  override fun isAnnotatedAsTransient(element: AnnotatedElement): Boolean = element.isAnnotationPresent(Transient::class.java)
 
   override fun hasStoreAnnotations(element: AccessibleObject): Boolean {
     @Suppress("DEPRECATION")

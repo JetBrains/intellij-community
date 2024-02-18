@@ -204,49 +204,37 @@ private fun <T : Any> getXmlSerializationState(
   val bindings = rootBinding.bindings!!
 
   val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
-  for ((index, binding) in bindings.withIndex()) {
-    val data = getXmlDataFromController(
-      key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}", pluginId = pluginId, tags = keyTags),
-      controller = controller,
-    )
-    if (!data.isResolved) {
-      if (oldData != null) {
-        if (result == null) {
-          // create a result only if we have some data - do not return empty state class
-          @Suppress("UNCHECKED_CAST")
-          result = rootBinding.newInstance() as T
-        }
-        deserializeBeanInto(result = result, element = oldData, bindings = bindings, start = index, end = index + 1)
-      }
-      continue
+  for (binding in bindings) {
+    val key = createSettingDescriptor(key = "$componentName.${binding.accessor.name}", pluginId = pluginId, tags = keyTags)
+    val value = try {
+      controller.doGetItem(key)
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot deserialize value for $key", e)
+      GetResult.inapplicable()
     }
 
-    val element = data.get()
-    if (element != null) {
+    if (value.isResolved) {
+      val elementXml = value.get() ?: continue
+      val element = buildNsUnawareJdom(elementXml)
       if (result == null) {
         // create a result only if we have some data - do not return empty state class
         @Suppress("UNCHECKED_CAST")
         result = rootBinding.newInstance() as T
       }
 
-      deserializeBeanInto(result = result, element = element, bindings = bindings, start = index, end = index + 1)
+      deserializeBeanInto(result = result, element = element, binding = binding)
+    }
+    else if (oldData != null) {
+      if (result == null) {
+        // create a result only if we have some data - do not return empty state class
+        @Suppress("UNCHECKED_CAST")
+        result = rootBinding.newInstance() as T
+      }
+      deserializeBeanInto(result = result, element = oldData, binding = binding)
     }
   }
   return result
-}
-
-private fun getXmlDataFromController(key: SettingDescriptor<ByteArray>, controller: SettingsController): GetResult<Element> {
-  try {
-    val item = controller.doGetItem(key)
-    if (item.isResolved) {
-      val xmlData = item.get() ?: return GetResult.resolved(null)
-      return GetResult.resolved(buildNsUnawareJdom(xmlData))
-    }
-  }
-  catch (e: Throwable) {
-    LOG.error("Cannot deserialize value for $key", e)
-  }
-  return GetResult.inapplicable()
 }
 
 private fun createSettingDescriptor(key: String, pluginId: PluginId, tags: Collection<SettingTag>): SettingDescriptor<ByteArray> {

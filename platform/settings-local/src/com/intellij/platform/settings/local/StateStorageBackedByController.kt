@@ -118,7 +118,7 @@ internal class StateStorageBackedByController(
     var result = mergeInto
     val bindings = (beanBinding as BeanBinding).bindings!!
 
-    for ((index, binding) in bindings.withIndex()) {
+    for (binding in bindings) {
       val data = getXmlData(createSettingDescriptor("$componentName.${binding.accessor.name}", pluginId))
       if (!data.isResolved) {
         continue
@@ -132,14 +132,7 @@ internal class StateStorageBackedByController(
           result = beanBinding.newInstance() as T
         }
 
-        deserializeBeanInto(
-          result = result,
-          element = element,
-          accessorNameTracker = null,
-          bindings = bindings,
-          start = index,
-          end = index + 1,
-        )
+        deserializeBeanInto(result = result, element = element, binding = binding)
       }
     }
     return result
