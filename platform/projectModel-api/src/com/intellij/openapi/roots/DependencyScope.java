@@ -97,6 +97,23 @@ public enum DependencyScope {
     return myForTestRuntime;
   }
 
+  public @NotNull DependencyScope including(@NotNull DependencyScope other) {
+    if (this == other || this.includes(other)) return this;
+    if (other.includes(this)) return other;
+    // At this point, we know that `this` and `other` are different, neither is COMPILE, and they're not PROVIDED+TEST either.
+    // The remaining cases are:
+    // - PROVIDED+RUNTIME = COMPILE
+    // - TEST+RUNTIME = COMPILE (broader than necessary, but there's no closer match)
+    return COMPILE;
+  }
+
+  public boolean includes(@NotNull DependencyScope other) {
+    return (myForProductionCompile || !other.myForProductionCompile) &&
+           (myForProductionRuntime || !other.myForProductionRuntime) &&
+           (myForTestCompile || !other.myForTestCompile) &&
+           (myForTestRuntime || !other.myForTestRuntime);
+  }
+
   @Override
   public @NlsContexts.ListItem String toString() {
     return getDisplayName();
