@@ -39,7 +39,8 @@ class HuggingFaceMarkdownToHtmlConverter(private val project: Project) {
     )
     val htmlWithFixedQuotes = addDivToBlockquotes(htmlWithFixedPTags)
     val htmlFixedTables = formatTablesInHtml(htmlWithFixedQuotes)
-    return wrapCodeBlocks(htmlFixedTables, project)
+    val fixedCodeBlocks = wrapCodeBlocks(htmlFixedTables, project)
+    return fixedCodeBlocks
   }
 
   private fun addDivToBlockquotes(html: String): String {
