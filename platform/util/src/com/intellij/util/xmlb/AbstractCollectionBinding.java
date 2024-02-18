@@ -174,7 +174,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   }
 
   @Override
-  public final @NotNull Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
+  public final @NotNull Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     if (!isSurroundWithTag()) {
       return doDeserializeList(context, elements);
     }

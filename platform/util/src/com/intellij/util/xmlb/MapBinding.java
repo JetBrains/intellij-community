@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -156,8 +156,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<? extends Element> elements) {
-    List<? extends Element> childNodes;
+  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+    List<Element> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = elements.get(0).getChildren();
@@ -201,7 +201,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @SuppressWarnings({"rawtypes", "DuplicatedCode"})
-  private @Nullable Map<?, ?> deserialize(@Nullable Object context, @NotNull List<? extends Element> childNodes) {
+  private @Nullable Map<?, ?> deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
     // if accessor is null, it is sub-map, and we must not use context
     Map map = accessor == null ? null : (Map<?, ?>)context;
     if (map != null) {

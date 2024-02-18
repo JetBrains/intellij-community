@@ -52,7 +52,7 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     if (accessor.getValueClass().isArray()) {
       accessor.set(context, elements.toArray(new Element[0]));
     }

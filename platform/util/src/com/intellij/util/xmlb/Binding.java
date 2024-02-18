@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.xml.dom.XmlElement;
@@ -20,7 +20,7 @@ public interface Binding {
   default void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
-  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
+  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }
@@ -63,7 +63,7 @@ public interface Binding {
       targetElement.addContent((Content)node);
     }
     else if (node instanceof List) {
-      //noinspection unchecked
+      //noinspection unchecked,rawtypes
       targetElement.addContent((List)node);
     }
     else {
