@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.kotlinAssert
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKJavaDisjunctionType
+import org.jetbrains.kotlin.nj2k.types.isNull
 import org.jetbrains.kotlin.nj2k.types.updateNullability
 import org.jetbrains.kotlin.nj2k.useExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -25,7 +25,7 @@ internal class JavaStatementConversion(context: NewJ2kConverterContext) : Recurs
         )
     }
 
-    private fun convertAssert(element: JKJavaAssertStatement): JKExpressionStatement {
+    private fun convertAssert(element: JKJavaAssertStatement): JKStatement {
         var assertion = element::condition.detached()
         if (assertion is JKParenthesizedExpression) {
             // drop awkward parentheses around the first argument
@@ -34,7 +34,59 @@ internal class JavaStatementConversion(context: NewJ2kConverterContext) : Recurs
         val messageExpression =
             if (element.description is JKStubExpression) null
             else JKLambdaExpression(JKExpressionStatement(element::description.detached()))
+        // If this is a null assertion like `assert s1 != null`, replace it with `checkNotNull(s1)
+        val expressionComparedToNull = assertion.singleExpressionComparedToNull()
+        if (expressionComparedToNull != null && assertion is JKBinaryExpression && assertion.operator.token.text == "!=") {
+            val referencedVariable = if (expressionComparedToNull is JKFieldAccessExpression)
+                expressionComparedToNull.identifier.target else null
+            val checkNotNullSymbol = symbolProvider.provideMethodSymbol("kotlin.checkNotNull")
+            return if (referencedVariable is JKLocalVariable && element.occursImmediatelyAfterDeclarationInBlock(referencedVariable)) {
+                // If the assertion occurs immediately after the variable declaration, merge them by wrapping the initializer in checkNotNull
+                val initializerType = referencedVariable.initializer.calculateType(typeFactory)
+                referencedVariable.initializer = JKCallExpressionImpl(
+                    checkNotNullSymbol,
+                    listOfNotNull(referencedVariable.initializer.copyTreeAndDetach(), messageExpression?.copyTree()).toArgumentList(),
+                    expressionType = initializerType?.updateNullability(NotNull)
+                )
+                // effectively delete the original statement, since the assertion was merged into the variable declaration above
+                JKEmptyStatement()
+            } else {
+                // Otherwise, leave the variable declaration untouched and do an inplace replacement of the assertion
+                JKExpressionStatement(
+                    JKCallExpressionImpl(
+                        checkNotNullSymbol,
+                        listOfNotNull(
+                            expressionComparedToNull.detached(assertion),
+                            messageExpression?.copyTree()
+                        ).toArgumentList()
+                    )
+                ).withFormattingFrom(element)
+            }
+        }
         return JKExpressionStatement(kotlinAssert(assertion, messageExpression, typeFactory))
+    }
+
+    private fun JKStatement.occursImmediatelyAfterDeclarationInBlock(declaration: JKDeclaration): Boolean {
+        val parent = this.parent.safeAs<JKBlockImpl>() ?: return false
+        if (parent != declaration.parent?.parent) return false
+        val statements = parent.statements
+        val declarationIndex =
+            statements.indexOfFirst { it is JKDeclarationStatement && it.declaredStatements.singleOrNull() == declaration }
+        if (declarationIndex < 0 || declarationIndex == statements.lastIndex) return false
+        val expressionIndex = statements.indexOf(this)
+        if (expressionIndex < declarationIndex) return false
+        if (declarationIndex + 1 == expressionIndex) return true
+        return statements.subList(declarationIndex + 1, expressionIndex).all { it.isEmpty() }
+    }
+
+    private fun JKExpression.singleExpressionComparedToNull(): JKExpression? {
+        if (this !is JKBinaryExpression) return null
+        val left = left
+        val right = right
+        val leftIsNull = left is JKLiteralExpression && left.isNull()
+        val rightIsNull = right is JKLiteralExpression && right.isNull()
+        if (leftIsNull == rightIsNull) return null
+        return if (leftIsNull) right else left
     }
 
     private fun convertSynchronized(element: JKJavaSynchronizedStatement): JKExpressionStatement {

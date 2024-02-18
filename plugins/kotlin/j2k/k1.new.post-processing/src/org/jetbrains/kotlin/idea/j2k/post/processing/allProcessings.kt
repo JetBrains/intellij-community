@@ -115,7 +115,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
         it.getExplicitLabelComment() == null
     },
     DestructureForLoopParameterProcessing(),
-    inspectionBasedProcessing(SimplifyAssertNotNullInspection()),
     LiftReturnInspectionBasedProcessing(),
     LiftAssignmentInspectionBasedProcessing(),
     intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
