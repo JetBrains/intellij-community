@@ -3,17 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.emoji
 
 import com.intellij.collaboration.ui.TransparentScrollPane
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionComponent
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil
-import com.intellij.collaboration.ui.codereview.reactions.ReactionLabel
-import com.intellij.collaboration.ui.codereview.reactions.VARIATION_SELECTOR
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-import com.intellij.collaboration.ui.util.CodeReviewColorUtil
-import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.popup.awaitClose
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WrapLayout
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReaction
@@ -83,20 +78,7 @@ internal object GitLabReactionsPickerComponentFactory {
   }
 
   private fun createReactionLabel(reaction: GitLabReaction, onClick: (GitLabReaction) -> Unit): JComponent {
-    val layout = SizeRestrictedSingleComponentLayout().apply {
-      val dimension = DimensionRestrictions.ScalingConstant(
-        CodeReviewReactionsUIUtil.Picker.EMOJI_WIDTH,
-        CodeReviewReactionsUIUtil.Picker.EMOJI_HEIGHT
-      )
-      prefSize = dimension
-      maxSize = dimension
-    }
-    return ReactionLabel(layout, onClick = { onClick(reaction) }) {
-      text = reaction.emoji + VARIATION_SELECTOR
-    }.apply {
-      addHoverAndPressStateListener(this, hoveredStateCallback = { component, isHovered ->
-        component.background = if (isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else null
-      })
-    }
+    val icon = CodeReviewReactionsUIUtil.createUnicodeEmojiIcon(reaction.emoji, CodeReviewReactionsUIUtil.ICON_SIZE)
+    return CodeReviewReactionComponent.createPickReactionButton(icon) { onClick(reaction) }
   }
 }

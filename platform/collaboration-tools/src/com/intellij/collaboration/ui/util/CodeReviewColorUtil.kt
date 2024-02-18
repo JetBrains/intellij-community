@@ -24,9 +24,9 @@ object CodeReviewColorUtil {
     val background: JBColor = JBColor.namedColor("Review.Reaction.Background", JBColor(0xEBECF0, 0x2B2D30))
     val backgroundHovered: JBColor = JBColor.namedColor("Review.Reaction.Background.Hovered", JBColor(0xDFE1E5, 0x393B40))
     val backgroundPressed: JBColor = JBColor.namedColor("Review.Reaction.Background.Pressed", JBColor(0xEDF3FF, 0x25324D))
+    // TODO: provide correct color
+    val backgroundReacted: JBColor = background
 
-    val border: JBColor = JBColor.namedColor("Review.Reaction.Border", JBColor(0xEBECF0, 0x2B2D30))
-    val borderHovered: JBColor = JBColor.namedColor("Review.Reaction.Border.Hovered", JBColor(0xDFE1E5, 0x393B40))
-    val borderPressed: JBColor = JBColor.namedColor("Review.Reaction.Border.Pressed", JBColor(0x3574F0, 0x548AF7))
+    val borderReacted: JBColor = JBColor.namedColor("Review.Reaction.Border.Reacted", JBColor(0x3574F0, 0x548AF7))
   }
 }

@@ -2,21 +2,18 @@
 package org.jetbrains.plugins.github.pullrequest.ui.emoji
 
 import com.intellij.collaboration.ui.HorizontalListPanel
-import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil
-import com.intellij.collaboration.ui.codereview.reactions.ReactionLabel
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-import com.intellij.collaboration.ui.util.CodeReviewColorUtil
-import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.hover.addHoverAndPressStateListener
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.api.data.GHReactionContent
+import java.awt.event.ActionListener
 import javax.swing.JComponent
 
 object GHReactionsPickerComponentFactory {
   private const val EMOJI_PICKER_GAP = 2
   private const val EMOJI_PICKER_BORDER = 2
+  private const val EMOJI_SIZE = 26
 
   fun showPopup(reactionsVm: GHReactionsViewModel, parentComponent: JComponent) {
     var popup: JBPopup? = null
@@ -52,26 +49,11 @@ object GHReactionsPickerComponentFactory {
     reaction: GHReactionContent,
     onClick: (GHReactionContent) -> Unit
   ): JComponent {
-    val layout = SizeRestrictedSingleComponentLayout().apply {
-      val dimension = DimensionRestrictions.ScalingConstant(
-        CodeReviewReactionsUIUtil.Picker.EMOJI_WIDTH,
-        CodeReviewReactionsUIUtil.Picker.EMOJI_HEIGHT
-      )
-      prefSize = dimension
-      maxSize = dimension
-    }
-    return ReactionLabel(
-      layout,
-      icon = reactionsVm.reactionIconsProvider.getIcon(reaction, CodeReviewReactionsUIUtil.Picker.EMOJI_ICON_SIZE),
-      onClick = { onClick(reaction) },
-      labelInitializer = { border = JBUI.Borders.empty(12, 4) }
-    ).apply {
-      val isReacted = reactionsVm.reactionsWithInfo.value[reaction]?.isReactedByCurrentUser ?: false
-      background = if (isReacted) CodeReviewColorUtil.Reaction.backgroundHovered else null
-      border = JBUI.Borders.empty()
-      addHoverAndPressStateListener(this, hoveredStateCallback = { component, isHovered ->
-        component.background = if (isReacted || isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else null
-      })
+    val icon = reactionsVm.reactionIconsProvider.getIcon(reaction, EMOJI_SIZE)
+    return InlineIconButton(icon).apply {
+      isFocusable = false
+      withBackgroundHover = true
+      actionListener = ActionListener { onClick(reaction) }
     }
   }
 }

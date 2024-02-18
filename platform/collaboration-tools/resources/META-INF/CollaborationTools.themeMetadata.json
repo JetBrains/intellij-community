@@ -93,18 +93,8 @@
       "since": "[2024.1]"
     },
     {
-      "key": "Review.Reaction.Border",
-      "description": "Border color of reaction component",
-      "since": "[2024.1]"
-    },
-    {
-      "key": "Review.Reaction.Border.Hovered",
-      "description": "Hovered border color of reaction component",
-      "since": "[2024.1]"
-    },
-    {
-      "key": "Review.Reaction.Border.Pressed",
-      "description": "Pressed border color of reaction component",
+      "key": "Review.Reaction.Border.Reacted",
+      "description": "Border color of reaction component where the current user has reacted",
       "since": "[2024.1]"
     },
     {
