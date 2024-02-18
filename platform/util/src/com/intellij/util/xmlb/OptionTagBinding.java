@@ -78,7 +78,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
       else {
         Object node = binding.serialize(value, targetElement, filter);
         if (node != null && targetElement != node) {
-          Binding.addContent(targetElement, node);
+          addContent(targetElement, node);
         }
       }
     }
@@ -107,7 +107,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
             Object oldValue = accessor.read(context);
             // do nothing if the field is already null
             if (oldValue != null) {
-              Object newValue = ((MultiNodeBinding)binding).deserializeList(oldValue, children);
+              Object newValue = ((MultiNodeBinding)binding).deserializeJdomList(oldValue, children);
               if (oldValue != newValue) {
                 accessor.set(context, newValue);
               }
@@ -120,7 +120,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
         else {
           assert binding != null;
           Object oldValue = accessor.read(context);
-          Object newValue = Binding.deserializeList(binding, oldValue, children);
+          Object newValue = Binding.deserializeJdomList(binding, oldValue, children);
           if (oldValue != newValue) {
             accessor.set(context, newValue);
           }
@@ -149,7 +149,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
             Object oldValue = accessor.read(context);
             // do nothing if field is already null
             if (oldValue != null) {
-              Object newValue = ((MultiNodeBinding)binding).deserializeList2(oldValue, children);
+              Object newValue = ((MultiNodeBinding)binding).deserializeList(oldValue, children);
               if (oldValue != newValue) {
                 accessor.set(context, newValue);
               }
@@ -162,7 +162,7 @@ final class OptionTagBinding extends BasePrimitiveBinding {
         else {
           assert binding != null;
           Object oldValue = accessor.read(context);
-          Object newValue = Binding.deserializeList2(binding, oldValue, children);
+          Object newValue = Binding.deserializeList(binding, oldValue, children);
           if (oldValue != newValue) {
             accessor.set(context, newValue);
           }

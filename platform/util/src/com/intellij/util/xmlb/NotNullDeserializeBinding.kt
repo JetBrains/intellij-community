@@ -14,7 +14,7 @@ interface NotNullDeserializeBinding : Binding {
 
   fun deserialize(context: Any?, element: XmlElement): Any
 
-  override fun deserializeUnsafe(context: Any, element: Element): Any = deserialize(context = context, element = element)
+  override fun deserializeUnsafe(context: Any?, element: Element): Any = deserialize(context = context, element = element)
 
   override fun deserializeUnsafe(context: Any, element: XmlElement): Any = deserialize(context = context, element = element)
 }

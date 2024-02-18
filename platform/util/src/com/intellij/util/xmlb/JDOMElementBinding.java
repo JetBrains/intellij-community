@@ -52,7 +52,7 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     if (accessor.getValueClass().isArray()) {
       accessor.set(context, elements.toArray(new Element[0]));
     }
@@ -63,7 +63,7 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public @NotNull Object deserializeList2(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
     throw new UnsupportedOperationException("XmlElement is not supported by JDOMElementBinding");
   }
 

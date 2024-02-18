@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 interface MultiNodeBinding extends Binding {
-  @Nullable Object deserializeList(@Nullable Object context, @NotNull List<Element> elements);
+  @Nullable Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements);
 
-  @Nullable Object deserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements);
+  @Nullable Object deserializeList(@Nullable Object context, @NotNull List<XmlElement> elements);
 
   boolean isMulti();
 }

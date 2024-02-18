@@ -25,7 +25,7 @@ import java.util.List;
 import static com.intellij.util.xmlb.NotNullDeserializeBindingKt.LOG;
 
 abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding {
-  private final MutableAccessor myAccessor;
+  private final MutableAccessor accessor;
   private List<Binding> itemBindings;
 
   protected final Class<?> itemType;
@@ -36,7 +36,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   private Serializer serializer;
 
   AbstractCollectionBinding(@NotNull Class<?> elementType, @Nullable MutableAccessor accessor) {
-    myAccessor = accessor;
+    this.accessor = accessor;
 
     itemType = elementType;
     newAnnotation = accessor == null ? null : accessor.getAnnotation(XCollection.class);
@@ -46,7 +46,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
 
   @Override
   public final @NotNull MutableAccessor getAccessor() {
-    return myAccessor;
+    return accessor;
   }
 
   protected final boolean isSortOrderedSet() {
@@ -174,7 +174,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   }
 
   @Override
-  public final @NotNull Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  public final @NotNull Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements) {
     if (!isSurroundWithTag()) {
       return doDeserializeList(context, elements);
     }
@@ -185,7 +185,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   }
 
   @Override
-  public @Nullable Object deserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements) {
+  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<XmlElement> elements) {
     if (!isSurroundWithTag()) {
       return doDeserializeList2(context, elements);
     }
@@ -201,7 +201,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
 
   private @Nullable Object serializeItem(@Nullable Object value, Object context, @Nullable SerializationFilter filter) {
     if (value == null) {
-      LOG.warn("Collection " + myAccessor + " contains 'null' object");
+      LOG.warn("Collection " + accessor + " contains 'null' object");
       return null;
     }
 

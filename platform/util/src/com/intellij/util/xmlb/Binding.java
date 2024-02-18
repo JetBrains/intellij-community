@@ -2,7 +2,6 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.util.xml.dom.XmlElement;
-import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +19,9 @@ public interface Binding {
   default void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
-  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<Element> nodes) {
+  static @Nullable Object deserializeJdomList(@NotNull Binding binding, @Nullable Object context, @NotNull List<Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
-      return ((MultiNodeBinding)binding).deserializeList(context, nodes);
+      return ((MultiNodeBinding)binding).deserializeJdomList(context, nodes);
     }
     else {
       if (nodes.size() == 1) {
@@ -37,9 +36,9 @@ public interface Binding {
     }
   }
 
-  static @Nullable Object deserializeList2(@NotNull Binding binding, @Nullable Object context, @NotNull List<XmlElement> nodes) {
+  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<XmlElement> nodes) {
     if (binding instanceof MultiNodeBinding) {
-      return ((MultiNodeBinding)binding).deserializeList2(context, nodes);
+      return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }
     else {
       if (nodes.size() == 1) {
@@ -57,17 +56,4 @@ public interface Binding {
   Object deserializeUnsafe(Object context, @NotNull Element element);
 
   Object deserializeUnsafe(Object context, @NotNull XmlElement element);
-
-  static void addContent(@NotNull Element targetElement, Object node) {
-    if (node instanceof Content) {
-      targetElement.addContent((Content)node);
-    }
-    else if (node instanceof List) {
-      //noinspection unchecked,rawtypes
-      targetElement.addContent((List)node);
-    }
-    else {
-      throw new IllegalArgumentException("Wrong node: " + node);
-    }
-  }
 }

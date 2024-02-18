@@ -47,14 +47,14 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
     else {
       Object node = binding.serialize(value, serialized, filter);
       if (node != null && node != serialized) {
-        Binding.addContent(serialized, node);
+        addContent(serialized, node);
       }
     }
     return serialized;
   }
 
   @Override
-  public @NotNull Object deserializeList(@NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeJdomList(@NotNull Object context, @NotNull List<Element> elements) {
     List<Element> children;
     if (elements.size() == 1) {
       children = elements.get(0).getChildren();
@@ -72,7 +72,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
   }
 
   @Override
-  public @NotNull Object deserializeList2(@NotNull Object context, @NotNull List<XmlElement> elements) {
+  public @NotNull Object deserializeList(@NotNull Object context, @NotNull List<XmlElement> elements) {
     List<XmlElement> children;
     if (elements.size() == 1) {
       children = elements.get(0).children;
@@ -127,10 +127,10 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
       ((BeanBinding)binding).deserializeInto(context, children.get(0));
     }
     else if ((binding instanceof CollectionBinding || binding instanceof MapBinding) && !accessor.isWritable()) {
-      Binding.deserializeList(binding, accessor.read(context), children);
+      Binding.deserializeJdomList(binding, accessor.read(context), children);
     }
     else {
-      accessor.set(context, Binding.deserializeList(binding, accessor.read(context), children));
+      accessor.set(context, Binding.deserializeJdomList(binding, accessor.read(context), children));
     }
   }
 
@@ -140,10 +140,10 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
       ((BeanBinding)binding).deserializeInto(context, children.get(0));
     }
     else if ((binding instanceof CollectionBinding || binding instanceof MapBinding) && !accessor.isWritable()) {
-      Binding.deserializeList2(binding, accessor.read(context), children);
+      Binding.deserializeList(binding, accessor.read(context), children);
     }
     else {
-      accessor.set(context, Binding.deserializeList2(binding, accessor.read(context), children));
+      accessor.set(context, Binding.deserializeList(binding, accessor.read(context), children));
     }
   }
 

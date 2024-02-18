@@ -156,7 +156,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+  public @Nullable Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements) {
     List<Element> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
@@ -169,7 +169,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object deserializeList2(@Nullable Object context, @NotNull List<XmlElement> elements) {
+  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<XmlElement> elements) {
     List<XmlElement> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
@@ -337,7 +337,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       }
       else {
         assert binding != null;
-        return Binding.deserializeList(binding, null, children);
+        return Binding.deserializeJdomList(binding, null, children);
       }
     }
     return null;
@@ -368,7 +368,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       }
       else {
         assert binding != null;
-        return Binding.deserializeList2(binding, null, children);
+        return Binding.deserializeList(binding, null, children);
       }
     }
     return null;

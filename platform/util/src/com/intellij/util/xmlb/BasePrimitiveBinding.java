@@ -4,12 +4,14 @@ package com.intellij.util.xmlb;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.dom.XmlElement;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 @ApiStatus.Internal
 public abstract class BasePrimitiveBinding implements NestedBinding {
@@ -70,4 +72,17 @@ public abstract class BasePrimitiveBinding implements NestedBinding {
   }
 
   public abstract void setValue(@NotNull Object host, @NotNull String value);
+
+  static void addContent(@NotNull Element targetElement, Object node) {
+    if (node instanceof Content) {
+      targetElement.addContent((Content)node);
+    }
+    else if (node instanceof List) {
+      //noinspection unchecked,rawtypes
+      targetElement.addContent((List)node);
+    }
+    else {
+      throw new IllegalArgumentException("Wrong node: " + node);
+    }
+  }
 }

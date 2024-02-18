@@ -132,13 +132,13 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = Binding.deserializeList(binding, currentValue, elements);
+      Object deserializedValue = Binding.deserializeJdomList(binding, currentValue, elements);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }
@@ -147,13 +147,13 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @NotNull Object deserializeList2(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
+  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = Binding.deserializeList2(binding, currentValue, elements);
+      Object deserializedValue = Binding.deserializeList(binding, currentValue, elements);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }

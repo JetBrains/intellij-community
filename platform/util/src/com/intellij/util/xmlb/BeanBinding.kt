@@ -126,7 +126,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
         element.setAttribute(node as Attribute?)
       }
       else {
-        Binding.addContent(element, node)
+        BasePrimitiveBinding.addContent(element, node)
       }
     }
     return element
@@ -283,7 +283,7 @@ fun deserializeBeanInto(
 
   if (data != null) {
     for (binding in data.keys) {
-      binding.deserializeList2(result, data.get(binding)!!)
+      binding.deserializeList(result, data.get(binding)!!)
     }
   }
 }
@@ -342,7 +342,7 @@ fun deserializeBeanInto(
   if (data != null) {
     for (binding in data.keys) {
       accessorNameTracker?.add(binding.accessor.name)
-      (binding as MultiNodeBinding).deserializeList(result, data.get(binding)!!)
+      (binding as MultiNodeBinding).deserializeJdomList(result, data.get(binding)!!)
     }
   }
 }
@@ -388,7 +388,7 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
   }
 
   if (data != null) {
-    (binding as MultiNodeBinding).deserializeList(result, data)
+    (binding as MultiNodeBinding).deserializeJdomList(result, data)
   }
 }
 
