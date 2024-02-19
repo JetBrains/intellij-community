@@ -2,9 +2,8 @@
 package com.intellij.util.ui.html
 
 import com.intellij.util.asSafely
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
 import java.awt.Graphics
+import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Shape
 import javax.swing.text.Element
@@ -24,11 +23,12 @@ private val CAPTION_SIDE = CSS.Attribute::class.java
  * Supports paddings and margins for inline elements, like `<span>`. Due to limitations of [HTMLDocument],
  * paddings for nested inline elements are not supported and will cause incorrect rendering.
  */
+@Suppress("UseDPIAwareInsets")
 internal class InlineViewEx(elem: Element) : InlineView(elem) {
 
-  private lateinit var padding: JBInsets
-  private lateinit var margin: JBInsets
-  private var insets: JBInsets = JBInsets.emptyInsets()
+  private lateinit var padding: Insets
+  private lateinit var margin: Insets
+  private var insets: Insets = Insets(0, 0, 0, 0)
 
   // With private fields Java clone doesn't work well
   @Suppress("ProtectedInFinal")
@@ -53,7 +53,6 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
                      ?.takeIf { it.endsWith("px") }
                      ?.removeSuffix("px")
                      ?.toIntOrNull()
-                     ?.let { JBUI.scale(it) }
                    ?: 0
     updatePaddingsAndMargins(true)
   }
@@ -174,26 +173,32 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
     this.startView = startView
     this.endView = endView
 
-    padding = JBInsets(
+    padding = Insets(
       cssPadding.top,
       if (startView) cssPadding.left else 0,
       cssPadding.bottom,
       if (endView) cssPadding.right else 0,
     )
 
-    margin = JBInsets(
+    margin = Insets(
       cssMargin.top,
       if (startView) cssMargin.left else 0,
       cssMargin.bottom,
       if (endView) cssMargin.right else 0,
     )
 
-    insets = JBInsets(
+    insets = Insets(
       padding.top + margin.top,
       padding.left + margin.left,
       padding.bottom + margin.bottom,
       padding.right + margin.right,
     )
   }
+
+  fun Insets.width() =
+    right + left
+
+  fun Insets.height() =
+    top + bottom
 
 }

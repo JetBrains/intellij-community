@@ -5,6 +5,7 @@ import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.impl.EditorCssFontResolver
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.addAllIfNotNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
@@ -81,11 +82,11 @@ object StyleSheetRulesProviderForCodeHighlighting {
       result.add("$selectors $codeColorStyle")
       // 'caption-side' is a hack to support 'border-radius'.
       // See also: com.intellij.util.ui.html.InlineViewEx
-      result.add("$selectors { padding: 1px 4px; margin: 1px 0px; caption-side: 10px; }")
+      result.add("$selectors { padding: ${scale(1)}px ${scale(4)}px; margin: ${scale(1)}px 0px; caption-side: ${scale(10)}px; }")
     }
     if (enableCodeBlocksBackground) {
       result.add("div.styled-code $codeColorStyle")
-      result.add("div.styled-code {  margin: $codeBlockMargin; padding: 6px 6px 6px 10px; }")
+      result.add("div.styled-code {  margin: $codeBlockMargin; padding: ${scale(6)}px ${scale(6)}px ${scale(6)}px ${scale(10)}px; }")
       result.add("div.styled-code pre { padding: 0px; margin: 0px }")
     }
     return result
