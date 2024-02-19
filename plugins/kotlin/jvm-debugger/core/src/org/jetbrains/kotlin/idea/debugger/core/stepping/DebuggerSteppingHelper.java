@@ -9,6 +9,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.statistics.Engine;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.statistics.SteppingAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.xdebugger.XSourcePosition;
 import com.sun.jdi.Location;
@@ -19,6 +20,8 @@ import org.jetbrains.kotlin.idea.debugger.base.util.SafeUtilKt;
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil;
 
 public final class DebuggerSteppingHelper {
+    private static final Logger LOG = Logger.getInstance(DebuggerSteppingHelper.class);
+
     public static DebugProcessImpl.ResumeCommand createStepOverCommand(
             SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,
@@ -39,11 +42,12 @@ public final class DebuggerSteppingHelper {
                                 .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
                                 .contextAction(suspendContext);
                         return;
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        LOG.error(e);
                     }
                 }
 
-                debugProcess.createStepOutCommand(suspendContext).contextAction(suspendContext);
+                debugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints).contextAction(suspendContext);
             }
         };
     }
@@ -92,11 +96,12 @@ public final class DebuggerSteppingHelper {
                                 .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
                                 .contextAction(suspendContext);
                         return;
-                    } catch (Exception ignored) {
+                    } catch (Exception e) {
+                        LOG.error(e);
                     }
                 }
 
-                debugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints).contextAction(suspendContext);
+                debugProcess.createStepOutCommand(suspendContext).contextAction(suspendContext);
             }
         };
     }
