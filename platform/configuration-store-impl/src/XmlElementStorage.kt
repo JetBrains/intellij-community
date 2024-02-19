@@ -13,6 +13,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.buildNsUnawareJdomAndClose
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
+import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -151,6 +152,9 @@ abstract class XmlElementStorage protected constructor(
   ) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
+
+    override val controller: SettingsController?
+      get() = storage.controller
 
     protected open fun isSaveAllowed(): Boolean = !storage.checkIsSavingDisabled()
 

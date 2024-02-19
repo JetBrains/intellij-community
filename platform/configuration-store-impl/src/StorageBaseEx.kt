@@ -156,8 +156,10 @@ private fun deserializeAsJdomElement(
 }
 
 internal fun serializeForController(obj: Any): Element? {
+  val aClass = obj.javaClass
+  assert(aClass !== Element::class.java)
   val serializer = __platformSerializer()
-  val binding = serializer.getRootBinding(obj.javaClass)
+  val binding = serializer.getRootBinding(aClass)
   if (binding is BeanBinding) {
     return binding.serializeInto(bean = obj, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
   }
@@ -231,7 +233,7 @@ private fun <T : Any> getXmlSerializationState(
   return result
 }
 
-private fun createSettingDescriptor(key: String, pluginId: PluginId, tags: Collection<SettingTag>): SettingDescriptor<ByteArray> {
+internal fun createSettingDescriptor(key: String, pluginId: PluginId, tags: Collection<SettingTag>): SettingDescriptor<ByteArray> {
   return SettingDescriptor(
     key = key,
     pluginId = pluginId,
@@ -289,7 +291,12 @@ private class StateGetterImpl<S : Any, T : Any>(
       serializedState
     }
     else {
-      serializeState(state = stateAfterLoad, componentName = componentName)?.normalizeRootName()?.takeIf {
+      serializeState(
+        state = stateAfterLoad,
+        componentName = componentName,
+        pluginId = pluginId,
+        controller = null,
+      )?.normalizeRootName()?.takeIf {
         !it.isEmpty
       }
     }

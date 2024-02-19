@@ -79,7 +79,7 @@ class ControllerBackedStoreTest {
             return GetResult.inapplicable()
           }
 
-          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.STOP
+          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.DONE
         }),
         isPersistenceStateComponentProxy = true,
       ),
@@ -122,7 +122,7 @@ class ControllerBackedStoreTest {
             return GetResult.inapplicable()
           }
 
-          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.STOP
+          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.DONE
         }),
         isPersistenceStateComponentProxy = true,
       ),
@@ -149,7 +149,7 @@ class ControllerBackedStoreTest {
             return GetResult.resolved("""<state foo="42" />""".encodeToByteArray() as T)
           }
 
-          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.STOP
+          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.DONE
         }),
         isPersistenceStateComponentProxy = true,
       ),

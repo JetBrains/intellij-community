@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.openapi.components.impl.stores
 
 import com.intellij.application.options.PathMacrosCollector
@@ -18,7 +20,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.jvm.Throws
 
 @ApiStatus.Internal
 object ComponentStorageUtil {
@@ -68,9 +69,6 @@ object ComponentStorageUtil {
     return map
   }
 
-  private fun isKotlinSerializable(element: Element): Boolean =
-    !element.hasAttributes() && element.content.size == 1 && element.content[0] is Text
-
   @JvmStatic
   fun getComponentNameIfValid(element: Element): String? {
     val name = element.getAttributeValue(NAME)
@@ -90,4 +88,8 @@ object ComponentStorageUtil {
     val offset = CharsetToolkit.getBOMLength(data, StandardCharsets.UTF_8)
     return String(data, offset, data.size - offset, StandardCharsets.UTF_8)
   }
+}
+
+private fun isKotlinSerializable(element: Element): Boolean {
+  return !element.hasAttributes() && element.content.size == 1 && element.content[0] is Text
 }

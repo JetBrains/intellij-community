@@ -39,6 +39,10 @@ interface SettingsController {
 
   @Internal
   @IntellijInternalApi
+  fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult
+
+  @Internal
+  @IntellijInternalApi
   fun isPersistenceStateComponentProxy(): Boolean
 }
 
@@ -78,7 +82,19 @@ value class GetResult<out T : Any?> @PublishedApi internal constructor(@Publishe
 
 @Internal
 enum class SetResult {
-  INAPPLICABLE, STOP, FORBID
+  /**
+   * Indicates that the controller can't be used to set this particular setting.
+   */
+  INAPPLICABLE,
+
+  /**
+   * Indicates that the setting was set successfully.
+   */
+  DONE,
+  /**
+   * Indicates that the attempted setting is read-only, therefore it can't be set.
+   */
+  FORBID
 }
 
 /**

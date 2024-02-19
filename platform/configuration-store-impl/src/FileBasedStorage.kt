@@ -22,7 +22,9 @@ import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.deleteIfExists
@@ -70,7 +72,7 @@ abstract class FileBasedStorage(
     }
   }
 
-  override fun createSaveSession(states: StateMap): FileSaveSessionProducer = FileSaveSessionProducer(storageData = states, storage = this)
+  override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(storageData = states, storage = this)
 
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage = storage) {

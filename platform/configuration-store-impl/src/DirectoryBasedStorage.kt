@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosCollector
@@ -100,7 +102,7 @@ open class DirectoryBasedStorage(
     }
   }
 
-  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -155,14 +157,18 @@ open class DirectoryBasedStorage(
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? =
-    if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
+  override fun createSaveSessionProducer(): SaveSessionProducer? {
+    return if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
+  }
 
   private class DirectorySaveSessionProducer(
     private val storage: DirectoryBasedStorage,
     private val originalStates: StateMap
   ) : SaveSessionProducerBase(), SaveSession, DirectoryBasedSaveSessionProducer {
     private var copiedStorageData: MutableMap<String, Any>? = null
+
+    override val controller: SettingsController?
+      get() = null
 
     private val dirtyFileNames = HashSet<String>()
     private var isSomeFileRemoved = false
@@ -215,12 +221,12 @@ open class DirectoryBasedStorage(
 
     private fun doSetState(fileName: String, subState: Element) {
       if (copiedStorageData == null) {
-        copiedStorageData = setStateAndCloneIfNeeded(fileName, subState, originalStates)
+        copiedStorageData = setStateAndCloneIfNeeded(key = fileName, newState = subState, oldStates = originalStates)
         if (copiedStorageData != null) {
           dirtyFileNames.add(fileName)
         }
       }
-      else if (updateState(copiedStorageData!!, fileName, subState)) {
+      else if (updateState(states = copiedStorageData!!, key = fileName, newState = subState)) {
         dirtyFileNames.add(fileName)
       }
     }
@@ -260,12 +266,21 @@ open class DirectoryBasedStorage(
         if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
 
       for (fileName in states.keys()) {
-        if (!dirtyFileNames.contains(fileName)) continue
+        if (!dirtyFileNames.contains(fileName)) {
+          continue
+        }
+
         val element = states.getElement(fileName) ?: continue
 
         val rootAttributes = mapOf(ComponentStorageUtil.NAME to storage.componentName!!)
         val debugString = storage.dir.toString()
-        val dataWriter = XmlDataWriter(ComponentStorageUtil.COMPONENT, listOf(element), rootAttributes, macroManager, debugString)
+        val dataWriter = XmlDataWriter(
+          rootElementName = ComponentStorageUtil.COMPONENT,
+          elements = listOf(element),
+          rootAttributes = rootAttributes,
+          macroManager = macroManager,
+          storageFilePathForDebugPurposes = debugString,
+        )
 
         try {
           if (storage.isUseVfsForWrite) {
@@ -278,11 +293,24 @@ open class DirectoryBasedStorage(
               }
             }
             val file = dir.getOrCreateChild(fileName, this)
-            writeFile(cachedFile = null, requestor = this, file, dataWriter, getOrDetectLineSeparator(file), prependXmlProlog = false)
+            writeFile(
+              cachedFile = null,
+              requestor = this,
+              virtualFile = file,
+              dataWriter = dataWriter,
+              lineSeparator = getOrDetectLineSeparator(file),
+              prependXmlProlog = false,
+            )
           }
           else {
             val file = storage.dir.resolve(fileName)
-            writeFile(file, requestor = this, dataWriter, storage.getLineSeparator(fileName), prependXmlProlog = false)
+            writeFile(
+              file = file,
+              requestor = this,
+              dataWriter = dataWriter,
+              lineSeparator = storage.getLineSeparator(fileName),
+              prependXmlProlog = false,
+            )
           }
         }
         catch (e: IOException) {
@@ -310,6 +338,7 @@ open class DirectoryBasedStorage(
         if (dir == null || !dir.exists()) {
           return
         }
+
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
@@ -335,7 +364,7 @@ open class DirectoryBasedStorage(
     storageDataRef.set(newStates)
   }
 
-  override fun toString(): String = "${javaClass.simpleName}(dir=${dir}, componentName=${componentName})"
+  override fun toString(): String = "${javaClass.simpleName}(dir=$dir, componentName=$componentName)"
 }
 
 internal interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {

@@ -45,15 +45,22 @@ class SettingsControllerMediator(
   }
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
+    doSetItem(key, value)
+  }
+
+  @IntellijInternalApi
+  override fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult {
+    var totalResult = SetResult.INAPPLICABLE
     for (controller in controllers) {
       val result = controller.setItem(key = key, value = value)
-      if (result == SetResult.STOP) {
-        return
+      if (result == SetResult.FORBID) {
+        return result
       }
-      else if (result == SetResult.FORBID) {
-        throw ReadOnlySettingException(key)
+      else if (result == SetResult.DONE) {
+        totalResult = result
       }
     }
+    return totalResult
   }
 
   override fun createStateStorage(collapsedPath: String, file: Path): Any? {
