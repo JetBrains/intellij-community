@@ -48,7 +48,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   @ApiStatus.Internal
   fun getStorageData(): T = getStorageData(reload = false)
 
-  abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?
+  abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean): Element?
 
   protected fun getStorageData(reload: Boolean): T {
     val currentStorageData = storageDataRef.get()

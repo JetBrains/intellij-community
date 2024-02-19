@@ -7,6 +7,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
@@ -24,7 +25,7 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
     componentName: String,
     pluginId: PluginId,
     stateClass: Class<S>,
-    reload: Boolean = false,
+    reload: Boolean,
   ): StateGetter<S> {
     return StateGetterImpl(
       component = component,
@@ -332,9 +333,11 @@ private class StateGetterImpl<S : Any, T : Any>(
     if (ApplicationManager.getApplication().isUnitTestMode &&
         serializedState != serializedStateAfterLoad &&
         (serializedStateAfterLoad == null || !JDOMUtil.areElementsEqual(serializedState, serializedStateAfterLoad))) {
-      LOG.debug("$componentName (from ${component.javaClass.name}) state changed after load. " +
-                "\nOld: ${JDOMUtil.writeElement(serializedState!!)}\n" +
-                "\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n")
+      LOG.debug {
+        "$componentName (from ${component.javaClass.name}) state changed after load. " +
+        "\nOld: ${JDOMUtil.writeElement(serializedState!!)}\n" +
+        "\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n"
+      }
     }
 
     storage.archiveState(storageData = storageData, componentName = componentName, serializedState = serializedStateAfterLoad)
