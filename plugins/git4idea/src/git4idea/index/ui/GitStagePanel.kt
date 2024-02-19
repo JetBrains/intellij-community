@@ -8,8 +8,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
@@ -51,10 +49,7 @@ import git4idea.index.GitStageCommitWorkflow
 import git4idea.index.GitStageCommitWorkflowHandler
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
-import git4idea.index.actions.GitAddOperation
-import git4idea.index.actions.GitResetOperation
-import git4idea.index.actions.StagingAreaOperation
-import git4idea.index.actions.performStageOperation
+import git4idea.index.actions.*
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitConflict
 import git4idea.repo.GitRepository
@@ -62,7 +57,6 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
-import java.awt.event.InputEvent
 import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.JPanel
@@ -296,26 +290,20 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-        processDoubleClickOrEnter(e, true)
+        processDoubleClickOrEnter(true)
         true
       }
-      enterKeyHandler = Processor { e ->
-        processDoubleClickOrEnter(e, false)
+      enterKeyHandler = Processor {
+        processDoubleClickOrEnter(false)
         true
       }
     }
 
-    private fun processDoubleClickOrEnter(e: InputEvent?, isDoubleClick: Boolean) {
-      val dataContext = DataManager.getInstance().getDataContext(tree)
-
-      val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
-      val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
-      if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
-        performActionDumbAwareWithCallbacks(mergeAction, event)
-        return
-      }
+    private fun processDoubleClickOrEnter(isDoubleClick: Boolean) {
+      if (performMergeAction(project, selectedStatusNodes())) return
       if (editorTabPreview?.processDoubleClickOrEnter(isDoubleClick) == true) return
 
+      val dataContext = DataManager.getInstance().getDataContext(tree)
       OpenSourceUtil.openSourcesFrom(dataContext, true)
     }
 
