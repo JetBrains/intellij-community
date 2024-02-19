@@ -9,15 +9,16 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
-@State(name = "NotRoamableUiSettings",
+@State(name = NotRoamableUiSettings.COMPONENT_NAME,
        category = SettingsCategory.UI,
        exportable = true,
        storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED))])
 class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
   private var initialConfigurationLoaded = false
-  
+
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
+    const val COMPONENT_NAME = "NotRoamableUiSettings"
   }
 
   var ideScale: Float

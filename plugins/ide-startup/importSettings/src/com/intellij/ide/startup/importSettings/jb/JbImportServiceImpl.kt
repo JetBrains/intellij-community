@@ -129,7 +129,7 @@ internal data class JbProductInfo(
   fun getPluginsDescriptors(): List<IdeaPluginDescriptorImpl> {
     val retval = descriptors.toList()
     if (retval.size != descriptors2ProcessCnt) {
-      JbImportServiceImpl.LOG.warn("found ${retval.size} custom plugins, but found only $descriptors2ProcessCnt")
+      JbImportServiceImpl.LOG.warn("found $descriptors2ProcessCnt custom plugins, but only ${retval.size} were processed")
     }
     return retval.filter { it.second }.map { it.first }
   }

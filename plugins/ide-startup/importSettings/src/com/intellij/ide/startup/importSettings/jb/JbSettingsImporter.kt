@@ -213,6 +213,7 @@ class JbSettingsImporter(private val configDirPath: Path,
                                       forceReloadNonReloadable = true)
       defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
     }
+    JbImportSpecialHandler.postProcess(configDirPath)
     RegistryManager.getInstanceAsync().resetValueChangeListener()
 
     // there's currently only one reason to restart after reading configs
