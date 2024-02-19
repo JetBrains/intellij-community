@@ -87,6 +87,10 @@ class ProgressEventConverter {
             { mutableSetOf<OperationDescriptor>().apply { dependencies.mapNotNullTo(this) { convert(it) } } },
             { convert(originPlugin) })
         }
+        is JvmTestOperationDescriptor -> operationDescriptor.run {
+          InternalJvmTestOperationDescriptor(id, name, displayName, convert(parent),
+                                             jvmTestKind, suiteName, className, methodName)
+        }
         is TestOperationDescriptor -> operationDescriptor.run {
           InternalTestOperationDescriptor(id, name, displayName, convert(parent))
         }
