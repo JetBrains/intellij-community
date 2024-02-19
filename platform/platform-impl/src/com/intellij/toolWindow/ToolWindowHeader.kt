@@ -67,6 +67,22 @@ abstract class ToolWindowHeader internal constructor(
   var isPopupShowing: Boolean = false
     private set
 
+  var sideComponent: JComponent? = null
+    set(value) {
+      val old = field
+      if (old !== value) {
+        if (old != null) {
+          westPanel.remove(old)
+        }
+        if (value != null) {
+          westPanel.add(value)
+        }
+        field = value
+        westPanel.revalidate()
+        westPanel.repaint()
+      }
+    }
+
   private fun setPopupShowing(showing: Boolean) {
     if (isPopupShowing != showing) {
       isPopupShowing = showing
