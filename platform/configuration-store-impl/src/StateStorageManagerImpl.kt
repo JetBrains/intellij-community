@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Internal
 
 package com.intellij.configurationStore
 
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -30,22 +30,26 @@ import kotlin.io.path.invariantSeparatorsPathString
 /**
  * If componentManager not specified, storage will not add file tracker
  */
-@Internal
 open class StateStorageManagerImpl(
   @NonNls private val rootTagName: String,
   final override val macroSubstitutor: PathMacroSubstitutor? = null,
   final override val componentManager: ComponentManager?,
-  private val controller: SettingsController? = null,
+  private val controller: SettingsController?,
 ) : StateStorageManager {
   private val virtualFileTracker = createDefaultVirtualTracker(componentManager)
 
   @Volatile
-  protected var macros: List<Macro> = Collections.emptyList()
+  @JvmField
+  protected var macros: List<Macro> = java.util.List.of()
 
+  @JvmField
   protected val storageLock: ReentrantReadWriteLock = ReentrantReadWriteLock()
   private val storages = HashMap<String, StateStorage>()
 
-  val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
+  override val streamProvider: StreamProvider
+    get() = compoundStreamProvider
+
+  private val compoundStreamProvider = CompoundStreamProvider()
 
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     compoundStreamProvider.addStreamProvider(provider = provider, first = first)
@@ -58,7 +62,8 @@ open class StateStorageManagerImpl(
   // access under storageLock
   private var isUseVfsListener = when (componentManager) {
     null -> ThreeState.NO
-    else -> ThreeState.UNSURE // unsure because depends on stream provider state
+    // unsure because depends on stream provider state
+    else -> ThreeState.UNSURE
   }
 
   protected open val isUseXmlProlog: Boolean
@@ -187,12 +192,14 @@ open class StateStorageManagerImpl(
     }
   }
 
-  private fun createStateStorage(storageClass: Class<out StateStorage>,
-                                 collapsedPath: String,
-                                 roamingType: RoamingType,
-                                 @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter>,
-                                 usePathMacroManager: Boolean,
-                                 exclusive: Boolean = false): StateStorage {
+  private fun createStateStorage(
+    storageClass: Class<out StateStorage>,
+    collapsedPath: String,
+    roamingType: RoamingType,
+    @Suppress("DEPRECATION", "removal") stateSplitter: Class<out StateSplitter>,
+    usePathMacroManager: Boolean,
+    exclusive: Boolean = false,
+  ): StateStorage {
     if (storageClass != StateStorage::class.java) {
       val constructor = storageClass.constructors.first { it.parameterCount <= 3 }
       constructor.isAccessible = true
@@ -272,17 +279,6 @@ open class StateStorageManagerImpl(
       provider = compoundStreamProvider,
       controller = controller?.takeIf { it.isPersistenceStateComponentProxy() },
     )
-  }
-
-  internal class TrackedDirectoryStorage(
-    override val storageManager: StateStorageManagerImpl,
-    dir: Path,
-    @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
-    macroSubstitutor: PathMacroSubstitutor?
-  ) : DirectoryBasedStorage(dir = dir, splitter = splitter, pathMacroSubstitutor = macroSubstitutor),
-      StorageVirtualFileTracker.TrackedStorage {
-    override val isUseVfsForWrite: Boolean
-      get() = storageManager.isUseVfsForWrite
   }
 
   internal class TrackedFileStorage(
@@ -380,7 +376,7 @@ open class StateStorageManagerImpl(
     throw IllegalStateException("Cannot resolve $collapsedPath in $macros")
   }
 
-  fun collapseMacro(path: String): String {
+  final override fun collapseMacro(path: String): String {
     for ((key, value) in macros) {
       val result = path.replace(value.invariantSeparatorsPathString, key)
       if (result !== path) {
@@ -392,7 +388,7 @@ open class StateStorageManagerImpl(
 
   final override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? {
     val oldStorageSpec = getOldStorageSpec(component = component, componentName = componentName, operation = operation) ?: return null
-    return getOrCreateStorage(oldStorageSpec, RoamingType.DEFAULT)
+    return getOrCreateStorage(collapsedPath = oldStorageSpec, roamingType = RoamingType.DEFAULT)
   }
 
   protected open fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? = null
@@ -401,6 +397,17 @@ open class StateStorageManagerImpl(
     virtualFileTracker?.remove { it.storageManager === this }
     controller?.release()
   }
+}
+
+private class TrackedDirectoryStorage(
+  override val storageManager: StateStorageManagerImpl,
+  dir: Path,
+  @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
+  macroSubstitutor: PathMacroSubstitutor?
+) : DirectoryBasedStorage(dir = dir, splitter = splitter, pathMacroSubstitutor = macroSubstitutor),
+    StorageVirtualFileTracker.TrackedStorage {
+  override val isUseVfsForWrite: Boolean
+    get() = storageManager.isUseVfsForWrite
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")

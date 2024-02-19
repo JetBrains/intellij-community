@@ -57,14 +57,14 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
   ) {
     val projectSessionManager = projectSessionManager as ProjectWithModulesSaveSessionProducerManager
 
-    val writer = JpsStorageContentWriter(projectSessionManager, this, project)
+    val writer = JpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
     JpsProjectModelSynchronizer.getInstance(project).saveChangedProjectEntities(writer)
 
     for (module in ModuleManager.getInstance(project).modules) {
       val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
       val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
-      moduleStore.commitComponents(forceSavingAllSettings, moduleSessionManager, saveResult)
-      projectSessionManager.commitComponents(moduleStore, moduleSessionManager)
+      moduleStore.commitComponents(isForce = forceSavingAllSettings, sessionManager = moduleSessionManager, saveResult = saveResult)
+      projectSessionManager.commitComponents(moduleStore = moduleStore, moduleSaveSessionManager = moduleSessionManager)
       moduleSessionManager.collectSaveSessions(saveSessions)
     }
   }

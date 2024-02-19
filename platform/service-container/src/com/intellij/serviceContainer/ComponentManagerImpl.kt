@@ -155,9 +155,9 @@ abstract class ComponentManagerImpl(
   }
 
   private val scopeHolder = ScopeHolder(
-    parentScope,
-    additionalContext + this.asContextElement(),
-    containerName = debugString(true),
+    parentScope = parentScope,
+    additionalContext = additionalContext + this.asContextElement(),
+    containerName = debugString(short = true),
   )
 
   open val supportedSignaturesOfLightServiceConstructors: List<MethodType> = java.util.List.of(

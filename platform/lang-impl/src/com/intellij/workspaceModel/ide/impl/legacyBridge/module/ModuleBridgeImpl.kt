@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.RenameableStateStorageManager
@@ -12,6 +12,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.impl.DeprecatedModuleOptionManager
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
@@ -128,10 +129,12 @@ internal class ModuleBridgeImpl(
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(modules = modules,
-                             app = app,
-                             precomputedExtensionModel = precomputedExtensionModel,
-                             listenerCallbacks = listenerCallbacks)
+    super.registerComponents(
+      modules = modules,
+      app = app,
+      precomputedExtensionModel = precomputedExtensionModel,
+      listenerCallbacks = listenerCallbacks,
+    )
     if (corePlugin == null) {
       return
     }

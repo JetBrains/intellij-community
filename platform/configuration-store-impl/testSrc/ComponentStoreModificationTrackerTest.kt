@@ -163,14 +163,15 @@ internal class ComponentStoreModificationTrackerTest {
   }
 
   private class TestComponentStore(testAppConfigPath: Path) : ComponentStoreImpl() {
-    private class TestStateStorageManager : StateStorageManagerImpl("application", componentManager = null) {
+    private class TestStateStorageManager : StateStorageManagerImpl("application", componentManager = null, controller = null) {
       override val isUseXmlProlog = false
 
       override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-      override fun expandMacro(collapsedPath: String): Path =
-        if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
+      override fun expandMacro(collapsedPath: String): Path {
+        return if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
         else macros[0].value.resolve(collapsedPath)
+      }
     }
 
     override val storageManager: StateStorageManagerImpl = TestStateStorageManager()

@@ -60,9 +60,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   final override var loadPolicy: StateLoadPolicy = StateLoadPolicy.LOAD
 
-  final override fun isOptimiseTestLoadSpeed(): Boolean = loadPolicy != StateLoadPolicy.LOAD
+  final override fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
 
-  final override fun getStorageScheme(): StorageScheme = if (isDirectoryBased) StorageScheme.DIRECTORY_BASED else StorageScheme.DEFAULT
+  final override fun getStorageScheme() = if (isDirectoryBased) StorageScheme.DIRECTORY_BASED else StorageScheme.DEFAULT
 
   override val storageManager: StateStorageManagerImpl =
     ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)), project)
@@ -78,7 +78,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   final override fun getWorkspacePath(): Path = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
-  final override fun clearStorages(): Unit = storageManager.clearStorages()
+  final override fun clearStorages() {
+    storageManager.clearStorages()
+  }
 
   final override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
@@ -151,9 +153,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       return
     }
 
-    val productWorkspaceFile = PathManager.getConfigDir()
-      .resolve("workspace")
-      .resolve("$projectWorkspaceId.xml")
+    val productWorkspaceFile = PathManager.getConfigDir().resolve("workspace/$projectWorkspaceId.xml")
     macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
     storageManager.setMacros(macros)
   }
@@ -167,9 +167,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       }
       else {
         moveComponentConfiguration(
-          defaultProject, element,
+          defaultProject = defaultProject,
+          element = element,
           storagePathResolver = { PROJECT_FILE },  // doesn't matter; any path will be resolved as projectFilePath (see `fileResolver`)
-          fileResolver = { if (it == "workspace.xml") workspacePath else dirOrFile!! })
+          fileResolver = { if (it == "workspace.xml") workspacePath else dirOrFile!! },
+        )
       }
     }.getOrLogException(LOG)
   }
@@ -197,7 +199,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       path = projectFilePath
       prefix = projectName
     }
-    return "${prefix}${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
+    return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
   }
 
   override fun getPresentableUrl(): String {
@@ -211,7 +213,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   override fun getProjectWorkspaceId(): String? = ProjectIdManager.getInstance(project).id
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
+  override fun <T> getStorageSpecs(
+    component: PersistentStateComponent<T>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+  ): List<Storage> {
     val storages = stateSpec.storages
     if (isDirectoryBased) {
       if (storages.size == 2 && ApplicationManager.getApplication().isUnitTestMode &&
@@ -398,9 +404,15 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   }
 }
 
-private class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor, private val project: Project)
-  : StateStorageManagerImpl(rootTagName = "project", macroSubstitutor = macroSubstitutor, componentManager = project)
-{
+private class ProjectStateStorageManager(
+  macroSubstitutor: PathMacroSubstitutor,
+  private val project: Project,
+) : StateStorageManagerImpl(
+  rootTagName = "project",
+  macroSubstitutor = macroSubstitutor,
+  componentManager = project,
+  controller = null,
+) {
   override val isUseVfsForWrite: Boolean
     get() = !useBackgroundSave
 

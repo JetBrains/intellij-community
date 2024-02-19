@@ -231,7 +231,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override suspend fun save(forceSavingAllSettings: Boolean) {
     val result = SaveResult()
-    doSave(result, forceSavingAllSettings)
+    doSave(saveResult = result, forceSavingAllSettings = forceSavingAllSettings)
     result.rethrow()
   }
 
@@ -259,7 +259,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     for (name in names) {
       val start = System.currentTimeMillis()
       try {
-        val info = components[name] ?: continue
+        val info = components.get(name) ?: continue
         var currentModificationCount = -1L
 
         if (info.lastSaved != -1) {
@@ -293,10 +293,12 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        commitComponent(sessionManager = sessionManager,
-                        info = info,
-                        componentName = name,
-                        modificationCountChanged = modificationCountChanged)
+        commitComponent(
+          sessionManager = sessionManager,
+          info = info,
+          componentName = name,
+          modificationCountChanged = modificationCountChanged,
+        )
         info.updateModificationCount(currentModificationCount)
       }
       catch (e: Throwable) {
@@ -653,9 +655,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
-                                         stateSpec: State,
-                                         operation: StateStorageOperation): List<Storage> {
+  protected open fun <T> getStorageSpecs(
+    component: PersistentStateComponent<T>,
+    stateSpec: State,
+    operation: StateStorageOperation,
+  ): List<Storage> {
     val storages = getWithPerOsStorages(stateSpec.storages)
     if (storages.size == 1 || component is StateStorageChooserEx) {
       return storages.toList()

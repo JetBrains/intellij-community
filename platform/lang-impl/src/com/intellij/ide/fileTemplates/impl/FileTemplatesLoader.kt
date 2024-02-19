@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -13,7 +12,6 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentStoreOwner
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -47,7 +45,7 @@ private const val DESCRIPTION_EXTENSION_SUFFIX = ".$DESCRIPTION_FILE_EXTENSION"
 
 /**
  * Serves as a container for all existing template manager types and loads corresponding templates lazily.
- * Reloads templates on plugins change.
+ * Reloads templates on plugin change.
  */
 internal open class FileTemplatesLoader(project: Project?) : Disposable {
   companion object {
@@ -169,19 +167,27 @@ private fun loadConfiguration(project: Project?): LoadedConfiguration {
   val managers = HashMap<String, FTManager>(managerToDir.size)
   val streamProvider = streamProvider(project)
   for ((name, pathPrefix) in managerToDir) {
-    val manager = FTManager(name, templatePath.resolve(pathPrefix), configDir.resolve(pathPrefix), result.prefixToTemplates.get(pathPrefix) ?: emptyList(),
-                            name == FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, streamProvider)
+    val manager = FTManager(
+      name,
+      templatePath.resolve(pathPrefix),
+      configDir.resolve(pathPrefix),
+      result.prefixToTemplates.get(pathPrefix) ?: emptyList(),
+      name == FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY,
+      streamProvider,
+    )
     manager.loadCustomizedContent()
     managers.put(name, manager)
   }
-  return LoadedConfiguration(managers = managers,
-                             defaultTemplateDescription = result.defaultTemplateDescription,
-                             defaultIncludeDescription = result.defaultIncludeDescription)
+  return LoadedConfiguration(
+    managers = managers,
+    defaultTemplateDescription = result.defaultTemplateDescription,
+    defaultIncludeDescription = result.defaultIncludeDescription,
+  )
 }
 
 internal fun streamProvider(project: Project?): StreamProvider {
-  val componentManager: ComponentManager = project ?: ApplicationManager.getApplication()
-  return ((componentManager as ComponentStoreOwner).componentStore.storageManager as StateStorageManagerImpl).compoundStreamProvider
+  val componentManager = (project ?: ApplicationManager.getApplication()) as ComponentStoreOwner
+  return (componentManager as ComponentStoreOwner).componentStore.storageManager.streamProvider
 }
 
 private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult {

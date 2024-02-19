@@ -35,7 +35,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
-import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -57,9 +56,7 @@ open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     e.presentation.isEnabled = true
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     ApplicationManager.getApplication().saveSettings()
@@ -380,8 +377,7 @@ private fun loadFileContent(item: ExportableItem, storageManager: StateStorageMa
   var content: ByteArray? = null
   var errorDuringLoadingFromProvider = false
   val skipProvider = !item.roamingType.isRoamable
-  val handledByProvider = !skipProvider && storageManager.compoundStreamProvider.read(item.fileSpec.rawFileSpec,
-                                                                                      item.roamingType) { inputStream ->
+  val handledByProvider = !skipProvider && storageManager.streamProvider.read(item.fileSpec.rawFileSpec, item.roamingType) { inputStream ->
     // null stream means empty file which shouldn't be exported
     inputStream?.let {
       try {
@@ -413,8 +409,11 @@ private fun isComponentDefined(componentName: String?, bytes: ByteArray): Boolea
 
 private fun exportDirectory(item: ExportableItem, zip: Compressor, storageManager: StateStorageManagerImpl) {
   var error = false
-  val success = storageManager.compoundStreamProvider.processChildren(item.fileSpec.relativePath, item.roamingType,
-                                                                      { true }) { name: String, inputStream: InputStream, _: Boolean ->
+  val success = storageManager.streamProvider.processChildren(
+    path = item.fileSpec.relativePath,
+    roamingType = item.roamingType,
+    filter = { true },
+  ) { name, inputStream, _ ->
     try {
       val fileName = item.fileSpec.relativePath + "/" + name
       zip.addFile(fileName, inputStream)
@@ -437,8 +436,7 @@ private fun exportDirectory(item: ExportableItem, zip: Compressor, storageManage
 
 private fun checkIfDirectoryExists(item: ExportableItem, storageManager: StateStorageManagerImpl): Boolean {
   var exists = false
-  val handledByProvider = storageManager.compoundStreamProvider.processChildren(item.fileSpec.relativePath, item.roamingType,
-                                                                                { true }) { _, _, _ ->
+  val handledByProvider = storageManager.streamProvider.processChildren(item.fileSpec.relativePath, item.roamingType, { true }) { _, _, _ ->
     exists = true
     false // stop processing children: now we know that the directory exists and is not empty
   }

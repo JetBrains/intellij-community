@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
+@file:ApiStatus.Internal
 
 package com.intellij.configurationStore
 
@@ -29,7 +30,7 @@ import java.nio.file.Path
 
 const val APP_CONFIG: String = "\$APP_CONFIG\$"
 
-@ApiStatus.Internal
+@VisibleForTesting
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
   override val storageManager: ApplicationStateStorageManager = ApplicationStateStorageManager(
@@ -129,8 +130,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
     }
     else {
       // APP_CONFIG is the first macro
-      return macros[0].value.resolve(collapsedPath)
-    }
+      return macros.get(0).value.resolve(collapsedPath)
   }
 }
 

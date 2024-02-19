@@ -1,6 +1,5 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.plugins.InstalledPluginsState
@@ -255,16 +254,16 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   private fun settingsRepositoryIsEnabled(): Boolean {
     return !SettingsSyncSettings.getInstance().syncEnabled &&
-           (ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
+           (ApplicationManager.getApplication().stateStore.storageManager).streamProvider.let { it.enabled && it.isExclusive }
   }
 
-  override fun serverStateCheckFinished(updateResult: UpdateResult) {
-    when (updateResult) {
+  override fun serverStateCheckFinished(state: UpdateResult) {
+    when (state) {
       NoFileOnServer, FileDeletedFromServer -> showEnableSyncDialog(null)
-      is Success -> showEnableSyncDialog(updateResult.settingsSnapshot.getState())
+      is Success -> showEnableSyncDialog(state.settingsSnapshot.getState())
       is Error -> {
-        if (updateResult != SettingsSyncEnabler.State.CANCELLED) {
-          showError(message("notification.title.update.error"), updateResult.message)
+        if (state != SettingsSyncEnabler.State.CANCELLED) {
+          showError(message("notification.title.update.error"), state.message)
         }
       }
     }

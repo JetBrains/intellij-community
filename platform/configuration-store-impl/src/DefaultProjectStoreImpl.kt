@@ -39,18 +39,23 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
       get() = null
 
     override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
-      compoundStreamProvider.addStreamProvider(provider, first)
+      compoundStreamProvider.addStreamProvider(provider = provider, first = first)
     }
 
     override fun removeStreamProvider(aClass: Class<out StreamProvider>) {
       compoundStreamProvider.removeStreamProvider(aClass)
     }
 
-    override fun getStateStorage(storageSpec: Storage): DefaultProjectStorage = storage
+    override fun getStateStorage(storageSpec: Storage) = storage
 
     override fun expandMacro(collapsedPath: String) = throw UnsupportedOperationException()
 
-    override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): DefaultProjectStorage = storage
+    override fun collapseMacro(path: String): String = throw UnsupportedOperationException()
+
+    override val streamProvider: StreamProvider
+      get() = compoundStreamProvider
+
+    override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
 
   override fun isUseLoadedStateAsExisting(storage: StateStorage) = false

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.configurationStore
 
@@ -107,7 +107,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
 }
 
 private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module)
-  : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor = macroSubstitutor, componentManager = module),
+  : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor = macroSubstitutor, componentManager = module, controller = null),
     RenameableStateStorageManager {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
     return StoragePathMacros.MODULE_FILE
@@ -132,8 +132,8 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
         else if (storage.file.fileName.toString() != newName) {
           // old file didn't exist or renaming failed
           val newFile = storage.file.parent.resolve(newName)
-          storage.setFile(null, newFile)
-          pathRenamed(newFile, null)
+          storage.setFile(virtualFile = null, ioFileIfChanged = newFile)
+          pathRenamed(newPath = newFile, event = null)
         }
       }
       catch (e: IOException) {
@@ -148,7 +148,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
 
   override fun pathRenamed(newPath: Path, event: VFileEvent?) {
     try {
-      setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, newPath)))
+      setMacros(java.util.List.of(Macro(StoragePathMacros.MODULE_FILE, newPath)))
     }
     finally {
       val requestor = event?.requestor
@@ -201,15 +201,15 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
     usePathMacroManager: Boolean,
     rootTagName: String?
   ): StateStorage {
-    val provider = if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider
+    val provider = if (roamingType == RoamingType.DISABLED) null else streamProvider
     return TrackedFileStorage(
       storageManager = this,
-      file,
-      collapsedPath,
-      rootTagName,
-      roamingType,
-      macroSubstitutor,
-      provider,
+      file = file,
+      fileSpec = collapsedPath,
+      rootElementName = rootTagName,
+      roamingType = roamingType,
+      pathMacroManager = macroSubstitutor,
+      provider = provider,
       controller = null,
     )
   }

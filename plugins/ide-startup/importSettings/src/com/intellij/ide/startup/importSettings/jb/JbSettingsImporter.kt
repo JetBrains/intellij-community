@@ -61,7 +61,7 @@ class JbSettingsImporter(private val configDirPath: Path,
   // Same applies to the Keymap manager.
   // So far, it doesn't look like there's a viable way to detect those, so we just hardcode them.
   suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>, pluginIds: Set<String>) {
-    val storageManager = componentStore.storageManager as StateStorageManagerImpl
+    val storageManager = componentStore.storageManager
     val (components, files) = findComponentsAndFiles()
     withExternalStreamProvider(arrayOf(storageManager)) {
       val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
@@ -427,24 +427,6 @@ class JbSettingsImporter(private val configDirPath: Path,
       ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
     }
     CustomConfigMigrationOption.MigrateFromCustomPlace(configDirPath).writeConfigMarkerFile(PathManager.getConfigDir())
-  }
-
-  internal class DummyStreamProvider : StreamProvider {
-    override val isExclusive = true
-
-    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {}
-
-    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-      return false
-    }
-
-    override fun processChildren(path: String,
-                                 roamingType: RoamingType,
-                                 filter: (name: String) -> Boolean,
-                                 processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) = true
-
-    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = true
-
   }
 
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
