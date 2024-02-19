@@ -1772,7 +1772,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return PaintUtil.alignToInt(sw, ctx, PaintUtil.devValue(1, ctx) > 2 ? RoundingMode.FLOOR : RoundingMode.ROUND, null);
   }
 
-  private int getFoldingAreaOffset() {
+  @Override
+  public int getFoldingAreaOffset() {
     return myLayout.getFoldingAreaOffset();
   }
 

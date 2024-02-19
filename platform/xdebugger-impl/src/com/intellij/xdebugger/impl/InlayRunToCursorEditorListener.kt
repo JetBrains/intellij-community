@@ -268,6 +268,10 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       return
     }
 
+    if (needShowOnGutter && editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1) != null) {
+      return
+    }
+
     val editorContentComponent = editor.contentComponent
     val position = SwingUtilities.convertPoint(
       editorContentComponent,
