@@ -124,13 +124,13 @@ class KotlinNewUserTrackerTest {
     }
 
     @Test
-    fun `New IDEA users should be detected as new if they have recently in`() {
+    fun `New IDEA users should be detected as new if they have recently installed IDEA`() {
         val instance = createInstance(LocalDate.now().minusDays(NEW_IDEA_USER_DURATION.toDays() - 2))
         assertTrue(instance.isNewIdeaUser())
     }
 
     @Test
-    fun `New IDEA should no longer be classed as new if they have installed IDEA too long ago`() {
+    fun `New IDEA users should no longer be classed as new if they have installed IDEA too long ago`() {
         val instance = createInstance(LocalDate.now().minusDays(NEW_IDEA_USER_DURATION.toDays() + 2))
         assertFalse(instance.isNewIdeaUser())
     }
