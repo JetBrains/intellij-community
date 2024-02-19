@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.TestModeFlags;
@@ -196,10 +195,15 @@ public final class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      FSRecordsImpl vfs = segment.owningVfsData.owningPersistentFS().peer();
+      //TODO RC: it seems like concurrency issue, really -- check the locks acquired up the stack in all invocation traces
+
       //FIXME RC: move .describeAlreadyCreatedFile() from FSRecordsImpl -- here, and replace static call with
       //  vfs instance call:
-      throw new FileAlreadyCreatedException(FSRecords.describeAlreadyCreatedFile(id, nameId));
+      throw new FileAlreadyCreatedException(
+        FSRecords.describeAlreadyCreatedFile(id, nameId)
+        + " data: " + data
+        + ", alreadyExistingData: " + existingData
+      );
     }
     segment.myObjectArray.set(offset, data);
   }
