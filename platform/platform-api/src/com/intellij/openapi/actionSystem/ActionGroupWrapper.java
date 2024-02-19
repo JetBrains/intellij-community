@@ -27,7 +27,7 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myDelegate.getActionUpdateThread();
+    return ActionUpdateThread.BGT;
   }
 
   @Override

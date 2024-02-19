@@ -47,7 +47,7 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myDelegate.getActionUpdateThread();
+    return ActionUpdateThread.BGT;
   }
 
   @Override
