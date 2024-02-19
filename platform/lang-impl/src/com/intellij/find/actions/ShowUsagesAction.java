@@ -585,7 +585,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
     UsageNode MORE_USAGES_SEPARATOR_NODE = new UsageNode(null, table.MORE_USAGES_SEPARATOR);
 
-    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", () -> popup.isDisposed(), 100, () -> {
+    Runnable runnable = () -> {
       if (popup.isDisposed()) return;
 
       List<UsageNode> nodes = new ArrayList<>(usages.size());
@@ -641,6 +641,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       showUsagesPopupData.header.setStatusText(hasMore, visibleCount, totalCount);
       rebuildTable(project, originUsageCheck, data, table, popup, parameters.popupPosition, parameters.minWidth, manuallyResized);
       preselectedRow.set(getSelectedUsageNode(table));
+    };
+    PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", () -> popup.isDisposed(), 100, () -> {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346641, EA-830956")) {
+        runnable.run();
+      }
     });
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
