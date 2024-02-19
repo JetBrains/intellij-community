@@ -20,7 +20,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 28)
+  private val GROUP = EventLogGroup("inline.completion", 29)
 
   const val INVOKED_EVENT_ID = "invoked"
   const val SHOWN_EVENT_ID = "shown"
@@ -128,8 +128,6 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   @ApiStatus.Internal
   object InsertedStateEvents {
-    val REQUEST_ID = EventFields.Long("request_id")
-    val DURATION = EventFields.Long("duration")
     val SUGGESTION_LENGTH = EventFields.Int("suggestion_length")
     val RESULT_LENGTH = EventFields.Int("result_length")
     val EDIT_DISTANCE = EventFields.Int("edit_distance")
@@ -139,11 +137,12 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
   }
 
   internal val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
-    INSERTED_STATE_EVENT_ID,
-    InsertedStateEvents.REQUEST_ID,
+    eventId = INSERTED_STATE_EVENT_ID,
+    description = "State of the inserted inline proposal in the editor after some time",
+    ShownEvents.REQUEST_ID,
     EventFields.Language,
     EventFields.CurrentFile,
-    InsertedStateEvents.DURATION,
+    EventFields.DurationMs,
     InsertedStateEvents.SUGGESTION_LENGTH,
     InsertedStateEvents.RESULT_LENGTH,
     InsertedStateEvents.EDIT_DISTANCE,
