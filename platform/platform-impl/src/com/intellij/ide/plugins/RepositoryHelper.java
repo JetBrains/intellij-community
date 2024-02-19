@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -231,5 +231,15 @@ public final class RepositoryHelper {
     var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
     var customPlugins = loadPluginsFromCustomRepositories(null).stream().filter(p -> pluginIds.contains(p.getPluginId())).toList();
     return mergePluginsFromRepositories(mpPlugins, customPlugins, true);
+  }
+
+  @ApiStatus.Internal
+  public static void amendPluginHostsProperty(@NotNull Collection<String> repositoryUrls) {
+    var hosts = System.getProperty("idea.plugin.hosts");
+    var newHosts = String.join(";", repositoryUrls);
+    if (hosts != null && !hosts.isBlank()) {
+      newHosts = hosts + ";" + newHosts;
+    }
+    System.setProperty("idea.plugin.hosts", newHosts);
   }
 }

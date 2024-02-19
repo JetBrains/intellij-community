@@ -1,15 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
+import com.intellij.openapi.updateSettings.impl.UpdateOptions;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +32,10 @@ import java.util.Set;
  * @see com.intellij.idea.Main#installPluginUpdates
  */
 final class UpdatePluginsApp implements ApplicationStarter {
+  private static final String OLD_CONFIG_DIR_PROPERTY = "idea.plugin.migration.config.dir";
+
   @Override
+  @SuppressWarnings("deprecation")
   public String getCommandName() {
     return "update";
   }
@@ -31,6 +43,26 @@ final class UpdatePluginsApp implements ApplicationStarter {
   @Override
   public void premain(@NotNull List<String> args) {
     System.setProperty("idea.skip.indices.initialization", "true");
+
+    var oldConfig = System.getProperty(OLD_CONFIG_DIR_PROPERTY);
+    if (oldConfig != null) {
+      log("Reading plugin repositories from " + oldConfig);
+      try {
+        var text = ComponentStorageUtil.loadTextContent(Path.of(oldConfig).resolve("options/updates.xml"));
+        var components = ComponentStorageUtil.loadComponents(JDOMUtil.load(text), null);
+        var element = components.get("UpdatesConfigurable");
+        if (element != null) {
+          var hosts = XmlSerializer.deserialize(element, UpdateOptions.class).getPluginHosts();
+          if (!hosts.isEmpty()) {
+            RepositoryHelper.amendPluginHostsProperty(hosts);
+            log("Plugin hosts: " + System.getProperty("idea.plugin.hosts"));
+          }
+        }
+      }
+      catch (InvalidPathException | IOException | JDOMException e) {
+        log("... failed: " + e.getMessage());
+      }
+    }
   }
 
   @Override

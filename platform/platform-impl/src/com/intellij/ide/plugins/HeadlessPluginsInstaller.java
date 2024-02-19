@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -65,13 +65,8 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
       collectProjectRequiredPlugins(pluginIds, projectPaths);
 
       if (!customRepositories.isEmpty()) {
-        var hosts = System.getProperty("idea.plugin.hosts");
-        var newHosts = String.join(";", customRepositories);
-        if (hosts != null && !hosts.isBlank()) {
-          newHosts = hosts + ";" + newHosts;
-        }
-        System.setProperty("idea.plugin.hosts", newHosts);
-        LOG.info("plugin hosts: " + newHosts);
+        RepositoryHelper.amendPluginHostsProperty(customRepositories);
+        LOG.info("plugin hosts: " + System.getProperty("idea.plugin.hosts"));
       }
 
       LOG.info("installing: " + pluginIds);
