@@ -33,7 +33,8 @@ public final class JsonFileResolver {
   private static final Key<Boolean> DOWNLOAD_STARTED = Key.create("DOWNLOAD_STARTED");
 
   public static boolean isRemoteEnabled(Project project) {
-    return !ApplicationManager.getApplication().isUnitTestMode() &&
+    return !"true".equals(System.getProperty("idea.is.integration.test"))
+           && !ApplicationManager.getApplication().isUnitTestMode() &&
            JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled();
   }
 
