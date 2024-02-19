@@ -4441,6 +4441,21 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-65385
+  public void testUnboundParamSpecFromUnresolvedArgumentRetained() {
+    doTest("(ParamSpec(\"P\")) -> str",
+           """
+             from typing import Callable, Any, ParamSpec
+                          
+             P = ParamSpec("P")
+                          
+             def deco(fn: Callable[P, Any]) -> Callable[P, str]:
+                 return ...
+                          
+             expr = deco(unresolved)
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

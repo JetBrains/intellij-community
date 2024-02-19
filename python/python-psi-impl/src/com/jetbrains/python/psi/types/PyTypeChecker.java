@@ -1106,7 +1106,10 @@ public final class PyTypeChecker {
           }
           return substitution;
         }
-        else if (type instanceof PyParamSpecType paramSpecType) {
+        else if (type instanceof PyParamSpecType paramSpecType && paramSpecType.getParameters() == null) {
+          if (!substitutions.paramSpecs.containsKey(paramSpecType)) {
+            return paramSpecType;
+          }
           PyParamSpecType substitution = substitutions.paramSpecs.get(paramSpecType);
           if (substitution != null && !substitution.equals(paramSpecType) && hasGenerics(substitution, context)) {
             return substitute(substitution, substitutions, context);
@@ -1166,9 +1169,9 @@ public final class PyTypeChecker {
             for (PyCallableParameter parameter : parameters) {
               final var parameterType = parameter.getType(context);
               if (parameters.size() == 1 && parameterType instanceof PyParamSpecType) {
-                final var parameterTypeSubst = substitutions.paramSpecs.get(parameterType);
-                if (parameterTypeSubst != null && parameterTypeSubst.getParameters() != null) {
-                  substParams = parameterTypeSubst.getParameters();
+                final var substitution = substitute(parameterType, substitutions, context);
+                if (substitution instanceof PyParamSpecType paramSpecSubst && paramSpecSubst.getParameters() != null) {
+                  substParams = paramSpecSubst.getParameters();
                   break;
                 }
               }
