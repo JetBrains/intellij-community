@@ -143,11 +143,9 @@ public final class VfsData {
     }
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
-      String message = "nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() +
-                       "; db.parent=" + persistentFS.peer().getParent(id);
-      final AssertionError error = new AssertionError(message);
-      FSRecords.invalidateCaches(message, error);
-      throw error;
+      int parentId = persistentFS.peer().getParent(id);
+      throw new AssertionError("nameId=" + nameId + "; data=" + o + ";" +
+                               " parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + parentId);
     }
 
     if (o instanceof DirectoryData) {
