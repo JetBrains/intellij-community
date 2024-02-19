@@ -10,6 +10,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -150,15 +151,22 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     if (file != null) {
       VirtualFile vFile = file.getVirtualFile();
       if (vFile != null) {
-        var defaultExtension = vFile.getFileType().getDefaultExtension();
+        var type = vFile.getFileType();
+        var defaultExtension = type.getDefaultExtension();
         if (!defaultExtension.isEmpty()) {
           // If the type defines a default extension, use it to group files of the same type together,
           // regardless of their actual extension (e.g. *.htm, *.html...).
           return defaultExtension;
         }
-        // Otherwise, fall back to the actual extension, convert it to lower case, again, to group things together.
-        var extension = vFile.getExtension();
-        return extension == null || extension.isEmpty() ? defaultExtension : extension.toLowerCase(Locale.ROOT);
+        else if (type != FileTypes.UNKNOWN) {
+          // Otherwise, fall back to the type name, again, to group files of the same type together.
+          return type.getName();
+        }
+        else {
+          // If the type is unknown, fall back to the actual extension, convert it to lower case, again, to group things together.
+          var extension = vFile.getExtension();
+          return extension == null || extension.isEmpty() ? defaultExtension : extension.toLowerCase(Locale.ROOT);
+        }
       }
     }
 
