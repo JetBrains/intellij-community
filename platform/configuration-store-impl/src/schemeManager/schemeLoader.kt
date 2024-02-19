@@ -11,10 +11,10 @@ import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.io.createDirectories
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -27,11 +27,13 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamReader
 import kotlin.io.path.invariantSeparatorsPathString
 
-internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
-                                                            private val oldList: SchemeCollection<T>,
-                                                            private val preScheduledFilesToDelete: MutableSet<String>,
-                                                            private val isDuringLoad: Boolean) {
-  private val filesToDelete: MutableSet<String> = HashSet()
+internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(
+  private val schemeManager: SchemeManagerImpl<T, MUTABLE_SCHEME>,
+  private val oldList: SchemeCollection<T>,
+  private val preScheduledFilesToDelete: MutableSet<String>,
+  private val isDuringLoad: Boolean,
+) {
+  private val filesToDelete = HashSet<String>()
 
   private val schemes: MutableList<T> = oldList.list.toMutableList()
   private var newSchemesOffset = schemes.size
@@ -132,7 +134,7 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
     else {
       // We don't load a scheme with a duplicated name - if we generate a unique name for it, it will be saved then with a new name.
       // It is not what all can expect.
-      // Such situation in most cases indicates an error on previous level, so we just warn about it.
+      // Such a situation in most cases indicates an error on previous level, so we just warn about it.
       LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeKey\"")
     }
     return false
@@ -307,7 +309,7 @@ internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: StorageMa
 }
 
 internal fun createDir(ioDir: Path, requestor: StorageManagerFileWriteRequestor): VirtualFile {
-  ioDir.createDirectories()
+  NioFiles.createDirectories(ioDir)
   val parentFile = ioDir.parent
   val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.invariantSeparatorsPathString))
                           ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.createDir
@@ -14,10 +16,8 @@ import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
 import org.jdom.Element
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.pathString
 
 open class DirectoryBasedStorage(
   private val dir: Path,
@@ -25,8 +25,10 @@ open class DirectoryBasedStorage(
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null
 ) : StateStorageBase<StateMap>() {
   private var componentName: String? = null
-  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = emptyMap()
-  @Volatile private var cachedVirtualFile: VirtualFile? = null
+  @Volatile
+  private var nameToLineSeparatorMap: Map<String, LineSeparator?> = emptyMap()
+  @Volatile
+  private var cachedVirtualFile: VirtualFile? = null
 
   override val controller: SettingsController?
     get() = null
@@ -37,7 +39,7 @@ open class DirectoryBasedStorage(
     return StateMap.fromMap(elementMap)
   }
 
-  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -55,7 +57,7 @@ open class DirectoryBasedStorage(
       return null
     }
 
-    // on load, `FileStorageCoreUtil` checks both component and name attributes
+    // on load, `FileStorageCoreUtil` checks both `component` and `name` attributes
     // (critically important for the external store case, where we have only in-project artifacts, but not external)
     val state = Element(ComponentStorageUtil.COMPONENT).setAttribute(ComponentStorageUtil.NAME, componentName)
     if (splitter is StateSplitterEx) {
@@ -92,8 +94,9 @@ open class DirectoryBasedStorage(
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? =
-    if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
+  override fun createSaveSessionProducer(): SaveSessionProducer? {
+    return if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
+  }
 
   private class DirectorySaveSessionProducer(
     private val storage: DirectoryBasedStorage,
@@ -162,8 +165,7 @@ open class DirectoryBasedStorage(
       }
     }
 
-    override fun createSaveSession(): SaveSession? =
-      if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
+    override fun createSaveSession(): SaveSession? = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
     override fun saveBlocking() {
       val stateMap = StateMap.fromMap(copiedStorageData!!)
@@ -202,8 +204,14 @@ open class DirectoryBasedStorage(
         val element = states.getElement(fileName) ?: continue
 
         val rootAttributes = mapOf(ComponentStorageUtil.NAME to storage.componentName!!)
-        val debugString = storage.dir.pathString
-        val dataWriter = XmlDataWriter(ComponentStorageUtil.COMPONENT, listOf(element), rootAttributes, macroManager, debugString)
+        val debugString = storage.dir.toString()
+        val dataWriter = XmlDataWriter(
+          rootElementName = ComponentStorageUtil.COMPONENT,
+          elements = listOf(element),
+          rootAttributes = rootAttributes,
+          macroManager = macroManager,
+          storageFilePathForDebugPurposes = debugString,
+        )
 
         try {
           if (storage.isUseVfsForWrite) {
@@ -211,16 +219,29 @@ open class DirectoryBasedStorage(
             if (dir == null || !dir.exists()) {
               dir = storage.getVirtualFile()
               if (dir == null || !dir.exists()) {
-                dir = createDir(storage.dir, this)
+                dir = createDir(ioDir = storage.dir, requestor = this)
                 storage.cachedVirtualFile = dir
               }
             }
-            val file = dir.getOrCreateChild(fileName, this)
-            writeFile(cachedFile = null, requestor = this, file, dataWriter, getOrDetectLineSeparator(file), prependXmlProlog = false)
+            val file = dir.getOrCreateChild(fileName = fileName, requestor = this)
+            writeFile(
+              cachedFile = null,
+              requestor = this,
+              virtualFile = file,
+              dataWriter = dataWriter,
+              lineSeparator = getOrDetectLineSeparator(file),
+              prependXmlProlog = false,
+            )
           }
           else {
             val file = storage.dir.resolve(fileName)
-            writeFile(file, requestor = this, dataWriter, storage.getLineSeparator(fileName), prependXmlProlog = false)
+            writeFile(
+              file = file,
+              requestor = this,
+              dataWriter = dataWriter,
+              lineSeparator = storage.getLineSeparator(fileName),
+              prependXmlProlog = false,
+            )
           }
         }
         catch (e: IOException) {
@@ -245,20 +266,25 @@ open class DirectoryBasedStorage(
       val copiedStorageData = copiedStorageData!!
       if (storage.isUseVfsForWrite) {
         val dir = storage.getVirtualFile()
-        if (dir == null || !dir.exists()) return
+        if (dir == null || !dir.exists()) {
+          return
+        }
+
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
-            if (!file.isWritable) throw ReadOnlyModificationException(file, null)
+            if (!file.isWritable) {
+              throw ReadOnlyModificationException(file, null)
+            }
             file.delete(/*requestor =*/ this)
           }
         }
       }
       else {
-        for (file in storage.dir.listDirectoryEntries()) {
+        for (file in NioFiles.list(storage.dir)) {
           val fileName = file.fileName.toString()
           if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
-            file.deleteIfExists()
+            Files.deleteIfExists(file)
           }
         }
       }
@@ -269,7 +295,7 @@ open class DirectoryBasedStorage(
     storageDataRef.set(newStates)
   }
 
-  override fun toString(): String = "${javaClass.simpleName}(dir=${dir}, componentName=$componentName)"
+  override fun toString(): String = "${javaClass.simpleName}(dir=$dir, componentName=$componentName)"
 }
 
 internal interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {
