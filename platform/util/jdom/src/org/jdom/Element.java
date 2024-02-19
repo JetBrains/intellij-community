@@ -67,7 +67,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.jdom.JDOMConstants.NS_PREFIX_DEFAULT;
 import static org.jdom.JDOMConstants.NS_PREFIX_XML;
@@ -637,10 +636,6 @@ public class Element extends Content implements Parent, Serializable {
    */
   public <E extends Content> List<E> getContent(Filter<E> filter) {
     return content.getView(AbstractFilter.toFilter2(filter));
-  }
-
-  public Stream<Content> content() {
-    return content.stream();
   }
 
   /**
@@ -1327,11 +1322,11 @@ public class Element extends Content implements Parent, Serializable {
    */
   @SuppressWarnings("unused")
   @Deprecated
-  public <F extends Content> Iterator<F> getDescendants(final Filter<F> filter) {
+  public <F extends Content> Iterator<F> getDescendants(Filter<F> filter) {
     return new FilterIterator<>(new DescendantIterator(this), AbstractFilter.toFilter2(filter));
   }
 
-  public <F extends Content> Iterator<F> getDescendants(final org.jdom.filter2.Filter<F> filter) {
+  public <F extends Content> Iterator<F> getDescendants(org.jdom.filter2.Filter<F> filter) {
     return new FilterIterator<>(new DescendantIterator(this), filter);
   }
 

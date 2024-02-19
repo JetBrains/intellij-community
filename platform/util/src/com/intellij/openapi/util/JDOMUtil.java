@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.fasterxml.aalto.UncheckedStreamException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
@@ -27,8 +28,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings("IOStreamConstructor")
 public final class JDOMUtil {
@@ -85,7 +84,10 @@ public final class JDOMUtil {
    * Returns hash code which is consistent with {@link #areElementsEqual(Element, Element, boolean)}
    */
   public static int hashCode(@Nullable Element e, boolean ignoreEmptyAttrValues) {
-    if (e == null) return 0;
+    if (e == null) {
+      return 0;
+    }
+
     int hashCode = e.getName().hashCode();
     for (Attribute attribute : getAttributes(e)) {
       String value = attribute.getValue();
@@ -94,9 +96,11 @@ public final class JDOMUtil {
       }
     }
 
-    Iterator<Content> iterator = e.content().filter(CONTENT_FILTER).iterator();
-    while (iterator.hasNext()) {
-      Content content = iterator.next();
+    for (Content content : e.getContent()) {
+      if (!CONTENT_FILTER.test(content)) {
+        continue;
+      }
+
       int contentHash = content instanceof Element ? hashCode((Element)content, ignoreEmptyAttrValues) : e.getValue().hashCode();
       hashCode = hashCode * 31 + contentHash;
     }
@@ -104,7 +108,15 @@ public final class JDOMUtil {
   }
 
   private static boolean areElementContentsEqual(@NotNull Element e1, @NotNull Element e2, boolean ignoreEmptyAttrValues) {
-    return contentListsEqual(e1.content().filter(CONTENT_FILTER), e2.content().filter(CONTENT_FILTER), ignoreEmptyAttrValues);
+    Iterator<Content> l1 = FilteringIterator.create(e1.getContent().iterator(), CONTENT_FILTER);
+    Iterator<Content> l2 = FilteringIterator.create(e2.getContent().iterator(), CONTENT_FILTER);
+    while (l1.hasNext() && l2.hasNext()) {
+      if (!contentsEqual(l1.next(), l2.next(), ignoreEmptyAttrValues)) {
+        return false;
+      }
+    }
+
+    return l1.hasNext() == l2.hasNext();
   }
 
   private static final Predicate<Content> CONTENT_FILTER = content -> {
@@ -144,18 +156,6 @@ public final class JDOMUtil {
     else {
       sb.append(each);
     }
-  }
-
-  private static boolean contentListsEqual(@NotNull Stream<Content> c1, @NotNull Stream<Content> c2, boolean ignoreEmptyAttrValues) {
-    Iterator<Content> l1 = c1.iterator();
-    Iterator<Content> l2 = c2.iterator();
-    while (l1.hasNext() && l2.hasNext()) {
-      if (!contentsEqual(l1.next(), l2.next(), ignoreEmptyAttrValues)) {
-        return false;
-      }
-    }
-
-    return l1.hasNext() == l2.hasNext();
   }
 
   private static boolean contentsEqual(Content c1, Content c2, boolean ignoreEmptyAttrValues) {
@@ -544,8 +544,7 @@ public final class JDOMUtil {
       buffer = XmlStringUtil.appendEscapedSymbol(text, buffer, i, quotation, ch);
     }
     // If there were any entities, return the escaped characters
-    // that we put in the StringBuffer. Otherwise, just return
-    // the unmodified input string.
+    // that we put in the StringBuffer. Otherwise, just return the unmodified input string.
     return buffer == null ? text : buffer.toString();
   }
 
@@ -752,6 +751,7 @@ public final class JDOMUtil {
         deepMergeWithAttributes(existingChild, child, mergeByAttributes);
       }
     }
+
     for (Iterator<Attribute> iterator = getAttributes(from).iterator(); iterator.hasNext(); ) {
       Attribute attribute = iterator.next();
       iterator.remove();
@@ -760,28 +760,43 @@ public final class JDOMUtil {
     return to;
   }
 
-  private static boolean areAttributesEqual(@NotNull List<? extends Attribute> l1,
-                                            @NotNull List<? extends Attribute> l2,
-                                            @NotNull Element base,
-                                            @NotNull List<MergeAttribute> mergeByAttributes) {
-    Set<String> attributes = mergeByAttributes.stream()
-      .filter(o -> o.elementName.equals(base.getName()))
-      .map(o -> o.attributeName)
-      .collect(Collectors.toSet());
+  private static boolean areAttributesEqual(
+    @NotNull List<Attribute> l1,
+    @NotNull List<Attribute> l2,
+    @NotNull Element base,
+    @NotNull List<MergeAttribute> mergeByAttributes
+  ) {
+    Set<String> attributes = new HashSet<>();
+    for (MergeAttribute mergeByAttribute : mergeByAttributes) {
+      if (mergeByAttribute.elementName.equals(base.getName())) {
+        attributes.add(mergeByAttribute.attributeName);
+      }
+    }
     if (attributes.isEmpty()) {
       return isAttributesEqual(l1, l2, false);
     }
 
-    Map<String, String> secondMap = l2.stream().collect(Collectors.toMap(Attribute::getName, Attribute::getValue));
-    return l1.stream()
-      .filter(o -> attributes.contains(o.getName()))
-      .allMatch(o -> o.getValue().equals(secondMap.get(o.getName())));
+    Map<String, String> secondMap = new HashMap<>();
+    for (Attribute attribute : l2) {
+      if (secondMap.put(attribute.getName(), attribute.getValue()) != null) {
+        throw new IllegalStateException("Duplicate key");
+      }
+    }
+    for (Attribute o : l1) {
+      if (attributes.contains(o.getName()) && !o.getValue().equals(secondMap.get(o.getName()))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static @Nullable Element reduceChildren(@NotNull String name, @NotNull Element parent) {
     List<Element> children = parent.getChildren(name);
     Iterator<Element> it = children.iterator();
-    if (!it.hasNext()) return null;
+    if (!it.hasNext()) {
+      return null;
+    }
+
     Element accumulator = it.next();
     while (it.hasNext()) {
       merge(accumulator, it.next());
