@@ -106,7 +106,7 @@ public final class JsonSchemaReader {
   public @Nullable JsonSchemaObject read(@NotNull PsiFile file) {
     if (Registry.is("json.schema.object.v2")) {
       return JsonSchemaObjectStorage.getInstance(file.getProject())
-        .getOrComputeSchemaRootObject(file.getVirtualFile());
+        .getOrComputeSchemaRootObject(file.getOriginalFile().getVirtualFile());
     }
 
     JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(file, JsonSchemaObjectReadingUtils.NULL_OBJ);
