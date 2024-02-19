@@ -13,13 +13,10 @@ import com.intellij.ide.ui.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
@@ -30,6 +27,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.feedback.newUi.NewUIInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
+import com.intellij.util.ui.RestartDialog
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -110,7 +108,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       onValueChanged(newUI)
       if (suggestRestart) {
         shouldApplyOnClose = newUI
-        showRestartDialog()
+        RestartDialog().show()
       }
       else {
         saveNewValue(newUI)
@@ -217,28 +215,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
           changeUI()
         }
       })
-    }
-  }
-
-  private fun showRestartDialog() {
-    val action = if (ApplicationManager.getApplication().isRestartCapable) {
-      IdeBundle.message("ide.restart.action")
-    }
-    else {
-      IdeBundle.message("ide.shutdown.action")
-    }
-    @Suppress("SpellCheckingInspection")
-    val result = Messages.showYesNoDialog(
-      /* message = */ IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
-                                        ApplicationNamesInfo.getInstance().fullProductName),
-      /* title = */ IdeBundle.message("dialog.title.restart.required"),
-      /* yesText = */ action,
-      /* noText = */ IdeBundle.message("ide.notnow.action"),
-      /* icon = */ Messages.getQuestionIcon()
-    )
-
-    if (result == Messages.YES) {
-      ApplicationManagerEx.getApplicationEx().restart(true)
     }
   }
 }
