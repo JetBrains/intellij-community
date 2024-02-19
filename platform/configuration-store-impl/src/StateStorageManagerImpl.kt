@@ -70,11 +70,11 @@ open class StateStorageManagerImpl(
     get() = true
 
   /**
-   * Returns an old map.
+   * Returns an old list.
    */
-  fun setMacros(map: List<Macro>): List<Macro> {
+  fun setMacros(list: List<Macro>): List<Macro> {
     val oldValue = macros
-    macros = map
+    macros = list
     return oldValue
   }
 

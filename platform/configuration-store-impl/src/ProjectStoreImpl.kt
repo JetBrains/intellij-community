@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.configurationStore
 
@@ -64,8 +64,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   final override fun getStorageScheme() = if (isDirectoryBased) StorageScheme.DIRECTORY_BASED else StorageScheme.DEFAULT
 
-  override val storageManager: StateStorageManagerImpl =
-    ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)), project)
+  final override val storageManager: StateStorageManagerImpl = ProjectStateStorageManager(project)
 
   private val isDirectoryBased: Boolean
     get() = dotIdea != null
@@ -84,11 +83,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
 
   final override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
-  override fun setPath(path: Path) {
+  final override fun setPath(path: Path) {
     setPath(file = path, isRefreshVfsNeeded = true, template = null)
   }
 
-  override fun setPath(file: Path, isRefreshVfsNeeded: Boolean, template: Project?) {
+  final override fun setPath(file: Path, isRefreshVfsNeeded: Boolean, template: Project?) {
     dirOrFile = file
 
     val storageManager = storageManager
@@ -202,7 +201,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
   }
 
-  override fun getPresentableUrl(): String {
+  final override fun getPresentableUrl(): String {
     if (isDirectoryBased) {
       return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).invariantSeparatorsPathString
     }
@@ -211,9 +210,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
   }
 
-  override fun getProjectWorkspaceId(): String? = ProjectIdManager.getInstance(project).id
+  final override fun getProjectWorkspaceId(): String? = ProjectIdManager.getInstance(project).id
 
-  override fun <T> getStorageSpecs(
+  final override fun <T> getStorageSpecs(
     component: PersistentStateComponent<T>,
     stateSpec: State,
     operation: StateStorageOperation,
@@ -279,7 +278,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
   }
 
-  override fun isProjectFile(file: VirtualFile): Boolean {
+  final override fun isProjectFile(file: VirtualFile): Boolean {
     if (!file.isInLocalFileSystem || !ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
       return false
     }
@@ -297,7 +296,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     batchReloadStates(componentNames, project.messageBus)
   }
 
-  override fun getProjectName(): String {
+  final override fun getProjectName(): String {
     if (!isDirectoryBased) {
       return storageManager.expandMacro(PROJECT_FILE).fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
@@ -404,12 +403,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   }
 }
 
-private class ProjectStateStorageManager(
-  macroSubstitutor: PathMacroSubstitutor,
-  private val project: Project,
-) : StateStorageManagerImpl(
+private class ProjectStateStorageManager(private val project: Project) : StateStorageManagerImpl(
   rootTagName = "project",
-  macroSubstitutor = macroSubstitutor,
+  macroSubstitutor = TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)),
   componentManager = project,
   controller = null,
 ) {
@@ -426,7 +422,7 @@ private class ProjectStateStorageManager(
     }
     else {
       // PROJECT_CONFIG_DIR is the first macro
-      return macros[0].value.resolve(collapsedPath)
+      return macros.get(0).value.resolve(collapsedPath)
     }
   }
 

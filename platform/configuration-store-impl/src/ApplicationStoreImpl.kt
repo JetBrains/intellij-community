@@ -131,6 +131,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
     else {
       // APP_CONFIG is the first macro
       return macros.get(0).value.resolve(collapsedPath)
+    }
   }
 }
 
