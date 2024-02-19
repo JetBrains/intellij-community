@@ -242,6 +242,7 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
       val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable)
 
       cs.launchNow {
+        editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, model)
         try {
           model.reviewRanges.collect {
             renderer.scheduleUpdate()
@@ -249,6 +250,7 @@ class CodeReviewEditorGutterChangesRenderer(private val model: CodeReviewEditorG
         }
         finally {
           Disposer.dispose(disposable)
+          editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, null)
         }
       }
     }

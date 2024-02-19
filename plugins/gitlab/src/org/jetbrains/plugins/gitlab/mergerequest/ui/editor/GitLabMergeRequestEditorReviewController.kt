@@ -71,7 +71,6 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                     val cs = this
                     val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
                     val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm, editor.document)
-                    editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
                     try {
                       CodeReviewEditorGutterChangesRenderer.setupIn(cs, model, editor)
                       CodeReviewEditorGutterControlsRenderer.setupIn(cs, model, editor)
@@ -79,7 +78,6 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                       awaitCancellation()
                     }
                     finally {
-                      editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, null)
                       Disposer.dispose(model)
                     }
                   }

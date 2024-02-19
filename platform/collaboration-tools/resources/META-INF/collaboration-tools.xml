@@ -22,4 +22,11 @@
     <listener class="com.intellij.collaboration.ui.codereview.CodeReviewCombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
+  <actions>
+    <action id="Code.Review.Editor.Show.Diff"
+            class="com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFileDiffAction"
+            icon="AllIcons.Actions.Diff">
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>
