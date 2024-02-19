@@ -557,7 +557,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           reloadData = isReloadDataForStorage,
           storage = storage,
           info = info,
-          name = name,
+          componentName = name,
           stateClass = stateClass,
         )
         var state = stateGetter.getState(defaultState)
@@ -620,20 +620,35 @@ abstract class ComponentStoreImpl : IComponentStore {
     reloadData: Boolean,
     storage: StateStorage,
     info: ComponentInfo,
-    name: String,
+    componentName: String,
     stateClass: Class<Any>,
   ): StateGetter<Any> {
-    val isUseLoadedStateAsExisting = info.stateSpec!!.useLoadedStateAsExisting && isUseLoadedStateAsExisting(storage)
     @Suppress("UNCHECKED_CAST")
-    return createStateGetter(
-      isUseLoadedStateAsExisting = isUseLoadedStateAsExisting,
-      storage = storage,
-      component = info.component as PersistentStateComponent<Any>,
-      componentName = name,
-      pluginId = info.pluginId,
-      stateClass = stateClass,
-      reloadData = reloadData,
-    )
+    val component = info.component as PersistentStateComponent<Any>
+    if (storage is StorageBaseEx<*> && info.stateSpec!!.useLoadedStateAsExisting && isUseLoadedStateAsExisting(storage)) {
+      return storage.createGetSession(
+        component = component,
+        componentName = componentName,
+        stateClass = stateClass,
+        reload = reloadData,
+        pluginId = info.pluginId,
+      )
+    }
+
+    return object : StateGetter<Any> {
+      override fun getState(mergeInto: Any?): Any? {
+        return storage.getState(
+          component = component,
+          componentName = componentName,
+          pluginId = info.pluginId,
+          stateClass = stateClass,
+          mergeInto = mergeInto,
+          reload = reloadData,
+        )
+      }
+
+      override fun archiveState(): Any? = null
+    }
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean {
@@ -651,7 +666,7 @@ abstract class ComponentStoreImpl : IComponentStore {
       return deserializeState(stateElement = element, stateClass = stateClass)
     }
     catch (e: Throwable) {
-      throw IOException("Error loading default state for $componentName", e)
+      throw RuntimeException("Error loading default state for $componentName", e)
     }
   }
 

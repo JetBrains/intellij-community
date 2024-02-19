@@ -6,7 +6,6 @@ package com.intellij.configurationStore
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -41,41 +40,6 @@ abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
    * serializedState is null if state equals to default (see XmlSerializer.serializeIfNotDefault)
    */
   abstract fun archiveState(storageData: T, componentName: String, serializedState: Element?)
-}
-
-internal fun <S : Any> createStateGetter(
-  isUseLoadedStateAsExisting: Boolean,
-  storage: StateStorage,
-  component: PersistentStateComponent<S>,
-  componentName: String,
-  pluginId: PluginId,
-  stateClass: Class<S>,
-  reloadData: Boolean,
-): StateGetter<S> {
-  if (isUseLoadedStateAsExisting && storage is StorageBaseEx<*>) {
-    return storage.createGetSession(
-      component = component,
-      componentName = componentName,
-      stateClass = stateClass,
-      reload = reloadData,
-      pluginId = pluginId,
-    )
-  }
-
-  return object : StateGetter<S> {
-    override fun getState(mergeInto: S?): S? {
-      return storage.getState(
-        component = component,
-        componentName = componentName,
-        pluginId = pluginId,
-        stateClass = stateClass,
-        mergeInto = mergeInto,
-        reload = reloadData,
-      )
-    }
-
-    override fun archiveState(): S? = null
-  }
 }
 
 @ApiStatus.Internal
