@@ -64,14 +64,16 @@ class DirectoryBasedStorageTest {
 
   private suspend fun setStateAndSave(storage: StateStorageBase<*>, componentName: String, state: String?) {
     val saveSessionProducer = storage.createSaveSessionProducer()!!
-    saveSessionProducer.setState(
-      component = null,
-      componentName = componentName,
-      pluginId = PluginManagerCore.CORE_ID,
-      state = if (state == null) Element("state") else JDOMUtil.load(state),
-    )
-    writeAction {
-      saveSessionProducer.createSaveSession()!!.saveBlocking()
+    val state = if (state == null) Element("state") else JDOMUtil.load(state)
+    saveSessionProducer.setState(component = null, componentName, PluginManagerCore.CORE_ID, state)
+    val saveSession = saveSessionProducer.createSaveSession()!!
+    if (useBackgroundSave) {
+      saveSession.save(events = null)
+    }
+    else {
+      writeAction {
+        saveSession.saveBlocking()
+      }
     }
   }
 

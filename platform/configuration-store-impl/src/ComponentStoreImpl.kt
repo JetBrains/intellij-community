@@ -367,7 +367,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     saveResult.rethrow()
   }
 
-  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager = SaveSessionProducerManager(false)
+  internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager =
+    SaveSessionProducerManager(isUseVfsForWrite = false, collectVfsEvents = false)
 
   private suspend fun commitComponent(
     sessionManager: SaveSessionProducerManager,

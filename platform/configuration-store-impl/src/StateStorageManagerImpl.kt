@@ -269,17 +269,16 @@ open class StateStorageManagerImpl(
       }
     }
     val pathMacroManager = if (usePathMacroManager) macroSubstitutor else null
-    return TrackedFileStorage(
-      storageManager = this,
-      file = file,
-      fileSpec = collapsedPath,
-      rootElementName = rootTagName,
-      roamingType = roamingType,
-      pathMacroManager = pathMacroManager,
-      provider = compoundStreamProvider,
-      controller = controller?.takeIf { it.isPersistenceStateComponentProxy() },
-    )
+    val controller = controller?.takeIf { it.isPersistenceStateComponentProxy() }
+    return TrackedFileStorage(storageManager = this, file, collapsedPath, rootTagName, roamingType, pathMacroManager, compoundStreamProvider, controller)
   }
+
+  private class TrackedDirectoryStorage(
+    override val storageManager: StateStorageManagerImpl,
+    dir: Path,
+    @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
+    macroSubstitutor: PathMacroSubstitutor?
+  ) : DirectoryBasedStorage(dir, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage
 
   internal class TrackedFileStorage(
     override val storageManager: StateStorageManagerImpl,
@@ -290,19 +289,9 @@ open class StateStorageManagerImpl(
     pathMacroManager: PathMacroSubstitutor?,
     provider: StreamProvider?,
     override val controller: SettingsController?,
-  ) : FileBasedStorage(
-    file = file,
-    fileSpec = fileSpec,
-    rootElementName = rootElementName,
-    pathMacroManager = pathMacroManager,
-    roamingType = roamingType,
-    provider = provider,
-  ), StorageVirtualFileTracker.TrackedStorage {
+  ) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)
-
-    override val isUseVfsForWrite: Boolean
-      get() = storageManager.isUseVfsForWrite
 
     override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
       if (rootElementName != null) {
@@ -333,15 +322,12 @@ open class StateStorageManagerImpl(
   open val isExternalSystemStorageEnabled: Boolean
     get() = false
 
-  // function must be pure and do not use anything outside passed arguments
-  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
-  }
+  // the function must be pure and do not use anything outside passed arguments
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
 
-  protected open fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
-  }
+  protected open fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) { }
 
-  protected open fun beforeElementLoaded(element: Element) {
-  }
+  protected open fun beforeElementLoaded(element: Element) { }
 
   final override fun clearStorages() {
     storageLock.write {
@@ -397,17 +383,6 @@ open class StateStorageManagerImpl(
     virtualFileTracker?.remove { it.storageManager === this }
     controller?.release()
   }
-}
-
-private class TrackedDirectoryStorage(
-  override val storageManager: StateStorageManagerImpl,
-  dir: Path,
-  @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
-  macroSubstitutor: PathMacroSubstitutor?
-) : DirectoryBasedStorage(dir = dir, splitter = splitter, pathMacroSubstitutor = macroSubstitutor),
-    StorageVirtualFileTracker.TrackedStorage {
-  override val isUseVfsForWrite: Boolean
-    get() = storageManager.isUseVfsForWrite
 }
 
 fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")

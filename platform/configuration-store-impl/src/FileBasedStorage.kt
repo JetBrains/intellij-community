@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.notification.Notification
@@ -14,9 +12,15 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
 import org.jdom.Element
@@ -36,13 +40,7 @@ abstract class FileBasedStorage(
   pathMacroManager: PathMacroSubstitutor? = null,
   roamingType: RoamingType,
   provider: StreamProvider? = null,
-) : XmlElementStorage(
-  fileSpec = fileSpec,
-  rootElementName = rootElementName,
-  pathMacroSubstitutor = pathMacroManager,
-  storageRoamingType = roamingType,
-  provider = provider,
-) {
+) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
@@ -75,54 +73,50 @@ abstract class FileBasedStorage(
   override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(storageData = states, storage = this)
 
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage = storage) {
+    XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage) {
 
-    final override fun isSaveAllowed(): Boolean {
-      return when {
-        !super.isSaveAllowed() -> false
-        storage.blockSaving != null -> {
-          LOG.warn("Save blocked for $storage")
-          false
-        }
-        else -> true
+    final override fun isSaveAllowed(): Boolean = when {
+      !super.isSaveAllowed() -> false
+      storage.blockSaving != null -> {
+        LOG.warn("Save blocked for $storage")
+        false
       }
+      else -> true
     }
 
-    override fun saveLocally(dataWriter: DataWriter?) {
+    override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
       var lineSeparator = storage.lineSeparator
       if (lineSeparator == null) {
         lineSeparator = if (storage.isUseUnixLineSeparator) LineSeparator.LF else LineSeparator.getSystemLineSeparator()
         storage.lineSeparator = lineSeparator
       }
 
-      val isUseVfs = storage.isUseVfsForWrite
-      val virtualFile = if (isUseVfs) storage.getVirtualFile() else null
+      val virtualFile = if (useVfs || events != null) storage.getVirtualFile() else null
       when {
         dataWriter == null -> {
-          if (isUseVfs && virtualFile == null) {
-            LOG.warn("Cannot find virtual file")
-          }
-          deleteFile(file = storage.file, requestor = this, virtualFile = virtualFile)
+          if (useVfs && virtualFile == null) LOG.warn("Cannot find virtual file")
+          deleteFile(storage.file, requestor = this, virtualFile)
           storage.cachedVirtualFile = null
+          if (events != null && virtualFile != null && virtualFile.isValid) {
+            events += VFileDeleteEvent(/*requestor =*/ this, virtualFile)
+          }
         }
-        isUseVfs -> {
-          storage.cachedVirtualFile = writeFile(
-            cachedFile = storage.file,
-            requestor = this,
-            virtualFile = virtualFile,
-            dataWriter = dataWriter,
-            lineSeparator = lineSeparator,
-            prependXmlProlog = storage.isUseXmlProlog,
-          )
+        useVfs -> {
+          storage.cachedVirtualFile = writeFile(storage.file, requestor = this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
         }
         else -> {
-          writeFile(
-            file = storage.file,
-            requestor = this,
-            dataWriter = dataWriter,
-            lineSeparator = lineSeparator,
-            prependXmlProlog = storage.isUseXmlProlog,
-          )
+          writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
+          if (events != null) {
+            if (virtualFile != null) {
+              events += VFileContentChangeEvent(/*requestor =*/ this, virtualFile, virtualFile.modificationStamp, -1)
+            }
+            else {
+              LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storage.file.parent)?.let { dir ->
+                val attributes = FileAttributes.fromNio(storage.file, NioFiles.readAttributes(storage.file))
+                events += VFileCreateEvent(/*requestor =*/ this, dir, storage.file.fileName.toString(), false, attributes, null, null)
+              }
+            }
+          }
         }
       }
     }
@@ -137,6 +131,8 @@ abstract class FileBasedStorage(
         }
         else {
           throw ReadOnlyModificationException(virtualFile, object : SaveSession {
+            override suspend fun save(events: MutableList<VFileEvent>?) = throw IllegalStateException()
+
             override fun saveBlocking() {
               // the caller must wrap into undo-transparent write action
               virtualFile.delete(requestor)
@@ -202,15 +198,9 @@ abstract class FileBasedStorage(
         return element
       }
     }
-    catch (e: JDOMException) {
-      processReadException(e)
-    }
-    catch (e: XMLStreamException) {
-      processReadException(e)
-    }
-    catch (e: IOException) {
-      processReadException(e)
-    }
+    catch (e: JDOMException) { processReadException(e) }
+    catch (e: XMLStreamException) { processReadException(e) }
+    catch (e: IOException) { processReadException(e) }
     return null
   }
 
@@ -303,6 +293,8 @@ internal fun writeFile(
         else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
       }
       throw ReadOnlyModificationException(file, object : SaveSession {
+        override suspend fun save(events: MutableList<VFileEvent>?) = throw IllegalStateException()
+
         override fun saveBlocking() {
           doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
         }
@@ -325,13 +317,7 @@ internal fun writeFile(
     }
   }
 
-  doWrite(
-    requestor = requestor,
-    file = file,
-    dataWriterOrByteArray = dataWriter,
-    lineSeparator = lineSeparator,
-    prependXmlProlog = prependXmlProlog,
-  )
+  doWrite(requestor, file, dataWriter, lineSeparator, prependXmlProlog)
 
   return file
 }

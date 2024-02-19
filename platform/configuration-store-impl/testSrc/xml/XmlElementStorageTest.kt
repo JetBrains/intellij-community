@@ -7,6 +7,7 @@ import com.intellij.configurationStore.XmlElementStorage
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
 import org.assertj.core.api.Assertions.assertThat
@@ -66,7 +67,7 @@ class XmlElementStorageTest {
     override fun loadLocalData() = element
 
     override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSessionProducer<MyXmlElementStorage>(states, this) {
-      override fun saveLocally(dataWriter: DataWriter?) {
+      override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
         if (dataWriter == null) {
           savedElement = null
         }

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.SerializationConstants
@@ -106,7 +107,7 @@ private class ExternalStorageSaveSessionProducer(
   private val name: String,
   private val filter: DataWriterFilter? = null
 ) : XmlElementStorageSaveSessionProducer<XmlElementStorage>(states, storage) {
-  override fun saveLocally(dataWriter: DataWriter?) {
+  override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
     fileStorage.write(name, dataWriter, filter)
   }
 }

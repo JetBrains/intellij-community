@@ -3,10 +3,10 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.PluginId
 
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+
 interface SaveSession : StorageManagerFileWriteRequestor {
-  suspend fun save() {
-    saveBlocking()
-  }
+  suspend fun save(events: MutableList<VFileEvent>?)
 
   fun saveBlocking()
 }

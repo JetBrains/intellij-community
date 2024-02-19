@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
 import org.jdom.Element
@@ -23,12 +24,7 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   private val storage by lazy {
     val file = ApplicationManager.getApplication().stateStore.storageManager.expandMacro(PROJECT_DEFAULT_FILE_SPEC)
-    DefaultProjectStorage(
-      file = file,
-      fileSpec = PROJECT_DEFAULT_FILE_SPEC,
-      pathMacroManager = PathMacroManager.getInstance(project),
-      streamProvider = compoundStreamProvider,
-    )
+    DefaultProjectStorage(file, PROJECT_DEFAULT_FILE_SPEC, PathMacroManager.getInstance(project), compoundStreamProvider)
   }
 
   override val serviceContainer: ComponentManagerImpl
@@ -92,13 +88,11 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
     override val controller: SettingsController?
       get() = null
 
-    public override fun loadLocalData(): Element? {
-      return postProcessLoadedData { super.loadLocalData() }
-    }
+    public override fun loadLocalData(): Element? =
+      postProcessLoadedData { super.loadLocalData() }
 
-    override fun loadFromStreamProvider(stream: InputStream): Element? {
-      return postProcessLoadedData { super.loadFromStreamProvider(stream) }
-    }
+    override fun loadFromStreamProvider(stream: InputStream): Element? =
+      postProcessLoadedData { super.loadFromStreamProvider(stream) }
 
     private fun postProcessLoadedData(elementProvider: () -> Element?): Element? {
       try {
@@ -110,27 +104,25 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
       }
     }
 
-    override fun createSaveSession(states: StateMap): FileSaveSessionProducer {
-      return object : FileSaveSessionProducer(storageData = states, storage = this) {
-        override fun saveLocally(dataWriter: DataWriter?) {
-          super.saveLocally(
-            dataWriter = if (dataWriter == null) null
-            else object : StringDataWriter() {
-              override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
+    override fun createSaveSession(states: StateMap): FileSaveSessionProducer =
+      object : FileSaveSessionProducer(storageData = states, storage = this) {
+        override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
+          val dataWriter = if (dataWriter == null) null else object : StringDataWriter() {
+            override fun hasData(filter: DataWriterFilter): Boolean = dataWriter.hasData(filter)
 
-              override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
-                val lineSeparatorWithIndent = "${lineSeparator}    "
-                writer.append("<application>").append(lineSeparator)
-                writer.append("""  <component name="ProjectManager">""")
-                writer.append(lineSeparatorWithIndent)
-                (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
-                writer.append(lineSeparator)
-                writer.append("  </component>").append(lineSeparator)
-                writer.append("</application>")
-              }
-            })
+            override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+              val lineSeparatorWithIndent = "${lineSeparator}    "
+              writer.append("<application>").append(lineSeparator)
+              writer.append("""  <component name="ProjectManager">""")
+              writer.append(lineSeparatorWithIndent)
+              (dataWriter as StringDataWriter).writeTo(writer, lineSeparatorWithIndent, filter)
+              writer.append(lineSeparator)
+              writer.append("  </component>").append(lineSeparator)
+              writer.append("</application>")
+            }
+          }
+          super.saveLocally(dataWriter, useVfs, events)
         }
       }
-    }
   }
 }

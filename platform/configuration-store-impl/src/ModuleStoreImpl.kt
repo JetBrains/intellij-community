@@ -32,9 +32,8 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
   override val storageManager: StateStorageManagerImpl =
     ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
-    return SaveSessionProducerManager(storageManager.isUseVfsForWrite)
-  }
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager =
+    SaveSessionProducerManager(storageManager.isUseVfsForWrite, collectVfsEvents = true)
 
   final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
@@ -107,11 +106,11 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
 }
 
 private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module)
-  : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor = macroSubstitutor, componentManager = module, controller = null),
-    RenameableStateStorageManager {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
-    return StoragePathMacros.MODULE_FILE
-  }
+  : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor, componentManager = module, controller = null),
+    RenameableStateStorageManager
+{
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
+    StoragePathMacros.MODULE_FILE
 
   // the only macro is supported by ModuleStateStorageManager
   override fun expandMacro(collapsedPath: String): Path {
@@ -196,22 +195,13 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
 
   override fun createFileBasedStorage(
     file: Path,
-    collapsedPath: String,
+    fileSpec: String,
     roamingType: RoamingType,
     usePathMacroManager: Boolean,
     rootTagName: String?
   ): StateStorage {
     val provider = if (roamingType == RoamingType.DISABLED) null else streamProvider
-    return TrackedFileStorage(
-      storageManager = this,
-      file = file,
-      fileSpec = collapsedPath,
-      rootElementName = rootTagName,
-      roamingType = roamingType,
-      pathMacroManager = macroSubstitutor,
-      provider = provider,
-      controller = null,
-    )
+    return TrackedFileStorage(storageManager = this, file, fileSpec, rootTagName, roamingType, macroSubstitutor, provider, controller = null)
   }
 }
 

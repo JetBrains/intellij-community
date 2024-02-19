@@ -8,11 +8,13 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.buildNsUnawareJdomAndClose
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
@@ -244,13 +246,18 @@ abstract class XmlElementStorage protected constructor(
       private val writer: DataWriter?,
       private val stateMap: StateMap
     ) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
-      override fun saveBlocking() {
+      override suspend fun save(events: MutableList<VFileEvent>?) = blockingContext { doSave(useVfs = false, events) }
+
+      override fun saveBlocking() = doSave(useVfs = true, events = null)
+
+      private fun doSave(useVfs: Boolean, events: MutableList<VFileEvent>?) {
         var isSavedLocally = false
         val provider = storage.provider
+
         if (elements == null) {
           if (provider == null || !provider.delete(storage.fileSpec, storage.effectiveRoamingType)) {
             isSavedLocally = true
-            saveLocally(writer)
+            saveLocally(writer, useVfs, events)
           }
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.effectiveRoamingType)) {
@@ -263,7 +270,7 @@ abstract class XmlElementStorage protected constructor(
         }
         else {
           isSavedLocally = true
-          saveLocally(writer)
+          saveLocally(writer, useVfs, events)
         }
 
         if (!isSavedLocally) {
@@ -291,14 +298,12 @@ abstract class XmlElementStorage protected constructor(
       }
     }
 
-    protected abstract fun saveLocally(dataWriter: DataWriter?)
+    protected abstract fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?)
   }
 
-  protected open fun beforeElementLoaded(element: Element) {
-  }
+  protected open fun beforeElementLoaded(element: Element) { }
 
-  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
-  }
+  protected open fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) { }
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
     val newElement = if (deleted) null else loadElement()
