@@ -5,6 +5,7 @@ import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -18,8 +19,8 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
 
-class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE,
-                                                                       false) {
+class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String?, val cancelCallback: () -> Unit) : DialogWrapper(null, null, true, IdeModalityType.IDE,
+                                                                                                                                            false) {
 
   private val tracker = WizardPageTracker()
 
@@ -61,12 +62,14 @@ class OnboardingDialog(val cancelCallback: () -> Unit) : DialogWrapper(null, nul
     Disposer.dispose(currentPage)
 
     tracker.onLeave()
+    title = titleGetter(page.stage) ?: ""
 
     val content = page.content
     pane.add(content)
 
     currentPage = page
     tracker.onEnter(page.stage)
+
   }
 
   override fun createContentPaneBorder(): Border {

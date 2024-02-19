@@ -33,7 +33,7 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
 
       OnboardingController.getInstance().startImport(
         { settingsService.importCancelled.fire() },
-        title = ApplicationNamesInfo.getInstance().fullProductName
+        titleGetter = { ApplicationNamesInfo.getInstance().fullProductName }
       )
     }
   }

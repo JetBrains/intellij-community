@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
 
-package com.intellij.ide.startup.importSettings.chooser.testActions
+package com.intellij.ide.startup.importSettings.testActions
 
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.ide.startup.importSettings.data.SettingsService
