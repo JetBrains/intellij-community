@@ -184,6 +184,7 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
   override fun unfoldReplies() {
     _repliesFolded.value = false
     _collapsed.value = false
+    newReplyVm.requestFocus()
   }
 
   override fun showDiff() {
