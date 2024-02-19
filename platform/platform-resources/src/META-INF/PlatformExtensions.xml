@@ -194,7 +194,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
-    <vfs.asyncListener implementation="com.intellij.configurationStore.MyAsyncVfsListener"/>
+    <vfs.asyncListener implementation="com.intellij.configurationStore.StorageVfsListener"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
                         serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>

@@ -5,9 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
@@ -63,12 +65,10 @@ internal class StorageVirtualFileTracker {
       else {
         val path = event.path
         storage = filePathToStorage.get(path)
-        // We don't care about parent directory create (because it doesn't affect anything)
-        // and move (because it is not a supported case),
-        // but we should detect deletion - but again, it is not a supported case.
-        // So, we don't check if some of the registered storages located inside changed directory.
-
-        // but if we have DirectoryBasedStorage, we check - if file located inside it
+        // We don't care about parent directory creation (because it doesn't affect anything) and move (because it is not a supported case),
+        // but we should detect deletion (though again, it is not a supported case).
+        // So, we don't check if some of the registered storages located inside changed directory,
+        // but if we have `DirectoryBasedStorage`, we check if a file is located inside it.
         if (storage == null && hasDirectoryBasedStorages && path.endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
           storage = filePathToStorage[VfsUtil.getParentDir(path)]
         }
@@ -126,5 +126,12 @@ internal class StorageVirtualFileTracker {
     for ((project, batchStorageEvents) in projectToChanges) {
       StoreReloadManager.getInstance(project).storageFilesBatchProcessing(batchStorageEvents)
     }
+  }
+}
+
+private class StorageVfsListener : AsyncFileListener {
+  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+    service<StorageVirtualFileTracker>().schedule(events)
+    return null
   }
 }

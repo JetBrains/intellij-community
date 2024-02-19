@@ -5,12 +5,8 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
@@ -383,21 +379,8 @@ fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePr
 internal val Storage.path: String
   get() = value.ifEmpty { file }
 
-
 @Internal
 data class Macro(@JvmField val key: String, @JvmField var value: Path)
-
-private class MyAsyncVfsListener : AsyncFileListener {
-  override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    LOG.debug { "Got a change in MyAsyncVfsListener: $events" }
-    service<StorageVirtualFileTracker>().schedule(events)
-    return null
-  }
-
-  companion object {
-    private val LOG = logger<MyAsyncVfsListener>()
-  }
-}
 
 private fun createDefaultVirtualTracker(componentManager: ComponentManager?): StorageVirtualFileTracker? {
   return if (componentManager == null) null else service<StorageVirtualFileTracker>()
