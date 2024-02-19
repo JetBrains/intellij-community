@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -525,10 +526,12 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public SelectConfigAction(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
       myProject = project;
       myConfiguration = configuration;
-      // TODO for RemDev old action update only, remove ASAP
-      Presentation p = getTemplatePresentation().clone();
-      update(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, p, DataContext.EMPTY_CONTEXT));
-      getTemplatePresentation().copyFrom(p);
+      // TODO remove when BackendAsyncActionHost.isNewActionUpdateEnabled is inlined
+      if (ClientId.getCurrentOrNull() != null) {
+        Presentation p = getTemplatePresentation().clone();
+        update(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, p, DataContext.EMPTY_CONTEXT));
+        getTemplatePresentation().copyFrom(p, null, true);
+      }
     }
 
     public @NotNull RunnerAndConfigurationSettings getConfiguration() {
