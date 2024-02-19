@@ -66,7 +66,7 @@ internal class UiThemePaletteScopeManager(theme: UIThemeBean) {
 
       when (val scope = getScope(colorKey)) {
         is UiThemePaletteScopeImpl -> {
-          val key = toColorString(key = colorKey, darkTheme = theme.dark, isNewUITheme = isBasedOnExperimentalTheme)
+          val key = toColorString(key = colorKey, darkTheme = theme.dark)
           if (v == null) {
             v = parseColorOrNull(key, null)
           }

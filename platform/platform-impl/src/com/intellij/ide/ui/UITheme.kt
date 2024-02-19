@@ -346,18 +346,16 @@ private fun createTheme(theme: UIThemeBean,
                  selectionColorPatcher = selectionColorPatcher)
 }
 
-internal fun toColorString(key: String, darkTheme: Boolean, isNewUITheme: Boolean): String {
-  val palette = if (isNewUITheme) {
-    if (darkTheme) colorPaletteNewDark else colorPaletteNewLight
-  }
-  else colorPaletteClassic
+internal fun toColorString(key: String, darkTheme: Boolean): String {
+  val newUiPalette = if (darkTheme) colorPaletteNewDark else colorPaletteNewLight
+  newUiPalette.get(key)?.let { return it.lowercase() }
 
-  if (darkTheme && !isNewUITheme) {
-    palette.get("$key.Dark")?.let {
+  if (darkTheme) {
+    colorPaletteClassic.get("$key.Dark")?.let {
       return it.lowercase()
     }
   }
-  return (palette.get(key) ?: key).lowercase()
+  return (colorPaletteClassic.get(key) ?: key).lowercase()
 }
 
 private val colorPaletteClassic: @NonNls Map<String, String> = java.util.Map.ofEntries(
