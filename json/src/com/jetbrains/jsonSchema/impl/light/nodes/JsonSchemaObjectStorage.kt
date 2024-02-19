@@ -52,8 +52,8 @@ internal class JsonSchemaObjectStorage {
 
 
   private fun isSupportedSchemaFile(maybeSchemaFile: VirtualFile): Boolean {
-    return  isSupportedSchemaFileType(maybeSchemaFile.fileType)
-            && !isNotLoadedHttpFile(maybeSchemaFile)
+    return isSupportedSchemaFileType(maybeSchemaFile.fileType)
+           && !isNotLoadedHttpFile(maybeSchemaFile)
   }
 
   private fun isSupportedSchemaFileType(fileType: FileType): Boolean {
@@ -80,8 +80,7 @@ internal class JsonSchemaObjectStorage {
 
   private fun parseSchemaFileSafe(schemaFile: VirtualFile): JsonNode? {
     val suitableReader = when (val providedFileTypeId = schemaFile.fileType.name) {
-      "JSON" -> jsonObjectMapper
-      "JSON5" -> json5ObjectMapper
+      "JSON", "JSON5" -> json5ObjectMapper
       "YAML" -> yamlObjectMapper
       else -> {
         Logger.getInstance("JsonSchemaReader").warn("Unsupported json schema file type: $providedFileTypeId")
@@ -98,9 +97,6 @@ internal class JsonSchemaObjectStorage {
   }
 }
 
-internal val jsonObjectMapper = JsonMapper()
-  .enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION)
-
 internal val json5ObjectMapper = JsonMapper(
   JsonFactory.builder()
     .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
@@ -112,7 +108,8 @@ internal val json5ObjectMapper = JsonMapper(
     .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
     .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
     .build()
-)
+).enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION)
+
 
 internal val yamlObjectMapper = ObjectMapper(
   YAMLFactory.builder()

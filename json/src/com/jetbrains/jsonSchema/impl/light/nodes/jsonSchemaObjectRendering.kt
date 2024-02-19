@@ -19,7 +19,7 @@ internal fun renderSchemaNode(schemaNode: JsonSchemaObject, language: JsonSchema
     }
 
   val mapper = when (language) {
-    JsonSchemaObjectRenderingLanguage.JSON -> jsonObjectMapper
+    JsonSchemaObjectRenderingLanguage.JSON -> json5ObjectMapper
     JsonSchemaObjectRenderingLanguage.YAML -> yamlObjectMapper
   }
 
