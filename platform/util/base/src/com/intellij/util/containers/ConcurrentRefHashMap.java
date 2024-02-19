@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +37,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   abstract @NotNull KeyReference<K> createKeyReference(@NotNull K key, @NotNull HashingStrategy<? super K> hashingStrategy);
 
-  @NotNull
-  private KeyReference<K> createKeyReference(@NotNull K key) {
+  private @NotNull KeyReference<K> createKeyReference(@NotNull K key) {
     return createKeyReference(key, myHashingStrategy);
   }
 
@@ -151,8 +150,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
   private static final ThreadLocal<HardKey<?>> HARD_KEY = ThreadLocal.withInitial(() -> new HardKey<>());
 
-  @NotNull
-  private HardKey<K> createHardKey(@NotNull Object o) {
+  private @NotNull HardKey<K> createHardKey(@NotNull Object o) {
     //noinspection unchecked
     K key = (K)o;
     //noinspection unchecked
@@ -244,9 +242,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   private final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
     private final Set<Map.Entry<KeyReference<K>, V>> hashEntrySet = myMap.entrySet();
 
-    @NotNull
     @Override
-    public Iterator<Map.Entry<K, V>> iterator() {
+    public @NotNull Iterator<Map.Entry<K, V>> iterator() {
       return new Iterator<Map.Entry<K, V>>() {
         private final Iterator<Map.Entry<KeyReference<K>, V>> hashIterator = hashEntrySet.iterator();
         private RefEntry<K, V> next;
@@ -343,9 +340,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
 
   private Set<Map.Entry<K, V>> entrySet;
 
-  @NotNull
   @Override
-  public Set<Map.Entry<K, V>> entrySet() {
+  public @NotNull Set<Map.Entry<K, V>> entrySet() {
     Set<Entry<K, V>> es = entrySet;
     if (es == null) entrySet = es = new EntrySet();
     return es;

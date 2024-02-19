@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
@@ -41,7 +41,7 @@ public final class CharArrayUtil {
   }
 
   /**
-   * Copies necessary number of symbols from the given char sequence to the given array.
+   * Copies the necessary number of symbols from the given char sequence to the given array.
    *
    * @param src         source data holder
    * @param dst         output data buffer
@@ -111,7 +111,7 @@ public final class CharArrayUtil {
   }
 
   /**
-   * @return a new char array containing the sub-sequence's chars
+   * @return a new char array containing the subsequence's chars
    */
   public static char @NotNull [] fromSequence(@NotNull CharSequence seq, int start, int end) {
     char[] result = new char[end - start];
@@ -346,7 +346,7 @@ public final class CharArrayUtil {
   }
 
   /**
-   * Tries to find index of given pattern at the given buffer.
+   * Tries to find index of a given pattern at the given buffer.
    *
    * @param buffer       characters buffer which contents should be checked for the given pattern
    * @param pattern      target characters sequence to find at the given buffer
@@ -501,12 +501,12 @@ public final class CharArrayUtil {
   }
 
   /**
-   * Allows to answer if target region of the given text contains only white space symbols (tabulations, white spaces and line feeds).
+   * Allows answering if a target region of the given text contains only white space symbols (tabulations, white spaces, and line feeds).
    *
    * @param text      text to check
    * @param start     start offset within the given text to check (inclusive)
    * @param end       end offset within the given text to check (exclusive)
-   * @return          {@code true} if target region of the given text contains white space symbols only; {@code false} otherwise
+   * @return          {@code true} if a target region of the given text contains white space symbols only; {@code false} otherwise
    */
   public static boolean isEmptyOrSpaces(@NotNull CharSequence text, int start, int end) {
     for (int i = start; i < end; i++) {
@@ -518,15 +518,13 @@ public final class CharArrayUtil {
     return true;
   }
 
-  @NotNull
-  public static Reader readerFromCharSequence(@NotNull CharSequence text) {
+  public static @NotNull Reader readerFromCharSequence(@NotNull CharSequence text) {
     char[] chars = fromSequenceWithoutCopying(text);
     return chars == null ? new CharSequenceReader(text) : new UnsyncCharArrayReader(chars, 0, text.length());
   }
 
-  @NotNull
   //TODO: move to a better place or inline, because it creates excessive dependencies
-  public static ImmutableCharSequence createImmutableCharSequence(@NotNull CharSequence sequence) {
+  public static @NotNull ImmutableCharSequence createImmutableCharSequence(@NotNull CharSequence sequence) {
     return ImmutableText.valueOf(sequence);
   }
 }

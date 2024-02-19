@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -90,15 +90,13 @@ final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
     throw RefValueHashMapUtil.pointlessContainsValue();
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return mySoftKeyMap.keySet();
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     List<V> result = new ArrayList<>();
     Collection<ValueReference<K, V>> refs = mySoftKeyMap.values();
     for (ValueReference<K, V> ref : refs) {
@@ -110,9 +108,8 @@ final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
     return result;
   }
 
-  @NotNull
   @Override
-  public Set<Entry<K, V>> entrySet() {
+  public @NotNull Set<Entry<K, V>> entrySet() {
     throw new UnsupportedOperationException();
   }
 }
