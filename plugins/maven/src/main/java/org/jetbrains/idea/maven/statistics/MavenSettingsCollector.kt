@@ -37,6 +37,7 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(CHECKSUM_POLICY.metric(generalSettings.checksumPolicy))
     usages.add(FAILURE_BEHAVIOR.metric(generalSettings.failureBehavior))
     usages.add(ALWAYS_UPDATE_SNAPSHOTS.metric(generalSettings.isAlwaysUpdateSnapshots))
+    usages.add(SHOW_ADVANCED_SETTINGS.metric(generalSettings.isShowDialogWithAdvancedSettings))
     usages.add(NON_RECURSIVE.metric(generalSettings.isNonRecursive))
     usages.add(PRINT_ERROR_STACK_TRACES.metric(generalSettings.isPrintErrorStackTraces))
     usages.add(WORK_OFFLINE.metric(generalSettings.isWorkOffline))
@@ -97,9 +98,10 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     return usages
   }
 
-  private val GROUP = EventLogGroup("build.maven.state", 11)
+  private val GROUP = EventLogGroup("build.maven.state", 12)
   private val HAS_MAVEN_PROJECT = GROUP.registerEvent("hasMavenProject", EventFields.Enabled)
   private val ALWAYS_UPDATE_SNAPSHOTS = GROUP.registerEvent("alwaysUpdateSnapshots", EventFields.Enabled)
+  private val SHOW_ADVANCED_SETTINGS = GROUP.registerEvent("showDialogWithAdvancedSettings", EventFields.Enabled)
   private val NON_RECURSIVE = GROUP.registerEvent("nonRecursive", EventFields.Enabled)
   private val PRINT_ERROR_STACK_TRACES = GROUP.registerEvent("printErrorStackTraces", EventFields.Enabled)
   private val WORK_OFFLINE = GROUP.registerEvent("workOffline", EventFields.Enabled)
