@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -94,7 +93,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   private void addToDirtyFiles(@NotNull VirtualFile fileOrDir) {
     if (!(fileOrDir instanceof VirtualFileWithId fileOrDirWithId)) return;
     int id = fileOrDirWithId.getId();
-    Set<Project> projects = myFileBasedIndex.getIndexableFilesFilterHolder().findProjectsForFile(FileBasedIndex.getFileId(fileOrDir));
+    List<Project> projects = myFileBasedIndex.getIndexableFilesFilterHolder().findProjectsForFile(FileBasedIndex.getFileId(fileOrDir));
     myDirtyFiles.addFile(projects, id);
   }
 

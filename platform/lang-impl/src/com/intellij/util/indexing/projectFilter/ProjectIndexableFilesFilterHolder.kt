@@ -4,7 +4,6 @@ package com.intellij.util.indexing.projectFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SmartList
-import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.UnindexedFilesUpdater
@@ -30,7 +29,7 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
 
   fun findProjectForFile(fileId: Int): Project?
 
-  fun findProjectsForFile(fileId: Int): Set<Project>
+  fun findProjectsForFile(fileId: Int): List<Project>
 
   fun onProjectClosing(project: Project)
 
@@ -116,8 +115,8 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     return null
   }
 
-  override fun findProjectsForFile(fileId: Int): Set<Project> {
-    val projects = SmartHashSet<Project>()
+  override fun findProjectsForFile(fileId: Int): List<Project> {
+    val projects = SmartList<Project>()
     for ((project, filter) in myProjectFilters) {
       if (filter.first.containsFileId(fileId)) {
         projects.add(project)
