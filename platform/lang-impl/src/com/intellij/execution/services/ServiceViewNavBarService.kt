@@ -29,7 +29,7 @@ internal class ServiceViewNavBarService(val project: Project, val cs: CoroutineS
       childScope.cancel()
     }
 
-    return ServiceViewNavBarPanel(project, childScope, serviceView.model, selector)
+    return ServiceViewNavBarPanel(project, childScope, serviceView, selector)
   }
 
   internal interface ServiceViewNavBarSelector {
