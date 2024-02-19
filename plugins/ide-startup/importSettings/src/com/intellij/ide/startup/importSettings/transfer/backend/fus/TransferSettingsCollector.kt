@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.fus
 
 import com.intellij.ide.startup.importSettings.*
@@ -6,7 +6,7 @@ import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vswin.mappings.VisualStudioPluginsMapping
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.mappings.VisualStudioPluginsMapping
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -198,7 +198,7 @@ class KnownPluginValidationRule : LocalFileCustomValidationRule(
 
     override fun createValue(value: String): String? = value.nullize(true)?.trim()?.lowercase()
     override fun readItems(): Set<String?> {
-      return super.readItems() + VisualStudioPluginsMapping.ReSharper
+      return super.readItems() + VisualStudioPluginsMapping.RESHARPER
     }
   }
 )

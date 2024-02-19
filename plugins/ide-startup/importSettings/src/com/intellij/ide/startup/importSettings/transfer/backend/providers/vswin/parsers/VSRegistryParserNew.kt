@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vswin.parsers
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -10,13 +10,13 @@ import com.intellij.ide.startup.importSettings.models.FeatureInfo
 import com.intellij.ide.startup.importSettings.models.ILookAndFeel
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.ide.startup.importSettings.providers.vswin.mappings.FontsAndColorsMappings
-import com.intellij.ide.startup.importSettings.providers.vswin.mappings.VisualStudioPluginsMapping
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSProfileDetectorUtils
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSProfileSettingsFileNotFound
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl.PrivateRegistryRoot
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl.RegistryRoot
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.mappings.VisualStudioPluginsMapping
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.io.systemIndependentPath
