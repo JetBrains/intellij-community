@@ -167,7 +167,7 @@ public final class DelegateHandler {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(psiType);
     final PsiClass psiClass = resolveResult.getElement();
     if (null != psiClass) {
-      final PsiSubstitutor psiClassSubstitutor = resolveResult.getSubstitutor();
+      final PsiSubstitutor psiClassSubstitutor = addAllInterfaceSuperSubstitutors(psiClass, resolveResult.getSubstitutor());
 
       for (Pair<PsiMethod, PsiSubstitutor> pair : psiClass.getAllMethodsAndTheirSubstitutors()) {
         final PsiMethod psiMethod = pair.getFirst();
@@ -179,6 +179,14 @@ public final class DelegateHandler {
         }
       }
     }
+  }
+
+  private static PsiSubstitutor addAllInterfaceSuperSubstitutors(PsiClass psiClass, PsiSubstitutor psiSubstitutor) {
+    for (PsiClass interfaceClass : psiClass.getInterfaces()) {
+      PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(interfaceClass, psiClass, psiSubstitutor);
+      psiSubstitutor = addAllInterfaceSuperSubstitutors(interfaceClass, psiSubstitutor.putAll(classSubstitutor));
+    }
+    return psiSubstitutor;
   }
 
   private static void collectAllOwnMethods(@NotNull PsiExtensibleClass psiStartClass, Collection<Pair<PsiMethod, PsiSubstitutor>> results) {
