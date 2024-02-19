@@ -116,7 +116,8 @@ mod tests {
         let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command));
         let output = launch_result.stdout;
 
-        assert!(output.contains("FONTCONFIG_PATH=/tmp/jbrd-fontconfig-"));
+        let expected_output = format!("FONTCONFIG_PATH={}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
+        assert!(output.contains(&expected_output));
     }
 
     #[test]
@@ -128,6 +129,7 @@ mod tests {
         let remote_dev_command = &["printEnvVar", "FONTCONFIG_PATH"];
         let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_env(&env).with_args(remote_dev_command)).stdout;
 
-        assert!(output.contains("FONTCONFIG_PATH=/some/existing/path:/tmp/jbrd-fontconfig-"));
+        let expected_output = format!("FONTCONFIG_PATH=/some/existing/path:{}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
+        assert!(output.contains(&expected_output));
     }
 }

@@ -1,14 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, fs};
-use std::collections::{HashMap, HashSet};
-use std::ffi::{CStr, CString};
+use std::collections::HashMap;
 use std::fs::File;
-use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
+#[allow(unused_imports)]
 use log::{debug, error, info};
 
 use crate::*;
@@ -304,13 +303,15 @@ fn get_temp_system_like_path() -> Result<PathBuf> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn setup_font_config(ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+fn setup_font_config(_ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
     // fontconfig is Linux-specific
     Ok(None)
 }
 
 #[cfg(target_os = "linux")]
 fn setup_font_config(ide_home_path: &PathBuf) -> Result<Option<(String, String)>> {
+    use std::hash::{Hash, Hasher};
+
     let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
     if !source_font_config_file.is_file() {
         error!("Missing self-contained font config file at {}; fontconfig setup will be skipped", source_font_config_file.to_string_lossy());
@@ -510,7 +511,7 @@ fn get_os_specific_env_vars<'a>() -> Option<Vec<(&'a str, &'a str)>> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
+fn preload_native_libs(_ide_home_dir: &PathBuf) -> Result<()> {
     // We don't ship self-contained libraries outside of Linux
     Ok(())
 }
@@ -518,6 +519,8 @@ fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
 #[cfg(target_os = "linux")]
 fn preload_native_libs(ide_home_dir: &PathBuf) -> Result<()> {
     use libc::{dlclose, dlerror, dlopen};
+    use std::ffi::{CStr, CString};
+    use std::collections::HashSet;
 
     let use_libs = parse_bool_env_var("REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS", true)?;
     if !use_libs {
