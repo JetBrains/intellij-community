@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.collaboration.ui.codereview.CodeReviewAdvancedSettings
 import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
@@ -29,12 +30,14 @@ internal data class GHPRDiffVirtualFile(private val fileManagerId: String,
   override fun isValid(): Boolean = isFileValid(fileManagerId, project, repository)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
-      return project.service<GHPRDiffService>().createCombinedDiffProcessor(repository, pullRequest)
+    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
+      project.service<GHPRDiffService>().createCombinedDiffProcessor(repository, pullRequest)
     }
     else {
-      return project.service<GHPRDiffService>().createDiffRequestProcessor(repository, pullRequest)
+      project.service<GHPRDiffService>().createDiffRequestProcessor(repository, pullRequest)
     }
+    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
+    return processor
   }
 }
 
