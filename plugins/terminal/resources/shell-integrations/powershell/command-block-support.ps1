@@ -30,6 +30,8 @@ $Global:__JetBrainsIntellijGeneratorRunning=$false
 
 function Global:Prompt() {
   $Success = $?
+  $ExitCode = $Global:LastExitCode
+  $Global:LastExitCode = 0
   if ($Global:__JetBrainsIntellijGeneratorRunning) {
     $Global:__JetBrainsIntellijGeneratorRunning = $false
     # Hide internal command in the built-in session history.
@@ -44,7 +46,9 @@ function Global:Prompt() {
   $CommandEndMarker = Global:__JetBrainsIntellijGetCommandEndMarker
   $PromptStateOSC = Global:__JetBrainsIntellijCreatePromptStateOSC
   if ($__JetBrainsIntellijTerminalInitialized) {
-    $ExitCode = if ($Success) { "0" } else { "1" }
+    if (($ExitCode -eq $null) -or ($ExitCode -eq 0 -and -not $Success)) {
+      $ExitCode = if ($Success) { 0 } else { 1 }
+    }
     if ($Env:JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL) {
       [Console]::WriteLine("command_finished exit_code=$ExitCode")
     }
