@@ -150,6 +150,7 @@ internal class StateStorageBackedByController(
     catch (e: Throwable) {
       thisLogger().error("Cannot deserialize value for $key", e)
     }
+    // exclusive storage - no fallback to old XML-based storage
     return GetResult.resolved(null)
   }
 
