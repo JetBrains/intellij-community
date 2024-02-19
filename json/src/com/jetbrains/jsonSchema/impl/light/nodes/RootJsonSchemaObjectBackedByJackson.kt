@@ -20,7 +20,6 @@ internal class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schem
   fun checkHasInjections(): Boolean {
     return getOrComputeValue(INJECTIONS_MAP_KEY) {
       indexSchema(rawSchemaNode) { _, parentPointer ->
-        println(parentPointer.lastOrNull())
         if (parentPointer.lastOrNull() == X_INTELLIJ_LANGUAGE_INJECTION)
           true
         else
