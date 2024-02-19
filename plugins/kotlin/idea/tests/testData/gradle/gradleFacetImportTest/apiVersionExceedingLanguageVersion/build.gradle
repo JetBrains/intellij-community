@@ -8,6 +8,10 @@ buildscript {
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
 apply plugin: 'kotlin'
 
 dependencies {
@@ -17,4 +21,4 @@ dependencies {
 compileKotlin {
     kotlinOptions.languageVersion = "1.1"
     kotlinOptions.apiVersion = "1.2"
-} 
+}
