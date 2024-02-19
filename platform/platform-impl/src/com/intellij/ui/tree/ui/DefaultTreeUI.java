@@ -482,6 +482,23 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
   }
 
   @Override
+  public Dimension getPreferredSize(JComponent c, boolean checkConsistency) {
+    if (treeState instanceof DefaultTreeLayoutCache cache) {
+      // If the cache decided to invalidate sizes, we need to propagate it here,
+      // so super() will query the cache again.
+      if (!cache.isCachedSizeValid$intellij_platform_ide_impl()) {
+        validCachedPreferredSize = false;
+      }
+      var result = super.getPreferredSize(c, checkConsistency);
+      cache.setCachedSizeValid$intellij_platform_ide_impl(true);
+      return result;
+    }
+    else {
+      return super.getPreferredSize(c, checkConsistency);
+    }
+  }
+
+  @Override
   protected void updateCachedPreferredSize() {
     JTree tree = getTree();
     AbstractLayoutCache cache = treeState;
