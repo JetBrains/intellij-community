@@ -2463,6 +2463,249 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertReferenceToLambda")
+    public static class ConvertReferenceToLambda extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("apply.kt")
+        public void testApply() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/apply.kt");
+        }
+
+        @TestMetadata("boundReference.kt")
+        public void testBoundReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/boundReference.kt");
+        }
+
+        @TestMetadata("companion.kt")
+        public void testCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/companion.kt");
+        }
+
+        @TestMetadata("companionNoImport.kt")
+        public void testCompanionNoImport() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/companionNoImport.kt");
+        }
+
+        @TestMetadata("companionNoImport2.kt")
+        public void testCompanionNoImport2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/companionNoImport2.kt");
+        }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/constructor.kt");
+        }
+
+        @TestMetadata("conversion.kt")
+        public void testConversion() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/conversion.kt");
+        }
+
+        @TestMetadata("extensionFunctionalType.kt")
+        public void testExtensionFunctionalType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/extensionFunctionalType.kt");
+        }
+
+        @TestMetadata("extensionProperty.kt")
+        public void testExtensionProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/extensionProperty.kt");
+        }
+
+        @TestMetadata("extensionWithoutQualifier.kt")
+        public void testExtensionWithoutQualifier() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/extensionWithoutQualifier.kt");
+        }
+
+        @TestMetadata("extensionWithoutQualifier2.kt")
+        public void testExtensionWithoutQualifier2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/extensionWithoutQualifier2.kt");
+        }
+
+        @TestMetadata("extensionWithoutQualifier3.kt")
+        public void testExtensionWithoutQualifier3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/extensionWithoutQualifier3.kt");
+        }
+
+        @TestMetadata("extensionWithoutReferenceToThis.kt")
+        public void testExtensionWithoutReferenceToThis() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/extensionWithoutReferenceToThis.kt");
+        }
+
+        @TestMetadata("fqNameForReceiver.kt")
+        public void testFqNameForReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/fqNameForReceiver.kt");
+        }
+
+        @TestMetadata("if1.kt")
+        public void testIf1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/if1.kt");
+        }
+
+        @TestMetadata("if2.kt")
+        public void testIf2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/if2.kt");
+        }
+
+        @TestMetadata("if3.kt")
+        public void testIf3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/if3.kt");
+        }
+
+        @TestMetadata("if4.kt")
+        public void testIf4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/if4.kt");
+        }
+
+        @TestMetadata("inner.kt")
+        public void testInner() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/inner.kt");
+        }
+
+        @TestMetadata("itClash.kt")
+        public void testItClash() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/itClash.kt");
+        }
+
+        @TestMetadata("kfunction.kt")
+        public void testKfunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/kfunction.kt");
+        }
+
+        @TestMetadata("kproperty.kt")
+        public void testKproperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/kproperty.kt");
+        }
+
+        @TestMetadata("kproperty0.kt")
+        public void testKproperty0() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/kproperty0.kt");
+        }
+
+        @TestMetadata("length.kt")
+        public void testLength() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/length.kt");
+        }
+
+        @TestMetadata("member.kt")
+        public void testMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/member.kt");
+        }
+
+        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("name.kt")
+        public void testName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/name.kt");
+        }
+
+        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("nestedLambdaWithReceiver.kt")
+        public void testNestedLambdaWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/nestedLambdaWithReceiver.kt");
+        }
+
+        @TestMetadata("nullable.kt")
+        public void testNullable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/nullable.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/object.kt");
+        }
+
+        @TestMetadata("receiverParameter.kt")
+        public void testReceiverParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/receiverParameter.kt");
+        }
+
+        @TestMetadata("referencedFunctionWithDefaultArugment.kt")
+        public void testReferencedFunctionWithDefaultArugment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/referencedFunctionWithDefaultArugment.kt");
+        }
+
+        @TestMetadata("referencedFunctionWithDefaultArugment2.kt")
+        public void testReferencedFunctionWithDefaultArugment2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/referencedFunctionWithDefaultArugment2.kt");
+        }
+
+        @TestMetadata("referencedFunctionWithDefaultArugment3.kt")
+        public void testReferencedFunctionWithDefaultArugment3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/referencedFunctionWithDefaultArugment3.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/simple.kt");
+        }
+
+        @TestMetadata("static.kt")
+        public void testStatic() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/static.kt");
+        }
+
+        @TestMetadata("staticTwoParameters.kt")
+        public void testStaticTwoParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/staticTwoParameters.kt");
+        }
+
+        @TestMetadata("syntheticProperty.kt")
+        public void testSyntheticProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/syntheticProperty.kt");
+        }
+
+        @TestMetadata("threeParameters.kt")
+        public void testThreeParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/threeParameters.kt");
+        }
+
+        @TestMetadata("toString.kt")
+        public void testToString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/toString.kt");
+        }
+
+        @TestMetadata("unwrap.kt")
+        public void testUnwrap() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/unwrap.kt");
+        }
+
+        @TestMetadata("when1.kt")
+        public void testWhen1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/when1.kt");
+        }
+
+        @TestMetadata("when2.kt")
+        public void testWhen2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/when2.kt");
+        }
+
+        @TestMetadata("when3.kt")
+        public void testWhen3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/when3.kt");
+        }
+
+        @TestMetadata("when4.kt")
+        public void testWhen4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/when4.kt");
+        }
+
+        @TestMetadata("withReceiver.kt")
+        public void testWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertReferenceToLambda/withReceiver.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/declarations/split")
     public static class Split extends AbstractK2IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -5532,8 +5775,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/mergeIfs/simple.kt");
         }
     }
-
-
 
 
 
