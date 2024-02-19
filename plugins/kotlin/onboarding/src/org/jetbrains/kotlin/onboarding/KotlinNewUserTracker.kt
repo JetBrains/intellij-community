@@ -111,8 +111,7 @@ class KotlinNewUserTracker : PersistentStateComponent<KotlinNewUserTrackerState>
         }
         val currentEpoch = Instant.now()
         // This part marks users who open a Kotlin file for the first time as new users
-        // TODO: This condition should remove the isNewIdeaUser() part in a future release
-        if (currentState.newKtUserSince == 0L && currentState.firstKtFileOpened == 0L && isNewIdeaUser()) {
+        if (currentState.newKtUserSince == 0L && currentState.firstKtFileOpened == 0L) {
             currentState.newKtUserSince = currentEpoch.epochSecond
             LOG.debug("Marking user as new Kotlin user because they are new to IDEA")
             return
