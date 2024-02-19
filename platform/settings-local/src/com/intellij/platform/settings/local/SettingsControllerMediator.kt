@@ -4,6 +4,7 @@
 
 package com.intellij.platform.settings.local
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
@@ -73,4 +74,21 @@ class SettingsControllerMediator(
 
   @IntellijInternalApi
   override fun isPersistenceStateComponentProxy(): Boolean = isPersistenceStateComponentProxy
+
+  @IntellijInternalApi
+  override fun createChild(container: ComponentManager): SettingsController? {
+    val result = ArrayList<DelegatedSettingsController>()
+    for (controller in controllers) {
+      controller.createChild(container)?.let {
+        result.add(it)
+      }
+    }
+
+    if (result.isEmpty()) {
+      return null
+    }
+    else {
+      return SettingsControllerMediator(controllers = java.util.List.copyOf(result), isPersistenceStateComponentProxy = true)
+    }
+  }
 }

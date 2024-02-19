@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.*
@@ -23,6 +24,10 @@ interface SettingsController {
   @Internal
   @IntellijInternalApi
   fun createStateStorage(collapsedPath: String, file: Path): Any?
+
+  @Internal
+  @IntellijInternalApi
+  fun createChild(container: ComponentManager): SettingsController?
 
   @Internal
   @IntellijInternalApi
@@ -84,6 +89,8 @@ interface DelegatedSettingsController {
   fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?>
 
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult
+
+  fun createChild(container: ComponentManager): DelegatedSettingsController? = null
 
   fun close() {
   }

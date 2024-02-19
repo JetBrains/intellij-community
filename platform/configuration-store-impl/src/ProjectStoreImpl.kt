@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.Ksuid
 import kotlinx.coroutines.coroutineScope
@@ -407,7 +408,7 @@ private class ProjectStateStorageManager(private val project: Project) : StateSt
   rootTagName = "project",
   macroSubstitutor = TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)),
   componentManager = project,
-  controller = null,
+  controller = ApplicationManager.getApplication().getService(SettingsController::class.java)?.createChild(project),
 ) {
   override val isUseVfsForWrite: Boolean
     get() = !useBackgroundSave

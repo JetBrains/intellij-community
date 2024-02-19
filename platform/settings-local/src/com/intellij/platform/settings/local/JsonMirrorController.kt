@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.local
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.platform.settings.DelegatedSettingsController
 import com.intellij.platform.settings.GetResult
@@ -15,10 +16,15 @@ private class JsonMirrorController : DelegatedSettingsController {
   }
 
   override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
+    //println("${key.pluginId.idString}/${key.key}")
     return GetResult.inapplicable()
   }
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult {
     return SetResult.INAPPLICABLE
+  }
+
+  override fun createChild(container: ComponentManager): DelegatedSettingsController {
+    return JsonMirrorController()
   }
 }
