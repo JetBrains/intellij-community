@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.project.Project
@@ -13,6 +14,7 @@ import com.intellij.util.LineSeparator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.io.StringReader
 import java.nio.file.Path
@@ -21,6 +23,8 @@ internal const val VERSION_OPTION: String = "version"
 
 @JvmField
 internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
+
+internal data class Macro(@JvmField val key: String, @JvmField var value: Path)
 
 internal fun isSpecialStorage(collapsedPath: String): Boolean =
   collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
@@ -48,6 +52,13 @@ private fun detectLineSeparator(chars: CharSequence): LineSeparator? {
   }
   return null
 }
+
+@ApiStatus.Internal
+fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")
+
+@Suppress("DEPRECATION", "removal")
+internal val Storage.path: String
+  get() = value.ifEmpty { file }
 
 internal val useBackgroundSave: Boolean
   get() = Registry.`is`("ide.background.save.settings", false)

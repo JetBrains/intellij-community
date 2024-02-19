@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Internal
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -12,8 +11,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -23,17 +21,18 @@ import kotlin.io.path.invariantSeparatorsPathString
 /**
  * If componentManager not specified, storage will not add file tracker
  */
+@ApiStatus.Internal
 open class StateStorageManagerImpl(
-  @NonNls private val rootTagName: String,
+  private val rootTagName: String,
   final override val macroSubstitutor: PathMacroSubstitutor? = null,
   final override val componentManager: ComponentManager?,
   private val controller: SettingsController?,
 ) : StateStorageManager {
-  private val virtualFileTracker = createDefaultVirtualTracker(componentManager)
+  private val virtualFileTracker = if (componentManager == null) null else service<StorageVirtualFileTracker>()
 
   @Volatile
   @JvmField
-  protected var macros: List<Macro> = java.util.List.of()
+  internal var macros: List<Macro> = java.util.List.of()
 
   @JvmField
   protected val storageLock: ReentrantReadWriteLock = ReentrantReadWriteLock()
@@ -65,7 +64,7 @@ open class StateStorageManagerImpl(
   /**
    * Returns an old list.
    */
-  fun setMacros(list: List<Macro>): List<Macro> {
+  internal fun setMacros(list: List<Macro>): List<Macro> {
     val oldValue = macros
     macros = list
     return oldValue
@@ -371,17 +370,4 @@ open class StateStorageManagerImpl(
     virtualFileTracker?.remove { it.storageManager === this }
     controller?.release()
   }
-}
-
-fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")
-
-@Suppress("DEPRECATION", "removal")
-internal val Storage.path: String
-  get() = value.ifEmpty { file }
-
-@Internal
-data class Macro(@JvmField val key: String, @JvmField var value: Path)
-
-private fun createDefaultVirtualTracker(componentManager: ComponentManager?): StorageVirtualFileTracker? {
-  return if (componentManager == null) null else service<StorageVirtualFileTracker>()
 }
