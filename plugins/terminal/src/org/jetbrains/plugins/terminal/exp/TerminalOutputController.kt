@@ -74,7 +74,7 @@ class TerminalOutputController(
       appendLineToBlock(block, command!!, listOf(createCommandHighlighting(block)), false)
     }
     if (block.withPrompt || block.withCommand) {
-      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
+      blocksDecorator.installDecoration(block)
     }
 
     scrollToBottom()
@@ -219,7 +219,7 @@ class TerminalOutputController(
     // ZSH prints '%' character on startup and then removing it immediately, so ignore this character to avoid blinking.
     // This hack can be solved by debouncing the update text requests.
     if (output.text.isNotBlank() && output.text.trim() != "%") {
-      blocksDecorator.installDecoration(block, isFirstBlock = outputModel.getBlocksSize() == 1)
+      blocksDecorator.installDecoration(block)
     }
 
     // scroll to bottom only if we were at the bottom before applying the changes
