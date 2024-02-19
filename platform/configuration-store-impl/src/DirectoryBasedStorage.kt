@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
+import com.intellij.application.options.PathMacrosCollector
 import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.NioFiles
@@ -16,8 +16,7 @@ import com.intellij.platform.settings.SettingsController
 import com.intellij.util.LineSeparator
 import org.jdom.Element
 import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
+import java.nio.file.*
 
 open class DirectoryBasedStorage(
   private val dir: Path,
@@ -25,21 +24,83 @@ open class DirectoryBasedStorage(
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null
 ) : StateStorageBase<StateMap>() {
   private var componentName: String? = null
-  @Volatile
-  private var nameToLineSeparatorMap: Map<String, LineSeparator?> = emptyMap()
-  @Volatile
-  private var cachedVirtualFile: VirtualFile? = null
+  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = emptyMap()
+  @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   override val controller: SettingsController?
     get() = null
 
   public override fun loadData(): StateMap {
-    val (elementMap, separatorMap) = loadComponentsAndDetectLineSeparator(dir = dir, pathMacroSubstitutor = pathMacroSubstitutor)
+    val (elementMap, separatorMap) = loadComponentsAndDetectLineSeparator()
     nameToLineSeparatorMap = separatorMap
     return StateMap.fromMap(elementMap)
   }
 
-  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
+  private fun loadComponentsAndDetectLineSeparator(): Pair<Map<String, Element>, Map<String, LineSeparator?>> {
+    try {
+      Files.newDirectoryStream(dir).use { files ->
+        val fileToState = HashMap<String, Element>()
+        val fileToSeparator = HashMap<String, LineSeparator?>()
+
+        for (file in files) {
+          // ignore system files like .DS_Store on Mac
+          if (!file.toString().endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
+            continue
+          }
+
+          try {
+            val (element, separator) = loadDataAndDetectLineSeparator(file)
+            val componentName = ComponentStorageUtil.getComponentNameIfValid(element) ?: continue
+            if (element.name != ComponentStorageUtil.COMPONENT) {
+              LOG.error("Incorrect root tag name (${element.name}) in $file")
+              continue
+            }
+
+            val elementChildren = element.children
+            if (elementChildren.isEmpty()) {
+              continue
+            }
+
+            val state = elementChildren[0].detach()
+            if (state.isEmpty) {
+              continue
+            }
+
+            if (pathMacroSubstitutor != null) {
+              pathMacroSubstitutor.expandPaths(state)
+              if (pathMacroSubstitutor is TrackingPathMacroSubstitutor) {
+                pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state))
+              }
+            }
+
+            val name = file.fileName.toString()
+            fileToState.put(name, state)
+            fileToSeparator.put(name, separator)
+          }
+          catch (e: Throwable) {
+            if (e.message!!.startsWith("Unexpected End-of-input in prolog")) {
+              LOG.warn("Ignore empty file $file")
+            }
+            else {
+              LOG.warn("Unable to load state from $file", e)
+            }
+          }
+        }
+        return Pair(fileToState, fileToSeparator)
+      }
+    }
+    catch (e: DirectoryIteratorException) {
+      throw e.cause!!
+    }
+    catch (_: NoSuchFileException) {
+      return Pair(java.util.Map.of(), java.util.Map.of())
+    }
+    catch (_: NotDirectoryException) {
+      return Pair(java.util.Map.of(), java.util.Map.of())
+    }
+  }
+
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -94,9 +155,8 @@ open class DirectoryBasedStorage(
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? {
-    return if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
-  }
+  override fun createSaveSessionProducer(): SaveSessionProducer? =
+    if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
 
   private class DirectorySaveSessionProducer(
     private val storage: DirectoryBasedStorage,
@@ -205,13 +265,7 @@ open class DirectoryBasedStorage(
 
         val rootAttributes = mapOf(ComponentStorageUtil.NAME to storage.componentName!!)
         val debugString = storage.dir.toString()
-        val dataWriter = XmlDataWriter(
-          rootElementName = ComponentStorageUtil.COMPONENT,
-          elements = listOf(element),
-          rootAttributes = rootAttributes,
-          macroManager = macroManager,
-          storageFilePathForDebugPurposes = debugString,
-        )
+        val dataWriter = XmlDataWriter(ComponentStorageUtil.COMPONENT, listOf(element), rootAttributes, macroManager, debugString)
 
         try {
           if (storage.isUseVfsForWrite) {
@@ -219,29 +273,16 @@ open class DirectoryBasedStorage(
             if (dir == null || !dir.exists()) {
               dir = storage.getVirtualFile()
               if (dir == null || !dir.exists()) {
-                dir = createDir(ioDir = storage.dir, requestor = this)
+                dir = createDir(storage.dir, this)
                 storage.cachedVirtualFile = dir
               }
             }
-            val file = dir.getOrCreateChild(fileName = fileName, requestor = this)
-            writeFile(
-              cachedFile = null,
-              requestor = this,
-              virtualFile = file,
-              dataWriter = dataWriter,
-              lineSeparator = getOrDetectLineSeparator(file),
-              prependXmlProlog = false,
-            )
+            val file = dir.getOrCreateChild(fileName, this)
+            writeFile(cachedFile = null, requestor = this, file, dataWriter, getOrDetectLineSeparator(file), prependXmlProlog = false)
           }
           else {
             val file = storage.dir.resolve(fileName)
-            writeFile(
-              file = file,
-              requestor = this,
-              dataWriter = dataWriter,
-              lineSeparator = storage.getLineSeparator(fileName),
-              prependXmlProlog = false,
-            )
+            writeFile(file, requestor = this, dataWriter, storage.getLineSeparator(fileName), prependXmlProlog = false)
           }
         }
         catch (e: IOException) {
@@ -269,7 +310,6 @@ open class DirectoryBasedStorage(
         if (dir == null || !dir.exists()) {
           return
         }
-
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
@@ -295,7 +335,7 @@ open class DirectoryBasedStorage(
     storageDataRef.set(newStates)
   }
 
-  override fun toString(): String = "${javaClass.simpleName}(dir=$dir, componentName=$componentName)"
+  override fun toString(): String = "${javaClass.simpleName}(dir=${dir}, componentName=${componentName})"
 }
 
 internal interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {

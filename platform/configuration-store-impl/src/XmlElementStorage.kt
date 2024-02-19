@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
-import com.intellij.openapi.components.impl.stores.loadComponents
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
@@ -96,7 +95,7 @@ abstract class XmlElementStorage protected constructor(
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(loadComponents(rootElement = element, pathMacroSubstitutor = pathMacroSubstitutor))
+    return StateMap.fromMap(ComponentStorageUtil.loadComponents(element, pathMacroSubstitutor))
   }
 
   open fun loadFromStreamProvider(stream: InputStream): Element? {

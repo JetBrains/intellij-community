@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
@@ -30,12 +29,11 @@ class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLo
     val content = fileContentCache.computeIfAbsent(fileUrl + customModuleFilePath) {
       loadComponents(fileUrl, customModuleFilePath)
     }
-    return content.get(componentName)
+    return content[componentName]
   }
 
-  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
-    return getMacroManager(fileUrl = fileUrl, customModuleFilePath = null).expandMacroMap
-  }
+  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap =
+    getMacroManager(fileUrl = fileUrl, customModuleFilePath = null).expandMacroMap
 
   private fun loadComponents(fileUrl: String, customModuleFilePath: String?): Map<String, Element> {
     val macroManager = getMacroManager(fileUrl = fileUrl, customModuleFilePath = customModuleFilePath)
@@ -66,6 +64,6 @@ class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLo
       }
       rootElement.addContent(optionElement)
     }
-    return com.intellij.openapi.components.impl.stores.loadComponents(rootElement, pathMacroManager)
+    return ComponentStorageUtil.loadComponents(rootElement, pathMacroManager)
   }
 }

@@ -3,13 +3,19 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.LineSeparator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jdom.Element
 import org.jetbrains.annotations.CalledInAny
+import java.io.StringReader
+import java.nio.file.Path
 
 internal const val VERSION_OPTION: String = "version"
 
@@ -25,6 +31,24 @@ internal suspend fun ensureFilesWritable(project: Project, files: Collection<Vir
   return withContext(Dispatchers.EDT) {
     ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files)
   }
+}
+
+internal fun loadDataAndDetectLineSeparator(file: Path): Pair<Element, LineSeparator?> {
+  val text = ComponentStorageUtil.loadTextContent(file)
+  return buildNsUnawareJdom(StringReader(text)) to detectLineSeparator(text)
+}
+
+private fun detectLineSeparator(chars: CharSequence): LineSeparator? {
+  for (element in chars) {
+    if (element == '\r') {
+      return LineSeparator.CRLF
+    }
+    // if we are here, there was no '\r' before
+    if (element == '\n') {
+      return LineSeparator.LF
+    }
+  }
+  return null
 }
 
 internal val useBackgroundSave: Boolean

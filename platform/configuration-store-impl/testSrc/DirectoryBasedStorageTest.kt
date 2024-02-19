@@ -14,7 +14,8 @@ import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Files
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeBytes
 
 class DirectoryBasedStorageTest {
   companion object {
@@ -28,9 +29,8 @@ class DirectoryBasedStorageTest {
   @Test
   fun readEmptyFile() {
     val dir = tempDirManager.newPath(refreshVfs = true)
-    Files.createDirectories(dir)
-    Files.write(dir.resolve("empty.xml"), ByteArray(0))
-    loadComponentsAndDetectLineSeparator(dir = dir, pathMacroSubstitutor = null)
+    dir.createDirectories().resolve("empty.xml").writeBytes(ByteArray(0))
+    DirectoryBasedStorage(dir, TestStateSplitter()).loadData()
   }
 
   @Test
