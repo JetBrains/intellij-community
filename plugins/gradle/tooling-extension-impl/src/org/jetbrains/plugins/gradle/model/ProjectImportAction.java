@@ -35,6 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -97,22 +98,20 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   @Override
   public @Nullable AllModels execute(@NotNull BuildController controller) {
+    configureAdditionalTypes(controller);
+    return withConverterExecutor(converterExecutor -> {
+      return withOpenTelemetry(telemetry -> {
+        return telemetry.callWithSpan("ProjectImportAction", __ -> {
+          return doExecute(controller, converterExecutor, telemetry);
+        });
+      });
+    });
+  }
+
+  private static @Nullable AllModels withConverterExecutor(@NotNull Function<ExecutorService, AllModels> action) {
     ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new SimpleThreadFactory());
     try {
-      configureAdditionalTypes(controller);
-      boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
-      if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
-        if (isTracingEnabled()) {
-          getTelemetry().start(myTracingContext);
-        }
-        getTelemetry().runWithSpan("onExecuteStart", __ -> onExecuteStart(controller));
-      }
-      AllModels allModels = getTelemetry().callWithSpan("doExecute",
-                                                        span -> doExecute(controller, converterExecutor, isProjectsLoadedAction));
-      if (!isProjectsLoadedAction && allModels != null) {
-        onExecuteEnd(allModels);
-      }
-      return allModels;
+      return action.apply(converterExecutor);
     }
     finally {
       converterExecutor.shutdown();
@@ -125,34 +124,47 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  /**
-   * On first execution of the {@link #doExecute(BuildController, ExecutorService, boolean)}.
-   * This method will be called only once, before the first invocation of the method.
-   */
-  private void onExecuteStart(@NotNull BuildController controller) {
-    myGradleBuild = getTelemetry().callWithSpan("GetBuildModel", __ -> controller.getBuildModel());
-    AllModels allModels = new AllModels(myGradleBuild);
-    BuildEnvironment buildEnvironment = getTelemetry().callWithSpan("GetBuildEnvironment",
-                                                                    __ -> controller.findModel(BuildEnvironment.class));
-    allModels.setBuildEnvironment(convert(buildEnvironment));
-    myAllModels = allModels;
-    myModelConverter = getToolingModelConverter(controller);
-  }
+  private <T> T withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, T> action) {
+    boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
+    if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
+      myTelemetry = new GradleOpenTelemetry();
+      if (myTracingContext != null) {
+        myTelemetry.start(myTracingContext);
+      }
+    }
 
-  /**
-   * After last execution of the {@link #doExecute(BuildController, ExecutorService, boolean)}.
-   * This method will be called only once, after the last invocation of the method.
-   */
-  private void onExecuteEnd(@NotNull AllModels allModels) {
-    byte[] trace = getTelemetry().shutdown();
-    allModels.setOpenTelemetryTrace(trace);
+    assert myTelemetry != null;
+
+    try {
+      return action.apply(myTelemetry);
+    }
+    finally {
+      if (!isProjectsLoadedAction && myAllModels != null) {
+        byte[] trace = myTelemetry.shutdown();
+        myAllModels.setOpenTelemetryTrace(trace);
+      }
+    }
   }
 
   private @Nullable AllModels doExecute(
     @NotNull BuildController controller,
     @NotNull ExecutorService converterExecutor,
-    boolean isProjectsLoadedAction
+    @NotNull GradleOpenTelemetry telemetry
   ) {
+    boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
+    if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
+      myGradleBuild = telemetry.callWithSpan("GetBuildModel", __ ->
+        controller.getBuildModel()
+      );
+      AllModels allModels = new AllModels(myGradleBuild);
+      BuildEnvironment buildEnvironment = telemetry.callWithSpan("GetBuildEnvironment", __ ->
+        controller.findModel(BuildEnvironment.class)
+      );
+      allModels.setBuildEnvironment(convert(buildEnvironment));
+      myAllModels = allModels;
+      myModelConverter = getToolingModelConverter(controller);
+    }
+
     assert myAllModels != null;
     assert myGradleBuild != null;
     assert myModelConverter != null;
@@ -163,7 +175,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       modelProviders,
       myModelConverter,
       converterExecutor,
-      getTelemetry(),
+      telemetry,
       myIsPreviewMode,
       isProjectsLoadedAction
     );
@@ -229,17 +241,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         .collect(Collectors.toSet());
     }
     return myModelProviders;
-  }
-
-  private boolean isTracingEnabled() {
-    return myTracingContext != null;
-  }
-
-  private @NotNull GradleOpenTelemetry getTelemetry() {
-    if (myTelemetry == null) {
-      myTelemetry = new GradleOpenTelemetry();
-    }
-    return myTelemetry;
   }
 
   // Note: This class is NOT thread safe, and it is supposed to be used from a single thread.
