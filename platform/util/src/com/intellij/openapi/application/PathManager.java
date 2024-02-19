@@ -49,6 +49,7 @@ public final class PathManager {
   private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
   private static final String COMMUNITY_MARKER = "intellij.idea.community.main.iml";
   private static final String ULTIMATE_MARKER = ".ultimate.root.marker";
+  private static final String PRODUCT_INFO_JSON = "product-info.json";
 
   private static final class Lazy {
     private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
@@ -173,7 +174,7 @@ public final class PathManager {
   }
 
   private static boolean isIdeaHome(Path root) {
-    if (Files.isRegularFile(root.resolve(BIN_DIRECTORY).resolve(PROPERTIES_FILE_NAME))
+    if (Files.isRegularFile(root.resolve(PRODUCT_INFO_JSON))
         || Files.isRegularFile(root.resolve(COMMUNITY_MARKER))
         || Files.isRegularFile(root.resolve(ULTIMATE_MARKER))) {
       return true;
