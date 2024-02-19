@@ -62,7 +62,7 @@ public final class DocumentationSettings {
       return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 96;
     }
     else {
-      return SystemInfo.isWin10OrNewer && !ApplicationManager.getApplication().isUnitTestMode() ? 90 : 100;
+      return 100;
     }
   }
 
