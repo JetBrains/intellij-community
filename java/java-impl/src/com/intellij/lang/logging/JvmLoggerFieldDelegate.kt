@@ -36,8 +36,13 @@ class JvmLoggerFieldDelegate(
 
   override fun isAvailable(module: Module?): Boolean = JavaLibraryUtil.hasLibraryClass(module, loggerTypeName)
 
-  override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean = clazz
-    .fields.any { it.name == LOGGER_IDENTIFIER || it.type.canonicalText == loggerTypeName }.not()
+  override fun isPossibleToPlaceLoggerAtClass(clazz: PsiClass): Boolean {
+    val resolveHelper = JavaPsiFacade.getInstance(clazz.project).resolveHelper
+    return clazz.allFields.any {
+      resolveHelper.isAccessible(it, clazz, null) &&
+      (it.name == LOGGER_IDENTIFIER || it.type.canonicalText == loggerTypeName)
+    }.not()
+  }
 
   override fun createLogger(project: Project, clazz: PsiClass): PsiField? {
     val factory = JavaPsiFacade.getElementFactory(project)

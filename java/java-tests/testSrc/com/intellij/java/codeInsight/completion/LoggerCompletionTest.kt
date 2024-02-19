@@ -48,17 +48,27 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
-  fun testLoggerAlreadyExists() {
+  fun testLoggerAlreadyExistsSimple() {
     JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
-    val name = getTestName(true)
-    configureByFile("$name.java")
-    assertStringItems("log", "long", "clone")
+    doAntiTest()
+  }
 
-    TestCase.assertFalse(
-      lookup.items.any {
-        it is JvmLoggerLookupElement
-      }
-    )
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
+  fun testLoggerAlreadyExistsInheritance() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest()
+  }
+
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
+  fun testLoggerAlreadyExistsNestedClasses() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest()
+  }
+
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
+  fun testLoggerAlreadyExistsNestedClassesWithInheritance() {
+    JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+    doAntiTest()
   }
 
   @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
@@ -86,6 +96,18 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/logger"
+
+  override fun doAntiTest() {
+    val name = getTestName(true)
+    configureByFile("$name.java")
+    assertStringItems("log", "long", "clone")
+
+    TestCase.assertFalse(
+      lookup.items.any {
+        it is JvmLoggerLookupElement
+      }
+    )
+  }
 
   private fun doTest(position: Int, vararg names: String) {
     val name = getTestName(false)
