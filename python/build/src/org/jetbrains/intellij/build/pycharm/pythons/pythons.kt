@@ -25,7 +25,7 @@ object Pythons {
                                                     "black-joblib-tenserflow",
                                                     "1",
                                                     listOf("black == 23.1.0", "joblib", "tensorflow"))
-  val CondaWithPyTorch = createPython("miniconda3-latest",
+  val CondaWithPyTorch = createPython("Miniconda3-latest",
                                       "conda-pytorch",
                                       "1",
                                       listOf("pytorch"))
