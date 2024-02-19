@@ -183,7 +183,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                 boolean canChangeFileSilently,
                                                 @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ProgressIndicatorProvider.getGlobalProgressIndicator() == null) {
+    if (!(ProgressIndicatorProvider.getGlobalProgressIndicator() instanceof DaemonProgressIndicator)) {
       ProgressManager.getInstance().executeProcessUnderProgress(()->runInsideHighlightingSessionInEDT(file, editorColorsScheme, visibleRange, canChangeFileSilently, runnable), new DaemonProgressIndicator());
       return;
     }
