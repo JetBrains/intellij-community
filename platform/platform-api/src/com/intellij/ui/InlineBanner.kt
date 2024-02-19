@@ -109,6 +109,7 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
     if (myMessage.caret != null) {
       myMessage.caretPosition = 0
     }
+    myMessage.addHyperlinkListener(BrowserHyperlinkListener())
 
     add(myCloseButton)
 
