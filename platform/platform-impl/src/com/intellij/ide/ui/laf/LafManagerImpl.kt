@@ -23,11 +23,11 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorSchemesSorter
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
@@ -298,7 +298,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun associatedToPreferredLafOrDefaultEditorColorSchemeName(isDark: Boolean): String {
     val theme = preferredOrDefaultLaf(isDark)
 
-    return getPreviousSchemeForLaf(theme)?.takeIf { isDark == ColorUtil.isDark(it.defaultBackground) }?.baseName
+    return getPreviousSchemeForLaf(theme)?.baseName
            ?: theme.editorSchemeId
            ?: defaultNonLaFSchemeName(isDark)
   }
@@ -887,79 +887,36 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private inner class PreferredEditorColorSchemeAction : DefaultActionGroup(), DumbAware {
+  private inner class PreferredEditorColorSchemeAction : DefaultActionGroup(PreferredLightEditorColorSchemeAction(),
+                                                                            PreferredDarkEditorColorSchemeAction()),
+                                                         DumbAware {
     init {
       isPopup = true
       templatePresentation.text = IdeBundle.message("preferred.editor.color.scheme.text")
       templatePresentation.description = IdeBundle.message("preferred.editor.color.scheme.description")
     }
+  }
 
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-      val themeGroups = ThemeListProvider.getInstance().getShownThemes()
-      val schemeIdToIsDark = mutableMapOf<String, Pair<Int, Boolean>>()
-      themeGroups.infos.asSequence().flatMap { it.items }.forEachIndexed { index, lafInfo ->
-        val schemeId = lafInfo.defaultSchemeName
-        schemeIdToIsDark[schemeId] = index to lafInfo.isDark
-      }
+  private inner class PreferredLightEditorColorSchemeAction :
+    PreferredEditorColorSchemeBaseAction(IdeBundle.message("preferred.editor.color.scheme.light.header"), false), DumbAware
+  private inner class PreferredDarkEditorColorSchemeAction :
+    PreferredEditorColorSchemeBaseAction(IdeBundle.message("preferred.editor.color.scheme.dark.header"), true), DumbAware
 
-      val lightSchemes = ArrayList<EditorColorsScheme>()
-      val darkSchemes = ArrayList<EditorColorsScheme>()
-
-      // Ignore schemes from new UI themes
-      val schemesToIgnore = if (ExperimentalUI.isNewUI()) {
-        emptySet()
-      }
-      else {
-        UiThemeProviderListManager.getInstance().getThemeListForTargetUI(TargetUIType.NEW).mapNotNull {
-          it.editorSchemeId
-        }.toSet()
-      }
-
-      // Sort schemes to light and dark baskets by info from themes
-      EditorColorsManager.getInstance().allSchemes.forEach { scheme ->
-        if (schemesToIgnore.contains(scheme.baseName) ||
-            scheme.parentBaseName?.let { schemesToIgnore.contains(it) } == true) return@forEach
-
-        val isDarkScheme = scheme.valueForBaseNameOrParentBaseName(schemeIdToIsDark)?.second
-                           ?: ColorUtil.isDark(scheme.defaultBackground)
-
-        if (isDarkScheme) {
-          darkSchemes.add(scheme)
-        }
-        else {
-          lightSchemes.add(scheme)
-        }
-      }
-
-      // Sort by comparing themes orders, then by comparing base names
-      val comparator = Comparator<EditorColorsScheme> { o1, o2 ->
-        if (o1 == null && o2 == null) 0
-        else if (o2 == null) -1
-        else if (o1 == null) 1
-        // Move schemes which can be deleted (copies or imported) to the end of the list
-        else if (o1.canBeDeletedAsInt != o2.canBeDeletedAsInt) o1.canBeDeletedAsInt - o2.canBeDeletedAsInt
-        else if (o1.canBeDeletedAsInt == 1) o1.baseName.compareTo(o2.baseName)
-        else {
-          val index1 = o1.valueForBaseNameOrParentBaseName(schemeIdToIsDark)?.first
-          val index2 = o2.valueForBaseNameOrParentBaseName(schemeIdToIsDark)?.first
-
-          if (index1 != null && index2 != null) {
-            if (index1 != index2) index1 - index2
-            else o1.baseName.compareTo(o2.baseName)
-          }
-          else if (index1 == null) 1
-          else -1
-        }
-      }
-
-      darkSchemes.sortWith(comparator)
-      lightSchemes.sortWith(comparator)
-
-      return (createSchemeActions(IdeBundle.message("preferred.editor.color.scheme.dark.header"), darkSchemes, isDark = true) +
-              createSchemeActions(IdeBundle.message("preferred.editor.color.scheme.light.header"), lightSchemes, isDark = false)).toTypedArray()
+  private open inner class PreferredEditorColorSchemeBaseAction(@Nls title: String, val isDark: Boolean) : DefaultActionGroup(), DumbAware {
+    init {
+      isPopup = true
+      templatePresentation.text = title
     }
 
-    private fun createSchemeActions(separatorText: @NlsContexts.Separator String,
+    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+      val groups = EditorColorSchemesSorter.getInstance().getOrderedSchemesFromSequence(EditorColorsManager.getInstance().allSchemes.asSequence())
+
+      return groups.infos.flatMap { group ->
+        createSchemeActions(group.title, group.items, isDark)
+      }.toTypedArray()
+    }
+
+    private fun createSchemeActions(separatorText: @NlsContexts.Separator String?,
                                     schemes: List<EditorColorsScheme>,
                                     isDark: Boolean): Collection<AnAction> {
       if (schemes.isEmpty()) {
@@ -1424,6 +1381,3 @@ private class LafComboBoxModel(val groupedThemes: Groups<UIThemeLookAndFeelInfo>
 )
 
 private val Scheme.baseName: String get() = Scheme.getBaseName(name)
-private val Scheme.parentBaseName: String? get() = (this as? EditorColorsSchemeImpl)?.parentScheme?.baseName
-private fun<T> Scheme.valueForBaseNameOrParentBaseName(map: Map<String, T>): T? = map[baseName] ?: parentBaseName?.let { map[it] }
-private val Scheme.canBeDeletedAsInt: Int get() = if ((this as? EditorColorsSchemeImpl)?.canBeDeleted() == true) 1 else -1
