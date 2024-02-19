@@ -9,20 +9,14 @@ import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
-import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.build.BuildEnvironment;
-import org.gradle.tooling.model.build.GradleEnvironment;
-import org.gradle.tooling.model.build.JavaEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment;
 
 import java.io.Serializable;
 import java.util.*;
@@ -150,7 +144,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
       BuildEnvironment buildEnvironment = telemetry.callWithSpan("GetBuildEnvironment", __ ->
         controller.findModel(BuildEnvironment.class)
       );
-      allModels.setBuildEnvironment(convert(buildEnvironment));
+      allModels.setBuildEnvironment(InternalBuildEnvironment.convertBuildEnvironment(buildEnvironment));
       myAllModels = allModels;
       myModelConverter = getToolingModelConverter(controller);
     }
@@ -170,31 +164,6 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     );
     buildAction.execute(new DefaultBuildController(controller, myGradleBuild));
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
-  }
-
-  @Contract("null -> null")
-  private static BuildEnvironment convert(final @Nullable BuildEnvironment buildEnvironment) {
-    if (buildEnvironment == null || buildEnvironment instanceof InternalBuildEnvironment) {
-      return buildEnvironment;
-    }
-    return new InternalBuildEnvironment(
-      () -> {
-        BuildIdentifier buildIdentifier = buildEnvironment.getBuildIdentifier();
-        return new InternalBuildIdentifier(buildIdentifier.getRootDir());
-      },
-      () -> {
-        GradleEnvironment gradle = buildEnvironment.getGradle();
-        return gradle.getGradleUserHome();
-      },
-      () -> {
-        GradleEnvironment gradle = buildEnvironment.getGradle();
-        return gradle.getGradleVersion();
-      },
-      () -> {
-        JavaEnvironment java = buildEnvironment.getJava();
-        return new InternalJavaEnvironment(java.getJavaHome(), java.getJvmArguments());
-      }
-    );
   }
 
   private void configureAdditionalTypes(BuildController controller) {

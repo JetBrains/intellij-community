@@ -10,9 +10,7 @@ import org.gradle.tooling.*
 import org.gradle.tooling.internal.consumer.BlockingResultHandler
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
 import org.gradle.tooling.model.build.BuildEnvironment
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalJavaEnvironment
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.build.InternalBuildEnvironment
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -175,12 +173,7 @@ object Main {
 
   private fun maybeConvert(result: Any?): Any? {
     if (result is BuildEnvironment) {
-      return InternalBuildEnvironment(
-        { InternalBuildIdentifier(result.buildIdentifier.rootDir) },
-        { result.gradle.gradleUserHome },
-        { result.gradle.gradleVersion },
-        { result.java.run { InternalJavaEnvironment(javaHome, jvmArguments) } }
-      )
+      return InternalBuildEnvironment.convertBuildEnvironment(result)
     }
     return result
   }
