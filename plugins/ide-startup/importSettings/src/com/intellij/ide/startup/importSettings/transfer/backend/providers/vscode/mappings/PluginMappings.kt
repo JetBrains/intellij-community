@@ -52,7 +52,7 @@ internal class CommonPluginMapping : VSCodePluginMapping {
     PlatformUtils.isCLion() -> listOf("general.json", "cl.json")
     PlatformUtils.isDataGrip() -> listOf("general.json", "dg.json")
     PlatformUtils.isDataSpell() -> listOf("general.json", "ds.json")
-    PlatformUtils.isGoIde() -> listOf("general.json", "ws.json", "dg.json", "go.json")
+    PlatformUtils.isGoIde() -> listOf("general.json", "go.json")
     PlatformUtils.isPhpStorm() -> listOf("general.json", "ps.json")
     PlatformUtils.isRider() -> listOf("general.json", "rd.json")
     PlatformUtils.isRubyMine() -> listOf("general.json", "rm.json")
