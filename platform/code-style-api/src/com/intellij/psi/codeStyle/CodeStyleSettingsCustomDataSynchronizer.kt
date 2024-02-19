@@ -98,18 +98,27 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
     val commonSettingsElement = element.getChild(COMMON_SETTINGS_TAG)
     val customSettingsElement = element.getChild(CUSTOM_SETTINGS_TAG)
 
-    // Turning the current settings instance to a "default" state before applying the changes
-    // got from host is necessary because these changes represent a difference between
-    // the actual settings state on host and the default state.
-    // TODO: restore the state of each settings in case of exception during the settings modification
+    val oldCommon = common.clone(CodeStyleSettings.getDefaults())
+    val oldCustom = custom.clone() as CustomCodeStyleSettings
 
-    common.copyFrom(provider.defaultCommonSettings)
-    common.readExternal(commonSettingsElement)
+    try {
+      common.applyFromExternal(commonSettingsElement, provider.defaultCommonSettings)
+      custom.applyFromExternal(customSettingsElement, provider.createCustomSettings(CodeStyleSettings.getDefaults()))
 
-    resetToDefaultState(custom, provider.createCustomSettings(CodeStyleSettings.getDefaults()))
-    custom.readExternal(customSettingsElement)
+      CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile)
+    }
+    catch (e: Exception) {
+      try {
+        if (e is CancellationException) LOG.trace("cancellation exception during code style settings synchronization. synchronizer.id=$id")
+        else LOG.error("exception during code style settings synchronization. synchronizer.id=$id", e)
 
-    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile)
+        common.copyFrom(oldCommon)
+        custom.copyFrom(oldCustom)
+      }
+      finally {
+        if (e is CancellationException) throw e
+      }
+    }
   }
 
   private suspend fun getActiveCodeStyleSettings(project: Project,
@@ -119,16 +128,32 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
         LOG.trace { "Cannot find PSI file for ${virtualFile.path}. provider.id=$id" }
         return@readAction null
       }
-      val custom = CodeStyle.getSettings(psiFile).getCustomSettings(customCodeStyleSettingsClass)
       val common = CodeStyle.getSettings(psiFile).getCommonSettings(language)
+      val custom = CodeStyle.getSettings(psiFile).getCustomSettings(customCodeStyleSettingsClass)
       Pair(common, custom)
     }
   }
 
-  private fun resetToDefaultState(customCodeStyleSettings: T, defaultCustomSettings: CustomCodeStyleSettings) {
-    val defaultsElement = Element("default")
-    defaultCustomSettings.writeExternal(defaultsElement, customCodeStyleSettings)
-    customCodeStyleSettings.readExternal(defaultsElement)
+  private fun CommonCodeStyleSettings.applyFromExternal(commonSettingsElement: Element?,
+                                                        defaultSettings: CommonCodeStyleSettings) {
+    // Turning the current settings instance to a "default" state before applying the changes
+    // got from host is necessary because these serialized changes represent a difference between
+    // the actual settings state on host and the default state.
+    copyFrom(defaultSettings)
+    readExternal(commonSettingsElement)
+  }
+
+  private fun CustomCodeStyleSettings.applyFromExternal(customSettingsElement: Element?,
+                                                        defaultSettings: CustomCodeStyleSettings) {
+    // same as CodeStyleSettingsCustomDataSynchronizer.applyFromExternal(CommonCodeStyleSettings, Element, CommonCodeStyleSettings)
+    copyFrom(defaultSettings)
+    readExternal(customSettingsElement)
+  }
+
+  private fun CustomCodeStyleSettings.copyFrom(original: CustomCodeStyleSettings) {
+    val differenceElement = Element("difference")
+    original.writeExternal(differenceElement, this)
+    this.readExternal(differenceElement)
   }
 
   // inspired by com.intellij.util.JdomKt.toByteArray. no dependency on module with this code
