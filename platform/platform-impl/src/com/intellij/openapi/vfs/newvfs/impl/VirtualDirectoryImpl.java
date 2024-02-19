@@ -554,7 +554,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     //So the branch below is almost surely 'child just not loaded yet'
 
-    PersistentFS persistence = owningPersistentFS();
+    PersistentFSImpl persistence = owningPersistentFS();
     String name = persistence.getName(id);
     VirtualFileSystemEntry fileByName = findChild(name, false, false, getFileSystem());
     if (fileByName != null && fileByName.getId() != id) {
@@ -563,7 +563,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       boolean deleted = FSRecords.isDeleted(id);
       if (!deleted) {
         THROTTLED_LOG.info(() -> {
-          @SuppressWarnings("removal") int parentId = FSRecords.getParent(id);
+          int parentId = persistence.peer().getParent(id);
           IntOpenHashSet childrenInPersistence = new IntOpenHashSet(FSRecords.listIds(id));
           IntOpenHashSet childrenInMemory = new IntOpenHashSet(myData.myChildrenIds);
           int[] childrenNotInPersistent = childrenInMemory.intStream()
