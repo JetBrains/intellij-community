@@ -75,15 +75,19 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     }
 
     for (change in event.getChanges(ModuleEntity::class.java)) {
-      val (oldLibDeps, newLibDeps) = when (change) {
+      val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Added -> continue
-        is EntityChange.Removed -> change.entity.libraryDependenciesAsSequence() to emptySet()
-        is EntityChange.Replaced -> change.oldEntity.libraryDependenciesAsSequence() to change.newEntity.libraryDependencies()
+        is EntityChange.Removed -> change.entity.dependencies to emptyList()
+        is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 
-      oldLibDeps.filterNot { newLibDeps.contains(it) }
-        .mapNotNull { findLibrary(it, event.storageBefore) }
-        .forEach { queue.revokeSynchronization(it) }
+      val newLibDeps = newModuleDeps.filterIsInstanceTo<LibraryDependency, HashSet<LibraryDependency>>(HashSet())
+      oldLModuleDeps.forEach { oldDependency ->
+        if (oldDependency !is LibraryDependency) return@forEach
+        if (newLibDeps.contains(oldDependency)) return@forEach
+        val library = findLibrary(oldDependency, event.storageBefore) ?: return@forEach
+        queue.revokeSynchronization(library)
+      }
     }
   }
 
@@ -107,18 +111,20 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
 
 
     for (change in event.getChanges(ModuleEntity::class.java)) {
-      val (oldLibDeps, newLibDeps) = when (change) {
+      val (oldLModuleDeps, newModuleDeps) = when (change) {
         is EntityChange.Removed -> continue
-        is EntityChange.Added -> emptySet<LibraryDependency>() to change.entity.libraryDependenciesAsSequence()
-        is EntityChange.Replaced -> change.oldEntity.libraryDependencies() to change.newEntity.libraryDependenciesAsSequence()
+        is EntityChange.Added -> emptyList<ModuleDependencyItem>() to change.entity.dependencies
+        is EntityChange.Replaced -> change.oldEntity.dependencies to change.newEntity.dependencies
       }
 
-      newLibDeps.filterNot { oldLibDeps.contains(it) }
-        .mapNotNull { findLibrary(it, event.storageAfter) }
-        .forEach {
-          queue.requestSynchronization(it)
-          libraryReloadRequested = true
-        }
+      val oldLibDeps = oldLModuleDeps.filterIsInstanceTo<LibraryDependency, HashSet<LibraryDependency>>(HashSet())
+      newModuleDeps.forEach { newDependency ->
+        if (newDependency !is LibraryDependency) return@forEach
+        if (oldLibDeps.contains(newDependency)) return@forEach
+        val library = findLibrary(newDependency, event.storageAfter) ?: return@forEach
+        queue.requestSynchronization(library)
+        libraryReloadRequested = true
+      }
     }
 
     if (libraryReloadRequested) {
@@ -137,10 +143,4 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
 
   private fun findLibrary(libDep: LibraryDependency, storage: EntityStorage): LibraryEx? =
     findLibrary(libDep.library, storage)
-
-  private fun ModuleEntity.libraryDependenciesAsSequence(): Sequence<LibraryDependency> =
-    dependencies.asSequence().filterIsInstance<LibraryDependency>()
-
-  private fun ModuleEntity.libraryDependencies(): Set<LibraryDependency> =
-    libraryDependenciesAsSequence().toHashSet()
 }
