@@ -153,6 +153,14 @@ public class Element extends Content implements Parent, Serializable {
     setNamespace(namespace);
   }
 
+  @ApiStatus.Internal
+  public Element(boolean ignored, @NotNull String name, @NotNull Namespace namespace) {
+    super(CType.Element);
+
+    this.name = name;
+    this.namespace = namespace;
+  }
+
   /**
    * Create a new element with the supplied (local) name and no namespace.
    *

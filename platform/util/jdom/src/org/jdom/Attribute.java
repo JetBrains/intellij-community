@@ -54,6 +54,7 @@
 
 package org.jdom;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -61,14 +62,6 @@ import java.io.Serializable;
 /**
  * An XML attribute. Methods allow the user to obtain the value of the attribute
  * as well as namespace and type information.
- * <p>
- * <strong>JDOM 1.x Compatibility Note:</strong><br>
- * The Attribute class in JDOM 1.x had a number of int Constants declared to
- * represent different Attribute Types. JDOM2 has introduced an AttributeType
- * enumeration instead. To facilitate compatibility and to simplify JDOM 1.x
- * migrations, the replacement AttributeType enums are referenced still using
- * the JDOM 1.x constant names. In JDOM 1.x these names referenced constant
- * int values. In JDOM2 these names reference Enum constants.
  *
  * @author Brett McLaughlin
  * @author Jason Hunter
@@ -162,6 +155,13 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
     setValue(value);
     setAttributeType(type);
     setNamespace(namespace);
+  }
+
+  @ApiStatus.Internal
+  public Attribute(boolean ignored, @NotNull String name, @NotNull String value, @NotNull Namespace namespace) {
+    this.name = name;
+    this.value = value;
+    this.namespace = namespace;
   }
 
   /**
@@ -310,7 +310,7 @@ public class Attribute extends CloneBase implements Serializable, Cloneable {
   /**
    * This will retrieve the namespace prefix of the
    * <code>Attribute</code>. For any XML attribute
-   * which appears as
+   * that appears as
    * <code>[namespacePrefix]:[attributeName]</code>,
    * the namespace prefix of the attribute would be
    * <code>[namespacePrefix]</code>. When the attribute

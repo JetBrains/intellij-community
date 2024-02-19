@@ -228,7 +228,7 @@ public final class JDOMUtil {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(stream);
       try {
-        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true, null);
+        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true);
       }
       finally {
         xmlStreamReader.close();
@@ -283,7 +283,7 @@ public final class JDOMUtil {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(reader);
       try {
-        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true, null);
+        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true);
       }
       finally {
         xmlStreamReader.close();
@@ -303,7 +303,7 @@ public final class JDOMUtil {
     try {
       XMLStreamReader2 xmlStreamReader = StaxFactory.createXmlStreamReader(data);
       try {
-        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true, null);
+        return SafeStAXStreamBuilderKt.buildJdom(xmlStreamReader, true);
       }
       finally {
         xmlStreamReader.close();

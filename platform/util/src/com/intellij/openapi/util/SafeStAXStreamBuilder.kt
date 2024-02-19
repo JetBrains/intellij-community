@@ -12,18 +12,7 @@ import java.nio.file.Path
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 
-interface SafeJdomFactory {
-  fun element(name: String, namespace: Namespace?): Element
-
-  fun attribute(name: String, value: String, namespace: Namespace?): Attribute
-
-  fun text(text: String): Text
-
-  fun cdata(text: String): CDATA
-}
-
 // DTD, COMMENT and PROCESSING_INSTRUCTION are ignored
-private val JDOM_FACTORY = BaseSafeJdomFactory()
 
 @Throws(XMLStreamException::class)
 fun buildJdomDocument(stream: XMLStreamReader2): Document {
@@ -46,7 +35,7 @@ fun buildJdomDocument(stream: XMLStreamReader2): Document {
       }
       XMLStreamConstants.DTD, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION, XMLStreamConstants.SPACE -> {}
       XMLStreamConstants.START_ELEMENT -> {
-        document.setRootElement(processElementFragment(reader = stream, isNsSupported = true, factory = JDOM_FACTORY))
+        document.setRootElement(processElementFragment(reader = stream, isNsSupported = true))
       }
       XMLStreamConstants.CHARACTERS -> {
         val badTxt = stream.text
@@ -102,14 +91,13 @@ fun buildNsUnawareJdom(file: Path): Element {
 
 @Throws(XMLStreamException::class)
 fun buildNsUnawareJdomAndClose(stream: XMLStreamReader2): Element {
-  return buildJdom(stream = stream, isNsSupported = false, factory = JDOM_FACTORY)
+  return buildJdom(stream = stream, isNsSupported = false)
 }
 
 @Throws(XMLStreamException::class)
 fun buildJdom(
   stream: XMLStreamReader2,
   isNsSupported: Boolean,
-  factory: SafeJdomFactory?,
 ): Element {
   var state = stream.eventType
   if (state != XMLStreamConstants.START_DOCUMENT) {
@@ -127,11 +115,7 @@ fun buildJdom(
       XMLStreamConstants.DTD -> {
       }
       XMLStreamConstants.START_ELEMENT -> {
-        rootElement = processElementFragment(
-          reader = stream,
-          isNsSupported = isNsSupported,
-          factory = factory ?: JDOM_FACTORY,
-        )
+        rootElement = processElementFragment(reader = stream, isNsSupported = isNsSupported)
       }
       else -> throw XMLStreamException("Unexpected XMLStream event $state")
     }
@@ -155,15 +139,14 @@ fun buildJdom(
 private fun processElementFragment(
   reader: XMLStreamReader2,
   isNsSupported: Boolean,
-  factory: SafeJdomFactory,
 ): Element {
-  val fragment = processElement(reader = reader, isNsSupported = isNsSupported, factory = factory)
+  val fragment = processElement(reader = reader, isNsSupported = isNsSupported)
   var current = fragment
   var depth = 1
   while (depth > 0 && reader.hasNext()) {
     when (reader.next()) {
       XMLStreamConstants.START_ELEMENT -> {
-        val tmp = processElement(reader = reader, isNsSupported = isNsSupported, factory = factory)
+        val tmp = processElement(reader = reader, isNsSupported = isNsSupported)
         current.addContent(tmp)
         current = tmp
         depth++
@@ -172,12 +155,12 @@ private fun processElementFragment(
         current = current.parentElement ?: return fragment
         depth--
       }
-      XMLStreamConstants.CDATA -> current.addContent(factory.cdata(reader.text))
+      XMLStreamConstants.CDATA -> current.addContent(CDATA(reader.text))
       XMLStreamConstants.SPACE -> {
       }
       XMLStreamConstants.CHARACTERS -> {
         if (!reader.isWhiteSpace) {
-          current.addContent(factory.text(reader.text))
+          current.addContent(Text(reader.text))
         }
       }
       XMLStreamConstants.ENTITY_REFERENCE, XMLStreamConstants.COMMENT, XMLStreamConstants.PROCESSING_INSTRUCTION -> {}
@@ -188,22 +171,24 @@ private fun processElementFragment(
   return fragment
 }
 
-private fun processElement(reader: XMLStreamReader2, isNsSupported: Boolean, factory: SafeJdomFactory): Element {
-  val element = factory.element(reader.localName, if (isNsSupported) {
+private fun processElement(reader: XMLStreamReader2, isNsSupported: Boolean): Element {
+  val element = Element(reader.localName, if (isNsSupported) {
     Namespace.getNamespace(reader.prefix, reader.namespaceURI)
   }
   else {
     Namespace.NO_NAMESPACE
   })
+
   // handle attributes
   val attributeCount = reader.attributeCount
   if (attributeCount != 0) {
     val list = element.initAttributeList(attributeCount)
     for (i in 0 until attributeCount) {
-      list.doAdd(factory.attribute(
+      list.doAdd(Attribute(
+        true,
         reader.getAttributeLocalName(i),
         reader.getAttributeValue(i),
-        if (isNsSupported) Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) else Namespace.NO_NAMESPACE
+        if (isNsSupported) Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i)) else Namespace.NO_NAMESPACE,
       ))
     }
   }
@@ -219,22 +204,4 @@ private fun processElement(reader: XMLStreamReader2, isNsSupported: Boolean, fac
   }
 
   return element
-}
-
-private class BaseSafeJdomFactory : SafeJdomFactory {
-  override fun element(name: String, namespace: Namespace?): Element {
-    val element = Element(name, namespace)
-    if (namespace != null) {
-      element.setNamespace(namespace)
-    }
-    return element
-  }
-
-  override fun attribute(name: String, value: String, namespace: Namespace?): Attribute {
-    return Attribute(name, value, AttributeType.UNDECLARED, namespace)
-  }
-
-  override fun text(text: String): Text = Text(text)
-
-  override fun cdata(text: String): CDATA = CDATA(text)
 }
