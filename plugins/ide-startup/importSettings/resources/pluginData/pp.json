@@ -21,7 +21,7 @@
   },
   {
     "vsCodeId": "Angular.ng-template",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -41,7 +41,7 @@
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -126,7 +126,7 @@
   },
   {
     "vsCodeId": "formulahendry.vscode-mysql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -186,7 +186,7 @@
   },
   {
     "vsCodeId": "johnpapa.Angular2",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -216,7 +216,7 @@
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -241,7 +241,7 @@
   },
   {
     "vsCodeId": "ms-mssql.mssql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -396,7 +396,7 @@
   },
   {
     "vsCodeId": "techer.open-in-browser",
-    "ideaName": "open in browser",
+    "ideaName": "Open in browser",
     "builtIn": true
   },
   {

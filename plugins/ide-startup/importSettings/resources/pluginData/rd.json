@@ -46,7 +46,7 @@
   },
   {
     "vsCodeId": "Angular.ng-template",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -76,7 +76,7 @@
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -166,22 +166,22 @@
   },
   {
     "vsCodeId": "formulahendry.dotnet",
-    "ideaName": "Run Configurations",
+    "ideaName": ".NET Core Tools",
     "builtIn": true
   },
   {
     "vsCodeId": "formulahendry.dotnet-test-explorer",
-    "ideaName": ".NET Core Test Explorer",
+    "ideaName": "Test Explorer",
     "builtIn": true
   },
   {
     "vsCodeId": "formulahendry.vscode-mysql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
-    "vsCodeId": "fudge.auto-using",
-    "ideaName": "C#",
+    "vsCodeId": "Fudge.auto-using",
+    "ideaName": "Auto-Using for C#",
     "builtIn": true
   },
   {
@@ -211,7 +211,7 @@
   },
   {
     "vsCodeId": "icsharpcode.ilspy-vscode",
-    "ideaName": ".NET Decompiler",
+    "ideaName": "ilspy-vscode",
     "builtIn": true
   },
   {
@@ -231,17 +231,17 @@
   },
   {
     "vsCodeId": "jmrog.vscode-nuget-package-manager",
-    "ideaName": "NuGet Package Manager",
+    "ideaName": "NuGet",
     "builtIn": true
   },
   {
     "vsCodeId": "johnpapa.Angular2",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
-    "ideaName": "Live Templates",
+    "ideaName": "C# Snippets",
     "builtIn": true
   },
   {
@@ -251,7 +251,7 @@
   },
   {
     "vsCodeId": "kleber-swf.unity-code-snippets",
-    "ideaName": "Unity",
+    "ideaName": "Unity Code Snippets",
     "builtIn": true
   },
   {
@@ -271,7 +271,7 @@
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -321,8 +321,13 @@
   },
   {
     "vsCodeId": "ms-mssql.mssql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
+  },
+  {
+    "vsCodeId": "ms-mssql.sql-database-projects-vscode",
+    "ideaName": "SQL Database Projects",
+    "builtIn": true
   },
   {
     "vsCodeId": "ms-python.python",

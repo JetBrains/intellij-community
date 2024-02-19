@@ -16,7 +16,7 @@
   },
   {
     "vsCodeId": "Angular.ng-template",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -136,7 +136,7 @@
   },
   {
     "vsCodeId": "johnpapa.Angular2",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -266,7 +266,7 @@
   },
   {
     "vsCodeId": "techer.open-in-browser",
-    "ideaName": "open in browser",
+    "ideaName": "Open in browser",
     "builtIn": true
   },
   {

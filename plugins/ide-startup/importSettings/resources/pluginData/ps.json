@@ -21,7 +21,7 @@
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -71,7 +71,7 @@
   },
   {
     "vsCodeId": "formulahendry.vscode-mysql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -101,7 +101,7 @@
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {

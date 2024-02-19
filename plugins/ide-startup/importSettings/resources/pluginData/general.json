@@ -2,7 +2,7 @@
   {
     "vsCodeId": "bungcip.better-toml",
     "ideaName": "TOML",
-    "builtIn": true
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "donjayamanne.githistory",
