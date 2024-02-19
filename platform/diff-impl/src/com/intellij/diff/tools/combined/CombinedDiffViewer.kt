@@ -597,7 +597,10 @@ class CombinedDiffViewer(
       newViewer.editors.forEach { editor ->
         (editor.scrollingModel as? ScrollingModelImpl)
           ?.addScrollRequestListener({ _, scrollType ->
-                                       combinedEditorsScrollingModel.scrollToCaret(scrollType)
+                                       if (editor in viewer.getCurrentDiffViewer()?.editors.orEmpty()) {
+                                         //e.g., scroll to caret emitted from editor search session (next/prev occurence action)
+                                         combinedEditorsScrollingModel.scrollToCaret(scrollType)
+                                       }
                                      }, newViewer)
       }
     }
