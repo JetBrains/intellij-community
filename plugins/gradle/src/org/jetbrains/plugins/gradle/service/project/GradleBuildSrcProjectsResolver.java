@@ -129,7 +129,7 @@ public final class GradleBuildSrcProjectsResolver {
 
       final String buildSrcProjectPath = buildPath + "/buildSrc";
       DefaultProjectResolverContext buildSrcResolverCtx =
-        new DefaultProjectResolverContext(mySyncTaskId, buildSrcProjectPath, buildSrcProjectSettings, myListener, myResolverContext.getPolicy(), false);
+        new DefaultProjectResolverContext(mySyncTaskId, buildSrcProjectPath, buildSrcProjectSettings, myListener, myResolverContext.getPolicy());
       myResolverContext.copyUserDataTo(buildSrcResolverCtx);
       String buildName = index.buildNames().get(buildPath);
 
@@ -252,14 +252,6 @@ public final class GradleBuildSrcProjectsResolver {
     }
 
     if (ArrayUtil.isEmpty(projectPathFile.list((dir, name) -> !name.equals(".gradle") && !name.equals("build")))) {
-      return;
-    }
-
-    if (buildSrcResolverCtx.isPreviewMode()) {
-      ModuleData buildSrcModuleData =
-        new ModuleData(":buildSrc", GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), BUILD_SRC_NAME, projectPath, projectPath);
-      GradleModuleDataKt.setBuildSrcModule(buildSrcModuleData);
-      resultProjectDataNode.createChild(ProjectKeys.MODULE, buildSrcModuleData);
       return;
     }
 

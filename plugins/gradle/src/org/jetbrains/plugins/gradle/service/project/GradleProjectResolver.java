@@ -143,7 +143,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     DefaultProjectResolverContext resolverContext =
-      new DefaultProjectResolverContext(syncTaskId, projectPath, settings, listener, gradleResolverPolicy, false);
+      new DefaultProjectResolverContext(syncTaskId, projectPath, settings, listener, gradleResolverPolicy);
     final CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
     myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
 
@@ -217,8 +217,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
     var buildAction = useCustomSerialization
-                      ? new GradleModelFetchActionWithCustomSerializer(resolverCtx.isPreviewMode())
-                      : new GradleModelFetchAction(resolverCtx.isPreviewMode());
+                      ? new GradleModelFetchActionWithCustomSerializer()
+                      : new GradleModelFetchAction();
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -684,8 +684,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                    @NotNull ProjectResolverContext resolverCtx,
                                                    boolean useCustomSerialization) {
     resolverCtx.setModels(models);
-    final Class<? extends ExternalProject> modelClazz = resolverCtx.isPreviewMode() ? ExternalProjectPreview.class : ExternalProject.class;
-    final ExternalProject externalRootProject = models.getModel(modelClazz);
+    final ExternalProject externalRootProject = models.getModel(ExternalProject.class);
     if (externalRootProject == null) return;
 
     final DefaultExternalProject wrappedExternalRootProject =
@@ -702,7 +701,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     for (Build includedBuild : models.getIncludedBuilds()) {
-      final ExternalProject externalIncludedRootProject = models.getModel(includedBuild, modelClazz);
+      final ExternalProject externalIncludedRootProject = models.getModel(includedBuild, ExternalProject.class);
       if (externalIncludedRootProject == null) continue;
       final DefaultExternalProject wrappedExternalIncludedRootProject = useCustomSerialization
                                                                         ? (DefaultExternalProject)externalIncludedRootProject

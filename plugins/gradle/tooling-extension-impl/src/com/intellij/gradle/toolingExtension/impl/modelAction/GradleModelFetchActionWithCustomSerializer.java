@@ -9,13 +9,9 @@ import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializerConve
 
 @ApiStatus.Internal
 public final class GradleModelFetchActionWithCustomSerializer extends GradleModelFetchAction {
-  public GradleModelFetchActionWithCustomSerializer(boolean isPreviewMode) {
-    super(isPreviewMode);
-  }
 
-  @NotNull
   @Override
-  protected ModelConverter getToolingModelConverter(@NotNull BuildController controller) {
+  protected @NotNull ModelConverter getToolingModelConverter(@NotNull BuildController controller) {
     return new ToolingSerializerConverter(controller);
   }
 }

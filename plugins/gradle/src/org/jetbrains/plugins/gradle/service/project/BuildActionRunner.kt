@@ -7,7 +7,6 @@ import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.*
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
-import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
 import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
@@ -100,9 +99,8 @@ class BuildActionRunner(
 
     // Old gradle distribution version used (before ver. 1.8)
     // fallback to use ModelBuilder gradle tooling API
-    val aClass = if (resolverCtx.isPreviewMode) BasicIdeaProject::class.java else IdeaProject::class.java
     val modelBuilder = helper.getModelBuilder(
-      aClass,
+      IdeaProject::class.java,
       resolverCtx.connection,
       resolverCtx.externalSystemTaskId,
       settings,

@@ -41,7 +41,6 @@ public class GradleCustomModelFetchAction {
   private final @NotNull ExecutorService myModelConverterExecutor;
   private final @NotNull GradleOpenTelemetry myTelemetry;
 
-  private final boolean myIsPreviewMode;
   private final boolean myIsProjectsLoadedAction;
 
   public GradleCustomModelFetchAction(
@@ -50,7 +49,6 @@ public class GradleCustomModelFetchAction {
     @NotNull ModelConverter modelConverter,
     @NotNull ExecutorService modelConverterExecutor,
     @NotNull GradleOpenTelemetry telemetry,
-    boolean isPreviewMode,
     boolean isProjectsLoadedAction
   ) {
     myAllModels = allModels;
@@ -60,7 +58,6 @@ public class GradleCustomModelFetchAction {
     myModelConverterExecutor = modelConverterExecutor;
     myTelemetry = telemetry;
 
-    myIsPreviewMode = isPreviewMode;
     myIsProjectsLoadedAction = isProjectsLoadedAction;
   }
 
@@ -178,10 +175,7 @@ public class GradleCustomModelFetchAction {
       });
     }
     catch (Exception e) {
-      // do not fail project import in a preview mode
-      if (!myIsPreviewMode) {
-        throw new ExternalSystemException(e);
-      }
+      throw new ExternalSystemException(e);
     }
   }
 

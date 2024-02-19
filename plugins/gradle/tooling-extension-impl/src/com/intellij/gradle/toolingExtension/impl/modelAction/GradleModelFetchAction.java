@@ -41,7 +41,6 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   private final Set<ProjectImportModelProvider> myModelProviders = new LinkedHashSet<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
 
-  private final boolean myIsPreviewMode;
   private boolean myUseProjectsLoadedPhase;
   private @Nullable GradleTracingContext myTracingContext = null;
 
@@ -49,10 +48,6 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   private transient @Nullable GradleBuild myGradleBuild = null;
   private transient @Nullable ModelConverter myModelConverter = null;
   private transient @Nullable GradleOpenTelemetry myTelemetry = null;
-
-  public GradleModelFetchAction(boolean isPreviewMode) {
-    myIsPreviewMode = isPreviewMode;
-  }
 
   public GradleModelFetchAction addProjectImportModelProviders(
     @NotNull Collection<? extends ProjectImportModelProvider> providers
@@ -171,7 +166,6 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
       myModelConverter,
       converterExecutor,
       telemetry,
-      myIsPreviewMode,
       isProjectsLoadedAction
     );
     buildAction.execute(new DefaultBuildController(controller, myGradleBuild));

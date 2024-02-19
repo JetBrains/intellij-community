@@ -41,8 +41,6 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   ExternalSystemTaskNotificationListener getListener();
 
-  boolean isPreviewMode();
-
   boolean isResolveModulePerSourceSet();
 
   boolean isUseQualifiedModuleNames();

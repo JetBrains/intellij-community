@@ -140,7 +140,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   private @NotNull AllModels fetchAllModels(@NotNull List<? extends ProjectImportModelProvider> modelProviders) {
-    GradleModelFetchAction buildAction = new GradleModelFetchAction(false)
+    GradleModelFetchAction buildAction = new GradleModelFetchAction()
       .addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject.class))
       .addProjectImportModelProviders(modelProviders);
 
