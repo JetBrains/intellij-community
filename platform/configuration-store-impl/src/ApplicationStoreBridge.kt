@@ -8,7 +8,7 @@ import com.intellij.openapi.components.*
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
-import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element
@@ -16,26 +16,32 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 
 internal class AppStorageContentReader : JpsFileContentReader {
-  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? = loadComponentTimeMs.addMeasuredTime {
-    val filePath = JpsPathUtil.urlToPath(fileUrl)
-    val element: Element? = if (isApplicationLevelFile(filePath)) {
-      val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
-      @Suppress("UNCHECKED_CAST")
-      (ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>)
-        .getStorageData()
-        .getElement(componentName)
+  override fun loadComponent(
+    fileUrl: String,
+    componentName: String,
+    customModuleFilePath: String?,
+  ): Element? {
+    return loadComponentTimeMs.addMeasuredTime {
+      val filePath = JpsPathUtil.urlToPath(fileUrl)
+      val element: Element? = if (isApplicationLevelFile(filePath)) {
+        val storageSpec = FileStorageAnnotation(PathUtilRt.getFileName(filePath), false, StateSplitterEx::class.java)
+        @Suppress("UNCHECKED_CAST")
+        (ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>)
+          .getStorageData()
+          .getElement(componentName)
+      }
+      else {
+        null
+      }
+      return@addMeasuredTime element
     }
-    else {
-      null
-    }
-    return@addMeasuredTime element
   }
 
-  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap =
-    PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
+  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
+    return PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
+  }
 
-  private fun isApplicationLevelFile(filePath: String): Boolean =
-    Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
+  private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
 
   companion object {
     private val loadComponentTimeMs = MillisecondsMeasurer()
@@ -69,7 +75,7 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
     saveComponentTimeMs.addMeasuredTime {
       val filePath = JpsPathUtil.urlToPath(fileUrl)
       if (isApplicationLevelFile(filePath)) {
-        val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
+        val storageSpec = FileStorageAnnotation(PathUtilRt.getFileName(filePath), false, StateSplitterEx::class.java)
 
         @Suppress("UNCHECKED_CAST")
         val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>

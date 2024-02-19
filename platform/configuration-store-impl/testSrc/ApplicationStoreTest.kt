@@ -3,7 +3,6 @@
 
 package com.intellij.configurationStore
 
-import com.intellij.configurationStore.ApplicationStoreImpl.ApplicationStateStorageManager
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
