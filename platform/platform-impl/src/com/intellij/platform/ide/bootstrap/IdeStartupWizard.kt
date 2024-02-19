@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -21,6 +22,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration.Companion.milliseconds
 
 private val log = logger<IdeStartupWizard>()
+
+val isIdeStartupDialogEnabled: Boolean
+  get() = !ApplicationManagerEx.isInIntegrationTest() &&
+          System.getProperty("intellij.startup.dialog", "true").toBoolean()
 
 val isIdeStartupWizardEnabled: Boolean
   get() = System.getProperty("intellij.startup.wizard", "true").toBoolean() && IdeStartupExperiment.isExperimentEnabled()

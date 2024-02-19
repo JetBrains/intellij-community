@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 
@@ -234,7 +234,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     if (ConfigImportHelper.isNewUser()) {
       enableNewUi(logDeferred)
 
-      if (isIdeStartupWizardEnabled) {
+      if (isIdeStartupDialogEnabled) {
         log.info("Will enter initial app wizard flow.")
         val result = CompletableDeferred<Boolean>()
         isInitialStart = result
