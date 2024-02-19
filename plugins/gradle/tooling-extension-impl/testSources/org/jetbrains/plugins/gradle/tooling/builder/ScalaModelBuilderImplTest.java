@@ -6,7 +6,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels;
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction.AllModels;
 import org.jetbrains.plugins.gradle.model.scala.ScalaCompileOptions;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
 import org.junit.Test;

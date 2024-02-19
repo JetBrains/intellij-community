@@ -8,6 +8,7 @@ import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExtern
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;

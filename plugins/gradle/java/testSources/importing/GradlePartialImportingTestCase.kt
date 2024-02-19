@@ -8,9 +8,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
-import org.jetbrains.plugins.gradle.model.ModelsHolder
+import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import java.util.function.Predicate

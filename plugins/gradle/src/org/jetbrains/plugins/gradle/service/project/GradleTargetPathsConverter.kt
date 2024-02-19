@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider
-import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction.AllModels
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.ReflectionTraverser
 import java.io.Closeable

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.tooling.core.Extras
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.settings.DistributionType

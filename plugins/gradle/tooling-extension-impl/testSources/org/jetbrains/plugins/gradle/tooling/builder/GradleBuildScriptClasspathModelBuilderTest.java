@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction;
 import org.junit.Test;
 
 import java.io.File;

@@ -13,7 +13,7 @@ import org.gradle.internal.impldep.org.objectweb.asm.ClassReader
 import org.gradle.internal.impldep.org.objectweb.asm.Type
 import org.gradle.tooling.BuildAction
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction
 import java.net.JarURLConnection
 import java.net.URL
 import java.util.concurrent.ConcurrentMap

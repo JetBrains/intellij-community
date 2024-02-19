@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.Build
 import org.jetbrains.plugins.gradle.model.Project
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction
 import java.util.stream.Collectors
 import java.util.stream.Stream
 

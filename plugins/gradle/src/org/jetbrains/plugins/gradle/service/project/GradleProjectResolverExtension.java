@@ -36,7 +36,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
-import org.jetbrains.plugins.gradle.model.ModelsHolder;
+import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 
 import java.util.*;

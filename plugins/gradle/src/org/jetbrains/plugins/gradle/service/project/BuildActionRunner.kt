@@ -9,9 +9,9 @@ import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
-import org.jetbrains.plugins.gradle.model.ModelsHolder
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
-import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels
+import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction.AllModels
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings

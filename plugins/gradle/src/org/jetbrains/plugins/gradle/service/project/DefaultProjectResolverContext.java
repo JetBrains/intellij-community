@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
+import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
