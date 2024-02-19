@@ -21,12 +21,8 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.JavaTokenType.LBRACE;
@@ -106,17 +102,15 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
 
   @Nullable
   private static PsiElement getStartContentElement(@NotNull PsiJavaModule module) {
-    PsiElement[] children = module.getChildren();
-    for (PsiElement child : children) {
-      if (child.getNode().getElementType() == LBRACE) {
-        return child;
-      }
+    PsiElement child = module.getFirstChild();
+    while (child != null && child.getNode().getElementType() != LBRACE) {
+      child = child.getNextSibling();
     }
-    return null;
+    return child;
   }
 
   private static Set<PsiJavaModule> walk(@NotNull PsiJavaModule descriptor,
-                                         @NotNull Function<@NotNull PsiJavaModule, @NotNull Boolean> function) {
+                                         @NotNull Predicate<@NotNull PsiJavaModule> shouldProcessFollowingFile) {
     PsiFile descriptorFile = descriptor.getContainingFile().getOriginalFile();
     Module module = ModuleUtilCore.findModuleForFile(descriptorFile);
     if (module == null) return Set.of();
@@ -126,10 +120,10 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
     ModuleFileIndex fileIndex = rootManager.getFileIndex();
 
     // collect descriptors
-    Map<PsiImportStatement, PsiJavaModule> imports = new ConcurrentHashMap<>();
+    Map<PsiImportStatement, PsiJavaModule> imports = new HashMap<>();
     ImportsCollector collector = new ImportsCollector(psiManager, statement -> {
       PsiJavaModule result = imports.computeIfAbsent(statement, stmt -> findDescriptor(stmt.resolve()));
-      return result == null || function.apply(result);
+      return result == null || shouldProcessFollowingFile.test(result);
     });
     DependencyScope scope = getScope(descriptor);
     for (VirtualFile root : rootManager.getSourceRoots()) {
@@ -180,23 +174,22 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
     @NotNull
     private final PsiManager myPsiManager;
     @NotNull
-    private final Function<PsiImportStatement, Boolean> myFunction;
+    private final Predicate<PsiImportStatement> myShouldProcessFollowingFile;
 
-    private ImportsCollector(@NotNull PsiManager manager, @NotNull Function<PsiImportStatement, Boolean> function) {
+    private ImportsCollector(@NotNull PsiManager manager, @NotNull Predicate<PsiImportStatement> shouldProcessFollowingFile) {
       myPsiManager = manager;
-      myFunction = function;
+      myShouldProcessFollowingFile = shouldProcessFollowingFile;
     }
 
     @Override
     public boolean processFile(@NotNull VirtualFile fileOrDir) {
       PsiFile file = myPsiManager.findFile(fileOrDir);
       if (file == null) return true;
-      if (file instanceof PsiJavaFile javaFile) {
-        PsiImportList imports = javaFile.getImportList();
-        if (imports == null) return true;
-        for (PsiImportStatement importStatement : imports.getImportStatements()) {
-          if (!myFunction.apply(importStatement)) return false;
-        }
+      if (!(file instanceof PsiJavaFile javaFile)) return true;
+      PsiImportList imports = javaFile.getImportList();
+      if (imports == null) return true;
+      for (PsiImportStatement importStatement : imports.getImportStatements()) {
+        if (!myShouldProcessFollowingFile.test(importStatement)) return false;
       }
       return true;
     }
