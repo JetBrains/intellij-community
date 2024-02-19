@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @ApiStatus.Internal
 public class GradleModelFetchAction {
 
-  private final @NotNull ProjectImportAction.AllModels myAllModels;
+  private final @NotNull AllModels myAllModels;
 
   private final @NotNull Set<ProjectImportModelProvider> myModelProviders;
   private final @NotNull ModelConverter myModelConverter;
@@ -45,7 +45,7 @@ public class GradleModelFetchAction {
   private final boolean myIsProjectsLoadedAction;
 
   public GradleModelFetchAction(
-    @NotNull ProjectImportAction.AllModels allModels,
+    @NotNull AllModels allModels,
     @NotNull Set<ProjectImportModelProvider> modelProviders,
     @NotNull ModelConverter modelConverter,
     @NotNull ExecutorService modelConverterExecutor,

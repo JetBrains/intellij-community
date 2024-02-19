@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
 import com.intellij.testFramework.registerServiceInstance
@@ -10,7 +11,6 @@ import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
-import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import java.util.function.Predicate
@@ -81,7 +81,7 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
       if (rootProjectLoadedModel.map.containsValue("error")) {
         val project = resolverCtx.externalSystemTaskId.findProject()!!
         val modelConsumer = project.getService(ModelConsumer::class.java)
-        val build = (models as ProjectImportAction.AllModels).mainBuild
+        val build = (models as AllModels).mainBuild
         for (gradleProject in build.projects) {
           val projectLoadedModel = models.getModel(gradleProject, ProjectLoadedModel::class.java)!!
           modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)

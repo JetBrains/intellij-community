@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -119,8 +120,8 @@ fun <T : Any> buildGradleModel(
 
         val allModels = runBlocking {
             suspendCoroutine { continuation ->
-                val buildActionResultHandler = object : ResultHandler<ProjectImportAction.AllModels> {
-                    override fun onComplete(result: ProjectImportAction.AllModels) {
+                val buildActionResultHandler = object : ResultHandler<AllModels> {
+                    override fun onComplete(result: AllModels) {
                         continuation.resume(result)
                     }
 

@@ -8,7 +8,7 @@ import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExtern
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
-import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -265,7 +265,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    ProjectImportAction.AllModels models = resolverCtx.getModels();
+    AllModels models = resolverCtx.getModels();
     ExternalTestsModel externalTestsModel = models.getModel(gradleModule, ExternalTestsModel.class);
     if (externalTestsModel != null) {
       for (ExternalTestSourceMapping testSourceMapping : externalTestsModel.getTestSourceMappings()) {

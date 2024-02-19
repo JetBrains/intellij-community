@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
-import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
@@ -37,7 +37,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final CancellationTokenSource myCancellationTokenSource;
   private ProjectConnection myConnection;
   @NotNull
-  private ProjectImportAction.AllModels myModels;
+  private AllModels myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
   @Nullable private String myBuildSrcGroup;
@@ -149,12 +149,12 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @NotNull
   @Override
-  public ProjectImportAction.AllModels getModels() {
+  public AllModels getModels() {
     return myModels;
   }
 
   @Override
-  public void setModels(@NotNull ProjectImportAction.AllModels models) {
+  public void setModels(@NotNull AllModels models) {
     myModels = models;
   }
 

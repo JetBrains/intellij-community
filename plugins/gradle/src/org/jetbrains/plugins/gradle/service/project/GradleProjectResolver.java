@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction;
 import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportActionWithCustomSerializer;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
@@ -271,7 +272,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
 
-    ProjectImportAction.AllModels allModels;
+    AllModels allModels;
     int errorsCount = 0;
     CountDownLatch buildFinishWaiter = new CountDownLatch(1);
 
@@ -358,7 +359,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   @NotNull
-  private DataNode<ProjectData> convertData(@NotNull ProjectImportAction.AllModels allModels,
+  private DataNode<ProjectData> convertData(@NotNull AllModels allModels,
                                             @NotNull GradleExecutionSettings executionSettings,
                                             @NotNull DefaultProjectResolverContext resolverCtx,
                                             @Nullable GradleVersion gradleVersion,
@@ -614,7 +615,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   @NotNull
-  private static Collection<IdeaModule> exposeCompositeBuild(ProjectImportAction.AllModels allModels,
+  private static Collection<IdeaModule> exposeCompositeBuild(AllModels allModels,
                                                              DefaultProjectResolverContext resolverCtx,
                                                              DataNode<ProjectData> projectDataNode) {
     if (resolverCtx.getSettings() != null && !resolverCtx.getSettings().getExecutionWorkspace().getBuildParticipants().isEmpty()) {
@@ -680,7 +681,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static void extractExternalProjectModels(@NotNull ProjectImportAction.AllModels models,
+  private static void extractExternalProjectModels(@NotNull AllModels models,
                                                    @NotNull ProjectResolverContext resolverCtx,
                                                    boolean useCustomSerialization) {
     resolverCtx.setModels(models);
@@ -980,7 +981,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return context;
   }
 
-  private static void exportRecordedTraces(@NotNull ProjectImportAction.AllModels allModels) {
+  private static void exportRecordedTraces(@NotNull AllModels allModels) {
     byte[] traces = allModels.getOpenTelemetryTrace();
     if (traces.length == 0) {
       return;

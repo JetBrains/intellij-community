@@ -4,20 +4,16 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.BuildModel;
-import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.build.GradleEnvironment;
 import org.gradle.tooling.model.build.JavaEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +30,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
  */
-public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
+public class ProjectImportAction implements BuildAction<AllModels>, Serializable {
 
   private final Set<ProjectImportModelProvider> myModelProviders = new LinkedHashSet<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
@@ -241,96 +236,6 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         .collect(Collectors.toSet());
     }
     return myModelProviders;
-  }
-
-  // Note: This class is NOT thread safe, and it is supposed to be used from a single thread.
-  //       Performance logging related methods are thread safe.
-  public static final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
-    @NotNull private final List<Build> includedBuilds = new ArrayList<>();
-    private transient Map<String, String> myBuildsKeyPrefixesMapping;
-    private byte[] openTelemetryTrace = ArrayUtilRt.EMPTY_BYTE_ARRAY;
-
-    public AllModels(@NotNull GradleBuild mainBuild) {
-      super(DefaultBuild.convertGradleBuild(mainBuild));
-    }
-
-    public AllModels(@NotNull IdeaProject ideaProject) {
-      super(DefaultBuild.convertIdeaProject(ideaProject));
-      addModel(ideaProject, IdeaProject.class);
-    }
-
-    @NotNull
-    public Build getMainBuild() {
-      return (Build)getRootModel();
-    }
-
-    @NotNull
-    public List<Build> getIncludedBuilds() {
-      return includedBuilds;
-    }
-
-    @ApiStatus.Internal
-    public void addIncludedBuild(@NotNull Build includedBuild) {
-      includedBuilds.add(includedBuild);
-    }
-
-    @NotNull
-    public List<Build> getAllBuilds() {
-      List<Build> result = new ArrayList<>();
-      result.add(getMainBuild());
-      result.addAll(includedBuilds);
-      return result;
-    }
-
-    @Nullable
-    public BuildEnvironment getBuildEnvironment() {
-      return getModel(BuildEnvironment.class);
-    }
-
-    public void setBuildEnvironment(@Nullable BuildEnvironment buildEnvironment) {
-      if (buildEnvironment != null) {
-        addModel(buildEnvironment, BuildEnvironment.class);
-      }
-    }
-
-    public byte[] getOpenTelemetryTrace() {
-      return openTelemetryTrace;
-    }
-
-    public void setOpenTelemetryTrace(byte[] openTelemetryTrace) {
-      this.openTelemetryTrace = openTelemetryTrace;
-    }
-
-    @Override
-    public void applyPathsConverter(@NotNull Consumer<Object> pathsConverter) {
-      super.applyPathsConverter(pathsConverter);
-      BuildEnvironment buildEnvironment = getBuildEnvironment();
-      if (buildEnvironment != null) {
-        pathsConverter.accept(buildEnvironment);
-      }
-      myBuildsKeyPrefixesMapping = new HashMap<>();
-      convertPaths(pathsConverter, getMainBuild());
-      for (Build includedBuild : includedBuilds) {
-        convertPaths(pathsConverter, includedBuild);
-      }
-    }
-
-    private void convertPaths(@NotNull Consumer<Object> fileMapper, @NotNull Build build) {
-      String originalKey = getBuildKeyPrefix(build.getBuildIdentifier());
-      fileMapper.accept(build);
-      String currentKey = getBuildKeyPrefix(build.getBuildIdentifier());
-      if (!originalKey.equals(currentKey)) {
-        myBuildsKeyPrefixesMapping.put(currentKey, originalKey);
-      }
-    }
-
-    @NotNull
-    @Override
-    protected String getBuildKeyPrefix(@NotNull BuildIdentifier buildIdentifier) {
-      String currentKey = super.getBuildKeyPrefix(buildIdentifier);
-      String originalKey = myBuildsKeyPrefixesMapping == null ? null : myBuildsKeyPrefixesMapping.get(currentKey);
-      return originalKey == null ? currentKey : originalKey;
-    }
   }
 
   // Use this static class as a simple ThreadFactory to prevent a memory leak when passing an anonymous ThreadFactory object to
