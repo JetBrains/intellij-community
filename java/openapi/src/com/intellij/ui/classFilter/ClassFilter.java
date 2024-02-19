@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -124,15 +125,7 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   }
 
   public static ClassFilter @NotNull [] deepCopyOf(ClassFilter @NotNull [] original) {
-    if (original.length == 0) {
-      return EMPTY_ARRAY;
-    }
-
-    final ClassFilter[] copy = new ClassFilter[original.length];
-    for (int i = 0; i < copy.length; i++) {
-      copy[i] = original[i].clone();
-    }
-    return copy;
+    return ContainerUtil.map(original, ClassFilter::clone, EMPTY_ARRAY);
   }
 
 }
