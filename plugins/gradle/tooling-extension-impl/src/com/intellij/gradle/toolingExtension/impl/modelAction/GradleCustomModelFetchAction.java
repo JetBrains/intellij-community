@@ -63,20 +63,18 @@ public class GradleCustomModelFetchAction {
 
   public void execute(@NotNull DefaultBuildController controller) {
     GradleBuild mainGradleBuild = controller.getBuildModel();
-
-    //We only need these later, but need to fetch them before fetching other models because of https://github.com/gradle/gradle/issues/20008
-    Set<GradleBuild> nestedBuilds = myTelemetry.callWithSpan("NestedBuildsResolve", span -> getNestedBuilds(controller, mainGradleBuild));
-
-    myTelemetry.runWithSpan("MainBuildAddModels", span -> addModels(controller, mainGradleBuild));
-    myTelemetry.runWithSpan("IncludedBuildAddModels", span -> {
+    Set<GradleBuild> nestedBuilds = myTelemetry.callWithSpan("NestedBuildsResolve", span ->
+      getNestedBuilds(controller, mainGradleBuild)
+    );
+    if (!myIsProjectsLoadedAction) {
       for (GradleBuild includedBuild : nestedBuilds) {
-        if (!myIsProjectsLoadedAction) {
-          myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
-        }
-        addModels(controller, includedBuild);
+        myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
       }
-    });
-    setupIncludedBuildsHierarchy(myAllModels.getIncludedBuilds(), nestedBuilds);
+      setupIncludedBuildsHierarchy(myAllModels.getIncludedBuilds(), nestedBuilds);
+    }
+
+    addModels(controller, mainGradleBuild, nestedBuilds);
+
     if (myIsProjectsLoadedAction) {
       controller.getModel(TurnOffDefaultTasks.class);
     }
@@ -155,21 +153,17 @@ public class GradleCustomModelFetchAction {
       .forEachOrdered(it -> consumer.accept(it.getKey(), it.getValue()));
   }
 
-  private void addModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
+  private void addModels(
+    @NotNull BuildController controller,
+    @NotNull GradleBuild rootGradleBuild,
+    @NotNull Set<GradleBuild> nestedGradleBuilds
+  ) {
     try {
       forEachModelFetchPhase((phase, modelProviders) -> {
-        myTelemetry.runWithSpan("AddProjectModels", span -> {
-          span.setAttribute("phase", phase.name());
-          for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
-            for (ProjectImportModelProvider modelProvider : modelProviders) {
-              addProjectModels(controller, gradleProject, modelProvider);
-            }
-          }
-        });
-        myTelemetry.runWithSpan("AddBuildModels", span -> {
-          span.setAttribute("phase", phase.name());
-          for (ProjectImportModelProvider modelProvider : modelProviders) {
-            addBuildModels(controller, gradleBuild, modelProvider);
+        myTelemetry.runWithSpan(phase.name(), span -> {
+          addModels(controller, rootGradleBuild, modelProviders);
+          for (GradleBuild nestedGradleBuild : nestedGradleBuilds) {
+            addModels(controller, nestedGradleBuild, modelProviders);
           }
         });
       });
@@ -177,6 +171,25 @@ public class GradleCustomModelFetchAction {
     catch (Exception e) {
       throw new ExternalSystemException(e);
     }
+  }
+
+  private void addModels(
+    @NotNull BuildController controller,
+    @NotNull GradleBuild gradleBuild,
+    @NotNull Collection<ProjectImportModelProvider> modelProviders
+  ) {
+    myTelemetry.runWithSpan("AddProjectModels", span -> {
+      for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
+        for (ProjectImportModelProvider modelProvider : modelProviders) {
+          addProjectModels(controller, gradleProject, modelProvider);
+        }
+      }
+    });
+    myTelemetry.runWithSpan("AddBuildModels", span -> {
+      for (ProjectImportModelProvider modelProvider : modelProviders) {
+        addBuildModels(controller, gradleBuild, modelProvider);
+      }
+    });
   }
 
   private void addProjectModels(
