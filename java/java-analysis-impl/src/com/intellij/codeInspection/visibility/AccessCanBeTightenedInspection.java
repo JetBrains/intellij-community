@@ -101,6 +101,10 @@ public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspect
       int currentLevel = PsiUtil.getAccessLevel(memberModifierList);
       int suggestedLevel = suggestLevel(member, memberClass, currentLevel);
       if (memberClass != null) {
+        if (memberClass instanceof PsiImplicitClass && currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
+          // Do not suggest making the members of implicit classes private
+          return;
+        }
         synchronized (maxSuggestedLevelForChildMembers) {
           int prevMax = maxSuggestedLevelForChildMembers.getInt(memberClass);
           maxSuggestedLevelForChildMembers.put(memberClass, Math.max(prevMax, suggestedLevel));
