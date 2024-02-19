@@ -7,7 +7,7 @@ import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
-import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup;
+import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.LineFragment;
@@ -86,7 +86,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   @NotNull protected final UnifiedDiffPanel myPanel;
   @NotNull private final OnesideContentPanel myContentPanel;
 
-  @NotNull private final SetEditorSettingsActionGroup myEditorSettingsAction;
+  @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final MyStatusPanel myStatusPanel;
 
@@ -136,7 +136,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     myFoldingModel = new MyFoldingModel(getProject(), myEditor, this);
     myMarkupUpdater = new MarkupUpdater(getContents());
 
-    myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
+    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
     myTextDiffProvider = DiffUtil.createNoIgnoreTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);

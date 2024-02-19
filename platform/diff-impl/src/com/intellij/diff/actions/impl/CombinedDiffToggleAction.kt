@@ -1,11 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl
 
+import com.intellij.diff.tools.combined.CombinedDiffRegistry
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.shouldConvertIconToDarkVariant
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
@@ -17,6 +20,8 @@ class CombinedDiffToggleAction : DumbAwareAction() {
     super.update(e)
     val diffModeToggle = getDiffModeToggle(e)
     e.presentation.isEnabledAndVisible = diffModeToggle != null
+    e.presentation.putClientProperty(ActionMenu.SECONDARY_ICON, null)
+
     diffModeToggle ?: return
 
     if (diffModeToggle.isCombinedDiffEnabled) {
@@ -35,6 +40,9 @@ class CombinedDiffToggleAction : DumbAwareAction() {
     else {
       e.presentation.icon = null
       e.presentation.selectedIcon = null
+      if (CombinedDiffRegistry.showBadge()) {
+        e.presentation.putClientProperty(ActionMenu.SECONDARY_ICON, AllIcons.General.New_badge)
+      }
     }
   }
 

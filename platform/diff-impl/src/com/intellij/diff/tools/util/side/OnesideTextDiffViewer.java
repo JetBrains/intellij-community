@@ -4,7 +4,7 @@ package com.intellij.diff.tools.util.side;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
-import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup;
+import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -35,14 +35,14 @@ import java.util.List;
 public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
   @NotNull private final List<? extends EditorEx> myEditableEditors;
 
-  @NotNull protected final SetEditorSettingsActionGroup myEditorSettingsAction;
+  @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
 
   public OnesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
 
     myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
 
-    myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), getEditors());
+    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().install(getEditors());

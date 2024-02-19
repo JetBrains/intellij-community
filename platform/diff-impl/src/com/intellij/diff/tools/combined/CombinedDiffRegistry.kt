@@ -3,6 +3,7 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.editor.DiffEditorViewerFileEditor.Companion.reloadDiffEditorsForFiles
 import com.intellij.diff.editor.DiffViewerVirtualFile
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
@@ -25,6 +26,12 @@ object CombinedDiffRegistry {
   fun getMaxBlockCountInMemory(): Int = Registry.intValue("combined.diff.loaded.content.limit")
 
   fun getFilesLimit(): Int = Registry.intValue("combined.diff.files.limit")
+
+  private const val BADGE_ID = "combined.diff.badge.shown"
+
+  fun showBadge(): Boolean = !PropertiesComponent.getInstance().getBoolean(BADGE_ID, false)
+
+  fun resetBadge() = PropertiesComponent.getInstance().setValue(BADGE_ID, true)
 }
 
 class CombinedDiffAdvancedSettingsChangeListener : AdvancedSettingsChangeListener {

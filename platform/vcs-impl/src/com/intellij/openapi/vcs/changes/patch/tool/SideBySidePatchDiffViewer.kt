@@ -6,7 +6,7 @@ import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.FocusOppositePaneAction
-import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
+import com.intellij.diff.actions.impl.SetEditorSettingsAction
 import com.intellij.diff.comparison.ByWord
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.comparison.DiffTooBigException
@@ -59,7 +59,7 @@ internal class SideBySidePatchDiffViewer(
 
   private val prevNextDifferenceIterable: MyPrevNextDifferenceIterable
   private val focusTrackerSupport: FocusTrackerSupport<Side>
-  private val editorSettingsAction: SetEditorSettingsActionGroup
+  private val editorSettingsAction: SetEditorSettingsAction
   private val syncScrollable: MySyncScrollable
   private val syncScrollSupport: TwosideSyncScrollSupport
   private val alignedDiffModel: AlignedDiffModel
@@ -108,7 +108,7 @@ internal class SideBySidePatchDiffViewer(
     MyFocusOppositePaneAction(true).install(panel)
     MyFocusOppositePaneAction(false).install(panel)
 
-    editorSettingsAction = SetEditorSettingsActionGroup(textSettings, editors)
+    editorSettingsAction = SetEditorSettingsAction(textSettings, editors)
     editorSettingsAction.setSyncScrollSupport(syncScrollSupport)
     editorSettingsAction.applyDefaults()
   }

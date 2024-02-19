@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.diff.*;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
-import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup;
+import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeModelBase;
 import com.intellij.diff.requests.SimpleDiffRequest;
@@ -70,7 +70,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   @NotNull private final StatusPanel myStatusPanel;
   @NotNull private final MyFoldingModel myFoldingModel;
 
-  @NotNull private final SetEditorSettingsActionGroup myEditorSettingsAction;
+  @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
 
   // Changes with known AppliedTo. Ordered as in result-editor
   @NotNull private final List<ApplyPatchChange> myResultChanges = new ArrayList<>();
@@ -135,7 +135,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     new TextDiffViewerUtil.EditorFontSizeSynchronizer(editors).install(this);
 
-    myEditorSettingsAction = new SetEditorSettingsActionGroup(getTextSettings(), editors);
+    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), editors);
     myEditorSettingsAction.applyDefaults();
 
     ProxyUndoRedoAction.register(myProject, myResultEditor, myContentPanel);
