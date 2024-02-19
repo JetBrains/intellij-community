@@ -12,6 +12,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
@@ -36,7 +37,7 @@ internal class JsonSchemaObjectStorage {
   }
 
   fun getOrComputeSchemaRootObject(schemaFile: VirtualFile): JsonSchemaObject? {
-    if (isNotLoadedHttpFile(schemaFile)) return null
+    if (!isSupportedSchemaFile(schemaFile)) return null
 
     return parsedSchemaById[schemaFile.asSchemaId()]
       .takeIf { it !is MissingJsonSchemaObject }
@@ -48,6 +49,18 @@ internal class JsonSchemaObjectStorage {
     return parsedSchemaById[maybeSchemaFile.asSchemaId()]
       .takeIf { it !is MissingJsonSchemaObject }
   }
+
+
+  private fun isSupportedSchemaFile(maybeSchemaFile: VirtualFile): Boolean {
+    return  isSupportedSchemaFileType(maybeSchemaFile.fileType)
+            && !isNotLoadedHttpFile(maybeSchemaFile)
+  }
+
+  private fun isSupportedSchemaFileType(fileType: FileType): Boolean {
+    return fileType.name in supportedFileTypeNames
+  }
+
+  private val supportedFileTypeNames = setOf("JSON", "JSON5", "YAML")
 
   private fun isNotLoadedHttpFile(maybeHttpFile: VirtualFile): Boolean {
     return maybeHttpFile is HttpVirtualFile && maybeHttpFile.fileInfo?.state != RemoteFileState.DOWNLOADED
