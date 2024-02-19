@@ -73,7 +73,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
                     val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm, editor.document)
                     editor.putUserData(GitLabMergeRequestEditorReviewUIModel.KEY, model)
                     try {
-                      showGutterMarkers(model, editor)
+                      CodeReviewEditorGutterChangesRenderer.setupIn(cs, model, editor)
                       CodeReviewEditorGutterControlsRenderer.setupIn(cs, model, editor)
                       editor.controlInlaysIn(cs, model.inlays, { it.key }) { createRenderer(model, it) }
                       awaitCancellation()
@@ -92,22 +92,6 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
           }
         }
     }.cancelOnDispose(editorDisposable)
-  }
-
-  private fun CoroutineScope.showGutterMarkers(model: GitLabMergeRequestEditorReviewUIModel, editor: Editor) {
-    val disposable = Disposer.newDisposable()
-    val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable)
-
-    launchNow {
-      try {
-        model.reviewRanges.collect {
-          renderer.scheduleUpdate()
-        }
-      }
-      finally {
-        Disposer.dispose(disposable)
-      }
-    }
   }
 
   private fun CoroutineScope.createRenderer(model: GitLabMergeRequestEditorReviewUIModel,
