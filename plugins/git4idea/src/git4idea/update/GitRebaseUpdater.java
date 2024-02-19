@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,7 +65,7 @@ public final class GitRebaseUpdater extends GitUpdater {
 
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = Collections.singletonList(remoteBranch);
-    GitUpdateResult result = new GitRebaser(myProject, myGit, myProgressIndicator).rebase(myRoot, params);
+    GitUpdateResult result = new GitRebaser(myProject, myGit, myProgressIndicator).rebase(myRoot, params, null);
     if (result == GitUpdateResult.CANCEL) {
       new GitRebaser(myProject, myGit, myProgressIndicator).abortRebase(myRoot);
     }

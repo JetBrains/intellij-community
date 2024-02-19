@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -221,7 +221,7 @@ public final class GitUpdateProcess {
       final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
       new GitPreservingProcess(myProject, myGit, myRootsToSave, GitBundle.message("git.update.operation"),
                                GitBundle.message("progress.update.destination.remote"),
-                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, () -> {
+                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, false, () -> {
         LOG.info("updateImpl: updating...");
         GitRepository currentlyUpdatedRoot = null;
         try {

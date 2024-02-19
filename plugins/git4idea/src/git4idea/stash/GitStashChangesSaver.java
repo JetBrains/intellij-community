@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -43,6 +43,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private final @NotNull GitRepositoryManager myRepositoryManager;
   private final @NotNull Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
+
+  private boolean myReportLocalHistoryActivity = true;
 
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
@@ -104,7 +106,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
         handler.addParameters("--index");
       }
       return handler;
-    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams));
+    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams), myReportLocalHistoryActivity);
     myProgressIndicator.setText(oldProgressTitle);
   }
 
@@ -120,6 +122,10 @@ public class GitStashChangesSaver extends GitChangesSaver {
     } else {
       GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
     }
+  }
+
+  void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myReportLocalHistoryActivity = reportLocalHistoryActivity;
   }
 
   @Override

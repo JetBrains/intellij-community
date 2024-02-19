@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.ActivityId;
@@ -81,16 +81,16 @@ public class RollbackWorker {
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @NotNull @NlsContexts.Label String localHistoryActionName,
-                         @NotNull ActivityId activityId,
+                         @Nullable ActivityId activityId,
                          boolean honorExcludedFromCommit) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(localHistoryActionName, activityId);
+      LocalHistoryAction action = activityId != null ? LocalHistory.getInstance().startAction(localHistoryActionName, activityId) : null;
 
       final Runnable afterRefresh = () -> {
-        action.finish();
+        if (action != null) action.finish();
         LocalHistory.getInstance().putSystemLabel(myProject, localHistoryActionName, -1);
 
         InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
