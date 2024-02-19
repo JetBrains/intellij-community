@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.flow

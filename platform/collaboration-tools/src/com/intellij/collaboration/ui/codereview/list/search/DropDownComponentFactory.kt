@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
-import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.util.NlsContexts

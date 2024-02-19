@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gitlab.mergerequest.util
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SelectablePopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SimpleSelectablePopupItemRenderer

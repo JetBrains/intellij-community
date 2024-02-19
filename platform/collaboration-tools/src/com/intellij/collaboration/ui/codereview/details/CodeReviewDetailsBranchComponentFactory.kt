@@ -5,9 +5,9 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
-import com.intellij.collaboration.ui.util.popup.ShowDirection
 import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
 import com.intellij.collaboration.ui.util.popup.showAndAwait
 import com.intellij.openapi.ui.popup.JBPopupFactory
