@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 internal class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val filter: ProjectIndexableFilesFilter) {
+  @Volatile
   private var healthCheckFuture: ScheduledFuture<*>? = null
 
   fun setUpHealthCheck() {
