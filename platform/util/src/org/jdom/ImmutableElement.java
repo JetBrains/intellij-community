@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -310,7 +310,7 @@ final class ImmutableElement extends Element {
 
   //////////////////////////////////////////////////////////////////////
   @Override
-  public Element detach() {
+  public @NotNull Element detach() {
     throw immutableError(this);
   }
 

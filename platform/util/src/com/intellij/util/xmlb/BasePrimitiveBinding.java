@@ -14,7 +14,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 @ApiStatus.Internal
-abstract class BasePrimitiveBinding implements PrimitiveValueBinding {
+public abstract class BasePrimitiveBinding implements PrimitiveValueBinding {
   protected final MutableAccessor accessor;
   protected final String name;
 

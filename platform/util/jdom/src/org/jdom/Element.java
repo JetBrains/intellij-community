@@ -60,6 +60,7 @@ import org.jdom.filter2.ElementFilter;
 import org.jdom.filter2.Filters;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -72,10 +73,9 @@ import static org.jdom.JDOMConstants.NS_PREFIX_DEFAULT;
 import static org.jdom.JDOMConstants.NS_PREFIX_XML;
 
 /**
- * An XML element. Methods allow the user to get and manipulate its child
- * elements and content, directly access the element's textual content,
- * manipulate its attributes, and manage namespaces.
- * <p>
+ * An XML element.
+ * Methods allow the user to get and manipulate its child elements and content,
+ * directly access the element's textual content, manipulate its attributes, and manage namespaces.
  *
  * @author Brett McLaughlin
  * @author Jason Hunter
@@ -112,7 +112,7 @@ public class Element extends Content implements Parent, Serializable {
    * The attributes of the element.  Subclasses have to
    * track attributes using their own mechanism.
    */
-  transient AttributeList attributes = null; // = new AttributeList(this);
+  transient AttributeList attributes = null;
 
   /**
    * The content of the element.  Subclasses have to
@@ -180,8 +180,7 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * Creates a new element with the supplied (local) name and a namespace
-   * given by the supplied prefix and URI combination.
+   * Creates a new element with the supplied (local) name and a namespace given by the supplied prefix and URI combination.
    *
    * @param name   local name of the element
    * @param prefix namespace prefix
@@ -209,8 +208,7 @@ public class Element extends Content implements Parent, Serializable {
    *
    * @param name the new (local) name of the element
    * @return the target element
-   * @throws IllegalNameException if the given name is illegal as an Element
-   *                              name
+   * @throws IllegalNameException if the given name is illegal as an Element name
    */
   public Element setName(final String name) {
     final String reason = Verifier.checkElementName(name);
@@ -274,9 +272,8 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * Returns the namespace URI mapped to this element's prefix (or the
-   * in-scope default namespace URI if no prefix). If no mapping is found, an
-   * empty string is returned.
+   * Returns the namespace URI mapped to this element's prefix (or the in-scope default namespace URI if no prefix).
+   * If no mapping is found, an empty string is returned.
    *
    * @return the namespace URI for this element
    */
@@ -1007,10 +1004,8 @@ public class Element extends Content implements Parent, Serializable {
    * @return attribute for the element
    */
   public Attribute getAttribute(final String name, final Namespace ns) {
-    if (attributes == null) {
-      return null;
-    }
-    return getAttributeList().get(name, ns);
+    AttributeList attributes = this.attributes;
+    return attributes == null ? null : attributes.get(name, ns);
   }
 
   /**
@@ -1074,7 +1069,8 @@ public class Element extends Content implements Parent, Serializable {
    * @return the named attribute's value, or the default if no such attribute
    */
   public String getAttributeValue(String name, Namespace ns, String defaultValue) {
-    Attribute attribute = attributes == null ? null : getAttributeList().get(name, ns);
+    AttributeList attributes = this.attributes;
+    Attribute attribute = attributes == null ? null : attributes.get(name, ns);
     return attribute == null ? defaultValue : attribute.getValue();
   }
 
@@ -1121,7 +1117,7 @@ public class Element extends Content implements Parent, Serializable {
    *                             or if any of the <code>Attribute</code> objects have
    *                             conflicting namespace prefixes.
    */
-  public Element setAttributes(final Collection<? extends Attribute> newAttributes) {
+  public Element setAttributes(@Nullable Collection<? extends Attribute> newAttributes) {
     getAttributeList().clearAndSet(newAttributes);
     return this;
   }
@@ -1212,10 +1208,7 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * <p>
-   * This removes the attribute with the given name and within no
-   * namespace. If no such attribute exists, this method does nothing.
-   * </p>
+   * This removes the attribute with the given name and within no namespace. If no such attribute exists, this method does nothing.
    *
    * @param name name of attribute to remove
    * @return whether the attribute was removed
@@ -1229,41 +1222,31 @@ public class Element extends Content implements Parent, Serializable {
   }
 
   /**
-   * <p>
-   * This removes the attribute with the given name and within the
-   * given Namespace.  If no such attribute exists, this method does
-   * nothing.
-   * </p>
+   * This removes the attribute with the given name and within the given Namespace. If no such attribute exists, this method does nothing.
    *
    * @param name name of attribute to remove
    * @param ns   namespace URI of attribute to remove. A null implies Namespace.NO_NAMESPACE.
    * @return whether the attribute was removed
    */
-  public boolean removeAttribute(final String name, final Namespace ns) {
-    if (attributes == null) {
-      return false;
-    }
-    return getAttributeList().remove(name, ns);
+  public boolean removeAttribute(String name, Namespace ns) {
+    AttributeList attributes = this.attributes;
+    return attributes != null && attributes.remove(name, ns);
   }
 
   /**
-   * <p>
    * This removes the supplied Attribute should it exist.
-   * </p>
    *
    * @param attribute Reference to the attribute to be removed.
    * @return whether the attribute was removed
    */
   public boolean removeAttribute(final Attribute attribute) {
-    if (attributes == null) {
-      return false;
-    }
-    return getAttributeList().remove(attribute);
+    AttributeList attributes = this.attributes;
+    return attributes != null && attributes.remove(attribute);
   }
 
   @Override
   public String toString() {
-    final StringBuilder stringForm = new StringBuilder(64)
+    StringBuilder stringForm = new StringBuilder(64)
       .append("[Element: <")
       .append(getQualifiedName());
 
