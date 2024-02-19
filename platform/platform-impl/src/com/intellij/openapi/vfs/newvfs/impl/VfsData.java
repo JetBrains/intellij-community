@@ -199,10 +199,7 @@ public final class VfsData {
       FSRecordsImpl vfs = segment.owningVfsData.owningPersistentFS().peer();
       //FIXME RC: move .describeAlreadyCreatedFile() from FSRecordsImpl -- here, and replace static call with
       //  vfs instance call:
-      String msg = FSRecords.describeAlreadyCreatedFile(id, nameId);
-      final FileAlreadyCreatedException exception = new FileAlreadyCreatedException(msg);
-      vfs.scheduleRebuild(msg, exception);
-      throw exception;
+      throw new FileAlreadyCreatedException(FSRecords.describeAlreadyCreatedFile(id, nameId));
     }
     segment.myObjectArray.set(offset, data);
   }
