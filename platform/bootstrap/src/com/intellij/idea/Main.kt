@@ -23,6 +23,7 @@ import com.intellij.platform.ide.bootstrap.startApplication
 import com.intellij.platform.impl.toolkit.IdeFontManager
 import com.intellij.platform.impl.toolkit.IdeGraphicsEnvironment
 import com.intellij.platform.impl.toolkit.IdeToolkit
+import com.intellij.util.ui.JBHtmlEditorKit
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import sun.font.FontManagerFactory
@@ -222,6 +223,8 @@ private fun initLux() {
   setStaticField(FontManagerFactory::class.java, "instance", IdeFontManager())
   @Suppress("SpellCheckingInspection")
   System.setProperty("sun.font.fontmanager", IdeFontManager::class.java.canonicalName)
+
+  JBHtmlEditorKit.DISABLE_TEXT_LAYOUT = true
 }
 
 private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {
