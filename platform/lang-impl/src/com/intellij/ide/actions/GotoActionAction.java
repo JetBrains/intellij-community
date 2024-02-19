@@ -70,7 +70,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
                                         @JdkConstants.InputEventMask int modifiers) {
     GotoActionModel.ActionWrapper wrapper = element instanceof AnAction ? null : (GotoActionModel.ActionWrapper)element;
     AnAction action = element instanceof AnAction ? (AnAction)element : wrapper.getAction();
-    Presentation presentation = wrapper != null && wrapper.hasPresentation() ? wrapper.getPresentation() :
+    Presentation presentation = wrapper != null ? wrapper.getPresentation() :
                                 action.getTemplatePresentation().clone();
     InputEvent inputEvent = e != null ? e.getInputEvent() : null;
     DataManager dataManager = DataManager.getInstance();

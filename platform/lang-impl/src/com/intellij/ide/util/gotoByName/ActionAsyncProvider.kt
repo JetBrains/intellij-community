@@ -247,7 +247,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         for ((text, action) in getIntentionsMap()) {
           if (model.actionMatches(pattern, matcher, action) != MatchMode.NONE) {
             val groupMapping = GroupMapping.createFromText(text, false)
-            send(ActionWrapper(action, groupMapping, MatchMode.INTENTION, model, presentationProvider(action)))
+            send(ActionWrapper(action, groupMapping, MatchMode.INTENTION, presentationProvider(action)))
           }
         }
       }
@@ -321,7 +321,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
           for (converter in ActionFromOptionDescriptorProvider.EP.extensionList) {
             val action = converter.provide(description)
             if (action != null) {
-              send(ActionWrapper(action, null, MatchMode.NAME, model, presentationProvider(action)))
+              send(ActionWrapper(action, null, MatchMode.NAME, presentationProvider(action)))
             }
           }
           send(description)
@@ -345,7 +345,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   private fun wrapAnAction(action: AnAction, presentation: Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
     val groupMapping = model.getGroupMapping(action)
     groupMapping?.updateBeforeShow(model.updateSession)
-    return ActionWrapper(action, groupMapping, matchMode, model, presentation)
+    return ActionWrapper(action, groupMapping, matchMode, presentation)
   }
 
   private fun buildWeightMatcher(pattern: String): MinusculeMatcher = NameUtil.buildMatcher("*$pattern")

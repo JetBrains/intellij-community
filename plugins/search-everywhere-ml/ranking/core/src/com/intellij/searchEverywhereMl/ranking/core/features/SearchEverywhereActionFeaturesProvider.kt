@@ -132,7 +132,7 @@ internal class SearchEverywhereActionFeaturesProvider :
     data.addIfTrue(IS_SEARCH_ACTION, action is SearchEverywhereBaseAction)
     data.addIfTrue(IS_TOGGLE_ACTION_DATA_KEY, action is ToggleAction)
 
-    val presentation = if (value is ActionWrapper && value.hasPresentation()) value.presentation else action.templatePresentation
+    val presentation = (value as? ActionWrapper)?.presentation ?: action.templatePresentation
     data.add(HAS_ICON_KEY.with(presentation.icon != null))
     data.add(IS_ENABLED.with(presentation.isEnabled))
     data.add(WEIGHT_KEY.with(presentation.weight))

@@ -24,7 +24,7 @@ abstract class SemanticActionsProvider(
                                              pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     val action = actionManager.getAction(name) ?: return emptyList()
     val actionWrapper = GotoActionModel.ActionWrapper(
-      action, actionModel.getGroupMapping(action), MatchMode.NAME, actionModel, presentationProvider(action))
+      action, actionModel.getGroupMapping(action), MatchMode.NAME, presentationProvider(action))
 
     // Remove disabled actions from results:
     if (!includeDisabledActions && !actionWrapper.isAvailable) return emptyList()
