@@ -141,9 +141,9 @@ internal class CombinedIgnorePolicySettingAction(settings: TextDiffSettingsHolde
 internal class CombinedHighlightPolicySettingAction(settings: TextDiffSettingsHolder.TextDiffSettings) :
   TextDiffViewerUtil.HighlightPolicySettingAction(settings, *SmartTextDiffProvider.HIGHLIGHT_POLICIES)
 
-internal class CombinedEditorSettingsAction(private val settings: TextDiffSettingsHolder.TextDiffSettings,
-                                            private val foldingModels: () -> List<FoldingModelSupport>,
-                                            editors: () -> List<Editor>) : SetEditorSettingsAction(settings, editors) {
+internal class CombinedEditorSettingsActionGroup(private val settings: TextDiffSettingsHolder.TextDiffSettings,
+                                                 private val foldingModels: () -> List<FoldingModelSupport>,
+                                                 editors: () -> List<Editor>) : SetEditorSettingsActionGroup(settings, editors) {
   init {
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }

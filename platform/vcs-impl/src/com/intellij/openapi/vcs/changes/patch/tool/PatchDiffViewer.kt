@@ -5,7 +5,7 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.EditorDiffViewer
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
-import com.intellij.diff.actions.impl.SetEditorSettingsAction
+import com.intellij.diff.actions.impl.SetEditorSettingsActionGroup
 import com.intellij.diff.tools.holders.EditorHolder
 import com.intellij.diff.tools.holders.TextEditorHolder
 import com.intellij.diff.tools.util.DiffDataKeys
@@ -40,7 +40,7 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
   private val editorHolder: EditorHolder
 
   private val prevNextDifferenceIterable: MyPrevNextDifferenceIterable
-  private val editorSettingsAction: SetEditorSettingsAction
+  private val editorSettingsAction: SetEditorSettingsActionGroup
 
   private var hunks: List<Hunk> = mutableListOf()
 
@@ -64,7 +64,7 @@ internal class PatchDiffViewer(private val diffContext: DiffContext,
 
     prevNextDifferenceIterable = MyPrevNextDifferenceIterable()
 
-    editorSettingsAction = SetEditorSettingsAction(TextDiffViewerUtil.getTextSettings(diffContext), editors)
+    editorSettingsAction = SetEditorSettingsActionGroup(TextDiffViewerUtil.getTextSettings(diffContext), editors)
     editorSettingsAction.applyDefaults()
   }
 

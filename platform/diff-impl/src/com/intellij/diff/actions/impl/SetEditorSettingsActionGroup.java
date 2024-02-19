@@ -24,20 +24,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
+public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettings myTextSettings;
   private final @NotNull Supplier<? extends List<? extends Editor>> myEditors;
   @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
 
   protected final AnAction @NotNull [] myActions;
 
-  public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
-                                 @NotNull List<? extends Editor> editors) {
+  public SetEditorSettingsActionGroup(@NotNull TextDiffSettings settings,
+                                      @NotNull List<? extends Editor> editors) {
     this(settings, () -> editors);
   }
 
-  public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
-                                 @NotNull Supplier<? extends List<? extends Editor>> editors) {
+  public SetEditorSettingsActionGroup(@NotNull TextDiffSettings settings,
+                                      @NotNull Supplier<? extends List<? extends Editor>> editors) {
     super(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain);
     setPopup(true);
     myTextSettings = settings;
