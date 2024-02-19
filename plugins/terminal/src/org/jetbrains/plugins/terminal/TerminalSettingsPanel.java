@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -24,6 +25,7 @@ import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -70,7 +72,10 @@ public final class TerminalSettingsPanel {
   private ActionLink myConfigureTerminalKeybindingsActionLink;
   private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
   private JBCheckBox myUseOptionAsMetaKey;
+
+  private JPanel myNewUiPanel;
   private JBCheckBox myNewUiCheckbox;
+  private JBLabel myBetaLabel;
 
   private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
@@ -85,7 +90,8 @@ public final class TerminalSettingsPanel {
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
-    myNewUiCheckbox.setVisible(ExperimentalUI.isNewUI());
+    myNewUiPanel.setVisible(ExperimentalUI.isNewUI());
+    myBetaLabel.setIcon(AllIcons.General.Beta);
 
     myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
     myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
