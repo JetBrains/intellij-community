@@ -611,28 +611,15 @@ abstract class ComponentStoreImpl : IComponentStore {
   ): StateGetter<Any> {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
+
     // getting state after loading with an active controller can lead to unusual issues - disable write protection
-    if (useLoadedStateAsExisting && storage is StorageBaseEx<*> && storage.controller == null && isUseLoadedStateAsExisting(storage)) {
-      return storage.createGetSession(
-        component = component,
-        componentName = componentName,
-        stateClass = stateClass,
-        reload = reloadData,
-        pluginId = info.pluginId,
-      )
+    if (useLoadedStateAsExisting && storage is XmlElementStorage && storage.controller == null && isUseLoadedStateAsExisting(storage)) {
+      return storage.createGetSession(component, componentName, info.pluginId, stateClass, reloadData)
     }
 
     return object : StateGetter<Any> {
-      override fun getState(mergeInto: Any?): Any? {
-        return storage.getState(
-          component = component,
-          componentName = componentName,
-          pluginId = info.pluginId,
-          stateClass = stateClass,
-          mergeInto = mergeInto,
-          reload = reloadData,
-        )
-      }
+      override fun getState(mergeInto: Any?): Any? =
+        storage.getState(component, componentName, info.pluginId, stateClass, mergeInto, reloadData)
 
       override fun archiveState(): Any? = null
     }

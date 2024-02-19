@@ -2,12 +2,17 @@
 package com.intellij.configurationStore
 
 import com.fasterxml.aalto.UncheckedStreamException
+import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
@@ -36,7 +41,7 @@ abstract class XmlElementStorage protected constructor(
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
   @JvmField val storageRoamingType: RoamingType,
   private val provider: StreamProvider? = null
-) : StorageBaseEx<StateMap>() {
+) : StateStorageBase<StateMap>() {
   override val saveStorageDataOnReload: Boolean
     get() = provider == null || provider.saveStorageDataOnReload
 
@@ -47,8 +52,69 @@ abstract class XmlElementStorage protected constructor(
   final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? =
     storageData.getState(key = componentName, archive)
 
-  final override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
-    storageData.archive(key = componentName, state = serializedState)
+  internal fun <S : Any> createGetSession(
+    component: PersistentStateComponent<S>,
+    componentName: String,
+    pluginId: PluginId,
+    stateClass: Class<S>,
+    reload: Boolean,
+  ): StateGetter<S> = StateGetterImpl(component, componentName, pluginId, getStorageData(reload), stateClass, storage = this)
+
+  private class StateGetterImpl<S : Any>(
+    private val component: PersistentStateComponent<S>,
+    private val componentName: String,
+    private val pluginId: PluginId,
+    private val storageData: StateMap,
+    private val stateClass: Class<S>,
+    private val storage: XmlElementStorage,
+  ) : StateGetter<S> {
+    private var serializedState: Element? = null
+
+    override fun getState(mergeInto: S?): S? {
+      LOG.assertTrue(serializedState == null)
+      serializedState = storage.getSerializedState(storageData, component, componentName, archive = false)
+      return deserializeStateWithController(stateElement = serializedState, stateClass, mergeInto, storage.controller, componentName, pluginId)
+    }
+
+    override fun archiveState(): S? {
+      if (serializedState == null) {
+        return null
+      }
+
+      val stateAfterLoad = try {
+        component.state
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        PluginException.logPluginError(LOG, "Cannot get state after load", e, component.javaClass)
+        null
+      }
+
+      val serializedStateAfterLoad = if (stateAfterLoad == null) {
+        serializedState
+      }
+      else {
+        serializeState(state = stateAfterLoad, componentName, pluginId, controller = null)
+          ?.normalizeRootName()
+          ?.takeIf { !it.isEmpty }
+      }
+
+      if (ApplicationManager.getApplication().isUnitTestMode &&
+          serializedState != serializedStateAfterLoad &&
+          (serializedStateAfterLoad == null || !JDOMUtil.areElementsEqual(serializedState, serializedStateAfterLoad))) {
+        LOG.debug {
+          "$componentName (from ${component.javaClass.name}) state changed after load. " +
+          "\nOld: ${JDOMUtil.writeElement(serializedState!!)}\n" +
+          "\nNew: ${serializedStateAfterLoad?.let { JDOMUtil.writeElement(it) } ?: "null"}\n"
+        }
+      }
+
+      storageData.archive(key = componentName, state = serializedStateAfterLoad)
+
+      return stateAfterLoad
+    }
   }
 
   final override fun loadData(): StateMap = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY

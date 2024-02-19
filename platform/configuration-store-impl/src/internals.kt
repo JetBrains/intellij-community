@@ -26,6 +26,13 @@ internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""
 
 internal data class Macro(@JvmField val key: String, @JvmField var value: Path)
 
+@ApiStatus.Internal
+interface StateGetter<S : Any> {
+  fun getState(mergeInto: S? = null): S?
+
+  fun archiveState(): S?
+}
+
 internal fun isSpecialStorage(collapsedPath: String): Boolean =
   collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
 
