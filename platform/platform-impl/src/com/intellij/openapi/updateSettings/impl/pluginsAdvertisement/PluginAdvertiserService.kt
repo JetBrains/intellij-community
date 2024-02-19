@@ -53,6 +53,7 @@ sealed interface PluginAdvertiserService {
       return getSuggestedCommercialIdeCode(thisProductCode) != null
     }
 
+    @JvmStatic
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
         "IC", "AS" -> "IU"
@@ -61,6 +62,7 @@ sealed interface PluginAdvertiserService {
       }
     }
 
+    @JvmStatic
     fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
 
     @Suppress("HardCodedStringLiteral")

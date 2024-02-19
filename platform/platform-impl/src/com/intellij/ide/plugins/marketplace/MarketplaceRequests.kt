@@ -23,6 +23,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TimeoutCachedValue
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.*
@@ -376,12 +377,20 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return pluginNode.name
   }
 
-  private fun getTagsForUi(pluginNode: PluginNode): MutableList<String> {
+  private fun getTagsForUi(pluginNode: PluginNode): Collection<String> {
     if (pluginNode.suggestedCommercialIde != null) {
-      // drop Paid in Community edition if it is Ultimate-only plugin
+      // drop Paid in a Community edition if it is Ultimate-only plugin
       val newTags = (pluginNode.tags ?: emptyList()).toMutableList()
-      newTags -= Tags.Paid.name
-      newTags += Tags.Ultimate.name
+
+      if (PlatformUtils.isIdeaCommunity()) {
+        newTags -= Tags.Paid.name
+        newTags += Tags.Ultimate.name
+      }
+      else if (PlatformUtils.isPyCharmCommunity()) {
+        newTags -= Tags.Paid.name
+        newTags += Tags.Pro.name
+      }
+
       return newTags
     }
 
