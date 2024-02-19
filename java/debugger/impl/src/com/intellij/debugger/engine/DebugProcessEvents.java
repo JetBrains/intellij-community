@@ -615,6 +615,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     return (RequestHint)event.request().getProperty("hint");
   }
 
+  @Nullable
   private static Object getCommandToken(Event event) {
     return event.request().getProperty("commandToken");
   }
