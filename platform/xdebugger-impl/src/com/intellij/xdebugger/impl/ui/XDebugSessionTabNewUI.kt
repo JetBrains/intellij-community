@@ -51,7 +51,12 @@ open class XDebugSessionTabNewUI(
 
   override fun initToolbars(session: XDebugSessionImpl) {
     val isVerticalToolbar = Registry.get("debugger.new.tool.window.layout.toolbar").isOptionEnabled("Vertical")
-    (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(isVerticalToolbar)
+    (myUi as? RunnerLayoutUiImpl)?.also {
+      it.setLeftToolbarVisible(isVerticalToolbar)
+      if (Registry.`is`("debugger.toolbar.before.tabs", true)) {
+        it.setTopLeftActionsBefore(true)
+      }
+    }
 
     val toolbar = DefaultActionGroupWithDelegate(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
 
