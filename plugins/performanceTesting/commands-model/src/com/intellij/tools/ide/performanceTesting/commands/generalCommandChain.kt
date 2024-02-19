@@ -959,3 +959,7 @@ fun <T : CommandChain> T.repeatCommand(times: Int, commandChain: (CommandChain) 
     commandChain.invoke(this)
   }
 }
+
+fun <T : CommandChain> T.createScratchFile(filename: String, content: String): T = apply {
+  addCommand("${CMD_PREFIX}createScratchFile $filename $content")
+}
