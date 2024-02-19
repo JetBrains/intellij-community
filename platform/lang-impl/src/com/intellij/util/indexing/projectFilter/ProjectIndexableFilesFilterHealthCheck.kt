@@ -70,9 +70,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
         error.fix()
       }
 
-      val checkForExcludedFiles = errors.size <= Registry.intValue("index.files.filter.check.excluded.files.limit")
-      val errorsToReport = if (checkForExcludedFiles) ReadAction.nonBlocking(Callable { filterErrorsToReport(errors) }).executeSynchronously()
-      else errors
+      val (excludedFilesWereFilteredOut, errorsToReport) = tryToFilterOutExcludedFiles(errors)
 
       if (errors.size > errorsToReport.size) {
         FileBasedIndexImpl.LOG.info("${errors.size - errorsToReport.size} of ${filter.javaClass.simpleName} health check errors were filtered out")
@@ -88,7 +86,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
           }
         }
 
-      val checkForExcludedFilesInfo = if (checkForExcludedFiles) "Excluded files were filtered out."
+      val checkForExcludedFilesInfo = if (excludedFilesWereFilteredOut) "Excluded files were filtered out."
       else "Check for excluded files was skipped, errors might be false-positive."
 
       FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errorsToReport.size} errors in project ${project.name}.\n" +
@@ -104,7 +102,20 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     }
   }
 
-  private fun filterErrorsToReport(errors: List<HealthCheckError>): List<HealthCheckError> {
+  private fun tryToFilterOutExcludedFiles(errors: List<HealthCheckError>): Pair<Boolean, List<HealthCheckError>> {
+    val checkForExcludedFiles = errors.size <= Registry.intValue("index.files.filter.check.excluded.files.limit")
+    if (!checkForExcludedFiles) {
+      return Pair(false, errors)
+    }
+    try {
+      return Pair(true, ReadAction.nonBlocking(Callable { filterOutExcludedFiles(errors) }).executeSynchronously())
+    }
+    catch (ignored: ProcessCanceledException) {
+      return Pair(false, errors)
+    }
+  }
+
+  private fun filterOutExcludedFiles(errors: List<HealthCheckError>): List<HealthCheckError> {
     val projectFileIndex = ProjectFileIndex.getInstance(project)
     return errors.filter {  error ->
       if (error !is NotIndexableFileIsInFilterError) true
