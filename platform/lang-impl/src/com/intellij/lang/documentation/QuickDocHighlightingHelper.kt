@@ -290,7 +290,7 @@ object QuickDocHighlightingHelper {
       "li p { padding-top: 0; padding-bottom: 0; }",
       "th { text-align: left; }",
       "tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }",
-      "td { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
+      "td { margin: 0 0 0 0; padding: 0 ${spacing}px ${spacing}px 0; }",
       "td p { padding-top: 0; padding-bottom: 0; }",
       "td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }",
       ".$CLASS_CENTERED { text-align: center}",
