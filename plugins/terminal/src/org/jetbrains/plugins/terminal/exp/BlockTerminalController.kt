@@ -60,7 +60,7 @@ class BlockTerminalController(
     // And there will be no blinking of prompt in this case.
     promptVisibilityAlarm.addRequest(Runnable {
       promptController.promptIsVisible = false
-    }, 50)
+    }, 150)
     session.commandManager.sendCommandToExecute(command)
     session.model.isCommandRunning = true
   }
