@@ -18,7 +18,7 @@ object PyCharmPromoCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private const val FUS_GROUP_ID = "pycharm.promo"
-  private val GROUP = EventLogGroup(FUS_GROUP_ID, 1)
+  private val GROUP = EventLogGroup(FUS_GROUP_ID, 2)
   private val PromoEventSourceField = EventFields.Enum("source", PromoEventSource::class.java) { it.name.lowercase() }
   private val PromoTopicField = EventFields.Enum("topic", PromoTopic::class.java) { it.name.lowercase() }
   internal val PromoOpenDownloadPageEvent = GROUP.registerEvent("open.download.page", PromoEventSourceField, PromoTopicField)
@@ -30,6 +30,7 @@ internal enum class PromoEventSource {
   NEW_FILE,
   PROJECT_WIZARD,
   SETTINGS,
+  FILE_PREVIEW,
 }
 
 internal enum class PromoTopic {
@@ -71,4 +72,3 @@ private fun createLinkWithInfo(promoTopic: PromoTopic, originalUrl: String): Str
     return originalUrl
   }
 }
-
