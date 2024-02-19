@@ -198,20 +198,19 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                ? StreamEx.of(lambdaMethod)
                                : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
     boolean found = false;
-    for (Method method : methods) {
+    for (Method original : methods) {
       found = true;
+
+      Method bridgeTarget = MethodBytecodeUtil.getBridgeTargetMethod(original, classesByName);
+      Method method = bridgeTarget != null ? bridgeTarget : original;
+
       if (method.isNative()) {
         LOG.info("Breakpoint emulation was disabled because " + method + " is native");
         breakpoint.disableEmulation();
         return;
       }
-      else if (method.isAbstract()) {
+      if (method.isAbstract()) {
         continue;
-      }
-
-      Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
-      if (target != null) {
-        method = target;
       }
 
       if (breakpoint.isWatchEntry()) {
@@ -221,7 +220,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       if (breakpoint.isWatchExit()) {
-        final Method finalMethod = method;
         class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
           private int bytecodeOffset = -1;
 
@@ -238,7 +236,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
           public void visitInsn(int opcode) {
             if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
               assert bytecodeOffset >= 0;
-              Location location = new LocationCodeIndexOnly(finalMethod, bytecodeOffset);
+              Location location = new LocationCodeIndexOnly(method, bytecodeOffset);
               createLocationBreakpointRequest(breakpoint, location, debugProcess, false);
             }
           }
