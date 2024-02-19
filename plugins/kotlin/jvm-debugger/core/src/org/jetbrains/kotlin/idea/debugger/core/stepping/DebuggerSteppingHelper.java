@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.stepping;
 
@@ -9,6 +9,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.statistics.Engine;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.statistics.SteppingAction;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.xdebugger.XSourcePosition;
 import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
@@ -127,13 +128,23 @@ public final class DebuggerSteppingHelper {
     ) {
         DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
         return debugProcess.new RunToCursorCommand(suspendContext, position, ignoreBreakpoints) {
+            final NullableLazyValue<LightOrRealThreadInfo> myThreadFilter = NullableLazyValue.lazyNullable(() -> {
+                LightOrRealThreadInfo result = CoroutineJobInfo.extractJobInfo(suspendContext);
+                return result != null ? result : super.getThreadFilterFromContext(suspendContext);
+            });
+
+            @Override
+            public void contextAction(@NotNull SuspendContextImpl context) {
+                // clear stepping through to allow switching threads in case of suspend thread context
+                if (!(myThreadFilter.getValue() instanceof RealThreadInfo)) {
+                    context.getDebugProcess().getSession().clearSteppingThrough();
+                }
+                super.contextAction(context);
+            }
+
             @Override
             public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
-                LightOrRealThreadInfo result = CoroutineJobInfo.extractJobInfo(suspendContext);
-                if (result != null) {
-                    return result;
-                }
-                return super.getThreadFilterFromContext(suspendContext);
+                return myThreadFilter.getValue();
             }
         };
     }
