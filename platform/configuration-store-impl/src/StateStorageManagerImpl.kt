@@ -18,7 +18,6 @@ import com.intellij.util.ThreeState
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -387,16 +386,6 @@ internal val Storage.path: String
 
 @Internal
 data class Macro(@JvmField val key: String, @JvmField var value: Path)
-
-@TestOnly
-fun checkStorageIsNotTracked(module: ComponentManager) {
-  service<StorageVirtualFileTracker>().remove {
-    if (it.storageManager.componentManager === module) {
-      throw AssertionError("Storage manager is not disposed, module $module, storage $it")
-    }
-    false
-  }
-}
 
 private class MyAsyncVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
