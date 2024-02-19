@@ -90,7 +90,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
   }
 
   private var ourTestIndicesDir: Path? = null
-  suspend fun getClassIndexForRepository(repo: MavenRepositoryInfo): MavenSearchIndex? {
+  suspend fun getClassIndexForRepository(repo: MavenRepositoryInfo): MavenSearchIndex {
     return getIndexForRepo(repo)
   }
 
