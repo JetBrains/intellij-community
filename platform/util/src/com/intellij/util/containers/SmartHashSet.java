@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 /**
  * Hash set which is fast when contains one or zero elements (avoids calculating hash codes and call equals whenever possible).
- * For other sizes it delegates to THashSet.
+ * For other sizes, it delegates to java.util.HashSet.
  * Null keys are NOT PERMITTED.
  */
 public final class SmartHashSet<T> extends HashSet<T> {
