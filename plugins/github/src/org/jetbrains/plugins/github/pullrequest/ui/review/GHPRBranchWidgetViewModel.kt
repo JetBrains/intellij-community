@@ -16,7 +16,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewBranchStateSharedViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
-interface GHPRBranchWidgetViewModel {
+interface GHPRBranchWidgetViewModel : GHPRReviewViewModel {
   val id: GHPRIdentifier
 
   val updateRequired: StateFlow<Boolean>
@@ -36,8 +36,9 @@ internal class GHPRBranchWidgetViewModelImpl(
   dataProvider: GHPRDataProvider,
   private val projectVm: GHPRToolWindowProjectViewModel,
   private val sharedBranchVm: GHPRReviewBranchStateSharedViewModel,
+  private val reviewVmHelper: GHPRReviewViewModelHelper,
   override val id: GHPRIdentifier
-) : GHPRBranchWidgetViewModel {
+) : GHPRBranchWidgetViewModel, GHPRReviewViewModel by DelegatingGHPRReviewViewModel(reviewVmHelper) {
   private val cs = parentCs.childScope(classAsCoroutineName())
 
   override val updateRequired: StateFlow<Boolean> = sharedBranchVm.updateRequired
