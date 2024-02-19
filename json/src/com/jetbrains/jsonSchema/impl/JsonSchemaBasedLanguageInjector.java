@@ -6,11 +6,13 @@ import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.nodes.RootJsonSchemaObjectBackedByJackson;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +31,11 @@ public final class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBas
     Project project = context.getProject();
     PsiFile containingFile = context.getContainingFile();
     JsonSchemaObject schemaObject = JsonSchemaService.Impl.get(project).getSchemaObject(containingFile);
+    if (Registry.is("json.schema.object.v2")
+        && schemaObject instanceof RootJsonSchemaObjectBackedByJackson rootSchema
+        && !rootSchema.checkHasInjections()) {
+      return null;
+    }
     if (schemaObject == null) return null;
     JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(context, schemaObject);
     if (walker == null) return null;
@@ -44,7 +51,9 @@ public final class JsonSchemaBasedLanguageInjector extends JsonSchemaInjectorBas
       String injection = schema.getLanguageInjection();
       if (injection != null) {
         Language language = Language.findLanguageByID(injection);
-        if (language != null) return new InjectedLanguageData(language, schema.getLanguageInjectionPrefix(), schema.getLanguageInjectionPostfix());
+        if (language != null) {
+          return new InjectedLanguageData(language, schema.getLanguageInjectionPrefix(), schema.getLanguageInjectionPostfix());
+        }
       }
     }
     return null;
