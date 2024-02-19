@@ -20,8 +20,8 @@ import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.runBlocking
-import java.io.File
+import com.intellij.warmup.util.importOrOpenProject
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -69,18 +69,14 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       try {
         println("Open and load project $projectPath. Operation may take a few minutes.")
         @Suppress("SSBasedInspection")
-        project = runBlocking {
-          ProjectOpeningUtils.openProject(
-            File(projectPath).toPath()
-          )
-        }
+        project = importOrOpenProject(OpenProjectArgsData(FileSystems.getDefault().getPath(projectPath)))
         println("Project loaded!")
 
         try {
           action(project)
         }
         catch (exception: Exception) {
-          throw RuntimeException("Failed to run actions on the project: $exception")
+          throw RuntimeException("Failed to run actions on the project: $exception", exception)
         }
       }
       catch (e: Exception) {
