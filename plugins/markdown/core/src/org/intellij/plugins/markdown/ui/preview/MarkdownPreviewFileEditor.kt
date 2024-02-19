@@ -1,365 +1,246 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.plugins.markdown.ui.preview;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.intellij.plugins.markdown.ui.preview
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.TextEditorWithPreview;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import org.intellij.plugins.markdown.MarkdownBundle;
-import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
-import org.intellij.plugins.markdown.settings.MarkdownSettings;
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
+import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil.generateMarkdownHtml
+import org.intellij.plugins.markdown.util.MarkdownPluginScope
+import java.awt.BorderLayout
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.beans.PropertyChangeListener
+import java.lang.ref.WeakReference
+import javax.swing.JComponent
+import javax.swing.JPanel
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
-import java.util.Objects;
+class MarkdownPreviewFileEditor(private val project: Project, private val file: VirtualFile) : UserDataHolder by UserDataHolderBase(), FileEditor {
+  private val document = checkNotNull(FileDocumentManager.getInstance().getDocument(file))
 
-public final class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
-  private static final long PARSING_CALL_TIMEOUT_MS = 50L;
-  private static final long RENDERING_DELAY_MS = 20L;
-  public static final Key<WeakReference<MarkdownHtmlPanel>> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");
+  private val htmlPanelWrapper: JPanel = JPanel(BorderLayout()).apply { addComponentListener(AttachPanelOnVisibilityChangeListener()) }
+  private var panel: MarkdownHtmlPanel? = null
+  var lastPanelProviderInfo: MarkdownHtmlPanelProvider.ProviderInfo? = null
+    private set
 
-  private final Project myProject;
-  private final VirtualFile myFile;
-  private final @Nullable Document myDocument;
+  private var lastRenderedHtml = ""
 
-  private final JPanel myHtmlPanelWrapper;
-  private @Nullable MarkdownHtmlPanel myPanel;
-  private @Nullable MarkdownHtmlPanelProvider.ProviderInfo myLastPanelProviderInfo = null;
-  private final Alarm myPooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
-  private final Alarm mySwingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
+  private var mainEditor = MutableStateFlow<Editor?>(null)
 
-  private final Object REQUESTS_LOCK = new Object();
-  private @Nullable Runnable myLastScrollRequest = null;
-  private @Nullable Runnable myLastHtmlOrRefreshRequest = null;
+  private var isDisposed: Boolean = false
 
-  private volatile int myLastScrollOffset;
-  private @NotNull String myLastRenderedHtml = "";
+  private val coroutineScope = MarkdownPluginScope.createChildScope(project)
 
-  private Editor mainEditor;
+  init {
+    document.addDocumentListener(ReparseContentDocumentListener(), this)
 
-  private boolean isDisposed = false;
+    coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
 
-  public MarkdownPreviewFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    myProject = project;
-    myFile = file;
-    myDocument = FileDocumentManager.getInstance().getDocument(myFile);
-
-    if (myDocument != null) {
-      myDocument.addDocumentListener(new ReparseContentDocumentListener(), this);
-    }
-
-    myHtmlPanelWrapper = new JPanel(new BorderLayout());
-    myHtmlPanelWrapper.addComponentListener(new AttachPanelOnVisibilityChangeListener());
-
-    attachHtmlPanel();
-
-    final var messageBusConnection = myProject.getMessageBus().connect(this);
-    final var settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
-    messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
-    messageBusConnection.subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, fromSettingsDialog -> {
-      if (!fromSettingsDialog) {
-        addImmediateRequest(mySwingAlarm, () -> {
-          if (myPanel != null) {
-            myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
-          }
-        });
-      }
-    });
-  }
-
-  private void setupScrollHelper() {
-    final var actualEditor = ObjectUtils.tryCast(mainEditor, EditorImpl.class);
-    if (actualEditor == null) {
-      return;
-    }
-    final var scrollPane = actualEditor.getScrollPane();
-    final var helper = new PreciseVerticalScrollHelper(
-      actualEditor,
-      () -> ObjectUtils.tryCast(myPanel, MarkdownHtmlPanelEx.class)
-    );
-    scrollPane.addMouseWheelListener(helper);
-    Disposer.register(this, () -> scrollPane.removeMouseWheelListener(helper));
-  }
-
-  public void setMainEditor(Editor editor) {
-    this.mainEditor = editor;
-    if (Registry.is("markdown.experimental.boundary.precise.scroll.enable")) {
-      setupScrollHelper();
-    }
-  }
-
-  public void scrollToSrcOffset(final int offset) {
-    if (myPanel == null) return;
-
-    // Do not scroll if html update request is online
-    // This will restrain preview from glitches on editing
-    if (!myPooledAlarm.isEmpty()) {
-      myLastScrollOffset = offset;
-      return;
-    }
-
-    synchronized (REQUESTS_LOCK) {
-      if (mySwingAlarm.isDisposed()) {
-        return;
-      }
-      if (myLastScrollRequest != null) {
-        mySwingAlarm.cancelRequest(myLastScrollRequest);
-      }
-
-      myLastScrollRequest = () -> {
-        if (myPanel != null) {
-          myLastScrollOffset = offset;
-          myPanel.scrollToMarkdownSrcOffset(myLastScrollOffset, true);
-          synchronized (REQUESTS_LOCK) {
-            myLastScrollRequest = null;
+    val messageBusConnection = project.messageBus.connect(this)
+    val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
+    messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener)
+    messageBusConnection.subscribe(
+      MarkdownExtensionsSettings.ChangeListener.TOPIC,
+      MarkdownExtensionsSettings.ChangeListener { fromSettingsDialog: Boolean ->
+        if (!fromSettingsDialog) {
+          coroutineScope.launch(Dispatchers.EDT) {
+            val editor = mainEditor.firstOrNull() ?: return@launch
+            val offset = editor.caretModel.offset
+            panel?.reloadWithOffset(offset)
           }
         }
-      };
+      })
+  }
 
-      mySwingAlarm.addRequest(myLastScrollRequest, RENDERING_DELAY_MS, ModalityState.stateForComponent(getComponent()));
+  private suspend fun setupScrollHelper() {
+    val editor = mainEditor.firstOrNull() ?: return
+    val actualEditor = editor as? EditorImpl ?: return
+    val scrollPane = actualEditor.scrollPane
+    val helper = PreciseVerticalScrollHelper(actualEditor) { (panel as? MarkdownHtmlPanelEx) }
+    scrollPane.addMouseWheelListener(helper)
+    Disposer.register(this@MarkdownPreviewFileEditor) { scrollPane.removeMouseWheelListener(helper) }
+  }
+
+  fun setMainEditor(editor: Editor) {
+    check(mainEditor.value == null)
+    mainEditor.value = editor
+    if (Registry.`is`("markdown.experimental.boundary.precise.scroll.enable")) {
+      coroutineScope.launch { setupScrollHelper() }
     }
   }
 
-  @Override
-  public @NotNull JComponent getComponent() {
-    return myHtmlPanelWrapper;
+  fun scrollToSrcOffset(offset: Int) {
+    panel?.scrollToMarkdownSrcOffset(offset, true)
   }
 
-  @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
-    return myPanel != null ? myPanel.getComponent() : null;
+  override fun getComponent(): JComponent {
+    return htmlPanelWrapper
   }
 
-  @Override
-  public @NotNull String getName() {
-    return MarkdownBundle.message("markdown.editor.preview.name");
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return panel?.component
   }
 
-  @Override
-  public void setState(@NotNull FileEditorState state) { }
-
-  @Override
-  public boolean isModified() {
-    return false;
+  override fun getName(): String {
+    return MarkdownBundle.message("markdown.editor.preview.name")
   }
 
-  @Override
-  public boolean isValid() {
-    return true;
+  override fun setState(state: FileEditorState) {}
+
+  override fun isModified(): Boolean {
+    return false
   }
 
-  @Override
-  public void selectNotify() {
-    if (myPanel != null) {
-      updateHtmlPooled();
+  override fun isValid(): Boolean {
+    return true
+  }
+
+  override fun selectNotify() {
+    if (panel != null) {
+      coroutineScope.launch(Dispatchers.EDT) { updateHtml() }
     }
   }
 
-  @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
 
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
 
-  @Override
-  public @NotNull VirtualFile getFile() {
-    return myFile;
+  override fun getFile(): VirtualFile {
+    return file
   }
 
-  public boolean isDisposed() {
-    return this.isDisposed;
-  }
-
-  @Override
-  public void dispose() {
-    if (myPanel != null) {
-      detachHtmlPanel();
+  override fun dispose() {
+    if (panel != null) {
+      detachHtmlPanel()
     }
-    myLastRenderedHtml = "";
-    isDisposed = true;
+    isDisposed = true
+    coroutineScope.cancel()
   }
 
-  @Nullable
-  public MarkdownHtmlPanelProvider.ProviderInfo getLastPanelProviderInfo() {
-    return myLastPanelProviderInfo;
-  }
-
-  private @NotNull MarkdownHtmlPanelProvider retrievePanelProvider(@NotNull MarkdownSettings settings) {
-    final var providerInfo = settings.getPreviewPanelProviderInfo();
-    var provider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo);
-    if (provider.isAvailable() != MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
-      final var defaultProvider = MarkdownHtmlPanelProvider.createFromInfo(MarkdownSettings.getDefaultProviderInfo());
+  private fun retrievePanelProvider(settings: MarkdownSettings): MarkdownHtmlPanelProvider {
+    val providerInfo = settings.previewPanelProviderInfo
+    var provider = MarkdownHtmlPanelProvider.createFromInfo(providerInfo)
+    if (provider.isAvailable() !== MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE) {
+      val defaultProvider = MarkdownHtmlPanelProvider.createFromInfo(MarkdownSettings.defaultProviderInfo)
       Messages.showMessageDialog(
-        myHtmlPanelWrapper,
-        MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.getName()),
+        htmlPanelWrapper,
+        MarkdownBundle.message("dialog.message.tried.to.use.preview.panel.provider", providerInfo.name),
         CommonBundle.getErrorTitle(),
         Messages.getErrorIcon()
-      );
-      MarkdownSettings.getInstance(myProject).setPreviewPanelProviderInfo(defaultProvider.getProviderInfo());
-      provider = Objects.requireNonNull(
-        ContainerUtil.find(
-          MarkdownHtmlPanelProvider.getProviders(),
-          p -> p.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE
-        )
-      );
+      )
+      MarkdownSettings.getInstance(project).previewPanelProviderInfo = defaultProvider.providerInfo
+      provider = MarkdownHtmlPanelProvider.getProviders().find { p: MarkdownHtmlPanelProvider -> p.isAvailable() === MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE }!!
     }
-    myLastPanelProviderInfo = settings.getPreviewPanelProviderInfo();
-    return provider;
+    lastPanelProviderInfo = settings.previewPanelProviderInfo
+    return provider
   }
 
-  // Is always run from pooled thread
-  private void updateHtml() {
-    if (myPanel == null || myDocument == null || !myFile.isValid() || isDisposed()) {
-      return;
+  @RequiresEdt
+  private suspend fun updateHtml() {
+    val panel = this.panel ?: return
+    if (!file.isValid || isDisposed) {
+      return
     }
 
-    var html = ReadAction.nonBlocking(() -> {
-        return MarkdownUtil.INSTANCE.generateMarkdownHtml(myFile, myDocument.getText(), myProject);
-      })
-      .executeSynchronously();
+    val html = readAction { generateMarkdownHtml(file, document.text, project) }
 
-    // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
-    if (!myFile.isValid() || isDisposed()) {
-      return;
+    val currentHtml = "<html><head></head>$html</html>"
+    if (currentHtml != lastRenderedHtml) {
+      lastRenderedHtml = currentHtml
+      val editor = mainEditor.firstOrNull() ?: return
+      val offset = editor.caretModel.offset
+      panel.setHtml(lastRenderedHtml, offset, file)
     }
+  }
 
-    synchronized (REQUESTS_LOCK) {
-      if (mySwingAlarm.isDisposed()) {
-        return;
+  @RequiresEdt
+  private fun detachHtmlPanel() {
+    val panel = this.panel
+    if (panel != null) {
+      htmlPanelWrapper.remove(panel.component)
+      Disposer.dispose(panel)
+      this.panel = null
+    }
+    putUserData(PREVIEW_BROWSER, null)
+  }
+
+  @RequiresEdt
+  private suspend fun attachHtmlPanel() {
+    val settings = MarkdownSettings.getInstance(project)
+    val panel = retrievePanelProvider(settings).createHtmlPanel(project, file)
+    this.panel = panel
+    htmlPanelWrapper.add(panel.component, BorderLayout.CENTER)
+    if (htmlPanelWrapper.isShowing) htmlPanelWrapper.validate()
+    htmlPanelWrapper.repaint()
+    lastRenderedHtml = ""
+    putUserData(PREVIEW_BROWSER, WeakReference(panel))
+    updateHtml()
+  }
+
+  private inner class ReparseContentDocumentListener : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
+      coroutineScope.launch(Dispatchers.EDT) { updateHtml() }
+    }
+  }
+
+  private inner class AttachPanelOnVisibilityChangeListener : ComponentAdapter() {
+    override fun componentShown(event: ComponentEvent) {
+      if (panel == null) {
+        coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
       }
-      if (myLastHtmlOrRefreshRequest != null) {
-        mySwingAlarm.cancelRequest(myLastHtmlOrRefreshRequest);
-      }
-
-      myLastHtmlOrRefreshRequest = () -> {
-        if (myPanel == null) return;
-
-        String currentHtml = "<html><head></head>" + html + "</html>";
-        if (!currentHtml.equals(myLastRenderedHtml)) {
-          myLastRenderedHtml = currentHtml;
-          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset(), myFile);
-        }
-
-        synchronized (REQUESTS_LOCK) {
-          myLastHtmlOrRefreshRequest = null;
-        }
-      };
-
-      mySwingAlarm.addRequest(myLastHtmlOrRefreshRequest, RENDERING_DELAY_MS, ModalityState.stateForComponent(getComponent()));
-    }
-  }
-
-  private void detachHtmlPanel() {
-    if (myPanel != null) {
-      myHtmlPanelWrapper.remove(myPanel.getComponent());
-      Disposer.dispose(myPanel);
-      myPanel = null;
-    }
-    putUserData(PREVIEW_BROWSER, null);
-  }
-
-  private void attachHtmlPanel() {
-    final var settings = MarkdownSettings.getInstance(myProject);
-    myPanel = retrievePanelProvider(settings).createHtmlPanel(myProject, myFile);
-    myHtmlPanelWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
-    if (myHtmlPanelWrapper.isShowing()) myHtmlPanelWrapper.validate();
-    myHtmlPanelWrapper.repaint();
-    myLastRenderedHtml = "";
-    putUserData(PREVIEW_BROWSER, new WeakReference<>(myPanel));
-    updateHtmlPooled();
-  }
-
-  private void updateHtmlPooled() {
-    myPooledAlarm.cancelAllRequests();
-    myPooledAlarm.addRequest(() -> updateHtml(), 0);
-  }
-
-  private void addImmediateRequest(@NotNull Alarm alarm, @NotNull Runnable request) {
-    if (!alarm.isDisposed()) {
-      alarm.addRequest(request, 0, ModalityState.stateForComponent(getComponent()));
-    }
-  }
-
-  private class ReparseContentDocumentListener implements DocumentListener {
-    @Override
-    public void beforeDocumentChange(@NotNull DocumentEvent event) {
-      myPooledAlarm.cancelAllRequests();
     }
 
-    @Override
-    public void documentChanged(@NotNull DocumentEvent event) {
-      if (!myPooledAlarm.isDisposed()) {
-        myPooledAlarm.addRequest(() -> updateHtml(), PARSING_CALL_TIMEOUT_MS);
+    override fun componentHidden(event: ComponentEvent) {
+      if (panel != null) {
+        detachHtmlPanel()
       }
     }
   }
 
-  private class AttachPanelOnVisibilityChangeListener extends ComponentAdapter {
-    @Override
-    public void componentShown(ComponentEvent event) {
-      addImmediateRequest(mySwingAlarm, () -> {
-        if (myPanel == null) {
-          attachHtmlPanel();
-        }
-      });
-    }
+  private inner class UpdatePanelOnSettingsChangedListener : MarkdownSettings.ChangeListener {
+    override fun beforeSettingsChanged(settings: MarkdownSettings) {}
 
-    @Override
-    public void componentHidden(ComponentEvent event) {
-      addImmediateRequest(mySwingAlarm, () -> {
-        if (myPanel != null) {
-          detachHtmlPanel();
-        }
-      });
-    }
-  }
-
-  private class MyUpdatePanelOnSettingsChangedListener implements MarkdownSettings.ChangeListener {
-    @Override
-    public void beforeSettingsChanged(@NotNull MarkdownSettings settings) { }
-
-    @Override
-    public void settingsChanged(@NotNull MarkdownSettings settings) {
-      addImmediateRequest(mySwingAlarm, () -> {
-        if (settings.getSplitLayout() != TextEditorWithPreview.Layout.SHOW_EDITOR) {
-          if (myPanel == null) {
-            attachHtmlPanel();
+    override fun settingsChanged(settings: MarkdownSettings) {
+      coroutineScope.launch(Dispatchers.EDT) {
+        if (settings.splitLayout != TextEditorWithPreview.Layout.SHOW_EDITOR) {
+          if (panel == null) {
+            attachHtmlPanel()
           }
-          else if (myLastPanelProviderInfo == null ||
-                   MarkdownHtmlPanelProvider.createFromInfo(myLastPanelProviderInfo).equals(retrievePanelProvider(settings))) {
-            detachHtmlPanel();
-            attachHtmlPanel();
+          else if (lastPanelProviderInfo == null ||
+                   MarkdownHtmlPanelProvider.createFromInfo(lastPanelProviderInfo!!) == retrievePanelProvider(settings)) {
+            detachHtmlPanel()
+            attachHtmlPanel()
           }
         }
-        if (myPanel != null) {
-          myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
-        }
-      });
+      }
     }
+  }
+
+  companion object {
+    val PREVIEW_BROWSER: Key<WeakReference<MarkdownHtmlPanel>> = Key.create("PREVIEW_BROWSER")
   }
 }

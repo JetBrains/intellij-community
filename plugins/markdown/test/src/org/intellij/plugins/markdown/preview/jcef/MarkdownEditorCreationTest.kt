@@ -89,8 +89,8 @@ class MarkdownEditorCreationTest {
     override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) = Unit
     override fun reloadWithOffset(offset: Int) = Unit
     override fun scrollToMarkdownSrcOffset(offset: Int, smooth: Boolean) = Unit
-    override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener?) = Unit
-    override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener?) = Unit
+    override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
+    override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
   }
 
   private class FailingHtmlPanel: StubHtmlPanel() {

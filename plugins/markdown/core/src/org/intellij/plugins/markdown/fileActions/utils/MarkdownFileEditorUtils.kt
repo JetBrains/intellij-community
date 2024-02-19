@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
-import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.PREVIEW_BROWSER
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor.Companion.PREVIEW_BROWSER
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
