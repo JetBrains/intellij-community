@@ -12,9 +12,16 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenPluginCollector : ProjectUsagesCollector() {
+  private val GROUP = EventLogGroup("maven.plugins", 5)
+
+  private val groupArtifactId = EventFields.StringValidatedByCustomRule<MavenPluginCoordinatesWhitelistValidationRule>("group_artifact_id")
+  private val pluginVersion = EventFields.Version
+  private val isExtension = EventFields.Boolean("extension")
+  private val hasConfiguration = EventFields.Boolean("has_configuration")
+
 
   private val mavenPluginId = group.registerVarargEvent("maven.plugins.used",
-                                                        groupArtifactId, Companion.version, isExtension, hasConfiguration)
+                                                        groupArtifactId, pluginVersion, isExtension, hasConfiguration)
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val manager = MavenProjectsManager.getInstance(project)
@@ -24,7 +31,7 @@ class MavenPluginCollector : ProjectUsagesCollector() {
       .map {
         mavenPluginId.metric(
           groupArtifactId with "${it.groupId}:${it.artifactId}",
-          Companion.version with it.version,
+          pluginVersion with it.version,
           isExtension with it.isExtensions,
           hasConfiguration with (it.configurationElement != null)
         )
@@ -32,15 +39,6 @@ class MavenPluginCollector : ProjectUsagesCollector() {
   }
 
   override fun getGroup(): EventLogGroup = GROUP
-
-  companion object {
-    private val GROUP = EventLogGroup("maven.plugins", 5)
-
-    val groupArtifactId = EventFields.StringValidatedByCustomRule<MavenPluginCoordinatesWhitelistValidationRule>("group_artifact_id")
-    val version = EventFields.Version
-    val isExtension = EventFields.Boolean("extension")
-    val hasConfiguration = EventFields.Boolean("has_configuration")
-  }
 }
 
 

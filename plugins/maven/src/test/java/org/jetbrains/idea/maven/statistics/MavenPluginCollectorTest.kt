@@ -32,12 +32,12 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
       MavenPluginCollector::class.java, project)
 
     val compiler = metrics.map { it.data.build() }.first {
-      it[MavenPluginCollector.groupArtifactId.name] == "org.apache.maven.plugins:maven-compiler-plugin"
+      it["group_artifact_id"] == "org.apache.maven.plugins:maven-compiler-plugin"
     }
 
-    assertNotNull(compiler[MavenPluginCollector.version.name])
-    assertEquals(true, compiler[MavenPluginCollector.hasConfiguration.name])
-    assertEquals(false, compiler[MavenPluginCollector.isExtension.name])
+    assertNotNull(compiler["version"])
+    assertEquals(true, compiler["has_configuration"])
+    assertEquals(false, compiler["extension"])
   }
 
   @Test
@@ -66,7 +66,7 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
     val metrics = collectProjectStateCollectorEvents(
       MavenPluginCollector::class.java, project)
     val collectedGroupIds = metrics.map { it.data.build() }.map {
-      it[MavenPluginCollector.groupArtifactId.name].toString()
+      it["group_artifact_id"].toString()
     }
 
     assertContain(collectedGroupIds, "org.apache.maven.plugins:maven-compiler-plugin")
