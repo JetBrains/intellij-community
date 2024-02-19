@@ -65,6 +65,7 @@ public final class VfsData {
   @TestOnly
   public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
 
+  //TODO RC: move to com.intellij.util.indexing.IndexingFlag since apt functionality moved there
   private static volatile Boolean isIndexedFlagDisabled = null;
 
   private static final int SEGMENT_BITS = 9;
@@ -244,7 +245,7 @@ public final class VfsData {
     return isIndexedFlagDisabled(ApplicationManager.getApplication());
   }
 
-  public static boolean isIndexedFlagDisabled(@NotNull Application app) {
+  private static boolean isIndexedFlagDisabled(@NotNull Application app) {
     if (isIndexedFlagDisabled == null) {
       Boolean enable;
       if (app.isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
@@ -260,6 +261,8 @@ public final class VfsData {
 
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
   static final class Segment {
+    private static final int FIELDS_COUNT = 2;
+
     final @NotNull VfsData owningVfsData;
 
 
@@ -267,7 +270,7 @@ public final class VfsData {
     private final AtomicReferenceArray<Object> myObjectArray;
 
     /**
-     * [nameId, flags, indexedStamps] fields triplet per fileId
+     * fields cortege [nameId, flags] per fileId
      * flag's lowest 3 bytes are used as modificationCounter
      */
     private final AtomicIntegerArray myIntArray;
@@ -277,7 +280,7 @@ public final class VfsData {
     @Nullable Segment replacement;
 
     Segment(@NotNull VfsData owningVfsData) {
-      this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 3));
+      this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * FIELDS_COUNT));
     }
 
     private Segment(@NotNull VfsData owningVfsData,
@@ -288,28 +291,13 @@ public final class VfsData {
       this.owningVfsData = owningVfsData;
     }
 
-    int getIndexedStamp(int fileId) {
-      if (isIndexedFlagDisabled(owningVfsData.app)) {
-        return 0;
-      }
-      return myIntArray.get(getOffset(fileId) * 3 + 2);
-    }
-
-    void setIndexedStamp(int fileId, int stamp) {
-      if (isIndexedFlagDisabled(owningVfsData.app)) {
-        return;
-      }
-      if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
-      myIntArray.set(getOffset(fileId) * 3 + 2, stamp);
-    }
-
     int getNameId(int fileId) {
-      return myIntArray.get(getOffset(fileId) * 3);
+      return myIntArray.get(getOffset(fileId) * FIELDS_COUNT);
     }
 
     void setNameId(int fileId, int nameId) {
       if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId + "; nameId: " + nameId);
-      myIntArray.set(getOffset(fileId) * 3, nameId);
+      myIntArray.set(getOffset(fileId) * FIELDS_COUNT, nameId);
     }
 
     void setUserMap(int fileId, @NotNull KeyFMap map) {
@@ -332,7 +320,7 @@ public final class VfsData {
     boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
       BitUtil.assertOneBitMask(mask);
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      return (myIntArray.get(getOffset(id) * 3 + 1) & mask) != 0;
+      return (myIntArray.get(getOffset(id) * FIELDS_COUNT + 1) & mask) != 0;
     }
 
     void setFlag(int id, @VirtualFileSystemEntry.Flags int mask, boolean value) {
@@ -340,7 +328,7 @@ public final class VfsData {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      int offset = getOffset(id) * 3 + 1;
+      int offset = getOffset(id) * FIELDS_COUNT + 1;
       myIntArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
 
@@ -351,16 +339,16 @@ public final class VfsData {
       assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue) + ") set bits outside mask (" +
                                                     Integer.toHexString(combinedMask) + ")";
-      int offset = getOffset(id) * 3 + 1;
+      int offset = getOffset(id) * FIELDS_COUNT + 1;
       myIntArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
     long getModificationStamp(int id) {
-      return myIntArray.get(getOffset(id) * 3 + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
+      return myIntArray.get(getOffset(id) * FIELDS_COUNT + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
     void setModificationStamp(int id, long stamp) {
-      int offset = getOffset(id) * 3 + 1;
+      int offset = getOffset(id) * FIELDS_COUNT + 1;
       myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) |
                                                 ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
