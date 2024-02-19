@@ -24,8 +24,8 @@ final class TextBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = accessor.read(o);
+  public @Nullable Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
     return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
   }
 

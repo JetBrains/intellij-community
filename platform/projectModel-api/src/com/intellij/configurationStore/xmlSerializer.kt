@@ -33,7 +33,7 @@ inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.de
 fun <T> Element.deserialize(clazz: Class<T>): T = jdomSerializer.deserialize(this, clazz)
 
 fun Element.deserializeInto(bean: Any) {
-  jdomSerializer.deserializeInto(bean, this)
+  jdomSerializer.deserializeInto(obj = bean, element = this)
 }
 
 @JvmOverloads

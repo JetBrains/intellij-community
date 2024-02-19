@@ -52,11 +52,11 @@ internal fun serializeState(state: Any, componentName: String): Element? {
         val binding = __platformSerializer().getRootBinding(state.javaClass)
         if (binding is BeanBinding) {
           // top level expects not null (null indicates error, an empty element will be omitted)
-          return binding.serializeInto(host = state, preCreatedElement = null, filter = filter)
+          return binding.serializeInto(bean = state, preCreatedElement = null, filter = filter)
         }
         else {
           // maybe ArrayBinding
-          return binding.serialize(state, null, filter) as Element
+          return binding.serialize(bean = state, context = null, filter = filter) as Element
         }
       }
       catch (e: SerializationException) {

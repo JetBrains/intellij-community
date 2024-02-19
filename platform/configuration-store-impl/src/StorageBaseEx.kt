@@ -159,7 +159,7 @@ internal fun serializeForController(obj: Any): Element? {
   val serializer = __platformSerializer()
   val binding = serializer.getRootBinding(obj.javaClass)
   if (binding is BeanBinding) {
-    return binding.serializeInto(host = obj, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
+    return binding.serializeInto(bean = obj, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
   }
   else {
     return binding.serialize(obj, null, jdomSerializer.getDefaultSerializationFilter()) as Element

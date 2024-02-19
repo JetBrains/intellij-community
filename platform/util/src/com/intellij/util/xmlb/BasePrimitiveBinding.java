@@ -47,8 +47,8 @@ public abstract class BasePrimitiveBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public final @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    return serialize(o, filter);
+  public final @Nullable Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
+    return serialize(bean, filter);
   }
 
   public abstract @Nullable Object serialize(@NotNull Object o, @Nullable SerializationFilter filter);

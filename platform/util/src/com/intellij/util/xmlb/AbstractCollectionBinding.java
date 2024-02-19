@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import static com.intellij.util.xmlb.NotNullDeserializeBindingKt.LOG;
+import static com.intellij.util.xmlb.BindingKt.LOG;
 
 abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding {
   private final MutableAccessor accessor;
@@ -176,7 +176,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   }
 
   @Override
-  public final @NotNull Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements) {
+  public final @NotNull Object deserializeJdomList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     if (!isSurroundWithTag()) {
       return doDeserializeJdomList(context, elements);
     }
@@ -207,7 +207,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     return doDeserializeList(context == null && element.name.equals(Constants.SET) ? new HashSet<>() : context, element.children);
   }
 
-  protected abstract @NotNull Object doDeserializeJdomList(@Nullable Object context, @NotNull List<Element> elements);
+  protected abstract @NotNull Object doDeserializeJdomList(@Nullable Object context, @NotNull List<? extends Element> elements);
 
   protected abstract @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<XmlElement> elements);
 

@@ -444,8 +444,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  // method is not called if storage is deprecated or clear was requested
-  // (state in these cases is null), but called if state is null if returned so from a component
+  // method is not called if storage is deprecated or clear was requested (state in these cases is null),
+  // but called if state is null if returned so from a component
   protected open fun setStateToSaveSessionProducer(
     state: Any?,
     info: ComponentInfo,

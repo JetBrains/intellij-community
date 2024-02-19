@@ -105,12 +105,12 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public @Nullable Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
     Element serialized = isSurroundWithTag() ? new Element(MAP) : (Element)context;
     assert serialized != null;
 
     @SuppressWarnings("rawtypes")
-    Map map = (Map)o;
+    Map map = (Map)bean;
     Object[] keys = ArrayUtil.toObjectArray(map.keySet());
     if (isSortMap(map)) {
       Arrays.sort(keys, KEY_COMPARATOR);
@@ -154,7 +154,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object deserializeJdomList(@Nullable Object context, @NotNull List<Element> elements) {
+  public @Nullable Object deserializeJdomList(@Nullable Object context, @NotNull List<? extends Element> elements) {
     List<Element> childNodes;
     if (isSurroundWithTag()) {
       if (elements.size() == 1) {
@@ -168,7 +168,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       }
     }
     else {
-      childNodes = elements;
+      //noinspection unchecked
+      childNodes = (List<Element>)elements;
     }
     return deserialize(context, childNodes);
   }
@@ -342,7 +343,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       }
       else {
         assert binding != null;
-        return Binding.deserializeJdomList(binding, null, children);
+        return BindingKt.deserializeJdomList(binding, null, children);
       }
     }
     return null;
@@ -373,7 +374,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       }
       else {
         assert binding != null;
-        return Binding.deserializeList(binding, null, children);
+        return BindingKt.deserializeList(binding, null, children);
       }
     }
     return null;

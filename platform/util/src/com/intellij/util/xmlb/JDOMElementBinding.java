@@ -29,8 +29,8 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = accessor.read(o);
+  public Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
     if (value == null) {
       return null;
     }
@@ -52,7 +52,7 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (accessor.getValueClass().isArray()) {
       accessor.set(context, elements.toArray(new Element[0]));
     }

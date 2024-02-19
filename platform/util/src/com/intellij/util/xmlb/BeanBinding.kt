@@ -67,24 +67,24 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     }
   }
 
-  override fun serialize(o: Any, context: Any?, filter: SerializationFilter?): Any? {
-    return serializeInto(host = o, preCreatedElement = if (context == null) null else Element(tagName), filter = filter)
+  override fun serialize(bean: Any, context: Any?, filter: SerializationFilter?): Any? {
+    return serializeInto(bean = bean, preCreatedElement = if (context == null) null else Element(tagName), filter = filter)
   }
 
   fun serialize(bean: Any, createElementIfEmpty: Boolean, filter: SerializationFilter?): Element? {
-    return serializeInto(host = bean, preCreatedElement = if (createElementIfEmpty) Element(tagName) else null, filter = filter)
+    return serializeInto(bean = bean, preCreatedElement = if (createElementIfEmpty) Element(tagName) else null, filter = filter)
   }
 
-  open fun serializeInto(host: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+  open fun serializeInto(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
     var element = preCreatedElement
     for (binding in bindings!!) {
-      if (host is SerializationFilter && !host.accepts(binding.accessor, host)) {
+      if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean)) {
         continue
       }
 
       element = serializePropertyInto(
         binding = binding,
-        host = host,
+        bean = bean,
         preCreatedElement = element,
         filter = filter,
         isFilterPropertyItself = true,
@@ -95,7 +95,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
 
   fun serializePropertyInto(
     binding: NestedBinding,
-    host: Any,
+    bean: Any,
     preCreatedElement: Element?,
     filter: SerializationFilter?,
     isFilterPropertyItself: Boolean,
@@ -106,11 +106,11 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     if (property == null || !property.alwaysWrite) {
       if (filter != null && isFilterPropertyItself) {
         if (filter is SkipDefaultsSerializationFilter) {
-          if (filter.equal(binding, host)) {
+          if (filter.equal(binding, bean)) {
             return element
           }
         }
-        else if (!filter.accepts(accessor, host)) {
+        else if (!filter.accepts(accessor, bean)) {
           return element
         }
       }
@@ -118,7 +118,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
       //todo: optimize. Cache it.
       if (property != null) {
         val propertyFilter = XmlSerializerUtil.getPropertyFilter(property)
-        if (propertyFilter != null && !propertyFilter.accepts(accessor, host)) {
+        if (propertyFilter != null && !propertyFilter.accepts(accessor, bean)) {
           return element
         }
       }
@@ -128,10 +128,10 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
       element = Element(tagName)
     }
 
-    val node = binding.serialize(host, element, filter)
+    val node = binding.serialize(bean = bean, context = element, filter = filter)
     if (node != null) {
       if (node is Attribute) {
-        element.setAttribute(node as Attribute?)
+        element.setAttribute(node)
       }
       else {
         BasePrimitiveBinding.addContent(element, node)
@@ -261,7 +261,7 @@ fun deserializeBeanInto(
     return
   }
 
-  var data: LinkedHashMap<MultiNodeBinding, MutableList<XmlElement?>>? = null
+  var data: LinkedHashMap<MultiNodeBinding, MutableList<XmlElement>>? = null
   nextNode@ for (child in element.children) {
     for (i in start until end) {
       val binding = bindings[i]

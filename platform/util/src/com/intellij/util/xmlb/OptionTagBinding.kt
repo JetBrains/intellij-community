@@ -62,7 +62,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
         targetElement.setAttribute(valueAttribute!!, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)))
       }
       else if (binding is BeanBinding && valueAttribute == null) {
-        binding.serializeInto(host = value, preCreatedElement = targetElement, filter = filter)
+        binding.serializeInto(bean = value, preCreatedElement = targetElement, filter = filter)
       }
       else {
         val node = binding.serialize(value, targetElement, filter)
@@ -105,7 +105,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
         }
         else {
           val oldValue = accessor.read(context)
-          val newValue = Binding.deserializeJdomList(binding!!, oldValue, children)
+          val newValue = deserializeJdomList(binding = binding!!, context = oldValue, nodes = children)
           if (oldValue !== newValue) {
             accessor.set(context, newValue)
           }
@@ -143,7 +143,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
         }
         else {
           val oldValue = accessor.read(context)
-          val newValue = Binding.deserializeList(binding!!, oldValue, children)
+          val newValue = deserializeList(binding = binding!!, context = oldValue, nodes = children)
           if (oldValue !== newValue) {
             accessor.set(context, newValue)
           }

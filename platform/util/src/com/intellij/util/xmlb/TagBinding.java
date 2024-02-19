@@ -54,7 +54,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
   }
 
   @Override
-  public @NotNull Object deserializeJdomList(@NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeJdomList(@NotNull Object context, @NotNull List<? extends Element> elements) {
     List<Element> children;
     if (elements.size() == 1) {
       children = elements.get(0).getChildren();
@@ -127,10 +127,10 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
       ((BeanBinding)binding).deserializeInto(context, children.get(0));
     }
     else if ((binding instanceof CollectionBinding || binding instanceof MapBinding) && !accessor.isWritable()) {
-      Binding.deserializeJdomList(binding, accessor.read(context), children);
+      BindingKt.deserializeJdomList(binding, accessor.read(context), children);
     }
     else {
-      accessor.set(context, Binding.deserializeJdomList(binding, accessor.read(context), children));
+      accessor.set(context, BindingKt.deserializeJdomList(binding, accessor.read(context), children));
     }
   }
 
@@ -140,10 +140,10 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
       ((BeanBinding)binding).deserializeInto(context, children.get(0));
     }
     else if ((binding instanceof CollectionBinding || binding instanceof MapBinding) && !accessor.isWritable()) {
-      Binding.deserializeList(binding, accessor.read(context), children);
+      BindingKt.deserializeList(binding, accessor.read(context), children);
     }
     else {
-      accessor.set(context, Binding.deserializeList(binding, accessor.read(context), children));
+      accessor.set(context, BindingKt.deserializeList(binding, accessor.read(context), children));
     }
   }
 

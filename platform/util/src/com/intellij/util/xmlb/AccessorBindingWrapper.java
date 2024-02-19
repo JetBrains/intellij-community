@@ -32,8 +32,8 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = accessor.read(o);
+  public @Nullable Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
     if (value == null) {
       return null;
     }
@@ -132,13 +132,13 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
+  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = Binding.deserializeJdomList(binding, currentValue, elements);
+      Object deserializedValue = BindingKt.deserializeJdomList(binding, currentValue, elements);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }
@@ -153,7 +153,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = Binding.deserializeList(binding, currentValue, elements);
+      Object deserializedValue = BindingKt.deserializeList(binding, currentValue, elements);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }
