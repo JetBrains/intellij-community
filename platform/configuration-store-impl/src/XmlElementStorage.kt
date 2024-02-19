@@ -5,6 +5,7 @@ import com.fasterxml.aalto.UncheckedStreamException
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.JDOMUtil
@@ -14,7 +15,6 @@ import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xml.dom.createXmlStreamReader
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Attribute
@@ -28,27 +28,25 @@ import javax.xml.stream.XMLStreamException
 import kotlin.math.min
 
 abstract class XmlElementStorage protected constructor(
-  val fileSpec: String,
-  protected val rootElementName: String?,
+  @JvmField val fileSpec: String,
+  @JvmField protected val rootElementName: String?,
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
-  storageRoamingType: RoamingType,
+  @JvmField val storageRoamingType: RoamingType,
   private val provider: StreamProvider? = null
 ) : StorageBaseEx<StateMap>() {
   override val saveStorageDataOnReload: Boolean
     get() = provider == null || provider.saveStorageDataOnReload
 
-  internal val rawRoamingType: RoamingType = storageRoamingType
-
-  private val effectiveRoamingType = getEffectiveRoamingType(storageRoamingType, fileSpec)
+  private val effectiveRoamingType = getEffectiveRoamingType(roamingType = storageRoamingType, collapsedPath = fileSpec)
 
   protected abstract fun loadLocalData(): Element?
 
   final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
-    return storageData.getState(componentName, archive)
+    return storageData.getState(key = componentName, archive = archive)
   }
 
   final override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
-    storageData.archive(componentName, serializedState)
+    storageData.archive(key = componentName, state = serializedState)
   }
 
   final override fun loadData(): StateMap = loadElement()?.let { loadState(it) } ?: StateMap.EMPTY
@@ -57,12 +55,16 @@ abstract class XmlElementStorage protected constructor(
     var element: Element? = null
     try {
       val isLoadLocalData: Boolean
-      if (provider != null) {
+      if (provider == null) {
+        isLoadLocalData = true
+      }
+      else {
         isLoadLocalData = !provider.read(fileSpec, effectiveRoamingType) { inputStream ->
           inputStream?.let {
             element = loadFromStreamProvider(inputStream)
             val writer = object : StringDataWriter() {
               override fun hasData(filter: DataWriterFilter) = filter.hasData(element!!)
+
               override fun writeTo(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
                 JbXmlOutputter(
                   lineSeparator = lineSeparator,
@@ -74,9 +76,6 @@ abstract class XmlElementStorage protected constructor(
             providerDataStateChanged(writer, DataStateChanged.LOADED)
           }
         }
-      }
-      else {
-        isLoadLocalData = true
       }
       if (isLoadLocalData) {
         element = loadLocalData()
@@ -164,7 +163,10 @@ abstract class XmlElementStorage protected constructor(
       val elements = save(stateMap, newLiveStates ?: throw IllegalStateException("createSaveSession was already called"))
       newLiveStates = null
 
-      val writer = if (elements == null) null else {
+      val writer = if (elements == null) {
+        null
+      }
+      else {
         val rootAttributes = LinkedHashMap<String, String>()
         storage.beforeElementSaved(elements, rootAttributes)
         val macroManager = if (storage.pathMacroSubstitutor == null) {
@@ -224,7 +226,9 @@ abstract class XmlElementStorage protected constructor(
           }
         }
 
-        result = result ?: SmartList()
+        if (result == null) {
+          result = SmartList()
+        }
         result.add(element)
       }
 
@@ -247,7 +251,11 @@ abstract class XmlElementStorage protected constructor(
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.effectiveRoamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          provider.write(storage.fileSpec, writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray(), storage.effectiveRoamingType)
+          provider.write(
+            fileSpec = storage.fileSpec,
+            content = writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray(),
+            roamingType = storage.effectiveRoamingType,
+          )
         }
         else {
           isSavedLocally = true
@@ -319,7 +327,7 @@ abstract class XmlElementStorage protected constructor(
       }
     }
 
-    val diffs = CollectionFactory.createSmallMemoryFootprintSet<String>(newKeys.size + existingKeys.size)
+    val diffs = HashSet<String>(newKeys.size + existingKeys.size)
     diffs.addAll(newKeys)
     diffs.addAll(existingKeys)
     for (state in bothStates) {
@@ -418,4 +426,16 @@ internal fun Element.normalizeRootName(): Element {
 @Internal
 enum class DataStateChanged {
   LOADED, SAVED
+}
+
+internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
+  if (roamingType != RoamingType.DISABLED &&
+      (collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
+       collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
+       isSpecialStorage(collapsedPath))) {
+    return RoamingType.DISABLED
+  }
+  else {
+    return roamingType
+  }
 }

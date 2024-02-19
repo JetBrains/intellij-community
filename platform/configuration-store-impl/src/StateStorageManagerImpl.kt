@@ -416,17 +416,6 @@ fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePr
 internal val Storage.path: String
   get() = value.ifEmpty { file }
 
-internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED &&
-      (collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
-       collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
-       isSpecialStorage(collapsedPath))) {
-    return RoamingType.DISABLED
-  }
-  else {
-    return roamingType
-  }
-}
 
 @Internal
 data class Macro(@JvmField val key: String, @JvmField var value: Path)
