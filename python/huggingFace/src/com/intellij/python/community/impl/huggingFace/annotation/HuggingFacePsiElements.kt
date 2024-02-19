@@ -8,14 +8,15 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.openapi.util.NlsSafe
 import java.net.URL
 import com.intellij.openapi.util.Key
+import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
+import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
 
 val HUGGING_FACE_ENTITY_NAME_KEY = Key.create<Boolean>("HUGGING_FACE_ENTITY_NAME_KEY")
 
 
 abstract class HuggingFaceEntityPsiElement(
   private val parent: PsiElement,
-  private val entityName: String,
-  private val getEntityLink: (String) -> URL
+  private val entityName: String
 ) : FakePsiElement() {
   init {
     parent.putUserData(HUGGING_FACE_ENTITY_NAME_KEY, true)
@@ -23,16 +24,22 @@ abstract class HuggingFaceEntityPsiElement(
 
   override fun getParent(): PsiElement = parent
 
-  override fun navigate(requestFocus: Boolean) {
-    BrowserUtil.browse(getEntityLink(entityName))
-  }
-
   @NlsSafe
   fun stringValue(): String = entityName
 }
 
-class HuggingFaceModelPsiElement(parent: PsiElement, modelName: String
-) : HuggingFaceEntityPsiElement(parent, modelName, HuggingFaceURLProvider::getModelCardLink)
+class HuggingFaceModelPsiElement(parent: PsiElement, private val modelName: String
+) : HuggingFaceEntityPsiElement(parent, modelName) {
+  override fun navigate(requestFocus: Boolean) {
+    HuggingFaceCardsUsageCollector.NAVIGATION_LINK_IN_EDITOR_CLICKED.log(modelName, HuggingFaceEntityKind.MODEL)
+    BrowserUtil.browse(HuggingFaceURLProvider.getModelCardLink(modelName))
+  }
+}
 
-class HuggingFaceDatasetPsiElement(parent: PsiElement, datasetName: String
-) : HuggingFaceEntityPsiElement(parent, datasetName, HuggingFaceURLProvider::getDatasetCardLink)
+class HuggingFaceDatasetPsiElement(parent: PsiElement, private val datasetName: String
+) : HuggingFaceEntityPsiElement(parent, datasetName) {
+  override fun navigate(requestFocus: Boolean) {
+    HuggingFaceCardsUsageCollector.NAVIGATION_LINK_IN_EDITOR_CLICKED.log(datasetName, HuggingFaceEntityKind.DATASET)
+    BrowserUtil.browse(HuggingFaceURLProvider.getDatasetCardLink(datasetName))
+  }
+}

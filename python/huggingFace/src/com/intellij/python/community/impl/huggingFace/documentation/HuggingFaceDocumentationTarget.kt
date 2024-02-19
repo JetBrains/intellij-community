@@ -3,6 +3,7 @@ package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.ide.IdeBundle
 import com.intellij.model.Pointer
+import com.intellij.openapi.application.readAction
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
@@ -19,6 +20,7 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsC
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCacheEntry
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCardsCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
+import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.jetbrains.python.psi.*
@@ -71,11 +73,12 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
       } else {
         HuggingFaceDatasetsCache.getBasicData(entityId)
       }
-
+      // shall we log failures?
       if (entityDataApiContent == null) { return@asyncDocumentation DocumentationResult.documentation(PyHuggingFaceBundle.message("python.hugging.face.could.not.fetch")) }
       val modelCardContent = fetchOrRetrieveModelCard(entityDataApiContent, entityId, entityKind)
-      val project = myElement.project
+      val project = readAction { myElement.project }
 
+      HuggingFaceCardsUsageCollector.CARD_SHOWN_ON_HOVER.log(entityId, entityKind)
       val htmlContent = HuggingFaceHtmlBuilder(
         project,
         entityDataApiContent,
