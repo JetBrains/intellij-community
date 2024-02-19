@@ -22,6 +22,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.application
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -380,17 +383,25 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val importer = JbSettingsImporter(productInfo.configDir, productInfo.pluginDir, null)
     val progressIndicator = importData.createProgressIndicatorAdapter()
     val importLifetime = LifetimeDefinition()
-    SettingsService.getInstance().importCancelled.advise(importLifetime) {
-      progressIndicator.cancel()
-    }
+    var importStartedDeferred: Deferred<Unit>? = null
     val modalityState = ModalityState.current()
 
+    SettingsService.getInstance().importCancelled.advise(importLifetime) {
+      progressIndicator.cancel()
+      importStartedDeferred?.apply {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), ImportSettingsBundle.message("progress.title.cancelling")) {
+          LOG.info("Import cancelled. Waiting for the current task to be finished")
+          join()
+        }
+      }
+    }
+
     val startTime = System.currentTimeMillis()
-    coroutineScope.async(modalityState.asContextElement()) {
+    importStartedDeferred = coroutineScope.async(modalityState.asContextElement()) {
       suspend fun performImport(): Boolean {
         if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
           LOG.info("Started importing all...")
-          progressIndicator.text2 = "Migrating options"
+          progressIndicator.text2 = ImportSettingsBundle.message("progress.details.migrating.options")
           //TODO support plugin list customization for raw import
           //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
           importer.importRaw()
@@ -458,7 +469,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       }
 
       LOG.info("Finishing the import process, shouldRestart=$shouldRestart")
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         if (shouldRestart) {
           restartIde()
         }

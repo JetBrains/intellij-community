@@ -39,9 +39,9 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
     val shouldExit = currentPage.confirmExit(peer.contentPane)
 
     if (shouldExit) {
-      super.doCancelAction()
       tracker.onLeave()
       cancelCallback()
+      super.doCancelAction()
     }
   }
 
