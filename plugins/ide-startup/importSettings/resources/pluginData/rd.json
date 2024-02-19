@@ -171,7 +171,7 @@
   },
   {
     "vsCodeId": "formulahendry.dotnet-test-explorer",
-    "ideaName": "Test Explorer",
+    "ideaName": ".NET Core Test Explorer",
     "builtIn": true
   },
   {
@@ -221,7 +221,7 @@
   },
   {
     "vsCodeId": "jchannon.csharpextensions",
-    "ideaName": "C#",
+    "ideaName": "C# Extensions",
     "builtIn": true
   },
   {
@@ -231,7 +231,7 @@
   },
   {
     "vsCodeId": "jmrog.vscode-nuget-package-manager",
-    "ideaName": "NuGet",
+    "ideaName": "NuGet Package Manager",
     "builtIn": true
   },
   {
@@ -246,7 +246,7 @@
   },
   {
     "vsCodeId": "k--kato.docomment",
-    "ideaName": "C#",
+    "ideaName": "C# XML Documentation Comments",
     "builtIn": true
   },
   {
