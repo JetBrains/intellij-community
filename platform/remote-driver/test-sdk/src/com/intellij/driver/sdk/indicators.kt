@@ -49,7 +49,7 @@ private fun Driver.waitForIndicators(projectGet: () -> Project, timeout: Duratio
     }
     else {
       val now = Instant.now()
-      if (start.plusSeconds(3).isBefore(now)) {
+      if (start.plusSeconds(5).isBefore(now)) {
         return@waitFor true // we are smart long enough
       }
     }
