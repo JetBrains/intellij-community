@@ -17,6 +17,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -43,7 +44,7 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
                 CoroutineFrameBuilder.coroutineExitFrame(frame, it)
             }
 
-            if (stackFrame != null) {
+            if (stackFrame != null && Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
                 showCoroutinePanel(debugProcess)
             }
 
