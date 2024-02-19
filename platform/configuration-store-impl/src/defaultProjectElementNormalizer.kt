@@ -1,6 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StoragePathMacros
@@ -56,9 +54,8 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
   moveComponentConfiguration(defaultProject, element, { it }) { projectConfigDir.resolve(it) }
 }
 
-private fun getProfileName(profile: Element): String? {
-  return profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
-}
+private fun getProfileName(profile: Element): String? =
+  profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
 
 private fun writeProfileSettings(schemeDir: Path, componentName: String, component: Element) {
   component.removeAttribute("name")

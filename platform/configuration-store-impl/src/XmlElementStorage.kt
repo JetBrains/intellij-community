@@ -44,9 +44,8 @@ abstract class XmlElementStorage protected constructor(
 
   protected abstract fun loadLocalData(): Element?
 
-  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
-    return storageData.getState(key = componentName, archive = archive)
-  }
+  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? =
+    storageData.getState(key = componentName, archive)
 
   final override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(key = componentName, state = serializedState)

@@ -13,7 +13,7 @@ import java.io.Writer
 import java.nio.file.Path
 
 const val PROJECT_DEFAULT_FILE_NAME = "project.default.xml"
-const val PROJECT_DEFAULT_FILE_SPEC = "$APP_CONFIG/${PROJECT_DEFAULT_FILE_NAME}"
+const val PROJECT_DEFAULT_FILE_SPEC = "${APP_CONFIG}/${PROJECT_DEFAULT_FILE_NAME}"
 
 internal class DefaultProjectStoreImpl(override val project: Project) : ComponentStoreWithExtraComponents() {
   // see note about default state in project store
@@ -62,11 +62,8 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
-                                   stateSpec: State,
-                                   operation: StateStorageOperation): List<FileStorageAnnotation> {
-    return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
-  }
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> =
+    listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
   override fun setPath(path: Path) {}
 

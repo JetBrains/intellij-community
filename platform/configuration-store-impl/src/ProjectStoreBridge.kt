@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
-
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -162,7 +160,7 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
     }
 
     val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
-    val internalComponents = internalModuleComponents.get(moduleFilePath.invariantSeparatorsPathString)
+    val internalComponents = internalModuleComponents[moduleFilePath.invariantSeparatorsPathString]
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
@@ -255,7 +253,6 @@ internal class StorageJpsConfigurationReader(private val project: Project,
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadComponentTimeCounter = meter.counterBuilder("jps.storage.jps.conf.reader.load.component.ms").buildObserver()
-
       meter.batchCallback({ loadComponentTimeCounter.record(loadComponentTimeMs.asMilliseconds()) }, loadComponentTimeCounter)
     }
 
@@ -320,7 +317,5 @@ private fun getStorageSpec(filePath: String, project: Project): Storage {
  * This fake implementation is used to force creating directory based storage in StateStorageManagerImpl.createStateStorage
  */
 private class FakeDirectoryBasedStateSplitter : StateSplitterEx() {
-  override fun splitState(state: Element): MutableList<Pair<Element, String>> {
-    throw AssertionError()
-  }
+  override fun splitState(state: Element): MutableList<Pair<Element, String>> = throw AssertionError()
 }

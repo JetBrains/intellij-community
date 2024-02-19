@@ -1,6 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -117,10 +115,6 @@ class StateMap private constructor(private val names: Array<String>, private val
 
   fun hasState(key: String): Boolean = get(key) is Element
 
-  fun hasStates(): Boolean {
-    return !isEmpty() && names.indices.any { states.get(it) is Element }
-  }
-
   fun compare(key: String, newStates: StateMap, diffs: MutableSet<String>) {
     val oldState = get(key)
     val newState = newStates.get(key)
@@ -212,7 +206,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
 
   newLiveStates?.put(key, newState)
 
-  val oldState = states.get(key)
+  val oldState = states[key]
 
   var newBytes: ByteArray? = null
   if (oldState is Element) {

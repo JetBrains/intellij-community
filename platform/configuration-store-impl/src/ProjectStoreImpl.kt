@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -13,6 +11,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectNameProvider
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -163,12 +162,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     runCatching {
       val dotIdea = dotIdea
       if (dotIdea != null) {
-        normalizeDefaultProjectElement(defaultProject = defaultProject, element = element, projectConfigDir = dotIdea)
+        normalizeDefaultProjectElement(defaultProject, element, projectConfigDir = dotIdea)
       }
       else {
         moveComponentConfiguration(
-          defaultProject = defaultProject,
-          element = element,
+          defaultProject, element,
           storagePathResolver = { PROJECT_FILE },  // doesn't matter; any path will be resolved as projectFilePath (see `fileResolver`)
           fileResolver = { if (it == "workspace.xml") workspacePath else dirOrFile!! },
         )
@@ -202,14 +200,9 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     return "$prefix${Integer.toHexString(path.invariantSeparatorsPathString.hashCode())}"
   }
 
-  final override fun getPresentableUrl(): String {
-    if (isDirectoryBased) {
-      return (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).invariantSeparatorsPathString
-    }
-    else {
-      return projectFilePath.invariantSeparatorsPathString
-    }
-  }
+  final override fun getPresentableUrl(): String =
+    if (isDirectoryBased) (dirOrFile ?: throw IllegalStateException("setPath was not yet called")).invariantSeparatorsPathString
+    else projectFilePath.invariantSeparatorsPathString
 
   final override fun getProjectWorkspaceId(): String? = ProjectIdManager.getInstance(project).id
 
@@ -283,7 +276,6 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     if (!file.isInLocalFileSystem || !ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
       return false
     }
-
     val filePath = file.path
     if (!isDirectoryBased) {
       return filePath == projectFilePath.invariantSeparatorsPathString || filePath == workspacePath.invariantSeparatorsPathString
@@ -326,6 +318,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       lastSavedProjectName = currentProjectName
 
       val nameFile = getNameFile()
+
       fun doSave() {
         val basePath = projectBasePath
         if (currentProjectName == basePath.fileName?.toString()) {
@@ -333,9 +326,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
           Files.deleteIfExists(nameFile)
         }
         else if (Files.isDirectory(basePath)) {
-          nameFile.parent?.let {
-            Files.createDirectories(it)
-          }
+          NioFiles.createParentDirectories(nameFile)
           Files.write(nameFile, currentProjectName.toByteArray())
         }
       }
@@ -362,20 +353,11 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
         // save modules before the project
         val saveSessions = Collections.synchronizedList(ArrayList<SaveSession>())
         val projectSessionManager = createSaveSessionProducerManager()
-        saveModules(
-          saveSessions = saveSessions,
-          saveResult = saveResult,
-          forceSavingAllSettings = forceSavingAllSettings,
-          projectSessionManager = projectSessionManager,
-        )
-        saveSettingsAndCommitComponents(
-          saveResult = saveResult,
-          forceSavingAllSettings = forceSavingAllSettings,
-          sessionManager = projectSessionManager,
-        )
+        saveModules(saveSessions, saveResult, forceSavingAllSettings, projectSessionManager)
+        saveSettingsAndCommitComponents(saveResult, forceSavingAllSettings, projectSessionManager)
         projectSessionManager.collectSaveSessions(saveSessions)
         if (saveSessions.isNotEmpty()) {
-          projectSessionManager.saveAndValidate(saveSessions = saveSessions, saveResult = saveResult)
+          projectSessionManager.saveAndValidate(saveSessions, saveResult)
         }
       }
 
@@ -390,12 +372,10 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     saveResult: SaveResult,
     forceSavingAllSettings: Boolean,
     projectSessionManager: ProjectSaveSessionProducerManager
-  ) {
-  }
+  ) { }
 
-  override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
-    return ProjectSaveSessionProducerManager(project = project, isUseVfsForWrite = storageManager.isUseVfsForWrite)
-  }
+  override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager =
+    ProjectSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (isDirectoryBased) {
@@ -413,32 +393,20 @@ private class ProjectStateStorageManager(private val project: Project) : StateSt
   override val isUseVfsForWrite: Boolean
     get() = !useBackgroundSave
 
-  override fun normalizeFileSpec(fileSpec: String): String {
-    return removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = PROJECT_CONFIG_DIR)
-  }
+  override fun normalizeFileSpec(fileSpec: String): String =
+    removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = PROJECT_CONFIG_DIR)
 
-  override fun expandMacro(collapsedPath: String): Path {
-    if (collapsedPath[0] == '$') {
-      return super.expandMacro(collapsedPath)
-    }
-    else {
-      // PROJECT_CONFIG_DIR is the first macro
-      return macros.get(0).value.resolve(collapsedPath)
-    }
-  }
+  override fun expandMacro(collapsedPath: String): Path =
+    if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
+    else macros[0].value.resolve(collapsedPath) // PROJECT_CONFIG_DIR is the first macro
 
   override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
     rootAttributes.put(VERSION_OPTION, "4")
   }
 
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
-    if (ComponentManagerImpl.badWorkspaceComponents.contains(componentName)) {
-      return StoragePathMacros.WORKSPACE_FILE
-    }
-    else {
-      return PROJECT_FILE
-    }
-  }
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
+    if (ComponentManagerImpl.badWorkspaceComponents.contains(componentName)) StoragePathMacros.WORKSPACE_FILE
+    else PROJECT_FILE
 
   override val isExternalSystemStorageEnabled: Boolean
     get() = project.isExternalStorageEnabled

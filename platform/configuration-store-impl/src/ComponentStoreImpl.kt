@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -205,6 +203,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
+  private fun getComponentName(component: Any): String =
+    @Suppress("DEPRECATION")
+    if (component is NamedComponent) component.componentName else component.javaClass.name
+
   override fun unloadComponent(component: Any) {
     @Suppress("DEPRECATION")
     val name = when (component) {
@@ -354,19 +356,6 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  @TestOnly
-  suspend fun saveNonVfsComponent(component: PersistentStateComponent<*>) {
-    val stateSpec = getStateSpec(component)
-    val saveManager = createSaveSessionProducerManager()
-
-    val componentInfo = getComponents().entries.first { it.key == stateSpec.name }.value
-    commitComponent(sessionManager = saveManager, info = componentInfo, componentName = null, modificationCountChanged = false)
-
-    val saveResult = SaveResult()
-    saveManager.save(saveResult)
-    saveResult.rethrow()
-  }
-
   internal open fun createSaveSessionProducerManager(): SaveSessionProducerManager =
     SaveSessionProducerManager(isUseVfsForWrite = false, collectVfsEvents = false)
 
@@ -511,9 +500,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
-  protected open fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage? {
-    return null
-  }
+  protected open fun getReadOnlyStorage(componentClass: Class<Any>, stateClass: Class<Any>, configurationSchemaKey: String): StateStorage? = null
 
   private fun doInitComponent(
     info: ComponentInfo,
@@ -608,14 +595,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean {
-    return !storageSpec.deprecated && stateSpec.reportStatistic && storageSpec.value != StoragePathMacros.CACHE_FILE
-  }
+  protected open fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean =
+    !storageSpec.deprecated && stateSpec.reportStatistic && storageSpec.value != StoragePathMacros.CACHE_FILE
 
-  private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean {
-    return changedStorages.contains(storage) ||
-           (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
-  }
+  private fun isStorageChanged(changedStorages: Set<StateStorage>, storage: StateStorage): Boolean =
+    changedStorages.contains(storage) || (storage is ExternalStorageWithInternalPart && changedStorages.contains(storage.internalStorage))
 
   protected open fun doCreateStateGetter(
     reloadData: Boolean,
@@ -654,9 +638,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean {
-    return (storage as? XmlElementStorage)?.storageRoamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
-  }
+  protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean =
+    (storage as? XmlElementStorage)?.storageRoamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
 
@@ -836,7 +819,7 @@ internal fun sortStoragesByDeprecated(storages: List<Storage>): List<Storage> {
   }
 
   if (!storages.first().deprecated) {
-    val othersAreDeprecated = (1 until storages.size).any { storages.get(it).deprecated }
+    val othersAreDeprecated = (1 until storages.size).any { storages[it].deprecated }
     if (othersAreDeprecated) {
       return storages.toList()
     }
@@ -877,25 +860,8 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   }
 }
 
-private fun getComponentName(component: Any): String {
-  @Suppress("DEPRECATION")
-  return if (component is NamedComponent) component.componentName else component.javaClass.name
-}
-
-internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? {
-  return when {
-    component is SerializablePersistentStateComponent<*> -> {
-      component.state
-    }
-    stateSpec.getStateRequiresEdt -> {
-      withContext(Dispatchers.EDT) {
-        component.state
-      }
-    }
-    else -> {
-      readAction {
-        component.state
-      }
-    }
-  }
+internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? = when {
+  component is SerializablePersistentStateComponent<*> -> component.state
+  stateSpec.getStateRequiresEdt -> withContext(Dispatchers.EDT) { component.state }
+  else -> readAction { component.state }
 }

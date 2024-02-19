@@ -1,7 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 @file:Internal
-
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -156,10 +154,8 @@ open class StateStorageManagerImpl(
     changed: Collection<String>,
     deleted: Collection<String>,
     pathNormalizer: ((String) -> String)? = null,
-  ): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> {
-    return storageLock.read {
-      Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
-    }
+  ): Pair<Collection<FileBasedStorage>, Collection<FileBasedStorage>> = storageLock.read {
+    Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
   }
 
   fun updatePath(spec: String, newPath: Path) {
@@ -180,7 +176,7 @@ open class StateStorageManagerImpl(
       var result: MutableList<FileBasedStorage>? = null
       for (fileSpec in fileSpecs) {
         val path = normalizeFileSpec(pathNormalizer?.invoke(fileSpec) ?: fileSpec)
-        val storage = storages.get(path)
+        val storage = storages[path]
         if (storage is FileBasedStorage) {
           if (result == null) {
             result = SmartList()
@@ -251,9 +247,7 @@ open class StateStorageManagerImpl(
     dir: Path,
     collapsedPath: String,
     @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
-  ): StateStorage {
-    return TrackedDirectoryStorage(storageManager = this, dir = dir, splitter = splitter, macroSubstitutor = macroSubstitutor)
-  }
+  ): StateStorage = TrackedDirectoryStorage(storageManager = this, dir, splitter, macroSubstitutor)
 
   protected open fun createFileBasedStorage(
     file: Path,
@@ -311,11 +305,10 @@ open class StateStorageManagerImpl(
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
-      if (operation == StateStorageOperation.WRITE && component is ProjectModelElement &&
-          storageManager.isExternalSystemStorageEnabled && component.externalSource != null) {
-        return Resolution.CLEAR
-      }
-      return Resolution.DO
+      val clearExtStorage = operation == StateStorageOperation.WRITE &&
+                            storageManager.isExternalSystemStorageEnabled &&
+                            (component as? ProjectModelElement)?.externalSource != null
+      return if (clearExtStorage) Resolution.CLEAR else Resolution.DO
     }
   }
 
@@ -354,7 +347,7 @@ open class StateStorageManagerImpl(
         return value
       }
 
-      if (collapsedPath.length > (key.length + 2) && collapsedPath.get(key.length) == '/' && collapsedPath.startsWith(key)) {
+      if (collapsedPath.length > (key.length + 2) && collapsedPath[key.length] == '/' && collapsedPath.startsWith(key)) {
         return value.resolve(collapsedPath.substring(key.length + 1))
       }
     }

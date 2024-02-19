@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.Service
@@ -72,7 +70,7 @@ internal class StorageVirtualFileTracker {
 
         // but if we have DirectoryBasedStorage, we check - if file located inside it
         if (storage == null && hasDirectoryBasedStorages && path.endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
-          storage = filePathToStorage.get(VfsUtil.getParentDir(path))
+          storage = filePathToStorage[VfsUtil.getParentDir(path)]
         }
       }
 
