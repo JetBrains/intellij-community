@@ -114,13 +114,9 @@ internal fun useExpression(
     return JKQualifiedExpression(receiver, methodCall)
 }
 
-internal fun kotlinAssert(assertion: JKExpression, message: JKExpression?, typeFactory: JKTypeFactory): JKCallExpressionImpl =
+internal fun kotlinAssert(assertion: JKExpression, message: JKExpression?, symbolProvider: JKSymbolProvider): JKCallExpressionImpl =
     JKCallExpressionImpl(
-        JKUnresolvedMethod( //TODO resolve assert
-            "assert",
-            typeFactory,
-            typeFactory.types.unit
-        ),
+        symbolProvider.provideMethodSymbol("kotlin.assert"),
         listOfNotNull(assertion, message).toArgumentList()
     )
 

@@ -38,7 +38,7 @@ internal class JavaStatementConversion(context: NewJ2kConverterContext) : Recurs
             else JKLambdaExpression(JKExpressionStatement(element::description.detached()))
 
         val expressionComparedToNull = assertion.expressionComparedToNull()
-            ?: return JKExpressionStatement(kotlinAssert(assertion, messageExpression, typeFactory))
+            ?: return kotlinAssert(assertion, messageExpression, symbolProvider).asStatement().withFormattingFrom(element)
         val referencedVariable = (expressionComparedToNull as? JKFieldAccessExpression)?.identifier?.target as? JKLocalVariable
         val checkNotNullSymbol = symbolProvider.provideMethodSymbol("kotlin.checkNotNull")
 
