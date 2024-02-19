@@ -50,6 +50,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     info: ComponentInfo,
     componentName: String,
     stateClass: Class<Any>,
+    useLoadedStateAsExisting: Boolean,
   ): StateGetter<Any> {
     val stateGetter = super.doCreateStateGetter(
       reloadData = reloadData,
@@ -57,6 +58,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
       info = info,
       componentName = componentName,
       stateClass = stateClass,
+      useLoadedStateAsExisting = false,
     )
     val configurationSchemaKey = info.configurationSchemaKey ?: return stateGetter
     val configurationFileManager = ConfigurationFileManager.getInstance(project)
@@ -88,7 +90,10 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     sessionProducer: SaveSessionProducer,
   ) {
     val configurationSchemaKey = info.configurationSchemaKey
-    if (state == null || configurationSchemaKey == null || info.affectedPropertyNames.isEmpty() || sessionProducer !is SaveSessionProducerBase) {
+    if (state == null ||
+        configurationSchemaKey == null ||
+        info.affectedPropertyNames.isEmpty() ||
+        sessionProducer !is SaveSessionProducerBase) {
       super.setStateToSaveSessionProducer(
         state = state,
         info = info,

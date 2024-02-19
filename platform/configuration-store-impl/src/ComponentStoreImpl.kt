@@ -35,7 +35,6 @@ import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.io.IOException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -559,6 +558,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           info = info,
           componentName = name,
           stateClass = stateClass,
+          useLoadedStateAsExisting = stateSpec.useLoadedStateAsExisting,
         )
         var state = stateGetter.getState(defaultState)
         if (state == null) {
@@ -622,10 +622,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     info: ComponentInfo,
     componentName: String,
     stateClass: Class<Any>,
+    useLoadedStateAsExisting: Boolean,
   ): StateGetter<Any> {
     @Suppress("UNCHECKED_CAST")
     val component = info.component as PersistentStateComponent<Any>
-    if (storage is StorageBaseEx<*> && info.stateSpec!!.useLoadedStateAsExisting && isUseLoadedStateAsExisting(storage)) {
+    // getting state after loading with an active controller can lead to unusual issues - disable write protection
+    if (useLoadedStateAsExisting && storage is StorageBaseEx<*> && storage.controller == null && isUseLoadedStateAsExisting(storage)) {
       return storage.createGetSession(
         component = component,
         componentName = componentName,
