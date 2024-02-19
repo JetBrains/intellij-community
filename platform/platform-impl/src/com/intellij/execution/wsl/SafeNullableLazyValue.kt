@@ -1,104 +1,94 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.wsl;
+package com.intellij.execution.wsl
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
-
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.RecursionManager
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
+import kotlin.concurrent.Volatile
 
 /**
  * A lazy value that is guaranteed to be computed only on a pooled thread without a RA lock.
  * May be safely called from any thread.
  */
-final class SafeNullableLazyValue<T> {
+internal class SafeNullableLazyValue<T> private constructor(private val computable: Supplier<out T>) {
+  private val isComputedRef = AtomicReference(false) // null == in progress
 
-  private final Supplier<? extends T> myComputable;
-  private final AtomicReference<@Nullable Boolean> myIsComputedRef = new AtomicReference<>(FALSE); // null == in progress
-  private volatile @Nullable T myValue = null;
+  @Volatile
+  private var value: T? = null
 
-  private SafeNullableLazyValue(final @NotNull Supplier<? extends T> computable) {
-    myComputable = computable;
-  }
+  val isComputed: Boolean
+    get() = true == isComputedRef.get()
 
-  public boolean isComputed() {
-    return TRUE.equals(myIsComputedRef.get());
-  }
-
-  private boolean isNotComputedNorInProgress() {
-    return FALSE.equals(myIsComputedRef.get());
-  }
+  private val isNotComputedNorInProgress: Boolean
+    get() = false == isComputedRef.get()
 
   /**
-   * Identical to {@code this.getValueOrElse(null)}.
+   * Identical to `this.getValueOrElse(null)`.
    *
-   * @see #getValueOrElse(Object)
+   * @see .getValueOrElse
    */
-  public @Nullable T getValue() {
-    return getValueOrElse(null);
-  }
+  fun getValue(): T? =
+    getValueOrElse(null)
 
   /**
    * If possible, tries to compute this lazy value synchronously.
-   * Otherwise, schedules an asynchronous computation if necessary and returns {@code notYet}.
+   * Otherwise, schedules an asynchronous computation if necessary and returns `notYet`.
    *
-   * @return a computed nullable value, or {@code notYet}.
+   * @return a computed nullable value, or `notYet`.
    * @implNote this method blocks on synchronous computation.
-   * @see #getValue()
+   * @see .getValue
    */
-  public @Nullable T getValueOrElse(final @Nullable T notYet) {
-    if (isComputed()) {
-      return myValue;
+  fun getValueOrElse(notYet: T?): T? {
+    if (isComputed) {
+      return value
     }
 
-    final var app = ApplicationManager.getApplication();
-    if (app.isDispatchThread() || app.isReadAccessAllowed()) {
-      if (isNotComputedNorInProgress()) {
-        CompletableFuture.runAsync(this::compute, AppExecutorUtil.getAppExecutorService());
+    val app = ApplicationManager.getApplication()
+    if (app.isDispatchThread || app.isReadAccessAllowed) {
+      if (isNotComputedNorInProgress) {
+        CompletableFuture.runAsync({ this.compute() }, AppExecutorUtil.getAppExecutorService())
       }
-      return notYet;
+      return notYet
     }
 
-    return compute();
+    return compute()
   }
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  private @Nullable T compute() {
-    if (isComputed()) {
-      return myValue;
+  private fun compute(): T? {
+    if (isComputed) {
+      return value
     }
-    synchronized (this) {
-      if (isComputed()) {
-        return myValue;
+    synchronized(this) {
+      if (isComputed) {
+        return value
       }
-      myIsComputedRef.set(null);
+      isComputedRef.set(null)
       try {
-        final var stamp = RecursionManager.markStack();
-        final var value = myComputable.get();
+        val stamp = RecursionManager.markStack()
+        val value = computable.get()
         if (stamp.mayCacheNow()) {
-          myValue = value;
-          myIsComputedRef.set(TRUE);
+          this.value = value
+          isComputedRef.set(true)
         }
-        return value;
+        return value
       }
       finally {
-        myIsComputedRef.compareAndSet(null, FALSE);
+        isComputedRef.compareAndSet(null, false)
       }
     }
   }
 
-  static <T> @NotNull SafeNullableLazyValue<@Nullable T> create(final @NotNull Supplier<? extends T> computable) {
-    return new SafeNullableLazyValue<>(computable);
+  companion object {
+    @JvmStatic
+    fun <T> create(computable: Supplier<out T>): SafeNullableLazyValue<T> {
+      return SafeNullableLazyValue(computable)
+    }
   }
 }
