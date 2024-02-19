@@ -1,8 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.command.impl;
+package com.intellij.ide.plugins;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
@@ -25,8 +24,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Works in two stages. On the first run, it collects available updates and writes an update script. The second run needs
- * {@code idea.force.plugin.updates = "true"} system property to apply the updates.
+ * Works in two stages.
+ * On the first run, it collects available updates and writes an update script.
+ * The second run needs {@code idea.force.plugin.updates = "true"} system property to apply the updates.
  *
  * @see AppMode#FORCE_PLUGIN_UPDATES
  * @see com.intellij.idea.Main#installPluginUpdates
