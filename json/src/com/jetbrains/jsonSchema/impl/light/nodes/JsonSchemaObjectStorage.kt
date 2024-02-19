@@ -31,7 +31,7 @@ internal class JsonSchemaObjectStorage {
 
   private data class SchemaId(val schemaFile: VirtualFile, val modificationStamp: Long)
 
-  private val parsedSchemaById = ConcurrentFactoryMap.createWeakMap<SchemaId, JsonSchemaObject> { id ->
+  private val parsedSchemaById = ConcurrentFactoryMap.createMap<SchemaId, JsonSchemaObject> { id ->
     createRootSchemaObject(id.schemaFile)
   }
 
