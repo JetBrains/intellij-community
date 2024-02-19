@@ -36,6 +36,23 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     }
   }
 
+  fun triggerHealthCheck() {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
+    stopHealthCheck()
+    AppExecutorUtil.getAppExecutorService().submit {
+      try {
+        runHealthCheck()
+      }
+      finally {
+        setUpHealthCheck()
+      }
+    }
+  }
+
+  @Synchronized // don't allow two parallel health checks in case of triggerHealthCheck()
   private fun runHealthCheck() {
     if (!IndexInfrastructure.hasIndices()) return
 

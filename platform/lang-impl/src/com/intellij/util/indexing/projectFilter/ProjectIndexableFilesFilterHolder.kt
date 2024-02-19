@@ -40,6 +40,8 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
    * This is a temp method
    */
   fun wasDataLoadedFromDisk(project: Project): Boolean
+
+  fun getHealthCheck(project: Project): ProjectIndexableFilesFilterHealthCheck?
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder {
@@ -64,6 +66,10 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
 
   override fun wasDataLoadedFromDisk(project: Project): Boolean {
     return myProjectFilters[project]?.first?.wasDataLoadedFromDisk ?: false
+  }
+
+  override fun getHealthCheck(project: Project): ProjectIndexableFilesFilterHealthCheck? {
+    return myProjectFilters[project]?.second
   }
 
   override fun getProjectIndexableFiles(project: Project): IdFilter? {
