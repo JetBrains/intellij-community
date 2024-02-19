@@ -2,6 +2,12 @@
 package org.jetbrains.idea.maven.indices;
 
 
+import org.jetbrains.annotations.ApiStatus;
+
+/**
+ * Consider using MavenGAVIndex or MavenSearchIndex instead
+ */
+@ApiStatus.Obsolete
 public interface MavenIndex extends MavenGAVIndex, MavenArchetypeContainer, MavenUpdatableIndex {
 
 }
