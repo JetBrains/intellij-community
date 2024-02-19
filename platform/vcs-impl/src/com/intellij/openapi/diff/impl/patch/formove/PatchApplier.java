@@ -64,7 +64,7 @@ public final class PatchApplier {
   @NlsContexts.Label @Nullable private final String myLeftConflictPanelTitle;
   @NlsContexts.Label @Nullable private final String myRightConflictPanelTitle;
   @NlsContexts.Label @NotNull private final String myActivityName;
-  @NotNull private final ActivityId myActivityId;
+  @Nullable private final ActivityId myActivityId;
 
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
@@ -75,7 +75,7 @@ public final class PatchApplier {
                       @NlsContexts.Label @Nullable String leftConflictPanelTitle,
                       @NlsContexts.Label @Nullable String rightConflictPanelTitle,
                       @NlsContexts.Label @NotNull String activityName,
-                      @NotNull ActivityId activityId) {
+                      @Nullable ActivityId activityId) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
@@ -172,7 +172,7 @@ public final class PatchApplier {
                                                     @Nullable LocalChangeList targetChangeList,
                                                     boolean showSuccessNotification,
                                                     boolean silentAddDelete,
-                                                    @NlsContexts.Label @NotNull String activityName, @NotNull ActivityId activityId) {
+                                                    @NlsContexts.Label @NotNull String activityName, @Nullable ActivityId activityId) {
     if (group.isEmpty()) {
       return ApplyPatchStatus.SUCCESS; //?
     }
@@ -190,7 +190,7 @@ public final class PatchApplier {
 
       final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
       ApplicationManager.getApplication().invokeAndWait(() -> {
-        LocalHistoryAction action = LocalHistory.getInstance().startAction(activityName, activityId);
+        LocalHistoryAction action = activityId != null ? LocalHistory.getInstance().startAction(activityName, activityId) : null;
         try {
           runWithDefaultConfirmations(project, silentAddDelete, () -> {
             CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -217,7 +217,7 @@ public final class PatchApplier {
         }
         finally {
           trigger.cleanup();
-          action.finish();
+          if (action != null) action.finish();
         }
       });
       result = refStatus.get();

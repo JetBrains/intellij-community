@@ -65,7 +65,7 @@ public final class GitRebaseUpdater extends GitUpdater {
 
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = Collections.singletonList(remoteBranch);
-    GitUpdateResult result = new GitRebaser(myProject, myGit, myProgressIndicator).rebase(myRoot, params);
+    GitUpdateResult result = new GitRebaser(myProject, myGit, myProgressIndicator).rebase(myRoot, params, null);
     if (result == GitUpdateResult.CANCEL) {
       new GitRebaser(myProject, myGit, myProgressIndicator).abortRebase(myRoot);
     }

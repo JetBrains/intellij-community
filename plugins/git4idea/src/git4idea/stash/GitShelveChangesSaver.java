@@ -133,6 +133,10 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
     }
   }
 
+  void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myVcsShelveChangesSaver.setReportLocalHistoryActivity(reportLocalHistoryActivity);
+  }
+
   @Override
   public @NonNls String toString() {
     return "ShelveChangesSaver. Lists: " + myVcsShelveChangesSaver.getShelvedLists();

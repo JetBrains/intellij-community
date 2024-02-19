@@ -2,6 +2,7 @@
 package git4idea.stash;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.history.ActivityId;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -47,6 +48,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private final @NotNull GitRepositoryManager myRepositoryManager;
   private final @NotNull Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
 
+  private boolean myReportLocalHistoryActivity = true;
+
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
                               @NotNull ProgressIndicator progressIndicator,
@@ -59,7 +62,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   protected void save(@NotNull Collection<? extends VirtualFile> rootsToSave) throws VcsException {
     LOG.info("saving " + rootsToSave);
 
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.stash"), GitActivity.Stash)) {
+    ActivityId activityId = myReportLocalHistoryActivity ? GitActivity.Stash : null;
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.stash"), activityId)) {
       for (VirtualFile root : rootsToSave) {
         String message = GitBundle.message("stash.progress.indicator.title", root.getName());
         LOG.info(message);
@@ -109,7 +113,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
         handler.addParameters("--index");
       }
       return handler;
-    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams));
+    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams), myReportLocalHistoryActivity);
     myProgressIndicator.setText(oldProgressTitle);
   }
 
@@ -125,6 +129,10 @@ public class GitStashChangesSaver extends GitChangesSaver {
     } else {
       GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
     }
+  }
+
+  void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myReportLocalHistoryActivity = reportLocalHistoryActivity;
   }
 
   @Override

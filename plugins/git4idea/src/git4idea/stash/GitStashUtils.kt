@@ -4,6 +4,7 @@
 package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.history.ActivityId
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
@@ -173,11 +174,13 @@ object GitStashOperations {
    * If there's a conflict, show the merge dialog, and if the conflicts get resolved, continue with other roots.
    */
   @JvmStatic
+  @JvmOverloads
   fun unstash(project: Project,
               rootAndRevisions: Map<VirtualFile, Hash?>,
               handlerProvider: (VirtualFile) -> GitLineHandler,
-              conflictResolver: GitConflictResolver): Boolean {
-    DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash"), GitActivity.Unstash).use {
+              conflictResolver: GitConflictResolver,
+              reportToLocalHistory: Boolean = true): Boolean {
+    DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash"), if (reportToLocalHistory) GitActivity.Unstash else null).use {
       for ((root, hash) in rootAndRevisions) {
         val handler = handlerProvider(root)
 

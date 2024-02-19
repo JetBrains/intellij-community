@@ -221,7 +221,7 @@ public final class GitUpdateProcess {
       final Map<GitRepository, GitUpdater> finalUpdaters = updaters;
       new GitPreservingProcess(myProject, myGit, myRootsToSave, GitBundle.message("git.update.operation"),
                                GitBundle.message("progress.update.destination.remote"),
-                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, () -> {
+                               GitVcsSettings.getInstance(myProject).getSaveChangesPolicy(), myProgressIndicator, false, () -> {
         LOG.info("updateImpl: updating...");
         GitRepository currentlyUpdatedRoot = null;
         try {
