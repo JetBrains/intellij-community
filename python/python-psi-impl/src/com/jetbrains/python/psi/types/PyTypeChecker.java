@@ -932,8 +932,8 @@ public final class PyTypeChecker {
                                                                                   @NotNull TypeEvalContext context) {
     GenericSubstitutions existingSubstitutions = substitutions == null ? new GenericSubstitutions() : substitutions;
     Generics typeParamsFromReturnType = collectGenerics(returnType, context);
-    // TODO Handle unmatched ParamSpecs and TypeVarTuples here as well
-    if (typeParamsFromReturnType.typeVars.isEmpty()) {
+    // TODO Handle unmatched TypeVarTuples here as well
+    if (typeParamsFromReturnType.typeVars.isEmpty() && typeParamsFromReturnType.paramSpecs.isEmpty()) {
       return existingSubstitutions;
     }
     Set<PyType> visited = new HashSet<>();
@@ -949,6 +949,20 @@ public final class PyTypeChecker {
                                existingSubstitutions.typeVars.containsKey(invert(returnTypeParam));
       if (canGetBoundFromArguments && !isAlreadyBound) {
         existingSubstitutions.typeVars.put(returnTypeParam, null);
+      }
+    }
+    for (PyParamSpecType paramSpecType : typeParamsFromReturnType.paramSpecs) {
+      // ParamSpecs already bound to parameter lists 
+      if (paramSpecType.getParameters() != null) {
+        continue;
+      }
+      boolean canGetBoundFromArguments = typeParamsFromParameterTypes.paramSpecs.contains(paramSpecType);
+      boolean isAlreadyBound = existingSubstitutions.paramSpecs.containsKey(paramSpecType);
+      if (canGetBoundFromArguments && !isAlreadyBound) {
+        existingSubstitutions.paramSpecs.put(paramSpecType, new PyParamSpecType(paramSpecType.getName())
+          .withParameters(List.of(PyCallableParameterImpl.positionalNonPsi("args", null),
+                                  PyCallableParameterImpl.keywordNonPsi("kwargs", null)),
+                          context));
       }
     }
     return existingSubstitutions;
@@ -1073,6 +1087,8 @@ public final class PyTypeChecker {
           if (!typeVarTupleType.equals(substitution) && hasGenerics(substitution, context)) {
             return substitute(substitution, substitutions, context, substituting);
           }
+          // TODO This should happen in getSubstitutionsWithUnresolvedReturnGenerics, but it won't work for inherited constructors
+          //   as in testVariadicGenericCheckTypeAliasesRedundantParameter, investigate why
           // Replace unknown TypeVarTuples by *tuple[Any, ...] instead of plain Any
           return substitution == null ? PyUnpackedTupleTypeImpl.UNSPECIFIED : substitution;
         }

@@ -4441,9 +4441,9 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
-  // PY-65385
-  public void testUnboundParamSpecFromUnresolvedArgumentRetained() {
-    doTest("(ParamSpec(\"P\")) -> str",
+  // PY-70484
+  public void testUnboundParamSpecFromUnresolvedArgumentReplacedWithArgsKwargs() {
+    doTest("(args: Any, kwargs: Any) -> str",
            """
              from typing import Callable, Any, ParamSpec
                           
@@ -4453,6 +4453,21 @@ public class PyTypingTest extends PyTestCase {
                  return ...
                           
              expr = deco(unresolved)
+             """);
+  }
+
+  // PY-70484
+  public void testUnboundParamSpecThatCannotBeBoundThroughParametersLeftIntact() {
+    doTest("((ParamSpec(\"P\")) -> Any) -> (ParamSpec(\"P\")) -> int",
+           """
+             from typing import Callable, Any, ParamSpec
+                          
+             P = ParamSpec("P")
+                          
+             def deco() -> Callable[[Callable[P, Any]], Callable[P, int]]
+                 return ...
+                          
+             expr = deco()
              """);
   }
 
