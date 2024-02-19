@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.ConcurrencyUtil
@@ -51,8 +52,9 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
         error.fix()
       }
 
-      val errorsToReport = errors
-        .filter { it.shouldBeReported }
+      val checkForExcludedFiles = errors.size <= Registry.intValue("index.files.filter.check.excluded.files.limit")
+      val errorsToReport = if (checkForExcludedFiles) ReadAction.nonBlocking(Callable { filterErrorsToReport(errors) }).executeSynchronously()
+      else errors
 
       if (errors.size > errorsToReport.size) {
         FileBasedIndexImpl.LOG.info("${errors.size - errorsToReport.size} of ${filter.javaClass.simpleName} health check errors were filtered out")
@@ -68,13 +70,30 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
           }
         }
 
-      FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errorsToReport.size} errors in project ${project.name}:\n$summary")
+      val checkForExcludedFilesInfo = if (checkForExcludedFiles) "Excluded files were filtered out."
+      else "Check for excluded files was skipped, errors might be false-positive."
+
+      FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errorsToReport.size} errors in project ${project.name}.\n" +
+                                  "$checkForExcludedFilesInfo\n" +
+                                  "Examples:\n" +
+                                  summary)
     }
     catch (_: ProcessCanceledException) {
 
     }
     catch (e: Exception) {
       FileBasedIndexImpl.LOG.error(e)
+    }
+  }
+
+  private fun filterErrorsToReport(errors: List<HealthCheckError>): List<HealthCheckError> {
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    return errors.filter {  error ->
+      if (error !is NotIndexableFileIsInFilterError) true
+      else {
+        val file = PersistentFS.getInstance().findFileById(error.fileId)
+        file == null || !projectFileIndex.isExcluded(file)
+      }
     }
   }
 
@@ -102,7 +121,6 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     val errors = mutableListOf<HealthCheckError>()
 
     val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
-    val projectFileIndex = ProjectFileIndex.getInstance(project)
 
     for ((fileId, indexable) in fileStatuses) {
       ProgressManager.checkCanceled()
@@ -113,9 +131,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
         if (checkAllExpectedIndexableFiles) shouldBeIndexable[fileId] = false
       }
       else if (indexable && !shouldBeIndexable[fileId]) {
-        val file = PersistentFS.getInstance().findFileById(fileId)
-        val excluded = file != null && projectFileIndex.isExcluded(file)
-        errors.add(NotIndexableFileIsInFilterError(fileId, excluded, filter))
+        errors.add(NotIndexableFileIsInFilterError(fileId, filter))
       }
     }
 
@@ -151,13 +167,11 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
 
 sealed interface HealthCheckError {
   val presentableText: String
-  val shouldBeReported: Boolean
   fun fix()
 }
 
 internal class MissingFileIdInFilterError(private val fileId: Int,
                                           private val filter: ProjectIndexableFilesFilter) : HealthCheckError {
-  override val shouldBeReported: Boolean = true
   override val presentableText: String
     get() = "file name=${PersistentFS.getInstance().findFileById(fileId)?.name} id=$fileId NOT found in filter"
 
@@ -166,10 +180,8 @@ internal class MissingFileIdInFilterError(private val fileId: Int,
   }
 }
 
-internal class NotIndexableFileIsInFilterError(private val fileId: Int,
-                                               excluded: Boolean,
+internal class NotIndexableFileIsInFilterError(val fileId: Int,
                                                private val filter: ProjectIndexableFilesFilter) : HealthCheckError {
-  override val shouldBeReported: Boolean = !excluded
   override val presentableText: String
     get() = "file name=${
       PersistentFS.getInstance().findFileById(fileId)?.name
