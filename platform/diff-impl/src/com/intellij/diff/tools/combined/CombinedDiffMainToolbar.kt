@@ -96,9 +96,9 @@ internal class CombinedDiffMainToolbar(
     topPanel.apply {
       removeAll()
       layout = MainToolbarLayout(leftToolbarPanel, rightToolbarPanel, diffInfoPanel)
-      add(diffInfoPanel.panel)
       add(leftToolbarPanel)
       add(rightToolbarPanel)
+      add(diffInfoPanel.panel)
     }
     topPanel.border = JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
     val background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
