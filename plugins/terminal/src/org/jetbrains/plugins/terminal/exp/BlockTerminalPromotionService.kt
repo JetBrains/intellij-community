@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
@@ -13,6 +12,7 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.GotItTooltip
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -23,13 +23,9 @@ import java.awt.Point
 import javax.swing.SwingUtilities
 
 internal object BlockTerminalPromotionService {
+  @RequiresEdt
   fun showPromotionOnce(project: Project, widget: TerminalWidget) {
-    if (widget.component.isShowing) {
-      runInEdt { doShowPromotionOnce(project, widget) }
-    }
-    else {
-      UiNotifyConnector.doWhenFirstShown(widget.component) { doShowPromotionOnce(project, widget) }
-    }
+    UiNotifyConnector.doWhenFirstShown(widget.component, { doShowPromotionOnce(project, widget) }, widget)
   }
 
   private fun doShowPromotionOnce(project: Project, widget: TerminalWidget) {
