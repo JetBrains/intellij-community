@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.util.AppPropertyService
 import com.intellij.ide.util.BasePropertyService
 import com.intellij.ide.util.PropertiesComponent
@@ -52,6 +53,8 @@ private object OtherXmlHandler : JbImportXmlHandler {
         processDFMInPropertiesService(component)
       }
     }
+
+    processExperimentalToolbar()
   }
 
   // IDEA-344035
@@ -63,6 +66,12 @@ private object OtherXmlHandler : JbImportXmlHandler {
       if (key.contains(DistractionFreeModeController.DISTRACTION_MODE_PROPERTY_KEY)) {
         propertiesService.setValue(key, value)
       }
+    }
+  }
+
+  fun processExperimentalToolbar() {
+    if (NotRoamableUiSettings.getInstance().experimentalSingleStripe) {
+      NotRoamableUiSettings.getInstance().experimentalSingleStripe = false
     }
   }
 }
