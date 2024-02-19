@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
@@ -55,14 +54,15 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   }
 
   public static boolean isInnerClass(@NotNull VirtualFile file) {
-    return detectInnerClass(file, null);
+    return isInnerClass(file, null);
   }
 
-  public static boolean isInnerClass(@NotNull VirtualFile file, byte @NotNull [] content) {
-    return detectInnerClass(file, content);
-  }
-
-  private static boolean detectInnerClass(VirtualFile file, byte @Nullable [] content) {
+  /**
+   * @param file virtual file
+   * @param reader ready class reader for this file, null, if not available
+   * @return true if the class is inner class
+   */
+  public static boolean isInnerClass(@NotNull VirtualFile file, @Nullable ClassReader reader) {
     String name = file.getNameWithoutExtension();
     int p = name.lastIndexOf('$', name.length() - 2);
     if (p <= 0) return false;
@@ -70,35 +70,40 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     Boolean isInner = IS_INNER_CLASS.get(file);
     if (isInner != null) return isInner;
 
-    if (content == null) {
+    if (reader == null) {
       try {
-        content = file.contentsToByteArray(false);
+        reader = new ClassReader(file.contentsToByteArray(false));
       }
       catch (IOException e) {
         throw new RuntimeException(e);
       }
     }
 
-    ClassReader reader = new ClassReader(content);
-    final Ref<Boolean> ref = Ref.create(Boolean.FALSE);
     final String className = reader.getClassName();
-    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+    class MyVisitor extends ClassVisitor {
+      boolean isInner;
+      
+      MyVisitor() {
+        super(Opcodes.API_VERSION);
+      }
+
       @Override
       public void visitOuterClass(String owner, String name, String desc) {
-        ref.set(Boolean.TRUE);
+        isInner = true;
       }
 
       @Override
       public void visitInnerClass(String name, String outer, String inner, int access) {
         if (className.equals(name)) {
-          ref.set(Boolean.TRUE);
+          isInner = true;
         }
       }
-    }, EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
+    }
+    MyVisitor visitor = new MyVisitor();
+    reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
 
-    isInner = ref.get();
-    IS_INNER_CLASS.set(file, isInner);
-    return isInner;
+    IS_INNER_CLASS.set(file, visitor.isInner);
+    return visitor.isInner;
   }
 
   @NotNull
