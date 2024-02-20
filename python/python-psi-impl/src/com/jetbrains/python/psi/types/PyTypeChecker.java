@@ -110,7 +110,7 @@ public final class PyTypeChecker {
     }
 
     for (PyTypeCheckerExtension extension : PyTypeCheckerExtension.EP_NAME.getExtensionList()) {
-      final Optional<Boolean> result = extension.match(expected, actual, context.context, context.mySubstitutions.typeVars);
+      final Optional<Boolean> result = extension.match(expected, actual, context.context, context.mySubstitutions);
       if (result.isPresent()) {
         return result;
       }
