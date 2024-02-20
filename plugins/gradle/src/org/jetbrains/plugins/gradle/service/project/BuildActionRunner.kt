@@ -10,7 +10,7 @@ import org.gradle.tooling.model.ProjectModel
 import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
 import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
-import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -38,7 +38,7 @@ import java.util.function.Consumer
  */
 class BuildActionRunner(
   private val resolverCtx: ProjectResolverContext,
-  private val buildAction: ProjectImportAction,
+  private val buildAction: GradleModelFetchAction,
   private val settings: GradleExecutionSettings,
   private val helper: GradleExecutionHelper
 ) {
@@ -56,7 +56,7 @@ class BuildActionRunner(
   }
 
   /**
-   * Fetches the [AllModels] that have been populated as a result of running the [ProjectImportAction] against the Gradle tooling API.
+   * Fetches the [AllModels] that have been populated as a result of running the [GradleModelFetchAction] against the Gradle tooling API.
    *
    * This method returns as soon as the all models have been obtained.
    *
@@ -133,7 +133,7 @@ class BuildActionRunner(
   }
 
   /**
-   * Creates the [BuildActionExecuter] to be used to run the [ProjectImportAction].
+   * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun createPhasedExecuter(projectsLoadedCallBack: Consumer<ModelsHolder<BuildModel, ProjectModel>>): BuildActionExecuter<Void> {
     buildAction.prepareForPhasedExecuter()

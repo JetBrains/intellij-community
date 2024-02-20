@@ -8,8 +8,8 @@ import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializerConverter;
 
 @ApiStatus.Internal
-public final class ProjectImportActionWithCustomSerializer extends ProjectImportAction {
-  public ProjectImportActionWithCustomSerializer(boolean isPreviewMode) {
+public final class GradleModelFetchActionWithCustomSerializer extends GradleModelFetchAction {
+  public GradleModelFetchActionWithCustomSerializer(boolean isPreviewMode) {
     super(isPreviewMode);
   }
 

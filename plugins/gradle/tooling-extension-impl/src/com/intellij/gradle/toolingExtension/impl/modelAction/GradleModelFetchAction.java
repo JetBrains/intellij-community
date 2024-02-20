@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * @author Vladislav.Soroka
  */
-public class ProjectImportAction implements BuildAction<AllModels>, Serializable {
+public class GradleModelFetchAction implements BuildAction<AllModels>, Serializable {
 
   private final Set<ProjectImportModelProvider> myModelProviders = new LinkedHashSet<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
@@ -50,11 +50,11 @@ public class ProjectImportAction implements BuildAction<AllModels>, Serializable
   private transient @Nullable ModelConverter myModelConverter = null;
   private transient @Nullable GradleOpenTelemetry myTelemetry = null;
 
-  public ProjectImportAction(boolean isPreviewMode) {
+  public GradleModelFetchAction(boolean isPreviewMode) {
     myIsPreviewMode = isPreviewMode;
   }
 
-  public ProjectImportAction addProjectImportModelProviders(
+  public GradleModelFetchAction addProjectImportModelProviders(
     @NotNull Collection<? extends ProjectImportModelProvider> providers
   ) {
     myModelProviders.addAll(providers);

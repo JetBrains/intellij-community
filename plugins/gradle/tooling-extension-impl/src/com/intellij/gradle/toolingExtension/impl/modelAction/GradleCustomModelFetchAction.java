@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * Part of {@link ProjectImportAction} which fully executes on Gradle side.
+ * Part of {@link GradleModelFetchAction} which fully executes on Gradle side.
  */
 @ApiStatus.Internal
 public class GradleCustomModelFetchAction {

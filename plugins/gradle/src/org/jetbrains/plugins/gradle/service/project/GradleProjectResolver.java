@@ -4,8 +4,8 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
-import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportAction;
-import com.intellij.gradle.toolingExtension.impl.modelAction.ProjectImportActionWithCustomSerializer;
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchActionWithCustomSerializer;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -216,10 +216,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     );
 
     boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
-    final ProjectImportAction projectImportAction =
-      useCustomSerialization
-      ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode())
-      : new ProjectImportAction(resolverCtx.isPreviewMode());
+    var buildAction = useCustomSerialization
+                      ? new GradleModelFetchActionWithCustomSerializer(resolverCtx.isPreviewMode())
+                      : new GradleModelFetchAction(resolverCtx.isPreviewMode());
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -236,11 +235,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       // pre-import checks
       resolverExtension.preImportCheck();
 
-      projectImportAction.addTargetTypes(resolverExtension.getTargetTypes());
+      buildAction.addTargetTypes(resolverExtension.getTargetTypes());
 
       // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
       try {
-        projectImportAction.addProjectImportModelProviders(resolverExtension.getModelProviders());
+        buildAction.addProjectImportModelProviders(resolverExtension.getModelProviders());
       }
       catch (Throwable t) {
         LOG.warn(t);
@@ -263,7 +262,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       GradleExecutionHelper.attachIdeaPluginConfigurator(executionSettings);
     }
 
-    BuildActionRunner buildActionRunner = new BuildActionRunner(resolverCtx, projectImportAction, executionSettings, myHelper);
+    BuildActionRunner buildActionRunner = new BuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper);
     resolverCtx.checkCancelled();
 
     final long startTime = System.currentTimeMillis();
@@ -281,7 +280,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     if (GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled()) {
       GradleTracingContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan);
-      projectImportAction.setTracingContext(gradleDaemonObservabilityContext);
+      buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       allModels = buildActionRunner.fetchModels(
