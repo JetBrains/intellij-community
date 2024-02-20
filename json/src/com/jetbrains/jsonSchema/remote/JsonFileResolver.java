@@ -33,8 +33,7 @@ public final class JsonFileResolver {
   private static final Key<Boolean> DOWNLOAD_STARTED = Key.create("DOWNLOAD_STARTED");
 
   public static boolean isRemoteEnabled(Project project) {
-    return !"true".equals(System.getProperty("idea.is.integration.test"))
-           && !ApplicationManager.getApplication().isUnitTestMode() &&
+    return !ApplicationManager.getApplication().isUnitTestMode() &&
            JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled();
   }
 
@@ -82,7 +81,7 @@ public final class JsonFileResolver {
     if (StringUtil.isEmpty(schemaUrl)) {
       return null;
     }
-    else if (!schemaUrl.startsWith("http")) {
+    else if (!schemaUrl.startsWith("http") || !Registry.is("json.schema.object.v2")) {
       return urlToFile(schemaUrl);
     }
     else {
