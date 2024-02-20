@@ -11,6 +11,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import it.unimi.dsi.fastutil.ints.IntCollection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,16 +93,21 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
         int[] buffer = SPARE_BUFFER_LOCAL.getBuffer(numberOfValues);
         int ptr = 0;
-        for (Integer i : value) {
-          buffer[ptr++] = i;
+        if (value instanceof IntCollection intCollection) {
+          buffer = intCollection.toArray(buffer);
+        } else {
+          for (Integer i : value) {
+            buffer[ptr++] = i;
+          }
         }
         Arrays.sort(buffer, 0, numberOfValues);
 
         DataInputOutputUtil.writeINT(out, numberOfValues);
         int prev = 0;
         for (ptr = 0; ptr < numberOfValues; ++ptr) {
-          DataInputOutputUtil.writeLONG(out, (long)buffer[ptr] - prev);
-          prev = buffer[ptr];
+          int cur = buffer[ptr];
+          DataInputOutputUtil.writeLONG(out, (long)cur - prev);
+          prev = cur;
         }
       }
 
