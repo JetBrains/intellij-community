@@ -16,6 +16,9 @@
     <extensionPoint qualifiedName="com.intellij.transferSettings.externalProjectImportChecker"
                     interface="com.intellij.ide.startup.importSettings.transfer.ExternalProjectImportChecker"
                     dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.thirdPartyProductSettingsTransfer"
+                    interface="com.intellij.ide.startup.importSettings.transfer.ThirdPartyProductSettingsTransfer"
+                    dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

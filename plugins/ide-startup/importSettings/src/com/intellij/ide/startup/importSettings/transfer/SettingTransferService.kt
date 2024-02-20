@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.transfer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.models.IdeVersion
@@ -42,12 +43,20 @@ class SettingTransferService(private val outerScope: CoroutineScope) : ExternalS
     private val logger = logger<SettingTransferService>()
   }
 
-  private val config = DefaultTransferSettingsConfiguration(
-    TransferSettingsDataProvider(
-      VSCodeTransferSettingsProvider(outerScope)
-    ),
-    shouldDisplayFailedVersions = false
-  )
+  private val config: TransferSettingsConfiguration
+  init {
+    val providers = buildList {
+      add(VSCodeTransferSettingsProvider(outerScope))
+      ThirdPartyProductSettingsTransfer.EP_NAME.forEachExtensionSafe { extension ->
+        addAll(extension.getProviders())
+      }
+    }
+
+    config = DefaultTransferSettingsConfiguration(
+      TransferSettingsDataProvider(providers),
+      shouldDisplayFailedVersions = false
+    )
+  }
 
   data class ThirdPartyProductInfo(
     val product: IdeVersion,
