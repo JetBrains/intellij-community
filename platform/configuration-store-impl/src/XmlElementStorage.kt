@@ -346,18 +346,12 @@ abstract class XmlElementStorage protected constructor(
 
     override fun setSerializedState(componentName: String, element: Element?) {
       val newLiveStates = newLiveStates ?: throw IllegalStateException("createSaveSession was already called")
-
       val normalized = element?.normalizeRootName()
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeeded(
-          key = componentName,
-          newState = normalized,
-          oldStates = originalStates,
-          newLiveStates = newLiveStates,
-        )
+        copiedStates = setStateAndCloneIfNeeded(key = componentName, newState = normalized, oldStates = originalStates, newLiveStates)
       }
       else {
-        updateState(states = copiedStates!!, key = componentName, newState = normalized, newLiveStates = newLiveStates)
+        updateState(states = copiedStates!!, key = componentName, newState = normalized, newLiveStates)
       }
     }
 

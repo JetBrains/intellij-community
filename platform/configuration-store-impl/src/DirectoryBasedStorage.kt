@@ -224,12 +224,12 @@ open class DirectoryBasedStorage(
 
     private fun doSetState(fileName: String, subState: Element) {
       if (copiedStorageData == null) {
-        copiedStorageData = setStateAndCloneIfNeeded(key = fileName, newState = subState, oldStates = originalStates)
+        copiedStorageData = setStateAndCloneIfNeeded(key = fileName, newState = subState, oldStates = originalStates, newLiveStates = null)
         if (copiedStorageData != null) {
           dirtyFileNames.add(fileName)
         }
       }
-      else if (updateState(states = copiedStorageData!!, key = fileName, newState = subState)) {
+      else if (updateState(states = copiedStorageData!!, key = fileName, newState = subState, newLiveStates = null)) {
         dirtyFileNames.add(fileName)
       }
     }
