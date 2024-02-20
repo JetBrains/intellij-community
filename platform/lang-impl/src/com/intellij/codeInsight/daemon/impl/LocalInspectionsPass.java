@@ -419,7 +419,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   }
 
   @NotNull
-  List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
+  private List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionProfile().getInspectionTools(getFile());
 
     if (LOG.isDebugEnabled()) {
