@@ -325,30 +325,16 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     private fun ActivityView.openDiffWhenLoaded() {
+      if (changesBrowser != null) return
+
       val disposable = Disposer.newDisposable()
       Disposer.register(this, disposable)
-      if (model.isSingleDiffSupported) {
-        model.addListener(object : ActivityModelListener {
-          override fun onItemsLoadingStopped(data: ActivityData) {
-            if (data.items.isEmpty()) Disposer.dispose(disposable)
-            else showDiff()
-          }
-        }, disposable)
-      }
-      else {
-        model.addListener(object : ActivityModelListener {
-          override fun onItemsLoadingStopped(data: ActivityData) {
-            if (data.items.isEmpty()) Disposer.dispose(disposable)
-          }
-
-          override fun onDiffDataLoadingStopped(diffData: ActivityDiffData?) {
-            if (diffData != null) {
-              showDiff()
-              Disposer.dispose(disposable)
-            }
-          }
-        }, disposable)
-      }
+      model.addListener(object : ActivityModelListener {
+        override fun onItemsLoadingStopped(data: ActivityData) {
+          if (data.items.isEmpty()) Disposer.dispose(disposable)
+          else showDiff()
+        }
+      }, disposable)
     }
 
     @JvmStatic
