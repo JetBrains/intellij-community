@@ -65,6 +65,10 @@ internal class DocumentationBrowser private constructor(
     closeTrigger = close
   }
 
+  internal fun clearCloseTrigger() {
+    closeTrigger = null
+  }
+
   fun resetBrowser(request: DocumentationRequest) {
     load(request, reset = true)
   }
