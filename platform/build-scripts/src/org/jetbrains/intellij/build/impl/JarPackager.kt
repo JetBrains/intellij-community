@@ -418,33 +418,34 @@ class JarPackager private constructor(
       var projectLibraryData: ProjectLibraryData? = null
       val libRef = element.libraryReference
       if (libRef.parentReference !is JpsModuleReference) {
+        val libName = libRef.libraryName
         if (includeProjectLib) {
-          val name = libRef.libraryName
-          if (platformLayout!!.hasLibrary(name) || layout.hasLibrary(name)) {
+          if (platformLayout!!.hasLibrary(libName) || layout.hasLibrary(libName)) {
             continue
           }
 
           if (helper.hasLibraryInDependencyChainOfModuleDependencies(
               dependentModule = module,
-              libraryName = name,
+              libraryName = libName,
               siblings = layout.includedModules,
             )) {
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = name, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName")
+          projectLibraryData = ProjectLibraryData(libraryName = libName, packMode = LibraryPackMode.MERGED, reason = "<- $moduleName")
           libToMetadata.put(element.library!!, projectLibraryData)
         }
-        else if (isLibraryAlwaysPackedIntoPlugin(libRef.libraryName)) {
-          check(!platformLayout!!.hasLibrary(libRef.libraryName))
+        else if (isLibraryAlwaysPackedIntoPlugin(libName)) {
+          check(!platformLayout!!.hasLibrary(libName)) {
+            "Library $libName must not be included into platform layout"
+          }
 
-          val name = libRef.libraryName
-          if (layout.hasLibrary(name)) {
+          if (layout.hasLibrary(libName)) {
             continue
           }
 
           projectLibraryData = ProjectLibraryData(
-            libraryName = name,
+            libraryName = libName,
             packMode = LibraryPackMode.MERGED,
             reason = "<- $moduleName (always packed into plugin)",
           )
