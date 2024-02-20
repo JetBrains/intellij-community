@@ -58,6 +58,9 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
       coroutineScope.launch {
         selectionFlow.collectLatest { selection ->
           thisLogger<ActivityViewModel>().debug("Loading diff data for $activityScope")
+          withContext(Dispatchers.EDT) {
+            eventDispatcher.multicaster.onDiffDataLoadingStarted()
+          }
           val diffData = selection?.let {
             withContext(Dispatchers.Default) {
               LocalHistoryCounter.logLoadDiff(project, activityScope) {
@@ -67,7 +70,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
           }
           diffDataFlow.value = selection to diffData
           withContext(Dispatchers.EDT) {
-            eventDispatcher.multicaster.onDiffDataLoaded(diffData)
+            eventDispatcher.multicaster.onDiffDataLoadingStopped(diffData)
           }
         }
       }
@@ -142,7 +145,8 @@ interface ActivityModelListener : EventListener {
   fun onItemsLoadingStarted() = Unit
   fun onItemsLoadingStopped(data: ActivityData) = Unit
   fun onSelectionChanged(selection: ActivitySelection?) = Unit
-  fun onDiffDataLoaded(diffData: ActivityDiffData?) = Unit
+  fun onDiffDataLoadingStarted() = Unit
+  fun onDiffDataLoadingStopped(diffData: ActivityDiffData?) = Unit
   fun onFilteringStarted() = Unit
   fun onFilteringStopped(result: Set<ActivityItem>?) = Unit
 }

@@ -15,6 +15,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
@@ -73,9 +75,13 @@ internal abstract class DifferenceDiffRequestProducer(protected val project: Pro
 
   override fun hashCode(): Int = Objects.hash(scope, leftItem, rightItem, isOldContentUsed)
 
-  internal class WithPreLoadedDiff(project: Project?, gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection,
-                                   override val difference: Difference, isOldContentUsed: Boolean)
-    : DifferenceDiffRequestProducer(project, gateway, scope, selection, isOldContentUsed) {
+  internal class WithDifferenceObject(project: Project?, gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection,
+                                      private val diffObject: DifferenceObject, isOldContentUsed: Boolean)
+    : DifferenceDiffRequestProducer(project, gateway, scope, selection, isOldContentUsed), ChangeDiffRequestChain.Producer,
+      PresentableChange by diffObject {
+
+    override val difference: Difference get() = diffObject.difference
+
     override fun getName(): String {
       val entry = difference.left ?: difference.right
       if (entry == null) return scope.presentableName

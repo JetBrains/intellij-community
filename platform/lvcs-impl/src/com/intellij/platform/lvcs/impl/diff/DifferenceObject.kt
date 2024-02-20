@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.diff
 
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.platform.lvcs.impl.ActivityDiffObject
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
@@ -15,7 +15,7 @@ import java.util.*
 internal class DifferenceObject(private val gateway: IdeaGateway,
                                 private val scope: ActivityScope,
                                 private val selection: ChangeSetSelection,
-                                private val difference: Difference,
+                                internal val difference: Difference,
                                 private val targetFilePath: FilePath,
                                 private val isOldContentUsed: Boolean) : ActivityDiffObject {
 
@@ -24,8 +24,8 @@ internal class DifferenceObject(private val gateway: IdeaGateway,
     return fileStatus(difference.left != null, difference.right != null)
   }
 
-  override fun createProducer(project: Project?): DiffRequestProducer {
-    return DifferenceDiffRequestProducer.WithPreLoadedDiff(project, gateway, scope, selection, difference, isOldContentUsed)
+  override fun createProducer(project: Project?): ChangeDiffRequestChain.Producer {
+    return DifferenceDiffRequestProducer.WithDifferenceObject(project, gateway, scope, selection, this, isOldContentUsed)
   }
 
   override fun equals(other: Any?): Boolean {
