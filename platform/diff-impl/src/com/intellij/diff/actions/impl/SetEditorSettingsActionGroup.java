@@ -39,7 +39,6 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
   public SetEditorSettingsActionGroup(@NotNull TextDiffSettings settings,
                                       @NotNull Supplier<? extends List<? extends Editor>> editors) {
     super(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain);
-    setPopup(true);
     myTextSettings = settings;
     myEditors = editors;
 
@@ -159,6 +158,16 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
     for (AnAction action : myActions) {
       ((EditorSettingAction)action).applyDefaults(myEditors.get());
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setPopupGroup(e.isFromActionToolbar());
   }
 
   @Override
