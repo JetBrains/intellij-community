@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -69,7 +70,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     updateEmptyText(true)
   }
   private val changesBrowser = createChangesBrowser()
-  private val editorDiffPreview = createDiffPreview()
+  private val editorDiffPreview = createDiffPreview(changesBrowser)
 
   init {
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
@@ -175,34 +176,26 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return changesBrowser
   }
 
-  private fun createDiffPreview(): DiffPreview {
-    if (model.isSingleDiffSupported) {
-      return object : SingleFileActivityDiffPreview(project, activityScope, this@ActivityView) {
-        override val selection: ActivitySelection? get() = model.selection
+  private fun createDiffPreview(changesBrowser: ActivityChangesBrowser?): DiffPreview {
+    if (changesBrowser != null) {
+      val diffPreview = MultiFileActivityDiffPreview(activityScope, changesBrowser.viewer, this@ActivityView)
+      changesBrowser.setShowDiffActionPreview(diffPreview)
+      return diffPreview
+    }
 
-        override fun onSelectionChange(disposable: Disposable, runnable: () -> Unit) {
-          model.addListener(object : ActivityModelListener {
-            override fun onSelectionChanged(selection: ActivitySelection?) = runnable()
-          }, disposable)
-        }
+    return object : SingleFileActivityDiffPreview(project, activityScope, this@ActivityView) {
+      override val selection: ActivitySelection? get() = model.selection
 
-        override fun getDiffRequestProducer(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {
-          return model.activityProvider.loadSingleDiff(scope, selection)
-        }
+      override fun onSelectionChange(disposable: Disposable, runnable: () -> Unit) {
+        model.addListener(object : ActivityModelListener {
+          override fun onSelectionChanged(selection: ActivitySelection?) = runnable()
+        }, disposable)
+      }
+
+      override fun getDiffRequestProducer(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {
+        return model.activityProvider.loadSingleDiff(scope, selection)
       }
     }
-    val combinedDiffPreview = object : CombinedActivityDiffPreview(project, activityList, activityScope, this@ActivityView) {
-      override fun loadDiffDataSynchronously(): ActivityDiffData? = model.loadDiffDataSynchronously()
-      override fun returnFocusToSourceComponent() {
-        IdeFocusManager.getInstance(project).requestFocus(activityList, true)
-      }
-    }
-    model.addListener(object : ActivityModelListener {
-      override fun onDiffDataLoadingStopped(diffData: ActivityDiffData?) {
-        combinedDiffPreview.setDiffData(diffData)
-      }
-    }, this)
-    return combinedDiffPreview
   }
 
   private fun createSearchField(): SearchTextArea {

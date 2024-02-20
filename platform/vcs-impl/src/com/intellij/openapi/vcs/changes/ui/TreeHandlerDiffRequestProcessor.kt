@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.diagnostic.Checks.fail
@@ -179,7 +179,10 @@ abstract class TreeHandlerEditorDiffPreview(
   }
 
   override fun createViewer(): DiffEditorViewer {
-    val place = "ChangesTreeDiffPreview"
+    return createDefaultViewer("ChangesTreeDiffPreview")
+  }
+
+  protected fun createDefaultViewer(place: String): DiffEditorViewer {
     val processor = if (CombinedDiffRegistry.isEnabled()) {
       CombinedDiffManager.getInstance(tree.project).createProcessor(place)
     }
@@ -227,7 +230,7 @@ abstract class ChangesTreeDiffPreviewHandler {
   }
 }
 
-object DefaultChangesTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
+abstract class ChangesTreeDiffPreviewHandlerBase : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     return collectWrappers(VcsTreeModelData.selected(tree))
   }
@@ -236,14 +239,18 @@ object DefaultChangesTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
     return collectWrappers(VcsTreeModelData.all(tree))
   }
 
-  private fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper> {
-    return treeModelData.iterateUserObjects(Change::class.java)
-      .map { ChangeViewDiffRequestProcessor.ChangeWrapper(it) }
-  }
+  protected abstract fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper>
 
   override fun selectChange(tree: ChangesTree, change: Wrapper) {
     val node = TreeUtil.findNodeWithObject(tree.root, change.userObject) ?: return
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
+  }
+}
+
+object DefaultChangesTreeDiffPreviewHandler : ChangesTreeDiffPreviewHandlerBase() {
+  override fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper> {
+    return treeModelData.iterateUserObjects(Change::class.java)
+      .map { ChangeViewDiffRequestProcessor.ChangeWrapper(it) }
   }
 }
 
