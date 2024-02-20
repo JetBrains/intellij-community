@@ -28,9 +28,6 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
-    private val classFileDecompiler = KotlinClassFileDecompiler()
-    private val builtInsDecompiler = KotlinBuiltInDecompiler()
-
     override fun setUp() {
         super.setUp()
         BuiltInDefinitionFile.FILTER_OUT_CLASSES_EXISTING_AS_JVM_CLASS_FILES = false
@@ -68,6 +65,8 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
         excludedClasses: Set<String> = emptySet(),
         fixedClassNameForSearch: String? = null, // workaround for KTIJ-28858
     ) {
+        val classFileDecompiler = KotlinClassFileDecompiler()
+        val builtInsDecompiler = KotlinBuiltInDecompiler()
         val dir = findDir(packageFqName, project, fixedClassNameForSearch)
         val groupedByExtension = dir.children.groupBy { it.extension }
         val builtInsFile = groupedByExtension.getValue(BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION).single()
