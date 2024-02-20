@@ -1,3 +1,4 @@
+# <16.8 allowsMultipleMergeRequestAssignees, allowsMultipleMergeRequestReviewers removed
 fragment project on Project {
   name
   nameWithNamespace
