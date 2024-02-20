@@ -28,3 +28,7 @@ interface DocRenderItem {
 
   fun getInlineDocumentationTarget(): DocumentationTarget?
 }
+
+interface MutableDocRenderItem {
+  var textToRender: @Nls String?
+}

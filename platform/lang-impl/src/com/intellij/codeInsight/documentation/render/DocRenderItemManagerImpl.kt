@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.psi.PsiManager
 import com.intellij.util.messages.Topic
 import java.util.*
 import java.util.function.BooleanSupplier
@@ -18,7 +18,7 @@ import java.util.function.Consumer
 
 class DocRenderItemManagerImpl : DocRenderItemManager {
   override fun getItemAroundOffset(editor: Editor, offset: Int): DocRenderItem? {
-    val items = editor.getUserData(OUR_ITEMS)
+    val items = editor.getUserData(OWN_ITEMS)
     if (items.isNullOrEmpty()) return null
     val document = editor.document
     if (offset < 0 || offset > document.textLength) return null
@@ -46,7 +46,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
   }
 
   override fun getItems(editor: Editor): Collection<DocRenderItem>? {
-    val items = editor.getUserData(OUR_ITEMS) ?: return null
+    val items = editor.getUserData(OWN_ITEMS) ?: return null
     return Collections.unmodifiableCollection<DocRenderItem>(items)
   }
 
@@ -55,8 +55,8 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
   }
 
   override fun setItemsToEditor(editor: Editor, itemsToSet: DocRenderPassFactory.Items, collapseNewItems: Boolean) {
-    if (editor.getUserData(OUR_ITEMS) == null && itemsToSet.isEmpty) return
-    val items = (editor as UserDataHolderEx).putUserDataIfAbsent(OUR_ITEMS, mutableListOf())
+    if (editor.getUserData(OWN_ITEMS) == null && itemsToSet.isEmpty) return
+    val items = (editor as UserDataHolderEx).putUserDataIfAbsent(OWN_ITEMS, mutableListOf())
     keepScrollingPositionWhile(editor) {
       val foldingTasks = mutableListOf<Runnable>()
       val itemsToUpdateRenderers: MutableList<DocRenderItemImpl> = ArrayList()
@@ -115,7 +115,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
   }
 
   override fun resetToDefaultState(editor: Editor) {
-    val items = editor.getUserData(OUR_ITEMS) ?: return
+    val items = editor.getUserData(OWN_ITEMS) ?: return
     val editorSetting = DocRenderManager.isDocRenderingEnabled(editor)
     keepScrollingPositionWhile(editor) {
       val foldingTasks = mutableListOf<Runnable>()
@@ -133,7 +133,7 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
   }
 
   override fun isRenderedDocHighlighter(highlighter: RangeHighlighter): Boolean {
-    return java.lang.Boolean.TRUE == highlighter.getUserData(OWN_HIGHLIGHTER)
+    return true == highlighter.getUserData(OWNS_HIGHLIGHTER)
   }
 
   object MyCaretListener : CaretListener {
@@ -170,9 +170,9 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
     @Topic.AppLevel
     val TOPIC: Topic<Listener> = Topic(
       Listener::class.java, Topic.BroadcastDirection.NONE, true)
-    private val OUR_ITEMS = Key.create<MutableList<DocRenderItemImpl>>("doc.render.items")
+    private val OWN_ITEMS = Key.create<MutableList<DocRenderItemImpl>>("doc.render.items")
     @JvmField
-    val OWN_HIGHLIGHTER: Key<Boolean> = Key.create("doc.render.highlighter")
+    val OWNS_HIGHLIGHTER: Key<Boolean> = Key.create("doc.render.highlighter")
     private fun keepScrollingPositionWhile(editor: Editor, task: BooleanSupplier) {
       val keeper = EditorScrollingPositionKeeper(editor)
       keeper.savePosition()
