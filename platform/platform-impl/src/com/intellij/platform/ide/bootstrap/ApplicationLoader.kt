@@ -8,6 +8,7 @@ import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -17,12 +18,16 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.NotRoamableUiSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.html.initGlobalStyleSheet
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -34,6 +39,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.useOrLogError
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
@@ -152,18 +158,36 @@ internal suspend fun loadApp(app: ApplicationImpl,
       }
 
       val preloadJob = launch(CoroutineName("critical services preloading")) {
-        preloadCriticalServices(app = app,
-                                asyncScope = asyncScope,
-                                appRegistered = appRegisteredJob,
-                                initLafJob = initLafJob,
-                                initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob)
+        preloadCriticalServices(
+          app = app,
+          asyncScope = asyncScope,
+          appRegistered = appRegisteredJob,
+          initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob,
+        )
+        asyncScope.launch {
+          launch {
+            app.serviceAsync<LogLevelConfigurationManager>()
+          }
+
+          if (!app.isHeadlessEnvironment) {
+            preloadNonHeadlessServices(app = app, initLafJob = initLafJob)
+          }
+        }
       }
 
-      preInitApp(app = app,
-                 asyncScope = asyncScope,
-                 initLafJob = initLafJob,
-                 euaTaskDeferred = euaTaskDeferred,
-                 loadIconMapping = loadIconMapping)
+      val cssInit = initLafManagerAndCss(
+        app = app,
+        asyncScope = asyncScope,
+        initLafJob = initLafJob,
+        loadIconMapping = loadIconMapping,
+      )
+
+      if (!app.isHeadlessEnvironment) {
+        euaTaskDeferred?.await()?.let {
+          cssInit?.join()
+          it()
+        }
+      }
 
       preloadJob.join()
       LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
@@ -209,6 +233,49 @@ internal suspend fun loadApp(app: ApplicationImpl,
   }
 }
 
+private suspend fun preloadNonHeadlessServices(
+  app: ApplicationImpl,
+  initLafJob: Job,
+) {
+  coroutineScope {
+    launch { // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
+      initLafJob.join()
+
+      launch(CoroutineName("CustomActionsSchema preloading")) {
+        app.serviceAsync<CustomActionsSchema>()
+      }
+    }
+
+    // wants PathMacros
+    launch(CoroutineName("GeneralSettings preloading")) {
+      app.serviceAsync<GeneralSettings>()
+    }
+
+    launch(CoroutineName("actionConfigurationCustomizer preloading")) {
+      @Suppress("ControlFlowWithEmptyBody")
+      for (ignored in ActionConfigurationCustomizer.EP.lazySequence()) {
+        // just preload
+      }
+    }
+
+    // https://youtrack.jetbrains.com/issue/IDEA-341318
+    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "true").toBoolean()) {
+      // ActionManager can use UISettings (KeymapManager doesn't use, but just to be sure)
+      initLafJob.join()
+    }
+
+    launch(CoroutineName("KeymapManager preloading")) {
+      app.serviceAsync<KeymapManager>()
+    }
+
+    launch(CoroutineName("ActionManager preloading")) {
+      app.serviceAsync<ActionManager>()
+    }
+
+    app.serviceAsync<ScreenReaderStateManager>()
+  }
+}
+
 private suspend fun enableCoroutineDumpAndJstack() {
   if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean() || (SystemInfoRt.isWindows && CpuArch.isArm64())) {
     return
@@ -251,12 +318,13 @@ ${dumpCoroutines(stripDump = false)}
   }
 }
 
-private suspend fun preInitApp(app: ApplicationImpl,
-                               asyncScope: CoroutineScope,
-                               initLafJob: Job,
-                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?,
-                               loadIconMapping: Job?) {
-  val cssInit = coroutineScope {
+private suspend fun initLafManagerAndCss(
+  app: ApplicationImpl,
+  asyncScope: CoroutineScope,
+  initLafJob: Job,
+  loadIconMapping: Job?,
+): Job? {
+  return coroutineScope {
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
     span("init laf waiting") {
@@ -270,8 +338,9 @@ private suspend fun preInitApp(app: ApplicationImpl,
       }
     }
 
-    launch {
-      // used by LafManager
+    launch(CoroutineName("UISettings preloading")) {
+      // used by LafManager in EDT - preload it in non-EDT
+      app.serviceAsync<NotRoamableUiSettings>()
       app.serviceAsync<UISettings>()
     }
 
@@ -290,13 +359,6 @@ private suspend fun preInitApp(app: ApplicationImpl,
         // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
         initGlobalStyleSheet()
       }
-    }
-  }
-
-  if (!app.isHeadlessEnvironment) {
-    euaTaskDeferred?.await()?.let {
-      cssInit?.join()
-      it()
     }
   }
 }

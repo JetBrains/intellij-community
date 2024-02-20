@@ -3,16 +3,9 @@ package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.history.LocalHistory
-import com.intellij.ide.GeneralSettings
-import com.intellij.ide.ScreenReaderStateManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -21,7 +14,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -33,11 +25,12 @@ import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
-fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
-                                           asyncScope: CoroutineScope,
-                                           appRegistered: Job,
-                                           initLafJob: Job,
-                                           initAwtToolkitAndEventQueueJob: Job?) {
+fun CoroutineScope.preloadCriticalServices(
+  app: ApplicationImpl,
+  asyncScope: CoroutineScope,
+  appRegistered: Job,
+  initAwtToolkitAndEventQueueJob: Job?,
+): Job {
   val pathMacroJob = launch(CoroutineName("PathMacros preloading")) {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
     app.serviceAsync<PathMacros>()
@@ -81,48 +74,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
     }
   }
 
-  asyncScope.launch {
-    launch {
-      app.serviceAsync<LogLevelConfigurationManager>()
-    }
-
-    pathMacroJob.join()
-
-    if (app.isHeadlessEnvironment) {
-      return@launch
-    }
-
-    launch {
-      // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
-      initLafJob.join()
-
-      launch(CoroutineName("CustomActionsSchema preloading")) {
-        app.serviceAsync<CustomActionsSchema>()
-      }
-
-      span("UISettings preloading") { app.serviceAsync<UISettings>() }
-    }
-
-    // wants PathMacros
-    launch(CoroutineName("GeneralSettings preloading")) {
-      app.serviceAsync<GeneralSettings>()
-    }
-
-    launch(CoroutineName("actionConfigurationCustomizer preloading")) {
-      ActionConfigurationCustomizer.EP.forEachExtensionSafe {
-        // just preload
-      }
-    }
-
-    launch(CoroutineName("KeymapManager preloading")) {
-      app.serviceAsync<KeymapManager>()
-    }
-    launch(CoroutineName("ActionManager preloading")) {
-      app.serviceAsync<ActionManager>()
-    }
-
-    app.serviceAsync<ScreenReaderStateManager>()
-  }
+  return pathMacroJob
 }
 
 private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
