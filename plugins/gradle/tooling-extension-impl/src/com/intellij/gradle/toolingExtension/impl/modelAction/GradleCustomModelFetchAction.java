@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Part of {@link ProjectImportAction} which fully executes on Gradle side.
  */
 @ApiStatus.Internal
-public class GradleModelFetchAction {
+public class GradleCustomModelFetchAction {
 
   private final @NotNull AllModels myAllModels;
 
@@ -44,7 +44,7 @@ public class GradleModelFetchAction {
   private final boolean myIsPreviewMode;
   private final boolean myIsProjectsLoadedAction;
 
-  public GradleModelFetchAction(
+  public GradleCustomModelFetchAction(
     @NotNull AllModels allModels,
     @NotNull Set<ProjectImportModelProvider> modelProviders,
     @NotNull ModelConverter modelConverter,

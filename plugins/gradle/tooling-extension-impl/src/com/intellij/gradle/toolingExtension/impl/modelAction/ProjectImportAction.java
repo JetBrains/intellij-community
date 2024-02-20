@@ -165,7 +165,7 @@ public class ProjectImportAction implements BuildAction<AllModels>, Serializable
     assert myModelConverter != null;
 
     Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
-    GradleModelFetchAction modelFetchAction = new GradleModelFetchAction(
+    GradleCustomModelFetchAction buildAction = new GradleCustomModelFetchAction(
       myAllModels,
       modelProviders,
       myModelConverter,
@@ -174,7 +174,7 @@ public class ProjectImportAction implements BuildAction<AllModels>, Serializable
       myIsPreviewMode,
       isProjectsLoadedAction
     );
-    modelFetchAction.execute(new DefaultBuildController(controller, myGradleBuild));
+    buildAction.execute(new DefaultBuildController(controller, myGradleBuild));
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
 
