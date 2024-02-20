@@ -19,15 +19,15 @@ import org.junit.runner.RunWith
 import java.io.File
 
 abstract class AbstractBuiltInDecompilerTest : KotlinLightCodeInsightFixtureTestCase() {
-    protected fun doTest(packageFqName: String, className: String? = null): String {
-        val stubTreeFromDecompiler = configureAndBuildFileStub(packageFqName, className)
+    protected fun doTest(packageFqName: String, classNameForDirectorySearch: String? = null): String {
+        val stubTreeFromDecompiler = configureAndBuildFileStub(packageFqName, classNameForDirectorySearch)
         val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(myFixture.file)
         val expectedText = stubTreeFromDecompiledText.serializeToString()
         Assert.assertEquals("Stub mismatch for package $packageFqName", expectedText, stubTreeFromDecompiler.serializeToString())
         return expectedText
     }
 
-    abstract fun configureAndBuildFileStub(packageFqName: String, className: String? = null): PsiFileStub<*>
+    abstract fun configureAndBuildFileStub(packageFqName: String, classNameForDirectorySearch: String? = null): PsiFileStub<*>
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 }
@@ -37,16 +37,16 @@ class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
     override fun getProjectDescriptor(): KotlinWithJdkAndRuntimeLightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
-    override fun configureAndBuildFileStub(packageFqName: String, className: String?): PsiFileStub<*> {
-        val dirInRuntime = findDir(packageFqName, project, className)
+    override fun configureAndBuildFileStub(packageFqName: String, classNameForDirectorySearch: String?): PsiFileStub<*> {
+        val dirInRuntime = findDir(packageFqName, project, classNameForDirectorySearch)
         val kotlinBuiltInsVirtualFile = dirInRuntime.children.single { it.extension == BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION }
         myFixture.configureFromExistingVirtualFile(kotlinBuiltInsVirtualFile)
         return KotlinBuiltInDecompiler().stubBuilder.buildFileStub(FileContentImpl.createByFile(kotlinBuiltInsVirtualFile))!!
     }
 
     fun testBuiltInStubTreeEqualToStubTreeFromDecompiledText() {
-        doTest("kotlin", "Int")
-        doTest("kotlin.collections", "List") // TODO(kirpichenkov): remove the hack once KTIJ-28858 is fixed
+        doTest("kotlin", classNameForDirectorySearch = "Int")
+        doTest("kotlin.collections", classNameForDirectorySearch = "List") // TODO(kirpichenkov): remove the hack once KTIJ-28858 is fixed
     }
 }
 
@@ -55,7 +55,7 @@ class BuiltInDecompilerForWrongAbiVersionTest : AbstractBuiltInDecompilerTest() 
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("decompiler/builtins")
 
-    override fun configureAndBuildFileStub(packageFqName: String, className: String?): PsiFileStub<*> {
+    override fun configureAndBuildFileStub(packageFqName: String, classNameForDirectorySearch: String?): PsiFileStub<*> {
         myFixture.configureByFile(BuiltInSerializerProtocol.getBuiltInsFilePath(FqName(packageFqName)))
         return KotlinBuiltInDecompiler().stubBuilder.buildFileStub(FileContentImpl.createByFile(myFixture.file.virtualFile))!!
     }

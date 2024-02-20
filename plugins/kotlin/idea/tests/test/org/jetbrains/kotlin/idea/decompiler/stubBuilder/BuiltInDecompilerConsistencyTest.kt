@@ -47,10 +47,10 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
             excludedClasses = setOf("ExperimentalStdlibApi",
             // annotation arguments defaults are not written in built-ins KT-58052
                                     "Deprecated", "RequiresOptIn", "DeprecatedSinceKotlin"),
-            fixedClassNameForSearch = "Int",
+            classNameForDirectorySearch = "Int",
         )
         doTest("kotlin.annotation", excludedClasses = setOf("Retention"))
-        doTest("kotlin.collections", fixedClassNameForSearch = "List")
+        doTest("kotlin.collections", classNameForDirectorySearch = "List")
         doTest("kotlin.ranges")
         doTest("kotlin.reflect", 3,
                setOf("KTypeProjection") // TODO: seems @JvmField is @OptionalExpectation that makes KTypeProjection actual one
@@ -63,11 +63,11 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
         packageFqName: String,
         minClassesEncountered: Int = 5,
         excludedClasses: Set<String> = emptySet(),
-        fixedClassNameForSearch: String? = null, // workaround for KTIJ-28858
+        classNameForDirectorySearch: String? = null, // workaround for KTIJ-28858
     ) {
         val classFileDecompiler = KotlinClassFileDecompiler()
         val builtInsDecompiler = KotlinBuiltInDecompiler()
-        val dir = findDir(packageFqName, project, fixedClassNameForSearch)
+        val dir = findDir(packageFqName, project, classNameForDirectorySearch)
         val groupedByExtension = dir.children.groupBy { it.extension }
         val builtInsFile = groupedByExtension.getValue(BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION).single()
 
@@ -114,13 +114,13 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
 internal fun findDir(
     packageFqName: String,
     project: Project,
-    fixedClassNameForSearch: String? = null // workaround for KTIJ-28858
+    classNameForDirectorySearch: String? = null // workaround for KTIJ-28858
 ): VirtualFile {
-    val randomClassInPackage = fixedClassNameForSearch?.let { "$packageFqName.$fixedClassNameForSearch" }
+    val classInPackage = classNameForDirectorySearch?.let { "$packageFqName.$classNameForDirectorySearch" }
         ?: KotlinFullClassNameIndex.getAllKeys(project).first {
             it.startsWith("$packageFqName.") && "." !in it.substringAfter("$packageFqName.")
         }
-    val classes = KotlinFullClassNameIndex.get(randomClassInPackage, project, GlobalSearchScope.allScope(project))
-    val firstClass = classes.firstOrNull() ?: error("No classes with this name found: $randomClassInPackage (package name $packageFqName)")
+    val classes = KotlinFullClassNameIndex.get(classInPackage, project, GlobalSearchScope.allScope(project))
+    val firstClass = classes.firstOrNull() ?: error("No classes with this name found: $classInPackage (package name $packageFqName)")
     return firstClass.containingFile.virtualFile.parent
 }
