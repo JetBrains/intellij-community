@@ -106,7 +106,7 @@ final class HighlightInfoUpdater implements Disposable {
   }
 
   @NotNull
-  HighlightersRecycler removeOrRecycleInvalidPsiElements(@NotNull PsiFile psiFile) {
+  HighlightersRecycler removeOrRecycleInvalidPsiElements(@NotNull PsiFile psiFile, @NotNull Object origin, boolean removeInspectionHighlights, boolean removeAnnotatorHighlights) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
     Document hostDocument = hostFile.getFileDocument();
     Map<PsiFile, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(hostDocument);
@@ -129,7 +129,7 @@ final class HighlightInfoUpdater implements Disposable {
         }
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("removeOrRecycleInvalidPsiElements: removed invalid file: "+psi+" ("+removed+" highlighters removed)");
+        LOG.debug("removeOrRecycleInvalidPsiElements: removed invalid file: "+psi+" ("+removed+" highlighters removed); from "+origin);
       }
       return true;
     });
@@ -139,6 +139,7 @@ final class HighlightInfoUpdater implements Disposable {
       return toReuse;
     }
     for (Map.Entry<Object, ToolHighlights> toolEntry: map.entrySet()) {
+      Object toolId = toolEntry.getKey();
       ToolHighlights toolHighlights = toolEntry.getValue();
       toolHighlights.elementHighlights.entrySet().removeIf(entry -> {
         PsiElement psiElement = entry.getKey();
@@ -148,8 +149,10 @@ final class HighlightInfoUpdater implements Disposable {
         for (HighlightInfo info : entry.getValue()) {
           RangeHighlighterEx highlighter = info.getHighlighter();
           if (highlighter != null) {
+            if (info.isFromAnnotator() && !removeAnnotatorHighlights) continue;
+            if (isInspectionToolId(toolId) && !removeInspectionHighlights) continue;
             if (LOG.isDebugEnabled()) {
-              LOG.debug("removeOrRecycleInvalidPsiElements: recycle " + info + " for " + psiElement);
+              LOG.debug("removeOrRecycleInvalidPsiElements: recycle " + info + " for invalid " + psiElement+" from "+origin);
             }
             toReuse.recycleHighlighter(highlighter);
           }
