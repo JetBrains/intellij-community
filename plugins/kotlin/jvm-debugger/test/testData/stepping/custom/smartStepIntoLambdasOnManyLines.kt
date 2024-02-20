@@ -102,5 +102,3 @@ fun main() {
             println(5)
         }.acceptLambda { println(6) }
 }
-
-// IGNORE_K2

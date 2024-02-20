@@ -15,5 +15,3 @@ inline fun f1(f1Param: () -> Unit) {
 fun test() {
     println("Hello")
 }
-
-// IGNORE_K2

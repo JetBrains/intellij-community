@@ -44,12 +44,8 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -397,16 +393,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     context(KtAnalysisSession)
     private fun KtCallExpression.getBytecodeMethodName(): String? {
         val resolvedCall = resolveCall()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol.asSafely<KtFunctionSymbol>() ?: return null
-        val jvmName = symbol.annotations
-          .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
-          .firstNotNullOfOrNull {
-              it.arguments.singleOrNull { a -> a.name.asString() == "name" }
-                ?.expression?.asSafely<KtConstantAnnotationValue>()
-                ?.constantValue?.asSafely<KtConstantValue.KtStringConstantValue>()?.value
-          }
-        if (jvmName != null) return jvmName
-        return symbol.name.identifier
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+        return symbol.getByteCodeMethodName()
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {

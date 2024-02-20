@@ -1280,6 +1280,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/filterProperties.kt");
         }
 
+        @TestMetadata("filterPropertyAccessCallsFromInlineClass.kt")
+        public void testFilterPropertyAccessCallsFromInlineClass() throws Exception {
+            runTest("../testData/stepping/custom/filterPropertyAccessCallsFromInlineClass.kt");
+        }
+
         @TestMetadata("finallyBlock.kt")
         public void testFinallyBlock() throws Exception {
             runTest("../testData/stepping/custom/finallyBlock.kt");
@@ -1613,6 +1618,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
         @TestMetadata("smartStepIntoMethodReference.kt")
         public void testSmartStepIntoMethodReference() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoMethodReference.kt");
+        }
+
+        @TestMetadata("smartStepIntoMethodWithJvmNameAnnotation.kt")
+        public void testSmartStepIntoMethodWithJvmNameAnnotation() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoMethodWithJvmNameAnnotation.kt");
         }
 
         @TestMetadata("smartStepIntoMultiplyInlinedLambdas.kt")

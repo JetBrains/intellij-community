@@ -7,7 +7,7 @@ value class A<T>(val str: T) {
         return this
     }
 
-    private fun foo(i: Int, j: Int): A<T> {
+    private fun foo(i: Int?, j: Int): A<T> {
         return this
     }
 
@@ -15,15 +15,15 @@ value class A<T>(val str: T) {
         return this
     }
 
-    private fun baz(): A<T> {
-        return this
+    private fun baz(a: A<*>): B.C {
+        return B.C()
     }
 
     inline fun inlineFoo(): A<T> {
         return this
     }
 
-    private inline fun inlineFoo(i: Int, j: Int): A<T> {
+    private inline fun inlineFoo(i: Int?, j: Int): A<T> {
         return this
     }
 
@@ -43,7 +43,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 1
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 3
-        foo().bar().foo(1, 2).baz()
+        foo().bar().foo(1, 2).baz(this)
 
         // STEP_OVER: 1
         //Breakpoint!
@@ -52,7 +52,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 2
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 2
-        foo().bar().foo(1, 2).baz()
+        foo().bar().foo(1, 2).baz(this)
 
         // STEP_OVER: 1
         //Breakpoint!
@@ -61,7 +61,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 3
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 1
-        foo().bar().foo(1, 2).baz()
+        foo().bar().foo(1, 2).baz(this)
     }
 
     fun testFirstCallIsInline() {
@@ -72,7 +72,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 1
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 3
-        inlineFoo().bar().foo(1, 2).baz()
+        inlineFoo().bar().foo(1, 2).baz(this)
 
         // STEP_OVER: 1
         //Breakpoint!
@@ -81,7 +81,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 2
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 2
-        inlineFoo().bar().foo(1, 2).baz()
+        inlineFoo().bar().foo(1, 2).baz(this)
 
         // STEP_OVER: 1
         //Breakpoint!
@@ -90,7 +90,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 3
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 1
-        inlineFoo().bar().foo(1, 2).baz()
+        inlineFoo().bar().foo(1, 2).baz(this)
     }
 
     fun testFirstAndThirdCallsAreInline() {
@@ -101,7 +101,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 1
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 3
-        inlineFoo().bar().inlineFoo(1, 2).baz()
+        inlineFoo().bar().inlineFoo(1, 2).baz(this)
 
         // STEP_OVER: 1
         //Breakpoint!
@@ -110,7 +110,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 2
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 2
-        inlineFoo().bar().inlineFoo(1, 2).baz()
+        inlineFoo().bar().inlineFoo(1, 2).baz(this)
 
         // STEP_OVER: 1
         //Breakpoint!
@@ -119,7 +119,7 @@ value class A<T>(val str: T) {
         // SMART_STEP_INTO_BY_INDEX: 3
         // STEP_OUT: 1
         // SMART_STEP_TARGETS_EXPECTED_NUMBER: 1
-        inlineFoo().bar().inlineFoo(1, 2).baz()
+        inlineFoo().bar().inlineFoo(1, 2).baz(this)
     }
 
     fun testAllCallsAreInline() {
@@ -194,6 +194,9 @@ fun main() {
 fun stopHere() {
 }
 
-// IGNORE_K2
+class B {
+    class C
+}
+
 // IGNORE_FOR_K2_CODE
 // Remove ignore after KT-57227 fix

@@ -18,5 +18,3 @@ fun <T> lambda(obj: T, f: T.() -> Unit) {
     println("lambda: $obj")
     f(obj)
 }
-
-// IGNORE_K2

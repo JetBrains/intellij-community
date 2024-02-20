@@ -12,4 +12,3 @@ fun getAndProcessString(stringSupplier: Supplier<String>, f: (String) -> Unit) {
     //Breakpoint!
     f(stringSupplier.get())
 }
-// IGNORE_K2

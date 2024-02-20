@@ -9,4 +9,3 @@ fun accessGetter(f: (Thread) -> Any) {
 }
 
 // EXISTS: accessGetter((Thread) -> Any), getName(), getName()
-// IGNORE_K2

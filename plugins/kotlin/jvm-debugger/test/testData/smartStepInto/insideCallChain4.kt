@@ -10,4 +10,3 @@ fun main() = It(0).next("a").next("b")
         .next("e").next("f")
 
 // EXISTS: next(String), next(String), next(String), next(String)
-// IGNORE_K2

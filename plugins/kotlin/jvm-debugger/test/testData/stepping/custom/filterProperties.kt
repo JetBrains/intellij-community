@@ -157,5 +157,3 @@ fun main() {
     //Breakpoint!
     foo(val1 + a.val2, val2 + a.val1)
 }
-
-// IGNORE_K2

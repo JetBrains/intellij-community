@@ -7,4 +7,3 @@ fun main(args: Array<String>) {
 class A
 
 // EXISTS:
-// IGNORE_K2

@@ -73,5 +73,3 @@ public class B {
         int a = 1;
     }
 }
-
-// IGNORE_K2

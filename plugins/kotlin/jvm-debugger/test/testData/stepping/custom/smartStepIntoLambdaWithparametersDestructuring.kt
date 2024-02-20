@@ -59,5 +59,3 @@ fun testInlineDestruction() {
 fun Ax.foo(f: (Ax) -> Unit) = f(this)
 inline fun Ax.inlineFoo(f: (Ax) -> Unit) = f(this)
 data class Ax(val x: Int, val y: Int)
-
-// IGNORE_K2

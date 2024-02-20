@@ -29,5 +29,3 @@ private suspend fun <T> Iterable<T>.collect(visitor: FlowCollector<T>) = forEach
 private fun interface FlowCollector<in T> {
     suspend fun emit(value: T)
 }
-
-// IGNORE_K2

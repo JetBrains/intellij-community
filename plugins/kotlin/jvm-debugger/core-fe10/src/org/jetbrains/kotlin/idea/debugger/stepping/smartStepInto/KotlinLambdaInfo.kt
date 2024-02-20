@@ -1,10 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import org.jetbrains.kotlin.coroutines.hasSuspendFunctionType
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.resolve.isInlineClass
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 data class KotlinLambdaInfo(
@@ -21,53 +20,39 @@ data class KotlinLambdaInfo(
 ) {
     val isInline = callerMethodInfo.isInline && !isNoinline && !isSam
 
-    constructor(
-        callerMethodDescriptor: CallableMemberDescriptor,
-        parameterDescriptor: ValueParameterDescriptor,
-        callerMethodOrdinal: Int,
-        isNameMangledInBytecode: Boolean,
-    ) : this(
-        parameterName = parameterDescriptor.name.asString(),
-        callerMethodOrdinal = callerMethodOrdinal,
-        parameterIndex = countParameterIndex(callerMethodDescriptor, parameterDescriptor),
-        isSuspend = parameterDescriptor.hasSuspendFunctionType,
-        isSam = false,
-        isNoinline = parameterDescriptor.isNoinline,
-        isNameMangledInBytecode = isNameMangledInBytecode,
-        methodName = OperatorNameConventions.INVOKE.asString(),
-        callerMethodInfo = CallableMemberInfo(callerMethodDescriptor),
-        isSamSuspendMethod = false
-        )
-
-    constructor(
-        callerMethodDescriptor: CallableMemberDescriptor,
-        parameterDescriptor: ValueParameterDescriptor,
-        callerMethodOrdinal: Int,
-        isNameMangledInBytecode: Boolean,
-        methodName: String,
-        isSamSuspendMethod: Boolean,
-    ) : this(
-        parameterName = parameterDescriptor.name.asString(),
-        callerMethodOrdinal = callerMethodOrdinal,
-        parameterIndex = countParameterIndex(callerMethodDescriptor, parameterDescriptor),
-        isSuspend = parameterDescriptor.hasSuspendFunctionType,
-        isSam = true,
-        isNoinline = parameterDescriptor.isNoinline,
-        isNameMangledInBytecode = isNameMangledInBytecode,
-        methodName = methodName,
-        callerMethodInfo = CallableMemberInfo(callerMethodDescriptor),
-        isSamSuspendMethod = isSamSuspendMethod
-    )
-
     fun getLabel() =
         "${callerMethodInfo.name}: $parameterName.$methodName()"
 }
 
-private fun countParameterIndex(callerMethodDescriptor: CallableMemberDescriptor, parameterDescriptor: ValueParameterDescriptor): Int {
-    var resultIndex = parameterDescriptor.index
-    if (callerMethodDescriptor.extensionReceiverParameter != null)
+context(KtAnalysisSession)
+internal fun KotlinLambdaInfo(
+    methodSymbol: KtFunctionLikeSymbol,
+    argumentSymbol: KtValueParameterSymbol,
+    callerMethodOrdinal: Int,
+    isNameMangledInBytecode: Boolean,
+    methodName: String = OperatorNameConventions.INVOKE.asString(),
+    isSam: Boolean = false,
+    isSamSuspendMethod: Boolean = false,
+) = KotlinLambdaInfo(
+    parameterName = argumentSymbol.name.asString(),
+    callerMethodOrdinal = callerMethodOrdinal,
+    parameterIndex = countParameterIndex(methodSymbol, argumentSymbol),
+    isSuspend = argumentSymbol.returnType.isSuspendFunctionType,
+    isSam = isSam,
+    isNoinline = argumentSymbol.isNoinline,
+    isNameMangledInBytecode = isNameMangledInBytecode,
+    methodName = methodName,
+    callerMethodInfo = CallableMemberInfo(methodSymbol),
+    isSamSuspendMethod = isSamSuspendMethod,
+)
+
+context(KtAnalysisSession)
+private fun countParameterIndex(methodSymbol: KtFunctionLikeSymbol, argumentSymbol: KtValueParameterSymbol): Int {
+    var resultIndex = methodSymbol.valueParameters.indexOf(argumentSymbol)
+
+    if (methodSymbol.isExtension)
         resultIndex++
-    if (callerMethodDescriptor.containingDeclaration.isInlineClass())
+    if (methodSymbol.isInsideInlineClass())
         resultIndex++
 
     return resultIndex
