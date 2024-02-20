@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class SdkAdditionalDataBase implements SdkAdditionalData {
-  protected static final Logger LOG = Logger.getInstance(SdkAdditionalDataBase.class);
+  private static final Logger LOG = Logger.getInstance(SdkAdditionalDataBase.class);
 
   private @Nullable Throwable myCommitStackTrace = null;
 
