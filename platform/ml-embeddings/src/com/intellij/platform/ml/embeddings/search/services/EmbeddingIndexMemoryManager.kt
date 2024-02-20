@@ -5,6 +5,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 /**
  * Service that tracks the memory usage of semantic indices.
@@ -13,6 +16,7 @@ import com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
 @Service(Service.Level.APP)
 class EmbeddingIndexMemoryManager {
   private val trackedIndices = mutableListOf<EmbeddingSearchIndex>()
+  private val lock = ReentrantReadWriteLock()
 
   private val applicationEmbeddingsMemoryLimit: Int?
     get() {
@@ -21,7 +25,7 @@ class EmbeddingIndexMemoryManager {
       } else null
     }
 
-  fun registerIndex(index: EmbeddingSearchIndex) {
+  fun registerIndex(index: EmbeddingSearchIndex) = lock.write {
     if (trackedIndices.none { it === index }) {
       trackedIndices.add(index)
     }
@@ -29,7 +33,7 @@ class EmbeddingIndexMemoryManager {
 
   fun checkCanAddEntry(): Boolean {
     val limit = applicationEmbeddingsMemoryLimit
-    return limit == null || trackedIndices.sumOf { it.estimateMemoryUsage() } < limit
+    return limit == null || lock.read { trackedIndices.sumOf { it.estimateMemoryUsage() } } < limit
   }
 
   companion object {
