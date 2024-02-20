@@ -54,7 +54,15 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
   }
 
   public static boolean isInnerClass(@NotNull VirtualFile file) {
-    return isInnerClass(file, null);
+    return isInnerClass(file, (ClassReader)null);
+  }
+
+  /**
+   * @deprecated use {@link #isInnerClass(VirtualFile)} or {@link #isInnerClass(VirtualFile, ClassReader)} 
+   */
+  @Deprecated
+  public static boolean isInnerClass(@NotNull VirtualFile file, byte @NotNull [] content) {
+    return isInnerClass(file, (ClassReader) null);
   }
 
   /**
