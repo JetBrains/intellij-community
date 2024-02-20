@@ -2,36 +2,38 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
-import org.jetbrains.plugins.github.api.GithubApiRequest
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHReactionContent
+import org.jetbrains.plugins.github.api.executeSuspend
 import java.awt.Image
-import java.net.URL
-import javax.imageio.ImageIO
 
 internal class GHReactionImageLoader(
   parentCs: CoroutineScope,
+  private val serverPath: GithubServerPath,
   private val requestExecutor: GithubApiRequestExecutor
 ) : AsyncImageIconsProvider.AsyncImageLoader<GHReactionContent> {
   private val cs = parentCs.childScope(CoroutineName("GitHub Reactions Image Loader"))
 
   private val emojisNameToUrl: Deferred<Map<String, String>> = cs.async(Dispatchers.IO) {
-    requestExecutor.execute(EmptyProgressIndicator(), GithubApiRequest.Get.JsonMap(GITHUB_EMOJI_API_URL))
+    requestExecutor.executeSuspend(GithubApiRequests.Emojis.loadNameToUrlMap(serverPath))
   }
+  // seems to be a bug in github asset manager - loading emoji images in parallel sometimes leads to 404
+  private val mutex = Mutex()
 
   override suspend fun load(key: GHReactionContent): Image? {
     val map = emojisNameToUrl.await()
-    val url = map[key.emojiName]?.let { URL(it) } ?: return null
+    val url = map[key.emojiName] ?: return null
     return withContext(Dispatchers.IO) {
-      ImageIO.read(url)
+      mutex.withLock {
+        requestExecutor.executeSuspend(GithubApiRequests.Emojis.loadImage(url))
+      }
     }
-  }
-
-  companion object {
-    private const val GITHUB_EMOJI_API_URL = "https://api.github.com/emojis"
   }
 }
 
