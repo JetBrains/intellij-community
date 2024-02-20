@@ -3,5 +3,5 @@
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
   "targetFile": "target.kt",
   "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }
