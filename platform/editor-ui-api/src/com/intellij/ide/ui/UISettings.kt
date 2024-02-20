@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -191,13 +191,13 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showNavigationBar = value
     }
 
-  var navBarLocation : NavBarLocation
+  var navBarLocation: NavBarLocation
     get() = state.navigationBarLocation
     set(value) {
       state.navigationBarLocation = value
     }
 
-  val showNavigationBarInBottom : Boolean
+  val showNavigationBarInBottom: Boolean
     get() = showNavigationBar && navBarLocation == NavBarLocation.BOTTOM
 
   var showMembersInNavigationBar: Boolean
@@ -748,7 +748,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
     migrateFontParameters()
 
-    // Check tab placement in editor
+    // check tab placement in the editor
     val editorTabPlacement = state.editorTabPlacement
     if (editorTabPlacement != TABS_NONE &&
         editorTabPlacement != SwingConstants.TOP &&
@@ -766,7 +766,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.alphaModeRatio = 0.5f
     }
 
-    fireUISettingsChanged()
+    if (LoadingState.APP_READY.isOccurred) {
+      fireUISettingsChanged()
+    }
   }
 
   override fun getStateModificationCount(): Long {
@@ -811,7 +813,18 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   }
 
   private fun migrateFontParameters() {
-    notRoamableOptions.migratePresentationModeIdeScale(state.presentationModeFontSize)
+    val presentationModeFontSize = state.presentationModeFontSize
+    val notRoamableOptions = notRoamableOptions
+    if (notRoamableOptions.presentationModeIdeScale != 0f) {
+      return
+    }
+
+    notRoamableOptions.presentationModeIdeScale = if (presentationModeFontSize == 24 || notRoamableOptions.fontSize == 0f) {
+      UISettingsUtils.defaultScale(isPresentation = true)
+    }
+    else {
+      presentationModeFontSize.toFloat() / notRoamableOptions.fontSize
+    }
   }
 
   //<editor-fold desc="Deprecated stuff.">
