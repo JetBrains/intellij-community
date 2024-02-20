@@ -6,15 +6,16 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.util.ui.RestartDialog
 
-class MargeMenuWithWindowTitleAction : ToggleAction() {
+class MergeMenuWithWindowTitleAction : ToggleAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = IdeRootPane.hideNativeLinuxTitleAvailable
+    e.presentation.isEnabledAndVisible = IdeRootPane.hideNativeLinuxTitleAvailable && IdeRootPane.hideNativeLinuxTitleSupported
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
