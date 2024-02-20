@@ -52,8 +52,6 @@
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
-      implementation="training.statistic.IdeFeaturesTrainerModuleRuleValidator"/>
-    <statistics.validation.customValidationRule
       implementation="training.statistic.SupportedLanguageRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.ActionIdRuleValidator"/>
