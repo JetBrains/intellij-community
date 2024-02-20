@@ -570,7 +570,7 @@ class InternalDecoratorImpl internal constructor(
         return JBInsets.emptyInsets()
       }
       val anchor = windowInfo.anchor
-      var component: Component = window.component
+      var component = c
       var parent = component.parent
       var isSplitter = false
       var isFirstInSplitter = false
