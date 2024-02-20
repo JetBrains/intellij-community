@@ -15,8 +15,11 @@
  */
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.nio.ByteOrder;
 
+@ApiStatus.Internal
 public final class CharSequenceAccess {
   static final Access<CharSequence> INSTANCE = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN
                                              ? LittleEndianCharSequenceAccess.INSTANCE
