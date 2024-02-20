@@ -32,6 +32,10 @@
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
+    <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
+      <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
+    </action>
+
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
