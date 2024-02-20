@@ -164,29 +164,24 @@ public final class DelegateHandler {
   }
 
   private static void addMethodsOfType(PsiType psiType, Collection<Pair<PsiMethod, PsiSubstitutor>> results) {
-    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(psiType);
-    final PsiClass psiClass = resolveResult.getElement();
+    if (!(psiType instanceof PsiClassType classType)) return;
+    final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+    final PsiClass psiClass = classResolveResult.getElement();
     if (null != psiClass) {
-      final PsiSubstitutor psiClassSubstitutor = addAllInterfaceSuperSubstitutors(psiClass, resolveResult.getSubstitutor());
-
-      for (Pair<PsiMethod, PsiSubstitutor> pair : psiClass.getAllMethodsAndTheirSubstitutors()) {
-        final PsiMethod psiMethod = pair.getFirst();
+      final PsiSubstitutor classResolveResultSubstitutor = classResolveResult.getSubstitutor();
+      for (PsiMethod psiMethod : psiClass.getAllMethods()) {
         if (isAcceptableMethod(psiMethod)) {
-          final PsiSubstitutor psiSubstitutor = pair.getSecond().putAll(psiClassSubstitutor);
-          if (!isAlreadyPresent(psiMethod, psiSubstitutor, results)) {
-            results.add(Pair.pair(psiMethod, psiSubstitutor));
+          final PsiClass containingClass = psiMethod.getContainingClass();
+          if (containingClass != null) {
+            final PsiSubstitutor psiSubstitutor =
+              TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, classResolveResultSubstitutor);
+            if (!isAlreadyPresent(psiMethod, psiSubstitutor, results)) {
+              results.add(Pair.pair(psiMethod, psiSubstitutor));
+            }
           }
         }
       }
     }
-  }
-
-  private static PsiSubstitutor addAllInterfaceSuperSubstitutors(PsiClass psiClass, PsiSubstitutor psiSubstitutor) {
-    for (PsiClass interfaceClass : psiClass.getInterfaces()) {
-      PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(interfaceClass, psiClass, psiSubstitutor);
-      psiSubstitutor = addAllInterfaceSuperSubstitutors(interfaceClass, psiSubstitutor.putAll(classSubstitutor));
-    }
-    return psiSubstitutor;
   }
 
   private static void collectAllOwnMethods(@NotNull PsiExtensibleClass psiStartClass, Collection<Pair<PsiMethod, PsiSubstitutor>> results) {
