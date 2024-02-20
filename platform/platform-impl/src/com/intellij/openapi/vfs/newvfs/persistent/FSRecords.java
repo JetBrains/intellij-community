@@ -134,7 +134,12 @@ public final class FSRecords {
     return _impl;
   }
 
-  /** @throws AlreadyDisposedException if VFS is disposed (or not yet initialized) */
+  /**
+   * @throws ServiceNotReadyException if VFS is not yet initialized (connected)
+   * @throws AlreadyDisposedException if VFS is disposed
+   * @throws com.intellij.openapi.progress.ProcessCanceledException (wrapping AlreadyDisposedException) if VFS is disposed, and
+   * we're now running under an progress indicator or Job
+   */
   public static @NotNull FSRecordsImpl getInstance() throws AlreadyDisposedException {
     return implOrFail();
   }
