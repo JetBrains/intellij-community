@@ -8,7 +8,6 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
@@ -28,7 +27,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jdom.Attribute
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Writer
@@ -476,7 +474,7 @@ internal class XmlDataWriter(
   }
 }
 
-internal fun Element.normalizeRootName(): Element {
+private fun Element.normalizeRootName(): Element {
   if (org.jdom.JDOMInterner.isInterned(this)) {
     if (name == ComponentStorageUtil.COMPONENT) {
       return this
@@ -494,22 +492,5 @@ internal fun Element.normalizeRootName(): Element {
     }
     name = ComponentStorageUtil.COMPONENT
     return this
-  }
-}
-
-@Internal
-enum class DataStateChanged {
-  LOADED, SAVED
-}
-
-internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
-  if (roamingType != RoamingType.DISABLED &&
-      (collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
-       collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
-       isSpecialStorage(collapsedPath))) {
-    return RoamingType.DISABLED
-  }
-  else {
-    return roamingType
   }
 }

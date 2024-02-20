@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
@@ -33,8 +34,23 @@ interface StateGetter<S : Any> {
   fun archiveState(): S?
 }
 
+@ApiStatus.Internal
+enum class DataStateChanged { LOADED, SAVED }
+
 internal fun isSpecialStorage(collapsedPath: String): Boolean =
   collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
+
+internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
+  if (roamingType != RoamingType.DISABLED &&
+      (collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
+       collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
+       isSpecialStorage(collapsedPath))) {
+    return RoamingType.DISABLED
+  }
+  else {
+    return roamingType
+  }
+}
 
 @CalledInAny
 internal suspend fun ensureFilesWritable(project: Project, files: Collection<VirtualFile>): ReadonlyStatusHandler.OperationStatus =
