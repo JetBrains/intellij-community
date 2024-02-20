@@ -354,9 +354,8 @@ public final class FSRecords {
   /**
    * @return human-readable description of file fileId -- as much information as VFS now contains
    */
-  public static @NotNull String describeAlreadyCreatedFile(int fileId,
-                                                           int nameId) {
-    return implOrFail().describeAlreadyCreatedFile(fileId, nameId);
+  public static @NotNull String describeAlreadyCreatedFile(int fileId) {
+    return implOrFail().describeAlreadyCreatedFile(fileId);
   }
 
   @TestOnly

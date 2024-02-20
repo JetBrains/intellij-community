@@ -148,15 +148,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull CharSequence getNameSequence() {
-    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (fs == null) {
+    PersistentFSImpl pfs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    if (pfs == null) {
       return "<FS-is-disposed>";//shutdown-safe
     }
-    return fs.getNameByNameId(getNameId());
+    return pfs.getName(myId);
   }
 
   public final int getNameId() {
-    return getSegment().getNameId(myId);
+    return owningPersistentFS().peer().getNameIdByFileId(myId);
   }
 
   @Override
@@ -416,16 +416,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IllegalArgumentException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
-    PersistentFSImpl pFS = owningPersistentFS();
+    PersistentFSImpl pfs = owningPersistentFS();
 
     VirtualDirectoryImpl parent = getParent();
+    //children are sorted by name: child position must change after its name has changed
     parent.removeChild(this);
-
-    int newNameId = pFS.peer().getNameId(newName);
-    getSegment().setNameId(myId, newNameId);
+    pfs.peer().setName(myId, newName);
     parent.addChild(this);
 
-    pFS.incStructuralModificationCount();
+    pfs.incStructuralModificationCount();
   }
 
   public void setParent(@NotNull VirtualFile newParent) {

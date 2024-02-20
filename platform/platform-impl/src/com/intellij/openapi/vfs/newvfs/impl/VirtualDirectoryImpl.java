@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
@@ -259,7 +260,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VfsData vfsData = getVfsData();
     VfsData.Segment segment = vfsData.getSegment(id, true);
     boolean isDirectory = PersistentFS.isDirectory(attributes);
-    VfsData.initFile(id, segment, nameId, isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
+    VfsData.initFile(id, segment, isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
 
     VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
@@ -626,13 +627,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     synchronized (myData) {
       int[] oldIds = myData.childrenIds;
       IntList mergedIds = new IntArrayList(oldIds.length + added.size());
-      VfsData vfsData = getVfsData();
+      FSRecordsImpl vfsPeer = owningPersistentFS().peer();
+      
       List<ChildInfo> existingChildren = new AbstractList<>() {
         @Override
         public ChildInfo get(int index) {
           int id = oldIds[index];
           assert id > 0 : id;
-          int nameId = vfsData.getNameId(id);
+          int nameId = vfsPeer.getNameIdByFileId(id);
           return new ChildInfoImpl(id, nameId, null, null, null/*irrelevant here*/);
         }
 

@@ -1690,7 +1690,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       try {
         String pathBeforeSlash = UriUtil.trimTrailingSlashes(rootPath);
-        newRoot = new FsRoot(rootId, rootNameId, myVfsData, fs, pathBeforeSlash, attributes, path, this);
+        newRoot = new FsRoot(rootId, myVfsData, fs, pathBeforeSlash, attributes, path, this);
       }
       catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
@@ -2317,8 +2317,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void executeRename(@NotNull VirtualFile file, @NotNull String newName) {
-    int id = getFileId(file);
-    vfsPeer.setName(id, newName);
     ((VirtualFileSystemEntry)file).setNewName(newName);
   }
 

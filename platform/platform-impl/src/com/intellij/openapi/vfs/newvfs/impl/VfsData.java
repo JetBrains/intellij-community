@@ -69,17 +69,16 @@ public final class VfsData {
   private final Object deadMarker = ObjectUtils.sentinel("dead file");
 
   //TODO RC: seems like the segments are only cached, but never evicted -- this could create memory problems
-  //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore.
-  //         we could remove Segment.indexingFlag immediately (not used anymore), we could probably remove Segment.nameId
-  //         and replace it with direct FSRecordsImpl access. Not sure about remaining (flag+modCount) field though --
-  //         on the first sight they look like an additional data, independent from persistent VFS data?
+  //TODO RC: FSRecords was quite optimized recently, probably caching is not needed anymore?
+  //         indexingFlag/nameId caching was already removed -- need to think through about remaining (flag+modCount)
+  //         field: on the first sight they look like an additional data, independent from persistent VFS data?
 
   /** [segmentIndex -> Segment] */
   private final ConcurrentIntObjectMap<Segment> segments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   /**
    * Set of deleted file ids. Never cleaned during a session (deleted fileId could be re-used,
-   * but it could be done only on a session start, see {@link com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl})
+   * but it could be done only on a session start, see {@link FSRecordsImpl})
    */
   private final ConcurrentBitSet invalidatedFileIds = ConcurrentBitSet.create();
 
@@ -142,12 +141,6 @@ public final class VfsData {
     if (o == deadMarker) {
       throw reportDeadFileAccess(new VirtualFileImpl(id, segment, parent));
     }
-    final int nameId = segment.getNameId(id);
-    if (nameId <= 0) {
-      int parentId = owningPersistentFS.peer().getParent(id);
-      throw new AssertionError("nameId=" + nameId + "; data=" + o + ";" +
-                               " parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + parentId);
-    }
 
     if (o instanceof DirectoryData) {
       if (putToMemoryCache) {
@@ -186,10 +179,8 @@ public final class VfsData {
   }
 
   //@GuardedBy("parent.DirectoryData")
-  static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
+  static void initFile(int id, @NotNull Segment segment, @NotNull Object data) throws FileAlreadyCreatedException {
     int offset = objectOffsetInSegment(id);
-
-    segment.setNameId(id, nameId);
 
     Object existingData = segment.objectFieldsArray.get(offset);
     if (existingData != null) {
@@ -204,7 +195,7 @@ public final class VfsData {
       DirectoryData parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
 
       throw new FileAlreadyCreatedException(
-        FSRecords.describeAlreadyCreatedFile(id, nameId)
+        FSRecords.describeAlreadyCreatedFile(id)
         + " data: " + data
         + ", alreadyExistingData: " + existingData
         + ", parentData: " + parentData
@@ -216,13 +207,7 @@ public final class VfsData {
 
   @NotNull
   CharSequence getNameByFileId(int fileId) {
-    //MAYBE RC: persistentFS.peer().getName(fileId) ?
-    int nameId = getNameId(fileId);
-    return owningPersistentFS.getNameByNameId(nameId);
-  }
-
-  int getNameId(int id) {
-    return Objects.requireNonNull(getSegment(id, false)).getNameId(id);
+    return owningPersistentFS.peer().getName(fileId);
   }
 
   boolean isFileValid(int id) {
@@ -259,9 +244,8 @@ public final class VfsData {
 
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
   static final class Segment {
-    private static final int INT_FIELDS_COUNT = 2;
-    private static final int NAME_ID_FIELD_NO = 0;
-    private static final int FLAGS_FIELD_NO = 1;
+    private static final int INT_FIELDS_COUNT = 1;
+    private static final int FLAGS_FIELD_NO = 0;
 
     final @NotNull VfsData owningVfsData;
 
@@ -289,15 +273,6 @@ public final class VfsData {
       this.objectFieldsArray = objectFieldsArray;
       this.intFieldsArray = intFieldsArray;
       this.owningVfsData = owningVfsData;
-    }
-
-    int getNameId(int fileId) {
-      return intFieldsArray.get(fieldOffset(fileId, NAME_ID_FIELD_NO));
-    }
-
-    void setNameId(int fileId, int nameId) {
-      if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId + "; nameId: " + nameId);
-      intFieldsArray.set(fieldOffset(fileId, NAME_ID_FIELD_NO), nameId);
     }
 
     void setUserMap(int fileId, @NotNull KeyFMap map) {

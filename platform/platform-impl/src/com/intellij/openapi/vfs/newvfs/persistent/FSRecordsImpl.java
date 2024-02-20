@@ -1014,7 +1014,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int getNameIdByFileId(int fileId) {
+  public int getNameIdByFileId(int fileId) {
     try {
       checkNotClosed();
       return connection.getRecords().getNameId(fileId);
@@ -1036,7 +1036,7 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  void setName(int fileId, @NotNull String name) {
+  public void setName(int fileId, @NotNull String name) {
     try {
       checkNotClosed();
       int nameId = getNameId(name);
@@ -1420,12 +1420,12 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @NotNull
-  String describeAlreadyCreatedFile(int fileId,
-                                    int nameId) {
+  String describeAlreadyCreatedFile(int fileId) {
     //RC: Actually, this method is better to be in VfsData class from there it is called.
     //    The only non-public method needed is .list(parentId) -- all other methods are
     //    open to be called from VfsData.
     int parentId = getParent(fileId);
+    int nameId = getNameIdByFileId(fileId);
     String description = "fileId=" + fileId +
                          "; nameId=" + nameId + "(" + getNameByNameId(nameId) + ")" +
                          "; parentId=" + parentId;
