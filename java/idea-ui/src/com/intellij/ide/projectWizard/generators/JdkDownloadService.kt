@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
@@ -21,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,6 +33,31 @@ import java.util.concurrent.atomic.AtomicReference
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class JdkDownloadService(private val project: Project, private val coroutineScope: CoroutineScope) {
+  @RequiresEdt
+  fun setupInstallableSdk(downloadTask: SdkDownloadTask): Sdk {
+    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
+    val sdk = AtomicReference<Sdk>()
+
+    model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) {
+      sdk.set(it)
+      ApplicationManager.getApplication().runWriteAction {
+        ProjectJdkTable.getInstance().addJdk(it)
+      }
+    }
+
+    return sdk.get()
+  }
+
+  fun downloadSdk(sdk: Sdk) {
+    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
+
+    coroutineScope.launch(Dispatchers.EDT) {
+      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
+        model.downloadSdk(sdk)
+      }
+    }
+  }
+
   private fun scheduleSetupInstallableSdk(project: Project,
                                           downloadTask: SdkDownloadTask,
                                           sdkDownloadedFuture: CompletableFuture<Boolean>,
