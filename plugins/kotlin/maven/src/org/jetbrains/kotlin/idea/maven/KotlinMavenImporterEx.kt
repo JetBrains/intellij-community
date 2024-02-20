@@ -200,12 +200,6 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
                 }
             }
             // end of initialize
-
-            val apiLevel = apiLevel
-            val languageLevel = languageLevel
-            if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
-                this.apiLevel = languageLevel
-            }
             this.pureKotlinSourceFolders = pureKotlinSourceFolders
         }
         // end of facet configuration

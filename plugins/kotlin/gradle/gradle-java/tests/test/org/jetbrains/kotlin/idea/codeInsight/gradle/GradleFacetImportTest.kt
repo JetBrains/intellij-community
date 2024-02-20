@@ -683,7 +683,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         with(facetSettings) {
             assertEquals("1.1", languageLevel!!.versionString)
-            assertEquals("1.1", apiLevel!!.versionString)
+            assertEquals("1.2", apiLevel!!.versionString)
         }
 
         assertAllModulesConfigured()

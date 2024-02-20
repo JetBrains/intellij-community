@@ -3976,8 +3976,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             with(facetSettings) {
                 Assert.assertEquals("1.1", languageLevel!!.versionString)
                 Assert.assertEquals("1.1", compilerArguments!!.languageVersion)
-                Assert.assertEquals("1.1", apiLevel!!.versionString)
-                Assert.assertEquals("1.1", compilerArguments!!.apiVersion)
+                Assert.assertEquals("1.2", apiLevel!!.versionString)
+                Assert.assertEquals("1.2", compilerArguments!!.apiVersion)
             }
         }
     }
