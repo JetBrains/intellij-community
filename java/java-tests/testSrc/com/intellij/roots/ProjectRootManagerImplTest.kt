@@ -7,9 +7,13 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl.Companion.getInsta
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
+import com.intellij.testFramework.waitUntil
 import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.seconds
 
 class ProjectRootManagerImplTest : HeavyPlatformTestCase() {
   @TestFor(issues = ["IDEA-232634"])
@@ -40,7 +44,7 @@ class ProjectRootManagerImplTest : HeavyPlatformTestCase() {
   }
 
   @TestFor(issues = ["IDEA-330499"])
-  fun testNoEventsIfNothingChanged() {
+  fun testNoEventsIfNothingChanged() = runBlocking {
     val count = AtomicInteger(0)
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener {
       ThreadingAssertions.assertWriteAccess()
@@ -60,14 +64,21 @@ class ProjectRootManagerImplTest : HeavyPlatformTestCase() {
                                          """.trimIndent())
     impl.loadState(firstLoad)
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject)
-    assertEquals(1, count.get())
+    waitUntil {
+      1 == count.get()
+    }
 
     impl.loadState(secondLoad)
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject)
-    assertEquals(2, count.get())
+    waitUntil {
+      2 == count.get()
+    }
 
     impl.loadState(secondLoad)
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject)
-    assertEquals(2, count.get())
+    repeat(10) {
+      assertEquals(2, count.get())
+      delay(1.seconds)
+    }
   }
 }
