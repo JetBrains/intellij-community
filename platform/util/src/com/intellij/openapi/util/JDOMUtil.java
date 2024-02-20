@@ -4,6 +4,7 @@ package com.intellij.openapi.util;
 import com.fasterxml.aalto.UncheckedStreamException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -346,6 +347,10 @@ public final class JDOMUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link #writeDocument(Document, Path, String)}
+   */
+  @Deprecated
   public static void writeDocument(@NotNull Document document, @NotNull File file, String lineSeparator) throws IOException {
     write(document, file, lineSeparator);
   }
@@ -365,6 +370,10 @@ public final class JDOMUtil {
     write(element, file, "\n");
   }
 
+  /**
+   * @deprecated Use {@link #write(Element, Path, String)}
+   */
+  @Deprecated
   public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
     FileUtilRt.createParentDirs(file);
 
@@ -373,8 +382,36 @@ public final class JDOMUtil {
     }
   }
 
+  public static void write(@NotNull Element element, @NotNull Path file, @NotNull String lineSeparator) throws IOException {
+    Path parent = file.getParent();
+    if (parent != null) {
+      NioFiles.createDirectories(parent);
+    }
+
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+      createOutputter(lineSeparator).output(element, writer);
+    }
+  }
+
   public static void writeDocument(@NotNull Document document, @NotNull OutputStream stream, String lineSeparator) throws IOException {
-    write(document, stream, lineSeparator);
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
+      writeDocument(document, writer, lineSeparator);
+    }
+  }
+
+  public static void writeDocument(@NotNull Document document, @NotNull Path file) throws IOException {
+    writeDocument(document, file, "\n");
+  }
+
+  public static void writeDocument(@NotNull Document document, @NotNull Path file, String lineSeparator) throws IOException {
+    Path parent = file.getParent();
+    if (parent != null) {
+      NioFiles.createDirectories(parent);
+    }
+
+    try (BufferedWriter writer = Files.newBufferedWriter(file)) {
+      writeDocument(document, writer, lineSeparator);
+    }
   }
 
   public static void write(@NotNull Parent element, @NotNull OutputStream stream) throws IOException {
@@ -390,6 +427,10 @@ public final class JDOMUtil {
         writeElement((Element)element, writer, lineSeparator);
       }
     }
+  }
+
+  public static @NotNull String writeDocument(@NotNull Document document) {
+    return writeDocument(document, "\n");
   }
 
   public static @NotNull String writeDocument(@NotNull Document document, String lineSeparator) {
