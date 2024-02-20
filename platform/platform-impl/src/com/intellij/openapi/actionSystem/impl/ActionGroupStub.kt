@@ -17,8 +17,11 @@ internal class ActionGroupStub(override val id: String,
 
   fun initGroup(target: ActionGroup, actionToId: Function<AnAction, String?>) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)
+    if (popupDefinedInXml) target.isPopup = isPopup
+
     copyActionTextOverrides(target)
 
+    target.isSearchable = isSearchable
     target.shortcutSet = shortcutSet
     val children = childActionsOrStubs
     if (children.isNotEmpty()) {
@@ -29,9 +32,5 @@ internal class ActionGroupStub(override val id: String,
         target.addAction(action, Constraints.LAST, actionToId)
       }
     }
-    if (popupDefinedInXml) {
-      target.isPopup = isPopup
-    }
-    target.isSearchable = isSearchable
   }
 }

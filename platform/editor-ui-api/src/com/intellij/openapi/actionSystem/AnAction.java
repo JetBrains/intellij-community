@@ -120,7 +120,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * @param icon        the action's icon
    */
   public AnAction(@Nullable @ActionText String text, @Nullable @ActionDescription String description, @Nullable Icon icon) {
-    this(() -> text, () -> description, icon);
+    this(text == null ? Presentation.NULL_STRING : () -> text,
+         description == null ? Presentation.NULL_STRING : () -> description, icon);
   }
 
   @ApiStatus.Experimental
