@@ -3,12 +3,9 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.BundleBase
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -22,7 +19,9 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.components.*
+import com.intellij.ui.dsl.builder.components.DslLabel
+import com.intellij.ui.dsl.builder.components.DslLabelType
+import com.intellij.ui.dsl.builder.components.TabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
@@ -212,13 +211,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       ActionUtil.invokeAction(action, result.component, actionPlace, null, null)
     }
     return result
-  }
-
-  override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar> {
-    val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
-    val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
-    toolbar.targetComponent = null // any data context is supported, suppress warning
-    return cell(toolbar)
   }
 
   override fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T> {

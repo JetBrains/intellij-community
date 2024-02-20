@@ -12,7 +12,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
@@ -64,8 +63,7 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JTable::class,
   JTextComponent::class,
   JTree::class,
-  SegmentedButtonComponent::class,
-  SegmentedButtonToolbar::class
+  SegmentedButtonComponent::class
 )
 
 /**
