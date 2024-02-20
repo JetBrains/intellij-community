@@ -2,22 +2,21 @@
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.util.ArrayUtilRt;
+import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
 import org.jetbrains.plugins.gradle.model.DefaultBuild;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -29,8 +28,19 @@ public final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
   private transient Map<String, String> myBuildsKeyPrefixesMapping;
   private byte[] openTelemetryTrace = ArrayUtilRt.EMPTY_BYTE_ARRAY;
 
-  public AllModels(@NotNull GradleBuild mainBuild) {
-    super(DefaultBuild.convertGradleBuild(mainBuild));
+  public AllModels(
+    @NotNull GradleBuild mainGradleBuild,
+    @NotNull Collection<? extends GradleBuild> nestedGradleBuilds,
+    @NotNull BuildEnvironment buildEnvironment
+  ) {
+    super(DefaultBuild.convertGradleBuild(mainGradleBuild));
+
+    for (GradleBuild includedBuild : nestedGradleBuilds) {
+      includedBuilds.add(DefaultBuild.convertGradleBuild(includedBuild));
+    }
+    setupIncludedBuildsHierarchy(includedBuilds, nestedGradleBuilds);
+
+    setBuildEnvironment(InternalBuildEnvironment.convertBuildEnvironment(buildEnvironment));
   }
 
   public AllModels(@NotNull IdeaProject ideaProject) {
@@ -46,11 +56,6 @@ public final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
   @NotNull
   public List<Build> getIncludedBuilds() {
     return includedBuilds;
-  }
-
-  @ApiStatus.Internal
-  public void addIncludedBuild(@NotNull Build includedBuild) {
-    includedBuilds.add(includedBuild);
   }
 
   @NotNull
@@ -109,5 +114,31 @@ public final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     String currentKey = super.getBuildKeyPrefix(buildIdentifier);
     String originalKey = myBuildsKeyPrefixesMapping == null ? null : myBuildsKeyPrefixesMapping.get(currentKey);
     return originalKey == null ? currentKey : originalKey;
+  }
+
+  private static void setupIncludedBuildsHierarchy(
+    @NotNull Collection<? extends Build> builds,
+    @NotNull Collection<? extends GradleBuild> gradleBuilds
+  ) {
+    Set<Build> updatedBuilds = new HashSet<>();
+    Map<File, Build> rootDirsToBuilds = new HashMap<>();
+    for (Build build : builds) {
+      rootDirsToBuilds.put(build.getBuildIdentifier().getRootDir(), build);
+    }
+
+    for (GradleBuild gradleBuild : gradleBuilds) {
+      Build build = rootDirsToBuilds.get(gradleBuild.getBuildIdentifier().getRootDir());
+      if (build == null) {
+        continue;
+      }
+
+      for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
+        Build buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
+        if (buildToUpdate instanceof DefaultBuild && updatedBuilds.add(buildToUpdate)) {
+          ((DefaultBuild)buildToUpdate).setParentBuildIdentifier(
+            new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir()));
+        }
+      }
+    }
   }
 }

@@ -3,25 +3,18 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
-import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import io.opentelemetry.context.Context;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
-import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.ProjectModel;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
@@ -39,111 +32,23 @@ public class GradleCustomModelFetchAction {
   private final @NotNull Set<ProjectImportModelProvider> myModelProviders;
   private final @NotNull ModelConverter myModelConverter;
   private final @NotNull ExecutorService myModelConverterExecutor;
-  private final @NotNull GradleOpenTelemetry myTelemetry;
 
-  private final boolean myIsProjectsLoadedAction;
+  private final @NotNull GradleOpenTelemetry myTelemetry;
 
   public GradleCustomModelFetchAction(
     @NotNull AllModels allModels,
     @NotNull Set<ProjectImportModelProvider> modelProviders,
     @NotNull ModelConverter modelConverter,
     @NotNull ExecutorService modelConverterExecutor,
-    @NotNull GradleOpenTelemetry telemetry,
-    boolean isProjectsLoadedAction
+    @NotNull GradleOpenTelemetry telemetry
   ) {
     myAllModels = allModels;
 
     myModelProviders = modelProviders;
     myModelConverter = modelConverter;
     myModelConverterExecutor = modelConverterExecutor;
+
     myTelemetry = telemetry;
-
-    myIsProjectsLoadedAction = isProjectsLoadedAction;
-  }
-
-  public void execute(@NotNull DefaultBuildController controller) {
-    GradleBuild mainGradleBuild = controller.getBuildModel();
-    Set<GradleBuild> nestedBuilds = myTelemetry.callWithSpan("NestedBuildsResolve", span ->
-      getNestedBuilds(controller, mainGradleBuild)
-    );
-    if (!myIsProjectsLoadedAction) {
-      for (GradleBuild includedBuild : nestedBuilds) {
-        myAllModels.addIncludedBuild(DefaultBuild.convertGradleBuild(includedBuild));
-      }
-      setupIncludedBuildsHierarchy(myAllModels.getIncludedBuilds(), nestedBuilds);
-    }
-
-    addModels(controller, mainGradleBuild, nestedBuilds);
-
-    if (myIsProjectsLoadedAction) {
-      controller.getModel(TurnOffDefaultTasks.class);
-    }
-  }
-
-  private static Set<GradleBuild> getNestedBuilds(@NotNull BuildController controller, @NotNull GradleBuild build) {
-    BuildEnvironment environment = controller.getModel(BuildEnvironment.class);
-    if (environment == null) {
-      return Collections.emptySet();
-    }
-    GradleVersion gradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
-    Set<String> processedBuildsPaths = new HashSet<>();
-    Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
-    String rootBuildPath = build.getBuildIdentifier().getRootDir().getPath();
-    processedBuildsPaths.add(rootBuildPath);
-    Queue<GradleBuild> queue = new ArrayDeque<>(getEditableBuilds(build, gradleVersion));
-    while (!queue.isEmpty()) {
-      GradleBuild includedBuild = queue.remove();
-      String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
-      if (processedBuildsPaths.add(includedBuildPath)) {
-        nestedBuilds.add(includedBuild);
-        queue.addAll(getEditableBuilds(includedBuild, gradleVersion));
-      }
-    }
-    return nestedBuilds;
-  }
-
-  /**
-   * Get nested builds to be imported by IDEA
-   *
-   * @param build parent build
-   * @return builds to be imported by IDEA. Before Gradle 8.0 - included builds, 8.0 and later - included and buildSrc builds
-   */
-  private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild build, @NotNull GradleVersion version) {
-    if (GradleVersionUtil.isGradleAtLeast(version, "8.0")) {
-      DomainObjectSet<? extends GradleBuild> builds = build.getEditableBuilds();
-      if (builds.isEmpty()) {
-        return build.getIncludedBuilds();
-      }
-      else {
-        return builds;
-      }
-    }
-    else {
-      return build.getIncludedBuilds();
-    }
-  }
-
-  private static void setupIncludedBuildsHierarchy(List<Build> builds, Set<GradleBuild> gradleBuilds) {
-    Set<Build> updatedBuilds = new HashSet<>();
-    Map<File, Build> rootDirsToBuilds = new HashMap<>();
-    for (Build build : builds) {
-      rootDirsToBuilds.put(build.getBuildIdentifier().getRootDir(), build);
-    }
-
-    for (GradleBuild gradleBuild : gradleBuilds) {
-      Build build = rootDirsToBuilds.get(gradleBuild.getBuildIdentifier().getRootDir());
-      if (build == null) {
-        continue;
-      }
-
-      for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
-        Build buildToUpdate = rootDirsToBuilds.get(includedGradleBuild.getBuildIdentifier().getRootDir());
-        if (buildToUpdate instanceof DefaultBuild && updatedBuilds.add(buildToUpdate)) {
-          ((DefaultBuild)buildToUpdate).setParentBuildIdentifier(
-            new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir()));
-        }
-      }
-    }
   }
 
   private void forEachModelFetchPhase(@NotNull BiConsumer<GradleModelFetchPhase, List<ProjectImportModelProvider>> consumer) {
@@ -153,10 +58,10 @@ public class GradleCustomModelFetchAction {
       .forEachOrdered(it -> consumer.accept(it.getKey(), it.getValue()));
   }
 
-  private void addModels(
+  public void execute(
     @NotNull BuildController controller,
     @NotNull GradleBuild rootGradleBuild,
-    @NotNull Set<GradleBuild> nestedGradleBuilds
+    @NotNull Collection<? extends GradleBuild> nestedGradleBuilds
   ) {
     try {
       forEachModelFetchPhase((phase, modelProviders) -> {

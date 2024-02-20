@@ -4,19 +4,22 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
+import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
 import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment;
 
 import java.io.Serializable;
 import java.util.*;
@@ -39,7 +42,8 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   private @Nullable GradleTracingContext myTracingContext = null;
 
   private transient @Nullable AllModels myAllModels = null;
-  private transient @Nullable GradleBuild myGradleBuild = null;
+  private transient @Nullable GradleBuild myMainGradleBuild = null;
+  private transient @Nullable Collection<? extends GradleBuild> myNestedGradleBuilds = null;
   private transient @Nullable ModelConverter myModelConverter = null;
   private transient @Nullable GradleOpenTelemetry myTelemetry = null;
 
@@ -136,33 +140,20 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     @NotNull GradleOpenTelemetry telemetry
   ) {
     boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
+
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
-      myGradleBuild = telemetry.callWithSpan("GetBuildModel", __ ->
-        controller.getBuildModel()
+      initAction(controller, telemetry);
+    }
+
+    executeAction(controller, converterExecutor, telemetry, isProjectsLoadedAction);
+
+    if (isProjectsLoadedAction) {
+      telemetry.runWithSpan("TurnOffDefaultTasks", __ ->
+        controller.getModel(TurnOffDefaultTasks.class)
       );
-      AllModels allModels = new AllModels(myGradleBuild);
-      BuildEnvironment buildEnvironment = telemetry.callWithSpan("GetBuildEnvironment", __ ->
-        controller.findModel(BuildEnvironment.class)
-      );
-      allModels.setBuildEnvironment(InternalBuildEnvironment.convertBuildEnvironment(buildEnvironment));
-      myAllModels = allModels;
-      myModelConverter = getToolingModelConverter(controller);
     }
 
     assert myAllModels != null;
-    assert myGradleBuild != null;
-    assert myModelConverter != null;
-
-    Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
-    GradleCustomModelFetchAction buildAction = new GradleCustomModelFetchAction(
-      myAllModels,
-      modelProviders,
-      myModelConverter,
-      converterExecutor,
-      telemetry,
-      isProjectsLoadedAction
-    );
-    buildAction.execute(new DefaultBuildController(controller, myGradleBuild));
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
 
@@ -185,6 +176,101 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     }
     catch (Exception ignore) {
     }
+  }
+
+  private void initAction(
+    @NotNull BuildController controller,
+    @NotNull GradleOpenTelemetry telemetry
+  ) {
+    GradleBuild mainGradleBuild = telemetry.callWithSpan("GetMainGradleBuild", __ ->
+      controller.getBuildModel()
+    );
+    Collection<? extends GradleBuild> nestedGradleBuilds = telemetry.callWithSpan("GetNestedGradleBuilds", __ ->
+      getNestedBuilds(controller, mainGradleBuild)
+    );
+    BuildEnvironment buildEnvironment = telemetry.callWithSpan("GetBuildEnvironment", __ ->
+      controller.getModel(BuildEnvironment.class)
+    );
+    ModelConverter modelConverter = telemetry.callWithSpan("GetToolingModelConverter", __ ->
+      getToolingModelConverter(controller)
+    );
+    AllModels allModels = telemetry.callWithSpan("InitAllModels", __ ->
+      new AllModels(mainGradleBuild, nestedGradleBuilds, buildEnvironment)
+    );
+
+    myMainGradleBuild = mainGradleBuild;
+    myNestedGradleBuilds = nestedGradleBuilds;
+    myModelConverter = modelConverter;
+    myAllModels = allModels;
+  }
+
+  private static Collection<? extends GradleBuild> getNestedBuilds(@NotNull BuildController controller, @NotNull GradleBuild build) {
+    BuildEnvironment environment = controller.getModel(BuildEnvironment.class);
+    if (environment == null) {
+      return Collections.emptySet();
+    }
+    GradleVersion gradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
+    Set<String> processedBuildsPaths = new HashSet<>();
+    Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
+    String rootBuildPath = build.getBuildIdentifier().getRootDir().getPath();
+    processedBuildsPaths.add(rootBuildPath);
+    Queue<GradleBuild> queue = new ArrayDeque<>(getEditableBuilds(build, gradleVersion));
+    while (!queue.isEmpty()) {
+      GradleBuild includedBuild = queue.remove();
+      String includedBuildPath = includedBuild.getBuildIdentifier().getRootDir().getPath();
+      if (processedBuildsPaths.add(includedBuildPath)) {
+        nestedBuilds.add(includedBuild);
+        queue.addAll(getEditableBuilds(includedBuild, gradleVersion));
+      }
+    }
+    return nestedBuilds;
+  }
+
+  /**
+   * Get nested builds to be imported by IDEA
+   *
+   * @param build parent build
+   * @return builds to be imported by IDEA. Before Gradle 8.0 - included builds, 8.0 and later - included and buildSrc builds
+   */
+  private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild build, @NotNull GradleVersion version) {
+    if (GradleVersionUtil.isGradleAtLeast(version, "8.0")) {
+      DomainObjectSet<? extends GradleBuild> builds = build.getEditableBuilds();
+      if (builds.isEmpty()) {
+        return build.getIncludedBuilds();
+      }
+      else {
+        return builds;
+      }
+    }
+    else {
+      return build.getIncludedBuilds();
+    }
+  }
+
+  private void executeAction(
+    @NotNull BuildController controller,
+    @NotNull ExecutorService converterExecutor,
+    @NotNull GradleOpenTelemetry telemetry,
+    boolean isProjectsLoadedAction
+  ) {
+    assert myAllModels != null;
+    assert myMainGradleBuild != null;
+    assert myNestedGradleBuilds != null;
+    assert myModelConverter != null;
+
+    Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
+    GradleCustomModelFetchAction buildAction = new GradleCustomModelFetchAction(
+      myAllModels,
+      modelProviders,
+      myModelConverter,
+      converterExecutor,
+      telemetry
+    );
+    buildAction.execute(
+      new DefaultBuildController(controller, myMainGradleBuild),
+      myMainGradleBuild,
+      myNestedGradleBuilds
+    );
   }
 
   private Set<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
