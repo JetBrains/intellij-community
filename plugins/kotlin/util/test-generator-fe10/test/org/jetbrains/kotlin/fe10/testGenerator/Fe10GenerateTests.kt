@@ -1242,25 +1242,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("j2k/k1.new/tests") {
+    testGroup("j2k/k1.new/tests", testDataPath = "../../shared/tests/testData") {
         testClass<AbstractNewJavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
         testClass<AbstractPartialConverterTest> {
             model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
-        }
-
-        testClass<AbstractCommonConstraintCollectorTest>(commonSuite = false) {
-            model("inference/common")
-        }
-
-        testClass<AbstractNullabilityInferenceTest>(commonSuite = false) {
-            model("inference/nullability")
-        }
-
-        testClass<AbstractMutabilityInferenceTest>(commonSuite = false) {
-            model("inference/mutability")
         }
 
         testClass<AbstractNewJavaToKotlinCopyPasteConversionTest>(commonSuite = false) {
@@ -1273,6 +1261,20 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractNewJavaToKotlinConverterMultiFileTest>(commonSuite = false) {
             model("multiFile", pattern = DIRECTORY, isRecursive = false)
+        }
+    }
+
+    testGroup("j2k/k1.new/tests") {
+        testClass<AbstractCommonConstraintCollectorTest>(commonSuite = false) {
+            model("inference/common")
+        }
+
+        testClass<AbstractNullabilityInferenceTest>(commonSuite = false) {
+            model("inference/nullability")
+        }
+
+        testClass<AbstractMutabilityInferenceTest>(commonSuite = false) {
+            model("inference/mutability")
         }
     }
 

@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("j2k/k1.new/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/multiFile")
+@TestMetadata("../../shared/tests/testData/multiFile")
 public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJavaToKotlinConverterMultiFileTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,106 +25,106 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
 
     @TestMetadata("AnnotationDoesNotLoseImport")
     public void testAnnotationDoesNotLoseImport() throws Exception {
-        runTest("testData/multiFile/AnnotationDoesNotLoseImport/");
+        runTest("../../shared/tests/testData/multiFile/AnnotationDoesNotLoseImport/");
     }
 
     @TestMetadata("AnnotationWithArrayParameter")
     public void testAnnotationWithArrayParameter() throws Exception {
-        runTest("testData/multiFile/AnnotationWithArrayParameter/");
+        runTest("../../shared/tests/testData/multiFile/AnnotationWithArrayParameter/");
     }
 
     @TestMetadata("DetectPropertiesMultipleFiles")
     public void testDetectPropertiesMultipleFiles() throws Exception {
-        runTest("testData/multiFile/DetectPropertiesMultipleFiles/");
+        runTest("../../shared/tests/testData/multiFile/DetectPropertiesMultipleFiles/");
     }
 
     @TestMetadata("EnumValues")
     public void testEnumValues() throws Exception {
-        runTest("testData/multiFile/EnumValues/");
+        runTest("../../shared/tests/testData/multiFile/EnumValues/");
     }
 
     @TestMetadata("FieldToPrimaryConstructorProperty")
     public void testFieldToPrimaryConstructorProperty() throws Exception {
-        runTest("testData/multiFile/FieldToPrimaryConstructorProperty/");
+        runTest("../../shared/tests/testData/multiFile/FieldToPrimaryConstructorProperty/");
     }
 
     @TestMetadata("FieldToProperty")
     public void testFieldToProperty() throws Exception {
-        runTest("testData/multiFile/FieldToProperty/");
+        runTest("../../shared/tests/testData/multiFile/FieldToProperty/");
     }
 
     @TestMetadata("FunctionalInterfaceAcceptor")
     public void testFunctionalInterfaceAcceptor() throws Exception {
-        runTest("testData/multiFile/FunctionalInterfaceAcceptor/");
+        runTest("../../shared/tests/testData/multiFile/FunctionalInterfaceAcceptor/");
     }
 
     @TestMetadata("GetterAndSetterUsages")
     public void testGetterAndSetterUsages() throws Exception {
-        runTest("testData/multiFile/GetterAndSetterUsages/");
+        runTest("../../shared/tests/testData/multiFile/GetterAndSetterUsages/");
     }
 
     @TestMetadata("InterfaceWithGetterInOtherFile")
     public void testInterfaceWithGetterInOtherFile() throws Exception {
-        runTest("testData/multiFile/InterfaceWithGetterInOtherFile/");
+        runTest("../../shared/tests/testData/multiFile/InterfaceWithGetterInOtherFile/");
     }
 
     @TestMetadata("Java17_RecordClass")
     public void testJava17_RecordClass() throws Exception {
-        runTest("testData/multiFile/Java17_RecordClass/");
+        runTest("../../shared/tests/testData/multiFile/Java17_RecordClass/");
     }
 
     @TestMetadata("Java17_RecordClassExplicitAccessor")
     public void testJava17_RecordClassExplicitAccessor() throws Exception {
-        runTest("testData/multiFile/Java17_RecordClassExplicitAccessor/");
+        runTest("../../shared/tests/testData/multiFile/Java17_RecordClassExplicitAccessor/");
     }
 
     @TestMetadata("JavaUsageOfBothFieldAndAccessor")
     public void testJavaUsageOfBothFieldAndAccessor() throws Exception {
-        runTest("testData/multiFile/JavaUsageOfBothFieldAndAccessor/");
+        runTest("../../shared/tests/testData/multiFile/JavaUsageOfBothFieldAndAccessor/");
     }
 
     @TestMetadata("KT11952")
     public void testKT11952() throws Exception {
-        runTest("testData/multiFile/KT11952/");
+        runTest("../../shared/tests/testData/multiFile/KT11952/");
     }
 
     @TestMetadata("NoDestructuringForPlainVariables")
     public void testNoDestructuringForPlainVariables() throws Exception {
-        runTest("testData/multiFile/NoDestructuringForPlainVariables/");
+        runTest("../../shared/tests/testData/multiFile/NoDestructuringForPlainVariables/");
     }
 
     @TestMetadata("NullabilityByDFa")
     public void testNullabilityByDFa() throws Exception {
-        runTest("testData/multiFile/NullabilityByDFa/");
+        runTest("../../shared/tests/testData/multiFile/NullabilityByDFa/");
     }
 
     @TestMetadata("OverrideFieldToPrimaryConstructorProperty")
     public void testOverrideFieldToPrimaryConstructorProperty() throws Exception {
-        runTest("testData/multiFile/OverrideFieldToPrimaryConstructorProperty/");
+        runTest("../../shared/tests/testData/multiFile/OverrideFieldToPrimaryConstructorProperty/");
     }
 
     @TestMetadata("OverridePropertyAndUseAnotherPropertyOfSupertypeCompanion")
     public void testOverridePropertyAndUseAnotherPropertyOfSupertypeCompanion() throws Exception {
-        runTest("testData/multiFile/OverridePropertyAndUseAnotherPropertyOfSupertypeCompanion/");
+        runTest("../../shared/tests/testData/multiFile/OverridePropertyAndUseAnotherPropertyOfSupertypeCompanion/");
     }
 
     @TestMetadata("ProtectedVisibility")
     public void testProtectedVisibility() throws Exception {
-        runTest("testData/multiFile/ProtectedVisibility/");
+        runTest("../../shared/tests/testData/multiFile/ProtectedVisibility/");
     }
 
     @TestMetadata("StaticAnnotation")
     public void testStaticAnnotation() throws Exception {
-        runTest("testData/multiFile/StaticAnnotation/");
+        runTest("../../shared/tests/testData/multiFile/StaticAnnotation/");
     }
 
     @TestMetadata("ToCompanionObject")
     public void testToCompanionObject() throws Exception {
-        runTest("testData/multiFile/ToCompanionObject/");
+        runTest("../../shared/tests/testData/multiFile/ToCompanionObject/");
     }
 
     @TestMetadata("ToObject")
     public void testToObject() throws Exception {
-        runTest("testData/multiFile/ToObject/");
+        runTest("../../shared/tests/testData/multiFile/ToObject/");
     }
 }
