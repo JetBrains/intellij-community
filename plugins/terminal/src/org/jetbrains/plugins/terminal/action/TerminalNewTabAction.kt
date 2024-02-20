@@ -16,7 +16,7 @@ open class TerminalNewTabAction : TerminalPromotedDumbAwareAction(), ActionRemot
     templatePresentation.also {
       it.setText(TerminalBundle.messagePointer("action.Terminal.NewTab.text"))
       it.setDescription(TerminalBundle.messagePointer("action.Terminal.NewTab.description"))
-      it.icon = AllIcons.General.Add
+      it.setIconSupplier { AllIcons.General.Add }
     }
   }
 
