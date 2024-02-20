@@ -4,16 +4,12 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Functions;
@@ -61,12 +57,6 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  */
 public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
-
-  @TestOnly
-  public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
-
-  //TODO RC: move to com.intellij.util.indexing.IndexingFlag since apt functionality moved there
-  private static volatile Boolean isIndexedFlagDisabled = null;
 
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
@@ -246,24 +236,6 @@ public final class VfsData {
       queueOfFileIdsToBeCleaned.add(id);
     }
   }
-
-  public static boolean isIndexedFlagDisabled() {
-    return isIndexedFlagDisabled(ApplicationManager.getApplication());
-  }
-
-  private static boolean isIndexedFlagDisabled(@NotNull Application app) {
-    if (isIndexedFlagDisabled == null) {
-      Boolean enable;
-      if (app.isUnitTestMode() && ((enable = TestModeFlags.get(ENABLE_IS_INDEXED_FLAG_KEY)) != null)) {
-        isIndexedFlagDisabled = !enable;
-      }
-      else {
-        isIndexedFlagDisabled = Registry.is("indexing.disable.virtual.file.system.entry.is.file.indexed", false);
-      }
-    }
-    return isIndexedFlagDisabled;
-  }
-
 
   /** @return offset of fileId's data in {@link Segment#objectFieldsArray} */
   private static int objectOffsetInSegment(int fileId) {
