@@ -476,6 +476,16 @@ object GithubApiRequests {
     }
   }
 
+  object Emojis : Entity("/emojis") {
+    fun loadNameToUrlMap(server: GithubServerPath): GithubApiRequest<Map<String, String>> = Get.JsonMap(getUrl(server, urlSuffix))
+
+    fun loadImage(url: String): GithubApiRequest<BufferedImage> =
+      object : Get<BufferedImage>(url) {
+        override fun extractResult(response: GithubApiResponse) =
+          response.handleBody(ThrowableConvertor(GithubApiContentHelper::loadImage))
+      }
+  }
+
   abstract class Entity(val urlSuffix: String)
 
   private fun getUrl(server: GithubServerPath, suffix: String) = server.toApiUrl() + suffix
