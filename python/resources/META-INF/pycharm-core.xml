@@ -23,8 +23,8 @@
   <actions>
     <group id="PlatformOpenProjectGroup">
       <reference ref="NewProjectOrModuleGroup"/>
-      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction" />
-      <reference ref="NewScratchFile" />
+      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+      <reference ref="NewScratchFile"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
@@ -34,6 +34,8 @@
 
     <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
       <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
+      <override-text place="ProjectWidgetPopup"/>
+      <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
