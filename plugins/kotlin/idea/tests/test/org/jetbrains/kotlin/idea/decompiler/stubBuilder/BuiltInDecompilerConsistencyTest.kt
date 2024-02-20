@@ -49,10 +49,11 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
             // ExperimentalStdlibApi is incorrectly written in built-ins, see KT-53073
             excludedClasses = setOf("ExperimentalStdlibApi",
             // annotation arguments defaults are not written in built-ins KT-58052
-                                    "Deprecated", "RequiresOptIn", "DeprecatedSinceKotlin")
+                                    "Deprecated", "RequiresOptIn", "DeprecatedSinceKotlin"),
+            fixedClassNameForSearch = "Int",
         )
         doTest("kotlin.annotation", excludedClasses = setOf("Retention"))
-        doTest("kotlin.collections")
+        doTest("kotlin.collections", fixedClassNameForSearch = "List")
         doTest("kotlin.ranges")
         doTest("kotlin.reflect", 3,
                setOf("KTypeProjection") // TODO: seems @JvmField is @OptionalExpectation that makes KTypeProjection actual one
@@ -61,8 +62,13 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
 
     // Check stubs for decompiled built-in classes against stubs for decompiled JVM class files, assuming the latter are well tested
     // Check only those classes, stubs for which are present in the stub for a decompiled .kotlin_builtins file
-    private fun doTest(packageFqName: String, minClassesEncountered: Int = 5, excludedClasses: Set<String> = emptySet()) {
-        val dir = findDir(packageFqName, project)
+    private fun doTest(
+        packageFqName: String,
+        minClassesEncountered: Int = 5,
+        excludedClasses: Set<String> = emptySet(),
+        fixedClassNameForSearch: String? = null, // workaround for KTIJ-28858
+    ) {
+        val dir = findDir(packageFqName, project, fixedClassNameForSearch)
         val groupedByExtension = dir.children.groupBy { it.extension }
         val builtInsFile = groupedByExtension.getValue(BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION).single()
 
