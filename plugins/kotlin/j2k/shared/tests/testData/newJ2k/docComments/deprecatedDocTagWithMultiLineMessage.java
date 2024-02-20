@@ -1,3 +1,4 @@
+// IGNORE_K2
 /**
  * @deprecated Ph'nglui mglw'nafh
  * Cthulhu R'lyeh wgah'nagl fhtagn.

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Base {
     static final int F = 0;
 }

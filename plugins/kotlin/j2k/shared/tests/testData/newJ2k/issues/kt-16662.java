@@ -1,3 +1,4 @@
+// IGNORE_K2
 import java.io.Serializable;
 
 class BaseEntity implements Serializable {

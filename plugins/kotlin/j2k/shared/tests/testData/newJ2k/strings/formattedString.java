@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class A {
     public static final String TEXT1 = "text1.\n" +
                                        "text2\n" +

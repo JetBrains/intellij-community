@@ -1,3 +1,4 @@
+// IGNORE_K2
 package com.example;
 
 import java.util.function.Function;

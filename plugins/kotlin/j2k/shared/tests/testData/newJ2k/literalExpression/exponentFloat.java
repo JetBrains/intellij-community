@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Exponent {
     private final float[] floats = {
             5e5f, +5e5f, -5e5f, 5e+5f, 5e-5f,

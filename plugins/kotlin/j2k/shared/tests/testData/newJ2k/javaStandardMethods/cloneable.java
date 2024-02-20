@@ -1,3 +1,4 @@
+// IGNORE_K2
 class C1 {
     public Object clone() throws CloneNotSupportedException {
         return super.clone();

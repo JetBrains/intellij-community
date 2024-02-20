@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     void foo() {
         for (int i = 1, j = 0; i < 1000; i *= 2, j++) {

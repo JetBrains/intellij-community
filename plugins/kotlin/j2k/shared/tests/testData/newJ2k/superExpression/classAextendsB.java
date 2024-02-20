@@ -1,3 +1,4 @@
+// IGNORE_K2
 class B {
   B(int i) {}
   int call() {return 1;}

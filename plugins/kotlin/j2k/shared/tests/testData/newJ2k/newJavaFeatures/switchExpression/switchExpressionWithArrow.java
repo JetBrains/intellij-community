@@ -1,3 +1,4 @@
+// IGNORE_K2
 package test;
 public class J {
     public static String foo(int x) {

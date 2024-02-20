@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     public static int [][] sampleFunction(int a[][], int b[][]) {
         int n = a[0].length;

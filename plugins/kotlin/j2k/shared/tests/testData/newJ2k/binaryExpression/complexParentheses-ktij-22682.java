@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Test {
     private static boolean foo(String text) {
         return text == null ||

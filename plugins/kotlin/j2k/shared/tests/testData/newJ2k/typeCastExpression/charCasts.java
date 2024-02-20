@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     void charToInt() {
         int a = 'a';

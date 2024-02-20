@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class ArrayInitializerBugKt {
 
     private static final byte[] GREETING = { 'H', 'e', 'l', 'l', 'o', ',', ' ', 'b', 'u', 'g', '!' };

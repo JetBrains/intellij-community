@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class TestSequentialIfs {
     public static String test(int i) {
         if (i == 0) return "zero";

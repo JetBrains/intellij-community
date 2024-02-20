@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class ArrayNullable {
     public static void main(String[] args) {
         int notNull = 0;

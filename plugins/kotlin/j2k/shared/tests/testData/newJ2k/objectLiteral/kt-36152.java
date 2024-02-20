@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Foo {
     public void foo(Preference l, Preference pm) {
         l.setOnPreferenceClickListener((p) -> true);

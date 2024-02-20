@@ -1,3 +1,4 @@
+// IGNORE_K2
 package javaApi;
 
 import kotlinApi.KotlinClass;

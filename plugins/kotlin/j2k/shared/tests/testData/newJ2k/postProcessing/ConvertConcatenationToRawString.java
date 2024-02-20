@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Test {
     String s1 = "asdf\n" +
                "asdfasdf";

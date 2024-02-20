@@ -1,3 +1,4 @@
+// IGNORE_K2
 @interface TestAnnotationField {}
 @interface TestAnnotationParam {}
 @interface TestAnnotationGet {}

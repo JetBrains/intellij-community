@@ -1,3 +1,4 @@
+// IGNORE_K2
 package org.test;
 
 import java.util.List;

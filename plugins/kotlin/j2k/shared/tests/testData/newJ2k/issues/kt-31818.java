@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class ClassC<T>{}
 
 public class Test {

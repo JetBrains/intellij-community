@@ -1,3 +1,4 @@
+// IGNORE_K2
 // !FORCE_NOT_NULL_TYPES: false
 // !SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT: true
 class Library {

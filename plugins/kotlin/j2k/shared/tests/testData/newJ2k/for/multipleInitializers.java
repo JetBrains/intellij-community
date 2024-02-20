@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class SomeClass {
     void doSomeFor() {
         int i, u;

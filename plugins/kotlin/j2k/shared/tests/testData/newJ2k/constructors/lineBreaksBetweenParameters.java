@@ -1,3 +1,4 @@
+// IGNORE_K2
 class C1 {
   C1(int arg1,
      int arg2,

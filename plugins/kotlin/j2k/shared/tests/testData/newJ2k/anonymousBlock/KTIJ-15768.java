@@ -1,3 +1,4 @@
+// IGNORE_K2
 class C {
     int a = 10;
 

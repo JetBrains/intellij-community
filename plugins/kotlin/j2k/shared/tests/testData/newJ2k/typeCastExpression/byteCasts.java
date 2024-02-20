@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     void byteToInt() {
         int a = (byte) 1;

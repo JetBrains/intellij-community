@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class TestToStringReturnsNullable {
     public static class Base {
         public String string;

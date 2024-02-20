@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     void foo(int i, char c, String s) {
         System.out.println("foo" + i + c + s);

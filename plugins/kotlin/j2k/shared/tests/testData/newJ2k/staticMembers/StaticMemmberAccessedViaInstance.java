@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Rectangle {
     public static int x = 0;
     public int y;

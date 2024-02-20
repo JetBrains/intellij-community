@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class TestMutltipleCtorsWithJavadoc {
     private String x;
     private String y;

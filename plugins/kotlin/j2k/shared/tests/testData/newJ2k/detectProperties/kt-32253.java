@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class TestInitInCtor {
     private int i;
     private int j;

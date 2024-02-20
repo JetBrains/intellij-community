@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Base {
     Base(Object o, int l){}
 }

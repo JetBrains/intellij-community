@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     void longToChar() {
         char a = (char) 1L;

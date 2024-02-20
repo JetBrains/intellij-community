@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Test {
   private final String myName;
   boolean a;

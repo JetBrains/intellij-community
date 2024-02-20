@@ -1,3 +1,4 @@
+// IGNORE_K2
 interface I {
     int getSomething();
     void setSomething(String value);

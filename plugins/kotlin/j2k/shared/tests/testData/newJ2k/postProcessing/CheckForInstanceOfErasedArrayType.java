@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class J {
     public boolean testObject(Object obj) {
         return obj instanceof String[];

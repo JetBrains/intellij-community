@@ -1,3 +1,4 @@
+// IGNORE_K2
 package foo; // we use package 'foo'
 
 // imports:

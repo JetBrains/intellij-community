@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class A {
     public void mixedOperators() {
         int x = 1

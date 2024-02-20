@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTe
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -620,6 +621,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("copyright/fir-tests", testDataPath = "../../copyright/tests/testData") {
         testClass<AbstractFirUpdateKotlinCopyrightTest> {
             model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
+        }
+    }
+
+    testGroup("j2k/k2/tests", testDataPath = "../../shared/tests/testData") {
+        testClass<AbstractK2JavaToKotlinConverterSingleFileTest> {
+            model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
     }
 }

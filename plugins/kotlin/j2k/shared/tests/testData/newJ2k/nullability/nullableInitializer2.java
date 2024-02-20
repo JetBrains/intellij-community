@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class TestJava {
     public Object nullableObj(int p) {
         return p > 0 ? "response" : null;

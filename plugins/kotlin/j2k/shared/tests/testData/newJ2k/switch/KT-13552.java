@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class SwitchDemo {
     public static int test(int i) {
         String monthString = "<empty>";

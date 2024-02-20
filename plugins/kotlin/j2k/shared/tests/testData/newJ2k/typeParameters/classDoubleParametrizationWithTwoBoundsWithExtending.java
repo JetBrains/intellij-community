@@ -1,3 +1,4 @@
+// IGNORE_K2
 interface INode {}
 interface Node {}
 class A {}

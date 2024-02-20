@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_LIBRARY: ../../libSources/enum/java
 
 import library.java.test.LibraryEnum;

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     public void foo(int p) {
         System.out.println("p = [" + p + "]");

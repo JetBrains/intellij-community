@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     void shortToInt() {
         int a = (short) 1;

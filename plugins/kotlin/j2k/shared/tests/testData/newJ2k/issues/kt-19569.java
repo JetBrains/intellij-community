@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class TestJavaBoxedPrimitives {
     public Object[] foo(Boolean x1, Byte x2, Short x3, Integer x4,
             Long x5, Float x6, Double x7, Character x8) {

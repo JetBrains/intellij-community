@@ -1,3 +1,4 @@
+// IGNORE_K2
 interface Cloneable {}
 
 class C1 implements Cloneable, java.lang.Cloneable {

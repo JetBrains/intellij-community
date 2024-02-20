@@ -1,3 +1,4 @@
+// IGNORE_K2
 import static kotlinApi.KotlinClass.*;
 
 public class C {

@@ -1,3 +1,4 @@
+// IGNORE_K2
 // Not supported yet: KTIJ-7583
 public class J extends K {
     @Override

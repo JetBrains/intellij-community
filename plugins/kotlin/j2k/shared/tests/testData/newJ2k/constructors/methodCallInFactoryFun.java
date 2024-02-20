@@ -1,3 +1,4 @@
+// IGNORE_K2
 class C {
     private final int arg1;
     private final int arg2;

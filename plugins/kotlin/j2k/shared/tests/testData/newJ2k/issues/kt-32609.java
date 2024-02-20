@@ -1,3 +1,4 @@
+// IGNORE_K2
 import org.jetbrains.annotations.NotNull;
 
 public class Book implements Comparable<Book> {

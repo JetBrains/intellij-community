@@ -1,3 +1,4 @@
+// IGNORE_K2
 import kotlinApi.KotlinClassWithProperties;
 import javaApi.JavaClassWithProperties;
 import javaApi.JavaClassDerivedFromKotlinClassWithProperties;

@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Base {
     public static void foo() {
     }

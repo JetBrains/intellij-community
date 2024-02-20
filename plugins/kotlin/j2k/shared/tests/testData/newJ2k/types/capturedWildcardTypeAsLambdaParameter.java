@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Test {
     public void useSamUpper(SamAcceptor<? extends Number> acceptor) {
         acceptor.acceptSam(p -> {});

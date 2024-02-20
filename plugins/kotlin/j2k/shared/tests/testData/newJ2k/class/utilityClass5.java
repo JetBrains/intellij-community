@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Util {
     public static final String publicStr = "";
     protected static final String protectedStr = "";

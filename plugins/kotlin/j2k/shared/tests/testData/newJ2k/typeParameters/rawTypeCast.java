@@ -1,3 +1,4 @@
+// IGNORE_K2
 // !WITHOUT_SLOW_ASSERTIONS: true
 import java.util.*;
 

@@ -1,3 +1,4 @@
+// IGNORE_K2
 public enum E {
     A(1) {
         @Override

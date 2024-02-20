@@ -1,3 +1,4 @@
+// IGNORE_K2
 import static java.lang.Enum.valueOf;
 
 public class Foo {

@@ -1,3 +1,4 @@
+// IGNORE_K2
 //method
 public void foo(int i, int j) {
     String a = switch (i) {

@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class J {
     private String s1;
     private String s2;

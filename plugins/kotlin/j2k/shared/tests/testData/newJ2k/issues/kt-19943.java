@@ -1,3 +1,4 @@
+// IGNORE_K2
 import java.util.List;
 
 public class TestSpecialMethodForTypeValue  {

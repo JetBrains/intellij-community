@@ -1,3 +1,4 @@
+// IGNORE_K2
 //method
 int foo(int a) {
   switch(a) {

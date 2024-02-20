@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class TestReturnsArray {
     public String[] strings(int n) {
         String[] result = new String[n];

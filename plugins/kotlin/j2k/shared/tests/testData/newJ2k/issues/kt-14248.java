@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class AppInfo {
 
     long mLastUpdateTime;

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Test {
     Object[][] field = new Object[][] {
             // 1st row

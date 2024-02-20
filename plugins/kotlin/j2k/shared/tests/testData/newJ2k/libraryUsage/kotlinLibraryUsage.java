@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_LIBRARY: ../../libSources/simple/kotlin
 
 import library.kotlin.test.LibraryKt;

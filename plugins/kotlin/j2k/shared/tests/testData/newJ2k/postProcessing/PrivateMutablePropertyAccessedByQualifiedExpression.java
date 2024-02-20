@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class J {
     private S s = new S();
 

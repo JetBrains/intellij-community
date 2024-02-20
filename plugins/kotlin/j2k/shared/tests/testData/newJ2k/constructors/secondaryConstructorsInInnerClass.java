@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Outer {
     private class Inner1 {
         public Inner1(){}

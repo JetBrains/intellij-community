@@ -1,3 +1,4 @@
+// IGNORE_K2
 // !SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT: true
 package test;
 

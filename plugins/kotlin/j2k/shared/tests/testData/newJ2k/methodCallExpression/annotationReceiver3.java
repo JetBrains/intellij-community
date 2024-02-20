@@ -1,3 +1,4 @@
+// IGNORE_K2
 class C {
     void process(Ann annotation) {
         System.out.println(annotation.toString());

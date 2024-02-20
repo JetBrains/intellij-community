@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Test {
     public static void test() {
         FooImpl foo = new FooImpl();

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class J1 {
     public void run() {
         problem();

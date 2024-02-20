@@ -2,19 +2,22 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.pom.java.LanguageLevel.JDK_1_8
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
 
 private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method|class)\n")
+private val ignoreDirectives = setOf(IGNORE_K1, IGNORE_K2)
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
@@ -37,25 +40,35 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
     open fun doTest(javaPath: String) {
         val javaFile = File(javaPath)
-        val fileContents = FileUtil.loadFile(javaFile, /* convertLineSeparators = */ true)
+        val fileContents = javaFile.getTextWithoutDirectives()
+        val disableTestDirective = if (isFirPlugin) IGNORE_K2 else IGNORE_K1
 
-        withCustomCompilerOptions(fileContents, project, module) {
-            addExternalFiles(javaFile)
-
-            val (prefix, javaCode) = getPrefixAndJavaCode(fileContents)
-            val directives = KotlinTestUtils.parseDirectives(javaCode)
-            val settings = configureSettings(directives)
-            val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
-
-            val actualText = if (prefix == "file") {
-                createKotlinFile(convertedText).dumpTextWithErrors()
-            } else {
-                convertedText
+        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), disableTestDirective) {
+            withCustomCompilerOptions(fileContents, project, module) {
+                doTest(javaFile, fileContents)
             }
-            val expectedFile = provideExpectedFile(javaPath)
-            KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
         }
     }
+
+    private fun doTest(javaFile: File, fileContents: String) {
+        addExternalFiles(javaFile)
+
+        val (prefix, javaCode) = getPrefixAndJavaCode(fileContents)
+        val directives = KotlinTestUtils.parseDirectives(javaCode)
+        val settings = configureSettings(directives)
+        val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
+
+        val actualText = if (prefix == "file") {
+            dumpTextWithErrors(createKotlinFile(convertedText))
+        } else {
+            convertedText
+        }
+        val expectedFile = File(javaFile.path.replace(".java", ".kt"))
+        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+    }
+
+    private fun File.getTextWithoutDirectives(): String =
+        readLines().filterNot { it.trim() in ignoreDirectives }.joinToString(separator = "\n")
 
     private fun addExternalFiles(javaFile: File) {
         val externalFileName = "${javaFile.nameWithoutExtension}.external"
@@ -108,12 +121,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             )
         }
 
-    open fun provideExpectedFile(javaPath: String): File {
-        val kotlinPath = javaPath.replace(".java", ".kt")
-        return File(kotlinPath)
-    }
-
     abstract fun fileToKotlin(text: String, settings: ConverterSettings): String
+
+    abstract fun dumpTextWithErrors(file: KtFile): String
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
         val result = fileToKotlin("final class C {$text}", settings)

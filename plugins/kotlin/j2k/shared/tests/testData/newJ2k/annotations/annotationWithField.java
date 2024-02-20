@@ -1,3 +1,4 @@
+// IGNORE_K2
 public @interface Example {
     String FOO = "foo";
     final String BAR = "bar";

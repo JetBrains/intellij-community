@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class J {
     private static int byteToInt(byte[] b) {
         int i = 0, result = 0, shift = 0;
