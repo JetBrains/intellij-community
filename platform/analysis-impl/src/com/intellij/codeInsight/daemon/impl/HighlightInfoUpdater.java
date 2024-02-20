@@ -80,9 +80,8 @@ final class HighlightInfoUpdater implements Disposable {
 
   HighlightInfoUpdater(Project project) {
     FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
-    Disposer.register(this, () -> {
-      fileManager.forEachCachedDocument(document -> document.putUserData(VISITED_PSI_ELEMENTS, null));
-    });
+    Disposer.register(this, () ->
+      fileManager.forEachCachedDocument(document -> document.putUserData(VISITED_PSI_ELEMENTS, null)));
   }
 
   @Override
