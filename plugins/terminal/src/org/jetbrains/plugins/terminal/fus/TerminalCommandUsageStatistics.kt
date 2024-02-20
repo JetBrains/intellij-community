@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceWeakRefStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
-import java.util.Set.*
+import java.util.Set.copyOf
 
 internal object TerminalCommandUsageStatistics {
 
@@ -24,9 +24,10 @@ internal object TerminalCommandUsageStatistics {
                                                                      + knownCommandToSubCommandsMap.keys)
   internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
 
-  fun triggerCommandExecuted(commandExecutedEvent: EventId2<String?, String?>, project: Project, userCommandLine: String) {
+  fun triggerCommandExecuted(commandExecutedEvent: EventId3<String?, String?, Boolean>,
+                             project: Project, userCommandLine: String, isNewTerminal: Boolean) {
     val eventData = toEventData(userCommandLine)
-    commandExecutedEvent.log(project, eventData?.command, eventData?.subCommand)
+    commandExecutedEvent.log(project, eventData?.command, eventData?.subCommand, isNewTerminal)
   }
 
   private fun toEventData(userCommandLine: String): TerminalCommandEventData? {

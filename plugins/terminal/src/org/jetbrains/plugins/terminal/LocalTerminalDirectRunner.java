@@ -236,7 +236,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       throw new IllegalStateException("Working directory must not be null, startup options: " + options);
     }
 
-    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
+    var shellIntegration = options.getShellIntegration();
+    boolean isNewTerminal = isBlockTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null;
+    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isNewTerminal);
+
     try {
       long startNano = System.nanoTime();
       PtyProcessBuilder builder = new PtyProcessBuilder(command)

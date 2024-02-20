@@ -14,6 +14,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
 class BlockTerminalController(
@@ -52,6 +53,8 @@ class BlockTerminalController(
       outputController.insertEmptyLine()
     }
     else startCommand(command)
+    // report event even if it is an empty command, because it will be reported as a separate command type
+    TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isNewTerminal = true)
   }
 
   private fun startCommand(command: String) {
