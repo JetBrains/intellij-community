@@ -10,11 +10,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "akamud.vscode-theme-onedark",
-    "ideaName": "Atom OneDark Theme",
-    "ideaId": "github.cweijan.test-theme"
-  },
-  {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular",
     "ideaId": "AngularJS"
@@ -40,11 +35,6 @@
     "ideaId": "Dart"
   },
   {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
-  },
-  {
     "vsCodeId": "dbaeumer.vscode-eslint",
     "ideaName": "ESLint",
     "builtIn": true
@@ -53,11 +43,6 @@
     "vsCodeId": "donjayamanne.githistory",
     "ideaName": "Git History",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea"
   },
   {
     "vsCodeId": "eamodio.gitlens",
@@ -210,16 +195,6 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
-    "vsCodeId": "PKief.material-icon-theme",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
-  },
-  {
     "vsCodeId": "pranaygp.vscode-css-peek",
     "ideaName": "CSS Peek",
     "builtIn": true
@@ -268,11 +243,6 @@
     "vsCodeId": "techer.open-in-browser",
     "ideaName": "Open in browser",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscodevim.vim",

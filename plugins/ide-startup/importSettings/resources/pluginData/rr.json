@@ -115,11 +115,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
     "vsCodeId": "pranaygp.vscode-css-peek",
     "ideaName": "CSS Peek",
     "builtIn": true
@@ -133,11 +128,6 @@
     "vsCodeId": "rust-lang.rust-analyzer",
     "ideaName": "Rust Support",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

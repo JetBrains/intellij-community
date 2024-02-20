@@ -10,11 +10,6 @@
     "ideaId": "gherkin"
   },
   {
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit"
-  },
-  {
     "vsCodeId": "bungcip.better-toml",
     "ideaName": "Toml",
     "ideaId": "org.toml.lang"
@@ -28,11 +23,6 @@
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
     "ideaId": "Dart"
-  },
-  {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
   },
   {
     "vsCodeId": "dbaeumer.vscode-eslint",
@@ -95,11 +85,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "GoogleCloudTools.cloudcode",
-    "ideaName": "Google Cloud Code",
-    "ideaId": "com.google.gct.core"
-  },
-  {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql"
@@ -121,13 +106,18 @@
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
-    "ideaName": "Kotlin",
+    "ideaName": "Kotlin Language",
     "builtIn": true
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
+  },
+  {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-python.python",
@@ -155,13 +145,8 @@
     "ideaId": "com.jetbrains.codeWithMe"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
     "vsCodeId": "redhat.java",
-    "ideaName": "Java",
+    "ideaName": "Language Support for Java(TM) by Red Hat",
     "builtIn": true
   },
   {
@@ -185,28 +170,18 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "SonarSource.sonarlint-vscode",
-    "ideaName": "SonarLint",
-    "ideaId": "org.sonarlint.idea"
-  },
-  {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
   },
   {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
-  },
-  {
     "vsCodeId": "vscjava.vscode-gradle",
     "ideaName": "Gradle",
-    "ideaId": "com.intellij.gradle"
+    "builtIn": true
   },
   {
     "vsCodeId": "vscjava.vscode-java-debug",
-    "ideaName": "Debugger for Java",
+    "ideaName": "Debugger",
     "builtIn": true
   },
   {
@@ -216,7 +191,7 @@
   },
   {
     "vsCodeId": "vscjava.vscode-java-pack",
-    "ideaName": "Java",
+    "ideaName": "Extension Pack for Java",
     "builtIn": true
   },
   {

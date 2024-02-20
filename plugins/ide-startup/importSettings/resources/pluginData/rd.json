@@ -1,18 +1,8 @@
 [
   {
-    "vsCodeId": "2gua.rainbow-brackets",
-    "ideaName": "Rainbow Brackets",
-    "ideaId": "izhangzhihao.rainbow.brackets"
-  },
-  {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
     "ideaId": "org.intellij.plugins.hcl"
-  },
-  {
-    "vsCodeId": "aaron-bond.better-comments",
-    "ideaName": "Better Comments",
-    "ideaId": "org.igu.plugins.bettercomments"
   },
   {
     "vsCodeId": "adpyke.vscode-sql-formatter",
@@ -33,16 +23,6 @@
     "vsCodeId": "adrianwilczynski.namespace",
     "ideaName": "C# Namespace Autocompletion",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "akamud.vscode-theme-onedark",
-    "ideaName": "Atom OneDark Theme",
-    "ideaId": "github.cweijan.test-theme"
-  },
-  {
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit"
   },
   {
     "vsCodeId": "Angular.ng-template",
@@ -115,11 +95,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea"
-  },
-  {
     "vsCodeId": "eamodio.gitlens",
     "ideaName": "GitLens — Git supercharged",
     "builtIn": true
@@ -183,11 +158,6 @@
     "vsCodeId": "Fudge.auto-using",
     "ideaName": "Auto-Using for C#",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "GitHub.github-vscode-theme",
-    "ideaName": "GitHub Theme",
-    "ideaId": "club.nutsoft.Github3Theme"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -263,11 +233,6 @@
     "vsCodeId": "mhutchie.git-graph",
     "ideaName": "Git Graph",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "mikestead.dotenv",
-    "ideaName": ".env files support",
-    "ideaId": "ru.adelf.idea.dotenv"
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
@@ -370,11 +335,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "ms-vscode.PowerShell",
-    "ideaName": "PowerShell",
-    "ideaId": "com.intellij.plugin.adernov.powershell"
-  },
-  {
     "vsCodeId": "ms-vscode.remote-explorer",
     "ideaName": "Remote Explorer",
     "builtIn": true
@@ -420,16 +380,6 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
-    "vsCodeId": "PKief.material-icon-theme",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
-  },
-  {
     "vsCodeId": "redhat.vscode-xml",
     "ideaName": "XML",
     "builtIn": true
@@ -470,11 +420,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "TabNine.tabnine-vscode",
-    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "ideaId": "com.tabnine.TabNine"
-  },
-  {
     "vsCodeId": "tintoy.msbuild-project-tools",
     "ideaName": "MSBuild project tools",
     "builtIn": true
@@ -488,11 +433,6 @@
     "vsCodeId": "twxs.cmake",
     "ideaName": "CMake",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "Unity.unity-debug",
@@ -518,11 +458,6 @@
     "vsCodeId": "yzhang.markdown-all-in-one",
     "ideaName": "Markdown All in One",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "zhuangtongfa.Material-theme",
-    "ideaName": "One Dark Pro Color Scheme",
-    "ideaId": "color.scheme.One Dark Pro"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",
