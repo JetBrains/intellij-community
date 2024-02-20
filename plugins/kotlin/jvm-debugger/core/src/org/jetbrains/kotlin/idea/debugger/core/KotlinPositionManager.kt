@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -78,8 +78,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
-    private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
-
     private val sourceSearchScopes: List<GlobalSearchScope> = listOf(
         debugProcess.searchScope,
         KotlinAllFilesScopeProvider.getInstance(debugProcess.project).getAllKotlinFilesScope()
@@ -103,7 +101,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val frameProxy = descriptor.frameProxy
         // Don't provide inline stack trace for coroutine frames yet
-        val coroutineFrame = stackFrameInterceptor?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
+        val coroutineFrame =
+            serviceOrNull<StackFrameInterceptor>()?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
         if (coroutineFrame != null) {
             return listOf(coroutineFrame)
         }

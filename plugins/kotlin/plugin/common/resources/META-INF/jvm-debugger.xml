@@ -34,7 +34,7 @@
             serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.KotlinJvmDebuggerFacadeImpl"/>
 
-    <projectService
+    <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
 
