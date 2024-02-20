@@ -29,7 +29,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
   }
 
   @Override
-  public void setValue(@NotNull Object bean, @NotNull String value) {
+  public void setValue(@NotNull Object bean, @Nullable String value) {
     XmlSerializerImpl.doSet(bean, value, accessor, ClassUtil.typeToClass(accessor.getGenericType()));
   }
 

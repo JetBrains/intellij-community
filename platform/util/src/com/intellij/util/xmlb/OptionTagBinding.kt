@@ -30,7 +30,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
     }
   }
 
-  override fun setValue(bean: Any, value: String) {
+  override fun setValue(bean: Any, value: String?) {
     if (converter == null) {
       try {
         XmlSerializerImpl.doSet(bean, value, accessor, ClassUtil.typeToClass(accessor.genericType))
@@ -40,7 +40,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
       }
     }
     else {
-      accessor.set(bean, converter.fromString(value))
+      accessor.set(bean, value?.let { converter.fromString(it) })
     }
   }
 

@@ -26,7 +26,7 @@ interface NestedBinding : Binding {
 }
 
 interface PrimitiveValueBinding : NestedBinding {
-  fun setValue(bean: Any, value: String)
+  fun setValue(bean: Any, value: String?)
 }
 
 private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())

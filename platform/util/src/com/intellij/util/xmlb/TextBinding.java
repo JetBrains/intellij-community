@@ -50,7 +50,7 @@ final class TextBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public void setValue(@NotNull Object context, @NotNull String value) {
+  public void setValue(@NotNull Object context, @Nullable String value) {
     XmlSerializerImpl.doSet(context, value, accessor, valueClass);
   }
 }
