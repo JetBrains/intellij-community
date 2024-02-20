@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.google.gson.Gson;
@@ -16,12 +16,11 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -166,37 +165,12 @@ public final class TaskUtil {
   }
 
   /**
-   * Print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
-   */
-  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull Element element) {
-    if (logger.isDebugEnabled()) {
-      // alternatively
-      //new XMLOutputter(Format.getPrettyFormat()).outputString(root)
-      logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(element));
-    }
-  }
-
-  /**
-   * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
-   */
-  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xml) {
-    if (logger.isDebugEnabled()) {
-      try {
-        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.load(xml)));
-      }
-      catch (Exception e) {
-        logger.debug(e);
-      }
-    }
-  }
-
-  /**
    * Parse and print pretty-formatted XML to {@code logger}, if its level is DEBUG or below.
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xml) {
     if (logger.isDebugEnabled()) {
       try {
-        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.load(xml)));
+        logger.debug("\n" + JDOMUtil.write(JDOMUtil.load(xml)));
       }
       catch (Exception e) {
         logger.debug(e);
@@ -220,21 +194,6 @@ public final class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted Json to {@code logger}, if its level is DEBUG or below.
-   */
-  public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull JsonElement json) {
-    if (logger.isDebugEnabled()) {
-      try {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        logger.debug("\n" + gson.toJson(json));
-      }
-      catch (JsonSyntaxException e) {
-        logger.debug("Malformed JSON\n" + json);
-      }
-    }
-  }
-
-  /**
    * Perform standard {@code application/x-www-urlencoded} translation for string {@code s}.
    *
    * @return urlencoded string
@@ -244,12 +203,12 @@ public final class TaskUtil {
   }
 
   public static List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {
-    final com.intellij.util.text.Matcher matcher = getMatcher(pattern);
+    final Matcher matcher = getMatcher(pattern);
     return ContainerUtil.mapNotNull(tasks,
                                     task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);
   }
 
-  private static com.intellij.util.text.Matcher getMatcher(String pattern) {
+  private static Matcher getMatcher(String pattern) {
     StringTokenizer tokenizer = new StringTokenizer(pattern, " ");
     StringBuilder builder = new StringBuilder();
     while (tokenizer.hasMoreTokens()) {
