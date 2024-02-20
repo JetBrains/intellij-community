@@ -816,7 +816,7 @@ public final class PyTypeChecker {
                   result.typeVarTuples.put(typeVarTuple, (PyVariadicType)typeArgument);
                 }
                 else if (typeParameter instanceof PyParamSpecType) {
-                  result.getParamSpecs().put((PyParamSpecType)typeParameter, as(typeArgument, PyParamSpecType.class));
+                  result.paramSpecs.put((PyParamSpecType)typeParameter, as(typeArgument, PyParamSpecType.class));
                 }
               }
             }
@@ -1631,15 +1631,15 @@ public final class PyTypeChecker {
     }
 
     public @NotNull Map<PyParamSpecType, PyParamSpecType> getParamSpecs() {
-      return paramSpecs;
+      return Collections.unmodifiableMap(paramSpecs);
     }
 
     public @NotNull Map<PyTypeVarType, PyType> getTypeVars() {
-      return typeVars;
+      return Collections.unmodifiableMap(typeVars);
     }
 
     public @NotNull Map<PyTypeVarTupleType, PyVariadicType> getTypeVarTuples() {
-      return typeVarTuples;
+      return Collections.unmodifiableMap(typeVarTuples);
     }
 
     @Nullable
