@@ -56,7 +56,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   private volatile @Nullable VolatileImage myVolatileImage;
   private volatile boolean myContentOutdated = false;
 
-  private volatile @Nullable JBCefCarriageListener myCarriageListener;
+  private volatile @Nullable JBCefCaretListener myCaretListener;
 
   JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
@@ -186,7 +186,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void OnImeCompositionRangeChanged(CefBrowser browser, CefRange selectionRange, Rectangle[] characterBounds) {
-    JBCefCarriageListener listener = myCarriageListener;
+    JBCefCaretListener listener = myCaretListener;
     if (listener != null) {
       listener.onImeCompositionRangeChanged(selectionRange, characterBounds);
     }
@@ -194,7 +194,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public void OnTextSelectionChanged(CefBrowser browser, String selectedText, CefRange selectionRange) {
-    JBCefCarriageListener listener = myCarriageListener;
+    JBCefCaretListener listener = myCaretListener;
     if (listener != null) {
       listener.onTextSelectionChanged(selectedText, selectionRange);
     }
@@ -313,7 +313,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     return image;
   }
 
-  void addCarriageListener(JBCefCarriageListener listener) {
-    myCarriageListener = listener;
+  void addCaretListener(JBCefCaretListener listener) {
+    myCaretListener = listener;
   }
 }

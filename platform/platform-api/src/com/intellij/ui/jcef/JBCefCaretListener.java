@@ -5,7 +5,7 @@ import org.cef.misc.CefRange;
 
 import java.awt.*;
 
-public interface JBCefCarriageListener {
+public interface JBCefCaretListener {
   void onImeCompositionRangeChanged(CefRange selectionRange, Rectangle[] characterBounds);
   void onTextSelectionChanged(String selectedText, CefRange selectionRange);
 }

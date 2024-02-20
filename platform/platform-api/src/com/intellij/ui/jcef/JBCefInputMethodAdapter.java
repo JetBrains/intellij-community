@@ -20,7 +20,7 @@ import java.text.CharacterIterator;
 import java.util.Arrays;
 import java.util.List;
 
-class JBCefInputMethodAdapter implements InputMethodRequests, InputMethodListener, JBCefCarriageListener {
+class JBCefInputMethodAdapter implements InputMethodRequests, InputMethodListener, JBCefCaretListener {
   // DEFAULT_RANGE represents an invalid range according to the chromium codebase.
   // It is used as none-value for optional arguments in CEF input methods API.
   public static final CefRange DEFAULT_RANGE = new CefRange(-1, -1);
@@ -85,11 +85,11 @@ class JBCefInputMethodAdapter implements InputMethodRequests, InputMethodListene
       CefRange replacementRange = mySelectionRange;
       if (replacementRange.from == replacementRange.to) {
         // It has been experimentally determined that replacementRange must have an actual value only if there is a text to be replaced.
-        // Passing zero-length ranges pointing to the carriage position breaks Korean Language input character order.
+        // Passing zero-length ranges pointing to the caret position breaks Korean Language input character order.
         replacementRange = DEFAULT_RANGE;
       }
 
-      // Selection range after replacement. Move the carriage at the end of the composed text.
+      // Selection range after replacement. Move the caret at the end of the composed text.
       CefRange selectionRange = new CefRange(composedText.length(), composedText.length());
       CefLog.Debug("CefBrowser::ImeSetComposition(compositionText: '%s', replacementRange: %s, selectionRange: %s)", composedText,
                    replacementRange, selectionRange);

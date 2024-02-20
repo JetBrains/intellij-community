@@ -85,7 +85,7 @@ class JBCefOsrComponent extends JPanel {
 
   public void setRenderHandler(@NotNull JBCefOsrHandler renderHandler) {
     myRenderHandler = renderHandler;
-    myRenderHandler.addCarriageListener(myInputMethodAdapter);
+    myRenderHandler.addCaretListener(myInputMethodAdapter);
   }
 
   @Override
