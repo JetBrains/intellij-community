@@ -210,7 +210,7 @@
     </group>
 
     <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
-      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
+      <group id="git.branches.popup.filter.by.separator" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterSeparatorWithText"/>
       <action id="git.branches.popup.filter.by.action" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction"/>
       <action id="git.branches.popup.filter.by.repository" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository"/>
       <separator/>
