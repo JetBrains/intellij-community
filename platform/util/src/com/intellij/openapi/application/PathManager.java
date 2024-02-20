@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -174,12 +174,10 @@ public final class PathManager {
   }
 
   private static boolean isIdeaHome(Path root) {
-    if (Files.isRegularFile(root.resolve(PRODUCT_INFO_JSON))
-        || Files.isRegularFile(root.resolve(COMMUNITY_MARKER))
-        || Files.isRegularFile(root.resolve(ULTIMATE_MARKER))) {
-      return true;
-    }
-    return false;
+    return Files.isRegularFile(root.resolve(PRODUCT_INFO_JSON)) ||
+           Files.isRegularFile(root.resolve(BIN_DIRECTORY).resolve(PROPERTIES_FILE_NAME)) ||
+           Files.isRegularFile(root.resolve(COMMUNITY_MARKER)) ||
+           Files.isRegularFile(root.resolve(ULTIMATE_MARKER));
   }
 
   private static List<Path> getBinDirectories(Path root) {
