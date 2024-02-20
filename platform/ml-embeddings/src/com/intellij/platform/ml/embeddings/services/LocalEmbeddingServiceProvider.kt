@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.services
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
@@ -46,6 +47,10 @@ class LocalEmbeddingServiceProvider {
           }
           catch (e: NoSuchFileException) {
             logger.warn("Local embedding model artifacts not found: $e")
+            null
+          }
+          catch (e: JsonProcessingException) {
+            logger.warn("Local embedding model artifacts JSON processing failure")
             null
           }
         }
