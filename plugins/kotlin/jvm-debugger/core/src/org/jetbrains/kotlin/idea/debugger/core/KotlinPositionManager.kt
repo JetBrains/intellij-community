@@ -21,7 +21,6 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
@@ -101,8 +100,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val frameProxy = descriptor.frameProxy
         // Don't provide inline stack trace for coroutine frames yet
-        val coroutineFrame =
-            serviceOrNull<StackFrameInterceptor>()?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
+        val coroutineFrame = StackFrameInterceptor.instance?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
         if (coroutineFrame != null) {
             return listOf(coroutineFrame)
         }

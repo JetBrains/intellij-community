@@ -9,19 +9,20 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.sun.jdi.ArrayReference
+import com.sun.jdi.Location
 import com.sun.jdi.LongValue
 import com.sun.jdi.ObjectReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -30,9 +31,11 @@ import org.jetbrains.kotlin.idea.debugger.core.stepping.ContinuationFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+
 
 class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun createStackFrame(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): XStackFrame? {
@@ -119,19 +122,33 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         defaultExecutionContext: DefaultExecutionContext
     ): ContinuationObjectFilter? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
-        val suspendExitMode = frameProxy.location().getSuspendExitMode()
-
-        val continuation = extractContinuation(suspendExitMode, frameProxy) ?: return null
-
+        val continuation = extractContinuation(frameProxy) ?: return null
         val baseContinuation = extractBaseContinuation(continuation, defaultExecutionContext) ?: return null
-
         return ContinuationObjectFilter(baseContinuation)
     }
 
-    private fun extractContinuation(mode: SuspendExitMode, frameProxy: StackFrameProxyImpl): ObjectReference? = when (mode) {
-        SuspendExitMode.SUSPEND_LAMBDA -> frameProxy.thisVariableValue()
-        SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.completionVariableValue() ?: frameProxy.continuationVariableValue()
-        else -> null
+    private fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
+        val suspendExitMode = frameProxy.location().getSuspendExitMode()
+        return when (suspendExitMode) {
+            SuspendExitMode.SUSPEND_LAMBDA -> frameProxy.thisVariableValue()
+            SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.completionVariableValue() ?: frameProxy.continuationVariableValue()
+            else -> null
+        }
+    }
+
+    override fun callerLocation(suspendContext: SuspendContextImpl): Location? {
+        val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
+        val continuationObject = extractContinuation(frameProxy) ?: return null
+        val executionContext = DefaultExecutionContext(EvaluationContextImpl(suspendContext, frameProxy))
+        val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
+        val completionObject = debugMetadata.baseContinuationImpl.getNextContinuation(continuationObject, executionContext) ?: return null
+        val stackTraceElement = debugMetadata.getStackTraceElement(completionObject, executionContext)?.stackTraceElement() ?: return null
+        return DebuggerUtilsEx.findOrCreateLocation(
+            suspendContext.debugProcess,
+            stackTraceElement.className,
+            stackTraceElement.methodName,
+            stackTraceElement.lineNumber
+        )
     }
 
     private fun extractBaseContinuation(

@@ -3,16 +3,19 @@ package org.jetbrains.kotlin.idea.debugger.core.stepping;
 
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.statistics.Engine;
 import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.statistics.SteppingAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Location;
+import com.sun.jdi.Method;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle;
+import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor;
 
 import static org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil.isInSuspendMethod;
 
@@ -35,13 +38,8 @@ public final class KotlinStepActionFactory {
 
             @Override
             public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
-                LightOrRealThreadInfo lightFilter = null;
-                // for now use coroutine filtering only in suspend functions
-                Location location = suspendContext.getLocation();
-                if (location != null && isInSuspendMethod(location)) {
-                    lightFilter = CoroutineJobInfo.extractJobInfo(suspendContext);
-                }
-                return lightFilter != null ? lightFilter : super.getThreadFilterFromContext(suspendContext);
+                LightOrRealThreadInfo filter = getThreadFilterFromContextForStepping(suspendContext);
+                return filter != null ? filter : super.getThreadFilterFromContext(suspendContext);
             }
 
             @Override
@@ -116,6 +114,22 @@ public final class KotlinStepActionFactory {
     ) {
         return debugProcess.new StepOutCommand(suspendContext, StepRequest.STEP_LINE) {
             @Override
+            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+                StackFrameInterceptor interceptor = StackFrameInterceptor.getInstance();
+                Location callerLocation = interceptor != null ? interceptor.callerLocation(suspendContext) : null;
+                Method method = callerLocation != null ? DebuggerUtilsEx.getMethod(callerLocation) : null;
+                if (method != null) {
+                    CoroutineBreakpointFacility.INSTANCE.installCoroutineResumedBreakpoint(suspendContext, method);
+                    applyThreadFilter(getThreadFilterFromContext(suspendContext));
+                    // call ResumeCommand.contextAction directly: if createResumeCommand is used, it will also reset thread filter
+                    debugProcess.new ResumeCommand(suspendContext){}.contextAction(suspendContext);
+                }
+                else {
+                    super.contextAction(suspendContext);
+                }
+            }
+
+            @Override
             public @NotNull RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
                 RequestHint hint = new KotlinRequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OUT, null, parentHint);
                 hint.setIgnoreFilters(debugProcess.getSession().shouldIgnoreSteppingFilters());
@@ -123,9 +137,24 @@ public final class KotlinStepActionFactory {
             }
 
             @Override
+            public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
+                LightOrRealThreadInfo filter = getThreadFilterFromContextForStepping(suspendContext);
+                return filter != null ? filter : super.getThreadFilterFromContext(suspendContext);
+            }
+
+            @Override
             public Object createCommandToken() {
                 return StatisticsStorage.createSteppingToken(SteppingAction.STEP_OUT, Engine.KOTLIN);
             }
         };
+    }
+
+    private static @Nullable LightOrRealThreadInfo getThreadFilterFromContextForStepping(@NotNull SuspendContextImpl suspendContext) {
+        // for now use coroutine filtering only in suspend functions
+        Location location = suspendContext.getLocation();
+        if (location != null && isInSuspendMethod(location)) {
+            return CoroutineJobInfo.extractJobInfo(suspendContext);
+        }
+        return null;
     }
 }
