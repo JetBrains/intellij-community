@@ -84,6 +84,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       .replaceViewFactoryExtensions(getIconsExtension(iconResolver),
                                     Extensions.BASE64_IMAGES,
                                     Extensions.INLINE_VIEW_EX,
+                                    Extensions.PARAGRAPH_VIEW_EX,
                                     Extensions.FIT_TO_WIDTH_IMAGES,
                                     Extensions.WBR_SUPPORT)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
