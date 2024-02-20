@@ -4,11 +4,12 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class SdkAdditionalDataBase implements SdkAdditionalData {
   protected static final Logger LOG = Logger.getInstance(SdkAdditionalDataBase.class);
 
-  private Throwable myCommitStackTrace = null;
+  private @Nullable Throwable myCommitStackTrace = null;
 
   /**
    * This method is intended to commit encapsulated objects (mark them as read-only) if they require access control.
