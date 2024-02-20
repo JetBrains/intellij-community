@@ -570,7 +570,7 @@ class InternalDecoratorImpl internal constructor(
         return JBInsets.emptyInsets()
       }
       val anchor = windowInfo.anchor
-      var component: Component = window.component
+      var component = c
       var parent = component.parent
       var isSplitter = false
       var isFirstInSplitter = false
@@ -593,7 +593,8 @@ class InternalDecoratorImpl internal constructor(
         ToolWindowAnchor.LEFT -> !isSplitter || isVerticalSplitter || !isFirstInSplitter
         else -> false
       }
-      val top = if (isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) && windowInfo.isSplit && isVerticalSplitter) -1 else 0
+      val top = if (isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) &&
+                    windowInfo.isSplit && isVerticalSplitter && isFirstInSplitter) 1 else 0
       var left = if (anchor == ToolWindowAnchor.RIGHT && isTouchingTheEditor) 1 else 0
       paintLeftExternalBorder = left > 0
       val bottom = 0
