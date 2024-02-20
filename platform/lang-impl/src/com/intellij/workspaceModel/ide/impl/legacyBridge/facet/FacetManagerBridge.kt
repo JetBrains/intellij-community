@@ -21,6 +21,8 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
@@ -43,13 +45,17 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
     model.checkConsistency(facetRelatedEntities, entityTypeToFacetContributor)
   }
 
+  @OptIn(EntityStorageInstrumentationApi::class)
   override fun facetConfigurationChanged(facet: Facet<*>) {
     if (facet is FacetBridge<*>) {
       runWriteAction {
-        val mutableEntityStorage = module.diff ?: WorkspaceModel.getInstance(module.project).currentSnapshot.toBuilder()
+        val mutableEntityStorage: MutableEntityStorage = module.diff
+                                                         ?: WorkspaceModel.getInstance(module.project).currentSnapshot.toBuilder()
         facet.updateInStorage(mutableEntityStorage)
         if (module.diff == null) {
-          WorkspaceModel.getInstance(module.project).updateProjectModel("Update facet configuration") { it.applyChangesFrom(mutableEntityStorage) }
+          if ((mutableEntityStorage as MutableEntityStorageInstrumentation).hasChanges()) {
+            WorkspaceModel.getInstance(module.project).updateProjectModel("Update facet configuration") { it.applyChangesFrom(mutableEntityStorage) }
+          }
         }
       }
     } else {
