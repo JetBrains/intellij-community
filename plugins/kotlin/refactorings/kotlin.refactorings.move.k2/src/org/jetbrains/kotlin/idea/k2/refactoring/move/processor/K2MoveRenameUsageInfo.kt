@@ -43,7 +43,7 @@ import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
  * External usages are the usages from references to moved declarations. These usages can both be Kotlin and non-Kotlin usages but always
  * reference Kotlin declarations.
  *
- * A reference can both be internal and external when the reference is moved but the referenced declarations is moved at the same time.
+ * A reference can both be internal and external when the reference and the referenced declaration are moved at the same time.
  */
 sealed class K2MoveRenameUsageInfo(
   element: PsiElement,
@@ -138,7 +138,7 @@ sealed class K2MoveRenameUsageInfo(
 
 
     /**
-     * A usage that can be represented in qualified form like for example a type reference.
+     * A usage that can be represented in a qualified form like, for example, a type reference.
      */
     class Qualifiable(
       element: KtElement,
@@ -160,7 +160,7 @@ sealed class K2MoveRenameUsageInfo(
     }
 
     /**
-     * A usage that can't be represented in qualified form like for example a call to an extension function or callable reference like
+     * A usage that can't be represented in a qualified form like, for example, a call to an extension function or callable reference like
      * `::foo`.
      */
     class Unqualifiable(
@@ -198,7 +198,7 @@ sealed class K2MoveRenameUsageInfo(
         }
 
         /**
-         * Removes unwanted usages, like for example usages through import aliases.
+         * Removes unwanted usages, like, for example, usages through import aliases.
          */
         private fun preProcessUsages(usages: List<UsageInfo>): List<UsageInfo> {
             MoveClassHandler.EP_NAME.extensionList.forEach { handler -> handler.preprocessUsages(usages) }
@@ -273,14 +273,13 @@ sealed class K2MoveRenameUsageInfo(
         fun KtSimpleNameExpression.isUnqualifiable(): Boolean {
             // example: a.foo() where foo is an extension function
             fun KtSimpleNameExpression.isExtensionReference(): Boolean = allowAnalysisFromWriteAction {
-                analyze(this) {
+                return analyze(this) {
                     val callable = mainReference.resolveToSymbol() as? KtCallableSymbol
                     if (callable?.isExtension == true) return true
                     if (callable is KtPropertySymbol) {
                         val returnType = callable.returnType
-                        return returnType is KtFunctionalType && returnType.receiverType != null
-                    }
-                    return false
+                        returnType is KtFunctionalType && returnType.receiverType != null
+                    } else false
                 }
             }
 
@@ -334,7 +333,7 @@ sealed class K2MoveRenameUsageInfo(
         private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
             val externalUsages = usages
                 .filterIsInstance<K2MoveRenameUsageInfo>()
-                .filter { !it.isInternal && it.element != null } // if element is null, it means the this external usage was moved
+                .filter { !it.isInternal && it.element != null } // if the element is null, it means that this external usage was moved
                 .sortedByFile()
             shortenUsages(retargetMoveUsages(externalUsages, oldToNewMap))
         }
