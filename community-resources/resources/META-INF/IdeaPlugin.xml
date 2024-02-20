@@ -16,6 +16,7 @@
     <module name="intellij.platform.ml.embeddings"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.kotlin.onboarding-promoter"/>
+    <module name="intellij.platform.experiment"/>
   </content>
   
   <extensions defaultExtensionNs="com.intellij">
