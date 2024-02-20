@@ -42,30 +42,20 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
     stateSpec: State,
     operation: StateStorageOperation,
   ): List<Storage> {
-    val result = if (stateSpec.storages.isEmpty()) {
-      listOf(MODULE_FILE_STORAGE_ANNOTATION)
-    }
-    else {
-      super.getStorageSpecs(component = component, stateSpec = stateSpec, operation = operation)
-    }
+    val storages = if (stateSpec.storages.isEmpty()) listOf(MODULE_FILE_STORAGE_ANNOTATION)
+                   else super.getStorageSpecs(component, stateSpec, operation)
 
     if (project.isDirectoryBased) {
       for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
         runCatching {
-          provider.customizeStorageSpecs(
-            component = component,
-            storageManager = storageManager,
-            stateSpec = stateSpec,
-            storages = result,
-            operation = operation,
-          )
+          provider.customizeStorageSpecs(component, storageManager, stateSpec, storages, operation)
         }.getOrLogException(LOG)?.let {
           return it
         }
       }
     }
 
-    return result
+    return storages
   }
 
   final override fun reloadStates(componentNames: Set<String>) {
@@ -73,7 +63,7 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
   }
 
   final override fun setPath(path: Path) {
-    setPath(path = path, virtualFile = null, isNew = false)
+    setPath(path, virtualFile = null, isNew = false)
   }
 
   override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {

@@ -62,7 +62,7 @@ abstract class FileBasedStorage(
     // only ApplicationStore doesn't use xml prolog
     get() = !isUseXmlProlog
 
-  // we never set io file to null
+  // we never set I/O file to null
   fun setFile(virtualFile: VirtualFile?, ioFileIfChanged: Path?) {
     cachedVirtualFile = virtualFile
     if (ioFileIfChanged != null) {
@@ -331,7 +331,7 @@ internal fun writeFile(
 ) {
   LOG.debug { "Save $file" }
   try {
-    dataWriter.writeTo(file = file, requestor = requestor, lineSeparator = lineSeparator, useXmlProlog = prependXmlProlog)
+    dataWriter.writeTo(file, requestor, lineSeparator, prependXmlProlog)
   }
   catch (e: ReadOnlyModificationException) {
     throw e

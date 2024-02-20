@@ -39,8 +39,8 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
 
       "libraryTable" -> {
         iterator.remove()
-        val librariesDir = projectConfigDir.resolve("libraries")
-        convertProfiles(component.getChildren("library").iterator(), componentName, librariesDir) { library ->
+        val libraryDir = projectConfigDir.resolve("libraries")
+        convertProfiles(component.getChildren("library").iterator(), componentName, libraryDir) { library ->
           library.getAttributeValue("name")
         }
       }
@@ -69,13 +69,14 @@ private fun writeProfileSettings(schemeDir: Path, componentName: String, compone
   JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml"))
 }
 
-private fun convertProfiles(profileIterator: MutableIterator<Element>,
-                            componentName: String,
-                            schemeDir: Path,
-                            nameCallback: (Element) -> String?) {
+private fun convertProfiles(
+  profileIterator: MutableIterator<Element>,
+  componentName: String,
+  schemeDir: Path,
+  nameCallback: (Element) -> String?
+) {
   for (profile in profileIterator) {
     val schemeName = nameCallback(profile) ?: continue
-
     profileIterator.remove()
     val wrapper = Element("component").setAttribute("name", componentName)
     wrapper.addContent(profile)
@@ -84,10 +85,12 @@ private fun convertProfiles(profileIterator: MutableIterator<Element>,
   }
 }
 
-internal fun moveComponentConfiguration(defaultProject: Project,
-                                        element: Element,
-                                        storagePathResolver: (storagePath: String) -> String,
-                                        fileResolver: (name: String) -> Path) {
+internal fun moveComponentConfiguration(
+  defaultProject: Project,
+  element: Element,
+  storagePathResolver: (storagePath: String) -> String,
+  fileResolver: (name: String) -> Path
+) {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
     return
@@ -120,7 +123,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     processComponents(aClass)
   }
 
-  // fileResolver may return the same file for different storage names (e.g. for IPR project)
+  // fileResolver may return the same file for different storage names (e.g., for .ipr)
   val storagePathToComponentStates = HashMap<Path, MutableList<Element>>()
   val iterator = componentElements.iterator()
   cI@ for (componentElement in iterator) {

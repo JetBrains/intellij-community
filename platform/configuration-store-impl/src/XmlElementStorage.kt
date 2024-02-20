@@ -244,18 +244,12 @@ abstract class XmlElementStorage protected constructor(
         else {
           (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
         }
-        XmlDataWriter(
-          rootElementName = storage.rootElementName,
-          elements = elements,
-          rootAttributes = rootAttributes,
-          macroManager = macroManager,
-          storageFilePathForDebugPurposes = storage.toString(),
-        )
+        XmlDataWriter(storage.rootElementName, elements, rootAttributes, macroManager, storageFilePathForDebugPurposes = storage.toString())
       }
 
       // during beforeElementSaved() elements can be modified and so,
       // even if our save() never returns empty list, at this point, elements can be an empty list
-      return XmlSaveSession(elements = elements, writer = writer, stateMap = stateMap)
+      return XmlSaveSession(elements, writer, stateMap)
     }
 
     private fun save(states: StateMap, newLiveStates: Map<String, Element>): MutableList<Element>? {
@@ -325,11 +319,8 @@ abstract class XmlElementStorage protected constructor(
         }
         else if (provider != null && provider.isApplicable(storage.fileSpec, storage.effectiveRoamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
-          provider.write(
-            fileSpec = storage.fileSpec,
-            content = writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray(),
-            roamingType = storage.effectiveRoamingType,
-          )
+          val content = writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray()
+          provider.write(storage.fileSpec, content, storage.effectiveRoamingType)
         }
         else {
           isSavedLocally = true
