@@ -39,6 +39,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   private val promotionShownEvent = GROUP.registerEvent("promotion.shown")
   private val promotionGotItClickedEvent = GROUP.registerEvent("promotion.got.it.clicked")
 
+  private val newTerminalSwitchedEvent = GROUP.registerEvent("new.terminal.switched",
+                                                             EventFields.Boolean("enabled"),
+                                                             EventFields.Enum<NewTerminalSwitchPlace>("switch_place"))
+
   @JvmStatic
   fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
 
@@ -83,6 +87,11 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
+  internal fun triggerNewTerminalSwitched(project: Project, enabled: Boolean, place: NewTerminalSwitchPlace) {
+    newTerminalSwitchedEvent.log(project, enabled, place)
+  }
+
+  @JvmStatic
   private fun getShellNameForStat(shellName: String?): String {
     if (shellName == null) return "unspecified"
     var name = shellName.trimStart()
@@ -100,6 +109,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     val ext = PathUtil.getFileExtension(name)
     return if (ext != null && KNOWN_EXTENSIONS.contains(ext)) name.substring(0, name.length - ext.length - 1) else name
   }
+}
+
+internal enum class NewTerminalSwitchPlace {
+  SETTINGS, TOOLWINDOW_OPTIONS
 }
 
 private const val GROUP_ID = "terminalShell"
