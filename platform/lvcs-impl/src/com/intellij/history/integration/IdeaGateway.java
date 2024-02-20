@@ -107,7 +107,8 @@ public class IdeaGateway {
     if (vfsEventDispatchContext != null) {
       versionedFilterData = vfsEventDispatchContext.myFilterData;
       if (versionedFilterData == null) versionedFilterData = vfsEventDispatchContext.myFilterData = new VersionedFilterData();
-    } else {
+    }
+    else {
       versionedFilterData = new VersionedFilterData();
     }
     return versionedFilterData;
@@ -189,7 +190,8 @@ public class IdeaGateway {
     return file;
   }
 
-  public @NotNull VirtualFile findOrCreateFileSafely(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory) throws IOException {
+  public @NotNull VirtualFile findOrCreateFileSafely(@NotNull VirtualFile parent, @NotNull String name, boolean isDirectory)
+    throws IOException {
     VirtualFile f = parent.findChild(name);
     if (f != null && f.isDirectory() != isDirectory) {
       f.delete(this);
@@ -265,7 +267,8 @@ public class IdeaGateway {
     List<VirtualFile> roots = new SmartList<>();
 
     for (VirtualFile root : ManagingFS.getInstance().getRoots()) {
-      if ((root.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
+      if ((root.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(root)) &&
+          !(root.getFileSystem() instanceof TempFileSystem)) {
         roots.add(root);
       }
     }

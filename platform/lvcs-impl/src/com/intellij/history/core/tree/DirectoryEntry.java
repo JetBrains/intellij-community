@@ -32,7 +32,8 @@ public class DirectoryEntry extends Entry {
     myChildren = new ArrayList<>(3);
   }
 
-  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/) throws IOException {
+  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/)
+    throws IOException {
     super(in);
     int count = DataInputOutputUtil.readINT(in);
     myChildren = new ArrayList<>(count);
@@ -136,13 +137,14 @@ public class DirectoryEntry extends Entry {
     final int rightChildrenSize = e.myChildren.size();
     final int minChildrenSize = Math.min(myChildrenSize, rightChildrenSize);
 
-    while(commonIndex < minChildrenSize) {
+    while (commonIndex < minChildrenSize) {
       Entry childEntry = myChildren.get(commonIndex);
       Entry rightChildEntry = e.myChildren.get(commonIndex);
 
       if (childEntry.getNameId() == rightChildEntry.getNameId() && childEntry.isDirectory() == rightChildEntry.isDirectory()) {
         childEntry.collectDifferencesWith(rightChildEntry, consumer);
-      } else {
+      }
+      else {
         break;
       }
       ++commonIndex;
@@ -159,7 +161,7 @@ public class DirectoryEntry extends Entry {
     Int2ObjectMap<Entry> uniqueNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
     Int2ObjectMap<Entry> myNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
 
-    for(int i = commonIndex; i < rightChildrenSize; ++i) {
+    for (int i = commonIndex; i < rightChildrenSize; ++i) {
       Entry rightChildEntry = e.myChildren.get(i);
       int rightChildEntryNameId = rightChildEntry.getNameId();
       Entry myChildEntry = uniqueNameIdToMyChildEntries.get(rightChildEntryNameId);
@@ -167,7 +169,8 @@ public class DirectoryEntry extends Entry {
       if (myChildEntry != null && myChildEntry.isDirectory() == rightChildEntry.isDirectory()) {
         uniqueNameIdToMyChildEntries.remove(rightChildEntryNameId);
         myNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
-      } else {
+      }
+      else {
         uniqueNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
       }
     }
@@ -199,7 +202,8 @@ public class DirectoryEntry extends Entry {
     for (Entry child : myChildren) {
       if (uniqueNameIdToMyChildEntries.containsKey(child.getNameId())) {
         child.collectDeletedDifferences(consumer);
-      } else {
+      }
+      else {
         Entry itsChild = myNameIdToRightChildEntries.get(child.getNameId());
         if (itsChild != null) child.collectDifferencesWith(itsChild, consumer);
       }

@@ -8,7 +8,10 @@ import com.intellij.history.integration.ui.models.RevisionProcessingProgress
 import com.intellij.history.integration.ui.models.SelectionCalculator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.platform.lvcs.impl.*
+import com.intellij.platform.lvcs.impl.ActivityScope
+import com.intellij.platform.lvcs.impl.ChangeSetSelection
+import com.intellij.platform.lvcs.impl.leftRevision
+import com.intellij.platform.lvcs.impl.rightRevision
 
 internal class SelectionDifferenceWrapper(gateway: IdeaGateway,
                                           override val scope: ActivityScope.Selection,
