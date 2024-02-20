@@ -6,10 +6,10 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
+import com.intellij.util.ui.html.*
 import com.intellij.util.ui.html.FitToWidthImageView
 import com.intellij.util.ui.html.HiDpiScalingImageView
 import com.intellij.util.ui.html.InlineViewEx
-import com.intellij.util.ui.html.WbrView
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -49,7 +49,7 @@ class ExtendableHTMLViewFactory internal constructor(
   companion object {
     @JvmField
     val DEFAULT_EXTENSIONS: List<Extension> = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
-                                                     Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT)
+                                                     Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT, Extensions.PARAGRAPH_VIEW_EX)
 
     @JvmField
     val DEFAULT: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
@@ -115,10 +115,16 @@ class ExtendableHTMLViewFactory internal constructor(
     val WORD_WRAP: Extension = WordWrapExtension()
 
     /**
-     * Supports rendering of inline elements, like <span>, with paddings and margins
+     * Supports rendering of inline elements, like <span>, with paddings, margins and rounded corners.
      */
     @JvmField
     val INLINE_VIEW_EX: Extension = InlineViewExExtension()
+
+    /**
+     * Supports line-height property (%, px and no-unit) in paragraphs.
+     */
+    @JvmField
+    val PARAGRAPH_VIEW_EX: Extension = ParagraphViewExExtension()
 
     /**
      * Renders images with proper scaling according to sysScale
@@ -383,6 +389,17 @@ class ExtendableHTMLViewFactory internal constructor(
           || attrs.getAttribute(CSS.Attribute.MARGIN_TOP) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null) {
         return InlineViewEx(element)
+      }
+      return null
+    }
+  }
+
+  private class ParagraphViewExExtension : Extension {
+    override fun invoke(element: Element, view: View): View? {
+      if (view.javaClass != ParagraphView::class.java) return null
+      val attrs = view.attributes
+      if (attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null) {
+        return ParagraphViewEx(element)
       }
       return null
     }
