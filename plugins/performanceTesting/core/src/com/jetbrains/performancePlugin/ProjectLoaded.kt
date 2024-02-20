@@ -37,8 +37,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
+import com.jetbrains.performancePlugin.commands.takeFullScreenshot
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
-import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindowsBlocking
 import com.jetbrains.performancePlugin.jmxDriver.InvokerService
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
@@ -188,7 +188,7 @@ class ProjectLoaded : ApplicationInitializedListener {
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
       service<InvokerService>().register({ PerformanceTestSpan.TRACER },
                                          { PerformanceTestSpan.getContext() },
-                                         { takeScreenshotOfAllWindowsBlocking(it) })
+                                         { takeFullScreenshot(it) })
     }
 
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {
