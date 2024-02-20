@@ -5,11 +5,6 @@
     "ideaId": "org.intellij.plugins.hcl"
   },
   {
-    "vsCodeId": "aaron-bond.better-comments",
-    "ideaName": "Better Comments",
-    "ideaId": "org.igu.plugins.bettercomments"
-  },
-  {
     "vsCodeId": "codezombiech.gitignore",
     "ideaName": "gitignore",
     "builtIn": true
@@ -20,11 +15,6 @@
     "ideaId": "Dart"
   },
   {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
-  },
-  {
     "vsCodeId": "donjayamanne.githistory",
     "ideaName": "Git History",
     "builtIn": true
@@ -33,11 +23,6 @@
     "vsCodeId": "donjayamanne.python-environment-manager",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
-  },
-  {
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea"
   },
   {
     "vsCodeId": "eamodio.gitlens",
@@ -55,11 +40,6 @@
     "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
-    "vsCodeId": "Equinusocio.vsc-material-theme-icons",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
-  },
-  {
     "vsCodeId": "formulahendry.auto-rename-tag",
     "ideaName": "Auto Rename Tag",
     "builtIn": true
@@ -73,16 +53,6 @@
     "vsCodeId": "frhtylcn.pythonsnippets",
     "ideaName": "python snippets",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "GitHub.copilot",
-    "ideaName": "GitHub Copilot",
-    "ideaId": "com.github.copilot"
-  },
-  {
-    "vsCodeId": "GitHub.github-vscode-theme",
-    "ideaName": "GitHub Theme",
-    "ideaId": "club.nutsoft.Github3Theme"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -120,11 +90,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "mikestead.dotenv",
-    "ideaName": ".env files support",
-    "ideaId": "ru.adelf.idea.dotenv"
-  },
-  {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
@@ -136,8 +101,8 @@
   },
   {
     "vsCodeId": "ms-python.black-formatter",
-    "ideaName": "Black Formatter",
-    "builtIn": true
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-python.isort",
@@ -145,19 +110,9 @@
     "ideaId": "PythonCore"
   },
   {
-    "vsCodeId": "ms-python.pylint",
-    "ideaName": "Pylint",
-    "ideaId": "com.leinardi.pycharm.pylint"
-  },
-  {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
     "ideaId": "Pythonid"
-  },
-  {
-    "vsCodeId": "ms-vscode.PowerShell",
-    "ideaName": "PowerShell",
-    "ideaId": "com.intellij.plugin.adernov.powershell"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
@@ -175,16 +130,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
-    "vsCodeId": "PKief.material-icon-theme",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
-  },
-  {
     "vsCodeId": "ritwickdey.LiveServer",
     "ideaName": "Live Server",
     "builtIn": true
@@ -195,29 +140,14 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "TabNine.tabnine-vscode",
-    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "ideaId": "com.tabnine.TabNine"
-  },
-  {
     "vsCodeId": "techer.open-in-browser",
     "ideaName": "Open in browser",
     "builtIn": true
   },
   {
-    "vsCodeId": "thekalinga.bootstrap4-vscode",
-    "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
-    "ideaId": "in.thekalinga.snippet.intellij"
-  },
-  {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscodevim.vim",
@@ -228,10 +158,5 @@
     "vsCodeId": "yzhang.markdown-all-in-one",
     "ideaName": "Markdown All in One",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "zhuangtongfa.Material-theme",
-    "ideaName": "One Dark Pro Color Scheme",
-    "ideaId": "color.scheme.One Dark Pro"
   }
 ]

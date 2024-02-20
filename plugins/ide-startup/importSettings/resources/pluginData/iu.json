@@ -20,11 +20,6 @@
     "ideaId": "gherkin"
   },
   {
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit"
-  },
-  {
     "vsCodeId": "Angular.ng-template",
     "ideaName": "Angular",
     "ideaId": "AngularJS"
@@ -63,11 +58,6 @@
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
     "ideaId": "Dart"
-  },
-  {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
   },
   {
     "vsCodeId": "dbaeumer.vscode-eslint",
@@ -150,11 +140,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "GitHub.codespaces",
-    "ideaName": "GitHub Codespaces",
-    "ideaId": "com.github.codespaces.jetbrains.gateway"
-  },
-  {
     "vsCodeId": "GitHub.vscode-pull-request-github",
     "ideaName": "GitHub Pull Requests and Issues",
     "builtIn": true
@@ -168,11 +153,6 @@
     "vsCodeId": "golang.Go",
     "ideaName": "Go",
     "ideaId": "org.jetbrains.plugins.go"
-  },
-  {
-    "vsCodeId": "GoogleCloudTools.cloudcode",
-    "ideaName": "Google Cloud Code",
-    "ideaId": "com.google.gct.core"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
@@ -250,6 +230,11 @@
     "ideaId": "com.intellij.database"
   },
   {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
+  },
+  {
     "vsCodeId": "ms-python.isort",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
@@ -305,11 +290,6 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
     "vsCodeId": "pranaygp.vscode-css-peek",
     "ideaName": "CSS Peek",
     "builtIn": true
@@ -350,11 +330,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "SonarSource.sonarlint-vscode",
-    "ideaName": "SonarLint",
-    "ideaId": "org.sonarlint.idea"
-  },
-  {
     "vsCodeId": "svelte.svelte-vscode",
     "ideaName": "Svelte",
     "ideaId": "dev.blachut.svelte.lang"
@@ -378,11 +353,6 @@
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vmware.vscode-boot-dev-pack",

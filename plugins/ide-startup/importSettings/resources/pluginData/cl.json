@@ -1,28 +1,13 @@
 [
   {
-    "vsCodeId": "2gua.rainbow-brackets",
-    "ideaName": "Rainbow Brackets",
-    "ideaId": "izhangzhihao.rainbow.brackets"
-  },
-  {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
     "ideaId": "org.intellij.plugins.hcl"
   },
   {
-    "vsCodeId": "aaron-bond.better-comments",
-    "ideaName": "Better Comments",
-    "ideaId": "org.igu.plugins.bettercomments"
-  },
-  {
     "vsCodeId": "adpyke.vscode-sql-formatter",
     "ideaName": "SQL Formatter",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "akamud.vscode-theme-onedark",
-    "ideaName": "Atom OneDark Theme",
-    "ideaId": "github.cweijan.test-theme"
   },
   {
     "vsCodeId": "Angular.ng-template",
@@ -90,11 +75,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea"
-  },
-  {
     "vsCodeId": "dustypomerleau.rust-syntax",
     "ideaName": "Rust",
     "ideaId": "com.jetbrains.rust"
@@ -140,21 +120,6 @@
     "ideaId": "com.intellij.database"
   },
   {
-    "vsCodeId": "GitHub.codespaces",
-    "ideaName": "GitHub Codespaces",
-    "ideaId": "com.github.codespaces.jetbrains.gateway"
-  },
-  {
-    "vsCodeId": "GitHub.copilot",
-    "ideaName": "GitHub Copilot",
-    "ideaId": "com.github.copilot"
-  },
-  {
-    "vsCodeId": "GitHub.github-vscode-theme",
-    "ideaName": "GitHub Theme",
-    "ideaId": "club.nutsoft.Github3Theme"
-  },
-  {
     "vsCodeId": "GitHub.vscode-pull-request-github",
     "ideaName": "GitHub Pull Requests and Issues",
     "builtIn": true
@@ -175,19 +140,9 @@
     "ideaId": "org.intellij.plugins.hcl"
   },
   {
-    "vsCodeId": "James-Yu.latex-workshop",
-    "ideaName": "TeXiFy IDEA",
-    "ideaId": "nl.rubensten.texifyidea"
-  },
-  {
     "vsCodeId": "jeff-hykin.better-cpp-syntax",
     "ideaName": "Better C++ Syntax",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "johnpapa.winteriscoming",
-    "ideaName": "Dark-Themes",
-    "ideaId": "com.github.shubham076.darkthemes"
   },
   {
     "vsCodeId": "JScearcy.rust-doc-viewer",
@@ -195,29 +150,14 @@
     "ideaId": "com.jetbrains.rust"
   },
   {
-    "vsCodeId": "mechatroner.rainbow-csv",
-    "ideaName": "Rainbow CSV",
-    "ideaId": "com.andrey4623.rainbowcsv"
-  },
-  {
     "vsCodeId": "mhutchie.git-graph",
     "ideaName": "Git Graph",
     "builtIn": true
   },
   {
-    "vsCodeId": "mikestead.dotenv",
-    "ideaName": ".env files support",
-    "ideaId": "ru.adelf.idea.dotenv"
-  },
-  {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
-  },
-  {
-    "vsCodeId": "monokai.theme-monokai-pro-vscode",
-    "ideaName": "Monokai Pro Theme",
-    "ideaId": "monokai-pro"
   },
   {
     "vsCodeId": "mrmlnc.vscode-scss",
@@ -300,16 +240,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "ms-vscode.hexeditor",
-    "ideaName": "BinEd - Binary/Hex Editor",
-    "ideaId": "org.exbin.deltahex.intellij"
-  },
-  {
-    "vsCodeId": "ms-vscode.PowerShell",
-    "ideaName": "PowerShell",
-    "ideaId": "com.intellij.plugin.adernov.powershell"
-  },
-  {
     "vsCodeId": "ms-vscode.remote-explorer",
     "ideaName": "Remote Explorer",
     "builtIn": true
@@ -333,16 +263,6 @@
     "vsCodeId": "octref.vetur",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue"
-  },
-  {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
-    "vsCodeId": "PKief.material-icon-theme",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
   },
   {
     "vsCodeId": "platformio.platformio-ide",
@@ -395,16 +315,6 @@
     "ideaId": "com.jetbrains.rust"
   },
   {
-    "vsCodeId": "TabNine.tabnine-vscode",
-    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "ideaId": "com.tabnine.TabNine"
-  },
-  {
-    "vsCodeId": "thekalinga.bootstrap4-vscode",
-    "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
-    "ideaId": "in.thekalinga.snippet.intellij"
-  },
-  {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
@@ -413,16 +323,6 @@
     "vsCodeId": "twxs.cmake",
     "ideaName": "CMake",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
-  },
-  {
-    "vsCodeId": "vsciot-vscode.vscode-arduino",
-    "ideaName": "Arduino Support",
-    "ideaId": "com.vladsch.clionarduinoplugin"
   },
   {
     "vsCodeId": "vscode-icons-team.vscode-icons",
@@ -440,11 +340,6 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "WallabyJs.quokka-vscode",
-    "ideaName": "Quokka",
-    "ideaId": "quokka.js"
-  },
-  {
     "vsCodeId": "wholroyd.jinja",
     "ideaName": "Python",
     "ideaId": "Pythonid"
@@ -453,11 +348,6 @@
     "vsCodeId": "yzhang.markdown-all-in-one",
     "ideaName": "Markdown All in One",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "zhuangtongfa.Material-theme",
-    "ideaName": "One Dark Pro Color Scheme",
-    "ideaId": "color.scheme.One Dark Pro"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

@@ -17,7 +17,7 @@
   {
     "vsCodeId": "bmewburn.vscode-intelephense-client",
     "ideaName": "PHP",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
@@ -145,19 +145,9 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
     "vsCodeId": "onecentlin.laravel-blade",
     "ideaName": "Laravel Blade Snippets",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "onecentlin.laravel5-snippets",
-    "ideaName": "Laravel Idea",
-    "ideaId": "com.laravel_idea.plugin"
   },
   {
     "vsCodeId": "pranaygp.vscode-css-peek",
@@ -185,11 +175,6 @@
     "ideaId": "dev.blachut.svelte.lang"
   },
   {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
-  },
-  {
     "vsCodeId": "xdebug.php-debug",
     "ideaName": "PHP",
     "ideaId": "com.jetbrains.php"
@@ -206,7 +191,7 @@
   },
   {
     "vsCodeId": "zobo.php-intellisense",
-    "ideaName": "PHP",
+    "ideaName": "PHP IntelliSense",
     "builtIn": true
   }
 ]
