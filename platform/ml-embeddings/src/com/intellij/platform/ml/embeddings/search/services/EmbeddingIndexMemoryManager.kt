@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.search.services
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 /**
  * Service that tracks the memory usage of semantic indices.
@@ -15,8 +13,7 @@ import kotlin.concurrent.write
  */
 @Service(Service.Level.APP)
 class EmbeddingIndexMemoryManager {
-  private val trackedIndices = mutableListOf<EmbeddingSearchIndex>()
-  private val lock = ReentrantReadWriteLock()
+  private val trackedIndices = ConcurrentCollectionFactory.createConcurrentIdentitySet<EmbeddingSearchIndex>()
 
   private val applicationEmbeddingsMemoryLimit: Int?
     get() {
@@ -25,15 +22,11 @@ class EmbeddingIndexMemoryManager {
       } else null
     }
 
-  fun registerIndex(index: EmbeddingSearchIndex) = lock.write {
-    if (trackedIndices.none { it === index }) {
-      trackedIndices.add(index)
-    }
-  }
+  fun registerIndex(index: EmbeddingSearchIndex) = trackedIndices.add(index)
 
   fun checkCanAddEntry(): Boolean {
     val limit = applicationEmbeddingsMemoryLimit
-    return limit == null || lock.read { trackedIndices.sumOf { it.estimateMemoryUsage() } } < limit
+    return limit == null || trackedIndices.sumOf { it.estimateMemoryUsage() } < limit
   }
 
   companion object {
