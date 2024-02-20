@@ -143,8 +143,13 @@ private suspend fun doInstallPlugins(
   val installationFinished = CompletableDeferred<Boolean>()
   val installer = createInstaller(installationFinished)
 
-  withUiContext {
+  val installationStarted = withUiContext {
     installer.doInstallPlugins({ true }, pi.modalityState)
+  }
+
+  if (!installationStarted) {
+    logger.warn("Plugin installation wasn't started. Skipping.")
+    return@coroutineScope false
   }
 
   installationFinished.await()
