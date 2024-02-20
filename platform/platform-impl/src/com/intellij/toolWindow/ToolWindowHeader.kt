@@ -4,10 +4,13 @@ package com.intellij.toolWindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToggleToolbarAction
+import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -361,7 +364,7 @@ abstract class ToolWindowHeader internal constructor(
     return Dimension(size.width, height)
   }
 
-  inner class ShowOptionsAction : DumbAwareAction() {
+  inner class ShowOptionsAction : DumbAwareAction(), FusAwareAction {
     private val myPopupState = PopupState.forPopupMenu()
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -384,6 +387,10 @@ abstract class ToolWindowHeader internal constructor(
       myPopupState.prepareToShow(popupMenu.component)
       popupMenu.component.addPopupMenuListener(popupMenuListener)
       popupMenu.component.show(inputEvent!!.component, x, y)
+    }
+
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with toolWindow.id)
     }
 
     init {
