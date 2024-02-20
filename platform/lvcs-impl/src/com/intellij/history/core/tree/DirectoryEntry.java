@@ -171,7 +171,7 @@ public class DirectoryEntry extends Entry {
       }
     }
 
-    if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
+    if (!Paths.isCaseSensitive() && !uniqueNameIdToMyChildEntries.isEmpty() && !uniqueNameIdToRightChildEntries.isEmpty()) {
       Map<String, Entry> nameToEntryMap = CollectionFactory.createCaseInsensitiveStringMap(uniqueNameIdToMyChildEntries.size());
       for (Entry entry : uniqueNameIdToMyChildEntries.values()) {
         nameToEntryMap.put(entry.getName(), entry);
