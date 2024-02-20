@@ -14,6 +14,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
+import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -161,7 +162,9 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
     val settings = CodeInsightSettings.getInstance()
-    if (!settings.AUTO_POPUP_JAVADOC_INFO) {
+    val inModalContext = ModalityState.current().dominates(ModalityState.nonModal())
+    if ((!inModalContext && !settings.AUTO_POPUP_JAVADOC_INFO)
+        || (inModalContext && !DocumentationSettings.autoShowQuickDocInModalDialogs())) {
       return
     }
     val delay = settings.JAVADOC_INFO_DELAY.toLong()
