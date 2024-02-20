@@ -6,7 +6,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -49,7 +48,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
       val tracker = SdkDownloadTracker.getInstance()
       val sdk = sdkReference.get()
       if (null != sdk) {
-        val registered = tracker.tryRegisterDownloadingListener(sdk, project, EmptyProgressIndicator()) {
+        val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
           sdkDownloadedFuture.complete(it)
         }
         if (!registered) {
