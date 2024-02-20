@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
@@ -36,6 +37,7 @@ public final class Presentation implements Cloneable {
   private static final Logger LOG = Logger.getInstance(Presentation.class);
 
   public static final Supplier<String> NULL_STRING = () -> null;
+  public static final Supplier<TextWithMnemonic> NULL_TEXT_WITH_MNEMONIC = () -> null;
 
   // Property keys for the PropertyChangeListener API
   public static final @NonNls String PROP_TEXT = "text";
@@ -71,7 +73,7 @@ public final class Presentation implements Cloneable {
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
   private @NotNull Supplier<@ActionDescription String> descriptionSupplier = NULL_STRING;
-  private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = () -> null;
+  private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = NULL_TEXT_WITH_MNEMONIC;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
   private @Nullable Supplier<? extends @Nullable Icon> icon;
@@ -169,7 +171,10 @@ public final class Presentation implements Cloneable {
 
   public @NotNull Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
                                                                  boolean mayContainMnemonic) {
-    if (mayContainMnemonic) {
+    if (text == NULL_STRING) {
+      return NULL_TEXT_WITH_MNEMONIC;
+    }
+    else if (mayContainMnemonic) {
       return () -> {
         String s = text.get();
         if (s == null) {
@@ -283,10 +288,18 @@ public final class Presentation implements Cloneable {
     return icon;
   }
 
-  public void copyIconIfUnset(@NotNull Presentation other) {
-    if (icon == null && other.icon != null) {
+  @ApiStatus.Internal // do not expose
+  void copyUnsetTemplateProperties(@NotNull Presentation other) {
+    if (icon == null) {
       icon = other.icon;
     }
+    if (Strings.isEmpty(getText()) && Strings.isNotEmpty(other.getText())) {
+      textWithMnemonicSupplier = other.textWithMnemonicSupplier;
+    }
+    if (Strings.isEmpty(descriptionSupplier.get()) && Strings.isNotEmpty(other.descriptionSupplier.get())) {
+      descriptionSupplier = other.descriptionSupplier;
+    }
+    myUserMap = myUserMap.plusAll(other.myUserMap);
   }
 
   public void setIcon(@Nullable Icon icon) {
