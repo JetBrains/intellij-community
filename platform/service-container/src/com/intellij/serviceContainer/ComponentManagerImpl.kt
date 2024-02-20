@@ -57,8 +57,9 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.asSequence
 
-internal val LOG: Logger
-  get() = logger<ComponentManagerImpl>()
+internal val LOG by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  logger<ComponentManagerImpl>()
+}
 
 private val methodLookup = MethodHandles.lookup()
 
