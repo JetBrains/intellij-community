@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.PluginId
@@ -21,7 +22,12 @@ internal fun <T : Any> deserializeStateWithController(
   pluginId: PluginId,
 ): T? {
   if (stateClass === Element::class.java) {
-    return deserializeAsJdomElement(controller, componentName, pluginId, stateElement) as T? ?: mergeInto
+    return deserializeAsJdomElement(
+      controller = controller,
+      componentName = componentName,
+      pluginId = pluginId,
+      stateElement = stateElement,
+    ) as T? ?: mergeInto
   }
   else if (com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
     if (stateElement == null) {
@@ -49,7 +55,14 @@ internal fun <T : Any> deserializeStateWithController(
         return rootBinding.deserialize(context = null, element = stateElement) as T
       }
 
-      return getXmlSerializationState<T>(oldData = stateElement, mergeInto = null, rootBinding, componentName, pluginId, controller)
+      return getXmlSerializationState<T>(
+        oldData = stateElement,
+        mergeInto = null,
+        rootBinding = rootBinding,
+        componentName = componentName,
+        pluginId = pluginId,
+        controller = controller,
+      )
     }
     else {
       if (controller == null) {
@@ -59,7 +72,14 @@ internal fun <T : Any> deserializeStateWithController(
         (rootBinding as BeanBinding).deserializeInto(result = mergeInto, element = stateElement)
       }
       else {
-        return getXmlSerializationState(oldData = stateElement, mergeInto, rootBinding as BeanBinding, componentName, pluginId, controller)
+        return getXmlSerializationState(
+          oldData = stateElement,
+          mergeInto = mergeInto,
+          rootBinding = rootBinding as BeanBinding,
+          componentName = componentName,
+          pluginId = pluginId,
+          controller = controller,
+        )
       }
       return mergeInto
     }
@@ -80,7 +100,7 @@ private fun deserializeAsJdomElement(
 ): Element? {
   try {
     val tags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
-    val key = createSettingDescriptor(key = componentName, pluginId, tags)
+    val key = createSettingDescriptor(key = componentName, pluginId = pluginId, tags = tags)
     val item = controller?.doGetItem(key) ?: GetResult.inapplicable()
     if (item.isResolved) {
       val xmlData = item.get() ?: return null
@@ -93,16 +113,16 @@ private fun deserializeAsJdomElement(
   return stateElement
 }
 
-internal fun serializeForController(obj: Any): Element? {
-  val aClass = obj.javaClass
+internal fun serializeForController(bean: Any): Element? {
+  val aClass = bean.javaClass
   assert(aClass !== Element::class.java)
   val serializer = __platformSerializer()
   val binding = serializer.getRootBinding(aClass)
   if (binding is BeanBinding) {
-    return binding.serializeInto(bean = obj, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
+    return binding.serializeInto(bean = bean, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
   }
   else {
-    return binding.serialize(obj, null, jdomSerializer.getDefaultSerializationFilter()) as Element
+    return binding.serialize(bean = bean, context = null, filter = jdomSerializer.getDefaultSerializationFilter()) as Element
   }
 }
 
@@ -119,7 +139,7 @@ private fun <T : Any> getXmlSerializationState(
 
   val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
   for (binding in bindings) {
-    val key = createSettingDescriptor(key = "${componentName}.${binding.accessor.name}", pluginId, keyTags)
+    val key = createSettingDescriptor(key = "${componentName}.${binding.accessor.name}", pluginId = pluginId, tags = keyTags)
     val value = try {
       controller.doGetItem(key)
     }
@@ -138,7 +158,7 @@ private fun <T : Any> getXmlSerializationState(
       }
 
       if (binding is PrimitiveValueBinding && ClassUtil.isPrimitive(binding.accessor.valueClass)) {
-        binding.setValue(result, valueData.decodeToString())
+        binding.setValue(bean = result, value = valueData.decodeToString())
       }
       else {
         val element = buildNsUnawareJdom(valueData)
@@ -152,7 +172,7 @@ private fun <T : Any> getXmlSerializationState(
               effectiveL = l + oldL
             }
           }
-          (binding as MultiNodeBinding).deserializeJdomList(result, effectiveL)
+          (binding as MultiNodeBinding).deserializeJdomList(context = result, elements = effectiveL)
         }
       }
     }
@@ -164,12 +184,18 @@ private fun <T : Any> getXmlSerializationState(
       }
       val l = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = true)
       if (l != null) {
-        (binding as MultiNodeBinding).deserializeJdomList(result, l)
+        (binding as MultiNodeBinding).deserializeJdomList(context = result, elements = l)
       }
     }
   }
   return result
 }
 
-internal fun createSettingDescriptor(key: String, pluginId: PluginId, tags: Collection<SettingTag>): SettingDescriptor<ByteArray> =
-  SettingDescriptor(key, pluginId, tags, RawSettingSerializerDescriptor)
+internal fun createSettingDescriptor(key: String, pluginId: PluginId, tags: Collection<SettingTag>): SettingDescriptor<ByteArray> {
+  return SettingDescriptor(
+    key = key,
+    pluginId = pluginId,
+    tags = tags,
+    serializer = RawSettingSerializerDescriptor,
+  )
+}

@@ -69,9 +69,19 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun toString(): String = "default project"
 
-  private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager, streamProvider: StreamProvider)
-    : FileBasedStorage(file, fileSpec, rootElementName = "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED, streamProvider)
-  {
+  private class DefaultProjectStorage(
+    file: Path,
+    fileSpec: String,
+    pathMacroManager: PathMacroManager,
+    streamProvider: StreamProvider,
+  ) : FileBasedStorage(
+    file = file,
+    fileSpec = fileSpec,
+    rootElementName = "defaultProject",
+    pathMacroManager = pathMacroManager.createTrackingSubstitutor(),
+    roamingType = RoamingType.DISABLED,
+    provider = streamProvider,
+  ) {
     override val controller: SettingsController?
       get() = null
 

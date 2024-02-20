@@ -40,7 +40,11 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
       "libraryTable" -> {
         iterator.remove()
         val libraryDir = projectConfigDir.resolve("libraries")
-        convertProfiles(component.getChildren("library").iterator(), componentName, libraryDir) { library ->
+        convertProfiles(
+          profileIterator = component.getChildren("library").iterator(),
+          componentName = componentName,
+          schemeDir = libraryDir,
+        ) { library ->
           library.getAttributeValue("name")
         }
       }
@@ -69,14 +73,13 @@ private fun writeProfileSettings(schemeDir: Path, componentName: String, compone
   JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml"))
 }
 
-private fun convertProfiles(
-  profileIterator: MutableIterator<Element>,
-  componentName: String,
-  schemeDir: Path,
-  nameCallback: (Element) -> String?
-) {
+private fun convertProfiles(profileIterator: MutableIterator<Element>,
+                            componentName: String,
+                            schemeDir: Path,
+                            nameCallback: (Element) -> String?) {
   for (profile in profileIterator) {
     val schemeName = nameCallback(profile) ?: continue
+
     profileIterator.remove()
     val wrapper = Element("component").setAttribute("name", componentName)
     wrapper.addContent(profile)
@@ -85,12 +88,10 @@ private fun convertProfiles(
   }
 }
 
-internal fun moveComponentConfiguration(
-  defaultProject: Project,
-  element: Element,
-  storagePathResolver: (storagePath: String) -> String,
-  fileResolver: (name: String) -> Path
-) {
+internal fun moveComponentConfiguration(defaultProject: Project,
+                                        element: Element,
+                                        storagePathResolver: (storagePath: String) -> String,
+                                        fileResolver: (name: String) -> Path) {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
     return

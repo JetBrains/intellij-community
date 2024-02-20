@@ -55,14 +55,14 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
   ) {
     val projectSessionManager = projectSessionManager as ProjectWithModulesSaveSessionProducerManager
 
-    val writer = JpsStorageContentWriter(projectSessionManager, store = this, project)
+    val writer = JpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
     JpsProjectModelSynchronizer.getInstance(project).saveChangedProjectEntities(writer)
 
     for (module in ModuleManager.getInstance(project).modules) {
       val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
       val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
-      moduleStore.commitComponents(forceSavingAllSettings, moduleSessionManager, saveResult)
-      projectSessionManager.commitComponents(moduleStore, moduleSessionManager)
+      moduleStore.commitComponents(isForce = forceSavingAllSettings, sessionManager = moduleSessionManager, saveResult = saveResult)
+      projectSessionManager.commitComponents(moduleStore = moduleStore, moduleSaveSessionManager = moduleSessionManager)
       moduleSessionManager.collectSaveSessions(saveSessions)
     }
   }
@@ -82,20 +82,27 @@ private class JpsStorageContentWriter(
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (FileUtilRt.extensionEquals(filePath, "iml")) {
-      session.setModuleComponentState(filePath, componentName, componentTag)
+      session.setModuleComponentState(imlFilePath = filePath, componentName = componentName, componentTag = componentTag)
     }
     else if (isExternalModuleFile(filePath)) {
-      val moduleFileName = FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(filePath))
-      session.setExternalModuleComponentState(moduleFileName, componentName, componentTag)
+      session.setExternalModuleComponentState(
+        moduleFileName = FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(filePath)),
+        componentName = componentName,
+        componentTag = componentTag,
+      )
     }
     else {
-      val stateStorage = getProjectStateStorage(filePath, store, project)
+      val stateStorage = getProjectStateStorage(filePath = filePath, store = store, project = project)
       val producer = session.getProducer(stateStorage)
       if (producer is DirectoryBasedSaveSessionProducer) {
-        producer.setFileState(PathUtilRt.getFileName(filePath), componentName, element = componentTag?.children?.first())
+        producer.setFileState(
+          fileName = PathUtilRt.getFileName(filePath),
+          componentName = componentName,
+          element = componentTag?.children?.first(),
+        )
       }
       else {
-        producer?.setState(component = null, componentName, PluginManagerCore.CORE_ID, state = componentTag)
+        producer?.setState(component = null, componentName = componentName, pluginId = PluginManagerCore.CORE_ID, state = componentTag)
       }
     }
   }
@@ -142,8 +149,12 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
       val producer = moduleSaveSessionManager.getProducer(storage)
       if (producer != null) {
         for ((componentName, componentTag) in componentToElement) {
-          val state = if (componentTag === NULL_ELEMENT) null else componentTag
-          producer.setState(component = null, componentName, PluginManagerCore.CORE_ID, state)
+          producer.setState(
+            component = null,
+            componentName = componentName,
+            pluginId = PluginManagerCore.CORE_ID,
+            state = if (componentTag === NULL_ELEMENT) null else componentTag,
+          )
         }
       }
     }
@@ -164,7 +175,8 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
   }
 }
 
-internal class StorageJpsConfigurationReader(private val project: Project, private val configLocation: JpsProjectConfigLocation) : JpsFileContentReaderWithCache {
+internal class StorageJpsConfigurationReader(private val project: Project,
+                                             private val configLocation: JpsProjectConfigLocation) : JpsFileContentReaderWithCache {
   @Volatile
   private var fileContentCachingReader: CachingJpsFileContentReader? = null
   private val externalConfigurationDir = lazy { project.getExternalConfigurationDir() }
@@ -250,7 +262,9 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
   }
 }
 
-fun getProjectStateStorage(filePath: String, store: IProjectStore, project: Project): StateStorageBase<StateMap> {
+fun getProjectStateStorage(filePath: String,
+                           store: IProjectStore,
+                           project: Project): StateStorageBase<StateMap> {
   val storageSpec = getStorageSpec(filePath, project)
   @Suppress("UNCHECKED_CAST")
   return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
