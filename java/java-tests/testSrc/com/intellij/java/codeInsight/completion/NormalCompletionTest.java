@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -1127,6 +1127,10 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testEnumConstantFromEnumMember() { doTest(); }
 
   public void testPrimitiveMethodParameter() { doTest(); }
+  
+  public void testPrimitiveVarargMethodParameter() { doTest("."); }
+  
+  public void testPrimitiveVarargMethodParameter2() { doTest("."); }
 
   public void testNewExpectedClassParens() { doTest("\n"); }
 
