@@ -131,7 +131,8 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val suspendExitMode = frameProxy.location().getSuspendExitMode()
         return when (suspendExitMode) {
             SuspendExitMode.SUSPEND_LAMBDA -> frameProxy.thisVariableValue()
-            SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.completionVariableValue() ?: frameProxy.continuationVariableValue()
+            // completionVariableValue seems wrong here
+            SuspendExitMode.SUSPEND_METHOD_PARAMETER -> /*frameProxy.completionVariableValue() ?:*/ frameProxy.continuationVariableValue()
             else -> null
         }
     }

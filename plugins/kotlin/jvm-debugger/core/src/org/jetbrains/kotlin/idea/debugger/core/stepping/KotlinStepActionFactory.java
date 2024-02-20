@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core.stepping;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.statistics.Engine;
 import com.intellij.debugger.statistics.StatisticsStorage;
@@ -115,18 +116,19 @@ public final class KotlinStepActionFactory {
         return debugProcess.new StepOutCommand(suspendContext, StepRequest.STEP_LINE) {
             @Override
             public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+                // first check coroutines
+                // TODO: it is better to move it somewhere else
                 StackFrameInterceptor interceptor = StackFrameInterceptor.getInstance();
                 Location callerLocation = interceptor != null ? interceptor.callerLocation(suspendContext) : null;
                 Method method = callerLocation != null ? DebuggerUtilsEx.getMethod(callerLocation) : null;
-                if (method != null) {
+                if (method != null && !method.equals(getDirectCallerMethod(suspendContext.getFrameProxy()))) {
                     CoroutineBreakpointFacility.INSTANCE.installCoroutineResumedBreakpoint(suspendContext, method);
                     applyThreadFilter(getThreadFilterFromContext(suspendContext));
                     // call ResumeCommand.contextAction directly: if createResumeCommand is used, it will also reset thread filter
-                    debugProcess.new ResumeCommand(suspendContext){}.contextAction(suspendContext);
+                    debugProcess.new ResumeCommand(suspendContext) {}.contextAction(suspendContext);
+                    return;
                 }
-                else {
-                    super.contextAction(suspendContext);
-                }
+                super.contextAction(suspendContext);
             }
 
             @Override
@@ -154,6 +156,25 @@ public final class KotlinStepActionFactory {
         Location location = suspendContext.getLocation();
         if (location != null && isInSuspendMethod(location)) {
             return CoroutineJobInfo.extractJobInfo(suspendContext);
+        }
+        return null;
+    }
+
+    private static Method getDirectCallerMethod(@Nullable StackFrameProxyImpl frame) {
+        if (frame != null) {
+            try {
+                ThreadReferenceProxyImpl threadProxy = frame.threadProxy();
+                int callerIndex = frame.getFrameIndex() + 1;
+                if (callerIndex >= threadProxy.frameCount()) {
+                    return null;
+                }
+                StackFrameProxyImpl callerFrame = threadProxy.frame(callerIndex);
+                if (callerFrame != null) {
+                    return DebuggerUtilsEx.getMethod(callerFrame.location());
+                }
+            } catch (EvaluateException e) {
+                LOG.error(e);
+            }
         }
         return null;
     }
