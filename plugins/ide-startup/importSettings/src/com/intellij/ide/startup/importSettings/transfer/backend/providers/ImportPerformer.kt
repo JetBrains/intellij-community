@@ -4,19 +4,21 @@ package com.intellij.ide.startup.importSettings.transfer.backend.providers
 import com.intellij.ide.plugins.*
 import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
 import com.intellij.openapi.rd.util.withUiContext
+import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialogPluginInstaller
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
+import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 enum class PluginInstallationState {
   NoPlugins, Done, RestartRequired
@@ -78,42 +80,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     if (installAndEnableTask.plugins.isEmpty()) return PluginInstallationState.NoPlugins
     val cp = installAndEnableTask.customPlugins ?: return PluginInstallationState.NoPlugins
     val restartRequiringPlugins = AtomicInteger()
-    val installStatus = withUiContext {
-      @Suppress("SSBasedInspection") // should be cancellable via the passed progress indicator
-      suspendCoroutine { cont ->
-        val a = object : PluginsAdvertiserDialogPluginInstaller(project, installAndEnableTask.plugins, cp, { status ->
-          cont.resume(status)
-        }) {
-          override fun downloadPlugins(plugins: MutableList<PluginNode>,
-                                       customPlugins: MutableCollection<PluginNode>,
-                                       onSuccess: Runnable?,
-                                       modalityState: ModalityState,
-                                       function: Consumer<Boolean>?) {
-            var success = true
-            try {
-              val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, pi)
-              operation.setAllowInstallWithoutRestart(true)
-              operation.run()
-              success = operation.isSuccess
-              if (operation.isRestartRequired) {
-                restartRequiringPlugins.incrementAndGet()
-              }
-              if (success) {
-                ApplicationManager.getApplication().invokeLater(Runnable {
-                  for ((file, pluginDescriptor) in operation.pendingDynamicPluginInstalls) {
-                    success = success and PluginInstaller.installAndLoadDynamicPlugin(file, pluginDescriptor)
-                  }
-                }, modalityState)
-              }
-            }
-            finally {
-              ApplicationManager.getApplication().invokeLater({ function?.accept(success) }, pi.modalityState)
-            }
-          }
-        }
-        a.doInstallPlugins({ true }, pi.modalityState)
-      }
-    }
+    val installStatus = doInstallPlugins(project, installAndEnableTask.plugins, cp, pi, restartRequiringPlugins)
 
     logger.info("Finished installing plugins, result: $installStatus")
     return if (restartRequiringPlugins.get() > 0) PluginInstallationState.RestartRequired else PluginInstallationState.Done
@@ -141,4 +108,71 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
       it.performEdt(project, settings)
     }
   }
+}
+
+private suspend fun doInstallPlugins(
+  project: Project?,
+  plugins: Collection<PluginDownloader>,
+  customPlugins: List<PluginNode>,
+  pi: ProgressIndicator,
+  restartRequiringPlugins: AtomicInteger): Boolean = coroutineScope {
+  val scope = this
+
+  fun createInstaller(finished: CompletableDeferred<Boolean>) =
+    object : PluginsAdvertiserDialogPluginInstaller(project, plugins, customPlugins, finished::complete) {
+      override fun downloadPlugins(plugins: MutableList<PluginNode>,
+                                   customPlugins: MutableCollection<PluginNode>,
+                                   onSuccess: Runnable?,
+                                   modalityState: ModalityState,
+                                   function: Consumer<Boolean>?) {
+        scope.launch {
+          var success = false
+          try {
+            success = doDownloadPlugins(plugins, customPlugins, modalityState, pi, restartRequiringPlugins)
+          } finally {
+            if (function != null) {
+              withContext(Dispatchers.EDT + pi.modalityState.asContextElement()) {
+                function.accept(success)
+              }
+            }
+          }
+        }
+      }
+    }
+
+  val installationFinished = CompletableDeferred<Boolean>()
+  val installer = createInstaller(installationFinished)
+
+  withUiContext {
+    installer.doInstallPlugins({ true }, pi.modalityState)
+  }
+
+  installationFinished.await()
+}
+
+private suspend fun doDownloadPlugins(
+  plugins: MutableList<PluginNode>,
+  customPlugins: MutableCollection<PluginNode>,
+  modalityState: ModalityState,
+  pi:ProgressIndicator,
+  restartRequiringPlugins: AtomicInteger): Boolean {
+  var success: Boolean
+  val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, pi)
+  operation.setAllowInstallWithoutRestart(true)
+  withSyncIOBackgroundContext {
+    operation.run()
+  }
+  success = operation.isSuccess
+  if (operation.isRestartRequired) {
+    restartRequiringPlugins.incrementAndGet()
+  }
+  if (success) {
+    withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+      for ((file, pluginDescriptor) in operation.pendingDynamicPluginInstalls) {
+        success = success and PluginInstaller.installAndLoadDynamicPlugin(file, pluginDescriptor)
+      }
+    }
+  }
+
+  return success
 }
