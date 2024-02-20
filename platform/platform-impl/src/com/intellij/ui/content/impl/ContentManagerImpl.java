@@ -358,13 +358,14 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return count;
   }
 
-  public List<Content> getContentsRecursively() {
+  @Override
+  public @NotNull List<@NotNull Content> getContentsRecursively() {
     List<Content> list = new ArrayList<>();
     collectContentsRecursively(list);
     return list;
   }
 
-  private void collectContentsRecursively(@NotNull List<Content> to) {
+  private void collectContentsRecursively(@NotNull List<@NotNull Content> to) {
     to.addAll(contents);
     for (ContentManagerImpl nestedManager : myNestedManagers) {
       nestedManager.collectContentsRecursively(to);
