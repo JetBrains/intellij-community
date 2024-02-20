@@ -34,6 +34,6 @@ data class GitLabProjectDTO(
   )
 
   data class Repository(
-    val rootRef: String
+    val rootRef: String?
   )
 }
