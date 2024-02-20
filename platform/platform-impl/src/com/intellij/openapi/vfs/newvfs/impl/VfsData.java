@@ -83,6 +83,7 @@ public final class VfsData {
   //         and replace it with direct FSRecordsImpl access. Not sure about remaining (flag+modCount) field though --
   //         on the first sight they look like an additional data, independent from persistent VFS data?
 
+  /** [segmentIndex -> Segment] */
   private final ConcurrentIntObjectMap<Segment> mySegments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   /** set of deleted file ids */
   private final ConcurrentBitSet myInvalidatedIds = ConcurrentBitSet.create();
@@ -108,7 +109,8 @@ public final class VfsData {
     }, app);
   }
 
-  @NotNull PersistentFSImpl owningPersistentFS(){
+  @NotNull
+  PersistentFSImpl owningPersistentFS() {
     return persistentFS;
   }
 
@@ -118,7 +120,7 @@ public final class VfsData {
         for (IntIterator iterator = myDyingIds.iterator(); iterator.hasNext(); ) {
           int id = iterator.nextInt();
           Segment segment = Objects.requireNonNull(getSegment(id, false));
-          segment.myObjectArray.set(getOffset(id), myDeadMarker);
+          segment.myObjectArray.set(objectOffsetInSegment(id), myDeadMarker);
           myChangedParents.remove(id);
         }
         myDyingIds = new IntOpenHashSet();
@@ -134,7 +136,7 @@ public final class VfsData {
     Segment segment = getSegment(id, false);
     if (segment == null) return null;
 
-    int offset = getOffset(id);
+    int offset = objectOffsetInSegment(id);
     Object o = segment.myObjectArray.get(offset);
     if (o == null) return null;
 
@@ -163,24 +165,19 @@ public final class VfsData {
     return new InvalidVirtualFileAccessException("Accessing dead virtual file: " + file.getUrl());
   }
 
-  private static int getOffset(int id) {
-    if (id <= 0) throw new IllegalArgumentException("invalid argument id: " + id);
-    return id & OFFSET_MASK;
-  }
-
   @Contract("_,true->!null")
   Segment getSegment(int id, boolean create) {
-    int key = id >>> SEGMENT_BITS;
-    Segment segment = mySegments.get(key);
+    int segmentIndex = segmentIndex(id);
+    Segment segment = mySegments.get(segmentIndex);
     if (segment != null || !create) {
       return segment;
     }
-    return mySegments.cacheOrGet(key, new Segment(this));
+    return mySegments.cacheOrGet(segmentIndex, new Segment(this));
   }
 
   public boolean hasLoadedFile(int id) {
     Segment segment = getSegment(id, false);
-    return segment != null && segment.myObjectArray.get(getOffset(id)) != null;
+    return segment != null && segment.myObjectArray.get(objectOffsetInSegment(id)) != null;
   }
 
   public static final class FileAlreadyCreatedException extends RuntimeException {
@@ -189,8 +186,9 @@ public final class VfsData {
     }
   }
 
+  //@GuardedBy("parent.DirectoryData")
   static void initFile(int id, @NotNull Segment segment, int nameId, @NotNull Object data) throws FileAlreadyCreatedException {
-    int offset = getOffset(id);
+    int offset = objectOffsetInSegment(id);
 
     segment.setNameId(id, nameId);
 
@@ -259,9 +257,22 @@ public final class VfsData {
   }
 
 
+  /** @return offset of fileId's data in {@link Segment#myObjectArray} */
+  private static int objectOffsetInSegment(int fileId) {
+    if (fileId <= 0) throw new IllegalArgumentException("invalid argument id: " + fileId);
+    return fileId & OFFSET_MASK;
+  }
+
+  private static int segmentIndex(int fileId) {
+    return fileId >>> SEGMENT_BITS;
+  }
+
+
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
   static final class Segment {
-    private static final int FIELDS_COUNT = 2;
+    private static final int INT_FIELDS_COUNT = 2;
+    private static final int NAME_ID_FIELD_NO = 0;
+    private static final int FLAGS_FIELD_NO = 1;
 
     final @NotNull VfsData owningVfsData;
 
@@ -280,7 +291,7 @@ public final class VfsData {
     @Nullable Segment replacement;
 
     Segment(@NotNull VfsData owningVfsData) {
-      this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * FIELDS_COUNT));
+      this(owningVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * INT_FIELDS_COUNT));
     }
 
     private Segment(@NotNull VfsData owningVfsData,
@@ -292,21 +303,21 @@ public final class VfsData {
     }
 
     int getNameId(int fileId) {
-      return myIntArray.get(getOffset(fileId) * FIELDS_COUNT);
+      return myIntArray.get(fieldOffset(fileId, NAME_ID_FIELD_NO));
     }
 
     void setNameId(int fileId, int nameId) {
       if (fileId <= 0 || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId + "; nameId: " + nameId);
-      myIntArray.set(getOffset(fileId) * FIELDS_COUNT, nameId);
+      myIntArray.set(fieldOffset(fileId, NAME_ID_FIELD_NO), nameId);
     }
 
     void setUserMap(int fileId, @NotNull KeyFMap map) {
-      myObjectArray.set(getOffset(fileId), map);
+      myObjectArray.set(objectOffsetInSegment(fileId), map);
     }
 
     @NotNull
     KeyFMap getUserMap(@NotNull VirtualFileSystemEntry file, int id) {
-      Object o = myObjectArray.get(getOffset(id));
+      Object o = myObjectArray.get(objectOffsetInSegment(id));
       if (!(o instanceof KeyFMap)) {
         throw reportDeadFileAccess(file);
       }
@@ -314,41 +325,44 @@ public final class VfsData {
     }
 
     boolean changeUserMap(int fileId, KeyFMap oldMap, KeyFMap newMap) {
-      return myObjectArray.compareAndSet(getOffset(fileId), oldMap, newMap);
+      return myObjectArray.compareAndSet(objectOffsetInSegment(fileId), oldMap, newMap);
     }
 
-    boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
+    boolean getFlag(int fileId, @VirtualFileSystemEntry.Flags int mask) {
       BitUtil.assertOneBitMask(mask);
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      return (myIntArray.get(getOffset(id) * FIELDS_COUNT + 1) & mask) != 0;
+
+      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      return (myIntArray.get(offset) & mask) != 0;
     }
 
-    void setFlag(int id, @VirtualFileSystemEntry.Flags int mask, boolean value) {
+    void setFlag(int fileId, @VirtualFileSystemEntry.Flags int mask, boolean value) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
+        LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + fileId);
       }
       assert (mask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
-      int offset = getOffset(id) * FIELDS_COUNT + 1;
+      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
       myIntArray.updateAndGet(offset, oldInt -> BitUtil.set(oldInt, mask, value));
     }
 
-    void setFlags(int id, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
+    void setFlags(int fileId, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Set flags " + Integer.toHexString(combinedMask) + "=" + combinedValue + " for id=" + id);
+        LOG.trace("Set flags " + Integer.toHexString(combinedMask) + "=" + combinedValue + " for id=" + fileId);
       }
       assert (combinedMask & ~VirtualFileSystemEntry.ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       assert (~combinedMask & combinedValue) == 0 : "Value (" + Integer.toHexString(combinedValue) + ") set bits outside mask (" +
                                                     Integer.toHexString(combinedMask) + ")";
-      int offset = getOffset(id) * FIELDS_COUNT + 1;
+      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
       myIntArray.updateAndGet(offset, oldInt -> oldInt & ~combinedMask | combinedValue);
     }
 
-    long getModificationStamp(int id) {
-      return myIntArray.get(getOffset(id) * FIELDS_COUNT + 1) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
+    long getModificationStamp(int fileId) {
+      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
+      return myIntArray.get(offset) & ~VirtualFileSystemEntry.ALL_FLAGS_MASK;
     }
 
-    void setModificationStamp(int id, long stamp) {
-      int offset = getOffset(id) * FIELDS_COUNT + 1;
+    void setModificationStamp(int fileId, long stamp) {
+      int offset = fieldOffset(fileId, FLAGS_FIELD_NO);
       myIntArray.updateAndGet(offset, oldInt -> (oldInt & VirtualFileSystemEntry.ALL_FLAGS_MASK) |
                                                 ((int)stamp & ~VirtualFileSystemEntry.ALL_FLAGS_MASK));
     }
@@ -356,10 +370,20 @@ public final class VfsData {
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
       assert replacement == null;
       replacement = new Segment(owningVfsData, myObjectArray, myIntArray);
-      int key = fileId >>> SEGMENT_BITS;
-      boolean replaced = owningVfsData.mySegments.replace(key, this, replacement);
+      int segmentIndex = segmentIndex(fileId);
+      boolean replaced = owningVfsData.mySegments.replace(segmentIndex, this, replacement);
       assert replaced;
       owningVfsData.changeParent(fileId, directory);
+    }
+
+    /** @return offset of field #fieldNo of file=fileId in a {@link #myIntArray} */
+    private static int fieldOffset(int fileId,
+                                   int fieldNo) {
+      if (fileId <= 0) {
+        throw new IllegalArgumentException("invalid fileId: " + fileId);
+      }
+      assert (0 <= fieldNo && fieldNo < INT_FIELDS_COUNT) : "fieldNo(=" + fieldNo + ") must be in [0," + INT_FIELDS_COUNT + ")";
+      return ((fileId & OFFSET_MASK) * INT_FIELDS_COUNT) + fieldNo;
     }
   }
 
