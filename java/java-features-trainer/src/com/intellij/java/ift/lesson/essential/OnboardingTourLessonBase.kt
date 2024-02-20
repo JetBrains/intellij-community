@@ -433,12 +433,9 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
 
 
   private fun LessonContext.checkUiSettings() {
-    hideToolStripesPreference = uiSettings.hideToolStripes
-    showNavigationBarPreference = uiSettings.showNavigationBar
-
     showInvalidDebugLayoutWarning()
 
-    if (!hideToolStripesPreference && (showNavigationBarPreference || uiSettings.showMainToolbar)) {
+    if (!uiSettings.hideToolStripes && (uiSettings.showNavigationBar || uiSettings.showMainToolbar)) {
       // a small hack to have same tasks count. It is needed to track statistics result.
       task { }
       task { }
@@ -451,6 +448,8 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
     }
 
     prepareRuntimeTask {
+      hideToolStripesPreference = uiSettings.hideToolStripes
+      showNavigationBarPreference = uiSettings.showNavigationBar
       uiSettings.hideToolStripes = false
       uiSettings.showNavigationBar = true
       uiSettings.fireUISettingsChanged()
