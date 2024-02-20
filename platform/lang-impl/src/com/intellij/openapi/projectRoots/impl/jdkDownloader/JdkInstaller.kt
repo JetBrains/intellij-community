@@ -23,7 +23,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
-import com.intellij.util.io.*
+import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.delete
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.Nls
@@ -196,7 +197,14 @@ abstract class JdkInstallerBase {
   /**
    * @see [JdkInstallRequest.javaHome] for the actual java home, it may not match the [JdkInstallRequest.installDir]
    */
-  fun installJdk(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
+  fun installJdk(jdkInstallRequest: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
+    var request = jdkInstallRequest
+
+    if (request is JdkInstallRequestInfo) {
+      // Request was created without side effects
+      request = prepareJdkInstallation(request.item, request.installDir)
+    }
+
     if (request is LocallyFoundJdk) {
       return
     }

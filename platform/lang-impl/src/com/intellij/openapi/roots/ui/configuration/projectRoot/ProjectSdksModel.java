@@ -23,12 +23,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsActions.ActionText;
@@ -477,9 +479,17 @@ public class ProjectSdksModel implements SdkModel {
     return newJdk;
   }
 
+  @RequiresEdt
   public void setupInstallableSdk(@NotNull SdkType type,
                                   @NotNull SdkDownloadTask item,
                                   @Nullable java.util.function.Consumer<? super Sdk> callback) {
+    final Sdk incompleteSdk = createIncompleteSdk(type, item, callback);
+    downloadSdk(incompleteSdk);
+  }
+
+  public @NotNull Sdk createIncompleteSdk(@NotNull SdkType type,
+                                          @NotNull SdkDownloadTask item,
+                                          java.util.function.@Nullable Consumer<? super Sdk> callback) {
     // we do not ask the SdkType to set up the SDK for us, instead, we return an incomplete SDK to the
     // model with an expectation it would be updated later on
     String suggestedName = item.getSuggestedSdkName();
@@ -487,17 +497,27 @@ public class ProjectSdksModel implements SdkModel {
     if (WslPath.isWslUncPath(homeDir)) {
       suggestedName += " (WSL)";
     }
-    Sdk sdk = createSdk(type, suggestedName, homeDir);
 
     SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
-    tracker.registerSdkDownload(sdk, item);
-    doAdd(sdk, (editableSdk) -> {
-      tracker.registerEditableSdk(sdk, editableSdk);
-      tracker.tryRegisterSdkDownloadFailureHandler(sdk, () -> removeSdk(editableSdk));
+    var tempSdk = createSdk(type, suggestedName, homeDir);
+    tracker.registerSdkDownload(tempSdk, item);
+
+    AtomicReference<Sdk> sdk = new AtomicReference<>();
+    doAdd(tempSdk, (editableSdk) -> {
+      tracker.registerEditableSdk(tempSdk, editableSdk);
+      tracker.tryRegisterSdkDownloadFailureHandler(editableSdk, () -> removeSdk(editableSdk));
+      sdk.set(editableSdk);
       if (callback != null) {
         callback.accept(editableSdk);
       }
     });
+
+    return sdk.get();
+  }
+
+  @RequiresEdt
+  public void downloadSdk(Sdk sdk) {
+    SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
     tracker.startSdkDownloadIfNeeded(sdk);
   }
 
