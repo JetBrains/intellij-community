@@ -7,7 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.awt.Component
-import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 import javax.swing.JComponent
 import kotlin.coroutines.resumeWithException
 
@@ -56,12 +56,11 @@ internal class JcefComponentWrapper(private val component: Component) {
 
   private class JsExecutor(jbCefBrowser: JBCefBrowserBase) {
     private val cefBrowser = jbCefBrowser.cefBrowser
-    private val runJsContinuation = AtomicReference<CancellableContinuation<String>?>()
+    private var callback: Consumer<String>? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private val jsResultQuery = JBCefJSQuery.create(jbCefBrowser).apply {
       addHandler {
-        runJsContinuation.getAndSet(null)?.resume(it) {}
+        callback?.accept(it)
         null
       }
     }
@@ -75,13 +74,14 @@ internal class JcefComponentWrapper(private val component: Component) {
     suspend fun callJs(js: String, executeTimeoutMs: Long = 3000): String = mutex.withLock {
       withTimeout(executeTimeoutMs) {
         suspendCancellableCoroutine { continuation ->
-          if (runJsContinuation.compareAndSet(null, continuation).not()) {
-            continuation.resumeWithException(IllegalStateException("Previous call is still running"))
-          }
           continuation.invokeOnCancellation {
-            runJsContinuation.getAndSet(null)?.resumeWithException(IllegalStateException("""
+            callback = null
+            continuation.resumeWithException(IllegalStateException("""
             |No result from script '$js' in embedded browser in ${executeTimeoutMs}ms.
             |Check logs in the browsers devTools(`ide.browser.jcef.contextMenu.devTools.enabled` key in the Registry...)""".trimMargin()))
+          }
+          callback = Consumer<String> {
+            continuation.resumeWith(Result.success(it))
           }
           cefBrowser.executeJavaScript(jsResultQuery.inject(js), cefBrowser.url, 0)
         }
