@@ -42,7 +42,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
   /**
