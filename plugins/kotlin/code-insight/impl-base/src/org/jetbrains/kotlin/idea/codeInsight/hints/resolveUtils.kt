@@ -6,12 +6,14 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-internal fun Project.resolveClass(fqNameString: String, scope: GlobalSearchScope = GlobalSearchScope.allScope(this)): PsiElement? =
+@ApiStatus.Internal
+fun Project.resolveClass(fqNameString: String, scope: GlobalSearchScope = GlobalSearchScope.allScope(this)): PsiElement? =
     resolveFqNameOfKtClassByIndex(fqNameString, scope)
         ?: resolveFqNameOfJavaClassByIndex(fqNameString, scope)
 

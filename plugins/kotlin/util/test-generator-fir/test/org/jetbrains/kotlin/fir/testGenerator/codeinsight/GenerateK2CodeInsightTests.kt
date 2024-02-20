@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtReferenceTypeHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractKotlinFirMoveStatementTest
 import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclarationsHandlerTest
@@ -68,6 +69,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractFirMoveLeftRightTest> {
             model("../../../idea/tests/testData/codeInsight/moveLeftRight")
+        }
+
+        testClass<AbstractKtReferenceTypeHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/types")
         }
     }
 }

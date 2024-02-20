@@ -8,30 +8,43 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.util.ThrowableRunnable
 import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
 import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import java.io.File
 
-abstract class AbstractKotlinLambdasHintsProvider :
-    DeclarativeInlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+abstract class AbstractKotlinLambdasHintsProvider : DeclarativeInlayHintsProviderTestCase() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
+    override fun setUp() {
+        super.setUp()
         customToStringProvider = { element ->
             val virtualFile = element.containingFile.virtualFile
-            val path = (virtualFile.fileSystem as? JarFileSystem)?.let {
+            val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
+            val path = jarFileSystem?.let {
                 val root = VfsUtilCore.getRootFile(virtualFile)
                 "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
             } ?: virtualFile.toString()
-            "[$path:${element.startOffset}]"
+            "$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}"
         }
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { customToStringProvider = null },
+            ThrowableRunnable { super.tearDown() },
+        )
+    }
+
+    fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
         try {
             assertThatActualHintsMatch(testPath)
         } finally {

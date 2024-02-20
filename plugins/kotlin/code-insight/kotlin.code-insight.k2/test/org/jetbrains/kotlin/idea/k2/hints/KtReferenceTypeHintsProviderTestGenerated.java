@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.codeInsight.hints;
+package org.jetbrains.kotlin.idea.k2.hints;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,202 +14,202 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("code-insight/kotlin.code-insight.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/codeInsight/hints/types")
-public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotlinReferenceTypeHintsProviderTest {
+@TestMetadata("../../idea/tests/testData/codeInsight/hints/types")
+public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferenceTypeHintsProviderTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("AnonymousObject.kt")
     public void testAnonymousObject() throws Exception {
-        runTest("testData/codeInsight/hints/types/AnonymousObject.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousObject.kt");
     }
 
     @TestMetadata("AnonymousObjectNoBaseType.kt")
     public void testAnonymousObjectNoBaseType() throws Exception {
-        runTest("testData/codeInsight/hints/types/AnonymousObjectNoBaseType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousObjectNoBaseType.kt");
     }
 
     @TestMetadata("ConstInitializerType.kt")
     public void testConstInitializerType() throws Exception {
-        runTest("testData/codeInsight/hints/types/ConstInitializerType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ConstInitializerType.kt");
     }
 
     @TestMetadata("ConstructorWithExplicitTypeParametersType.kt")
     public void testConstructorWithExplicitTypeParametersType() throws Exception {
-        runTest("testData/codeInsight/hints/types/ConstructorWithExplicitTypeParametersType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ConstructorWithExplicitTypeParametersType.kt");
     }
 
     @TestMetadata("ConstructorWithoutExplicitTypeParametersType.kt")
     public void testConstructorWithoutExplicitTypeParametersType() throws Exception {
-        runTest("testData/codeInsight/hints/types/ConstructorWithoutExplicitTypeParametersType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ConstructorWithoutExplicitTypeParametersType.kt");
     }
 
     @TestMetadata("ConstructorWithoutTypeParametersType.kt")
     public void testConstructorWithoutTypeParametersType() throws Exception {
-        runTest("testData/codeInsight/hints/types/ConstructorWithoutTypeParametersType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ConstructorWithoutTypeParametersType.kt");
     }
 
     @TestMetadata("DefinitelyNonNullTypes.kt")
     public void testDefinitelyNonNullTypes() throws Exception {
-        runTest("testData/codeInsight/hints/types/DefinitelyNonNullTypes.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/DefinitelyNonNullTypes.kt");
     }
 
     @TestMetadata("DestructingType.kt")
     public void testDestructingType() throws Exception {
-        runTest("testData/codeInsight/hints/types/DestructingType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/DestructingType.kt");
     }
 
     @TestMetadata("DestructingType2.kt")
     public void testDestructingType2() throws Exception {
-        runTest("testData/codeInsight/hints/types/DestructingType2.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/DestructingType2.kt");
     }
 
     @TestMetadata("Destructuring.kt")
     public void testDestructuring() throws Exception {
-        runTest("testData/codeInsight/hints/types/Destructuring.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/Destructuring.kt");
     }
 
     @TestMetadata("EnumEntry.kt")
     public void testEnumEntry() throws Exception {
-        runTest("testData/codeInsight/hints/types/EnumEntry.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/EnumEntry.kt");
     }
 
     @TestMetadata("EnumEntryCompanion.kt")
     public void testEnumEntryCompanion() throws Exception {
-        runTest("testData/codeInsight/hints/types/EnumEntryCompanion.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/EnumEntryCompanion.kt");
     }
 
     @TestMetadata("EnumEntryLikeFunction.kt")
     public void testEnumEntryLikeFunction() throws Exception {
-        runTest("testData/codeInsight/hints/types/EnumEntryLikeFunction.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/EnumEntryLikeFunction.kt");
     }
 
     @TestMetadata("EnumEntryLikeProperty.kt")
     public void testEnumEntryLikeProperty() throws Exception {
-        runTest("testData/codeInsight/hints/types/EnumEntryLikeProperty.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/EnumEntryLikeProperty.kt");
     }
 
     @TestMetadata("EnumEntryQualified.kt")
     public void testEnumEntryQualified() throws Exception {
-        runTest("testData/codeInsight/hints/types/EnumEntryQualified.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/EnumEntryQualified.kt");
     }
 
     @TestMetadata("ErrorType.kt")
     public void testErrorType() throws Exception {
-        runTest("testData/codeInsight/hints/types/ErrorType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ErrorType.kt");
     }
 
     @TestMetadata("ExpandedTypeAlias.kt")
     public void testExpandedTypeAlias() throws Exception {
-        runTest("testData/codeInsight/hints/types/ExpandedTypeAlias.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ExpandedTypeAlias.kt");
     }
 
     @TestMetadata("FlexibleType.kt")
     public void testFlexibleType() throws Exception {
-        runTest("testData/codeInsight/hints/types/FlexibleType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleType.kt");
     }
 
     @TestMetadata("FunctionalType.kt")
     public void testFunctionalType() throws Exception {
-        runTest("testData/codeInsight/hints/types/FunctionalType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/FunctionalType.kt");
     }
 
     @TestMetadata("ImportedEnumEntry.kt")
     public void testImportedEnumEntry() throws Exception {
-        runTest("testData/codeInsight/hints/types/ImportedEnumEntry.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ImportedEnumEntry.kt");
     }
 
     @TestMetadata("JavaFQName.kt")
     public void testJavaFQName() throws Exception {
-        runTest("testData/codeInsight/hints/types/JavaFQName.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/JavaFQName.kt");
     }
 
     @TestMetadata("LambdaReturnType.kt")
     public void testLambdaReturnType() throws Exception {
-        runTest("testData/codeInsight/hints/types/LambdaReturnType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/LambdaReturnType.kt");
     }
 
     @TestMetadata("LocalVariable.kt")
     public void testLocalVariable() throws Exception {
-        runTest("testData/codeInsight/hints/types/LocalVariable.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/LocalVariable.kt");
     }
 
     @TestMetadata("LoopParameter.kt")
     public void testLoopParameter() throws Exception {
-        runTest("testData/codeInsight/hints/types/LoopParameter.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/LoopParameter.kt");
     }
 
     @TestMetadata("LoopParameterWithExplicitType.kt")
     public void testLoopParameterWithExplicitType() throws Exception {
-        runTest("testData/codeInsight/hints/types/LoopParameterWithExplicitType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/LoopParameterWithExplicitType.kt");
     }
 
     @TestMetadata("NestedClassImports.kt")
     public void testNestedClassImports() throws Exception {
-        runTest("testData/codeInsight/hints/types/NestedClassImports.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/NestedClassImports.kt");
     }
 
     @TestMetadata("NestedClassWithoutImport.kt")
     public void testNestedClassWithoutImport() throws Exception {
-        runTest("testData/codeInsight/hints/types/NestedClassWithoutImport.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/NestedClassWithoutImport.kt");
     }
 
     @TestMetadata("ParameterType.kt")
     public void testParameterType() throws Exception {
-        runTest("testData/codeInsight/hints/types/ParameterType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/ParameterType.kt");
     }
 
     @TestMetadata("PropertyType.kt")
     public void testPropertyType() throws Exception {
-        runTest("testData/codeInsight/hints/types/PropertyType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/PropertyType.kt");
     }
 
     @TestMetadata("QualifiedReferences.kt")
     public void testQualifiedReferences() throws Exception {
-        runTest("testData/codeInsight/hints/types/QualifiedReferences.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/QualifiedReferences.kt");
     }
 
     @TestMetadata("SAMConstructor.kt")
     public void testSAMConstructor() throws Exception {
-        runTest("testData/codeInsight/hints/types/SAMConstructor.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/SAMConstructor.kt");
     }
 
     @TestMetadata("TypeInCompanion.kt")
     public void testTypeInCompanion() throws Exception {
-        runTest("testData/codeInsight/hints/types/TypeInCompanion.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/TypeInCompanion.kt");
     }
 
     @TestMetadata("TypeInNonDefaultCompanion.kt")
     public void testTypeInNonDefaultCompanion() throws Exception {
-        runTest("testData/codeInsight/hints/types/TypeInNonDefaultCompanion.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/TypeInNonDefaultCompanion.kt");
     }
 
     @TestMetadata("UnaryConstInitializerType.kt")
     public void testUnaryConstInitializerType() throws Exception {
-        runTest("testData/codeInsight/hints/types/UnaryConstInitializerType.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/UnaryConstInitializerType.kt");
     }
 
     @TestMetadata("UnitLocalVariable.kt")
     public void testUnitLocalVariable() throws Exception {
-        runTest("testData/codeInsight/hints/types/UnitLocalVariable.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/UnitLocalVariable.kt");
     }
 
     @TestMetadata("UnitLocalVariable2.kt")
     public void testUnitLocalVariable2() throws Exception {
-        runTest("testData/codeInsight/hints/types/UnitLocalVariable2.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/UnitLocalVariable2.kt");
     }
 
     @TestMetadata("UnitLocalVariable3.kt")
     public void testUnitLocalVariable3() throws Exception {
-        runTest("testData/codeInsight/hints/types/UnitLocalVariable3.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/UnitLocalVariable3.kt");
     }
 
     @TestMetadata("When.kt")
     public void testWhen() throws Exception {
-        runTest("testData/codeInsight/hints/types/When.kt");
+        runTest("../../idea/tests/testData/codeInsight/hints/types/When.kt");
     }
 }

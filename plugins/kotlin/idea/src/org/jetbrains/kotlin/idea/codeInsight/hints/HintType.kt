@@ -11,10 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_PARAMETER_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_RETURN_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_LOCAL_VARIABLE_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_PROPERTY_TYPES
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
@@ -254,12 +250,6 @@ enum class HintType(
 }
 
 data class InlayInfoDetails(val inlayInfo: InlayInfo, val details: List<InlayInfoDetail>, val option: InlayInfoOption? = NoInlayInfoOption)
-
-sealed class InlayInfoOption
-
-object NoInlayInfoOption: InlayInfoOption()
-
-class NamedInlayInfoOption(val name: String): InlayInfoOption()
 
 sealed class InlayInfoDetail(val text: String)
 

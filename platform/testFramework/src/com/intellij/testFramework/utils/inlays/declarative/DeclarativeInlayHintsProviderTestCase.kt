@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -44,7 +45,9 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
   private fun applyPassAndCheckResult(pass: DeclarativeInlayHintsPass,
                         previewText: String,
                         expectedText: String) {
-    pass.doCollectInformation(EmptyProgressIndicator())
+    ActionUtil.underModalProgress(project, "") {
+      pass.doCollectInformation(EmptyProgressIndicator())
+    }
     pass.applyInformationToEditor()
 
     val dump = InlayDumpUtil.dumpHintsInternal(previewText, renderer = { renderer, _ ->

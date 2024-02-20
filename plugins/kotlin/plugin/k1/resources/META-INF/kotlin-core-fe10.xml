@@ -166,7 +166,7 @@
 <!--    <codeInsight.inlayProvider language="kotlin"-->
 <!--                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>-->
 
-    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinFqnDeclarativeInlayActionHandler"
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
 
     <codeInsight.declarativeInlayProvider
