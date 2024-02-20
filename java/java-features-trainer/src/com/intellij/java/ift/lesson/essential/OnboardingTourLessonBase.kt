@@ -102,7 +102,7 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
 
   private var backupPopupLocation: Point? = null
   private var hideToolStripesPreference = false
-  private var showNavigationBarPreference = true
+  private var showMainToolbarPreference = true
 
   @NlsSafe
   private var jdkAtStart: String = "undefined"
@@ -171,7 +171,7 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
     backupPopupLocation = null
 
     uiSettings.hideToolStripes = hideToolStripesPreference
-    uiSettings.showNavigationBar = showNavigationBarPreference
+    uiSettings.showNewMainToolbar = showMainToolbarPreference
     uiSettings.fireUISettingsChanged()
 
     if (!lessonEndInfo.lessonPassed) {
@@ -435,7 +435,7 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
   private fun LessonContext.checkUiSettings() {
     showInvalidDebugLayoutWarning()
 
-    if (!uiSettings.hideToolStripes && (uiSettings.showNavigationBar || uiSettings.showMainToolbar)) {
+    if (!uiSettings.hideToolStripes && uiSettings.showNewMainToolbar) {
       // a small hack to have same tasks count. It is needed to track statistics result.
       task { }
       task { }
@@ -449,9 +449,9 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
 
     prepareRuntimeTask {
       hideToolStripesPreference = uiSettings.hideToolStripes
-      showNavigationBarPreference = uiSettings.showNavigationBar
+      showMainToolbarPreference = uiSettings.showNewMainToolbar
       uiSettings.hideToolStripes = false
-      uiSettings.showNavigationBar = true
+      uiSettings.showNewMainToolbar = true
       uiSettings.fireUISettingsChanged()
     }
   }
