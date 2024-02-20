@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.nj2k
+package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
@@ -8,13 +8,12 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.java.LanguageLevel.JDK_17
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
@@ -28,9 +27,9 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
 
         val testName = getTestName(false)
         if (testName.contains("Java17") || testName.contains("java17")) {
-            LanguageLevelProjectExtension.getInstance(project).languageLevel = JDK_17
+            LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_17
         }
-        vfsDisposable = allowProjectRootAccess(this)
+        vfsDisposable = KotlinTestUtils.allowProjectRootAccess(this)
         invalidateLibraryCache(project)
         addFile("KotlinApi.kt", "kotlinApi")
         addFile("JavaApi.java", "javaApi")
@@ -40,7 +39,7 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disposeVfsRootAccess(vfsDisposable) },
+            ThrowableRunnable { KotlinTestUtils.disposeVfsRootAccess(vfsDisposable) },
             ThrowableRunnable { project.DEBUG_LOG_ENABLE_PerModulePackageCache = false },
             ThrowableRunnable { super.tearDown() },
         )
