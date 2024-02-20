@@ -136,7 +136,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return highlightVisitors;
   }
 
-  private HighlightVisitor @NotNull [] filterVisitors(@NotNull List<HighlightVisitor> highlightVisitors, @NotNull PsiFile psiFile) {
+  private HighlightVisitor @NotNull [] filterVisitors(@NotNull List<? extends HighlightVisitor> highlightVisitors, @NotNull PsiFile psiFile) {
     List<HighlightVisitor> visitors = new ArrayList<>(highlightVisitors.size());
     for (HighlightVisitor visitor : DumbService.getInstance(myProject).filterByDumbAwareness(highlightVisitors)) {
       if (visitor instanceof RainbowVisitor
