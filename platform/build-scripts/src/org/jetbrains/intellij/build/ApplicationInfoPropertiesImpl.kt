@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
-import okhttp3.internal.platform.Jdk9Platform.Companion.majorVersion
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.annotations.VisibleForTesting
@@ -137,7 +136,7 @@ internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoPr
   val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
   val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
   check("${appInfo.majorVersion}${appInfo.minorVersion}".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
-    "'major=$majorVersion' and 'minor=${appInfo.minorVersion}' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
+    "'major=${appInfo.majorVersion}' and 'minor=${appInfo.minorVersion}' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
   }
 
   val artifactServer = context.proprietaryBuildTools.artifactsServer
