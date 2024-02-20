@@ -2,9 +2,11 @@
 package com.intellij.jupyter.core.jupyter.preview
 
 
+import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.util.PathUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.EmptyHttpHeaders
@@ -15,7 +17,7 @@ import org.jetbrains.ide.HttpRequestHandler
 import java.io.File
 import java.net.URI
 import java.net.URL
-
+import java.nio.file.Path
 
 /**
  * "Web server" to serve Jupyter HTML
@@ -43,7 +45,10 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
      */
     private fun getResource(path: String): URL {
       val javaClass = Companion::class.java
+      // After optimizations in PluginClassLoader, classLoader.getResource return null in debug,
+      // so we have additional logic with PluginClassLoader.pluginDescriptor.
       val url = javaClass.classLoader.getResource(path)
+                ?: (javaClass.classLoader as? PluginClassLoader)?.pluginDescriptor?.getPluginPath()?.let { Path.of(it.toCanonicalPath(), path) }?.toUri()?.toURL()
       if (url != null) {
         return url
       }
