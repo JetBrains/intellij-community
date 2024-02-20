@@ -95,7 +95,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val LOG = logger<StatisticBase>()
   private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 20)
+  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 21)
 
   var isLearnProjectCloseLogged = false
 
@@ -104,7 +104,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val languageField = EventFields.StringValidatedByCustomRule(LANGUAGE, SupportedLanguageRuleValidator::class.java)
   private val completedCountField = EventFields.Int(COMPLETED_COUNT)
   private val courseSizeField = EventFields.Int(COURSE_SIZE)
-  private val taskIdField = EventFields.StringValidatedByCustomRule(TASK_ID, TaskIdRuleValidator::class.java)
+  private val taskIdField = EventFields.Int(TASK_ID)
   private val actionIdField = EventFields.StringValidatedByCustomRule(ACTION_ID, ActionIdRuleValidator::class.java)
   private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KeymapSchemeRuleValidator::class.java)
   private val versionField = EventFields.Version
@@ -204,7 +204,7 @@ object StatisticBase : CounterUsagesCollector() {
       val lessonId = lessonManager.currentLesson!!.id
       val taskId = lessonManager.currentLessonExecutor!!.currentTaskIndex
       lessonStoppedEvent.log(lessonIdField with lessonId,
-                             taskIdField with taskId.toString(),
+                             taskIdField with taskId,
                              languageField with courseLanguage(),
                              reasonField with reason
       )
@@ -222,7 +222,7 @@ object StatisticBase : CounterUsagesCollector() {
       shortcutClickedEvent.log(inputEventField with createInputEvent(actionId),
                                keymapSchemeField with keymap.name,
                                lessonIdField with lesson.id,
-                               taskIdField with lessonManager.currentLessonExecutor?.currentTaskIndex.toString(),
+                               taskIdField with lessonManager.currentLessonExecutor?.currentTaskIndex!!,
                                actionIdField with actionId,
                                versionField with getPluginVersion(lesson))
     }
@@ -233,7 +233,7 @@ object StatisticBase : CounterUsagesCollector() {
     if (curLessonProgress != prevRestoreLessonProgress) {
       prevRestoreLessonProgress = curLessonProgress
       restorePerformedEvent.log(lessonIdField with lesson.id,
-                                taskIdField with taskId.toString(),
+                                taskIdField with taskId,
                                 versionField with getPluginVersion(lesson))
     }
   }
