@@ -36,11 +36,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import java.util.function.Predicate
 
 
-class ShowSettingsWithAddedPattern : AnAction() {
-  init {
-    templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
-    templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
-  }
+class ShowSettingsWithAddedPattern : AnAction(), ActionRemoteBehaviorSpecification {
+
+  override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
