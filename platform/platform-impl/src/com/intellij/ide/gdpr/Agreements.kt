@@ -5,6 +5,7 @@ package com.intellij.ide.gdpr
 
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.SystemLanguage
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -20,7 +21,7 @@ import kotlin.system.exitProcess
 
 fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
   val isPrivacyPolicy = agreement.isPrivacyPolicy
-  val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.AgreementsBundle", Locale.getDefault())
+  val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().locale)
   showAgreementUi {
     htmlText = agreement.text
     title = if (isPrivacyPolicy) {
@@ -84,7 +85,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
 
 internal fun showDataSharingAgreement() {
   showAgreementUi {
-    configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle"))
+    configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().locale))
   }
 }
 

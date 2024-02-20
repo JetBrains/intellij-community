@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.ide.SystemLanguage
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
@@ -32,6 +33,22 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
       it.isAccepted
     }
   }
+}
+
+fun prepareShowEuaIfNeeded(document: EndUserAgreement.Document?) {
+  EndUserAgreement.updateCachedContentToLatestBundledVersion()
+
+  if (document != null) {
+    showEndUserAndDataSharingAgreements(document)
+    SystemLanguage.getInstance().doChooseLanguage()
+    return
+  }
+  if (ConsentOptions.needToShowUsageStatsConsent()) {
+    showDataSharingAgreement()
+    SystemLanguage.getInstance().doChooseLanguage()
+    return
+  }
+  SystemLanguage.getInstance().doChooseLanguage()
 }
 
 internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,

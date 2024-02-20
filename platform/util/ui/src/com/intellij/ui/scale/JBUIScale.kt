@@ -80,6 +80,10 @@ object JBUIScale {
     systemFontData.value = computeSystemFontDataForMacOs()
   }
 
+  fun drop() {
+    systemScaleFactor.drop()
+  }
+
   private val systemScaleFactor: SynchronizedClearableLazy<Float> = SynchronizedClearableLazy {
     computeSystemScaleFactor(uiDefaults = null)
   }
