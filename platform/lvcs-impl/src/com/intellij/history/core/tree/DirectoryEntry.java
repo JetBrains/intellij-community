@@ -8,6 +8,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -177,12 +178,14 @@ public class DirectoryEntry extends Entry {
         nameToEntryMap.put(entry.getName(), entry);
       }
 
-      for (Entry rightChildEntry : uniqueNameIdToRightChildEntries.values()) {
+      for (ObjectIterator<Entry> rightChildEntryIterator = uniqueNameIdToRightChildEntries.values().iterator();
+           rightChildEntryIterator.hasNext(); ) {
+        Entry rightChildEntry = rightChildEntryIterator.next();
         Entry myChildEntry = nameToEntryMap.get(rightChildEntry.getName());
         if (myChildEntry != null && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
           myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
           uniqueNameIdToMyChildEntries.remove(myChildEntry.getNameId());
-          uniqueNameIdToRightChildEntries.remove(rightChildEntry.getNameId());
+          rightChildEntryIterator.remove();
         }
       }
     }
