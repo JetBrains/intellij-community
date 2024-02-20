@@ -2,21 +2,14 @@
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
-import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.ClickListener
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.*
 import com.intellij.util.ui.JBFont
@@ -26,7 +19,6 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import kotlin.jvm.internal.CallableReference
@@ -193,13 +185,6 @@ interface CellBuilder<out T : JComponent> {
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun withErrorOnApplyIf(@DialogMessage message: String, callback: (T) -> Boolean): CellBuilder<T> {
-    withValidationOnApply { if (callback(it)) error(message) else null }
-    return this
-  }
-
   @Deprecated("Use Kotlin UI DSL Version 2")
   @ApiStatus.Internal
   fun shouldSaveOnApply(): Boolean
@@ -272,10 +257,6 @@ abstract class Cell : BaseBuilder {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   val pushY: CCFlags = CCFlags.pushY
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  val push: CCFlags = CCFlags.push
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -450,24 +431,6 @@ abstract class Cell : BaseBuilder {
   fun spinner(getter: () -> Int, setter: (Int) -> Unit, minValue: Int, maxValue: Int, step: Int = 1): CellBuilder<JBIntSpinner> {
     val spinner = JBIntSpinner(getter(), minValue, maxValue, step)
     return component(spinner).withBinding(JBIntSpinner::getNumber, JBIntSpinner::setNumber, PropertyBinding(getter, setter))
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun gearButton(vararg actions: AnAction): CellBuilder<JComponent> {
-    val label = JLabel(LayeredIcon.GEAR_WITH_DROPDOWN)
-    label.disabledIcon = AllIcons.General.GearPlain
-    object : ClickListener() {
-      override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
-        if (!label.isEnabled) return true
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, DefaultActionGroup(*actions), DataManager.getInstance().getDataContext(label), true, null, 10)
-          .showUnderneathOf(label)
-        return true
-      }
-    }.installOn(label)
-
-    return component(label)
   }
 
   @ApiStatus.ScheduledForRemoval
