@@ -134,6 +134,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       runInEdt {
         SdkConfigurationUtil.addSdk(newSdk)
         newSdk.associateWithModule(module, null)
+        ApplicationManager.getApplication().runWriteAction {
+          newSdk.sdkModificator.commitChanges()
+        }
         setReadyToUseSdk(project, module, newSdk)
       }
 
