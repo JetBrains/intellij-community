@@ -18,6 +18,7 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.awt.Component
 import java.awt.Point
 import javax.swing.SwingUtilities
@@ -55,6 +56,8 @@ internal object BlockTerminalPromotionService {
     }, tooltip)
 
     tooltip.withHeader(TerminalBundle.message("new.terminal.promotion.text.header"))
+      .withGotItButtonAction { TerminalUsageTriggerCollector.triggerPromotionGotItClicked(project) }
+
     tooltip.show(optionsButton) { button, balloon ->
       val window = SwingUtilities.getWindowAncestor(button)
       val buttonBounds = SwingUtilities.convertRectangle(button, button.bounds, window)
@@ -65,6 +68,7 @@ internal object BlockTerminalPromotionService {
       }
       else Point(0, button.height / 2)
     }
+    TerminalUsageTriggerCollector.triggerPromotionShown(project)
   }
 
   private inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
