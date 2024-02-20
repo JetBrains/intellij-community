@@ -149,7 +149,7 @@ private fun <T : Any> getXmlSerializationState(
     }
 
     if (value.isResolved) {
-      val valueData = value.get() ?: continue
+      val valueData = value.get()
 
       if (result == null) {
         // create a result only if we have some data - do not return empty state class
@@ -158,9 +158,9 @@ private fun <T : Any> getXmlSerializationState(
       }
 
       if (binding is PrimitiveValueBinding && ClassUtil.isPrimitive(binding.accessor.valueClass)) {
-        binding.setValue(bean = result, value = valueData.decodeToString())
+        binding.setValue(bean = result, value = valueData?.decodeToString())
       }
-      else {
+      else if (valueData != null) {
         val element = buildNsUnawareJdom(valueData)
         val l = deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = false)
         if (l != null) {

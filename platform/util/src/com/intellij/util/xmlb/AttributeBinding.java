@@ -50,12 +50,12 @@ final class AttributeBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  public void setValue(@NotNull Object bean, @NotNull String value) {
+  public void setValue(@NotNull Object bean, @Nullable String value) {
     if (converter == null) {
       XmlSerializerImpl.doSet(bean, value, accessor, valueClass);
     }
     else {
-      accessor.set(bean, converter.fromString(value));
+      accessor.set(bean, value == null ? null : converter.fromString(value));
     }
   }
 

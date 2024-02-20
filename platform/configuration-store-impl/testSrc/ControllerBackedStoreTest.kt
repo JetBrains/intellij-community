@@ -14,10 +14,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.settings.*
 import com.intellij.platform.settings.local.SettingsControllerMediator
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Text
@@ -26,85 +25,64 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
 import kotlin.properties.Delegates
 
+@TestApplication
 class ControllerBackedStoreTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
+  @RegisterExtension
   @JvmField
-  @Rule
-  val fsRule = InMemoryFsRule()
+  val fsRule = InMemoryFsExtension()
 
-  @JvmField
-  @Rule
-  val disposableRule = DisposableRule()
+  private var appConfig: Path by Delegates.notNull()
 
-  private var testAppConfig: Path by Delegates.notNull()
-  private var componentStore: ControllerBackedTestComponentStore by Delegates.notNull()
+  private val data = HashMap<String, ByteArray?>()
 
-  private val data = HashMap<String, ByteArray>()
-
-  @Before
+  @BeforeEach
   fun setUp() {
-    testAppConfig = fsRule.fs.getPath("/app-config")
+    appConfig = fsRule.fs.getPath("/app-config")
   }
 
   @Test
   fun `get`() = runBlocking<Unit>(Dispatchers.Default) {
-    componentStore = ControllerBackedTestComponentStore(
-      testAppConfigPath = testAppConfig,
-      controller = SettingsControllerMediator(
-        controllers = listOf(object : DelegatedSettingsController {
-          @Suppress("UNCHECKED_CAST")
-          override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
-            data.get(key.key)?.let { data ->
-              assertThat(key.tags.first { it is PersistenceStateComponentPropertyTag && it.componentName == "TestState" })
+    val store = createStore { key ->
+      if (data.containsKey(key.key)) {
+        val data = data.get(key.key)
+        assertThat(key.tags.first { it is PersistenceStateComponentPropertyTag && it.componentName == "TestState" })
 
-              if (key.key == "TestState.list") {
-                return GetResult.partial(data as T)
-              }
+        if (key.key == "TestState.list") {
+          return@createStore GetResult.partial(data!!)
+        }
 
-              return GetResult.resolved(data as T?)
-            }
+        return@createStore GetResult.resolved(data)
+      }
 
-            return GetResult.inapplicable()
-          }
-
-          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.DONE
-        }),
-        isPersistenceStateComponentProxy = true,
-      ),
-    )
+      GetResult.inapplicable()
+    }
 
     val component = TestComponent()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.foo).isEmpty()
     assertThat(component.state.bar).isEmpty()
 
     component.state = ControllerTestState(bar = "42")
 
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEmpty()
 
     component.state = ControllerTestState(list = listOf("d", "c"))
-    componentStore.save(forceSavingAllSettings = true)
+    store.save(forceSavingAllSettings = true)
 
     val propertyName = "bar"
     data.put("TestState.$propertyName", "12".toByteArray())
     data.put("TestState.text", "a long sad story".toByteArray())
     data.put("TestState.list", JDOMUtil.write(serializeForController(ControllerTestState(list = listOf("a", "b")))!!).toByteArray())
 
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("12")
     assertThat(component.state.text).isEqualTo("a long sad story")
     assertThat(component.state.list).containsExactlyElementsOf(listOf("a", "b"))
@@ -113,26 +91,16 @@ class ControllerBackedStoreTest {
   @Test
   fun `pass Element`() = runBlocking<Unit>(Dispatchers.Default) {
     var requested = false
-    componentStore = ControllerBackedTestComponentStore(
-      testAppConfigPath = testAppConfig,
-      controller = SettingsControllerMediator(
-        controllers = listOf(object : DelegatedSettingsController {
-          override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
-            requested = true
-            return GetResult.inapplicable()
-          }
-
-          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.DONE
-        }),
-        isPersistenceStateComponentProxy = true,
-      ),
-    )
+    val store = createStore {
+      requested = true
+      GetResult.inapplicable()
+    }
 
     @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
     class TestComponentWithElementState : SerializablePersistentStateComponent<Element>(Element("test"))
 
     val component = TestComponentWithElementState()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(requested).isTrue()
     assertThat(component.state.isEmpty).isTrue()
@@ -140,34 +108,43 @@ class ControllerBackedStoreTest {
 
   @Test
   fun `override Element`() = runBlocking<Unit>(Dispatchers.Default) {
-    componentStore = ControllerBackedTestComponentStore(
-      testAppConfigPath = testAppConfig,
-      controller = SettingsControllerMediator(
-        controllers = listOf(object : DelegatedSettingsController {
-          override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
-            @Suppress("UNCHECKED_CAST")
-            return GetResult.resolved("""<state foo="42" />""".encodeToByteArray() as T)
-          }
-
-          override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.DONE
-        }),
-        isPersistenceStateComponentProxy = true,
-      ),
-    )
+    val store = createStore {
+      GetResult.resolved("""<state foo="42" />""".encodeToByteArray())
+    }
 
     @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
     class TestComponentWithElementState : SerializablePersistentStateComponent<Element>(Element("test"))
 
     val component = TestComponentWithElementState()
-    componentStore.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.getAttributeValue("foo")).isEqualTo("42")
   }
 
   @Test
+  fun `set primitive to null`() = runBlocking(Dispatchers.Default) {
+    val store = createStore { key ->
+      if (data.containsKey(key.key)) {
+        GetResult.resolved(this@ControllerBackedStoreTest.data.get(key.key))
+      }
+      else {
+        GetResult.inapplicable()
+      }
+    }
+
+    val component = TestComponent()
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    assertThat(component.state.bar).isEmpty()
+
+    data.put("TestState.bar", null)
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    assertThat(component.state.bar).isNull()
+  }
+
+  @Test
   fun `not applicable`() = runBlocking<Unit>(Dispatchers.Default) {
-    componentStore = ControllerBackedTestComponentStore(
-      testAppConfigPath = testAppConfig,
+    val componentStore = ControllerBackedTestComponentStore(
+      testAppConfigPath = appConfig,
       controller = SettingsControllerMediator(isPersistenceStateComponentProxy = true),
     )
 
@@ -193,9 +170,30 @@ class ControllerBackedStoreTest {
 
   @Suppress("SameParameterValue")
   private fun writeConfig(fileName: String, @Language("XML") data: String): Path {
-    val file = testAppConfig.resolve(fileName)
+    val file = appConfig.resolve(fileName)
     file.write(data)
     return file
+  }
+
+  private fun createStore(controller: DelegatedSettingsController): ControllerBackedTestComponentStore {
+    return ControllerBackedTestComponentStore(
+      testAppConfigPath = appConfig,
+      controller = SettingsControllerMediator(
+        controllers = listOf(controller),
+        isPersistenceStateComponentProxy = true,
+      ),
+    )
+  }
+
+  private fun createStore(supplier: (SettingDescriptor<ByteArray>) -> GetResult<ByteArray>): ControllerBackedTestComponentStore {
+    return createStore(object : DelegatedSettingsController {
+      override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
+        @Suppress("UNCHECKED_CAST")
+        return supplier(key as SettingDescriptor<ByteArray>) as GetResult<T>
+      }
+
+      override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.INAPPLICABLE
+    })
   }
 }
 
@@ -227,7 +225,7 @@ private class TestComponent : SerializablePersistentStateComponent<ControllerTes
 
 private data class ControllerTestState(
   @JvmField @Attribute var foo: String = "",
-  @JvmField @Attribute var bar: String = "",
+  @JvmField @Attribute var bar: String? = "",
   @JvmField @Text var text: String = "",
   @JvmField @XCollection val list: List<String> = emptyList(),
 )
