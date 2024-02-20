@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.task.impl.ProjectTaskManagerImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.CustomLibraryTableBridge
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
@@ -31,6 +33,7 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
 
   override fun execute(context: CompileContext): Boolean {
     val queue = LibrarySynchronizationQueue.getInstance(context.project)
+    val newQueue = LibraryIdSynchronizationQueue.getInstance(context.project)
     val missingLibrariesResolutionTasks = mutableMapOf<LibraryEx, ResolutionTask>()
     val application = ApplicationManager.getApplication()
     val affectedModules = application.runReadAction<Array<Module>> {
@@ -46,7 +49,11 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
           if (library is LibraryEx &&
               !missingLibrariesResolutionTasks.containsKey(library) &&
               library.needToReload()) {
-            queue.revokeSynchronization(library)
+            if (CustomLibraryTableBridge.isEnabled()) {
+              newQueue.revokeSynchronization((library as LibraryBridge).libraryId)
+            } else {
+              queue.revokeSynchronization(library)
+            }
             missingLibrariesResolutionTasks[library] = ResolutionTask(library, module, context.project)
           }
           true
