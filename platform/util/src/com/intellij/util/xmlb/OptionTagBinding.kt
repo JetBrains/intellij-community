@@ -30,17 +30,17 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
     }
   }
 
-  override fun setValue(host: Any, value: String) {
+  override fun setValue(bean: Any, value: String) {
     if (converter == null) {
       try {
-        XmlSerializerImpl.doSet(host, value, accessor, ClassUtil.typeToClass(accessor.genericType))
+        XmlSerializerImpl.doSet(bean, value, accessor, ClassUtil.typeToClass(accessor.genericType))
       }
       catch (e: Exception) {
         throw RuntimeException("Cannot set value for field $name", e)
       }
     }
     else {
-      accessor.set(host, converter.fromString(value))
+      accessor.set(bean, converter.fromString(value))
     }
   }
 
@@ -113,7 +113,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
       }
     }
     else {
-      setValue(host = context, value = value)
+      setValue(bean = context, value = value)
     }
     return context
   }
@@ -151,7 +151,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
       }
     }
     else {
-      setValue(host = context, value = value)
+      setValue(bean = context, value = value)
     }
     return context
   }

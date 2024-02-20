@@ -29,8 +29,20 @@ abstract class StateStorageBase<T : Any> : StateStorage {
     mergeInto: T?,
     reload: Boolean,
   ): T? {
-    val stateElement = getSerializedState(getStorageData(reload), component, componentName, archive = false)
-    return deserializeStateWithController(stateElement, stateClass, mergeInto, controller, componentName, pluginId)
+    val stateElement = getSerializedState(
+      storageData = getStorageData(reload = reload),
+      component = component,
+      componentName = componentName,
+      archive = false,
+    )
+    return deserializeStateWithController(
+      stateElement = stateElement,
+      stateClass = stateClass,
+      mergeInto = mergeInto,
+      controller = controller,
+      componentName = componentName,
+      pluginId = pluginId,
+    )
   }
 
   @ApiStatus.Internal

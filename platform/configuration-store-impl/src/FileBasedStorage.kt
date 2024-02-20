@@ -331,7 +331,7 @@ internal fun writeFile(
 ) {
   LOG.debug { "Save $file" }
   try {
-    dataWriter.writeTo(file, requestor, lineSeparator, prependXmlProlog)
+    dataWriter.writeTo(file = file, requestor = requestor, lineSeparator = lineSeparator, useXmlProlog = prependXmlProlog)
   }
   catch (e: ReadOnlyModificationException) {
     throw e
