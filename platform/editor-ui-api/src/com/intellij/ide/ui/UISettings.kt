@@ -30,7 +30,12 @@ import javax.swing.SwingConstants
 
 private val LOG = logger<UISettings>()
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], useLoadedStateAsExisting = false, category = SettingsCategory.UI)
+@State(
+  name = "UISettings",
+  storages = [(Storage("ui.lnf.xml", usePathMacroManager = false))],
+  useLoadedStateAsExisting = false,
+  category = SettingsCategory.UI,
+)
 class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponentWithModificationTracker<UISettingsState> {
   constructor() : this(ApplicationManager.getApplication().service<NotRoamableUiSettings>())
 

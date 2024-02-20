@@ -12,6 +12,7 @@ import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
+import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
@@ -24,6 +25,7 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
@@ -192,11 +194,16 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
 private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
     withTimeout(Duration.ofSeconds(40).toMillis()) {
-      preloadCriticalServices(app = app,
-                              asyncScope = app.getCoroutineScope(),
-                              appRegistered = CompletableDeferred(value = null),
-                              initLafJob = CompletableDeferred(value = null),
-                              initAwtToolkitAndEventQueueJob = null)
+      val pathMacroJob = preloadCriticalServices(
+        app = app,
+        asyncScope = app.getCoroutineScope(),
+        appRegistered = CompletableDeferred(value = null),
+        initAwtToolkitAndEventQueueJob = null,
+      )
+      launch {
+        pathMacroJob.join()
+        app.serviceAsync<LogLevelConfigurationManager>()
+      }
     }
 
     @Suppress("TestOnlyProblems")
