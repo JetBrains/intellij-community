@@ -36,6 +36,9 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                          TerminalCommandUsageStatistics.commandExecutableField,
                                                          TerminalCommandUsageStatistics.subCommandField)
 
+  private val promotionShownEvent = GROUP.registerEvent("promotion.shown")
+  private val promotionGotItClickedEvent = GROUP.registerEvent("promotion.got.it.clicked")
+
   @JvmStatic
   fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
 
@@ -71,6 +74,14 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                        Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
                        getShellNameForStat(shellCommand.firstOrNull()))
 
+  internal fun triggerPromotionShown(project: Project) {
+    promotionShownEvent.log(project)
+  }
+
+  internal fun triggerPromotionGotItClicked(project: Project) {
+    promotionGotItClickedEvent.log(project)
+  }
+
   @JvmStatic
   private fun getShellNameForStat(shellName: String?): String {
     if (shellName == null) return "unspecified"
@@ -89,10 +100,6 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     val ext = PathUtil.getFileExtension(name)
     return if (ext != null && KNOWN_EXTENSIONS.contains(ext)) name.substring(0, name.length - ext.length - 1) else name
   }
-}
-
-internal enum class TerminalPromotionEvent {
-  SHOWN, BUTTON_CLICKED, MENU_OPENED
 }
 
 private const val GROUP_ID = "terminalShell"
