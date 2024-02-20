@@ -117,8 +117,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1129,17 +1128,6 @@ public final class BuildManager implements Disposable {
   public void dispose() {
     stopListening();
     myAutomakeTrigger.cancel();
-    if (IS_UNIT_TEST_MODE) {
-      // wait until command queue with already submitted tasks is drained
-      CountDownLatch latch = new CountDownLatch(1);
-      runCommand(() -> latch.countDown());
-      try {
-        latch.await();
-      }
-      catch (InterruptedException e) {
-        LOG.info(e);
-      }
-    }
     myRequestsProcessor.cancel();
   }
 
