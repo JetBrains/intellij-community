@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.CREATE_OPEN_DIALOG
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.logSnippetActionExecuted
 
@@ -33,7 +34,8 @@ class GitLabCreateSnippetAction : DumbAwareAction() {
     val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
 
     e.presentation.isEnabledAndVisible =
-      project.service<GitLabProjectsManager>().knownRepositoriesState.value.isNotEmpty() &&
+      (project.service<GitLabProjectsManager>().knownRepositoriesState.value.isNotEmpty() ||
+       service<GitLabAccountManager>().accountsState.value.isNotEmpty()) &&
       project.service<GitLabSnippetService>().canCreateSnippet(editor, selectedFile, selectedFiles)
   }
 }
