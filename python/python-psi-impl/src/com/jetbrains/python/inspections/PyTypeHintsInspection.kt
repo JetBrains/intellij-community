@@ -413,8 +413,8 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkInstanceAndClassChecksOnTypeVar(base: PyExpression) {
       val type = myTypeEvalContext.getType(base)
-      if (type is PyGenericType && !type.isDefinition ||
-          type is PyCollectionType && type.elementTypes.any { it is PyGenericType } && !type.isDefinition) {
+      if (type is PyTypeVarType && !type.isDefinition ||
+          type is PyCollectionType && type.elementTypes.any { it is PyTypeVarType } && !type.isDefinition) {
         registerProblem(base,
                         PyPsiBundle.message("INSP.type.hints.type.variables.cannot.be.used.with.instance.class.checks"),
                         ProblemHighlightType.GENERIC_ERROR)
@@ -654,7 +654,7 @@ class PyTypeHintsInspection : PyInspection() {
             .filterIsInstance<PyReferenceExpression>()
             .flatMap { multiFollowAssignmentsChain(it, this::followNotTypeVar).asSequence() }
             .filterIsInstance<PyTargetExpression>()
-            .filter { myTypeEvalContext.getType(it) is PyGenericType }
+            .filter { myTypeEvalContext.getType(it) is PyTypeVarType }
             .toSet()
 
           if (generic) genericTypeVars.addAll(superClassTypeVars) else nonGenericTypeVars.addAll(superClassTypeVars)
@@ -751,7 +751,7 @@ class PyTypeHintsInspection : PyInspection() {
           val type = myTypeEvalContext.getType(it)
 
           if (type != null) {
-            if (type is PyGenericType || isParamSpecOrConcatenate(it, myTypeEvalContext)) {
+            if (type is PyTypeVarType || isParamSpecOrConcatenate(it, myTypeEvalContext)) {
               if (it is PyReferenceExpression && !genericParameters.addAll(multiFollowAssignmentsChain(it))) {
                 registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.unique"),
                                 ProblemHighlightType.GENERIC_ERROR)

@@ -1656,8 +1656,8 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-54336
   public void testCyclePreventionDuringGenericsSubstitution() {
-    PyGenericType typeVarT = new PyTypeVarTypeImpl("T", null);
-    PyGenericType typeVarV = new PyTypeVarTypeImpl("V", null);
+    PyTypeVarType typeVarT = new PyTypeVarTypeImpl("T", null);
+    PyTypeVarType typeVarV = new PyTypeVarTypeImpl("V", null);
     TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     PyType substituted;
 

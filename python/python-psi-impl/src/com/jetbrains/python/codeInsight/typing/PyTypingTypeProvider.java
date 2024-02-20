@@ -1014,7 +1014,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (classType != null && !classType.isDefinition()) {
       return Ref.create(classType.toClass());
     }
-    final PyGenericType typeVar = as(type, PyGenericType.class);
+    final PyTypeVarType typeVar = as(type, PyTypeVarType.class);
     if (typeVar != null && !typeVar.isDefinition()) {
       return Ref.create(typeVar.toClass());
     }

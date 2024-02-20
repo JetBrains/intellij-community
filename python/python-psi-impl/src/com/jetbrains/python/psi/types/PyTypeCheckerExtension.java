@@ -26,5 +26,5 @@ public interface PyTypeCheckerExtension {
   Optional<Boolean> match(@Nullable PyType expected,
                           @Nullable PyType actual,
                           @NotNull TypeEvalContext context,
-                          @NotNull Map<PyGenericType, PyType> substitutions);
+                          @NotNull Map<? extends PyTypeParameterType, PyType> substitutions);
 }

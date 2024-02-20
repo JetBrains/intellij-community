@@ -100,7 +100,7 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
 
     PyClass pyClass = pyFunction.getContainingClass();
 
-    Function<PyGenericType, PyQualifiedNameOwner> findScopeOwner = typeVar -> pyFunction;
+    Function<PyTypeVarType, PyQualifiedNameOwner> findScopeOwner = typeVar -> pyFunction;
     if (PyUtil.isInitOrNewMethod(callable)) {
       findScopeOwner = typeVar -> pyClass;
     }
@@ -108,7 +108,7 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
       PyType classGenericType = getGenericType(pyClass, context);
       if (classGenericType != null) {
         PyTypeChecker.Generics classTypeParameters = PyTypeChecker.collectGenerics(classGenericType, context);
-        Set<String> classTypeVarNames = ContainerUtil.map2Set(classTypeParameters.getTypeVars(), PyGenericType::getName);
+        Set<String> classTypeVarNames = ContainerUtil.map2Set(classTypeParameters.getTypeVars(), PyTypeVarType::getName);
         findScopeOwner = typeVar -> classTypeVarNames.contains(typeVar.getName()) ? pyClass : pyFunction;
       }
     }
