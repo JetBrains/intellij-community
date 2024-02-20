@@ -80,6 +80,11 @@ public interface ContentManager extends Disposable, BusyObject {
 
   Content @NotNull [] getContents();
 
+  /**
+   * Returns combined contents of this content manager and all nested content managers.
+   */
+  @NotNull List<@NotNull Content> getContentsRecursively();
+
   Content findContent(String displayName);
 
   @Nullable

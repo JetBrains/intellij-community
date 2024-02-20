@@ -532,6 +532,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public @NotNull List<@NotNull Content> getContentsRecursively() {
+      return Arrays.asList(getContents());
+    }
+
+    @Override
     public int getIndexOfContent(@NotNull Content content) {
       return myContents.indexOf(content);
     }
