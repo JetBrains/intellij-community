@@ -7,9 +7,6 @@ import com.intellij.ide.impl.OpenProjectTaskKt;
 import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -260,6 +257,8 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     if (project != null && generator != null && !(generator instanceof TemplateProjectDirectoryGenerator)) {
       generator.generateProject(project, baseDir, settings, ModuleManager.getInstance(project).getModules()[0]);
     }
+
+    LightweightNewProjectWizardCollector.logProjectGenerated(project, generator != null ? generator.getClass() : null);
     return project;
   }
 

@@ -21,6 +21,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.lang.Integer.min
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged as logAddSampleCodeChangedImpl
 
+/**
+ * Collects FUS statistics for the Java new project wizard.
+ * This new project wizard is used in Java IDEs like IntelliJ IDEA.
+ *
+ * @see com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
+ * @see com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector
+ */
 @ApiStatus.Internal
 object NewProjectWizardCollector : CounterUsagesCollector() {
 
