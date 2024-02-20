@@ -159,7 +159,7 @@ public final class SdkDownloadTracker {
   @RequiresEdt
   public boolean tryRegisterDownloadingListener(@NotNull Sdk sdk,
                                                 @NotNull Disposable lifetime,
-                                                @NotNull ProgressIndicator indicator,
+                                                @Nullable ProgressIndicator indicator,
                                                 @NotNull Consumer<? super Boolean> onDownloadCompleteCallback) {
     PendingDownload pd = findTask(sdk);
     if (pd == null) return false;
@@ -389,20 +389,24 @@ public final class SdkDownloadTracker {
     }
 
     void registerListener(@NotNull Disposable lifetime,
-                          @NotNull ProgressIndicator uiIndicator,
+                          @Nullable ProgressIndicator uiIndicator,
                           @NotNull Consumer<? super Boolean> completedCallback) {
       myModalityTracker.updateModality();
 
       //there is no need to add yet another copy of the same component
       if (!myCompleteListeners.add(completedCallback)) return;
 
-      //make the UI indicator receive events, when the background task run
-      myProgressIndicator.addStateDelegate((ProgressIndicatorEx)uiIndicator);
+      // make the UI indicator receive events, when the background task runs
+      if (uiIndicator instanceof ProgressIndicatorEx indicatorEx) {
+        myProgressIndicator.addStateDelegate(indicatorEx);
+      }
 
       Disposable unsubscribe = new Disposable() {
         @Override
         public void dispose() {
-          myProgressIndicator.removeStateDelegate((ProgressIndicatorEx)uiIndicator);
+          if (uiIndicator instanceof ProgressIndicatorEx indicatorEx) {
+            myProgressIndicator.removeStateDelegate(indicatorEx);
+          }
           myCompleteListeners.remove(completedCallback);
           myDisposables.remove(this);
         }
