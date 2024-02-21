@@ -1,4 +1,11 @@
-import com.intellij.mermaid.build.*
+import com.intellij.mermaid.build.properties
+import com.intellij.mermaid.build.publishChannel
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
+
+plugins {
+  kotlin("js") apply false
+}
 
 group = "com.intellij.mermaid"
 version = obtainVersion()
@@ -28,4 +35,10 @@ subprojects {
 afterEvaluate {
   logger.lifecycle("Publish channel is: $publishChannel")
   logger.lifecycle("Project version is: $version")
+}
+
+project.plugins.withType<NodeJsRootPlugin>().configureEach {
+  extensions.configure<NodeJsRootExtension> {
+    nodeDownloadBaseUrl = "https://packages.jetbrains.team/files/p/grazi/node-mirror"
+  }
 }
