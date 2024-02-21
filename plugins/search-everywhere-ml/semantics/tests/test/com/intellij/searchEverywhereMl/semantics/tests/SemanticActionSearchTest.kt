@@ -11,7 +11,6 @@ import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemant
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private val storage
@@ -35,7 +34,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   }
 
   fun `test search everywhere contributor`() = runTest(
-    timeout = 45.seconds // increased timeout because of a bug in SE
+    timeout = 1.minutes // time to generate action embeddings
   ) {
     setupTest("java/IndexProjectAction.java")
 
