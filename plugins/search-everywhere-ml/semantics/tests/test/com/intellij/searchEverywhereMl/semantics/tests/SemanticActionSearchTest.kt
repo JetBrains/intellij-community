@@ -10,6 +10,7 @@ import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemant
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private val storage
@@ -32,7 +33,9 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
     assertContainsElements(neighbours, "WebBrowser", "BrowseWeb")
   }
 
-  fun `test search everywhere contributor`() = runTest {
+  fun `test search everywhere contributor`() = runTest(
+    timeout = 30.seconds // increased timeout because of a bug in SE
+  ) {
     setupTest("java/IndexProjectAction.java")
 
     val standardActionContributor = ActionSearchEverywhereContributor.Factory()
