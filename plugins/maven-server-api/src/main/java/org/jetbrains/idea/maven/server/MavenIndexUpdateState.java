@@ -30,6 +30,7 @@ public class MavenIndexUpdateState implements Serializable {
   public enum State {
     INDEXING,
     SUCCEED,
+    CANCELLED,
     FAILED
   }
 }

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.server
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.rmi.RemoteException
 
 abstract class RemoteObjectWrapper<T> protected constructor() {
@@ -67,11 +68,13 @@ abstract class RemoteObjectWrapper<T> protected constructor() {
   }
 
   @Throws(MavenProcessCanceledException::class)
-  protected fun <R, E : Exception?> performCancelable(r: RetriableCancelable<R, E>): R {
+  protected fun <R, E : Exception?> performCancelable(indicator: MavenProgressIndicator, r: RetriableCancelable<R, E>): R {
     var last: RemoteException? = null
     for (i in 0..1) {
       try {
-        return r.execute()
+        if (!indicator.isCanceled) {
+          return r.execute()
+        }
       }
       catch (e: RemoteException) {
         handleRemoteError(e.also { last = it })
