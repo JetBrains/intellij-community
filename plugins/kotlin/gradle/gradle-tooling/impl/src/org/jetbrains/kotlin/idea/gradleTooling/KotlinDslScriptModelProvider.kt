@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -32,10 +31,4 @@ class KotlinDslScriptModelProvider : ProjectImportModelProvider {
             }
         }
     }
-
-    override fun populateProjectModels(
-        controller: BuildController,
-        projectModel: Model,
-        modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
-    ) = Unit
 }
