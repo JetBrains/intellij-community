@@ -32,7 +32,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.CancellablePromise
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayProgressStatus
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
