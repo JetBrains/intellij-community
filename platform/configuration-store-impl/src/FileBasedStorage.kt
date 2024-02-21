@@ -32,6 +32,7 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.name
 
 abstract class FileBasedStorage(
   file: Path,
@@ -108,12 +109,11 @@ abstract class FileBasedStorage(
           writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
           if (events != null) {
             if (virtualFile != null) {
-              events += VFileContentChangeEvent(/*requestor =*/ this, virtualFile, virtualFile.modificationStamp, -1)
+              events += updatingEvent(storage.file, virtualFile)
             }
             else {
               LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storage.file.parent)?.let { dir ->
-                val attributes = FileAttributes.fromNio(storage.file, NioFiles.readAttributes(storage.file))
-                events += VFileCreateEvent(/*requestor =*/ this, dir, storage.file.fileName.toString(), false, attributes, null, null)
+                events += creationEvent(storage.file, dir)
               }
             }
           }
@@ -339,6 +339,18 @@ internal fun writeFile(
   catch (e: Throwable) {
     throw RuntimeException("Cannot write $file", e)
   }
+}
+
+internal fun creationEvent(file: Path, dir: VirtualFile): VFileCreateEvent {
+  val attributes = FileAttributes.fromNio(file, NioFiles.readAttributes(file))
+  return VFileCreateEvent(RELOADING_STORAGE_WRITE_REQUESTOR, dir, file.name, attributes.isDirectory, attributes, /*symlinkTarget =*/ null, /*children =*/ null)
+}
+
+internal fun updatingEvent(file: Path, vFile: VirtualFile): VFileContentChangeEvent {
+  val attributes = FileAttributes.fromNio(file, NioFiles.readAttributes(file))
+  return VFileContentChangeEvent(
+    RELOADING_STORAGE_WRITE_REQUESTOR, vFile, vFile.modificationStamp, /*newModificationStamp =*/ -1,
+    vFile.timeStamp, attributes.lastModified, vFile.length, attributes.length)
 }
 
 internal class ReadOnlyModificationException(
