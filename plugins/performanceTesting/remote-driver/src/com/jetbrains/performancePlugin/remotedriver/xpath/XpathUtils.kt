@@ -13,11 +13,11 @@ import javax.xml.transform.stream.StreamResult
 internal fun Document.convertToHtml(): String {
   return try {
     val sw = StringWriter()
-    sw.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"styles.css\">")
-    sw.append("<script src=\"scripts.js\"></script>\n")
-    sw.append("<script src=\"xpathEditor.js\"></script>\n")
+    sw.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"static/styles.css\">")
+    sw.append("<script src=\"static/scripts.js\"></script>\n")
+    sw.append("<script src=\"static/xpathEditor.js\"></script>\n")
 
-    sw.append("<script src=\"updateButton.js\"></script>\n")
+    sw.append("<script src=\"static/updateButton.js\"></script>\n")
     sw.append("<div id=\"updateButton\"></div>\n")
 
     val tf = TransformerFactory.newInstance()
