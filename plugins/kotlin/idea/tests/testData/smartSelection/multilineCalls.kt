@@ -12,7 +12,7 @@ fun foo(t: T) {
 
 /*
 2
-t.foo(...)
-t.foo(...).foo()
-t.foo(...).foo().foo(...)
+t.foo(…)
+t.foo(…).foo()
+t.foo(…).foo().foo(4)
 */
