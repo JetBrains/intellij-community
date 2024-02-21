@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
@@ -33,6 +34,9 @@ class TerminalOutputController(
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(session.colorPalette, outputModel, focusModel, selectionModel, editor)
   private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
 
+  private val blockCreationAlarm: Alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, session)
+
+  private var runningCommandContext: RunningCommandContext? = null
   private var caretPainter: TerminalCaretPainter? = null
 
   @Volatile
@@ -65,20 +69,19 @@ class TerminalOutputController(
 
   @RequiresEdt
   fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
-    val block = outputModel.createBlock(command, prompt)
-    if (block.withPrompt) {
-      val highlightings = adjustHighlightings(block.prompt!!.highlightings, block.startOffset)
-      appendLineToBlock(block, block.prompt.text, highlightings, block.withCommand)
-    }
-    if (block.withCommand) {
-      appendLineToBlock(block, command!!, listOf(createCommandHighlighting(block)), false)
-    }
-    if (block.withPrompt || block.withCommand) {
-      blocksDecorator.installDecoration(block)
-    }
-
+    outputModel.closeActiveBlock()
     scrollToBottom()
     installRunningCommandListeners()
+    runningCommandContext = RunningCommandContext(command, prompt)
+
+    // Create a block forcefully in a timeout if there are no content updates. Command can output nothing for some time.
+    val createBlockRequest = {
+      doWithScrollingAware {
+        val context = runningCommandContext ?: error("No running command context")
+        createNewBlock(context)
+      }
+    }
+    blockCreationAlarm.addRequest(createBlockRequest, 200)
   }
 
   private fun installRunningCommandListeners() {
@@ -130,6 +133,7 @@ class TerminalOutputController(
       else {
         outputModel.setBlockInfo(block, CommandBlockInfo(exitCode))
       }
+      runningCommandContext = null
     }
   }
 
@@ -177,10 +181,36 @@ class TerminalOutputController(
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
       if (!editor.isDisposed) {
-        val baseOffset = outputModel.getActiveBlock()?.outputStartOffset ?: error("No active block")
-        updateEditor(toHighlightedCommandOutput(output, baseOffset))
+        doWithScrollingAware {
+          doUpdateEditorContent(output)
+        }
       }
     }
+  }
+
+  private fun doUpdateEditorContent(output: StyledCommandOutput) {
+    val activeBlock = outputModel.getActiveBlock() ?: run {
+      // If there is no active block, it means that it is the first content update. Create the new block here.
+      blockCreationAlarm.cancelAllRequests()
+      val context = runningCommandContext ?: error("No running command context")
+      createNewBlock(context)
+    }
+    updateBlock(activeBlock, toHighlightedCommandOutput(output, baseOffset = activeBlock.outputStartOffset))
+  }
+
+  private fun createNewBlock(context: RunningCommandContext): CommandBlock {
+    val block = outputModel.createBlock(context.command, context.prompt)
+    if (block.withPrompt) {
+      val highlightings = adjustHighlightings(block.prompt!!.highlightings, block.startOffset)
+      appendLineToBlock(block, block.prompt.text, highlightings, block.withCommand)
+    }
+    if (block.withCommand) {
+      appendLineToBlock(block, context.command!!, listOf(createCommandHighlighting(block)), false)
+    }
+    if (block.withPrompt || block.withCommand) {
+      blocksDecorator.installDecoration(block)
+    }
+    return block
   }
 
   private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): CommandOutput {
@@ -189,10 +219,7 @@ class TerminalOutputController(
     })
   }
 
-  private fun updateEditor(output: CommandOutput) {
-    val block = outputModel.getActiveBlock() ?: error("No active block")
-    val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
-
+  private fun updateBlock(block: CommandBlock, output: CommandOutput) {
     // highlightings are collected only for output, so add prompt and command highlightings to the first place
     val highlightings = if (block.withPrompt || block.withCommand) {
       output.highlightings.toMutableList().also { highlightings ->
@@ -220,14 +247,24 @@ class TerminalOutputController(
       blocksDecorator.installDecoration(block)
     }
 
-    // scroll to bottom only if we were at the bottom before applying the changes
-    // so the user is free to look at the other commands output while active command is running
-    if (wasAtBottom) {
-      scrollToBottom()
-    }
     // caret highlighter can be removed at this moment, because we replaced the text of the block
     // so, call repaint manually
     caretPainter?.repaint()
+  }
+
+  /**
+   * Scroll to bottom if we were at the bottom before executing the [action]
+   */
+  private fun doWithScrollingAware(action: () -> Unit) {
+    val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
+    try {
+      action()
+    }
+    finally {
+      if (wasAtBottom) {
+        scrollToBottom()
+      }
+    }
   }
 
   private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
@@ -258,6 +295,8 @@ class TerminalOutputController(
   }
 
   private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
+
+  private data class RunningCommandContext(val command: String?, val prompt: PromptRenderingInfo?)
 
   companion object {
     val KEY: DataKey<TerminalOutputController> = DataKey.create("TerminalOutputController")
