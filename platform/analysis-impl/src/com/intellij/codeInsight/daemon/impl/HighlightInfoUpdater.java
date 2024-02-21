@@ -50,7 +50,8 @@ final class HighlightInfoUpdater implements Disposable {
   private static final Key<Map<PsiFile, Map<Object, ToolHighlights>>> VISITED_PSI_ELEMENTS = Key.create("VISITED_PSI_ELEMENTS");
 
   static class ToolHighlights {
-    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap(); //new ConcurrentHashMap<>();
+    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap(evicted -> removeEvicted(evicted));
+
     @NotNull ToolLatencies latencies = new ToolLatencies(0,0,0);
   }
   record ToolLatencies(
@@ -80,6 +81,16 @@ final class HighlightInfoUpdater implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  private static void removeEvicted(@NotNull List<? extends HighlightInfo> evicted) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Disposing evicted  " + evicted);
+    }
+    for (HighlightInfo info : evicted) {
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter != null) highlighter.dispose();
+    }
   }
 
   @NotNull
@@ -142,23 +153,22 @@ final class HighlightInfoUpdater implements Disposable {
     for (Map.Entry<Object, ToolHighlights> toolEntry: map.entrySet()) {
       Object toolId = toolEntry.getKey();
       ToolHighlights toolHighlights = toolEntry.getValue();
-      toolHighlights.elementHighlights.entrySet().removeIf(entry -> {
-        PsiElement psiElement = entry.getKey();
+      toolHighlights.elementHighlights.replaceAll((psiElement, infos) -> {
         if (psiElement == FAKE_ELEMENT || psiElement.isValid()) {
-          return false;
+          return infos;
         }
-        for (HighlightInfo info : entry.getValue()) {
+        return List.copyOf(ContainerUtil.filter(infos, info -> {
           RangeHighlighterEx highlighter = info.getHighlighter();
-          if (highlighter != null) {
-            if (info.isFromAnnotator() && !removeAnnotatorHighlights) continue;
-            if (isInspectionToolId(toolId) && !removeInspectionHighlights) continue;
+          if (highlighter != null && (info.isFromAnnotator() && removeAnnotatorHighlights ||
+                                      isInspectionToolId(toolId) && removeInspectionHighlights)) {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("removeOrRecycleInvalidPsiElements: recycle " + info + " for invalid " + psiElement+" from "+origin);
+              LOG.debug("removeOrRecycleInvalidPsiElements: recycle " + info + " for invalid " + psiElement + " from " + origin);
             }
             toReuse.recycleHighlighter(highlighter);
+            return false;
           }
-        }
-        return true;
+          return true;
+        }));
       });
     }
     return toReuse;
