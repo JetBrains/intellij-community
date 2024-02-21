@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  */
 final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
 
-  ConcurrentSoftValueHashMap(@Nullable Consumer<K> evictionListener) {
+  ConcurrentSoftValueHashMap(@Nullable Consumer<? super K> evictionListener) {
     super(evictionListener);
   }
 

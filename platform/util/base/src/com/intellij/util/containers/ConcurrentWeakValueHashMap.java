@@ -17,7 +17,7 @@ import java.util.function.Consumer;
  */
 final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
 
-  ConcurrentWeakValueHashMap(@Nullable Consumer<K> evictionListener) {
+  ConcurrentWeakValueHashMap(@Nullable Consumer<? super K> evictionListener) {
     super(evictionListener);
   }
 

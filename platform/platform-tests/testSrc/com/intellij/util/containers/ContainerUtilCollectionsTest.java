@@ -842,7 +842,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   @Test
-  public void testEvictionListenerWorks() {
+  public void testKeyEvictionListenerWorks() {
     AtomicReference<Object> evicted = new AtomicReference<>();
     Map<Object, Object> map = CollectionFactory.createConcurrentSoftMap(value -> {
       assertTrue(evicted.compareAndSet(null, value));
@@ -850,8 +850,22 @@ public class ContainerUtilCollectionsTest extends Assert {
     Object value = new Object();
     map.put(new Object(), value);
 
-    GCUtil.tryGcSoftlyReachableObjects(() -> map.remove("")!=null/*to call processQueue()*/ || map.isEmpty());
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.remove("") != null/*to call processQueue()*/ || map.isEmpty());
     map.remove(""); // to call processQueue()
     assertSame(value, evicted.get());
+  }
+
+  @Test
+  public void testValueEvictionListenerWorks() {
+    AtomicReference<Object> evicted = new AtomicReference<>();
+    Map<Object, Object> map = CollectionFactory.createConcurrentSoftValueMap(key -> {
+      assertTrue(evicted.compareAndSet(null, key));
+    });
+    Object key = new Object();
+    map.put(key, new Object());
+
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.remove("") != null/*to call processQueue()*/ || map.isEmpty());
+    map.remove(""); // to call processQueue()
+    assertSame(key, evicted.get());
   }
 }
