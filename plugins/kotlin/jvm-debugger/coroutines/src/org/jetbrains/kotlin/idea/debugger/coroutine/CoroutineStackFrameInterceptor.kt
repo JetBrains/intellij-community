@@ -31,7 +31,10 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.continuationVariableValue
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.getSuspendExitMode
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.thisVariableValue
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutineStackFrameInterceptor(val project: Project) : StackFrameInterceptor {
@@ -66,31 +69,22 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
         val evaluationContext = EvaluationContextImpl(suspendContext, frameProxy)
         val defaultExecutionContext = DefaultExecutionContext(evaluationContext)
 
-        var currentCoroutines: Set<Long>? = null
+        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
+        if (debugProbesImpl != null) {
+            // first try the helper, it is the fastest way
+            var currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
 
-        if (!useContinuationObjectFilter.get(suspendContext.debugProcess, false)) {
-            val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
-            if (debugProbesImpl != null) {
-                // first try the helper, it is the fastest way
-                currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
-
-                // then try the mirror
-                if (currentCoroutines == null) {
-                    currentCoroutines = debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
-                }
+            // then try the mirror
+            if (currentCoroutines == null) {
+                currentCoroutines = debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
             }
-            if (currentCoroutines != null) {
-                return when {
-                    currentCoroutines.isEmpty() -> null
-                    else -> ContinuationIdFilter(currentCoroutines)
-                }
+            return when {
+                currentCoroutines.isEmpty() -> null
+                else -> ContinuationIdFilter(currentCoroutines)
             }
-            else {
-                useContinuationObjectFilter.set(suspendContext.debugProcess, true)
-                //TODO: IDEA-341142 show nice notification about this
-                thisLogger().warn("No ThreadLocal coroutine tracking is found")
-            }
-
+        } else {
+            //TODO: IDEA-341142 show nice notification about this
+            thisLogger().warn("No ThreadLocal coroutine tracking is found")
         }
         return continuationObjectFilter(suspendContext, defaultExecutionContext)
     }
@@ -167,10 +161,5 @@ class CoroutineStackFrameInterceptor(val project: Project) : StackFrameIntercept
     private data class ContinuationObjectFilter(val reference: ObjectReference) : ContinuationFilter {
         override fun canRunTo(nextContinuationFilter: ContinuationFilter): Boolean = 
             this == nextContinuationFilter
-    }
-
-    companion object {
-        @JvmStatic
-        private val useContinuationObjectFilter = Key.create<Boolean>("useContinuationObjectFilter")
     }
 }
