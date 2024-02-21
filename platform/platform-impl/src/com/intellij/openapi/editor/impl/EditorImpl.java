@@ -864,7 +864,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
         EditorPopupHandler handler = myPopupHandlers.get(i);
         ActionGroup group = handler instanceof ContextMenuPopupHandler o ? o.getActionGroup(event) : null;
-        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0) return group;
+        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0 &&
+            group.getClass() == DefaultActionGroup.class) return group;
         if (group != null) return new EditorMousePopupActionGroup(group, event);
       }
       return null;
@@ -5342,7 +5343,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (ContainerUtil.all(myPopupHandlers, o -> o instanceof ContextMenuPopupHandler)) {
         ActionGroup group = getPopupActionGroup(event);
         if (group == null) return;
-        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0) return;
+        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0 &&
+            group.getClass() == DefaultActionGroup.class) return;
         new ContextMenuPopupHandler.Simple(group).handlePopup(event);
       }
       else {
