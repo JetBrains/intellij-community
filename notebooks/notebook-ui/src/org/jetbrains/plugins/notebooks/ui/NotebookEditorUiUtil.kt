@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.ui
 
+import com.intellij.openapi.util.Key
 import javax.swing.JPanel
 import javax.swing.plaf.PanelUI
 
@@ -21,3 +22,5 @@ open class SteadyUIPanel(private val steadyUi: PanelUI) : JPanel() {
     setUI(steadyUi)
   }
 }
+
+val isFoldingEnabledKey = Key.create<Boolean>("jupyter.editor.folding.cells")

@@ -34,6 +34,11 @@ interface NotebookCellInlayController {
     }
   }
 
+  /**
+   * Marker interface for factories producing custom editors for cells
+   */
+  interface InputFactory
+
   val inlay: Inlay<*>
 
   val factory: Factory

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
+import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 import java.awt.Color
 import java.awt.Graphics
@@ -42,13 +43,15 @@ inline fun paintNotebookCellBackgroundGutter(
   }
 
   actionBetweenBackgroundAndStripe()
-  if (editor.editorKind == EditorKind.DIFF) return
-  if (stripe != null) {
-    paintCellStripe(appearance, g, r, stripe, top, height)
-  }
-  if (stripeHover != null) {
-    g.color = stripeHover
-    g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineHoverWidth(), height)
+  if (editor.getUserData(isFoldingEnabledKey) != true) {
+    if (editor.editorKind == EditorKind.DIFF) return
+    if (stripe != null) {
+      paintCellStripe(appearance, g, r, stripe, top, height)
+    }
+    if (stripeHover != null) {
+      g.color = stripeHover
+      g.fillRect(r.width - appearance.getLeftBorderWidth(), top, appearance.getCellLeftLineHoverWidth(), height)
+    }
   }
 }
 

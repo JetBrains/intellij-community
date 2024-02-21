@@ -42,13 +42,6 @@ private class NotebookIntervalPointerImpl(@Volatile var interval: NotebookCellLi
 
 private typealias NotebookIntervalPointersEventChanges = ArrayList<Change>
 
-
-private sealed interface ChangesContext
-
-private data class DocumentChangedContext(var redoContext: RedoContext? = null) : ChangesContext
-private data class UndoContext(val changes: List<Change>) : ChangesContext
-private data class RedoContext(val changes: List<Change>) : ChangesContext
-
 /**
  * One unique NotebookIntervalPointer exists for each current interval. You can use NotebookIntervalPointer as map key.
  * [NotebookIntervalPointerFactoryImpl] automatically supports undo/redo for [documentChanged] and [modifyPointers] calls.
@@ -62,7 +55,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
                                          undoManager: UndoManager?,
                                          private val project: Project) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
-  private var changesContext: ChangesContext? = null
+  private var postponedEvent: NotebookIntervalPointersEvent? = null
   override val changeListeners: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener> =
     EventDispatcher.create(NotebookIntervalPointerFactory.ChangeListener::class.java)
 
@@ -109,77 +102,44 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   override fun documentChanged(event: NotebookCellLinesEvent) {
     ThreadingAssertions.assertWriteAccess()
     try {
-      val pointersEvent = when (val context = changesContext) {
-        is DocumentChangedContext -> documentChangedByAction(event, context)
-        is UndoContext -> documentChangedByUndo(event, context)
-        is RedoContext -> documentChangedByRedo(event, context)
-        null -> documentChangedByAction(event, null) // changesContext is null if undo manager is unavailable
+      if (validUndoManager?.isUndoOrRedoInProgress != true) {
+        documentChangedByAction(event)
+      } else {
+        val e = postponedEvent
+        if (e != null) {
+          onUpdated(e)
+        }
       }
-      onUpdated(pointersEvent)
     }
     catch (ex: Exception) {
       thisLogger().error(ex)
       // DS-3893 consume exception and log it, actions changing document should work as usual
-    }
-    finally {
-      changesContext = null
-    }
-  }
-
-  override fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {
-    ThreadingAssertions.assertWriteAccess()
-    val undoManager = validUndoManager
-    if (undoManager == null || undoManager.isUndoOrRedoInProgress) return
-    val context = DocumentChangedContext()
-    try {
-      undoManager.undoableActionPerformed(object : BasicUndoableAction() {
-        override fun undo() {}
-
-        override fun redo() {
-          changesContext = context.redoContext
-        }
-      })
-      changesContext = context
-    }
-    catch (ex: Exception) {
-      thisLogger().error(ex)
-      // DS-3893 consume exception, don't prevent document updating
+    } finally {
+      postponedEvent = null
     }
   }
 
-  private fun documentChangedByAction(event: NotebookCellLinesEvent,
-                                      documentChangedContext: DocumentChangedContext?): NotebookIntervalPointersEvent {
-    val eventChanges = NotebookIntervalPointersEventChanges()
-
-    updateChangedIntervals(event, eventChanges)
-    updateShiftedIntervals(event)
+  private fun documentChangedByAction(event: NotebookCellLinesEvent) {
+    val eventChanges = updateChangedIntervals(event)
+    val shiftChanges = updateShiftedIntervals(event)
 
     validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
       override fun undo() {
-        changesContext = UndoContext(eventChanges)
+        ThreadingAssertions.assertWriteAccess()
+        updatePointersByChanges(invertChanges(shiftChanges))
+        val invertChanges = invertChanges(eventChanges)
+        updatePointersByChanges(invertChanges)
+        onUpdated(NotebookIntervalPointersEvent(invertChanges, event, EventSource.UNDO_ACTION))
       }
 
-      override fun redo() {}
+      override fun redo() {
+        ThreadingAssertions.assertWriteAccess()
+        updatePointersByChanges(eventChanges)
+        updatePointersByChanges(shiftChanges)
+        postponedEvent = NotebookIntervalPointersEvent(eventChanges, event, EventSource.REDO_ACTION)
+      }
     })
-
-    documentChangedContext?.let {
-      it.redoContext = RedoContext(eventChanges)
-    }
-
-    return NotebookIntervalPointersEvent(eventChanges, event, EventSource.ACTION)
-  }
-
-  private fun documentChangedByUndo(event: NotebookCellLinesEvent, context: UndoContext): NotebookIntervalPointersEvent {
-    val invertedChanges = invertChanges(context.changes)
-    updatePointersByChanges(invertedChanges)
-    updateShiftedIntervals(event)
-    return NotebookIntervalPointersEvent(invertedChanges, event, EventSource.UNDO_ACTION)
-  }
-
-  private fun documentChangedByRedo(event: NotebookCellLinesEvent, context: RedoContext): NotebookIntervalPointersEvent {
-    updatePointersByChanges(context.changes)
-    updateShiftedIntervals(event)
-    return NotebookIntervalPointersEvent(context.changes, event, EventSource.REDO_ACTION)
+    onUpdated(NotebookIntervalPointersEvent(eventChanges, event, EventSource.ACTION))
   }
 
   private fun updatePointersByChanges(changes: List<Change>) {
@@ -215,7 +175,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     return old.type == new.type && old.language == new.language
   }
 
-  private fun updateChangedIntervals(e: NotebookCellLinesEvent, eventChanges: NotebookIntervalPointersEventChanges) {
+  private fun updateChangedIntervals(e: NotebookCellLinesEvent): NotebookIntervalPointersEventChanges {
+    val eventChanges = NotebookIntervalPointersEventChanges()
     when {
       !e.isIntervalsChanged() -> {
         // content edited without affecting intervals values
@@ -257,17 +218,25 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         }
       }
     }
+    return eventChanges
   }
 
-  private fun updateShiftedIntervals(event: NotebookCellLinesEvent) {
+  private fun updateShiftedIntervals(event: NotebookCellLinesEvent): NotebookIntervalPointersEventChanges {
     val invalidPointersStart =
       event.newIntervals.firstOrNull()?.let { it.ordinal + event.newIntervals.size }
       ?: event.oldIntervals.firstOrNull()?.ordinal
       ?: pointers.size
 
+    val eventChanges = NotebookIntervalPointersEventChanges()
+    val intervals = notebookCellLines.intervals
     for (i in invalidPointersStart until pointers.size) {
-      pointers[i].interval = notebookCellLines.intervals[i]
+      val ptr = pointers[i]
+      val intervalBefore = ptr.interval!!
+      val intervalAfter = intervals[i]
+      ptr.interval = intervals[i]
+      eventChanges.add(OnEdited(ptr, intervalBefore, intervalAfter))
     }
+    return eventChanges
   }
 
   private fun applyChanges(changes: Iterable<NotebookIntervalPointerFactory.Change>, eventChanges: NotebookIntervalPointersEventChanges) {

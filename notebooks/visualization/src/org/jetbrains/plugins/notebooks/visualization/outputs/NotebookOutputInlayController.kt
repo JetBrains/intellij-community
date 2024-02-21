@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asSafely
 import com.intellij.util.messages.Topic
+import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
@@ -80,22 +81,6 @@ class NotebookOutputInlayController private constructor(
     }
   }
 
-  fun checkAndUpdateInlayPosition(): Inlay<*>? {
-    val lines = intervalPointer.get()?.lines ?: return null
-    val lineEnd = computeInlayOffset(editor.document, lines)
-    if (inlay.offset != lineEnd) {
-      val oldInlay = inlay
-      isInReplaceInlay = true
-      Disposer.dispose(inlay)
-      inlay = createInlay()
-      isInReplaceInlay = false
-      return oldInlay
-    }
-    else {
-      return null
-    }
-  }
-
   private fun createInlay() = editor.addComponentInlay(
     outerComponent,
     isRelatedToPrecedingText = true,
@@ -124,7 +109,9 @@ class NotebookOutputInlayController private constructor(
     for (collapsingComponent in innerComponent.components) {
       val mainComponent = (collapsingComponent as CollapsingComponent).mainComponent
 
-      collapsingComponent.paintGutter(editor, yOffset, g)
+      if (editor.getUserData(isFoldingEnabledKey) != true) {
+        collapsingComponent.paintGutter(editor, yOffset, g)
+      }
 
       mainComponent.gutterPainter?.let { painter ->
         mainComponent.yOffsetFromEditor(editor)?.let { yOffset ->
@@ -276,6 +263,14 @@ class NotebookOutputInlayController private constructor(
     }
     ApplicationManager.getApplication().messageBus.syncPublisher(OUTPUT_LISTENER).outputCreated(editor, lines.last)
     return result
+  }
+
+  fun toggle() {
+    collapsingComponents.forEach { collapsingComponent ->
+      if (collapsingComponent.isWorthCollapsing) {
+        collapsingComponent.isSeen = !collapsingComponent.isSeen
+      }
+    }
   }
 
   class Factory : NotebookCellInlayController.Factory {

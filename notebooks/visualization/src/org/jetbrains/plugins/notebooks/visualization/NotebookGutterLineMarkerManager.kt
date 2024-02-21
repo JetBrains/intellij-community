@@ -3,8 +3,6 @@ package org.jetbrains.plugins.notebooks.visualization
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -21,10 +19,11 @@ import java.awt.Rectangle
 class NotebookGutterLineMarkerManager {
 
   fun attachHighlighters(editor: EditorEx) {
-    editor.addEditorDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) = putHighlighters(editor)
-      override fun bulkUpdateFinished(document: Document) = putHighlighters(editor)
-    })
+    NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(object: NotebookIntervalPointerFactory.ChangeListener  {
+      override fun onUpdated(event: NotebookIntervalPointersEvent) {
+        putHighlighters(editor)
+      }
+    }, (editor as EditorImpl).disposable)
 
     editor.caretModel.addCaretListener(object : CaretListener {
       override fun caretPositionChanged(event: CaretEvent) {
