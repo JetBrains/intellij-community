@@ -95,7 +95,7 @@ abstract class FileBasedStorage(
       when {
         dataWriter == null -> {
           if (useVfs && virtualFile == null) LOG.warn("Cannot find virtual file")
-          deleteFile(storage.file, requestor = this, virtualFile)
+          deleteFile(storage.file, virtualFile = if (useVfs) virtualFile else null, requestor = this)
           storage.cachedVirtualFile = null
           if (events != null && virtualFile != null && virtualFile.isValid) {
             events += VFileDeleteEvent(/*requestor =*/ this, virtualFile)
@@ -121,7 +121,7 @@ abstract class FileBasedStorage(
       }
     }
 
-    private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile?) {
+    private fun deleteFile(file: Path, virtualFile: VirtualFile?, requestor: StorageManagerFileWriteRequestor) {
       if (virtualFile == null) {
         file.deleteIfExists()
       }
