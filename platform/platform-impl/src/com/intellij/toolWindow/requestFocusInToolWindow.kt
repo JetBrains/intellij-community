@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
-import com.intellij.ui.content.impl.ContentManagerImpl
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 import javax.swing.SwingUtilities
@@ -73,29 +72,14 @@ internal fun getShowingComponentToRequestFocus(toolWindow: ToolWindowImpl): Comp
     }
     return component
   }
-  if (manager is ContentManagerImpl) {
-    manager.contentsRecursively.forEach { content ->
-      if (content.isSelected) {
-        val component = content.preferredFocusableComponent
-        if (component == null || !component.isShowing) {
-          LOG.debug { "tool window ${toolWindow.id} selected content's (name='${content.displayName}') preferred focusable component is hidden: $component" }
-          return null
-        }
-        return component
-      }
-    }
-  }
-  else {
-    val content = manager.selectedContent
-    if (content != null) {
+  manager.contentsRecursively.forEach { content ->
+    if (content.isSelected) {
       val component = content.preferredFocusableComponent
-      if (component != null) {
-        if (!component.isShowing) {
-          LOG.debug { "tool window ${toolWindow.id} selected content's (name='${content.displayName}') preferred focusable component is hidden: $component" }
-          return null
-        }
-        return component
+      if (component == null || !component.isShowing) {
+        LOG.debug { "tool window ${toolWindow.id} selected content's (name='${content.displayName}') preferred focusable component is hidden: $component" }
+        return null
       }
+      return component
     }
   }
 
