@@ -36,7 +36,7 @@ public fun Text(
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = JewelTheme.textStyle,
+    style: TextStyle = JewelTheme.defaultTextStyle,
 ) {
     Text(
         AnnotatedString(text),
@@ -77,7 +77,7 @@ public fun Text(
     maxLines: Int = Int.MAX_VALUE,
     inlineContent: Map<String, InlineTextContent> = emptyMap(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = JewelTheme.textStyle,
+    style: TextStyle = JewelTheme.defaultTextStyle,
 ) {
     val textColor = color.takeOrElse { LocalContentColor.current.takeOrElse { style.color } }
 

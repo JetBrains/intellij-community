@@ -11,7 +11,7 @@ import org.jetbrains.jewel.ui.component.minus
 
 /**
  * The text style to use for regular text. Identical to
- * [JewelTheme.textStyle].
+ * [JewelTheme.defaultTextStyle].
  *
  * Only available when running in the IntelliJ Platform.
  */

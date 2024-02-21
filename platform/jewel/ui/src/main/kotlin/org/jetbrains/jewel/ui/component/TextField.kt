@@ -109,7 +109,7 @@ public fun TextField(
     keyboardActions: KeyboardActions = KeyboardActions(),
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextFieldStyle = JewelTheme.textFieldStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     InputField(

@@ -751,6 +751,7 @@ public abstract interface class org/jetbrains/jewel/foundation/theme/JewelTheme 
 
 public final class org/jetbrains/jewel/foundation/theme/JewelTheme$Companion {
 	public final fun getContentColor (Landroidx/compose/runtime/Composer;I)J
+	public final fun getDefaultTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun getGlobalColors (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 	public final fun getTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;

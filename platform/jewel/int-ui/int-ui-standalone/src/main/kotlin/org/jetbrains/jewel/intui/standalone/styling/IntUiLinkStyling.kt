@@ -12,7 +12,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
-import org.jetbrains.jewel.intui.standalone.theme.defaultTextStyle
+import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.ui.component.styling.LinkColors
 import org.jetbrains.jewel.ui.component.styling.LinkIcons
 import org.jetbrains.jewel.ui.component.styling.LinkMetrics
@@ -89,8 +89,8 @@ public fun LinkIcons.Companion.defaults(
 
 @Composable
 public fun LinkTextStyles.Companion.light(
-    normal: TextStyle = JewelTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
-    disabled: TextStyle = JewelTheme.defaultTextStyle,
+    normal: TextStyle = JewelTheme.createDefaultTextStyle().copy(textDecoration = TextDecoration.Underline),
+    disabled: TextStyle = JewelTheme.createDefaultTextStyle(),
     focused: TextStyle = normal,
     pressed: TextStyle = normal,
     hovered: TextStyle = normal,
@@ -100,8 +100,8 @@ public fun LinkTextStyles.Companion.light(
 
 @Composable
 public fun LinkTextStyles.Companion.dark(
-    normal: TextStyle = JewelTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
-    disabled: TextStyle = JewelTheme.defaultTextStyle,
+    normal: TextStyle = JewelTheme.createDefaultTextStyle().copy(textDecoration = TextDecoration.Underline),
+    disabled: TextStyle = JewelTheme.createDefaultTextStyle(),
     focused: TextStyle = normal,
     pressed: TextStyle = normal,
     hovered: TextStyle = normal,

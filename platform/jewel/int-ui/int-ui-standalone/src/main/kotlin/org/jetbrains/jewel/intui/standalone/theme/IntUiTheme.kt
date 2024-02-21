@@ -48,8 +48,8 @@ import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.painter.LocalPainterHintsProvider
 import org.jetbrains.jewel.ui.theme.BaseJewelTheme
 
-public val JewelTheme.Companion.defaultTextStyle: TextStyle
-    get() = TextStyle.Default.copy(
+public fun JewelTheme.Companion.createDefaultTextStyle(): TextStyle =
+    TextStyle.Default.copy(
         fontFamily = FontFamily.Inter,
         fontSize = 13.sp,
         fontWeight = FontWeight.Normal,
@@ -62,7 +62,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
     metrics: GlobalMetrics = GlobalMetrics.defaults(),
     palette: ThemeColorPalette = IntUiLightTheme.colors,
     iconData: ThemeIconData = IntUiLightTheme.iconData,
-    defaultTextStyle: TextStyle = JewelTheme.defaultTextStyle,
+    defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
     contentColor: Color = IntUiLightTheme.colors.grey(1),
 ): ThemeDefinition =
     ThemeDefinition(isDark = false, colors, metrics, defaultTextStyle, contentColor, palette, iconData)
@@ -73,7 +73,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
     metrics: GlobalMetrics = GlobalMetrics.defaults(),
     palette: ThemeColorPalette = IntUiDarkTheme.colors,
     iconData: ThemeIconData = IntUiDarkTheme.iconData,
-    defaultTextStyle: TextStyle = JewelTheme.defaultTextStyle,
+    defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
     contentColor: Color = IntUiDarkTheme.colors.grey(12),
 ): ThemeDefinition =
     ThemeDefinition(isDark = true, colors, metrics, defaultTextStyle, contentColor, palette, iconData)

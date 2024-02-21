@@ -54,7 +54,7 @@ public fun RadioButton(
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = JewelTheme.radioButtonStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) {
     RadioButtonImpl(
         selected = selected,
@@ -79,7 +79,7 @@ public fun RadioButtonRow(
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = JewelTheme.radioButtonStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
 ) {
     RadioButtonImpl(
         selected = selected,
@@ -104,7 +104,7 @@ public fun RadioButtonRow(
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: RadioButtonStyle = JewelTheme.radioButtonStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     RadioButtonImpl(

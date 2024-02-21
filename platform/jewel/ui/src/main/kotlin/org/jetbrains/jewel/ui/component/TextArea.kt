@@ -51,7 +51,7 @@ public fun TextArea(
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextAreaStyle = JewelTheme.textAreaStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var textFieldValueState by remember { mutableStateOf(TextFieldValue(text = value)) }
@@ -107,7 +107,7 @@ public fun TextArea(
     maxLines: Int = Int.MAX_VALUE,
     onTextLayout: (TextLayoutResult) -> Unit = {},
     style: TextAreaStyle = JewelTheme.textAreaStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     val minSize = style.metrics.minSize

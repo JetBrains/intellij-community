@@ -49,7 +49,7 @@ public fun DefaultButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = JewelTheme.defaultButtonStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(
@@ -70,7 +70,7 @@ public fun OutlinedButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = JewelTheme.outlinedButtonStyle,
-    textStyle: TextStyle = JewelTheme.textStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(

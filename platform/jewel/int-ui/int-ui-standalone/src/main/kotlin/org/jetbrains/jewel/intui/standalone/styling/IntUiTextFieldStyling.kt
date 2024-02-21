@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.theme.defaultTextStyle
+import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldColors
 import org.jetbrains.jewel.ui.component.styling.TextFieldMetrics
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -20,7 +20,7 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 public fun TextFieldStyle.Companion.light(
     colors: TextFieldColors = TextFieldColors.light(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
 ): TextFieldStyle =
     TextFieldStyle(colors, metrics, textStyle)
 
@@ -28,7 +28,7 @@ public fun TextFieldStyle.Companion.light(
 public fun TextFieldStyle.Companion.dark(
     colors: TextFieldColors = TextFieldColors.dark(),
     metrics: TextFieldMetrics = TextFieldMetrics.defaults(),
-    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    textStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
 ): TextFieldStyle =
     TextFieldStyle(colors, metrics, textStyle)
 

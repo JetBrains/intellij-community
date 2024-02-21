@@ -26,7 +26,13 @@ public interface JewelTheme {
             @ReadOnlyComposable
             get() = LocalGlobalMetrics.current
 
+        @Deprecated("Use defaultTextStyle instead", ReplaceWith("JewelTheme.defaultTextStyle"), DeprecationLevel.ERROR)
         public val textStyle: TextStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = defaultTextStyle
+
+        public val defaultTextStyle: TextStyle
             @Composable
             @ReadOnlyComposable
             get() = LocalTextStyle.current

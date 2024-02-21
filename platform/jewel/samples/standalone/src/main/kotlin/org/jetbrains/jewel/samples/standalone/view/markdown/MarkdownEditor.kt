@@ -121,7 +121,7 @@ private fun Editor(
     onMarkdownChange: (String) -> Unit,
     modifier: Modifier,
 ) {
-    val monospacedTextStyle = JewelTheme.textStyle.copy(fontFamily = FontFamily.Monospace)
+    val monospacedTextStyle = JewelTheme.defaultTextStyle.copy(fontFamily = FontFamily.Monospace)
 
     TextArea(
         value = currentMarkdown,
