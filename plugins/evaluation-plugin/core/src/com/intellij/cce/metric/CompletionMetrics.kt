@@ -45,6 +45,8 @@ fun createBenchmarkMetrics(): List<Metric> =
     MatchedRatio(showByDefault = true),
     MatchedRatioAt(showByDefault = false, n = 1),
     MatchedRatioAt(showByDefault = false, n = 3),
+    MatchedRatioWithRelevanceModel(showByDefault = true, "filter"),
+    MatchedRatioWithRelevanceModel(showByDefault = false, "trigger"),
     PrefixSimilarity(showByDefault = false),
     EditSimilarity(showByDefault = false),
     PerfectLine(showByDefault = true),

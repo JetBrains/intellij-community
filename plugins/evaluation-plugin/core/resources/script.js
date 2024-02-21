@@ -157,7 +157,8 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
       }
     }
   }
-  addTriggerModelBlock(popup, lookup)
+  addRelevanceModelBlock(popup, lookup, "trigger")
+  addRelevanceModelBlock(popup, lookup, "filter")
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
@@ -185,12 +186,13 @@ function addSuggestions(sessionDiv, popup, lookup) {
   }
 }
 
-function addTriggerModelBlock(popup, lookup) {
-  if (!("trigger_score" in lookup["additionalInfo"] && "trigger_decision" in lookup["additionalInfo"])) return
+function addRelevanceModelBlock(popup, lookup, relevanceMode) {
+  if (!(`${relevanceMode}_score` in lookup["additionalInfo"] && `${relevanceMode}_decision` in lookup["additionalInfo"])) return
   let addInfo = lookup["additionalInfo"]
-  let triggerModelResults = document.createElement("DIV")
-  triggerModelResults.innerHTML = "Trigger model score: " + addInfo["trigger_score"] + ", decision: " + addInfo["trigger_decision"]
-  popup.appendChild(triggerModelResults)
+  let relevanceModelResults = document.createElement("DIV")
+  relevanceModelResults.innerHTML = `${relevanceMode} model score:` + addInfo[`${relevanceMode}_score`]
+    + ", decision: " + addInfo[`${relevanceMode}_decision`]
+  popup.appendChild(relevanceModelResults)
 }
 
 // thanks to AI Assistant

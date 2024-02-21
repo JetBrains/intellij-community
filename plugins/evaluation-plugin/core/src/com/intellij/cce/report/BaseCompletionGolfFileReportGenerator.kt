@@ -59,7 +59,11 @@ abstract class BaseCompletionGolfFileReportGenerator(
           }
           div("trigger") {
             label("labelText") { +"Trigger model " }
-            span("stats-skipped") { +"skipped" }
+            span("stats-trigger-skipped") { +"skipped" }
+          }
+          div("filter") {
+            label("labelText") { +"Filter model " }
+            span("stats-filter-skipped") { +"skipped" }
           }
           div("red-code") {
             label("labelText") { +"Filters check " }

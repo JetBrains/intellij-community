@@ -76,6 +76,19 @@ class MatchedRatioAt(showByDefault: Boolean = false, val n: Int) : SimilarityMet
   }
 }
 
+class MatchedRatioWithRelevanceModel(showByDefault: Boolean = false, private val relevance: String) : SimilarityMetric(showByDefault) {
+  override val name = "With ${relevance.capitalize()} Model Matched Ratio"
+  override val description: String = "Length of selected proposal normalized by expected text (avg by invocations) " +
+                                     "taking $relevance model into account"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+    if (lookup.selectedPosition == -1 || lookup.additionalInfo["${relevance}_decision"] == "SKIP")
+      return null
+    val selected = lookup.suggestions[lookup.selectedPosition]
+    return selected.text.length.toDouble() - lookup.prefix.length
+  }
+}
+
 class PrefixSimilarity(showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
   override val name = "Prefix Similarity"
   override val description: String = "The most matching prefix among proposals normalized by expected text (avg by invocations)"

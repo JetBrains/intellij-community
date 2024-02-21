@@ -35,7 +35,10 @@ class LineCompletionFileReportGenerator(
 
   override fun getKindClass(lookup: Lookup, expectedText: String): String {
     if (lookup.additionalInfo["trigger_decision"] == "SKIP") {
-      return "cg-skipped"
+      return "cg-trigger-skipped"
+    }
+    if (lookup.additionalInfo["filter_decision"] == "SKIP") {
+      return "cg-filter-skipped"
     }
     if (lookup.suggestions.isEmpty()) {
       return "cg-empty"
