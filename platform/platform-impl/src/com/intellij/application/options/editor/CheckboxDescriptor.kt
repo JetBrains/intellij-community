@@ -7,8 +7,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.layout.Cell
-import com.intellij.ui.layout.CellBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.reflect.KMutableProperty0
@@ -48,13 +46,6 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
       override fun isOptionEnabled() = getter.invoke()
     }
   }
-}
-
-@ApiStatus.ScheduledForRemoval
-@ApiStatus.Internal
-@Deprecated("Use Kotlin UI DSL Version 2")
-fun Cell.checkBox(ui: CheckboxDescriptor): CellBuilder<JBCheckBox> {
-  return checkBox(ui.name, ui.getter, ui.setter, ui.comment)
 }
 
 fun Row.checkBox(ui: CheckboxDescriptor): com.intellij.ui.dsl.builder.Cell<JBCheckBox> {
