@@ -11,7 +11,7 @@ import com.intellij.ui.ExperimentalUI
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.fus.NewTerminalSwitchPlace
+import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 
 class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.messagePointer("action.Terminal.EnableNewUi.text")) {
@@ -22,7 +22,7 @@ class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.message
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY).setValue(state)
     val project = e.project!!
-    TerminalUsageTriggerCollector.triggerNewTerminalSwitched(project, state, NewTerminalSwitchPlace.TOOLWINDOW_OPTIONS)
+    TerminalUsageTriggerCollector.triggerBlockTerminalSwitched(project, state, BlockTerminalSwitchPlace.TOOLWINDOW_OPTIONS)
     TerminalToolWindowManager.getInstance(project).createNewSession()
   }
 

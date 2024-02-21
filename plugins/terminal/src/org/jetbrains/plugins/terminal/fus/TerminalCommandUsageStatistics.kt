@@ -25,9 +25,9 @@ internal object TerminalCommandUsageStatistics {
   internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
 
   fun triggerCommandExecuted(commandExecutedEvent: EventId3<String?, String?, Boolean>,
-                             project: Project, userCommandLine: String, isNewTerminal: Boolean) {
+                             project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
     val eventData = toEventData(userCommandLine)
-    commandExecutedEvent.log(project, eventData?.command, eventData?.subCommand, isNewTerminal)
+    commandExecutedEvent.log(project, eventData?.command, eventData?.subCommand, isBlockTerminal)
   }
 
   private fun toEventData(userCommandLine: String): TerminalCommandEventData? {
