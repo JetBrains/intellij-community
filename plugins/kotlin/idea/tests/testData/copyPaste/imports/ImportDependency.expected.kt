@@ -3,10 +3,15 @@ package to
 
 import d.A
 import d.ClassObject
-import d.E
+import d.E.ENTRY
 import d.O1
 import d.O2
-import d.Outer
+import d.Outer.Inner
+import d.Outer.Nested
+import d.Outer.NestedAnnotation
+import d.Outer.NestedEnum
+import d.Outer.NestedInterface
+import d.Outer.NestedObj
 import d.T
 import d.c
 import d.ext
@@ -16,9 +21,9 @@ fun f(a: A, t: T) {
     g(A(c).ext())
     O1.f()
     O2
-    E.ENTRY
+    ENTRY
 }
 
-fun f2(i: Outer.Inner, n: Outer.Nested, e: Outer.NestedEnum, o: Outer.NestedObj, t: Outer.NestedInterface, a: Outer.NestedAnnotation) {
+fun f2(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedInterface, a: NestedAnnotation) {
     ClassObject
 }

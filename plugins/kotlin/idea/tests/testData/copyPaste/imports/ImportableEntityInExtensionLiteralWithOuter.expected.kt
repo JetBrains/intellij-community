@@ -1,13 +1,13 @@
 package to
 
-import a.A.Nested
+import a.A
 import a.ext
 import a.f
 
 fun g() {
     f {
         Inner()
-        Nested()
+        A.Nested()
         foo()
         ext()
     }
