@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard
 
 import com.intellij.icons.AllIcons
@@ -15,6 +15,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
@@ -310,11 +311,13 @@ class ProjectWizardJdkComboBox(
   private suspend fun addExistingJdks() {
     val javaSdk = JavaSdk.getInstance()
 
-    val detected = JdkFinder.getInstance().suggestHomePaths().mapNotNull { homePath: String ->
-      val version = javaSdk.getVersionString(homePath)
-      when {
-        version != null && javaSdk.isValidSdkHome(homePath) -> DetectedJdk(version, homePath)
-        else -> null
+    val detected = blockingContext {
+      JdkFinder.getInstance().suggestHomePaths().mapNotNull { homePath: String ->
+        val version = javaSdk.getVersionString(homePath)
+        when {
+          version != null && javaSdk.isValidSdkHome(homePath) -> DetectedJdk(version, homePath)
+          else -> null
+        }
       }
     }
 
