@@ -206,6 +206,11 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     return component == myMessagePanel ? null : (JComponent)component;
   }
 
+  @Override
+  public void setSplitOrientation(boolean verticalSplit) {
+    mySplitter.setOrientation(verticalSplit);
+  }
+
   private static class NavBarWrapper extends JPanel {
     private final JScrollPane myScrollPane;
     private final Border mySideBorder;

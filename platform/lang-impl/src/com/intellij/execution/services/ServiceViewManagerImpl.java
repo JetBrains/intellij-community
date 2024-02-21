@@ -276,8 +276,19 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager,
                                @NotNull ToolWindow toolWindow,
                                @NotNull ToolWindowManagerEventType changeType) {
-        if (changeType == ToolWindowManagerEventType.SetContentUiType &&
-            toolWindowId.equals(toolWindow.getId())) {
+        if (!toolWindowId.equals(toolWindow.getId())) return;
+
+        if (changeType == ToolWindowManagerEventType.SetSideToolAndAnchor) {
+          boolean verticalSplit = !toolWindow.getAnchor().isHorizontal();
+          for (Content content : holder.contentManager.getContents()) {
+            ServiceView serviceView = getServiceView(content);
+            if (serviceView != null) {
+              serviceView.getUi().setSplitOrientation(verticalSplit);
+            }
+          }
+          return;
+        }
+        if (changeType == ToolWindowManagerEventType.SetContentUiType) {
           updateNavBar(holder);
         }
       }
@@ -1083,6 +1094,11 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       if (serviceView != null) {
         // Skip adding dragging bean as a content.
         updateNavBar(myContentHolder);
+
+        ToolWindow toolWindow = ToolWindowManager.getInstance(serviceView.getProject()).getToolWindow(myContentHolder.toolWindowId);
+        if (toolWindow != null) {
+          serviceView.getUi().setSplitOrientation(!toolWindow.getAnchor().isHorizontal());
+        }
       }
     }
 

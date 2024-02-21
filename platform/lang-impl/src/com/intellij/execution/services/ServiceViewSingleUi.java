@@ -80,6 +80,10 @@ final class ServiceViewSingleUi implements ServiceViewUi {
     return content == myMessagePanel ? null : content;
   }
 
+  @Override
+  public void setSplitOrientation(boolean verticalSplit) {
+  }
+
   private static boolean isHorizontal() {
     return ServiceViewUIUtils.isNewServicesUIEnabled();
   }
