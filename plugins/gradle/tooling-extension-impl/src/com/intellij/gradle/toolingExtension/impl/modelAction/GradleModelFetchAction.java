@@ -190,11 +190,11 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     GradleBuild mainGradleBuild = telemetry.callWithSpan("GetMainGradleBuild", __ ->
       controller.getBuildModel()
     );
-    Collection<? extends GradleBuild> nestedGradleBuilds = telemetry.callWithSpan("GetNestedGradleBuilds", __ ->
-      getNestedBuilds(controller, mainGradleBuild)
-    );
     BuildEnvironment buildEnvironment = telemetry.callWithSpan("GetBuildEnvironment", __ ->
       controller.getModel(BuildEnvironment.class)
+    );
+    Collection<? extends GradleBuild> nestedGradleBuilds = telemetry.callWithSpan("GetNestedGradleBuilds", __ ->
+      getNestedBuilds(buildEnvironment, mainGradleBuild)
     );
     ModelConverter modelConverter = telemetry.callWithSpan("GetToolingModelConverter", __ ->
       getToolingModelConverter(controller, telemetry)
@@ -209,12 +209,8 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     myAllModels = allModels;
   }
 
-  private static Collection<? extends GradleBuild> getNestedBuilds(@NotNull BuildController controller, @NotNull GradleBuild build) {
-    BuildEnvironment environment = controller.getModel(BuildEnvironment.class);
-    if (environment == null) {
-      return Collections.emptySet();
-    }
-    GradleVersion gradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
+  private static Collection<? extends GradleBuild> getNestedBuilds(@NotNull BuildEnvironment buildEnvironment, @NotNull GradleBuild build) {
+    GradleVersion gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
     Set<String> processedBuildsPaths = new HashSet<>();
     Set<GradleBuild> nestedBuilds = new LinkedHashSet<>();
     String rootBuildPath = build.getBuildIdentifier().getRootDir().getPath();
@@ -238,17 +234,15 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
    * @return builds to be imported by IDEA. Before Gradle 8.0 - included builds, 8.0 and later - included and buildSrc builds
    */
   private static DomainObjectSet<? extends GradleBuild> getEditableBuilds(@NotNull GradleBuild build, @NotNull GradleVersion version) {
-    if (GradleVersionUtil.isGradleAtLeast(version, "8.0")) {
-      DomainObjectSet<? extends GradleBuild> builds = build.getEditableBuilds();
-      if (builds.isEmpty()) {
-        return build.getIncludedBuilds();
-      }
-      else {
-        return builds;
-      }
+    if (GradleVersionUtil.isGradleOlderThan(version, "8.0")) {
+      return build.getIncludedBuilds();
+    }
+    DomainObjectSet<? extends GradleBuild> builds = build.getEditableBuilds();
+    if (builds.isEmpty()) {
+      return build.getIncludedBuilds();
     }
     else {
-      return build.getIncludedBuilds();
+      return builds;
     }
   }
 
