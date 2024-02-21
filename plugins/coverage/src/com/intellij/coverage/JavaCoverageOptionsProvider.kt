@@ -18,7 +18,6 @@ class JavaCoverageOptionsProvider(private val project: Project) : PersistentStat
   var branchCoverage: Boolean by state::myBranchCoverage
   var testTracking: Boolean by state::myTestTracking
   var testModulesCoverage: Boolean by state::myTestModulesCoverage
-  var calculateExactHits: Boolean by state::myCalculateExactHits
   var ignoreImplicitConstructors: Boolean by state::myIgnoreImplicitConstructors
   var excludeAnnotationPatterns: List<String> by state::myExcludeAnnotationPatterns
   var coverageRunner: CoverageRunner?
@@ -44,7 +43,6 @@ class JavaCoverageOptionsProvider(private val project: Project) : PersistentStat
     state.myBranchCoverage = loaded.myBranchCoverage
     state.myTestTracking = loaded.myTestTracking
     state.myTestModulesCoverage = loaded.myTestModulesCoverage
-    state.myCalculateExactHits = loaded.myCalculateExactHits
     state.myIgnoreImplicitConstructors = loaded.myIgnoreImplicitConstructors
     state.myExcludeAnnotationPatterns = listWithDefaultAnnotations(loaded.myExcludeAnnotationPatterns)
   }
@@ -54,7 +52,6 @@ class JavaCoverageOptionsProvider(private val project: Project) : PersistentStat
     internal var myBranchCoverage: Boolean = true
     internal var myTestTracking: Boolean = false
     internal var myTestModulesCoverage: Boolean = false
-    internal var myCalculateExactHits: Boolean = true
     internal var myIgnoreImplicitConstructors: Boolean = true
     internal var myExcludeAnnotationPatterns: List<String> = defaultExcludeAnnotationPatterns
   }
