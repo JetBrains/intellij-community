@@ -361,7 +361,11 @@ public final class CollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap() {
-    return new ConcurrentSoftHashMap<>();
+    return new ConcurrentSoftHashMap<>(null);
+  }
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull Consumer<? super V> evictionListener) {
+    return new ConcurrentSoftHashMap<>(evictionListener);
   }
 
   @Contract(value = "_,_,_,_-> new", pure = true)
