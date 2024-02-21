@@ -27,7 +27,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
     }
     myPathWithOneSlash = pathBeforeSlash + '/';
     VfsData.Segment segment = getSegment();
-    VfsData.initFile(id, segment, myData);
+    segment.initFileData(id, myData);
     // assume root has FS-default case-sensitivity
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);

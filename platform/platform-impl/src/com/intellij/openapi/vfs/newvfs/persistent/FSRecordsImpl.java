@@ -704,8 +704,7 @@ public final class FSRecordsImpl implements Closeable {
   /**
    * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
    */
-  @NotNull
-  ListResult list(int parentId) {
+  public @NotNull ListResult list(int parentId) {
     try {
       return treeAccessor.doLoadChildren(parentId);
     }
@@ -1419,23 +1418,6 @@ public final class FSRecordsImpl implements Closeable {
     invertedNameIndexLazy.get().checkConsistency();
   }
 
-  @NotNull
-  String describeAlreadyCreatedFile(int fileId) {
-    //RC: Actually, this method is better to be in VfsData class from there it is called.
-    //    The only non-public method needed is .list(parentId) -- all other methods are
-    //    open to be called from VfsData.
-    int parentId = getParent(fileId);
-    int nameId = getNameIdByFileId(fileId);
-    String description = "fileId=" + fileId +
-                         "; nameId=" + nameId + "(" + getNameByNameId(nameId) + ")" +
-                         "; parentId=" + parentId;
-    if (parentId > 0) {
-      description += "; parent.name=" + getName(parentId)
-                     + "; parent.children=" + list(parentId) + "; ";
-    }
-    return description;
-  }
-
   public int corruptionsDetected() {
     return connection.corruptionsDetected();
   }
@@ -1445,7 +1427,6 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   //========== accessors for diagnostics & sanity checks: ========================
-
 
   public PersistentFSConnection connection() {
     return connection;

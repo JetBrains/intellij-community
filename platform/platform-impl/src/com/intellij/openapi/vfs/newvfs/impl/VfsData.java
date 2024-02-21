@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -44,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * <li> The file has not been instantiated yet, so {@link #getFileById} returns null. </li>
  *
  * <li> A file is explicitly requested by calling getChildren or findChild on its parent. The parent initializes all the necessary data (in a thread-safe context)
- * and creates the file instance. See {@link #initFile} </li>
+ * and creates the file instance. See {@link Segment#initFileData(int, Object)} </li>
  *
  * <li> After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
  * kept on hard references in {@link PersistentFS} </li>
@@ -178,33 +177,6 @@ public final class VfsData {
     }
   }
 
-  //@GuardedBy("parent.DirectoryData")
-  static void initFile(int id, @NotNull Segment segment, @NotNull Object data) throws FileAlreadyCreatedException {
-    int offset = objectOffsetInSegment(id);
-
-    Object existingData = segment.objectFieldsArray.get(offset);
-    if (existingData != null) {
-      //FIXME RC: move .describeAlreadyCreatedFile() from FSRecordsImpl -- here, and replace static call with
-      //  vfs instance call:
-
-      //RC: it seems like concurrency issue, really -- check the locks acquired up the stack in all invocation traces
-      VfsData owningVfsData = segment.owningVfsData;
-      FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
-      int parentId = vfsPeer.getParent(id);
-      Segment parentSegment = owningVfsData.getSegment(parentId, false);
-      DirectoryData parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
-
-      throw new FileAlreadyCreatedException(
-        FSRecords.describeAlreadyCreatedFile(id)
-        + " data: " + data
-        + ", alreadyExistingData: " + existingData
-        + ", parentData: " + parentData
-        + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
-      );
-    }
-    segment.objectFieldsArray.set(offset, data);
-  }
-
   @NotNull
   CharSequence getNameByFileId(int fileId) {
     return owningPersistentFS.peer().getName(fileId);
@@ -240,7 +212,6 @@ public final class VfsData {
   private static int segmentIndex(int fileId) {
     return fileId >>> SEGMENT_BITS;
   }
-
 
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
   static final class Segment {
@@ -340,6 +311,31 @@ public final class VfsData {
       owningVfsData.changeParent(fileId, directory);
     }
 
+    //@GuardedBy("parent.DirectoryData")
+    void initFileData(int fileId, @NotNull Object fileData) throws FileAlreadyCreatedException {
+      int offset = objectOffsetInSegment(fileId);
+
+      Object existingData = objectFieldsArray.get(offset);
+      if (existingData != null) {
+        //RC: it seems like concurrency issue, really -- check the locks acquired up the stack in all invocation traces
+
+        FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
+        int parentId = vfsPeer.getParent(fileId);
+        Segment parentSegment = owningVfsData.getSegment(parentId, false);
+        DirectoryData parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
+
+        throw new FileAlreadyCreatedException(
+          describeAlreadyCreatedFile(fileId)
+          + " data: " + fileData
+          + ", alreadyExistingData: " + existingData
+          + ", parentData: " + parentData
+          + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
+        );
+      }
+      objectFieldsArray.set(offset, fileData);
+    }
+
+
     /** @return offset of field #fieldNo of file=fileId in a {@link #intFieldsArray} */
     private static int fieldOffset(int fileId,
                                    int fieldNo) {
@@ -349,11 +345,28 @@ public final class VfsData {
       assert (0 <= fieldNo && fieldNo < INT_FIELDS_COUNT) : "fieldNo(=" + fieldNo + ") must be in [0," + INT_FIELDS_COUNT + ")";
       return ((fileId & OFFSET_MASK) * INT_FIELDS_COUNT) + fieldNo;
     }
+
+    /** @return human-readable description of file fileId -- as much information as VFS now contains */
+    private @NotNull String describeAlreadyCreatedFile(int fileId) {
+      FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
+      int parentId = vfsPeer.getParent(fileId);
+      int nameId = vfsPeer.getNameIdByFileId(fileId);
+      String fileName = vfsPeer.getNameByNameId(nameId);
+      String description = "fileId=" + fileId +
+                           "; nameId=" + nameId + "(" + fileName + ")" +
+                           "; parentId=" + parentId;
+      if (parentId > 0) {
+        description += "; parent.name=" + vfsPeer.getName(parentId)
+                       + "; parent.children=" + vfsPeer.list(parentId) + "; ";
+      }
+      return description;
+    }
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   static final class DirectoryData {
-    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
+    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> USER_MAP_UPDATER =
+      AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     volatile @NotNull KeyFMap userMap = KeyFMap.EMPTY_MAP;
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}

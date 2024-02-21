@@ -259,8 +259,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     VfsData vfsData = getVfsData();
     VfsData.Segment segment = vfsData.getSegment(id, true);
+
     boolean isDirectory = PersistentFS.isDirectory(attributes);
-    VfsData.initFile(id, segment, isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
+    Object fileData = isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP;
+    segment.initFileData(id, fileData);
 
     VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
