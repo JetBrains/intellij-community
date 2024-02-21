@@ -31,9 +31,9 @@ public interface ActionPromoter {
    * The method must be fast, must not do reference resolution, reparsing, etc.
    * To ensure that the provided {@code context} returns only the already cached UI data.
    * <p>
-   * For example, {@link PlatformCoreDataKeys.CONTEXT_COMPONENT}
-   * and {@link PlatformCoreDataKeys.FILE_EDITOR} keys are available,
-   * but {@link CommonDataKeys.PSI_FILE} is not.
+   * For example, {@link PlatformCoreDataKeys#CONTEXT_COMPONENT}
+   * and {@link PlatformCoreDataKeys#FILE_EDITOR} keys are available,
+   * but {@link CommonDataKeys#PSI_FILE} is not.
    */
   default @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     return null;
