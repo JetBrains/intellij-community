@@ -85,6 +85,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   private fun onStateChanged() {
+    LOG.info("State changed. Current mode: ${getCurrentMode()}")
     if (isSmart()) {
       // Always reschedule execution to avoid unexpected write lock acquired.
       //
