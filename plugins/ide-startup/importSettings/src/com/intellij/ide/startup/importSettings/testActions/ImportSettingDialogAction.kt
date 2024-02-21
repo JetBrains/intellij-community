@@ -15,6 +15,6 @@ class ImportSettingDialogAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    OnboardingController.getInstance().startImport(isModal = true, titleGetter = titleGetter)
+    OnboardingController.getInstance().startImport(isModal = false, titleGetter = titleGetter)
   }
 }
