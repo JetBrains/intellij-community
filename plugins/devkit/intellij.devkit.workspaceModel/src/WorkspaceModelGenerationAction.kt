@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.module.ModuleManager
 import org.jetbrains.idea.devkit.util.PsiUtil
 
 class WorkspaceModelGenerationAction: AnAction() {
@@ -25,6 +26,27 @@ class WorkspaceModelGenerationAction: AnAction() {
       event.presentation.isEnabledAndVisible = true
     } else {
       event.presentation.isEnabledAndVisible = event.getData(LangDataKeys.MODULE_CONTEXT) != null
+    }
+  }
+}
+
+class WorkspaceModelGenerateAllModulesAction: AnAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  override fun actionPerformed(event: AnActionEvent) {
+    val project = event.project ?: return
+
+    val modules = ModuleManager.getInstance(project).modules
+    val modulesSize = modules.size
+    println("Updating $modulesSize modules")
+    WorkspaceModelGenerator.getInstance(project).generate(modules)
+  }
+
+  override fun update(event: AnActionEvent) {
+    if (!PsiUtil.isIdeaProject(event.project)) {
+      event.presentation.isEnabledAndVisible = false
+      return
     }
   }
 }
