@@ -30,16 +30,19 @@ import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports.reviewAddedImports
+import org.jetbrains.kotlin.idea.codeInsight.shorten.ShorteningRequest
+import org.jetbrains.kotlin.idea.codeInsight.shorten.modifyExistingShorteningRequests
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.core.ShortenReferences.Options
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.*
@@ -772,7 +775,26 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 imported.add(fqName.asString())
             }
         }
-        performDelayedRefactoringRequests(file.project)
+
+        fun Options.enforceImportOfNestedDeclarations(): Options {
+            return copy(
+                // shorten only the primary `bindTo` target reference and ignore nested ones;
+                // they will be handled in their own `bindTo` calls
+                shortenNestedReferences = false,
+                // shorten as much as possible, so that the pasted code
+                // looks just like the original
+                overrideAllowImportOfNestedDeclarations = true,
+            )
+        }
+
+        // We adjust the generated shortening requests so that references are shortened exactly how they appear in the original code.
+        // The references to be shortened by the copy-paste processor are already bound in the same way as in the original code, so
+        // we can apply the most aggressive shortening settings.
+        file.project.modifyExistingShorteningRequests {
+            ShorteningRequest(it.pointer, it.options.enforceImportOfNestedDeclarations())
+        }
+        val defaultOptions = Options.DEFAULT.enforceImportOfNestedDeclarations()
+        performDelayedRefactoringRequests(file.project, defaultOptions)
     }
 
     private fun findImportableDescriptors(fqName: FqName, file: KtFile): Collection<DeclarationDescriptor> {

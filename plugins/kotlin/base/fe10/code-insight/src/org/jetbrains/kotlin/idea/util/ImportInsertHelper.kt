@@ -18,7 +18,11 @@ abstract class ImportInsertHelper {
 
     abstract fun isImportedWithLowPriorityDefaultImport(importPath: ImportPath, contextFile: KtFile): Boolean
 
-    abstract fun mayImportOnShortenReferences(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean
+    abstract fun mayImportOnShortenReferences(
+        descriptor: DeclarationDescriptor,
+        contextFile: KtFile,
+        overrideAllowImportOfNestedDeclarations: Boolean,
+    ): Boolean
 
     abstract fun importDescriptor(
         element: KtElement,

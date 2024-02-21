@@ -1,5 +1,7 @@
 package source
 
+import source.X.Companion.other
+
 class X {
     companion object {
 
@@ -16,7 +18,7 @@ class X {
 
 
 fun foo() {
-    X.other()
+    other()
     bar++
 }
 

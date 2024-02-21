@@ -1,13 +1,13 @@
 package target
 
-import source.SourceObject
+import source.SourceObject.other
 import source.sourcePackFun
 
 fun targetPackFun(){}
 
 
 fun foo() {
-    SourceObject.other()
+    other()
     sourcePackFun()
     targetPackFun()
     bar++
