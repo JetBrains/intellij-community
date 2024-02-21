@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.images.editor.ImageEditor
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsPanel
-import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ToolbarPane
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JPanel

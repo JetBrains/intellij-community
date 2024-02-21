@@ -17,6 +17,7 @@ import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayOutput
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.MouseWheelUtils
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.ui.ToolbarUtil
 import java.awt.BorderLayout
 import java.awt.Dimension
