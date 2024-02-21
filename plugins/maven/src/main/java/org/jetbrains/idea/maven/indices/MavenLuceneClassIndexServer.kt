@@ -35,8 +35,8 @@ class MavenLuceneClassIndexServer(private val myRepo: MavenRepositoryInfo,
     return myNexusIndexer.search(myIndexId, pattern, maxResult)
   }
 
-  override suspend fun update(indicator: MavenProgressIndicator, explicit: Boolean) {
-    myNexusIndexer.updateIndex(myIndexId, indicator, explicit)
+  override fun updateOrRepair(fullUpdate: Boolean, progress: MavenProgressIndicator, explicit: Boolean) {
+    myNexusIndexer.updateIndex(myIndexId, progress, explicit)
     myUpdateTimestamp = System.currentTimeMillis()
   }
 

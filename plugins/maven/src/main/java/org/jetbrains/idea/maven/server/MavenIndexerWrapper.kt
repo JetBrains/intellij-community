@@ -107,6 +107,7 @@ abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer
                   indicator: MavenProgressIndicator,
                   multithreaded: Boolean) {
     performCancelable<Any, Exception>(
+      indicator,
       RetriableCancelable<Any, Exception> {
         val indicatorWrapper = wrapAndExport(indicator)
         try {
