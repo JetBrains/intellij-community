@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -29,7 +28,6 @@ class SemanticSearchFileChangeListener(private val project: Project, cs: Corouti
 
   init {
     cs.launch {
-      project.waitForSmartMode()
       reindexRequest.debounce(1000.milliseconds).collectLatest {
         processFiles(reindexQueue.getAndSet(ConcurrentCollectionFactory.createConcurrentSet()))
       }
