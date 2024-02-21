@@ -18,9 +18,11 @@ public class TestBuildObjectModelProvider implements ProjectImportModelProvider 
   }
 
   @Override
-  public void populateBuildModels(@NotNull BuildController controller,
-                                  @NotNull GradleBuild buildModel,
-                                  @NotNull ProjectImportModelProvider.BuildModelConsumer consumer) {
+  public void populateBuildModels(
+    @NotNull BuildController controller,
+    @NotNull GradleBuild buildModel,
+    @NotNull GradleModelConsumer modelConsumer
+  ) {
     // used as a trigger for a ModelBuilder which accepts Object and configure build
     // the model instance is not used somehow further
     //noinspection unused

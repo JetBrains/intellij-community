@@ -31,12 +31,12 @@ public class GradleExternalProjectModelProvider implements ProjectImportModelPro
   public void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) {
     Map<BasicGradleProject, PartialExternalProject> externalProjectMap = collectExternalProjects(controller, buildModel);
     PartialExternalProject rootExternalProject = buildExternalProjectHierarchy(buildModel, externalProjectMap);
     if (rootExternalProject != null) {
-      consumer.consume(buildModel, rootExternalProject, ExternalProject.class);
+      modelConsumer.consumeBuildModel(buildModel, rootExternalProject, ExternalProject.class);
     }
   }
 

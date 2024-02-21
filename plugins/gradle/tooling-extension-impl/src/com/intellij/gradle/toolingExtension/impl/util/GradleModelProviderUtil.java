@@ -7,7 +7,7 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.BuildModelConsumer;
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -19,7 +19,7 @@ public final class GradleModelProviderUtil {
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
   ) {
     if (Objects.equals(System.getProperty("idea.parallelModelFetch.enabled"), "true")) {
       buildModelsInParallel(controller, buildModel, modelClass, consumer);
@@ -33,7 +33,7 @@ public final class GradleModelProviderUtil {
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
   ) {
     List<BuildAction<Pair<BasicGradleProject, M>>> buildActions = new ArrayList<>();
     for (BasicGradleProject gradleProject : buildModel.getProjects()) {
@@ -57,7 +57,7 @@ public final class GradleModelProviderUtil {
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
   ) {
     for (BasicGradleProject gradleProject : buildModel.getProjects()) {
       M model = controller.findModel(gradleProject, modelClass);
@@ -71,7 +71,7 @@ public final class GradleModelProviderUtil {
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer consumer
   ) {
     traverseTree(buildModel.getRootProject(), BasicGradleProject::getChildren, (gradleProject) -> {
       M model = controller.findModel(gradleProject, modelClass);

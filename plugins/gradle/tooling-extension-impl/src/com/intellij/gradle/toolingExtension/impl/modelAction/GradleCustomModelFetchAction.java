@@ -103,9 +103,9 @@ public class GradleCustomModelFetchAction {
     @NotNull ProjectImportModelProvider modelProvider
   ) {
     myTelemetry.runWithSpan(modelProvider.getName(), span -> {
-      modelProvider.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
+      modelProvider.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.GradleModelConsumer() {
         @Override
-        public void consume(@NotNull Object object, @NotNull Class<?> clazz) {
+        public void consumeProjectModel(@NotNull BasicGradleProject projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
           addProjectModel(gradleProject, object, clazz);
         }
       });
@@ -118,14 +118,14 @@ public class GradleCustomModelFetchAction {
     @NotNull ProjectImportModelProvider modelProvider
   ) {
     myTelemetry.runWithSpan(modelProvider.getName(), span -> {
-      modelProvider.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
+      modelProvider.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.GradleModelConsumer() {
         @Override
-        public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
+        public void consumeProjectModel(@NotNull BasicGradleProject projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
           addProjectModel(projectModel, object, clazz);
         }
 
         @Override
-        public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
+        public void consumeBuildModel(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
           addBuildModel(buildModel, object, clazz);
         }
       });

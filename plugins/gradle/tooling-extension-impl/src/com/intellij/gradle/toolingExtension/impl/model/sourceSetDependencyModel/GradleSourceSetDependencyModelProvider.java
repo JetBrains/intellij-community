@@ -23,9 +23,9 @@ public class GradleSourceSetDependencyModelProvider implements ProjectImportMode
   public void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModelsRecursively(controller, buildModel, GradleDependencyDownloadPolicy.class, BuildModelConsumer.NOOP);
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleSourceSetDependencyModel.class, BuildModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModelsRecursively(controller, buildModel, GradleDependencyDownloadPolicy.class, GradleModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModels(controller, buildModel, GradleSourceSetDependencyModel.class, GradleModelConsumer.NOOP);
   }
 }

@@ -12,10 +12,11 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.Model
+import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
@@ -100,8 +101,8 @@ class AndroidAwareGradleModelProvider<TModel>(
 
     override fun populateProjectModels(
         controller: BuildController,
-        projectModel: Model,
-        modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
+        projectModel: BasicGradleProject,
+        modelConsumer: GradleModelConsumer
     ) {
         val model = if (androidPluginIsRequestingVariantSpecificModels) {
             controller.findModel(projectModel, modelClass, ModelBuilderService.Parameter::class.java) {
@@ -111,7 +112,7 @@ class AndroidAwareGradleModelProvider<TModel>(
             controller.findModel(projectModel, modelClass)
         }
         if (model != null) {
-            modelConsumer.consume(model, modelClass)
+            modelConsumer.consumeProjectModel(projectModel, model, modelClass)
         }
     }
 

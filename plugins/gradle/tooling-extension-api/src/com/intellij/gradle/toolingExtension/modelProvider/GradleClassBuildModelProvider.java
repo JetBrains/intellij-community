@@ -47,11 +47,11 @@ public class GradleClassBuildModelProvider<T> implements ProjectImportModelProvi
   public void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) {
     T instance = controller.findModel(buildModel, modelClass);
     if (instance != null) {
-      consumer.consume(buildModel, instance, modelClass);
+      modelConsumer.consumeBuildModel(buildModel, instance, modelClass);
     }
   }
 

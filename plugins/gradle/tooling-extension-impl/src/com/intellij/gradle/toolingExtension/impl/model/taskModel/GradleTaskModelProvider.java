@@ -21,8 +21,8 @@ public class GradleTaskModelProvider implements ProjectImportModelProvider {
   public void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskModel.class, BuildModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskModel.class, GradleModelConsumer.NOOP);
   }
 }

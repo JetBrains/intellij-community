@@ -5,8 +5,7 @@ import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.GradleProject;
-import org.gradle.tooling.model.Model;
-import org.gradle.tooling.model.ProjectModel;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,28 +34,22 @@ public interface ProjectImportModelProvider extends Serializable {
   default void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) { }
 
   default void populateProjectModels(
     @NotNull BuildController controller,
-    @NotNull Model projectModel,
-    @NotNull ProjectModelConsumer modelConsumer
+    @NotNull BasicGradleProject projectModel,
+    @NotNull GradleModelConsumer modelConsumer
   ) { }
 
-  interface BuildModelConsumer {
+  interface GradleModelConsumer {
 
-    default void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) { }
+    default void consumeBuildModel(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) { }
 
-    default void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) { }
+    default void consumeProjectModel(@NotNull BasicGradleProject projectModel, @NotNull Object object, @NotNull Class<?> clazz) { }
 
-    BuildModelConsumer NOOP = new BuildModelConsumer() {};
-  }
-
-  interface ProjectModelConsumer {
-
-    default void consume(@NotNull Object object, @NotNull Class<?> clazz) { }
-
-    ProjectModelConsumer NOOP = new ProjectModelConsumer() {};
+    GradleModelConsumer NOOP = new GradleModelConsumer() {
+    };
   }
 }
