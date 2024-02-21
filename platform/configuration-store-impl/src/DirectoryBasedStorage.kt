@@ -10,12 +10,9 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.settings.SettingsController
@@ -309,11 +306,8 @@ open class DirectoryBasedStorage(
             if (events != null) {
               val vFile = dir?.findChild(fileName)
               when {
-                vFile != null -> events += VFileContentChangeEvent(/*requestor =*/ this, vFile, vFile.modificationStamp, -1)
-                dir != null -> {
-                  val attributes = FileAttributes.fromNio(file, NioFiles.readAttributes(file))
-                  events += VFileCreateEvent(/*requestor =*/ this, dir, fileName, false, attributes, null, null)
-                }
+                vFile != null -> events += updatingEvent(file, vFile)
+                dir != null -> events += creationEvent(file, dir)
               }
             }
           }

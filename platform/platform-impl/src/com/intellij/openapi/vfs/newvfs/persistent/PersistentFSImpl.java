@@ -78,6 +78,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
+import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getLongProperty;
@@ -2117,7 +2118,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           timestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
         }
 
-        executeTouch(file, contentUpdateEvent.isFromRefresh(), contentUpdateEvent.getModificationStamp(), length, timestamp);
+        var reloadContent = contentUpdateEvent.isFromRefresh() || contentUpdateEvent.getRequestor() == RELOADING_STORAGE_WRITE_REQUESTOR;
+        executeTouch(file, reloadContent, contentUpdateEvent.getModificationStamp(), length, timestamp);
       }
       else if (event instanceof VFileCopyEvent ce) {
         executeCreateChild(ce.getNewParent(), ce.getNewChildName(), null, null, ce.getFile().getChildren().length == 0);

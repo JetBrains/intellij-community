@@ -183,3 +183,7 @@ class UnknownMacroNotification(
     }
   }
 }
+
+@ApiStatus.Internal
+@JvmField
+val RELOADING_STORAGE_WRITE_REQUESTOR = object : StorageManagerFileWriteRequestor { }
