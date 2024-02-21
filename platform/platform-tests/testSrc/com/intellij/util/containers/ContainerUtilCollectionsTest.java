@@ -21,6 +21,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 // tests various ContainerUtil.create*, ContainerUtil.new*, CollectionFactory.create*, ConcurrentCollectionFactory.create* collections for being really weak/soft/concurrent
 @RunFirst
@@ -838,5 +839,19 @@ public class ContainerUtilCollectionsTest extends Assert {
     iterator.remove();
     UsefulTestCase.assertEmpty(ContainerUtil.collect(map.entries().iterator()));
     assertTrue(map.isEmpty());
+  }
+
+  @Test
+  public void testEvictionListenerWorks() {
+    AtomicReference<Object> evicted = new AtomicReference<>();
+    Map<Object, Object> map = CollectionFactory.createConcurrentSoftMap(value -> {
+      assertTrue(evicted.compareAndSet(null, value));
+    });
+    Object value = new Object();
+    map.put(new Object(), value);
+
+    GCUtil.tryGcSoftlyReachableObjects(() -> map.remove("")!=null/*to call processQueue()*/ || map.isEmpty());
+    map.remove(""); // to call processQueue()
+    assertSame(value, evicted.get());
   }
 }

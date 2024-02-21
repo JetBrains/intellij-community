@@ -24,7 +24,7 @@ final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   }
 
   ConcurrentWeakHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
-    super(hashingStrategy);
+    super(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, hashingStrategy);
   }
 
   private static final class WeakKey<K> extends WeakReference<K> implements KeyReference<K> {
