@@ -1,9 +1,11 @@
 package to
 
-import a.A
+import a.A.A
+import a.A.B
+import a.A.C
 
 fun f() {
-    A.A
-    A.B
-    A.C
+    A
+    B
+    C
 }
