@@ -23,15 +23,32 @@ project.commonMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    targetPlatform = Native (linux_x64)/Native (macos_x64)
+    targetPlatform = JVM (17)/Native (general)
 
 project.commonTest
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    additionalVisibleModuleNames = project:commonMain, project:nativeMain
-    targetPlatform = Native (linux_x64)/Native (macos_x64)
+    additionalVisibleModuleNames = project:commonMain
+    targetPlatform = JVM (17)/Native (general)
+
+project.jvmMain
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonMain
+    targetPlatform = JVM (17)
+
+project.jvmTest
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonTest
+    additionalVisibleModuleNames = project:commonMain, project:jvmMain
+    targetPlatform = JVM (17)
 
 project.linuxMain
     externalProjectId = project
@@ -57,7 +74,6 @@ project.linuxX64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:linuxMain, project:nativeMain
     targetPlatform = Native (linux_x64)
-    compilerSettings = -nostdlib
 
 project.linuxX64Test
     externalProjectId = project
@@ -67,7 +83,6 @@ project.linuxX64Test
     dependsOnModuleNames = project:commonTest, project:linuxTest, project:nativeTest
     additionalVisibleModuleNames = project:commonMain, project:linuxMain, project:linuxX64Main, project:nativeMain
     targetPlatform = Native (linux_x64)
-    compilerSettings = -nostdlib
 
 project.macosMain
     externalProjectId = project
@@ -93,7 +108,6 @@ project.macosX64Main
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:macosMain, project:nativeMain
     targetPlatform = Native (macos_x64)
-    compilerSettings = -nostdlib
 
 project.macosX64Test
     externalProjectId = project
@@ -103,7 +117,40 @@ project.macosX64Test
     dependsOnModuleNames = project:appleTest, project:commonTest, project:macosTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:macosMain, project:macosX64Main, project:nativeMain
     targetPlatform = Native (macos_x64)
-    compilerSettings = -nostdlib
+
+project.mingwMain
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonMain, project:nativeMain
+    targetPlatform = Native (mingw_x64)
+
+project.mingwTest
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonTest, project:nativeTest
+    additionalVisibleModuleNames = project:commonMain, project:mingwMain, project:mingwX64Main, project:nativeMain
+    targetPlatform = Native (mingw_x64)
+
+project.mingwX64Main
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonMain, project:mingwMain, project:nativeMain
+    targetPlatform = Native (mingw_x64)
+
+project.mingwX64Test
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    dependsOnModuleNames = project:commonTest, project:mingwTest, project:nativeTest
+    additionalVisibleModuleNames = project:commonMain, project:mingwMain, project:mingwX64Main, project:nativeMain
+    targetPlatform = Native (mingw_x64)
 
 project.nativeMain
     externalProjectId = project
@@ -111,7 +158,7 @@ project.nativeMain
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain
-    targetPlatform = Native (linux_x64)/Native (macos_x64)
+    targetPlatform = Native (linux_x64)/Native (macos_x64)/Native (mingw_x64)
 
 project.nativeTest
     externalProjectId = project
@@ -120,4 +167,4 @@ project.nativeTest
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
     additionalVisibleModuleNames = project:commonMain, project:nativeMain
-    targetPlatform = Native (linux_x64)/Native (macos_x64)
+    targetPlatform = Native (linux_x64)/Native (macos_x64)/Native (mingw_x64)

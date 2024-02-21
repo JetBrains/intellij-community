@@ -1,6 +1,13 @@
 MODULES
 project
 
+project.androidTest
+    externalProjectId = project
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    mppVersion = M3
+    targetPlatform = JVM (17)
+
 project.commonMain
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
@@ -23,7 +30,6 @@ project.iosArm64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_arm64)
-    compilerSettings = -nostdlib
 
 project.iosArm64Test
     externalProjectId = project
@@ -33,7 +39,6 @@ project.iosArm64Test
     dependsOnModuleNames = project:commonTest, project:iosTest
     additionalVisibleModuleNames = project:commonMain, project:iosArm64Main, project:iosMain
     targetPlatform = Native (ios_arm64)
-    compilerSettings = -nostdlib
 
 project.iosMain
     externalProjectId = project
@@ -59,7 +64,6 @@ project.iosX64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_x64)
-    compilerSettings = -nostdlib
 
 project.iosX64Test
     externalProjectId = project
@@ -69,9 +73,8 @@ project.iosX64Test
     dependsOnModuleNames = project:commonTest, project:iosTest
     additionalVisibleModuleNames = project:commonMain, project:iosMain, project:iosX64Main
     targetPlatform = Native (ios_x64)
-    compilerSettings = -nostdlib
 
-project.jvmMain
+project.main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
@@ -79,11 +82,10 @@ project.jvmMain
     dependsOnModuleNames = project:commonMain
     targetPlatform = JVM (17)
 
-project.jvmTest
+project.unitTest
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
-    additionalVisibleModuleNames = project:commonMain, project:jvmMain
     targetPlatform = JVM (17)

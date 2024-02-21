@@ -40,7 +40,6 @@ project.iosArm64Main
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_arm64)
-    compilerSettings = -nostdlib
 
 project.iosArm64Test
     externalProjectId = project
@@ -50,7 +49,6 @@ project.iosArm64Test
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:iosArm64Main, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_arm64)
-    compilerSettings = -nostdlib
 
 project.iosX64Main
     externalProjectId = project
@@ -59,7 +57,6 @@ project.iosX64Main
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_x64)
-    compilerSettings = -nostdlib
 
 project.iosX64Test
     externalProjectId = project
@@ -69,7 +66,6 @@ project.iosX64Test
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:iosX64Main, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_x64)
-    compilerSettings = -nostdlib
 
 project.jsMain
     externalProjectId = project
@@ -131,7 +127,6 @@ project.linuxX64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (linux_x64)
-    compilerSettings = -nostdlib
 
 project.linuxX64Test
     externalProjectId = project
@@ -141,7 +136,6 @@ project.linuxX64Test
     dependsOnModuleNames = project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:commonMain, project:jvmAndNativeMain, project:linuxX64Main, project:nativeMain
     targetPlatform = Native (linux_x64)
-    compilerSettings = -nostdlib
 
 project.macosX64Main
     externalProjectId = project
@@ -150,7 +144,6 @@ project.macosX64Main
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (macos_x64)
-    compilerSettings = -nostdlib
 
 project.macosX64Test
     externalProjectId = project
@@ -160,7 +153,6 @@ project.macosX64Test
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:macosX64Main, project:nativeMain
     targetPlatform = Native (macos_x64)
-    compilerSettings = -nostdlib
 
 project.nativeMain
     externalProjectId = project
