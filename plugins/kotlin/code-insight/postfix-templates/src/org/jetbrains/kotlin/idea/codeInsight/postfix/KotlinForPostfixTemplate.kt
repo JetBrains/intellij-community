@@ -15,8 +15,25 @@ import org.jetbrains.kotlin.name.ClassId
 
 internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("for", provider)
 
-@Suppress("SpellCheckingInspection")
-internal class KotlinIterPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("iter", provider)
+internal class KotlinIterPostfixTemplate(
+    provider: KotlinPostfixTemplateProvider
+) : StringBasedPostfixTemplate(
+    "iter",
+    /* example = */ "val iterator = expr.iterator(); while (iterator.hasNext()) { val next = iterator.next() }",
+    /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { canBeIterated(it) }),
+    /* provider = */ provider
+) {
+    override fun setVariables(template: Template, element: PsiElement) {
+        val iteratorName = MacroCallNode(SymbolBasedSuggestVariableNameMacro("iterator"))
+        template.addVariable("iterator", iteratorName, ConstantNode("iterator"), false)
+        val nextName = MacroCallNode(SymbolBasedSuggestVariableNameMacro())
+        template.addVariable("next", nextName, ConstantNode("next"), true)
+    }
+
+    override fun getTemplateString(element: PsiElement) = "val \$iterator$ = \$expr$.iterator()\nwhile (\$iterator$.hasNext()) {\n val \$next$ = \$iterator$.next()\n\$END$\n}"
+
+    override fun getElementToRemove(expr: PsiElement?) = expr
+}
 
 internal class KotlinForWithIndexPostfixTemplate(
     provider: PostfixTemplateProvider

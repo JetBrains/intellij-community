@@ -1,5 +1,7 @@
 fun test(list: List<String>) {
-    for (<selection>string<caret></selection> in list) {
+    val <selection>iterator<caret></selection> = list.iterator()
+    while (iterator.hasNext()) {
+        val next = iterator.next()
 
     }
 }
