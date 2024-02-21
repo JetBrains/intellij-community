@@ -8,10 +8,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.workspace.jps.entities.LibraryDependency
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
@@ -66,9 +63,10 @@ internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: Library
 
   override fun beforeChanged(event: VersionedStorageChange) {
     beforeCalled = true
+    val libraryIdsToRevoke = mutableListOf<LibraryId>()
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val removed = change as? EntityChange.Removed ?: continue
-      queue.revokeSynchronization(removed.entity.symbolicId)
+      libraryIdsToRevoke.add(removed.entity.symbolicId)
     }
 
     for (change in event.getChanges(ModuleEntity::class.java)) {
@@ -82,15 +80,17 @@ internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: Library
       oldLModuleDeps.forEach { oldDependency ->
         if (oldDependency !is LibraryDependency) return@forEach
         if (newLibDeps.contains(oldDependency)) return@forEach
-        queue.revokeSynchronization(oldDependency.library)
+        libraryIdsToRevoke.add(oldDependency.library)
       }
     }
+    libraryIdsToRevoke.forEach { queue.revokeSynchronization(it) }
   }
 
   override fun changed(event: VersionedStorageChange) {
     if (!beforeCalled) return
     beforeCalled = false
     var libraryReloadRequested = false
+    val libraryIdsToSync = mutableListOf<LibraryId>()
 
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val entity = when (change) {
@@ -98,7 +98,7 @@ internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: Library
                      is EntityChange.Replaced -> change.newEntity
                      is EntityChange.Removed -> null
                    } ?: continue
-      queue.requestSynchronization(entity.symbolicId)
+      libraryIdsToSync.add(entity.symbolicId)
       libraryReloadRequested = true
     }
 
@@ -114,11 +114,12 @@ internal class ChangedRepositoryLibraryIdSynchronizer(private val queue: Library
       newModuleDeps.forEach { newDependency ->
         if (newDependency !is LibraryDependency) return@forEach
         if (oldLibDeps.contains(newDependency)) return@forEach
-        queue.requestSynchronization(newDependency.library)
+        libraryIdsToSync.add(newDependency.library)
         libraryReloadRequested = true
       }
     }
 
+    libraryIdsToSync.forEach { queue.requestSynchronization(it) }
     if (libraryReloadRequested) {
       queue.flush()
     }

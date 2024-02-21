@@ -27,7 +27,7 @@ class LibraryIdSynchronizationQueue(private val project: Project, private val sc
   private val toSynchronize = mutableSetOf<LibraryId>()
 
   init {
-    scope.launch(Dispatchers.IO) {
+    scope.launch(Dispatchers.Default) {
       for (request in synchronizationRequests) {
         try {
           when (request) {
