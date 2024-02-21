@@ -16,8 +16,6 @@ fun foo(libraryEnum: LibraryEnum, libraryJavaEnum: LibraryJavaEnum) {
     libraryJavaEnum.<caret>hashCode()
 }
 
-// ALLOW_AST_ACCESS
-
 // REF1: (in kotlin.Enum).name
 // REF2: (in kotlin.Enum).ordinal
 // REF3: (in kotlin.Enum).compareTo(E)
