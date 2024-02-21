@@ -56,18 +56,21 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   private void checkKeyTossedEventually(Map<Object, Object> map) {
-    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), new Object()));
-    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), this));
+    checkClearsEventuallyAfterGCPressure(map, () -> map.put(new Object(), new Object()));
+    checkClearsEventuallyAfterGCPressure(map, () -> map.put(new Object(), this));
   }
+
   private void checkKeyTossedEventually(ObjectIntMap<Object> map) {
-    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), 0));
+    checkClearsEventuallyAfterGCPressure(map, () -> map.put(new Object(), 0));
   }
+
   private void checkValueTossedEventually(IntObjectMap<Object> map) {
-    checkClearsEventuallyAfterGCPressure(map, ()->map.put(0, new Object()));
+    checkClearsEventuallyAfterGCPressure(map, () -> map.put(0, new Object()));
   }
+
   private void checkValueTossedEventually(Map<Object, Object> map) {
-    checkClearsEventuallyAfterGCPressure(map, ()->map.put(new Object(), new Object()));
-    checkClearsEventuallyAfterGCPressure(map, ()->map.put(this, new Object()));
+    checkClearsEventuallyAfterGCPressure(map, () -> map.put(new Object(), new Object()));
+    checkClearsEventuallyAfterGCPressure(map, () -> map.put(this, new Object()));
   }
 
   @Test(timeout = TIMEOUT)
@@ -137,18 +140,22 @@ public class ContainerUtilCollectionsTest extends Assert {
   public void testConcurrentWeakMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
     checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(ContainerUtil.createConcurrentWeakMap());
   }
+
   @Test(timeout = TIMEOUT)
   public void testConcurrentSoftMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
     checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentSoftMap());
   }
+
   @Test(timeout = TIMEOUT)
   public void testConcurrentWKWVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
     checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentWeakKeyWeakValueMap());
   }
+
   @Test(timeout = TIMEOUT)
   public void testConcurrentWKSVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
     checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentWeakKeySoftValueMap());
   }
+
   @Test(timeout = TIMEOUT)
   public void testConcurrentSKSVMapDoesntRetainOldValueKeyAfterPutWithTheSameKeyButDifferentValue() {
     checkMapDoesntLeakOldValueAfterPutWithTheSameKeyButDifferentValue(CollectionFactory.createConcurrentSoftKeySoftValueMap(1, 1, 1));
@@ -194,7 +201,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     do {
       GCUtil.tryGcSoftlyReachableObjects();
     }
-    while (ref.get()!=null);
+    while (ref.get() != null);
     Object old = map.putIfAbsent(2, new Object());
     assertNull(old);
     assertFalse(((ConcurrentRefValueHashMap<?, ?>)map).processQueue());
@@ -227,6 +234,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   private static final int RANDOM_INT = 987654321;
+
   private void checkClearsEventuallyAfterGCPressure(ObjectIntMap<Object> map, @NotNull Runnable put) {
     assertTrue(map.isEmpty());
     assertEquals(0, map.size());
@@ -317,7 +325,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   private void checkHashCodeDoesntCalledFor(Map<Object, Object> map) {
-    Object key = new Object(){
+    Object key = new Object() {
       @Override
       public int hashCode() {
         fail("must not be called");
@@ -337,7 +345,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
-    assertSame("ab",map.get("AB"));
+    assertSame("ab", map.get("AB"));
     String removed = map.remove("aB");
     assertEquals("ab", removed);
     assertTrue(map.isEmpty());
@@ -350,6 +358,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertNullKeysMustThrow(map);
     assertNullValuesMustThrow(map);
   }
+
   @Test
   public void testConcurrentWeakMapMustNotAcceptNullKeyOrValue() {
     Map<String, String> map = ContainerUtil.createConcurrentWeakMap();
@@ -376,28 +385,34 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test
   public void testWeakMapMustNotAcceptNullKey() {
-    assertNullKeysMustThrow(CollectionFactory.createWeakMap(11,0.5f,HashingStrategy.canonical()));
+    assertNullKeysMustThrow(CollectionFactory.createWeakMap(11, 0.5f, HashingStrategy.canonical()));
   }
+
   @Test
   public void testSoftMapMustNotAcceptNullKey() {
     assertNullKeysMustThrow(CollectionFactory.createSoftMap());
   }
+
   @Test
   public void testWeakKeySoftValueMapMustNotAcceptNullKey() {
     assertNullKeysMustThrow(ContainerUtil.createWeakKeySoftValueMap());
   }
+
   @Test
   public void testWeakKeyWeakValueMapMustNotAcceptNullKey() {
     assertNullKeysMustThrow(ContainerUtil.createWeakKeyWeakValueMap());
   }
+
   @Test
   public void testSoftKeySoftValueMapMustNotAcceptNullKey() {
     assertNullKeysMustThrow(CollectionFactory.createSoftKeySoftValueMap());
   }
+
   @Test
   public void testSoftValueMapMustNotAcceptNullKey() {
     assertNullKeysMustThrow(ContainerUtil.createSoftValueMap());
   }
+
   @Test
   public void testWeakValueMapMustNotAcceptNullKey() {
     assertNullKeysMustThrow(ContainerUtil.createWeakValueMap());
@@ -410,6 +425,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> map.remove(null));
     assertTrue(map.isEmpty());
   }
+
   private static void assertNullValuesMustThrow(Map<? super String, String> map) {
     UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> map.put("ab", null));
     assertEquals(0, map.size());
@@ -417,7 +433,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentWeakSoftCustomStrategy() {
-    ConcurrentMap<String, String> map = CollectionFactory.createConcurrentWeakKeySoftValueMap(1, 1, 1, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
+    Map<String, String> map = CollectionFactory.createConcurrentWeakKeySoftValueMap(1, 1, 1, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
     assertEquals(1, map.size());
@@ -434,7 +450,7 @@ public class ContainerUtilCollectionsTest extends Assert {
   }
 
   private static void check(ConcurrentLongObjectMap<Object> map) {
-    for (long i = Long.MAX_VALUE-1000; i != Long.MIN_VALUE+1000; i++) {
+    for (long i = Long.MAX_VALUE - 1000; i != Long.MIN_VALUE + 1000; i++) {
       Object prev = map.put(i, i);
       assertNull(prev);
       Object ret = map.get(i);
@@ -547,6 +563,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     Map<String, Object> map = CollectionFactory.createConcurrentWeakValueMap();
     checkPutIfAbsent(map);
   }
+
   @Test
   public void testConcurrentSoftValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
     Map<String, Object> map = ContainerUtil.createConcurrentSoftValueMap();
@@ -586,12 +603,13 @@ public class ContainerUtilCollectionsTest extends Assert {
       assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
     }
     if (i == N) {
-      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(key)==null);
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(key) == null);
       Object prev = map.putIfAbsent(key, newVal);
       assertNull(prev);
       assertSame(newVal, map.get(key));
     }
   }
+
   private static void checkPutIfAbsent(ConcurrentIntObjectMap<Object> map) {
     int key = 4;
     map.put(key, new Object());
@@ -613,7 +631,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
     }
     if (i == N) {
-      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(key)==null);
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(key) == null);
       Object prev = map.putIfAbsent(key, newVal);
       assertNull(prev);
       assertSame(newVal, map.get(key));
@@ -689,16 +707,16 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testWeakKeyMapsKeySetIsIterable() {
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> CollectionFactory.createWeakMap(11,1,HashingStrategy.canonical()));
-    checkKeySetIterable(CollectionFactory.createWeakMap(11,0.5f,HashingStrategy.canonical()));
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> CollectionFactory.createWeakMap(11, 1, HashingStrategy.canonical()));
+    checkKeySetIterable(CollectionFactory.createWeakMap(11, 0.5f, HashingStrategy.canonical()));
     checkKeySetIterable(ContainerUtil.createWeakKeySoftValueMap());
     checkKeySetIterable(ContainerUtil.createWeakKeyWeakValueMap());
     checkKeySetIterable(ContainerUtil.createConcurrentWeakMap());
   }
 
   private static void checkKeySetIterable(@NotNull Map<Object, Object> map) {
-    for (int i=0; i<10; i++) {
-      for (int k=0;k<i;k++) {
+    for (int i = 0; i < 10; i++) {
+      for (int k = 0; k < i; k++) {
         map.put(new Object(), new Object());
       }
       checkKeySetIterable(map.keySet());
@@ -713,8 +731,9 @@ public class ContainerUtilCollectionsTest extends Assert {
         found = true;
         assertNotNull(o);
       }
-      GCUtil.tryGcSoftlyReachableObjects(()->set.isEmpty());
-    } while (found);
+      GCUtil.tryGcSoftlyReachableObjects(() -> set.isEmpty());
+    }
+    while (found);
   }
 
   @Test(timeout = TIMEOUT)
@@ -722,6 +741,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     ObjectIntMap<Object> map = ContainerUtil.createWeakKeyIntValueMap();
     checkKeyTossedEventually(map);
   }
+
   @Test(timeout = TIMEOUT)
   public void testIntKeyWeakValueMapTossed() {
     IntObjectMap<Object> map = ContainerUtil.createIntKeyWeakValueMap();
@@ -756,9 +776,9 @@ public class ContainerUtilCollectionsTest extends Assert {
     Iterator<IntObjectMap.Entry<Object>> iterator = map.entrySet().iterator();
     assertTrue(iterator.hasNext());
     strong = null;
-    for (int i=0; i<10; i++) {
-      if (map.get(3)==null) break;
-      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(3)==null);
+    for (int i = 0; i < 10; i++) {
+      if (map.get(3) == null) break;
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(3) == null);
     }
     if (map.get(3) == null) {
       List<Integer> keys = ContainerUtil.map(ContainerUtil.collect(iterator), e -> e.getKey());
@@ -784,7 +804,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertTrue(iterator.hasNext());
     IntObjectMap.Entry<Object> next = iterator.next();
     int key = next.getKey();
-    assertTrue(key==K1 || key==K2);
+    assertTrue(key == K1 || key == K2);
     iterator.remove();
 
     assertEquals(1, ContainerUtil.collect(map.entrySet().iterator()).size());
@@ -805,6 +825,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     UsefulTestCase.assertEmpty(ContainerUtil.collect(map.entrySet().iterator()));
     assertTrue(map.isEmpty());
   }
+
   private void checkEntrySetIterator(ConcurrentLongObjectMap<Object> map) {
     map.clear();
     int K1 = 1;
@@ -819,7 +840,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     assertTrue(iterator.hasNext());
     ConcurrentLongObjectMap.LongEntry<Object> next = iterator.next();
     long key = next.getKey();
-    assertTrue(key==K1 || key==K2);
+    assertTrue(key == K1 || key == K2);
     iterator.remove();
 
     assertEquals(1, ContainerUtil.collect(map.entries().iterator()).size());
