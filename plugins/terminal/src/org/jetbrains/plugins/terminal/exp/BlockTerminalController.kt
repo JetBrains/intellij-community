@@ -54,7 +54,7 @@ class BlockTerminalController(
     }
     else startCommand(command)
     // report event even if it is an empty command, because it will be reported as a separate command type
-    TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isNewTerminal = true)
+    TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isBlockTerminal = true)
   }
 
   private fun startCommand(command: String) {

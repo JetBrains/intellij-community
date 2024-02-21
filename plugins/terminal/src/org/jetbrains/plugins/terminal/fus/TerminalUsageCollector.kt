@@ -16,11 +16,11 @@ import java.util.*
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 17)
+  private val GROUP = EventLogGroup(GROUP_ID, 18)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
-  private val NEW_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
+  private val BLOCK_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
 
   private val sshExecEvent = GROUP.registerEvent("ssh.exec")
   private val terminalSmartCommandExecutedEvent = GROUP.registerVarargEvent("terminal.smart.command.executed",
@@ -32,26 +32,26 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   private val localExecEvent = GROUP.registerEvent("local.exec",
                                                    EventFields.StringValidatedByRegexpReference("os-version", "version"),
                                                    EventFields.String("shell", KNOWN_SHELLS.toList()),
-                                                   NEW_TERMINAL_FIELD)
+                                                   BLOCK_TERMINAL_FIELD)
 
   private val commandExecutedEvent = GROUP.registerEvent("terminal.command.executed",
                                                          TerminalCommandUsageStatistics.commandExecutableField,
                                                          TerminalCommandUsageStatistics.subCommandField,
-                                                         NEW_TERMINAL_FIELD)
+                                                         BLOCK_TERMINAL_FIELD)
 
   private val promotionShownEvent = GROUP.registerEvent("promotion.shown")
   private val promotionGotItClickedEvent = GROUP.registerEvent("promotion.got.it.clicked")
 
-  private val newTerminalSwitchedEvent = GROUP.registerEvent("new.terminal.switched",
-                                                             EventFields.Boolean("enabled"),
-                                                             EventFields.Enum<NewTerminalSwitchPlace>("switch_place"))
+  private val blockTerminalSwitchedEvent = GROUP.registerEvent("new.terminal.switched",
+                                                               EventFields.Boolean("enabled"),
+                                                               EventFields.Enum<BlockTerminalSwitchPlace>("switch_place"))
 
   @JvmStatic
   fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
 
   @JvmStatic
-  fun triggerCommandExecuted(project: Project, userCommandLine: String, isNewTerminal: Boolean) {
-    TerminalCommandUsageStatistics.triggerCommandExecuted(commandExecutedEvent, project, userCommandLine, isNewTerminal)
+  fun triggerCommandExecuted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
+    TerminalCommandUsageStatistics.triggerCommandExecuted(commandExecutedEvent, project, userCommandLine, isBlockTerminal)
   }
 
   @JvmStatic
@@ -76,11 +76,11 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>, isNewTerminal: Boolean) =
+  fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>, isBlockTerminal: Boolean) =
     localExecEvent.log(project,
                        Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
                        getShellNameForStat(shellCommand.firstOrNull()),
-                       isNewTerminal)
+                       isBlockTerminal)
 
   internal fun triggerPromotionShown(project: Project) {
     promotionShownEvent.log(project)
@@ -91,8 +91,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  internal fun triggerNewTerminalSwitched(project: Project, enabled: Boolean, place: NewTerminalSwitchPlace) {
-    newTerminalSwitchedEvent.log(project, enabled, place)
+  internal fun triggerBlockTerminalSwitched(project: Project, enabled: Boolean, place: BlockTerminalSwitchPlace) {
+    blockTerminalSwitchedEvent.log(project, enabled, place)
   }
 
   @JvmStatic
@@ -115,7 +115,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 }
 
-internal enum class NewTerminalSwitchPlace {
+internal enum class BlockTerminalSwitchPlace {
   SETTINGS, TOOLWINDOW_OPTIONS
 }
 

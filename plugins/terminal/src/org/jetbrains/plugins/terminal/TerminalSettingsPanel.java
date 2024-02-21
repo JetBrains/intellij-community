@@ -35,7 +35,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.fus.NewTerminalSwitchPlace;
+import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
 import javax.swing.*;
@@ -190,8 +190,8 @@ public final class TerminalSettingsPanel {
     var blockTerminalSetting = Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY);
     if (blockTerminalSetting.asBoolean() != myNewUiCheckbox.isSelected()) {
       blockTerminalSetting.setValue(myNewUiCheckbox.isSelected());
-      TerminalUsageTriggerCollector.triggerNewTerminalSwitched$intellij_terminal(myProject, myNewUiCheckbox.isSelected(),
-                                                                                 NewTerminalSwitchPlace.SETTINGS);
+      TerminalUsageTriggerCollector.triggerBlockTerminalSwitched$intellij_terminal(myProject, myNewUiCheckbox.isSelected(),
+                                                                                   BlockTerminalSwitchPlace.SETTINGS);
     }
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());

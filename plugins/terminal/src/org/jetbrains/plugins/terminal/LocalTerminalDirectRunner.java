@@ -237,8 +237,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     var shellIntegration = options.getShellIntegration();
-    boolean isNewTerminal = isBlockTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null;
-    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isNewTerminal);
+    boolean isBlockTerminal = isBlockTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null;
+    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
 
     try {
       long startNano = System.nanoTime();
