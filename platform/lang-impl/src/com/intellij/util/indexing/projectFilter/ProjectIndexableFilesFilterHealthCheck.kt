@@ -80,6 +80,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       val indexableNotFoundInFilterCount = errorGroups.entries.find { it.key == INDEXABLE_FILE_NOT_FOUND_IN_FILTER }?.value?.size ?: 0
 
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(project,
+                                                                                     filter,
                                                                                      onProjectOpen,
                                                                                      nonIndexableFoundInFilterCount,
                                                                                      indexableNotFoundInFilterCount,
