@@ -60,6 +60,7 @@ class GitCommitCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
       suspendCancellableCoroutine { continuation ->
         val dataPackListener = object : DataPackChangeListener {
           override fun onDataPackChange(newDataPack: DataPack) {
+            if (newDataPack is DataPack.SmallDataPack) return
             if (logManager.isLogUpToDate) {
               logManager.dataManager.removeDataPackChangeListener(this)
               continuation.resumeWith(Result.success(Unit))
