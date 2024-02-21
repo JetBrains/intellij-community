@@ -251,31 +251,6 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatingToInterfaces.kt"));
         }
 
-        @TestMetadata("deprecatedHiddenProperty_accessors.kt")
-        public void testDeprecatedHiddenProperty_accessors() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_accessors.kt"));
-        }
-
-        @TestMetadata("deprecatedHiddenProperty_getter.kt")
-        public void testDeprecatedHiddenProperty_getter() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_getter.kt"));
-        }
-
-        @TestMetadata("deprecatedHiddenProperty_interface.kt")
-        public void testDeprecatedHiddenProperty_interface() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_interface.kt"));
-        }
-
-        @TestMetadata("deprecatedHiddenProperty_noAccessor.kt")
-        public void testDeprecatedHiddenProperty_noAccessor() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_noAccessor.kt"));
-        }
-
-        @TestMetadata("deprecatedHiddenProperty_setter.kt")
-        public void testDeprecatedHiddenProperty_setter() throws Exception {
-            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/deprecatedHiddenProperty_setter.kt"));
-        }
-
         @TestMetadata("dollarsInNameLocal.kt")
         public void testDollarsInNameLocal() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/dollarsInNameLocal.kt"));
