@@ -74,7 +74,7 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
 
       override fun createPopupComponent(content: JComponent?): JComponent {
         val popupComponent = super.createPopupComponent(content)
-        popupComponent.preferredSize = Dimension(JBUI.scale (UiUtils.DEFAULT_BUTTON_WIDTH), popupComponent.preferredSize.height)
+        popupComponent.preferredSize = Dimension(JBUI.scale(UiUtils.DEFAULT_BUTTON_WIDTH).coerceAtLeast(popupComponent.preferredSize.width), popupComponent.preferredSize.height)
 
         return popupComponent
       }
