@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.highlighting
 
 import com.intellij.openapi.application.PathMacros
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
@@ -32,20 +34,6 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
     override fun setUp() {
         super.setUp()
 
-        ModuleRootModificationUtil.updateModel(module) { model ->
-            // annotations for lombok plugin
-            MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES)
-
-            // annotations for serialization plugin
-            MavenDependencyUtil.addFromMaven(model, KOTLINX_SERIALIZATION_CORE_MAVEN_COORDINATES)
-
-            // json serialization jar to check compiled declarations with serialization annotations
-            MavenDependencyUtil.addFromMaven(model, KOTLINX_SERIALIZATION_JSON_MAVEN_COORDINATES)
-
-            // annotations for parcelize plugin
-            MavenDependencyUtil.addFromMaven(model, PARCELIZE_RUNTIME_MAVEN_COORDINATES)
-        }
-
         // N.B. We don't use PathMacroContributor here because it's too late to register at this point
         PathMacros.getInstance().setMacro(testDirPlaceholder, testDataDirectory.toString())
     }
@@ -65,12 +53,38 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
             super.doMultiFileTest(files, globalDirectives)
         }
     }
+
+    override fun getDefaultProjectDescriptor(): ProjectDescriptorWithStdlibSources =
+        ProjectDescriptorWithStdlibSourcesAndExtraLibraries
 }
 
-private const val LOMBOK_MAVEN_COORDINATES = "org.projectlombok:lombok:1.18.26"
+/**
+ * A Kotlin project descriptor with STDLIB sources and extra libraries required for testing compiler plugins.
+ *
+ * We reuse a single instance of project descriptor so that the module and project configuration can
+ * be effectively cached and reused between tests by the test infrastructure.
+ */
+private object ProjectDescriptorWithStdlibSourcesAndExtraLibraries : ProjectDescriptorWithStdlibSources() {
 
-private const val KOTLINX_SERIALIZATION_CORE_MAVEN_COORDINATES = "org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.0"
+    private val extraMavenLibraries: List<String> = listOf(
+        // annotations for lombok plugin
+        "org.projectlombok:lombok:1.18.26",
 
-private const val KOTLINX_SERIALIZATION_JSON_MAVEN_COORDINATES = "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.5.0"
+        // annotations for serialization plugin
+        "org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.0",
 
-private const val PARCELIZE_RUNTIME_MAVEN_COORDINATES = "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.20"
+        // json serialization jar to check compiled declarations with serialization annotations
+        "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.5.0",
+
+        // annotations for parcelize plugin
+        "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.20",
+    )
+
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        super.configureModule(module, model)
+
+        for (libraryCoordinates in extraMavenLibraries) {
+            MavenDependencyUtil.addFromMaven(model, libraryCoordinates)
+        }
+    }
+}
