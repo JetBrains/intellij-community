@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.api.util.LinkHttpHeaderValue
 import com.intellij.platform.templates.github.GithubTagInfo
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.commit.GHCommitFile
+import org.jetbrains.plugins.github.api.data.commit.GHCommitFiles
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.request.*
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
@@ -184,15 +187,19 @@ object GithubApiRequests {
         Get.json<GHCommitsCompareResult>(getUrl(repository, "/compare/$refA...$refB")).withOperationName("compare refs")
 
       @JvmStatic
-      fun getDiff(repository: GHRepositoryCoordinates, ref: String) =
-        object : Get<String>(getUrl(repository, urlSuffix, "/$ref"),
-                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
-          override fun extractResult(response: GithubApiResponse): String {
-            return response.handleBody(ThrowableConvertor {
-              it.reader().use { it.readText() }
-            })
+      fun getDiffFiles(repository: GHRepositoryCoordinates, ref: String): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        getDiffFiles(getUrl(repository, urlSuffix, "/$ref"))
+
+      @JvmStatic
+      fun getDiffFiles(url: String): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        object : Get<GithubResponsePage<GHCommitFile>>(url) {
+          override fun extractResult(response: GithubApiResponse): GithubResponsePage<GHCommitFile> {
+            val list = response.readBody(ThrowableConvertor { GithubApiContentHelper.readJsonObject(it, GHCommitFiles::class.java) })
+              .files
+            val linkHeader = response.findHeader(LinkHttpHeaderValue.HEADER_NAME)?.let(LinkHttpHeaderValue::parse)
+            return GithubResponsePage(list, linkHeader)
           }
-        }.withOperationName("get diff for ref")
+        }.withOperationName("get files for ref")
 
       @JvmStatic
       fun getDiff(repository: GHRepositoryCoordinates, refA: String, refB: String) =
