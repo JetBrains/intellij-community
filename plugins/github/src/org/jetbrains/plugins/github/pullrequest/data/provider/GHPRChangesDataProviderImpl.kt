@@ -73,7 +73,7 @@ class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
         changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid).thenCombine(commitsRequest) { mergeBaseRef, commits ->
           mergeBaseRef to commits
         }.thenCompose { (mergeBaseRef, commits) ->
-          changesService.createChangesProvider(indicator, it.baseRefOid, mergeBaseRef, it.headRefOid, commits)
+          changesService.createChangesProvider(indicator, pullRequestId, it.baseRefOid, mergeBaseRef, it.headRefOid, commits)
         }
       }
   }

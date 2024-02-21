@@ -31,6 +31,7 @@ import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.Commits
+import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.PullRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.commit.GHCommitFile
@@ -104,14 +105,12 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
     patchesCache.get(ref1 to ref2)
 
   override fun createChangesProvider(progressIndicator: ProgressIndicator,
+                                     id: GHPRIdentifier,
                                      baseRef: String,
                                      mergeBaseRef: String,
                                      headRef: String,
-                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitBranchComparisonResult> {
-
-    return progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
-      val prPatchesRequest = patchesCache.get(baseRef to headRef)
-
+                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitBranchComparisonResult> =
+    progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
       val (lastCommit, graph) = commits
       val commitsPatchesRequests = LinkedHashMap<GHCommit, CompletableFuture<List<FilePatch>>>()
       for (commit in Traverser.forGraph(graph).depthFirstPostOrder(lastCommit)) {
@@ -122,12 +121,12 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
         val patches = request.joinCancellable()
         GitCommitShaWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
       }
-      val prPatches = prPatchesRequest.joinCancellable()
+      val request = GithubApiPagesLoader.Request(PullRequests.getDiffFiles(ghRepository, id), PullRequests::getDiffFiles)
+      val prPatches = GithubApiPagesLoader.loadAll(requestExecutor, it, request).mapNotNull(::toPatch)
       it.checkCanceled()
 
       GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList, prPatches)
     }.logError(LOG, "Error occurred while building changes from commits")
-  }
 
   companion object {
     private val LOG = logger<GHPRChangesService>()

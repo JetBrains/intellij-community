@@ -13,6 +13,7 @@ import org.jetbrains.plugins.github.api.data.request.*
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import java.awt.image.BufferedImage
 
@@ -415,15 +416,12 @@ object GithubApiRequests {
         }.withOperationName("get pull request list ETag")
 
       @JvmStatic
-      fun getDiff(repository: GHRepositoryCoordinates, number: Long) =
-        object : Get<String>(getUrl(repository, urlSuffix, "/$number"),
-                             GithubApiContentHelper.V3_DIFF_JSON_MIME_TYPE) {
-          override fun extractResult(response: GithubApiResponse): String {
-            return response.handleBody(ThrowableConvertor {
-              it.reader().use { it.readText() }
-            })
-          }
-        }.withOperationName("get diff of a PR")
+      fun getDiffFiles(repository: GHRepositoryCoordinates, id: GHPRIdentifier): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        getDiffFiles(getUrl(repository, urlSuffix, "/${id.number}", "/files"))
+
+      @JvmStatic
+      fun getDiffFiles(url: String): GithubApiRequest<GithubResponsePage<GHCommitFile>> =
+        Get.jsonPage<GHCommitFile>(url).withOperationName("get files for pull request")
 
       object Reviewers : Entity("/requested_reviewers") {
         @JvmStatic
