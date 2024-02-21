@@ -19,6 +19,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.*
@@ -99,7 +100,9 @@ fun runRefactoringTest(
 ) {
     val mainFilePath = config.getNullableString("mainFile") ?: config.getAsJsonArray("filesToMove").first().asString
 
-    val conflictFile = alternativeConflicts?.let { File(File(path).parentFile, alternativeConflicts) }?.takeIf { it.exists() }
+    val conflictFile = alternativeConflicts
+        ?.let { File(File(path).parentFile, alternativeConflicts) }?.takeIf { it.exists() }
+        ?: File(File(path).parentFile, "conflicts.k2.txt").takeIf { KotlinPluginModeProvider.isK2Mode() && it.exists() }
         ?: File(File(path).parentFile, "conflicts.txt")
 
     val mainFile = rootDir.findFileByRelativePath(mainFilePath)!!
