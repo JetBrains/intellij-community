@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PerformanceWatcher
@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
@@ -89,6 +90,12 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
 
     if (app.isHeadlessEnvironment) {
       return@launch
+    }
+
+    // https://youtrack.jetbrains.com/issue/IDEA-341318
+    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "true").toBoolean()) {
+      // ActionManager can use UISettings (KeymapManager doesn't use, but just to be sure)
+      initLafJob.join()
     }
 
     launch {
