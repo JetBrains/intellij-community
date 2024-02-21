@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
+import static com.intellij.codeWithMe.ClientIdPropagation.decorateCallable;
+import static com.intellij.codeWithMe.ClientIdPropagation.decorateRunnable;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 /**
@@ -232,13 +234,13 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     if (!propagateContextOrCancellation()) {
       return command;
     }
-    return Propagation.capturePropagationAndCancellationContext(command);
+    return Propagation.capturePropagationAndCancellationContext(decorateRunnable(command));
   }
 
   public static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
     if (!propagateContextOrCancellation()) {
       return new FutureTask<>(callable);
     }
-    return Propagation.capturePropagationAndCancellationContext(callable);
+    return Propagation.capturePropagationAndCancellationContext(decorateCallable(callable));
   }
 }
