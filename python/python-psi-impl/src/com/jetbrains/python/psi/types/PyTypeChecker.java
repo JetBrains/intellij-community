@@ -363,10 +363,8 @@ public final class PyTypeChecker {
 
   private static boolean match(@NotNull PyParamSpecType expected, @Nullable PyType actual, @NotNull MatchContext context) {
     if (actual == null) return true;
-    if (!(actual instanceof PyParamSpecType callableActual)) return false;
-    final var parameters = callableActual.getParameters();
-    if (parameters == null) return false;
-    context.mySubstitutions.paramSpecs.put(expected, expected.withParameters(parameters, context.context));
+    if (!(actual instanceof PyCallableParameterListType actualParameters)) return false;
+    context.mySubstitutions.paramSpecs.put(expected, actualParameters);
     return true;
   }
 
@@ -612,7 +610,7 @@ public final class PyTypeChecker {
       final var firstExpectedParam = expectedParameters.get(0);
       final var expectedParamType = firstExpectedParam.getType(context);
       if (expectedParamType instanceof final PyParamSpecType expectedParamSpecType) {
-        matchContext.mySubstitutions.paramSpecs.put(expectedParamSpecType, expectedParamSpecType.withParameters(actualParameters, context));
+        matchContext.mySubstitutions.paramSpecs.put(expectedParamSpecType, new PyCallableParameterListTypeImpl(actualParameters));
         return true;
       }
       else if (expectedParamType instanceof final PyConcatenateType expectedConcatenateType) {
@@ -640,8 +638,7 @@ public final class PyTypeChecker {
           if (actualParamRightBound < actualParameters.size()) {
             final var expectedParamSpecType = expectedConcatenateType.getParamSpec();
             final var restActualParameters = actualParameters.subList(actualParamRightBound, actualParameters.size());
-            final var parametersSubst = expectedParamSpecType.withParameters(restActualParameters, context);
-            matchContext.mySubstitutions.paramSpecs.put(expectedParamSpecType, parametersSubst);
+            matchContext.mySubstitutions.paramSpecs.put(expectedParamSpecType, new PyCallableParameterListTypeImpl(restActualParameters));
             return true;
           }
         }
@@ -794,8 +791,8 @@ public final class PyTypeChecker {
           result.typeVars.put(typeVarType, entry.getValue());
         }
         else if (entry.getKey() instanceof PyTypeVarTupleType typeVarTuple) {
-          assert entry.getValue() instanceof PyVariadicType;
-          result.typeVarTuples.put(typeVarTuple, (PyVariadicType)entry.getValue());
+          assert entry.getValue() instanceof PyPositionalVariadicType;
+          result.typeVarTuples.put(typeVarTuple, (PyPositionalVariadicType)entry.getValue());
         }
         // TODO Handle ParamSpecs here
       }
@@ -953,23 +950,18 @@ public final class PyTypeChecker {
       }
     }
     for (PyParamSpecType paramSpecType : typeParamsFromReturnType.paramSpecs) {
-      // ParamSpecs already bound to parameter lists 
-      if (paramSpecType.getParameters() != null) {
-        continue;
-      }
       boolean canGetBoundFromArguments = typeParamsFromParameterTypes.paramSpecs.contains(paramSpecType);
       boolean isAlreadyBound = existingSubstitutions.paramSpecs.containsKey(paramSpecType);
       if (canGetBoundFromArguments && !isAlreadyBound) {
         if (paramSpecType.getDefaultType() != null) {
-          PyType defaultType = paramSpecType.getDefaultType();
-          if (defaultType instanceof PyParamSpecType defaultParamSpec) {
-            existingSubstitutions.paramSpecs.put(paramSpecType, defaultParamSpec);
-          }
-        } else {
-          existingSubstitutions.paramSpecs.put(paramSpecType, new PyParamSpecType(paramSpecType.getName())
-            .withParameters(List.of(PyCallableParameterImpl.positionalNonPsi("args", null),
-                                    PyCallableParameterImpl.keywordNonPsi("kwargs", null)),
-                            context));
+          PyCallableParameterVariadicType defaultType = paramSpecType.getDefaultType();
+          existingSubstitutions.paramSpecs.put(paramSpecType, defaultType);
+        }
+        else {
+          existingSubstitutions.paramSpecs.put(paramSpecType, new PyCallableParameterListTypeImpl(
+            List.of(PyCallableParameterImpl.positionalNonPsi("args", null),
+                  PyCallableParameterImpl.keywordNonPsi("kwargs", null)))
+        );
         }
       }
     }
@@ -1010,7 +1002,6 @@ public final class PyTypeChecker {
     if (type instanceof PyTypeVarTupleType typeVarTupleType) {
       generics.typeVarTuples.add(typeVarTupleType);
     }
-    // TODO Filter out PyParamSpecTypes representing actual lists of parameters, not type parameters declared via ParamSpec
     if (type instanceof PyParamSpecType) {
       generics.paramSpecs.add((PyParamSpecType)type);
     }
@@ -1053,6 +1044,11 @@ public final class PyTypeChecker {
         collectGenerics(elementType, context, generics, visited);
       }
       collectGenerics(concatenateType.getParamSpec(), context, generics, visited);
+    }
+    else if (type instanceof PyCallableParameterListType callableParameterList) {
+      for (PyCallableParameter parameter : callableParameterList.getParameters()) {
+        collectGenerics(parameter.getType(context), context, generics, visited);
+      }
     }
     else if (type instanceof PyUnpackedTupleType unpackedTupleType) {
       for (PyType elementType : unpackedTupleType.getElementTypes()) {
@@ -1162,7 +1158,7 @@ public final class PyTypeChecker {
           }
           return substitution;
         }
-        else if (type instanceof PyParamSpecType paramSpecType && paramSpecType.getParameters() == null) {
+        else if (type instanceof PyParamSpecType paramSpecType) {
           if (!substitutions.paramSpecs.containsKey(paramSpecType)) {
             PyParamSpecType sameScopeSubstitution = StreamEx.of(substitutions.paramSpecs.keySet())
               .findFirst(typeVarType -> {
@@ -1175,7 +1171,7 @@ public final class PyTypeChecker {
             }
             return paramSpecType;
           }
-          PyParamSpecType substitution = substitutions.paramSpecs.get(paramSpecType);
+          PyCallableParameterVariadicType substitution = substitutions.paramSpecs.get(paramSpecType);
           if (substitution != null && !substitution.equals(paramSpecType) && hasGenerics(substitution, context)) {
             return substitute(substitution, substitutions, context, substituting);
           }
@@ -1235,15 +1231,16 @@ public final class PyTypeChecker {
             PyCallableParameter onlyParam = ContainerUtil.getOnlyItem(parameters);
             if (onlyParam != null && onlyParam.getType(context) instanceof PyParamSpecType paramSpecType) {
               final var substitution = substitute(paramSpecType, substitutions, context);
-              if (substitution instanceof PyParamSpecType paramSpecSubst && paramSpecSubst.getParameters() != null) {
-                substParams = paramSpecSubst.getParameters();
+              if (substitution instanceof PyCallableParameterListType callableParams) {
+                substParams = callableParams.getParameters();
               }
               else {
                 substParams = List.of(PyCallableParameterImpl.nonPsi(substitution));
               }
             }
             else if (onlyParam != null && onlyParam.getType(context) instanceof PyConcatenateType concatenateType) {
-              final var paramSpecSubst = as(substitute(concatenateType.getParamSpec(), substitutions, context), PyParamSpecType.class);
+              PyCallableParameterListType paramSpecSubst =
+                as(substitute(concatenateType.getParamSpec(), substitutions, context), PyCallableParameterListType.class);
               List<PyCallableParameter> paramSpecParams = paramSpecSubst != null ? paramSpecSubst.getParameters() : null;
               substParams = StreamEx.of(concatenateType.getFirstTypes())
                 .flatCollection(paramType -> substituteExpand(paramType, substitutions, context, substituting))
@@ -1447,7 +1444,7 @@ public final class PyTypeChecker {
           for (Map.Entry<PyTypeVarTupleType, PyPositionalVariadicType> typeVarMapping : newSubstitutions.typeVarTuples.entrySet()) {
             substitutions.typeVarTuples.putIfAbsent(typeVarMapping.getKey(), typeVarMapping.getValue());
           }
-          for (Map.Entry<PyParamSpecType, PyParamSpecType> paramSpecMapping : newSubstitutions.paramSpecs.entrySet()) {
+          for (Map.Entry<PyParamSpecType, PyCallableParameterVariadicType> paramSpecMapping : newSubstitutions.paramSpecs.entrySet()) {
             substitutions.paramSpecs.putIfAbsent(paramSpecMapping.getKey(), paramSpecMapping.getValue());
           }
         });
@@ -1641,10 +1638,10 @@ public final class PyTypeChecker {
           substitutions.typeVars.put(typeVar, pair.getSecond());
         }
         else if (pair.getFirst() instanceof PyTypeVarTupleType typeVarTuple) {
-          substitutions.typeVarTuples.put(typeVarTuple, as(pair.getSecond(), PyVariadicType.class));
+          substitutions.typeVarTuples.put(typeVarTuple, as(pair.getSecond(), PyPositionalVariadicType.class));
         }
         else if (pair.getFirst() instanceof PyParamSpecType paramSpec) {
-          substitutions.paramSpecs.put(paramSpec, as(pair.getSecond(), PyParamSpecType.class));
+          substitutions.paramSpecs.put(paramSpec, as(pair.getSecond(), PyCallableParameterVariadicType.class));
         }
       }
       return substitutions;
@@ -1711,7 +1708,7 @@ public final class PyTypeChecker {
     private final Map<PyTypeVarTupleType, PyPositionalVariadicType> typeVarTuples;
 
     @NotNull
-    private final Map<PyParamSpecType, PyParamSpecType> paramSpecs;
+    private final Map<PyParamSpecType, PyCallableParameterVariadicType> paramSpecs;
 
     @Nullable
     private PyType qualifierType;
@@ -1727,7 +1724,7 @@ public final class PyTypeChecker {
           .toCustomMap(LinkedHashMap::new),
         EntryStream.of(typeParameters)
           .selectKeys(PyParamSpecType.class)
-          .selectValues(PyParamSpecType.class)
+          .selectValues(PyCallableParameterVariadicType.class)
           .toCustomMap(LinkedHashMap::new),
         null
       );
@@ -1739,7 +1736,7 @@ public final class PyTypeChecker {
 
     private GenericSubstitutions(@NotNull Map<PyTypeVarType, PyType> typeVars,
                                  @NotNull Map<PyTypeVarTupleType, PyPositionalVariadicType> typeVarTuples,
-                                 @NotNull Map<PyParamSpecType, PyParamSpecType> paramSpecs,
+                                 @NotNull Map<PyParamSpecType, PyCallableParameterVariadicType> paramSpecs,
                                  @Nullable PyType qualifierType) {
       this.typeVars = typeVars;
       this.typeVarTuples = typeVarTuples;
@@ -1747,7 +1744,7 @@ public final class PyTypeChecker {
       this.qualifierType = qualifierType;
     }
 
-    public @NotNull Map<PyParamSpecType, PyParamSpecType> getParamSpecs() {
+    public @NotNull Map<PyParamSpecType, PyCallableParameterVariadicType> getParamSpecs() {
       return Collections.unmodifiableMap(paramSpecs);
     }
 

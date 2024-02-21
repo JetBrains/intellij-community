@@ -5,6 +5,9 @@ import org.jetbrains.annotations.ApiStatus;
 
 
 /**
+ * A type representing an ordered series of other types.
+ * It can appear only as a type parameter/argument of another generic type.
+ * <p>
  * Two variants of such types described in <a href="https://peps.python.org/pep-0646/">PEP 646 – Variadic Generics</a> are
  * TypeVarTuples and unpacked tuple types.
  *
@@ -12,6 +15,6 @@ import org.jetbrains.annotations.ApiStatus;
  * @see PyUnpackedTupleType
  */
 @ApiStatus.Experimental
-public interface PyPositionalVariadicType extends PyVariadicType {
+public sealed interface PyPositionalVariadicType extends PyVariadicType permits PyTypeVarTupleType, PyUnpackedTupleType {
 
 }

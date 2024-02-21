@@ -20,10 +20,19 @@ public final class PyTypeParameterMapping {
     for (Couple<PyType> couple : mapping) {
       PyType expectedType = couple.getFirst();
       PyType actualType = couple.getSecond();
-      if (expectedType instanceof PyPositionalVariadicType && !(actualType instanceof PyPositionalVariadicType || actualType == null)) {
-        throw new IllegalArgumentException("Variadic type " + expectedType + " cannot be mapped to a non-variadic type " + actualType);
+      if (expectedType instanceof PyPositionalVariadicType &&
+          !(actualType instanceof PyPositionalVariadicType || actualType == null)) {
+        throw new IllegalArgumentException(
+          "Positional variadic type " + expectedType + " cannot be mapped to a non-variadic type " + actualType
+        );
       }
-      if (!(expectedType instanceof PyPositionalVariadicType) && actualType instanceof PyPositionalVariadicType) {
+      if (expectedType instanceof PyCallableParameterVariadicType &&
+          !(actualType instanceof PyCallableParameterVariadicType || actualType == null)) {
+        throw new IllegalArgumentException(
+          "Callable parameter variadic type " + expectedType + " cannot be mapped to a non-variadic type " + actualType
+        );
+      }
+      if (!(expectedType instanceof PyVariadicType) && actualType instanceof PyVariadicType) {
         throw new IllegalArgumentException("Non-variadic type " + expectedType + " cannot be mapped to a variadic type " + actualType);
       }
     }
@@ -188,10 +197,8 @@ public final class PyTypeParameterMapping {
     else if (expectedTypesDeque.size() == 1) {
       PyType onlyLeftExpectedType = expectedTypesDeque.peekFirst();
       if (onlyLeftExpectedType instanceof PyPositionalVariadicType) {
-        if (actualTypesDeque.size() == 1 && actualTypesDeque.peekFirst() instanceof PyPositionalVariadicType variadicType) {
-      if (onlyLeftExpectedType instanceof PyVariadicType) {
         // [*Ts] <- [*Ts] or [*Ts] <- [*tuple[T1, ...]]
-        if (actualTypesDeque.size() == 1 && actualTypesDeque.peekFirst() instanceof PyVariadicType variadicType) {
+        if (actualTypesDeque.size() == 1 && actualTypesDeque.peekFirst() instanceof PyPositionalVariadicType variadicType) {
           centerMappedTypes.add(Couple.of(onlyLeftExpectedType, variadicType));
         }
         else {

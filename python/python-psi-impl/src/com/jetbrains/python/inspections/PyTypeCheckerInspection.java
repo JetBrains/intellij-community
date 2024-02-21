@@ -407,11 +407,10 @@ public class PyTypeCheckerInspection extends PyInspection {
                                   @NotNull List<AnalyzeArgumentResult> result,
                                   @NotNull List<UnexpectedArgumentForParamSpec> unexpectedArgumentForParamSpecs,
                                   @NotNull List<UnfilledParameterFromParamSpec> unfilledParameterFromParamSpecs) {
-      paramSpec = Objects.requireNonNullElse(substitutions.getParamSpecs().get(paramSpec), paramSpec);
-      List<PyCallableParameter> parameters = paramSpec.getParameters();
-      if (parameters == null) return;
+      PyCallableParameterListType paramSpecSubst = as(substitutions.getParamSpecs().get(paramSpec), PyCallableParameterListType.class);
+      if (paramSpecSubst == null) return;
 
-      var mapping = analyzeArguments(arguments, parameters, myTypeEvalContext);
+      var mapping = analyzeArguments(arguments, paramSpecSubst.getParameters(), myTypeEvalContext);
       for (var item: mapping.getMappedParameters().entrySet()) {
         PyExpression argument = item.getKey();
         PyCallableParameter parameter = item.getValue();

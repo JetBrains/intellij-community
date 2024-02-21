@@ -1649,7 +1649,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
               .withDeclarationElement(declarationElement);
           }
           case ParamSpec -> {
-            PyType defaultType = defaultExpression != null ? createParamSpecDefaultTypeFromExpression(name, defaultExpression, context) : null;
+            PyCallableParameterVariadicType defaultType =
+              defaultExpression != null ? createParamSpecDefaultTypeFromExpression(defaultExpression, context) : null;
             yield new PyParamSpecType(name)
               .withScopeOwner(scopeOwner)
               .withDefaultType(defaultType)
@@ -1796,7 +1797,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (!(firstArgument instanceof PyStringLiteralExpression)) return null;
 
     final var name = ((PyStringLiteralExpression)firstArgument).getStringValue();
-    return new PyParamSpecType(name).withDefaultType(getParamSpecDefaultType(name, assignedCall, context));
+    return new PyParamSpecType(name).withDefaultType(getParamSpecDefaultType(assignedCall, context));
   }
 
   @Nullable
@@ -1830,18 +1831,18 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
-  private static PyType getParamSpecDefaultType(@NotNull String name, @NotNull PyCallExpression callExpression, @NotNull Context context) {
+  private static PyCallableParameterVariadicType getParamSpecDefaultType(@NotNull PyCallExpression callExpression,
+                                                                         @NotNull Context context) {
     PyExpression defaultExpression = callExpression.getKeywordArgument("default");
     if (defaultExpression != null) {
-      return createParamSpecDefaultTypeFromExpression(name, defaultExpression, context);
+      return createParamSpecDefaultTypeFromExpression(defaultExpression, context);
     }
     return null;
   }
 
   @Nullable
-  private static PyParamSpecType createParamSpecDefaultTypeFromExpression(@NotNull String name,
-                                                                          @NotNull PyExpression expression,
-                                                                          @NotNull Context context) {
+  private static PyCallableParameterVariadicType createParamSpecDefaultTypeFromExpression(@NotNull PyExpression expression,
+                                                                                          @NotNull Context context) {
     if (expression instanceof PyListLiteralExpression listLiteralExpression) {
       PyExpression[] defaultExpressions = listLiteralExpression.getElements();
       List<PyType> defaultArgumentTypes = StreamEx.of(defaultExpressions)
@@ -1849,9 +1850,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         .map(defExpr -> Ref.deref(getType(defExpr, context)))
         .toList();
 
-      return new PyParamSpecType(name)
-        .withParameters(ContainerUtil
-                          .map(defaultArgumentTypes, argType -> PyCallableParameterImpl.nonPsi(argType)), context.getTypeContext());
+      return new PyCallableParameterListTypeImpl(ContainerUtil.map(defaultArgumentTypes, PyCallableParameterImpl::nonPsi));
     }
     if (expression instanceof PyReferenceExpression) {
       PyType referenceType = Ref.deref(getType(expression, context));
@@ -1885,7 +1884,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     if (indexExpr instanceof PyTupleExpression tupleExpr) {
       for (PyExpression expr : tupleExpr.getElements()) {
         if (expr instanceof PyListLiteralExpression listLiteralExpression) { // ParamSpec explicit parameterization
-          types.add(createParamSpecDefaultTypeFromExpression("P", listLiteralExpression, context));
+          types.add(createParamSpecDefaultTypeFromExpression(listLiteralExpression, context));
         }
         else {
           types.add(Ref.deref(getType(expr, context)));
@@ -1893,7 +1892,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       }
     }
     else if (indexExpr instanceof PyListLiteralExpression listLiteralExpression) {
-      types.add(createParamSpecDefaultTypeFromExpression("P", listLiteralExpression, context));
+      types.add(createParamSpecDefaultTypeFromExpression(listLiteralExpression, context));
     }
     else if (indexExpr != null) {
       types.add(Ref.deref(getType(indexExpr, context)));
