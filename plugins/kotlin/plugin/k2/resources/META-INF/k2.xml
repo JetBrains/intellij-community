@@ -198,6 +198,16 @@
               nameKey="hints.settings.lambda.receivers.parameters"
               descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.receivers.parameters"/>
     </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KtValuesHintsProvider"
+            isEnabledByDefault="true"
+            group="VALUES_GROUP"
+            providerId="kotlin.values.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.values.ranges"
+            descriptionKey="inlay.kotlin.values.hints"/>
   </extensions>
 
   <extensionPoints>
