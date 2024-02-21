@@ -138,7 +138,7 @@ class PyTypeHintsInspection : PyInspection() {
         return
       }
 
-      if (myTypeEvalContext.getType(node) is PyVariadicType) {
+      if (myTypeEvalContext.getType(node) is PyPositionalVariadicType) {
         checkTypeVarTupleUnpacked(node)
       }
 

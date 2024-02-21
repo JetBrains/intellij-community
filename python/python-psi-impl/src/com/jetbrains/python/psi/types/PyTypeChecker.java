@@ -132,7 +132,7 @@ public final class PyTypeChecker {
       return Optional.of(match(typeVarTupleType, expected, context));
     }
 
-    if (expected instanceof PyVariadicType variadic) {
+    if (expected instanceof PyPositionalVariadicType variadic) {
       return Optional.of(match(variadic, actual, context));
     }
 
@@ -291,11 +291,11 @@ public final class PyTypeChecker {
     return true;
   }
 
-  private static boolean match(@NotNull PyVariadicType expected, @Nullable PyType actual, @NotNull MatchContext context) {
+  private static boolean match(@NotNull PyPositionalVariadicType expected, @Nullable PyType actual, @NotNull MatchContext context) {
     if (actual == null) {
       return true;
     }
-    if (!(actual instanceof PyVariadicType actualVariadic)) {
+    if (!(actual instanceof PyPositionalVariadicType actualVariadic)) {
       return false;
     }
     if (expected instanceof PyUnpackedTupleType expectedUnpackedTupleType) {
@@ -326,7 +326,7 @@ public final class PyTypeChecker {
     }
     // The expected type is just a TypeVarTuple
     else {
-      PyVariadicType substitution = context.mySubstitutions.typeVarTuples.get(expected);
+      PyPositionalVariadicType substitution = context.mySubstitutions.typeVarTuples.get(expected);
       if (substitution != null && !substitution.equals(PyUnpackedTupleTypeImpl.UNSPECIFIED)) {
         if (expected.equals(actual) || substitution.equals(expected)) {
           return true;
@@ -675,7 +675,7 @@ public final class PyTypeChecker {
       .filter(cp -> !(cp.getParameter() instanceof PySlashParameter || cp.getParameter() instanceof PySingleStarParameter))
       .map(cp -> {
         PyType argType = cp.getArgumentType(context);
-        if (cp.isPositionalContainer() && !(argType instanceof PyVariadicType)) {
+        if (cp.isPositionalContainer() && !(argType instanceof PyPositionalVariadicType)) {
           return PyUnpackedTupleTypeImpl.createUnbound(argType);
         }
         return argType;
@@ -1100,7 +1100,7 @@ public final class PyTypeChecker {
           if (!substitutions.typeVarTuples.containsKey(typeVarTupleType)) {
             return type;
           }
-          PyVariadicType substitution = substitutions.typeVarTuples.get(typeVarTupleType);
+          PyPositionalVariadicType substitution = substitutions.typeVarTuples.get(typeVarTupleType);
           if (!typeVarTupleType.equals(substitution) && hasGenerics(substitution, context)) {
             return substitute(substitution, substitutions, context, substituting);
           }
@@ -1408,7 +1408,7 @@ public final class PyTypeChecker {
       return true;
     }
     final PyType expectedArgumentType = container.getArgumentType(context);
-    if (container.isPositionalContainer() && expectedArgumentType instanceof PyVariadicType variadicType) {
+    if (container.isPositionalContainer() && expectedArgumentType instanceof PyPositionalVariadicType variadicType) {
       return match(variadicType, PyUnpackedTupleTypeImpl.create(actualArgumentTypes),
                    new MatchContext(context, substitutions, false));
     }
@@ -1444,7 +1444,7 @@ public final class PyTypeChecker {
           for (Map.Entry<PyTypeVarType, PyType> typeVarMapping : newSubstitutions.typeVars.entrySet()) {
             substitutions.typeVars.putIfAbsent(typeVarMapping.getKey(), typeVarMapping.getValue());
           }
-          for (Map.Entry<PyTypeVarTupleType, PyVariadicType> typeVarMapping : newSubstitutions.typeVarTuples.entrySet()) {
+          for (Map.Entry<PyTypeVarTupleType, PyPositionalVariadicType> typeVarMapping : newSubstitutions.typeVarTuples.entrySet()) {
             substitutions.typeVarTuples.putIfAbsent(typeVarMapping.getKey(), typeVarMapping.getValue());
           }
           for (Map.Entry<PyParamSpecType, PyParamSpecType> paramSpecMapping : newSubstitutions.paramSpecs.entrySet()) {
@@ -1708,7 +1708,7 @@ public final class PyTypeChecker {
     private final Map<PyTypeVarType, PyType> typeVars;
 
     @NotNull
-    private final Map<PyTypeVarTupleType, PyVariadicType> typeVarTuples;
+    private final Map<PyTypeVarTupleType, PyPositionalVariadicType> typeVarTuples;
 
     @NotNull
     private final Map<PyParamSpecType, PyParamSpecType> paramSpecs;
@@ -1723,7 +1723,7 @@ public final class PyTypeChecker {
           .toCustomMap(LinkedHashMap::new),
         EntryStream.of(typeParameters)
           .selectKeys(PyTypeVarTupleType.class)
-          .selectValues(PyVariadicType.class)
+          .selectValues(PyPositionalVariadicType.class)
           .toCustomMap(LinkedHashMap::new),
         EntryStream.of(typeParameters)
           .selectKeys(PyParamSpecType.class)
@@ -1738,7 +1738,7 @@ public final class PyTypeChecker {
     }
 
     private GenericSubstitutions(@NotNull Map<PyTypeVarType, PyType> typeVars,
-                                 @NotNull Map<PyTypeVarTupleType, PyVariadicType> typeVarTuples,
+                                 @NotNull Map<PyTypeVarTupleType, PyPositionalVariadicType> typeVarTuples,
                                  @NotNull Map<PyParamSpecType, PyParamSpecType> paramSpecs,
                                  @Nullable PyType qualifierType) {
       this.typeVars = typeVars;
@@ -1755,7 +1755,7 @@ public final class PyTypeChecker {
       return Collections.unmodifiableMap(typeVars);
     }
 
-    public @NotNull Map<PyTypeVarTupleType, PyVariadicType> getTypeVarTuples() {
+    public @NotNull Map<PyTypeVarTupleType, PyPositionalVariadicType> getTypeVarTuples() {
       return Collections.unmodifiableMap(typeVarTuples);
     }
 

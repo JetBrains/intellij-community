@@ -1744,7 +1744,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   @Nullable
-  public static PyVariadicType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  public static PyPositionalVariadicType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     Ref<@Nullable PyType> typeRef = getTypeFromStarExpression(element, context);
     if (typeRef == null) {
       typeRef = getTypeFromUnpackOperator(element, context);

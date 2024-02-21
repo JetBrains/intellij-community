@@ -386,7 +386,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       List<UnfilledPositionalVararg> unfilledPositionalVarargs = new ArrayList<>();
       for (var unmappedContainer: mapping.getUnmappedContainerParameters()) {
         PyType containerType = unmappedContainer.getArgumentType(myTypeEvalContext);
-        if (unmappedContainer.getName() == null || !(containerType instanceof PyVariadicType)) continue;
+        if (unmappedContainer.getName() == null || !(containerType instanceof PyPositionalVariadicType)) continue;
         PyType expandedVararg = PyTypeChecker.substitute(containerType, substitutions, myTypeEvalContext);
         if (!(expandedVararg instanceof PyUnpackedTupleType unpackedTuple) || unpackedTuple.isUnbound()) continue;
         unfilledPositionalVarargs.add(
@@ -450,7 +450,7 @@ public class PyTypeCheckerInspection extends PyInspection {
                                                                 @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       final PyType expected = container.getArgumentType(myTypeEvalContext);
 
-      if (container.isPositionalContainer() && expected instanceof PyVariadicType) {
+      if (container.isPositionalContainer() && expected instanceof PyPositionalVariadicType) {
         PyUnpackedTupleType argumentTypes = PyUnpackedTupleTypeImpl.create(ContainerUtil.map(arguments, myTypeEvalContext::getType));
         boolean matched = matchParameterAndArgument(expected, argumentTypes, null, substitutions);
         return ContainerUtil.map(arguments, argument -> {
