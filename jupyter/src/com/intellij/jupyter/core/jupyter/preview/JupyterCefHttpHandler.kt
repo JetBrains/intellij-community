@@ -2,7 +2,7 @@
 package com.intellij.jupyter.core.jupyter.preview
 
 
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtilRt
@@ -48,7 +48,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
       // After optimizations in PluginClassLoader, classLoader.getResource return null in debug,
       // so we have additional logic with PluginClassLoader.pluginDescriptor.
       val url = javaClass.classLoader.getResource(path)
-                ?: (javaClass.classLoader as? PluginClassLoader)?.pluginDescriptor?.getPluginPath()?.let { Path.of(it.toCanonicalPath(), path) }?.toUri()?.toURL()
+                ?: (javaClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.getPluginPath()?.let { Path.of(it.toCanonicalPath(), path) }?.toUri()?.toURL()
       if (url != null) {
         return url
       }
