@@ -30,7 +30,7 @@ public interface ProjectImportModelProvider extends Serializable {
   }
 
   default @NotNull String getName() {
-    return getClass().getName();
+    return getClass().getSimpleName();
   }
 
   default void populateBuildModels(

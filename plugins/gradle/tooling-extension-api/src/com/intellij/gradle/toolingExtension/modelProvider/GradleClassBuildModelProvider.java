@@ -40,7 +40,7 @@ public class GradleClassBuildModelProvider<T> implements ProjectImportModelProvi
 
   @Override
   public @NotNull String getName() {
-    return modelClass.getName();
+    return modelClass.getSimpleName();
   }
 
   @Override
