@@ -12,8 +12,6 @@ fun foo() {
     LibraryJavaEnum.<caret>entries
 }
 
-// ALLOW_AST_ACCESS
-
 // REF1: (dependency).LibraryEnum
 // REF2: (dependency).LibraryEnum
 // REF3: (dependency).LibraryEnum
