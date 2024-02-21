@@ -280,6 +280,11 @@
     "ideaId": "com.jetbrains.codeWithMe"
   },
   {
+    "vsCodeId": "mtxr.sqltools",
+    "ideaName": "SQLTools",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "mtxr.sqltools-driver-mysql",
     "ideaName": "SQLTools MySQL/MariaDB/TiDB",
     "builtIn": true
