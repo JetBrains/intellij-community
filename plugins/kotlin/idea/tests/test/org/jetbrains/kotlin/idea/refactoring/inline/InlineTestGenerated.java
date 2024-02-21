@@ -699,6 +699,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                     runTest("testData/refactoring/inline/inlineVariableOrProperty/property/expect.kt");
                 }
 
+                @TestMetadata("fromCompanionObject.kt")
+                public void testFromCompanionObject() throws Exception {
+                    runTest("testData/refactoring/inline/inlineVariableOrProperty/property/fromCompanionObject.kt");
+                }
+
                 @TestMetadata("inheritance.kt")
                 public void testInheritance() throws Exception {
                     runTest("testData/refactoring/inline/inlineVariableOrProperty/property/inheritance.kt");

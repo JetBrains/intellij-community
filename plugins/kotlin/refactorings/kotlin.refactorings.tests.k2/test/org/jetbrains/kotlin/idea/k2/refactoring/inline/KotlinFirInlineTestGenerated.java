@@ -538,6 +538,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/expect.kt");
             }
 
+            @TestMetadata("fromCompanionObject.kt")
+            public void testFromCompanionObject() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/fromCompanionObject.kt");
+            }
+
             @TestMetadata("inheritance.kt")
             public void testInheritance() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/property/inheritance.kt");
