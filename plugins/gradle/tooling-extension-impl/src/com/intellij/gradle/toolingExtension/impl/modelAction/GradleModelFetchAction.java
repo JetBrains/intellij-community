@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.model.internal.TurnOffDefaultTasks;
+import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasks;
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ModelConverter;
 
 import java.io.Serializable;
