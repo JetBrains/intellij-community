@@ -245,6 +245,26 @@
     "ideaId": "org.jetbrains.plugins.sass"
   },
   {
+    "vsCodeId": "ms-azuretools.vscode-azureappservice",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-azurefunctions",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-azureresourcegroups",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-cosmosdb",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
@@ -268,6 +288,11 @@
     "vsCodeId": "ms-dotnettools.csharp",
     "ideaName": "C#",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-dotnettools.dotnet-maui",
+    "ideaName": "Rider Android Support",
+    "ideaId": "com.jetbrains.rider.android"
   },
   {
     "vsCodeId": "ms-dotnettools.vscode-dotnet-pack",
