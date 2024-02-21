@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
 import javax.swing.JComponent
 
@@ -52,6 +54,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
                                                                          private val myPublisher: DumbModeListener,
                                                                          private val scope: CoroutineScope) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private val myState: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L, 0))
+
+  private val initialDumbTaskRequiredForSmartModeSubmitted = AtomicBoolean(false)
 
   // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
   private var lastPublishedState: DumbState = myState.value
@@ -119,6 +123,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   internal suspend fun queueStartupActivitiesRequiredForSmartMode() {
+    if (!initialDumbTaskRequiredForSmartModeSubmitted.compareAndSet(false, true)) {
+      return
+    }
+
     val task = InitialDumbTaskRequiredForSmartMode(project)
     blockingContext {
       queueTask(task)
@@ -235,7 +243,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         dumbModeStartTrace = trace
         try {
           publishDumbModeChangedEvent()
-        } catch (t: Throwable) {
+        }
+        catch (t: Throwable) {
           // in unit tests we may get here because of exception thrown from Log.error from catch block inside runCatchingIgnorePCE
           decrementDumbCounter()
           throw t
@@ -601,14 +610,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   @TestOnly
-  suspend fun waitUntilFinished() {
-    myGuiDumbTaskRunner.waitUntilFinished()
-    mySyncDumbTaskRunner.isRunning.first { !it }
+  fun ensureInitialDumbTaskRequiredForSmartModeSubmitted() {
+    if (!initialDumbTaskRequiredForSmartModeSubmitted.get()) {
+      runBlockingMaybeCancellable {
+        queueStartupActivitiesRequiredForSmartMode()
+      }
+    }
   }
 
   @TestOnly
   fun isRunning(): Boolean {
     return myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value
+  }
+
+  @TestOnly
+  fun hasScheduledTasks(): Boolean {
+    // when queued on EDT, dumb mode starts immediately, but executor does not start immediately - it schedules start to the end of the EDT
+    // queue to give a chance to invoke completeJustSubmittedTasks and index files under modal progress.
+    return scheduledTasksScope.coroutineContext.job.children.firstOrNull() != null
   }
 
   companion object {

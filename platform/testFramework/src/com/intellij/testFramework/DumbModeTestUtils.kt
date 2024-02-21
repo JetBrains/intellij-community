@@ -23,6 +23,12 @@ import kotlin.time.toDuration
 object DumbModeTestUtils {
   private val projectsWithEternalDumbTask = ConcurrentHashMap<Project, MutableSet<EternalTaskShutdownToken>>()
 
+  internal fun isEternalDumbTaskRunning(project: Project): Boolean {
+    return synchronized(projectsWithEternalDumbTask) {
+      !projectsWithEternalDumbTask[project].isNullOrEmpty()
+    }
+  }
+
   private fun registerEternalDumbTask(project: Project, eternalTask: EternalTaskShutdownToken) {
     synchronized(projectsWithEternalDumbTask) {
       projectsWithEternalDumbTask
@@ -149,6 +155,8 @@ object DumbModeTestUtils {
    * Can be invoked from any thread (even from EDT).
    */
   @JvmStatic
+  @Deprecated("Most likely, you need indexes to be ready, not bare !dumb mode",
+              replaceWith = ReplaceWith("IndexingTestUtil.waitUntilIndexesAreReady", "com.intellij.testFramework.IndexingTestUtil"))
   fun waitForSmartMode(project: Project, ignoreEternalTasks: Boolean = false) {
     if (ignoreEternalTasks && !projectsWithEternalDumbTask[project].isNullOrEmpty()) {
       thisLogger().info("Don't wait for smart mode, because eternal task is in progress")
