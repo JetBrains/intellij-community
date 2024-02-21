@@ -7,42 +7,34 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexable.files.filter", 3)
+  private val GROUP = EventLogGroup("indexable.files.filter", 4)
 
   override fun getGroup(): EventLogGroup = GROUP
 
   private val filterNameField = EventFields.StringValidatedByEnum("filter_name", "indexable_files_filter_name")
   private val isOnProjectOpenField = EventFields.Boolean("is_on_project_open")
-  private val nonIndexableFilesFoundInFilterField = EventFields.Int("non_indexable_files_found_in_filter_count")
-  private val indexableFilesNotFoundInFilterField = EventFields.Int("indexable_files_not_found_in_filter_count")
-  private val excludedFilesCountField = EventFields.Int("excluded_files_count")
-  private val excludedFilesWereFilteredOutField = EventFields.Boolean("excluded_files_were_filtered_out")
+  private val nonIndexableFilesInFilterField = EventFields.Int("non_indexable_files_in_filter_count")
+  private val indexableFilesNotInFilterField = EventFields.Int("indexable_files_not_in_filter_count")
 
   private val indexableFilesFilterHealthCheck = GROUP.registerVarargEvent(
     "indexable_files_filter_health_check",
     filterNameField,
     isOnProjectOpenField,
-    nonIndexableFilesFoundInFilterField,
-    indexableFilesNotFoundInFilterField,
-    excludedFilesWereFilteredOutField,
-    excludedFilesCountField,
+    nonIndexableFilesInFilterField,
+    indexableFilesNotInFilterField,
   )
 
   fun reportIndexableFilesFilterHealthcheck(project: Project,
                                             filter: ProjectIndexableFilesFilter,
                                             onProjectOpen: Boolean,
-                                            nonIndexableFoundInFilterCount: Int,
-                                            indexableNotFoundInFilterCount: Int,
-                                            excludedFilesWereFilteredOut: Boolean,
-                                            excludedFilesCount: Int) {
+                                            nonIndexableFilesInFilterCount: Int,
+                                            indexableFilesNotInFilterCount: Int) {
     indexableFilesFilterHealthCheck.log(
       project,
       filterNameField.with(getFilterName(filter)),
       isOnProjectOpenField.with(onProjectOpen),
-      nonIndexableFilesFoundInFilterField.with(nonIndexableFoundInFilterCount),
-      indexableFilesNotFoundInFilterField.with(indexableNotFoundInFilterCount),
-      excludedFilesWereFilteredOutField.with(excludedFilesWereFilteredOut),
-      excludedFilesCountField.with(excludedFilesCount),
+      nonIndexableFilesInFilterField.with(nonIndexableFilesInFilterCount),
+      indexableFilesNotInFilterField.with(indexableFilesNotInFilterCount),
     )
   }
 

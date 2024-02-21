@@ -3,14 +3,13 @@ package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
-import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.ConcurrencyUtil
@@ -18,12 +17,15 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexInfrastructure
-import com.intellij.util.indexing.projectFilter.HealthCheckErrorType.INDEXABLE_FILE_NOT_FOUND_IN_FILTER
-import com.intellij.util.indexing.projectFilter.HealthCheckErrorType.NON_INDEXABLE_FILE_FOUND_IN_FILTER
+import com.intellij.util.indexing.projectFilter.HealthCheckErrorType.INDEXABLE_FILE_NOT_IN_FILTER
+import com.intellij.util.indexing.projectFilter.HealthCheckErrorType.NON_INDEXABLE_FILE_IN_FILTER
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+
+
+private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
 
 internal class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val filter: ProjectIndexableFilesFilter) {
   @Volatile
@@ -55,88 +57,51 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     }
   }
 
+  /**
+   * [ProjectIndexableFilesFilter] is compared to set of files from [FileBasedIndexImpl.iterateIndexableFiles] (all files that
+   * should belong to workspace)
+   *
+   * There could be two possible types of inconsistency between [ProjectIndexableFilesFilter] and [FileBasedIndexImpl.iterateIndexableFiles]:
+   * 1. False positives - files that were found in filter but were NOT iterated by [FileBasedIndexImpl.iterateIndexableFiles].
+   *    This is fine because files can be removed from workspace, but we clear indexes for them lazily
+   * 2. False negatives - files that were NOT found in filter but were iterated by [FileBasedIndexImpl.iterateIndexableFiles]
+   */
   @Synchronized // don't allow two parallel health checks in case of triggerHealthCheck()
   private fun runHealthCheck(onProjectOpen: Boolean) {
     if (!IndexInfrastructure.hasIndices()) return
 
     try {
-      val errors: List<HealthCheckError> = doRunHealthCheckInReadAction() ?: return
+      val errorsByType = doRunHealthCheckInReadAction() ?: return
 
-      for (error in errors) {
-        error.fix()
+      errorsByType.fix(filter)
+
+      IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(
+        project,
+        filter,
+        onProjectOpen,
+        errorsByType[NON_INDEXABLE_FILE_IN_FILTER]?.size ?: 0,
+        errorsByType[INDEXABLE_FILE_NOT_IN_FILTER]?.size ?: 0)
+
+      for ((errorType, errors) in errorsByType) {
+        if (errors.isEmpty()) continue
+
+        val message = "${errorType.message}. Errors count: ${errors.size}. Examples:\n" +
+                      errors.take(5).joinToString("\n") { error ->
+                        ReadAction.nonBlocking(Callable { error.fileInfo }).executeSynchronously()
+                      }
+        errorType.logger(message)
       }
-
-      val (excludedFilesWereFilteredOut, errorsToReport) = tryToFilterOutExcludedFiles(errors)
-
-      val excludedFilesCount = errors.size - errorsToReport.size
-      if (excludedFilesCount > 0) {
-        FileBasedIndexImpl.LOG.info("$excludedFilesCount of ${filter.javaClass.simpleName} health check errors were filtered out")
-      }
-
-      val errorGroups = errorsToReport
-        .groupBy { it.type }
-
-      val nonIndexableFoundInFilterCount = errorGroups.entries.find { it.key == NON_INDEXABLE_FILE_FOUND_IN_FILTER }?.value?.size ?: 0
-      val indexableNotFoundInFilterCount = errorGroups.entries.find { it.key == INDEXABLE_FILE_NOT_FOUND_IN_FILTER }?.value?.size ?: 0
-
-      IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(project,
-                                                                                     filter,
-                                                                                     onProjectOpen,
-                                                                                     nonIndexableFoundInFilterCount,
-                                                                                     indexableNotFoundInFilterCount,
-                                                                                     excludedFilesWereFilteredOut,
-                                                                                     excludedFilesCount)
-
-      if (errorsToReport.isEmpty()) return
-
-      val summary = errorGroups
-        .entries.joinToString("\n") { (type, e) ->
-          "${e.size} $type errors. Examples:\n" + e.take(10).joinToString("\n") { error ->
-            ReadAction.nonBlocking(Callable { error.presentableText }).executeSynchronously()
-          }
-        }
-
-      val checkForExcludedFilesInfo = if (excludedFilesWereFilteredOut) "Excluded files were filtered out."
-      else "Check for excluded files was skipped, errors might be false-positive."
-
-      FileBasedIndexImpl.LOG.warn("${filter.javaClass.simpleName} health check found ${errorsToReport.size} errors in project ${project.name}.\n" +
-                                  "$checkForExcludedFilesInfo\n:" +
-                                  summary)
     }
     catch (_: ProcessCanceledException) {
 
     }
     catch (e: Exception) {
-      FileBasedIndexImpl.LOG.error(e)
+      LOG.error(e)
     }
   }
 
-  private fun tryToFilterOutExcludedFiles(errors: List<HealthCheckError>): Pair<Boolean, List<HealthCheckError>> {
-    val checkForExcludedFiles = errors.size <= Registry.intValue("index.files.filter.check.excluded.files.limit")
-    if (!checkForExcludedFiles) {
-      return Pair(false, errors)
-    }
-    try {
-      return Pair(true, ReadAction.nonBlocking(Callable { filterOutExcludedFiles(errors) }).executeSynchronously())
-    }
-    catch (ignored: ProcessCanceledException) {
-      return Pair(false, errors)
-    }
-  }
-
-  private fun filterOutExcludedFiles(errors: List<HealthCheckError>): List<HealthCheckError> {
-    val projectFileIndex = ProjectFileIndex.getInstance(project)
-    return errors.filter {  error ->
-      if (error !is NotIndexableFileIsInFilterError) true
-      else {
-        val file = PersistentFS.getInstance().findFileById(error.fileId)
-        file == null || !projectFileIndex.isExcluded(file)
-      }
-    }
-  }
-
-  private fun doRunHealthCheckInReadAction(): List<HealthCheckError>? {
-    var errors: List<HealthCheckError>? = null
+  private fun doRunHealthCheckInReadAction(): Map<HealthCheckErrorType, List<InconsistentFile>>? {
+    var errors: Map<HealthCheckErrorType, List<InconsistentFile>>? = null
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
       if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
       errors = doRunHealthCheck()
@@ -144,7 +109,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     return errors
   }
 
-  private fun doRunHealthCheck(): List<HealthCheckError> {
+  private fun doRunHealthCheck(): Map<HealthCheckErrorType, List<InconsistentFile>> {
     return runIfScanningScanningIsCompleted(project) {
       filter.runAndCheckThatNoChangesHappened {
         // It is possible that scanning will start and finish while we are performing healthcheck,
@@ -164,33 +129,37 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
    * Errors reported for [com.intellij.util.indexing.projectFilter.CachingProjectIndexableFilesFilter] could also mean an inconsistency
    * between [com.intellij.util.indexing.roots.IndexableFilesIterator] and [com.intellij.util.indexing.IndexableFilesIndex].
    */
-  private fun doRunHealthCheck(project: Project, checkAllExpectedIndexableFiles: Boolean, fileStatuses: Sequence<Pair<Int, Boolean>>): List<HealthCheckError> {
-    val errors = mutableListOf<HealthCheckError>()
+  private fun doRunHealthCheck(project: Project,
+                               checkAllExpectedIndexableFiles: Boolean,
+                               fileStatuses: Sequence<Pair<Int, Boolean>>): Map<HealthCheckErrorType, List<InconsistentFile>> {
+    val nonIndexableFilesInFilter = mutableListOf<InconsistentFile>()
+    val indexableFilesNotInFilter = mutableListOf<InconsistentFile>()
 
     val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
 
-    for ((fileId, indexable) in fileStatuses) {
+    for ((fileId, isInFilter) in fileStatuses) {
       ProgressManager.checkCanceled()
       if (shouldBeIndexable[fileId]) {
-        if (!indexable) {
-          errors.add(MissingFileIdInFilterError(fileId, filter))
+        if (!isInFilter) {
+          indexableFilesNotInFilter.add(InconsistentFile(fileId))
         }
         if (checkAllExpectedIndexableFiles) shouldBeIndexable[fileId] = false
       }
-      else if (indexable && !shouldBeIndexable[fileId]) {
-        errors.add(NotIndexableFileIsInFilterError(fileId, filter))
+      else if (isInFilter && !shouldBeIndexable[fileId]) {
+        nonIndexableFilesInFilter.add(InconsistentFile(fileId))
       }
     }
 
     if (checkAllExpectedIndexableFiles) {
       for (fileId in 0 until shouldBeIndexable.size()) {
         if (shouldBeIndexable[fileId]) {
-          errors.add(MissingFileIdInFilterError(fileId, filter))
+          indexableFilesNotInFilter.add(InconsistentFile(fileId))
         }
       }
     }
 
-    return errors
+    return mapOf(NON_INDEXABLE_FILE_IN_FILTER to nonIndexableFilesInFilter,
+                 INDEXABLE_FILE_NOT_IN_FILTER to indexableFilesNotInFilter)
   }
 
   private fun getFilesThatShouldBeIndexable(project: Project): BitSet {
@@ -212,37 +181,33 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
   }
 }
 
-enum class HealthCheckErrorType {
-  NON_INDEXABLE_FILE_FOUND_IN_FILTER,
-  INDEXABLE_FILE_NOT_FOUND_IN_FILTER
-}
+internal typealias HealthCheckLogger = (String) -> Unit
 
-sealed interface HealthCheckError {
-  val presentableText: String
-  val type: HealthCheckErrorType
-  fun fix()
-}
+internal val infoLogger: HealthCheckLogger = { LOG.info(it) }
+internal val warnLogger: HealthCheckLogger = { LOG.warn(it) }
 
-internal class MissingFileIdInFilterError(private val fileId: Int,
-                                          private val filter: ProjectIndexableFilesFilter) : HealthCheckError {
-  override val type = INDEXABLE_FILE_NOT_FOUND_IN_FILTER
-  override val presentableText: String
-    get() = "file name=${PersistentFS.getInstance().findFileById(fileId)?.name} id=$fileId NOT found in filter"
-
-  override fun fix() {
-    filter.ensureFileIdPresent(fileId) { true }
+internal fun Map<HealthCheckErrorType, List<InconsistentFile>>.fix(filter: ProjectIndexableFilesFilter) {
+  this.forEach { (type, files) ->
+    files.forEach { file -> type.fix(file.fileId, filter) }
   }
 }
 
-internal class NotIndexableFileIsInFilterError(val fileId: Int,
-                                               private val filter: ProjectIndexableFilesFilter) : HealthCheckError {
-  override val type = NON_INDEXABLE_FILE_FOUND_IN_FILTER
-  override val presentableText: String
-    get() = "file name=${
-      PersistentFS.getInstance().findFileById(fileId)?.name
-    } id=$fileId is found in filter even though it's NOT indexable"
+internal enum class HealthCheckErrorType(val message: String, val logger: HealthCheckLogger) {
+  NON_INDEXABLE_FILE_IN_FILTER("Following files are NOT indexable but they were found in filter", infoLogger) {
+    override fun fix(fileId: Int, filter: ProjectIndexableFilesFilter) {
+      filter.removeFileId(fileId)
+    }
+  },
+  INDEXABLE_FILE_NOT_IN_FILTER("Following files are indexable but they were NOT found in filter", warnLogger) {
+    override fun fix(fileId: Int, filter: ProjectIndexableFilesFilter) {
+      filter.ensureFileIdPresent(fileId) { true }
+    }
+  };
 
-  override fun fix() {
-    filter.removeFileId(fileId)
-  }
+  abstract fun fix(fileId: Int, filter: ProjectIndexableFilesFilter)
+}
+
+internal class InconsistentFile(val fileId: Int) {
+  val fileInfo: String
+    get() = "file id=$fileId path=${PersistentFS.getInstance().findFileById(fileId)?.path}"
 }
