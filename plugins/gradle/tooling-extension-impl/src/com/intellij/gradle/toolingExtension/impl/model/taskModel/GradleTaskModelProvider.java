@@ -14,7 +14,7 @@ public class GradleTaskModelProvider implements ProjectImportModelProvider {
 
   @Override
   public GradleModelFetchPhase getPhase() {
-    return GradleModelFetchPhase.TASK_WARM_UP_PHASE;
+    return GradleModelFetchPhase.WARM_UP_PHASE;
   }
 
   @Override
