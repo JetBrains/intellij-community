@@ -101,6 +101,7 @@ final class ServiceSingleView extends ServiceView {
           if (oldValueRef.get() == null) {
             onViewSelected(descriptor);
           }
+          myUi.setDetailsComponentVisible(descriptor.isContentPartVisible());
           myUi.setDetailsComponent(descriptor.getContentComponent());
         }
       }
@@ -116,6 +117,7 @@ final class ServiceSingleView extends ServiceView {
       ServiceViewDescriptor descriptor = item.getViewDescriptor();
       onViewSelected(descriptor);
 
+      myUi.setDetailsComponentVisible(descriptor.isContentPartVisible());
       myUi.setDetailsComponent(descriptor.getContentComponent());
     }
   }

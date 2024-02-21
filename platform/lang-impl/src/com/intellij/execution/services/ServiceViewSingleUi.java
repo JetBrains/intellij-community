@@ -61,6 +61,10 @@ final class ServiceViewSingleUi implements ServiceViewUi {
   }
 
   @Override
+  public void setDetailsComponentVisible(boolean visible) {
+  }
+
+  @Override
   public void setNavBar(@NotNull JComponent component) {
   }
 

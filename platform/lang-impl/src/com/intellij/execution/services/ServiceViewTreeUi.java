@@ -196,6 +196,11 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     });
   }
 
+  @Override
+  public void setDetailsComponentVisible(boolean visible) {
+    myDetailsPanel.setVisible(visible);
+  }
+
   @Nullable
   @Override
   public JComponent getDetailsComponent() {
