@@ -67,6 +67,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/AllPrivate.kt"));
         }
 
+        @TestMetadata("FunctionTypeParameterAnnotation.kt")
+        public void testFunctionTypeParameterAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/FunctionTypeParameterAnnotation.kt"));
+        }
+
         @TestMetadata("InternalFacadeClass.kt")
         public void testInternalFacadeClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/InternalFacadeClass.kt"));
@@ -75,6 +80,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("MultiFile.kt")
         public void testMultiFile() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/MultiFile.kt"));
+        }
+
+        @TestMetadata("PropertyTypeParameterAnnotation.kt")
+        public void testPropertyTypeParameterAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/facades/PropertyTypeParameterAnnotation.kt"));
         }
 
         @TestMetadata("SingleFile.kt")
@@ -280,6 +290,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/BackingFields.kt"));
         }
 
+        @TestMetadata("ClassTypeParameterAnnotation.kt")
+        public void testClassTypeParameterAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/ClassTypeParameterAnnotation.kt"));
+        }
+
         @TestMetadata("CompanionObject.kt")
         public void testCompanionObject() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObject.kt"));
@@ -370,6 +385,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InlineReified.kt"));
         }
 
+        @TestMetadata("InterfaceTypeParameterAnnotation.kt")
+        public void testInterfaceTypeParameterAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InterfaceTypeParameterAnnotation.kt"));
+        }
+
         @TestMetadata("InvalidJavaIdentifierAsAnnotationArgument.kt")
         public void testInvalidJavaIdentifierAsAnnotationArgument() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsAnnotationArgument.kt"));
@@ -405,6 +425,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/LocalFunctions.kt"));
         }
 
+        @TestMetadata("MethodTypeParameterAnnotation.kt")
+        public void testMethodTypeParameterAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/MethodTypeParameterAnnotation.kt"));
+        }
+
         @TestMetadata("NestedObjects.kt")
         public void testNestedObjects() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/NestedObjects.kt"));
@@ -423,6 +448,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("PrivateObject.kt")
         public void testPrivateObject() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/PrivateObject.kt"));
+        }
+
+        @TestMetadata("PropertyTypeParameterAnnotation.kt")
+        public void testPropertyTypeParameterAnnotation() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/PropertyTypeParameterAnnotation.kt"));
         }
 
         @TestMetadata("PublishedApi.kt")
@@ -463,6 +493,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("TypePararametersInClass.kt")
         public void testTypePararametersInClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/TypePararametersInClass.kt"));
+        }
+
+        @TestMetadata("UnitAsTypeAlias.kt")
+        public void testUnitAsTypeAlias() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/UnitAsTypeAlias.kt"));
         }
 
         @TestMetadata("ValueClassInParametersWithJvmName.kt")
