@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -106,6 +107,11 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     }
     file.accept(visitor)
     visitor.renamedElement?.let { editor.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
+  }
+
+  override fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry) {
+    RenameCodeVisionCollector.inlayHintClicked()
+    super.handleClick(editor, textRange, entry)
   }
 
   override val name: String
