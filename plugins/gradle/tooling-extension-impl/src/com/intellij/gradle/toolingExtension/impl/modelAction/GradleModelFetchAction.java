@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.util.ReflectionUtilRt;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -12,6 +13,7 @@ import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,8 +30,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Vladislav.Soroka
@@ -259,27 +263,58 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     assert myNestedGradleBuilds != null;
     assert myModelConverter != null;
 
-    DefaultBuildController buildController = new DefaultBuildController(controller, myMainGradleBuild);
-    Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
     Collection<GradleBuild> gradleBuilds = getGradleBuilds();
+    DefaultBuildController buildController = new DefaultBuildController(controller, myMainGradleBuild);
     GradleModelConsumer modelConsumer = new GradleCustomModelConsumer(myAllModels, myModelConverter, converterExecutor);
-
-    GradleCustomModelFetchAction buildAction = new GradleCustomModelFetchAction(telemetry, modelConsumer, modelProviders);
-    buildAction.execute(buildController, gradleBuilds);
+    try {
+      forEachModelFetchPhase(isProjectsLoadedAction, (phase, modelProviders) -> {
+        telemetry.runWithSpan(phase.name(), __ -> {
+          for (GradleBuild gradleBuild : gradleBuilds) {
+            for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
+              for (ProjectImportModelProvider modelProvider : modelProviders) {
+                telemetry.runWithSpan(modelProvider.getName(), span -> {
+                  span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
+                  span.setAttribute("model-type", "ProjectModel");
+                  modelProvider.populateProjectModels(buildController, gradleProject, modelConsumer);
+                });
+              }
+            }
+            for (ProjectImportModelProvider modelProvider : modelProviders) {
+              telemetry.runWithSpan(modelProvider.getName(), span -> {
+                span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
+                span.setAttribute("model-type", "BuildModel");
+                modelProvider.populateBuildModels(buildController, gradleBuild, modelConsumer);
+              });
+            }
+          }
+        });
+      });
+    }
+    catch (Exception e) {
+      throw new ExternalSystemException(e);
+    }
   }
 
-  private Set<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
-    if (myUseProjectsLoadedPhase) {
-      if (isProjectsLoadedAction) {
-        return myModelProviders.stream()
-          .filter(it -> it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
-          .collect(Collectors.toSet());
-      }
-      return myModelProviders.stream()
-        .filter(it -> !it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE))
-        .collect(Collectors.toSet());
+  private void forEachModelFetchPhase(
+    boolean isProjectsLoadedAction,
+    @NotNull BiConsumer<GradleModelFetchPhase, List<ProjectImportModelProvider>> consumer
+  ) {
+    getModelProviders(isProjectsLoadedAction)
+      .collect(Collectors.groupingBy(it -> it.getPhase())).entrySet().stream()
+      .sorted(Map.Entry.comparingByKey())
+      .forEachOrdered(it -> consumer.accept(it.getKey(), it.getValue()));
+  }
+
+  private Stream<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
+    if (!myUseProjectsLoadedPhase) {
+      return myModelProviders.stream();
     }
-    return myModelProviders;
+    if (isProjectsLoadedAction) {
+      return myModelProviders.stream()
+        .filter(it -> it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE));
+    }
+    return myModelProviders.stream()
+      .filter(it -> !it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE));
   }
 
   private @NotNull Collection<GradleBuild> getGradleBuilds() {
