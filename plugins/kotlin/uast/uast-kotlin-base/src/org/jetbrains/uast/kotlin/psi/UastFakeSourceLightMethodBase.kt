@@ -79,6 +79,10 @@ abstract class UastFakeSourceLightMethodBase<T : KtDeclaration>(
     }
 
     override fun computeNullability(): KtTypeNullability? {
+        if (baseResolveProviderService.hasInheritedGenericType(original)) {
+            // Inherited generic type: nullity will be determined at use-site
+            return null
+        }
         if (isSuspendFunction()) {
             // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
             return KtTypeNullability.NULLABLE

@@ -35,13 +35,15 @@ class UastKotlinPsiParameter internal constructor(
         get() = annotationsPart.getOrBuild {
             val annotations = SmartList<PsiAnnotation>()
 
-            val nullability = baseResolveProviderService.nullability(ktParameter)
-            if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
-                annotations.add(
-                    UastFakeLightNullabilityAnnotation(nullability, this)
-                )
+            val hasInheritedGenericType = baseResolveProviderService.hasInheritedGenericType(ktParameter)
+            if (!hasInheritedGenericType) {
+                val nullability = baseResolveProviderService.nullability(ktParameter)
+                if (nullability != null && nullability != KtTypeNullability.UNKNOWN) {
+                    annotations.add(
+                        UastFakeLightNullabilityAnnotation(nullability, this)
+                    )
+                }
             }
-
             ktParameter.annotationEntries.mapTo(annotations) { entry ->
                 KtLightAnnotationForSourceEntry(
                     name = entry.shortName?.identifier,
