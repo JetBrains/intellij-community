@@ -35,7 +35,7 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun createBlock(command: String?, prompt: PromptRenderingInfo?): CommandBlock {
-    closeLastBlock()
+    closeActiveBlock()
 
     if (document.textLength > 0) {
       document.insertString(document.textLength, "\n")
@@ -50,12 +50,12 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun closeLastBlock() {
-    val lastBlock = getLastBlock()
-    // restrict previous block expansion
-    if (lastBlock != null) {
-      lastBlock.range.isGreedyToRight = false
-      listeners.forEach { it.blockFinalized(lastBlock) }
+  fun closeActiveBlock() {
+    val activeBlock = getActiveBlock()
+    // restrict block expansion
+    if (activeBlock != null) {
+      activeBlock.range.isGreedyToRight = false
+      listeners.forEach { it.blockFinalized(activeBlock) }
     }
   }
 
@@ -104,6 +104,17 @@ class TerminalOutputModel(val editor: EditorEx) {
       removeBlock(block)
     }
     editor.document.setText("")
+  }
+
+  /**
+   * Active block is the last block if it is able to expand.
+   * @return null in three cases:
+   * 1. There are no blocks created yet.
+   * 2. Requested after user inserted an empty line, but before block for new command is created.
+   * 3. Requested after command is started, but before the block is created for it.
+   */
+  fun getActiveBlock(): CommandBlock? {
+    return blocks.lastOrNull()?.takeIf { !it.isFinalized }
   }
 
   fun getLastBlock(): CommandBlock? {
@@ -324,6 +335,10 @@ data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, 
 
   val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
   val withCommand: Boolean = !command.isNullOrEmpty()
+
+  /** If block is finalized it means that its length won't be expanded if some text is added before or after it */
+  val isFinalized: Boolean
+    get() = !range.isGreedyToRight
 }
 
 data class CommandBlockInfo(val exitCode: Int)
