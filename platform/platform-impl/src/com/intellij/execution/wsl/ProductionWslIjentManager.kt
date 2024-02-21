@@ -2,16 +2,16 @@
 package com.intellij.execution.wsl
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentApi
-import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -39,18 +39,8 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
         null -> null
       }
 
-      validOldHolder ?: scope.suspendingLazy {
-        val scopeName = "IJent on WSL $wslDistribution"
-        val ijentScope = scope.namedChildScope(scopeName, CoroutineExceptionHandler { _, err ->
-          LOG.error("Unexpected error in $scopeName", err)
-        })
-        try {
-          deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
-        }
-        catch (err: Throwable) {
-          ijentScope.cancel(CancellationException("Failed to start IJent in WSL", err))
-          throw err
-        }
+      validOldHolder ?: scope.suspendingLazy(CoroutineName("IJent on WSL $wslDistribution")) {
+        deployAndLaunchIjent(project, wslDistribution, wslCommandLineOptionsModifier = { it.setSudo(rootUser) })
       }
     }!!.getValue()
   }
@@ -63,9 +53,5 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
       }
       true
     }
-  }
-
-  companion object {
-    private val LOG = logger<WslIjentManager>()
   }
 }
