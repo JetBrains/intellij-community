@@ -177,6 +177,27 @@
               nameKey="hints.settings.types.parameter"
               descriptionKey="inlay.kotlin.references.types.hints.hints.type.function.parameter"/>
     </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KtLambdasHintsProvider"
+            isEnabledByDefault="false"
+            group="LAMBDAS_GROUP"
+            providerId="kotlin.lambdas.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.lambdas"
+            descriptionKey="inlay.kotlin.lambdas.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.return"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.return"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.return"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.lambda.receivers.parameters"
+              enabledByDefault="true"
+              nameKey="hints.settings.lambda.receivers.parameters"
+              descriptionKey="inlay.kotlin.lambdas.hints.hints.lambda.receivers.parameters"/>
+    </codeInsight.declarativeInlayProvider>
   </extensions>
 
   <extensionPoints>
