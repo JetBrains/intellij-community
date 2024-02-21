@@ -82,6 +82,8 @@ class TestJbService private constructor(): JbService {
              TestChildrenSettings("Go", "built-in", "⇧F12")),
     )
 
+    val oneChildren = listOf( listOf( TestChildrenSettings ("Go to EverythingEve rything")))
+
     val children1 = listOf(
       listOf(TestChildrenSettings("Go to EverythingEve rything"),
              TestChildrenSettings("Find ges"),
@@ -115,7 +117,7 @@ class TestJbService private constructor(): JbService {
     val settings1 = listOf(
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
-      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugin_", list = oneChildren),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
 
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
@@ -129,8 +131,8 @@ class TestJbService private constructor(): JbService {
 
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children2),
-      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
-                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugin_",
+                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", oneChildren),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                               "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
