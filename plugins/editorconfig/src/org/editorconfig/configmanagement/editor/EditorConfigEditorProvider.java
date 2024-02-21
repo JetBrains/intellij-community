@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.editorconfig.language.filetype.EditorConfigFileType;
 import org.editorconfig.settings.EditorConfigSettings;
@@ -32,13 +33,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Set;
 
 final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbAware {
   private static final String EDITOR_TYPE_ID = "org.editorconfig.configmanagement.editor";
 
   static final int MAX_PREVIEW_LENGTH = 10000;
 
-  private static final PsiAwareTextEditorProvider myMainEditorProvider = new PsiAwareTextEditorProvider();
+  private static final PsiAwareTextEditorProvider ourMainEditorProvider = new PsiAwareTextEditorProvider();
 
   @Override
   public @NotNull Builder createEditorAsync(@NotNull Project project, @NotNull VirtualFile file) {
@@ -66,35 +68,35 @@ final class EditorConfigEditorProvider implements AsyncFileEditorProvider, DumbA
   }
 
   private static final class MyEditorBuilder extends Builder {
-    private final Project myProject;
-    private final VirtualFile myFile;
+    final Project myProject;
+    final VirtualFile myFile;
+    final Set<String> myEncodings;
 
     private MyEditorBuilder(Project project, VirtualFile file) {
       myProject = project;
       myFile = file;
+      myEncodings = EditorConfigStatusListener.extractEncodings(project, file);
     }
 
     @Override
     public @NotNull FileEditor build() {
+      FileEditor result;
       VirtualFile contextFile = EditorConfigPreviewManager.getInstance(myProject).getAssociatedPreviewFile(myFile);
-      EditorConfigStatusListener statusListener = new EditorConfigStatusListener(myProject, myFile);
       if (contextFile != null && CodeStyle.getSettings(myProject).getCustomSettings(EditorConfigSettings.class).ENABLED) {
-        Document document =EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
-        Disposable previewDisposable = Disposer.newDisposable();
-        final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document, previewDisposable);
+        Document document = EditorFactory.getInstance().createDocument(getPreviewText(contextFile));
+        Disposable disposable = Disposer.newDisposable();
+        EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document, disposable);
         FileEditor previewEditor = createPreviewEditor(document, previewFile);
         TextEditor ecTextEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myFile);
-        final EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(
-          myFile, myProject, ecTextEditor, previewEditor);
-        Disposer.register(splitEditor, previewDisposable);
-        Disposer.register(splitEditor, statusListener);
-        return splitEditor;
+        result = new EditorConfigEditorWithPreview(myFile, myProject, ecTextEditor, previewEditor);
+        Disposer.register(result, disposable);
       }
       else {
-        FileEditor fileEditor = myMainEditorProvider.createEditor(myProject, myFile);
-        Disposer.register(fileEditor, statusListener);
-        return fileEditor;
+        result = ourMainEditorProvider.createEditor(myProject, myFile);
       }
+      EditorConfigStatusListener statusListener = new EditorConfigStatusListener(myProject, myFile, myEncodings);
+      CodeStyleSettingsManager.getInstance(myProject).subscribe(statusListener, result);
+      return result;
     }
 
     private FileEditor createPreviewEditor(@NotNull Document document, @NotNull EditorConfigPreviewFile previewFile) {

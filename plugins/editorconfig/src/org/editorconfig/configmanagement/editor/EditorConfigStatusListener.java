@@ -3,7 +3,6 @@ package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -13,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotifications;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil;
@@ -28,18 +26,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-final class EditorConfigStatusListener implements CodeStyleSettingsListener, Disposable {
+final class EditorConfigStatusListener implements CodeStyleSettingsListener {
   private boolean myEnabledStatus;
   private final VirtualFile myVirtualFile;
   private final Project myProject;
   private Set<String> myEncodings;
 
-  EditorConfigStatusListener(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  EditorConfigStatusListener(@NotNull Project project,
+                             @NotNull VirtualFile virtualFile,
+                             @NotNull Set<String> encodings) {
     myProject = project;
     myEnabledStatus = Utils.INSTANCE.isEnabled(project);
     myVirtualFile = virtualFile;
-    myEncodings = extractEncodings();
-    CodeStyleSettingsManager.getInstance(project).subscribe(this, this);
+    myEncodings = encodings;
   }
 
   @Override
@@ -55,7 +54,7 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener, Dis
       myEnabledStatus = newEnabledStatus;
       onEditorConfigEnabled(newEnabledStatus);
     }
-    Set<String> newEncodings = extractEncodings();
+    Set<String> newEncodings = extractEncodings(myProject, myVirtualFile);
     if (!myEncodings.equals(newEncodings)) {
       if (containsValidEncodings(newEncodings)) {
         onEncodingChanged();
@@ -78,10 +77,6 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener, Dis
     }
   }
 
-  @Override
-  public void dispose() {
-  }
-
   private static void onEncodingChanged() {
     EditorConfigEncodingCache.Companion.getInstance().reset();
   }
@@ -95,9 +90,9 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener, Dis
     return true;
   }
 
-  private @NotNull Set<String> extractEncodings() {
+  static @NotNull Set<String> extractEncodings(@NotNull Project project, @NotNull VirtualFile file) {
     Set<String> charsets = new HashSet<>();
-    PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myVirtualFile);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
       return charsets;
     }
