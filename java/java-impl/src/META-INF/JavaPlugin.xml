@@ -2476,6 +2476,7 @@
     <newProjectWizard.languageGenerator implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.java.buildSystem implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard"/>
     <requiredForSmartModeStartupActivity implementation="com.intellij.ide.projectWizard.generators.SdkPreIndexingRequiredForSmartModeActivity"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectWizard.JdkComboBoxCollector"/>
 
     <registryKey key="starters.dependency.update.host"
                  defaultValue="https://frameworks.jetbrains.com"

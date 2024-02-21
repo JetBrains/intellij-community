@@ -20,10 +20,7 @@ import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderBase
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequestInfo
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstaller
-import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkListDownloader
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.*
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
@@ -105,6 +102,11 @@ fun Row.projectWizardJdkComboBox(
     }
     .onApply {
       context.projectJdk = sdkProperty.get()
+
+      when (val selected = combo.selectedItem) {
+        is NoJdk -> JdkComboBoxCollector.noJdkRegistered()
+        is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((selected.task as JdkDownloadTask).jdkItem)
+      }
     }
 
   val lastSelected = PropertiesComponent.getInstance().getValue(selectedJdkProperty)
@@ -378,6 +380,7 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
 private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
   runReadAction {
     SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())?.let {
+      JdkComboBoxCollector.jdkRegistered(it)
       val comboItem = ExistingJdk(it)
       val index = combo.lastRegisteredJdkIndex
       combo.registered.add(comboItem)
