@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.icons.AllIcons
@@ -6,6 +6,7 @@ import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
+import com.intellij.ide.startup.importSettings.data.ExtActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -60,7 +61,10 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
     group.add(SyncStateAction())
     group.add(SyncChooserAction(controller))
     group.add(JbChooserAction(controller))
-    group.add(ExpChooserAction(controller))
+    for (service in SettingsService.getInstance().getExternalService().productServices) {
+      val provider = ExtActionsDataProvider(service)
+      group.add(ExpChooserAction(provider, controller))
+    }
     group.add(SkipImportAction { controller.skipImportAction.invoke() })
 
     val act = ActionManager.getInstance().createActionToolbar(ActionPlaces.IMPORT_SETTINGS_DIALOG, group, false).apply {

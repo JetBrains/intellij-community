@@ -250,18 +250,23 @@ class TestJbService private constructor(): JbService {
 }
 
 class TestExternalService : ExternalService {
-  companion object {
-    private val LOG = logger<TestExternalService>()
-  }
 
   override suspend fun hasDataToImport() = true
 
   override fun warmUp(scope: CoroutineScope) {}
 
+  override val productServices: List<BaseService> = listOf(TestExternalProductService())
+}
+
+class TestExternalProductService : BaseService {
+
+  companion object {
+    private val LOG = logger<TestExternalService>()
+  }
+
   override fun products(): List<Product> {
     return listOf(TestJbService.main2)
   }
-
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return TestJbService.getProductIcon(itemId, size)

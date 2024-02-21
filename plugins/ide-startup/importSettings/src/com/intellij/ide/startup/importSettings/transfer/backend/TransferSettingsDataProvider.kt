@@ -19,7 +19,7 @@ import java.util.*
 import java.util.stream.Collectors
 import kotlin.time.Duration.Companion.nanoseconds
 
-class TransferSettingsDataProvider(private val providers: List<TransferSettingsProvider>) {
+class TransferSettingsDataProvider(val providers: List<TransferSettingsProvider>) {
   private val baseIdeVersions = mutableListOf<BaseIdeVersion>()
   private val ideVersions = mutableListOf<IdeVersion>()
   private val failedIdeVersions = mutableListOf<FailedIdeVersion>()

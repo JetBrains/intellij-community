@@ -190,7 +190,8 @@ interface SyncService : JbService {
   fun generalSync()
 }
 
-interface ExternalService : BaseService {
+interface ExternalService {
+  val productServices: List<BaseService>
   suspend fun hasDataToImport(): Boolean
   fun warmUp(scope: CoroutineScope)
 }
