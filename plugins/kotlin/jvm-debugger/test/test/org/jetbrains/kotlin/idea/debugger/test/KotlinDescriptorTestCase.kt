@@ -30,6 +30,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.addIfNotNull
@@ -280,6 +281,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(), IgnorableTestCas
         )
         sourcesKtFiles =
             compilerFacility.creatKtFiles(jvmSourcesOutputDirectory, commonSourcesOutputDirectory, scriptSourcesOutputDirectory)
+
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
 
     // Provide a hook for subclasses to compile additional libraries.
