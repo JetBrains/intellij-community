@@ -104,7 +104,6 @@ def __get_describe(table):
                                     exclude=[np.complex64, np.complex128])
     except (TypeError, OverflowError, ValueError):
         return
-
     if type(table) is pd.Series:
         return described_
     else:
@@ -188,7 +187,6 @@ def analyze_categorical_column(column):
 
 
 def analyze_numeric_column(column):
-    # todo: add tests for that
     if column.dtype.kind in ['i', 'u']:
         bins = np.bincount(column)
         unique_values = np.count_nonzero(bins)

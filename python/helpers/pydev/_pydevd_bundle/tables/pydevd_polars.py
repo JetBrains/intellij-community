@@ -158,7 +158,12 @@ def analyze_categorical_column(column, col_name):
 def analyze_numeric_column(column, col_name):
     # handle np.NaN values, because they are not dropped with drop_nulls() the way they are
     column = column.fill_nan(None).drop_nulls()
-    unique_values = column.n_unique()
+    if column.is_float():
+        # for float type we don't compute number of unique values because it's an
+        # expensive operation, just take number of elements in a column
+        unique_values = column.len()
+    else:
+        unique_values = column.n_unique()
     if unique_values > ColumnVisualisationUtils.NUM_BINS:
         import numpy as np
         format_function = int if column.is_integer() else lambda x: round(x, 1)
