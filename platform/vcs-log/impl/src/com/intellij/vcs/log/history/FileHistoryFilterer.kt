@@ -172,7 +172,8 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
                               allFilters: VcsLogFilterCollection,
                               commitCount: CommitCountStage): VisiblePack {
       val filters = allFilters.without(VcsLogFileHistoryFilter::class.java)
-      val isFastStart = commitCount == CommitCountStage.INITIAL && fileHistoryHandler.isFastStartSupported
+      val fastStartSupported = fileHistoryHandler.isFastStartSupported
+      val isFastStart = commitCount == CommitCountStage.INITIAL && fastStartSupported
 
       val (revisions, isDone) = if (isFastStart) {
         cancelLastTask(false)
@@ -181,8 +182,8 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
         } to false
       }
       else {
-        createFileHistoryTask(fileHistoryHandler, root, filePath, hash, filters, commitCount == CommitCountStage.FIRST_STEP)
-          .waitForRevisions(100)
+        val isInitial = commitCount == (if (fastStartSupported) CommitCountStage.FIRST_STEP else CommitCountStage.INITIAL)
+        createFileHistoryTask(fileHistoryHandler, root, filePath, hash, filters, isInitial).waitForRevisions(100)
       }
 
       if (revisions.isEmpty()) return VisiblePack.EMPTY
