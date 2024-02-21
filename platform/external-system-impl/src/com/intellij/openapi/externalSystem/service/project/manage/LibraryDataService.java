@@ -113,7 +113,9 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     for (File file : files) {
       Path path = file.toPath();
       // search for jar file first otherwise lib root won't be found!
-      virtualFileManager.refreshAndFindFileByNioPath(path);
+      if (virtualFileManager.findFileByNioPath(path) == null) {
+        virtualFileManager.refreshAndFindFileByNioPath(path);
+      }
     }
   }
 
