@@ -1,148 +1,135 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.psi
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi;
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.*
-import com.intellij.psi.impl.source.PsiClassReferenceType
-import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.tree.java.JavaFileElement
-import com.intellij.psi.impl.source.tree.java.MethodElement
-import com.intellij.psi.impl.source.tree.java.ParameterElement
-import com.intellij.testFramework.LeakHunter
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.ref.GCWatcher
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.java.JavaFileElement;
+import com.intellij.psi.impl.source.tree.java.MethodElement;
+import com.intellij.psi.impl.source.tree.java.ParameterElement;
+import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ref.GCWatcher;
 
-import java.util.function.Predicate
+public class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
+  public void test_AST_should_be_on_a_soft_reference__for_changed_files_as_well() {
+    final PsiFile file = myFixture.addClass("class Foo {}").getContainingFile();
+    assertTrue(file.findElementAt(0) instanceof PsiKeyword);
+    LeakHunter.checkLeak(file, JavaFileElement.class, e -> e.getPsi().equals(file));
 
-class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
-
-  void "test AST should be on a soft reference, for changed files as well"() {
-    def file = myFixture.addClass('class Foo {}').containingFile
-    assert file.findElementAt(0) instanceof PsiKeyword
-    LeakHunter.checkLeak(file, JavaFileElement) { e -> e.psi == file }
-
-    WriteCommandAction.runWriteCommandAction project, {
-      file.viewProvider.document.insertString(0, ' ')
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-    assert file.findElementAt(0) instanceof PsiWhiteSpace
-    LeakHunter.checkLeak(file, JavaFileElement) { e -> e.psi == file }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      file.getViewProvider().getDocument().insertString(0, " ");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
+    assertTrue(file.findElementAt(0) instanceof PsiWhiteSpace);
+    LeakHunter.checkLeak(file, JavaFileElement.class, e -> e.getPsi().equals(file));
   }
 
-  void "test super methods held via their signatures in class user data"() {
-    def superClass = myFixture.addClass('class Super { void foo() {} }')
-    superClass.text // load AST
+  public void test_super_methods_held_via_their_signatures_in_class_user_data() {
+    final PsiClass superClass = myFixture.addClass("class Super { void foo() {} }");
+    assertNotNull(superClass.getText()); // load AST
 
-    def file = myFixture.addFileToProject('Main.java', 'class Main extends Super { void foo() { System.out.println("hello"); } }')
-    myFixture.configureFromExistingVirtualFile(file.virtualFile)
-    myFixture.doHighlighting()
+    PsiFile file = myFixture.addFileToProject("Main.java", "class Main extends Super { void foo() { System.out.println(\"hello\"); } }");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.doHighlighting();
 
-    def mainClass = ((PsiJavaFile)file).classes[0]
-    LeakHunter.checkLeak(mainClass, MethodElement) { MethodElement node ->
-      superClass == node.psi.parent
-    }
+    PsiClass mainClass = ((PsiJavaFile)file).getClasses()[0];
+    LeakHunter.checkLeak(mainClass, MethodElement.class, node -> superClass.equals(node.getPsi().getParent()));
   }
 
-  void "test no hard refs to AST after highlighting"() {
-    def sup = myFixture.addFileToProject('sup.java', 'class Super { Super() {} }')
-    assert sup.findElementAt(0) // load AST
-    assert !((PsiFileImpl)sup).stub
+  public void test_no_hard_refs_to_AST_after_highlighting() {
+    final PsiFile sup = myFixture.addFileToProject("sup.java", "class Super { Super() {} }");
+    assertNotNull(sup.findElementAt(0));// load AST
+    assertNull(((PsiFileImpl)sup).getStub());
 
-    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup })
+    LeakHunter.checkLeak(sup, MethodElement.class, it -> it.getPsi().getContainingFile().equals(sup));
 
-    def foo = myFixture.addFileToProject('a.java', 'class Foo extends Super { void bar() { bar(); } }')
-    myFixture.configureFromExistingVirtualFile(foo.virtualFile)
-    myFixture.doHighlighting()
+    final PsiFile foo = myFixture.addFileToProject("a.java", "class Foo extends Super { void bar() { bar(); } }");
+    myFixture.configureFromExistingVirtualFile(foo.getVirtualFile());
+    myFixture.doHighlighting();
 
-    assert !((PsiFileImpl)foo).stub
-    assert ((PsiFileImpl)foo).treeElement
+    assertNull(((PsiFileImpl)foo).getStub());
+    assertNotNull(((PsiFileImpl)foo).getTreeElement());
 
-    LeakHunter.checkLeak(foo, MethodElement, { it.psi.containingFile == foo })
-    LeakHunter.checkLeak(sup, MethodElement, { it.psi.containingFile == sup })
+    LeakHunter.checkLeak(foo, MethodElement.class, it -> it.getPsi().getContainingFile().equals(foo));
+    LeakHunter.checkLeak(sup, MethodElement.class, it -> it.getPsi().getContainingFile().equals(sup));
   }
 
-  void "test no hard refs to AST via class reference type"() {
-    def cls = myFixture.addClass("class Foo { Object bar() {} }")
-    def file = cls.containingFile as PsiFileImpl
-    cls.node
-    def type = cls.methods[0].returnType
-    assert type instanceof PsiClassReferenceType
+  public void test_no_hard_refs_to_AST_via_class_reference_type() {
+    final PsiClass cls = myFixture.addClass("class Foo { Object bar() {} }");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getReturnType();
+    assertTrue(type instanceof PsiClassReferenceType);
 
-    LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
-      node.psi == cls.methods[0]
-    })
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
-    GCWatcher.tracking(cls.node).ensureCollected()
-    assert !file.contentsLoaded
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
 
-    assert type.equalsToText(Object.name)
-    assert !file.contentsLoaded
+    assertTrue(type.equalsToText(Object.class.getName()));
+    assertFalse(file.isContentsLoaded());
   }
 
-  @SuppressWarnings('CStyleArrayDeclaration')
-  void "test no hard refs to AST via class reference type of c-style array"() {
-    def cls = myFixture.addClass("class Foo { static void main(String args[]) {} }")
-    def file = cls.containingFile as PsiFileImpl
-    cls.node
-    def type = cls.methods[0].parameterList.parameters[0].typeElement.type
-    assert type instanceof PsiClassReferenceType
+  @SuppressWarnings("CStyleArrayDeclaration")
+  public void test_no_hard_refs_to_AST_via_class_reference_type_of_c_style_array() {
+    final PsiClass cls = myFixture.addClass("class Foo { static void main(String args[]) {} }");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType();
+    assertTrue(type instanceof PsiClassReferenceType);
 
-    LeakHunter.checkLeak(type, ParameterElement, { ParameterElement node ->
-      node.psi == cls.methods[0].parameterList.parameters[0]
-    })
+    LeakHunter.checkLeak(type, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
 
-    GCWatcher.tracking(cls.node).ensureCollected()
-    assert !file.contentsLoaded
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
 
-    assert type.equalsToText(String.name)
-    assert !file.contentsLoaded
+    assertTrue(type.equalsToText(String.class.getName()));
+    assertFalse(file.isContentsLoaded());
   }
 
-  void "test no hard refs to AST via array component type"() {
-    def cls = myFixture.addClass("class Foo { Object[] bar() {} }")
-    def file = cls.containingFile as PsiFileImpl
-    cls.node
-    def type = cls.methods[0].returnType
-    assert type instanceof PsiArrayType
-    def componentType = type.getComponentType()
-    assert componentType instanceof PsiClassReferenceType
+  public void test_no_hard_refs_to_AST_via_array_component_type() {
+    final PsiClass cls = myFixture.addClass("class Foo { Object[] bar() {} }");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getReturnType();
+    assertTrue(type instanceof PsiArrayType);
+    PsiType componentType = ((PsiArrayType)type).getComponentType();
+    assertTrue(componentType instanceof PsiClassReferenceType);
 
-    LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
-      node.psi == cls.methods[0]
-    })
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
-    GCWatcher.tracking(cls.node).ensureCollected()
-    assert !file.contentsLoaded
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
 
-    assert componentType.equalsToText(Object.name)
-    assert !file.contentsLoaded
+    assertTrue(componentType.equalsToText(Object.class.getName()));
+    assertFalse(file.isContentsLoaded());
   }
 
-  void "test no hard refs to AST via generic component type"() {
-    def cls = myFixture.addClass("class Foo { java.util.Map<String[], ? extends CharSequence> bar() {} }")
-    def file = cls.containingFile as PsiFileImpl
-    cls.node
-    def type = cls.methods[0].returnType
-    assert type instanceof PsiClassReferenceType
-    def parameters = (type as PsiClassReferenceType).getParameters()
-    assert parameters.length == 2
-    assert parameters[0] instanceof PsiArrayType
-    def componentType = parameters[0].getDeepComponentType()
-    assert componentType instanceof PsiClassReferenceType
-    assert parameters[1] instanceof PsiWildcardType
-    def bound = (parameters[1] as PsiWildcardType).getExtendsBound()
-    assert bound instanceof PsiClassReferenceType
+  public void test_no_hard_refs_to_AST_via_generic_component_type() {
+    final PsiClass cls = myFixture.addClass("class Foo { java.util.Map<String[], ? extends CharSequence> bar() {} }");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getReturnType();
+    assertTrue(type instanceof PsiClassReferenceType);
+    PsiType[] parameters = ((PsiClassReferenceType)type).getParameters();
+    assertEquals(2, parameters.length);
+    assertTrue(parameters[0] instanceof PsiArrayType);
+    PsiType componentType = parameters[0].getDeepComponentType();
+    assertTrue(componentType instanceof PsiClassReferenceType);
+    assertTrue(parameters[1] instanceof PsiWildcardType);
+    PsiType bound = ((PsiWildcardType)parameters[1]).getExtendsBound();
+    assertTrue(bound instanceof PsiClassReferenceType);
 
-    LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
-      node.psi == cls.methods[0]
-    })
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
-    GCWatcher.tracking(cls.node).ensureCollected()
-    assert !file.contentsLoaded
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
 
-    assert componentType.equalsToText(String.name)
-    assert bound.equalsToText(CharSequence.name)
-    assert !file.contentsLoaded
+    assertTrue(componentType.equalsToText(String.class.getName()));
+    assertTrue(bound.equalsToText(CharSequence.class.getName()));
+    assertFalse(file.isContentsLoaded());
   }
-
 }

@@ -1,518 +1,505 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.psi
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.psi;
 
-import com.intellij.codeInsight.AnnotationTargetUtil
-import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Document
-import com.intellij.psi.*
-import com.intellij.psi.impl.source.PsiClassImpl
-import com.intellij.psi.impl.source.PsiFieldImpl
-import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.psi.search.searches.AnnotatedElementsSearch
-import com.intellij.psi.search.searches.ClassInheritorsSearch
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import groovy.transform.CompileStatic
+import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassImpl;
+import com.intellij.psi.impl.source.PsiFieldImpl;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
-import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException;
 
-@CompileStatic
-class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
+public class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
+  public void test_resolve_from_annotation_method_default() {
+    PsiClass cls = myFixture.addClass("""
+                                         public @interface BrokenAnnotation {
+                                           enum Foo {DEFAULT, OTHER}
+                                           Foo value() default Foo.DEFAULT;
+                                         }""");
 
-  void "test resolve from annotation method default"() {
-    def cls = myFixture.addClass("""\
-      public @interface BrokenAnnotation {
-        enum Foo {DEFAULT, OTHER}
-        Foo value() default Foo.DEFAULT;
-      }
-      """.stripIndent())
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(file.getStub());
 
-    def file = cls.containingFile as PsiFileImpl
-    assert file.stub
+    PsiAnnotationMemberValue ref = (((PsiAnnotationMethod)cls.getMethods()[0])).getDefaultValue();
+    assertNotNull(file.getStub());
 
-    def ref = (cls.methods[0] as PsiAnnotationMethod).defaultValue
-    assert file.stub
-
-    assert ref instanceof PsiReferenceExpression
-    assert ref.resolve() == cls.innerClasses[0].fields[0]
-    assert file.stub
+    assertTrue(ref instanceof PsiReferenceExpression);
+    assertEquals(((PsiReferenceExpression)ref).resolve(), cls.getInnerClasses()[0].getFields()[0]);
+    assertNotNull(file.getStub());
   }
 
-  void "test literal annotation value"() {
-    def cls = myFixture.addClass("""\
-      class Foo {
-        @org.jetbrains.annotations.Contract(pure=true)
-        native int foo();
-      }
-      """.stripIndent())
+  public void test_literal_annotation_value() {
+    PsiClass cls = myFixture.addClass("""
+                                         class Foo {
+                                           @org.jetbrains.annotations.Contract(pure=true)
+                                           native int foo();
+                                         }""");
 
-    def file = cls.containingFile as PsiFileImpl
-    assert JavaMethodContractUtil.isPure(cls.methods[0])
-    assert file.stub
-    assert !file.contentsLoaded
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertTrue(JavaMethodContractUtil.isPure(cls.getMethods()[0]));
+    assertNotNull(file.getStub());
+    assertFalse(file.isContentsLoaded());
   }
 
-  void "test local variable annotation doesn't cause stub-ast switch"() {
-    def cls = myFixture.addClass("""
+  public void test_local_variable_annotation_doesn_t_cause_stub_ast_switch() {
+    PsiClass cls = myFixture.addClass("""
       class Foo {
         @Anno int foo() {
           @Anno int var = 2;
         }
       }
-      @interface Anno {}
-      """)
+      @interface Anno {}""");
 
-    def file = cls.containingFile as PsiFileImpl
-    assert AnnotatedElementsSearch.searchPsiMethods(myFixture.findClass("Anno"), GlobalSearchScope.allScope(project)).size() == 1
-    assert file.stub
-    assert !file.contentsLoaded
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertEquals(1, AnnotatedElementsSearch.searchPsiMethods(myFixture.findClass("Anno"), GlobalSearchScope.allScope(getProject()))
+      .findAll().size());
+    assertNotNull(file.getStub());
+    assertFalse(file.isContentsLoaded());
   }
 
-  void "test applying type annotations"() {
-    def cls = myFixture.addClass("""\
-      import java.lang.annotation.*;
-      class Foo {
-        @Target(ElementType.TYPE_USE)
-        @interface TA { String value(); }
+  public void test_applying_type_annotations() {
+    PsiClass cls = myFixture.addClass("""
+       import java.lang.annotation.*;
+       class Foo {
+         @Target(ElementType.TYPE_USE)
+         @interface TA { String value(); }
 
-        private @TA String f1;
+         private @TA String f1;
 
-        private static @TA int m1(@TA int p1) { return 0; }
-      }
-      """.stripIndent())
+         private static @TA int m1(@TA int p1) { return 0; }
+       }""");
 
-    def f1 = cls.fields[0].type
-    def m1 = cls.methods[0].returnType
-    def p1 = cls.methods[0].parameterList.parameters[0].type
-    assert (cls as PsiClassImpl).stub
+    PsiType f1 = cls.getFields()[0].getType();
+    PsiType m1 = cls.getMethods()[0].getReturnType();
+    PsiType p1 = cls.getMethods()[0].getParameterList().getParameters()[0].getType();
+    assertNotNull(((PsiClassImpl)cls).getStub());
 
-    assert f1.getCanonicalText(true) == "java.lang.@Foo.TA String"
-    assert m1.getCanonicalText(true) == "@Foo.TA int"
-    assert p1.getCanonicalText(true) == "@Foo.TA int"
+    assertEquals("java.lang.@Foo.TA String", f1.getCanonicalText(true));
+    assertEquals("@Foo.TA int", m1.getCanonicalText(true));
+    assertEquals("@Foo.TA int", p1.getCanonicalText(true));
   }
 
-  void "test containing class of a local class is null"() {
-    def foo = myFixture.addClass("""\
-      class Foo {
-        static { class Bar extends Foo { } }
-      }""".stripIndent())
-    def bar = ClassInheritorsSearch.search(foo).findFirst()
+  public void test_containing_class_of_a_local_class_is_null() {
+    PsiClass foo = myFixture.addClass("""
+                                        class Foo {
+                                          static { class Bar extends Foo { } }
+                                        }""");
+    PsiClass bar = ClassInheritorsSearch.search(foo).findFirst();
 
-    def file = (PsiFileImpl)foo.containingFile
-    assert !file.contentsLoaded
+    PsiFileImpl file = (PsiFileImpl)foo.getContainingFile();
+    assertFalse(file.isContentsLoaded());
 
-    assert bar.containingClass == null
-    assert !file.contentsLoaded
+    assertNull(bar.getContainingClass());
+    assertFalse(file.isContentsLoaded());
 
-    bar.node
-    assert bar.containingClass == null
-    assert file.contentsLoaded
+    assertNotNull(bar.getNode());
+    assertNull(bar.getContainingClass());
+    assertTrue(file.isContentsLoaded());
   }
 
-  void "test stub-based super class type parameter resolve"() {
+  public void test_stub_based_super_class_type_parameter_resolve() throws ExecutionException, InterruptedException {
     for (int i = 0; i < 100; i++) {
-      def foo = myFixture.addClass("class Foo$i<T> {}")
-      def bar = myFixture.addClass("class Bar$i<T> extends Foo$i<T> {}")
+      PsiClass foo = myFixture.addClass("class Foo" + i + "<T> {}");
+      final PsiClass bar = myFixture.addClass("class Bar" + i + "<T> extends Foo" + i + "<T> {}");
 
-      def app = ApplicationManager.application
-      app.executeOnPooledThread({ ReadAction.compute { bar.node } })
-      def superType = app.executeOnPooledThread({ ReadAction.compute { bar.superTypes[0] }} as Callable<PsiClassType>).get()
-      assert foo == superType.resolve()
-      assert bar.typeParameters[0] == PsiUtil.resolveClassInClassTypeOnly(superType.parameters[0])
+      Application app = ApplicationManager.getApplication();
+      app.executeOnPooledThread(() -> ReadAction.compute(() -> bar.getNode()));
+      PsiClassType superType = app.executeOnPooledThread(() -> ReadAction.compute(() -> bar.getSuperTypes()[0])).get();
+      assertEquals(foo, superType.resolve());
+      assertEquals(bar.getTypeParameters()[0], PsiUtil.resolveClassInClassTypeOnly(superType.getParameters()[0]));
     }
   }
 
-  void "test default annotation attribute name"() {
-    def cls = myFixture.addClass('@Anno("foo") class Foo {}')
-    def file = (PsiFileImpl)cls.containingFile
-    assert !file.contentsLoaded
+  public void test_default_annotation_attribute_name() {
+    PsiClass cls = myFixture.addClass("@Anno(\"foo\") class Foo {}");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertFalse(file.isContentsLoaded());
 
-    def attr = cls.modifierList.annotations[0].parameterList.attributes[0]
-    assert attr.name == null
-    assert !file.contentsLoaded
+    PsiNameValuePair attr = cls.getModifierList().getAnnotations()[0].getParameterList().getAttributes()[0];
+    assertNull(attr.getName());
+    assertFalse(file.isContentsLoaded());
 
-    attr.node
-    assert attr.name == null
+    assertNotNull(attr.getNode());
+    assertNull(attr.getName());
   }
 
-  void "test determine annotation target without AST"() {
-    def cls = myFixture.addClass("""\
-      import java.lang.annotation.*;
-      @Anno class Some {} 
-      @Target(ElementType.METHOD) @interface Anno {}""".stripIndent())
-    assert "Some" == cls.name
-    assert !AnnotationTargetUtil.isTypeAnnotation(cls.modifierList.annotations[0])
-    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+  public void test_determine_annotation_target_without_AST() {
+    PsiClass cls = myFixture.addClass("""
+                                        import java.lang.annotation.*;
+                                        @Anno class Some {}
+                                        @Target(ElementType.METHOD) @interface Anno {}""");
+    assertEquals("Some", cls.getName());
+    assertFalse(AnnotationTargetUtil.isTypeAnnotation(cls.getModifierList().getAnnotations()[0]));
+    assertFalse(((PsiFileImpl)cls.getContainingFile()).isContentsLoaded());
   }
 
-  void "test parameter list count"() {
-    myFixture.addFileToProject("a.java", "class Cls { void foo(a) {} }")
-    def list = myFixture.findClass("Cls").methods[0].parameterList
-    assert list.parametersCount == list.parameters.size()
+  public void test_parameter_list_count() {
+    myFixture.addFileToProject("a.java", "class Cls { void foo(a) {} }");
+    PsiParameterList list = myFixture.findClass("Cls").getMethods()[0].getParameterList();
+    assertEquals(list.getParametersCount(), list.getParameters().length);
   }
 
-  void "test deprecated enum constant"() {
-    def cls = myFixture.addClass("enum Foo { c1, @Deprecated c2, /** @deprecated */ c3 }")
-    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+  public void test_deprecated_enum_constant() {
+    PsiClass cls = myFixture.addClass("enum Foo { c1, @Deprecated c2, /** @deprecated */ c3 }");
+    assertFalse(((PsiFileImpl)cls.getContainingFile()).isContentsLoaded());
 
-    assert !cls.fields[0].deprecated
-    assert cls.fields[1].deprecated
-    assert cls.fields[2].deprecated
+    assertFalse(cls.getFields()[0].isDeprecated());
+    assertTrue(cls.getFields()[1].isDeprecated());
+    assertTrue(cls.getFields()[2].isDeprecated());
 
-    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+    assertFalse(((PsiFileImpl)cls.getContainingFile()).isContentsLoaded());
   }
 
-  void "test breaking and adding import does not cause stub AST mismatch"() {
-    def file = myFixture.addFileToProject("a.java", "import foo.*; import bar.*; class Foo {}") as PsiJavaFile
-    def another = myFixture.addClass("package zoo; public class Another {}")
-    WriteCommandAction.runWriteCommandAction(project) {
-      file.viewProvider.document.insertString(file.text.indexOf("import"), "x")
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      file.importClass(another)
-    }
-    PsiTestUtil.checkStubsMatchText(file)
+  public void test_breaking_and_adding_import_does_not_cause_stub_AST_mismatch() {
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "import foo.*; import bar.*; class Foo {}");
+    PsiClass another = myFixture.addClass("package zoo; public class Another {}");
+    WriteCommandAction.runWriteCommandAction(getProject(), (Computable<Boolean>)() -> {
+      file.getViewProvider().getDocument().insertString(file.getText().indexOf("import"), "x");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      return file.importClass(another);
+    });
+    PsiTestUtil.checkStubsMatchText(file);
   }
 
-  void "test removing import in broken code does not cause stub AST mismatch"() {
-    def file = myFixture.addFileToProject("a.java", "import foo..module.SomeClass; class Foo {}") as PsiJavaFile
-    WriteCommandAction.runWriteCommandAction(project) {
-      file.importList.importStatements[0].delete()
-    }
-    PsiTestUtil.checkStubsMatchText(file)
+  public void test_removing_import_in_broken_code_does_not_cause_stub_AST_mismatch() {
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "import foo..module.SomeClass; class Foo {}");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getImportList().getImportStatements()[0].delete());
+    PsiTestUtil.checkStubsMatchText(file);
   }
 
-  void "test adding type before method call does not cause stub AST mismatch"() {
-    def file = myFixture.addFileToProject("a.java", """\
+  public void test_adding_type_before_method_call_does_not_cause_stub_AST_mismatch() {
+    final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", """
       class Foo {
         void foo() {
           something();
           call();
         }
-      }""".stripIndent()) as PsiJavaFile
-    WriteCommandAction.runWriteCommandAction(project) {
-      file.viewProvider.document.insertString(file.text.indexOf("call"), "char ")
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      PsiTestUtil.checkStubsMatchText(file)
-    }
+      }""");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      file.getViewProvider().getDocument().insertString(file.getText().indexOf("call"), "char ");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiTestUtil.checkStubsMatchText(file);
+    });
   }
 
-  void "test inserting class keyword"() {
-    String text = "class Foo { void foo() { return; } }"
-    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
-    Document document = psiFile.getViewProvider().getDocument()
+  public void test_inserting_class_keyword() {
+    final String text = "class Foo { void foo() { return; } }";
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text);
+    final Document document = psiFile.getViewProvider().getDocument();
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      document.insertString(text.indexOf("return"), "class ")
-    }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    PsiTestUtil.checkStubsMatchText(psiFile)
+    WriteCommandAction.runWriteCommandAction(
+      getProject(), () -> document.insertString(text.indexOf("return"), "class "));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiTestUtil.checkStubsMatchText(psiFile);
   }
 
-  void "test inserting enum keyword"() {
-    String text = "class Foo { void foo() { return; } }"
-    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
-    Document document = psiFile.getViewProvider().getDocument()
+  public void test_inserting_enum_keyword() {
+    final String text = "class Foo { void foo() { return; } }";
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text);
+    final Document document = psiFile.getViewProvider().getDocument();
 
-    WriteCommandAction.runWriteCommandAction(project) {
-      document.insertString(text.indexOf("return"), "enum Foo")
-    }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    PsiTestUtil.checkStubsMatchText(psiFile)
+    WriteCommandAction.runWriteCommandAction(
+      getProject(), () -> document.insertString(text.indexOf("return"), "enum Foo"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiTestUtil.checkStubsMatchText(psiFile);
   }
 
-  void "test type arguments without type in a method"() {
-    String text = "class Foo { { final Collection<String> contexts; f instanceof -> } }"
-    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+  public void test_type_arguments_without_type_in_a_method() {
+    String text = "class Foo { { final Collection<String> contexts; f instanceof -> } }";
+    final PsiFile psiFile = myFixture.addFileToProject("a.java", text);
 
-    WriteCommandAction.runWriteCommandAction(project) { deleteString(psiFile, "Collection") }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    PsiTestUtil.checkStubsMatchText(psiFile)
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> deleteString(psiFile, "Collection"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiTestUtil.checkStubsMatchText(psiFile);
   }
 
   private static void deleteString(PsiFile file, String fragment) {
-    def document = file.viewProvider.document
-    def index = document.text.indexOf(fragment)
-    document.deleteString(index, index + fragment.size())
+    Document document = file.getViewProvider().getDocument();
+    int index = document.getText().indexOf(fragment);
+    document.deleteString(index, index + fragment.length());
   }
 
-  void "test remove class literal qualifier"() {
-    String text = "class Foo { { foo(String.class); } }"
-    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
-    WriteCommandAction.runWriteCommandAction(project) {
-      psiFile.viewProvider.document.insertString(text.indexOf(");"), " x")
-      WriteCommandAction.runWriteCommandAction(project) { deleteString(psiFile, "String") }
-    }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    PsiTestUtil.checkStubsMatchText(psiFile)
+  public void test_remove_class_literal_qualifier() {
+    final String text = "class Foo { { foo(String.class); } }";
+    final PsiFile psiFile = myFixture.addFileToProject("a.java", text);
+    WriteCommandAction.runWriteCommandAction(
+      getProject(), () -> {
+        psiFile.getViewProvider().getDocument().insertString(text.indexOf(");"), " x");
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> deleteString(psiFile, "String"));
+      });
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiTestUtil.checkStubsMatchText(psiFile);
   }
 
-  void "test annotation stub without reference"() {
-    PsiFile psiFile = myFixture.addFileToProject("a.java", "@() class Foo { } }")
-    assert ((PsiJavaFile) psiFile).classes[0].modifierList.annotations[0].nameReferenceElement == null
-    assert !((PsiFileImpl) psiFile).contentsLoaded
+  public void test_annotation_stub_without_reference() {
+    PsiFile psiFile = myFixture.addFileToProject("a.java", "@() class Foo { } }");
+    assertNull(((PsiJavaFile)psiFile).getClasses()[0].getModifierList().getAnnotations()[0].getNameReferenceElement());
+    assertFalse(((PsiFileImpl)psiFile).isContentsLoaded());
   }
 
-  void "test anonymous class stubs see method type parameters"() {
-    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """\
+  public void test_anonymous_class_stubs_see_method_type_parameters() {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("A.java", """
       class A {
           <V> Object foo() {
             return new I<V>(){};
           }
       }
-      interface I<T> {}
-      """.stripIndent())
+      interface I<T> {}""");
 
-    PsiClass a = ((PsiJavaFile) file).classes[0]
-    PsiClass i = ((PsiJavaFile) file).classes[1]
-    PsiAnonymousClass anon = assertOneElement(DirectClassInheritorsSearch.search(i).findAll()) as PsiAnonymousClass
+    PsiClass a = ((PsiJavaFile)file).getClasses()[0];
+    PsiClass i = ((PsiJavaFile)file).getClasses()[1];
+    PsiAnonymousClass anon = (PsiAnonymousClass)UsefulTestCase.assertOneElement(DirectClassInheritorsSearch.search(i).findAll());
 
-    assert i == anon.baseClassType.resolve()
-    assert a.methods[0].typeParameters[0] == PsiUtil.resolveClassInClassTypeOnly(anon.baseClassType.parameters[0])
+    assertEquals(i, anon.getBaseClassType().resolve());
+    assertEquals(a.getMethods()[0].getTypeParameters()[0], PsiUtil.resolveClassInClassTypeOnly(anon.getBaseClassType().getParameters()[0]));
 
-    assert !file.contentsLoaded
+    assertFalse(file.isContentsLoaded());
   }
 
-  void "test anonymous class stubs see local classes"() {
-    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """\
+  public void test_anonymous_class_stubs_see_local_classes() {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("A.java", """
       class A {
           void foo() {
             class Local {}
             new I<Local>(){};
           }
       }
-      interface I<T> {}
-      """.stripIndent())
+      interface I<T> {}""");
 
-    PsiClass i = ((PsiJavaFile) file).classes[1]
-    PsiAnonymousClass anon = assertOneElement(DirectClassInheritorsSearch.search(i).findAll()) as PsiAnonymousClass
+    PsiClass i = ((PsiJavaFile)file).getClasses()[1];
+    PsiAnonymousClass anon = (PsiAnonymousClass)UsefulTestCase.assertOneElement(DirectClassInheritorsSearch.search(i).findAll());
 
-    assert !file.contentsLoaded
+    assertFalse(file.isContentsLoaded());
 
-    assert i == anon.baseClassType.resolve()
-    assert PsiUtil.resolveClassInClassTypeOnly(anon.baseClassType.parameters[0])?.name == "Local"
+    assertEquals(i, anon.getBaseClassType().resolve());
+    final PsiClass only = PsiUtil.resolveClassInClassTypeOnly(anon.getBaseClassType().getParameters()[0]);
+    assertEquals("Local", (only == null ? null : only.getName()));
   }
 
-  void "test local class stubs see other local classes"() {
-    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """\
+  public void test_local_class_stubs_see_other_local_classes() {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("A.java", """
       class A {
           void foo() {
             class Local1 {}
             class Local2 extends Local1 {}
           }
-      }
-      """.stripIndent())
+      }""");
 
-    def cache = PsiShortNamesCache.getInstance(project)
-    def local1 = cache.getClassesByName("Local1", GlobalSearchScope.allScope(project))[0]
-    def local2 = cache.getClassesByName("Local2", GlobalSearchScope.allScope(project))[0]
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());
+    PsiClass local1 = cache.getClassesByName("Local1", GlobalSearchScope.allScope(getProject()))[0];
+    PsiClass local2 = cache.getClassesByName("Local2", GlobalSearchScope.allScope(getProject()))[0];
 
-    assert !file.contentsLoaded
+    assertFalse(file.isContentsLoaded());
 
-    assert local1 == local2.superClass
+    assertEquals(local1, local2.getSuperClass());
   }
 
-  void "test local class stubs do not load AST for inheritance checking when possible"() {
-    PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("A.java", """\
-      class A {
-          void foo() {
-            class UnrelatedLocal {}
-            class Local extends A {}
-          }
-      }
-      """.stripIndent())
+  public void test_local_class_stubs_do_not_load_AST_for_inheritance_checking_when_possible() {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("A.java", """
+       class A {
+           void foo() {
+             class UnrelatedLocal {}
+             class Local extends A {}
+           }
+       }""");
 
-    def local = PsiShortNamesCache.getInstance(project).getClassesByName("Local", GlobalSearchScope.allScope(project))[0]
-    assert "A" == local.superClass.name
-    assert !file.contentsLoaded
+    PsiClass local = PsiShortNamesCache.getInstance(getProject()).getClassesByName("Local", GlobalSearchScope.allScope(getProject()))[0];
+    assertEquals("A", local.getSuperClass().getName());
+    assertFalse(file.isContentsLoaded());
   }
 
-  void "test broken anonymous"() {
-    String text = """\
+  public void test_broken_anonymous() {
+    final String text = """
       class A {
         public GroupDescriptor[] getGroupDescriptors() {
           return new ThreadGroup(Descriptor[]{
             new GroupDescriptor(groupId, "test")
           };
         }
-      }""".stripIndent()
-    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
-    WriteCommandAction.runWriteCommandAction(project) {
-      psiFile.viewProvider.document.insertString(text.indexOf("]{"), "x")
-    }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
-    PsiTestUtil.checkStubsMatchText(psiFile)
+      }""";
+    final PsiFile psiFile = myFixture.addFileToProject("a.java", text);
+    WriteCommandAction.runWriteCommandAction(
+      getProject(), () -> psiFile.getViewProvider().getDocument().insertString(text.indexOf("]{"), "x"));
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiTestUtil.checkStubsMatchText(psiFile);
   }
 
-  void "test broken nested anonymous"() {
-    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", "class A { { new A(new B[a]{b}); } }"))
+  public void test_broken_nested_anonymous() {
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", "class A { { new A(new B[a]{b}); } }"));
   }
 
-  void "test lone angle brackets"() {
-    String text = """\
+  public void test_lone_angle_brackets() {
+    String text = """
       class A {
         {
           PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(element, .class);
           final <PsiElement, TextRange> pair;
-        }  
-      }""".stripIndent()
-    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", text))
-  }
-
-  void "test incomplete static import does not cause CCE"() {
-    def file = myFixture.addFileToProject("a.java", "import static foo.bar.") as PsiJavaFile
-    assert ((PsiFileImpl)file).stub
-    assert file.node
-    def staticImport = ((PsiJavaFile)file).importList.importStaticStatements[0]
-    assert staticImport.referenceName == null
-    assert !staticImport.resolveTargetClass()
-  }
-
-  void "test adding import to broken file with type parameters"() {
-    def file = myFixture.addFileToProject("a.java", "A<B>") as PsiJavaFile
-    WriteCommandAction.runWriteCommandAction(project) {
-      file.importClass(myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST))
-    }
-    PsiTestUtil.checkStubsMatchText(file)
-  }
-
-  void "test remove extends reference before dot"() {
-    def file = myFixture.addFileToProject("a.java", "class A extends B. { int a; }")
-    WriteCommandAction.runWriteCommandAction(project) {
-      def javaFile = file as PsiJavaFile
-      def clazz = (javaFile.classes[0] as PsiImplicitClass).innerClasses[0]
-      clazz.extendsList.referenceElements[0].delete()
-    }
-    PsiTestUtil.checkStubsMatchText(file)
-  }
-
-  void "test remove type argument list after space"() {
-    def file = myFixture.addFileToProject("a.java", "class A { A <B>a; }")
-    WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.findClass("A").fields[0].typeElement.innermostComponentReferenceElement.parameterList.delete()
-    }
-    PsiTestUtil.checkStubsMatchText(file)
-    PsiTestUtil.checkFileStructure(file)
-  }
-
-  void "test remove modifier making a comment a class javadoc"() {
-    def file = myFixture.addFileToProject("a.java", "import foo; final /** @deprecated */ public class A { }")
-    WriteCommandAction.runWriteCommandAction(project) {
-      def clazz = myFixture.findClass("A")
-      def children = clazz.modifierList.children
-      assert children.length != 0 : clazz.containingFile.text + ";" + clazz.containingFile.virtualFile.path
-      children[0].delete()
-    }
-    PsiTestUtil.checkFileStructure(file)
-    PsiTestUtil.checkStubsMatchText(file)
-  }
-
-  void "test add reference into broken extends list"() {
-    def file = myFixture.addFileToProject("a.java", "class A extends.ends Foo { int a; }")
-    WriteCommandAction.runWriteCommandAction(project) {
-      def javaFile = file as PsiJavaFile
-      def clazz = (javaFile.classes[0] as PsiImplicitClass).innerClasses[0]
-      clazz.extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
-    }
-    PsiTestUtil.checkStubsMatchText(file)
-  }
-
-  void "test identifier dot before class"() {
-    def file = myFixture.addFileToProject("a.java", "class A {{ public id.class B {}}}")
-    PsiTestUtil.checkStubsMatchText(file)
-  }
-
-  void "test removing orphan annotation"() {
-    String text = """\
-      public class Foo {
-          public Foo() {
-          }
-      
-          @Override
-        public void initSteps {
         }
-      }""".stripIndent()
-    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
-    WriteCommandAction.runWriteCommandAction(project) {
-      PsiTreeUtil.findChildOfType(psiFile, PsiAnnotation).delete()
-    }
-    PsiTestUtil.checkStubsMatchText(psiFile)
+      }""";
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", text));
   }
 
-  void "test local record"() {
-    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", """\
-      class A {
-        void test() {
-          record A(String s) { }
-        }
-      }
-      """.stripIndent()))
+  public void test_incomplete_static_import_does_not_cause_CCE() {
+    PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "import static foo.bar.");
+    assertNotNull(((PsiFileImpl)file).getStub());
+    assertNotNull(file.getNode());
+    PsiImportStaticStatement staticImport = file.getImportList().getImportStaticStatements()[0];
+    assertNull(staticImport.getReferenceName());
+    assertNull(staticImport.resolveTargetClass());
   }
 
-  void "test field with missing initializer"() {
-    def file = myFixture.addFileToProject("a.java", "class A { int a = ; } ")
-    def clazz = myFixture.findClass("A")
-    assert PsiFieldImpl.getDetachedInitializer(clazz.fields[0]) == null
-    assert !(file as PsiFileImpl).contentsLoaded
+  public void test_adding_import_to_broken_file_with_type_parameters() {
+    final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "A<B>");
+    WriteCommandAction.runWriteCommandAction(
+      getProject(), (Computable<Boolean>)() -> file.importClass(myFixture.findClass(CommonClassNames.JAVA_UTIL_LIST)));
+    PsiTestUtil.checkStubsMatchText(file);
   }
 
-  void "test implicit class"() {
+  public void test_remove_extends_reference_before_dot() {
+    final PsiFile file = myFixture.addFileToProject("a.java", "class A extends B. { int a; }");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PsiJavaFile javaFile = (PsiJavaFile)file;
+      PsiClass clazz = javaFile.getClasses()[0].getInnerClasses()[0];
+      clazz.getExtendsList().getReferenceElements()[0].delete();
+    });
+    PsiTestUtil.checkStubsMatchText(file);
+  }
 
-    def psiFile = myFixture.addFileToProject("a.java", """\
+  public void test_remove_type_argument_list_after_space() {
+    PsiFile file = myFixture.addFileToProject("a.java", "class A { A <B>a; }");
+    WriteCommandAction.runWriteCommandAction(
+      getProject(),
+      () -> myFixture.findClass("A").getFields()[0].getTypeElement().getInnermostComponentReferenceElement().getParameterList().delete());
+    PsiTestUtil.checkStubsMatchText(file);
+    PsiTestUtil.checkFileStructure(file);
+  }
+
+  public void test_remove_modifier_making_a_comment_a_class_javadoc() {
+    PsiFile file = myFixture.addFileToProject("a.java", "import foo; final /** @deprecated */ public class A { }");
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PsiClass clazz = myFixture.findClass("A");
+      PsiElement[] children = clazz.getModifierList().getChildren();
+      assertTrue(clazz.getContainingFile().getText() + ";" + clazz.getContainingFile().getVirtualFile().getPath(),
+                 children.length != 0);
+      children[0].delete();
+    });
+    PsiTestUtil.checkFileStructure(file);
+    PsiTestUtil.checkStubsMatchText(file);
+  }
+
+  public void test_add_reference_into_broken_extends_list() {
+    final PsiFile file = myFixture.addFileToProject("a.java", "class A extends.ends Foo { int a; }");
+    WriteCommandAction.runWriteCommandAction(getProject(), (Computable<PsiElement>)() -> {
+      PsiJavaFile javaFile = (PsiJavaFile)file;
+      PsiClass clazz = javaFile.getClasses()[0].getInnerClasses()[0];
+      return clazz.getExtendsList().add(JavaPsiFacade.getElementFactory(getProject())
+                                          .createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT,
+                                                                               file.getResolveScope()));
+    });
+    PsiTestUtil.checkStubsMatchText(file);
+  }
+
+  public void test_identifier_dot_before_class() {
+    PsiFile file = myFixture.addFileToProject("a.java", "class A {{ public id.class B {}}}");
+    PsiTestUtil.checkStubsMatchText(file);
+  }
+
+  public void test_removing_orphan_annotation() {
+    String text = """
+       public class Foo {
+         public Foo() {
+         }
+
+         @Override
+         public void initSteps {
+         }
+       }""";
+    final PsiFile psiFile = myFixture.addFileToProject("a.java", text);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> PsiTreeUtil.findChildOfType(psiFile, PsiAnnotation.class).delete());
+    PsiTestUtil.checkStubsMatchText(psiFile);
+  }
+
+  public void test_local_record() {
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", """
+       class A {
+         void test() {
+           record A(String s) { }
+         }
+       }"""));
+  }
+
+  public void test_field_with_missing_initializer() {
+    PsiFile file = myFixture.addFileToProject("a.java", "class A { int a = ; } ");
+    PsiClass clazz = myFixture.findClass("A");
+    assertNull(PsiFieldImpl.getDetachedInitializer(clazz.getFields()[0]));
+    assertFalse(((PsiFileImpl)file).isContentsLoaded());
+  }
+
+  public void test_implicit_class() {
+    PsiFile psiFile = myFixture.addFileToProject("a.java", """
       void test() {
       }
-      
+
       String s = "foo";
       int i = 10;
-      static {} // not allowed by spec, but we parse
-      """.stripIndent())
-    PsiTestUtil.checkStubsMatchText(psiFile)
+      static {} // not allowed by spec, but we parse""");
+    PsiTestUtil.checkStubsMatchText(psiFile);
   }
 
-  void "test array type use annotation stubbing"() {
-    myFixture.addClass("""\
-      import java.lang.annotation.*;
-      @Target(ElementType.TYPE_USE)
-      @interface Anno { int value(); }""".stripIndent())
+  public void test_array_type_use_annotation_stubbing() {
+    myFixture.addClass("""
+                         import java.lang.annotation.*;
+                         @Target(ElementType.TYPE_USE)
+                         @interface Anno { int value(); }""");
 
-    PsiClass clazz = myFixture.addClass("""\
-      class Foo {
-        <T> @Anno(0) String @Anno(1) [] @Anno(2) [] foo(@Anno(3) byte @Anno(4) [] data) {}
-        List<String> @Anno(5) [] field;
-      }""".stripIndent())
+    PsiClass clazz = myFixture.addClass("""
+                                          class Foo {
+                                            <T> @Anno(0) String @Anno(1) [] @Anno(2) [] foo(@Anno(3) byte @Anno(4) [] data) {}
+                                            List<String> @Anno(5) [] field;
+                                          }""");
 
-    def method = clazz.methods[0]
-    def field = clazz.fields[0]
-    def parameter = method.parameterList.parameters[0]
-    def parameterAnnotations = parameter.type.annotations
-    def parameterComponentAnnotations = (parameter.type as PsiArrayType).componentType.annotations
-    def methodAnnotations = method.returnType.annotations
-    def methodComponentAnnotations = (method.returnType as PsiArrayType).componentType.annotations
-    def methodDeepComponentAnnotations = method.returnType.deepComponentType.annotations
-    def fieldAnnotations = field.type.annotations
+    PsiMethod method = clazz.getMethods()[0];
+    PsiField field = clazz.getFields()[0];
+    PsiParameter parameter = method.getParameterList().getParameters()[0];
+    PsiAnnotation[] parameterAnnotations = parameter.getType().getAnnotations();
+    PsiAnnotation[] parameterComponentAnnotations = ((PsiArrayType)parameter.getType()).getComponentType().getAnnotations();
+    PsiAnnotation[] methodAnnotations = method.getReturnType().getAnnotations();
+    PsiAnnotation[] methodComponentAnnotations = ((PsiArrayType)method.getReturnType()).getComponentType().getAnnotations();
+    PsiAnnotation[] methodDeepComponentAnnotations = method.getReturnType().getDeepComponentType().getAnnotations();
+    PsiAnnotation[] fieldAnnotations = field.getType().getAnnotations();
 
-    assert !(clazz.containingFile as PsiFileImpl).contentsLoaded
-    assertAnnotationValueText methodDeepComponentAnnotations, "0"
-    assertAnnotationValueText methodAnnotations, "1"
-    assertAnnotationValueText methodComponentAnnotations, "2"
-    assertAnnotationValueText parameterComponentAnnotations, "3"
-    assertAnnotationValueText parameterAnnotations, "4"
-    assertAnnotationValueText fieldAnnotations, "5"
-    assert !(clazz.containingFile as PsiFileImpl).contentsLoaded
+    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+    assertAnnotationValueText(methodDeepComponentAnnotations, "0");
+    assertAnnotationValueText(methodAnnotations, "1");
+    assertAnnotationValueText(methodComponentAnnotations, "2");
+    assertAnnotationValueText(parameterComponentAnnotations, "3");
+    assertAnnotationValueText(parameterAnnotations, "4");
+    assertAnnotationValueText(fieldAnnotations, "5");
+    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
 
-    assert clazz.node // load AST
-    assert parameter.type.annotations.size() == 1
+    assertNotNull(clazz.getNode());// load AST
+    assertEquals(1, parameter.getType().getAnnotations().length);
   }
 
   private static void assertAnnotationValueText(PsiAnnotation[] annotations, String text) {
-    assert annotations.size() == 1
-    assert annotations[0].findAttributeValue("value").text == text
+    assertEquals(1, annotations.length);
+    assertEquals(annotations[0].findAttributeValue("value").getText(), text);
   }
 }
