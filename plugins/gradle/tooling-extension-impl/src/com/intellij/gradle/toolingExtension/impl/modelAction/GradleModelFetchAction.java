@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasks;
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ModelConverter;
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
 import java.io.Serializable;
 import java.util.*;
@@ -80,7 +81,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   }
 
   @NotNull
-  protected ModelConverter getToolingModelConverter(@NotNull BuildController controller) {
+  protected ModelConverter getToolingModelConverter(@NotNull BuildController controller, @NotNull GradleOpenTelemetry telemetry) {
     return ModelConverter.NOP;
   }
 
@@ -192,7 +193,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
       controller.getModel(BuildEnvironment.class)
     );
     ModelConverter modelConverter = telemetry.callWithSpan("GetToolingModelConverter", __ ->
-      getToolingModelConverter(controller)
+      getToolingModelConverter(controller, telemetry)
     );
     AllModels allModels = telemetry.callWithSpan("InitAllModels", __ ->
       new AllModels(mainGradleBuild, nestedGradleBuilds, buildEnvironment)
@@ -258,19 +259,13 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     assert myNestedGradleBuilds != null;
     assert myModelConverter != null;
 
+    DefaultBuildController buildController = new DefaultBuildController(controller, myMainGradleBuild);
     Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
-    GradleCustomModelFetchAction buildAction = new GradleCustomModelFetchAction(
-      myAllModels,
-      modelProviders,
-      myModelConverter,
-      converterExecutor,
-      telemetry
-    );
-    buildAction.execute(
-      new DefaultBuildController(controller, myMainGradleBuild),
-      myMainGradleBuild,
-      myNestedGradleBuilds
-    );
+    Collection<GradleBuild> gradleBuilds = getGradleBuilds();
+    GradleModelConsumer modelConsumer = new GradleCustomModelConsumer(myAllModels, myModelConverter, converterExecutor);
+
+    GradleCustomModelFetchAction buildAction = new GradleCustomModelFetchAction(telemetry, modelConsumer, modelProviders);
+    buildAction.execute(buildController, gradleBuilds);
   }
 
   private Set<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
@@ -285,6 +280,16 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
         .collect(Collectors.toSet());
     }
     return myModelProviders;
+  }
+
+  private @NotNull Collection<GradleBuild> getGradleBuilds() {
+    assert myMainGradleBuild != null;
+    assert myNestedGradleBuilds != null;
+
+    List<GradleBuild> gradleBuilds = new ArrayList<>();
+    gradleBuilds.add(myMainGradleBuild);
+    gradleBuilds.addAll(myNestedGradleBuilds);
+    return gradleBuilds;
   }
 
   // Use this static class as a simple ThreadFactory to prevent a memory leak when passing an anonymous ThreadFactory object to
