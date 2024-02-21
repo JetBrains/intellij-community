@@ -155,6 +155,10 @@ open class IdeStarter : ModernApplicationStarter() {
     }
 
     if (project != null) {
+      // the IDE is started with an argument to open a specific project => forget which projects were opened in the last session,
+      // otherwise irrelevant projects may be opened after a restart.
+      // `project` will remain with "opened" status because it is open at this point
+      recentProjectManager.updateLastProjectPath()
       return
     }
 

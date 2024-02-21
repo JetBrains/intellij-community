@@ -443,6 +443,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
     synchronized(stateLock) {
+      // FIXME do we really want to make this method non-idempotent?
       state.forceReopenProjects = false
       return state.additionalInfo.values.any { canReopenProject(it) }
     }
