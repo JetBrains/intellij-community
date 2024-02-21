@@ -13,7 +13,7 @@ public class DelegateIncludeUnknownMethods {
     boolean clearXYZ();
   }
 
-  <warning descr="Cannot find symbol method clearXYZ">@Delegate(types = SomeCollection.class)</warning>
+  <warning descr="Cannot find method 'clearXYZ'">@Delegate(types = SomeCollection.class)</warning>
   private final Collection<String> collection = new ArrayList<String>();
 
   public static void main(String[] args) {
