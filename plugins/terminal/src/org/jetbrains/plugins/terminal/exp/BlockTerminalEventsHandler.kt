@@ -23,7 +23,7 @@ class BlockTerminalEventsHandler(
     val selectedBlock = outputController.selectionModel.primarySelection
     // Send key pressed events only when no block is selected or last block is selected.
     // So, it is possible to invoke actions on blocks
-    if (selectedBlock == null || selectedBlock == outputModel.getLastBlock()) {
+    if (selectedBlock == null || selectedBlock == outputModel.getActiveBlock()) {
       super.keyPressed(e)
     }
   }

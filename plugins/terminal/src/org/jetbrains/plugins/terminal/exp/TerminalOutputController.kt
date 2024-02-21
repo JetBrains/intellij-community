@@ -113,8 +113,7 @@ class TerminalOutputController(
     disposeRunningCommandListeners()
     updateEditorContent(scraper.scrapeOutput())
     invokeLater {
-      // the last block can be null in case of 'clear' command
-      val block = outputModel.getLastBlock() ?: return@invokeLater
+      val block = outputModel.getActiveBlock() ?: error("No active block")
       val document = editor.document
       val lastLineInd = document.getLineNumber(block.endOffset)
       val lastLineStart = document.getLineStartOffset(lastLineInd)
@@ -136,7 +135,7 @@ class TerminalOutputController(
 
   @RequiresEdt
   fun insertEmptyLine() {
-    outputModel.closeLastBlock()
+    outputModel.closeActiveBlock()
     editor.document.insertString(editor.document.textLength, "\n")
     scrollToBottom()
   }
@@ -178,8 +177,7 @@ class TerminalOutputController(
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
       if (!editor.isDisposed) {
-        // there can be no last block for 'clear' command, because it removes all blocks
-        val baseOffset = outputModel.getLastBlock()?.outputStartOffset ?: return@invokeLater
+        val baseOffset = outputModel.getActiveBlock()?.outputStartOffset ?: error("No active block")
         updateEditor(toHighlightedCommandOutput(output, baseOffset))
       }
     }
@@ -192,7 +190,7 @@ class TerminalOutputController(
   }
 
   private fun updateEditor(output: CommandOutput) {
-    val block = outputModel.getLastBlock() ?: error("No active block")
+    val block = outputModel.getActiveBlock() ?: error("No active block")
     val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
 
     // highlightings are collected only for output, so add prompt and command highlightings to the first place

@@ -80,7 +80,7 @@ class TerminalCaretPainter(
   }
 
   override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
-    isBlockActive = newSelection.isEmpty() || newSelection.singleOrNull() == outputModel.getLastBlock()
+    isBlockActive = newSelection.isEmpty() || newSelection.singleOrNull() == outputModel.getActiveBlock()
     if (isBlockActive) {
       repaint()
     }
