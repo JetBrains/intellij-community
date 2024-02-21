@@ -48,6 +48,7 @@ import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
+import com.intellij.util.application
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -277,9 +278,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     content.setPreferredFocusedComponent(descriptor.preferredFocusComputable)
     content.putUserData(RunContentDescriptor.DESCRIPTOR_KEY, descriptor)
     content.putUserData(EXECUTOR_KEY, executor)
+    content.displayName = descriptor.displayName
 
-    descriptor.displayNameView.advise(descriptor.lifetime) {
-      descriptor.lifetime.launchOnUi {
+    descriptor.displayNameProperty.afterChange(descriptor) {
+      application.invokeLater {
         content.displayName = it
       }
     }
@@ -290,7 +292,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     if (processHandler != null) {
       val processAdapter = object : ProcessAdapter() {
         override fun startNotified(event: ProcessEvent) {
-          descriptor.iconView.advise(descriptor.lifetime) {
+          UIUtil.invokeLaterIfNeeded {
+            content.icon = getLiveIndicator(descriptor.icon)
+          }
+          descriptor.iconProperty.afterChange(descriptor) {
             UIUtil.invokeLaterIfNeeded {
               content.icon = getLiveIndicator(it)
               var icon = toolWindowIdToBaseIcon[toolWindowId]
@@ -319,8 +324,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         Disposer.register(disposer, Disposable { processHandler.removeProcessListener(processAdapter) })
       }
     } else {
-      descriptor.iconView.advise(descriptor.lifetime) {
-        descriptor.lifetime.launchOnUi {
+      descriptor.iconProperty.afterChange(descriptor) {
+        application.invokeLater {
           content.icon = it ?: executor.toolWindowIcon
         }
       }

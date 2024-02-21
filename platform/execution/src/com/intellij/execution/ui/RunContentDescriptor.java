@@ -9,16 +9,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.observable.properties.AtomicProperty;
+import com.intellij.openapi.observable.properties.ObservableProperty;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
-import com.jetbrains.rd.util.lifetime.Lifetime;
-import com.jetbrains.rd.util.lifetime.LifetimeDefinition;
-import com.jetbrains.rd.util.reactive.IProperty;
-import com.jetbrains.rd.util.reactive.IPropertyView;
-import com.jetbrains.rd.util.reactive.Property;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +32,8 @@ public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final IProperty<@TabTitle String> myDisplayNameView = new Property<>(null);
-  private final IProperty<Icon> myIconView = new Property<>(null);
+  private final AtomicProperty<@TabTitle String> myDisplayNameView = new AtomicProperty<>(null);
+  private final AtomicProperty<Icon> myIconView = new AtomicProperty<>(null);
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
@@ -54,8 +51,6 @@ public class RunContentDescriptor implements Disposable {
 
   @Nullable
   private final Runnable myActivationCallback;
-
-  private final LifetimeDefinition myLifetimeDef;
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
@@ -88,8 +83,6 @@ public class RunContentDescriptor implements Disposable {
     if (processHandler != null) {
       setContentToolWindowId(processHandler.getUserData(CONTENT_TOOL_WINDOW_ID_KEY));
     }
-
-    myLifetimeDef = Lifetime.Companion.getEternal().createNested();
   }
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
@@ -135,7 +128,6 @@ public class RunContentDescriptor implements Disposable {
 
   @Override
   public void dispose() {
-    myLifetimeDef.terminate(true);
     myExecutionConsole = null;
     myComponent = null;
     myProcessHandler = null;
@@ -146,25 +138,25 @@ public class RunContentDescriptor implements Disposable {
    * Returns the icon to show in the Run or Debug toolwindow tab corresponding to this content.
    * <p>
    * Note: This method will return a current snapshot of the icon value. It may change during content execution.
-   * Use {@link RunContentDescriptor#getIconView} to obtain a reactive property to track icon changes.
+   * Use {@link RunContentDescriptor#getIconProperty} to obtain a reactive property to track icon changes.
    * </p>
    * @return the icon to show, or null if the executor icon should be used.
    */
   @Nullable
   public Icon getIcon() {
-    return myIconView.getValue();
+    return myIconView.get();
   }
 
   /**
-   * Returns the reactive view for an icon to show in the Run or Debug toolwindow tab corresponding to this content.
-   * @return the icon view that can be observed for the most recent icon value.
+   * Returns the reactive property for an icon to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the icon property that can be observed for the most recent icon value.
    */
-  public IPropertyView<Icon> getIconView() {
+  public ObservableProperty<Icon> getIconProperty() {
     return myIconView;
   }
 
   protected void setIcon(@Nullable Icon icon) {
-    myIconView.setValue(icon);
+    myIconView.set(icon);
   }
 
   @Nullable
@@ -188,25 +180,25 @@ public class RunContentDescriptor implements Disposable {
    * Returns the title to show in the Run or Debug toolwindow tab corresponding to this content.
    * <p>
    * Note: This method will return a current snapshot of the title value. It may change during content execution.
-   * Use {@link RunContentDescriptor#getDisplayNameView} to obtain a reactive property to track title changes.
+   * Use {@link RunContentDescriptor#getDisplayNameProperty} to obtain a reactive property to track title changes.
    * </p>
    * @return the title to show, or null if the executor name should be used.
    */
   @BuildEventsNls.Title
   public String getDisplayName() {
-    return myDisplayNameView.getValue();
+    return myDisplayNameView.get();
   }
 
   /**
-   * Returns the reactive view for a title to show in the Run or Debug toolwindow tab corresponding to this content.
-   * @return the title view that can be observed for the most recent title value.
+   * Returns the reactive property for a title to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the title property that can be observed for the most recent title value.
    */
-  public IPropertyView<@Nullable @BuildEventsNls.Title String> getDisplayNameView() {
+  public ObservableProperty<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
     return myDisplayNameView;
   }
 
   protected void setDisplayName(@Nullable @TabTitle String displayName) {
-    myDisplayNameView.setValue(displayName);
+    myDisplayNameView.set(displayName);
   }
 
   public String getHelpId() {
@@ -323,9 +315,5 @@ public class RunContentDescriptor implements Disposable {
 
   public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
     myReusePolicy = reusePolicy;
-  }
-
-  public Lifetime getLifetime() {
-    return myLifetimeDef;
   }
 }
