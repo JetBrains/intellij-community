@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.BiConsumer;
@@ -64,6 +65,11 @@ public final class TrigramBuilder {
         trigrams.forEach(integer -> {
           consumer.accept(integer, null);
         });
+      }
+
+      @Override
+      public IntSet keySet() {
+        return trigrams;
       }
 
       @Override
@@ -172,6 +178,28 @@ public final class TrigramBuilder {
 
     AddonlyIntSet() {
       this(21);
+    }
+
+    @Override
+    public int[] toArray(int[] arr) {
+      int size = this.size;
+      if (arr == null) {
+        arr = new int[size];
+      }
+      else if (arr.length < size) {
+        arr = Arrays.copyOf(arr, size);
+      }
+      int idx = 0;
+      if (hasZeroKey) {
+        arr[idx++] = 0;
+      }
+      for (int val : data) {
+        if (val != 0) {
+          arr[idx++] = val;
+        }
+      }
+      assert idx == size;
+      return arr;
     }
 
     @Override

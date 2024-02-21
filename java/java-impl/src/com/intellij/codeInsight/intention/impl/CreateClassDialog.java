@@ -98,8 +98,8 @@ public class CreateClassDialog extends DialogWrapper {
     }
 
     myTfClassName.setText(myClassName);
-    myDestinationCB.setData(myProject, getBaseDir(targetPackageName), s-> setErrorText(s, myDestinationCB)
-    , myPackageComponent.getChildComponent());
+    myDestinationCB.setData(myProject, getBaseDir(targetPackageName), s -> setErrorText(s, myDestinationCB), 
+                            myPackageComponent.getChildComponent());
   }
 
   protected boolean reportBaseInTestSelectionInSource() {

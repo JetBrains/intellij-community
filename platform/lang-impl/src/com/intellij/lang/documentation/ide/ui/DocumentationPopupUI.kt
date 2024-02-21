@@ -175,6 +175,7 @@ internal class DocumentationPopupUI(
     EDT.assertIsEdt()
     val ui = ui
     _ui = null
+    browser.clearCloseTrigger()
     return ui
   }
 

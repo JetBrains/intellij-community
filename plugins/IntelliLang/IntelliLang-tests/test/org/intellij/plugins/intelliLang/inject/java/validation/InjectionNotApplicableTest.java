@@ -20,15 +20,11 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Bas Leijdekkers
- */
-public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
+public class InjectionNotApplicableTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    var inspection = new LanguageMismatch();
-    inspection.CHECK_NON_ANNOTATED_REFERENCES = true;
+    var inspection = new InjectionNotApplicable();
     myFixture.enableInspections(inspection);
   }
 
@@ -37,53 +33,31 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
     return JAVA_21_ANNOTATED;
   }
 
-  public void testParenthesesHighlighting() {
-    highlightTest("""
-      import org.intellij.lang.annotations.Language;
-    
-      class X {
-        @Language("JavaScript")
-        String JS_CODE = "var x;";
-    
-        @Language("XPath")
-        String XPATH_CODE = (((<warning descr="Language mismatch: Expected 'XPath', got 'JavaScript'">JS_CODE</warning>)));
-      }
-    """);
-  }
-
-  public void testAnnotateFix() {
-    quickFixTest("""
-    import org.intellij.lang.annotations.Language;
-    
-    class X {
-      String JS_CODE = "var y;";
-
-      @Language("JavaScript")
-      String OTHER_JS_CODE = JS_<caret>CODE;
-    }
-    """, """
-    import org.intellij.lang.annotations.Language;
-    
-    class X {
-      @Language("JavaScript")
-      String JS_CODE = "var y;";
-
-      @Language("JavaScript")
-      String OTHER_JS_CODE = JS_<caret>CODE;
-    }
-    """, "Annotate field 'JS_CODE' as '@Language'");
-  }
-  
-  public void testProcessorReassigned() {
+  public void testNonString() {
     highlightTest("""
                       import org.intellij.lang.annotations.Language;
                       
                       class Hello {
-                          @Language("JAVA")
-                          public static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
+                          <error descr="Language injection is only applicable to strings or string templates">@Language("JAVA")</error>
+                          public static native Object getSomething();
                       }""");
   }
 
+  public void testNonStringFix() {
+    quickFixTest("""
+                      import org.intellij.lang.annotations.Language;
+                      
+                      class Hello {
+                          @<caret>Language("JAVA")
+                          public static native Object getSomething();
+                      }""",
+                 """
+                      class Hello {
+                          public static native Object getSomething();
+                      }""", 
+                 "Remove annotation");
+  }
+  
   public void testProcessorFromMethod() {
     highlightTest("""
                       import org.intellij.lang.annotations.Language;
@@ -95,20 +69,6 @@ public class LanguageMismatchTest extends LightJavaCodeInsightFixtureTestCase {
                           public static native MyProcessor getProcessor();
                       }""");
 
-  }
-  public void testEmptyArrayConstant() {
-    highlightTest("""
-      import org.intellij.lang.annotations.Language;
-    
-      class X {
-        public static final String[] EMPTY_ARRAY = {};
-    
-        @Language("HTML")
-        String[] getCode() {
-          return EMPTY_ARRAY;
-        }
-      }
-    """);
   }
 
   public void highlightTest(String text) {

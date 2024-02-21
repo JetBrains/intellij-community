@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.cache.TypeInfo.RefTypeInfo;
@@ -194,7 +193,9 @@ class FirstPassData implements SignatureParsing.TypeInfoProvider {
 
       @Override
       public void visitSource(String source, String debug) {
-        if (source != null && StringUtil.endsWithIgnoreCase(source, ".groovy")) {
+        String suffix = ".groovy";
+        if (source != null && source.length() > suffix.length() &&
+            source.regionMatches(true, source.length() - suffix.length(), suffix, 0, suffix.length())) {
           trustInnerClasses = false;
         }
         super.visitSource(source, debug);
