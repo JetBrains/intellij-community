@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
@@ -42,6 +43,8 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
       .createContributor(createEvent()) as ActionSearchEverywhereContributor
     val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticActionSearchEverywhereContributor(standardActionContributor)),
                                                 { _ -> null }, null)
+    Disposer.register(project, searchEverywhereUI)
+
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("delete all breakpoints"))
 
     val items = elements.filterIsInstance<GotoActionModel.MatchedValue>().map { it.value as GotoActionModel.ActionWrapper }.map { it.actionText }
@@ -54,6 +57,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
       ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
 
     val semanticSearchEverywhereUI = SearchEverywhereUI(project, listOf(semanticActionContributor))
+    Disposer.register(project, semanticSearchEverywhereUI)
 
     val results = PlatformTestUtil.waitForFuture(semanticSearchEverywhereUI.findElementsForPattern(""))
 
@@ -71,7 +75,9 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
       ActionSearchEverywhereContributor.Factory().createContributor(createEvent()) as ActionSearchEverywhereContributor)
 
     val standardSearchEverywhereUI = SearchEverywhereUI(project, listOf(standardActionContributor))
+    Disposer.register(project, standardSearchEverywhereUI)
     val semanticSearchEverywhereUI = SearchEverywhereUI(project, listOf(semanticActionContributor))
+    Disposer.register(project, semanticSearchEverywhereUI)
 
     val prefixes = ('a'..'z').map { it.toString() }.toMutableList()
     var lastAdded = prefixes.toList()

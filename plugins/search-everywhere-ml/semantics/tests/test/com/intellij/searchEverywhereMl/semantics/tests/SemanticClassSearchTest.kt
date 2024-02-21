@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
 import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.psi.PsiClass
@@ -53,8 +54,11 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
     assertEquals(3, storage.index.size)
 
-    val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticClassSearchEverywhereContributor(createEvent())),
-                                                { _ -> null }, null)
+    val contributor = SemanticClassSearchEverywhereContributor(createEvent())
+    Disposer.register(project, contributor)
+    val searchEverywhereUI = SearchEverywhereUI(project, listOf(contributor), { _ -> null }, null)
+    Disposer.register(project, searchEverywhereUI)
+
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("index project job"))
     assertEquals(2, elements.size)
 
