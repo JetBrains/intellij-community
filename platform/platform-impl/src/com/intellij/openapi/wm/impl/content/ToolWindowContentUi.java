@@ -31,7 +31,6 @@ import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
-import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
@@ -54,7 +53,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -134,9 +132,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         ContentManager manager = content.getManager();
         // merge subContents to main content if they are together inside one content manager
         if (manager != null && !(content instanceof SingleContentLayout.SubContent)) {
-          List<Content> contents = manager instanceof ContentManagerImpl managerImpl
-                                   ? managerImpl.getContentsRecursively()
-                                   : Arrays.asList(manager.getContents());
+          List<Content> contents = manager.getContentsRecursively();
           List<Content> mainContents = contents.stream().filter(c -> !(c instanceof SingleContentLayout.SubContent)).toList();
           List<Content> subContents = contents.stream().filter(c -> c instanceof SingleContentLayout.SubContent).toList();
           if (mainContents.size() == 1) {
