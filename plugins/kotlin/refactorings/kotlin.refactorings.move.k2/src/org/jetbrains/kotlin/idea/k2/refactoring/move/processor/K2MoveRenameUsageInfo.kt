@@ -223,9 +223,7 @@ sealed class K2MoveRenameUsageInfo(
                 if (refExpr is KtEnumEntrySuperclassReferenceExpression) return@forEachDescendantOfType
                 if (refExpr.parent is KtThisExpression || refExpr.parent is KtSuperExpression) return@forEachDescendantOfType
                 if (!refExpr.isImportable()) return@forEachDescendantOfType
-                val resolved = analyze(refExpr) {
-                    refExpr.mainReference.resolveToSymbol()?.psi
-                } as? PsiNamedElement ?: return@forEachDescendantOfType
+                val resolved = analyze(refExpr) { refExpr.mainReference.resolve() } as? PsiNamedElement ?: return@forEachDescendantOfType
                 val usageInfo = refExpr.mainReference.createKotlinUsageInfo(resolved, isInternal = true)
                 usages.add(usageInfo)
                 refExpr.internalUsageInfo = usageInfo
