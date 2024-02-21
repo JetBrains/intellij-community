@@ -34,12 +34,12 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       healthCheckFuture = AppExecutorUtil
         .getAppScheduledExecutorService()
         .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index files filter health check for project ${project.name}") {
-          runHealthCheck()
+          runHealthCheck(false)
         }, 5, 5, TimeUnit.MINUTES)
     }
   }
 
-  fun triggerHealthCheck() {
+  fun triggerHealthCheck(onProjectOpen: Boolean) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -47,7 +47,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     stopHealthCheck()
     AppExecutorUtil.getAppExecutorService().submit {
       try {
-        runHealthCheck()
+        runHealthCheck(onProjectOpen)
       }
       finally {
         setUpHealthCheck()
@@ -56,7 +56,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
   }
 
   @Synchronized // don't allow two parallel health checks in case of triggerHealthCheck()
-  private fun runHealthCheck() {
+  private fun runHealthCheck(onProjectOpen: Boolean) {
     if (!IndexInfrastructure.hasIndices()) return
 
     try {
@@ -80,6 +80,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       val indexableNotFoundInFilterCount = errorGroups.entries.find { it.key == INDEXABLE_FILE_NOT_FOUND_IN_FILTER }?.value?.size ?: 0
 
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(project,
+                                                                                     onProjectOpen,
                                                                                      nonIndexableFoundInFilterCount,
                                                                                      indexableNotFoundInFilterCount,
                                                                                      excludedFilesWereFilteredOut,
