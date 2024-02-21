@@ -49,6 +49,7 @@ internal class WindowsDistributionBuilder(
         .copyToDir(distBinDir)
 
       generateBuildTxt(context, targetPath)
+      generateLanguagePluginsXml(context, distBinDir)
       copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))

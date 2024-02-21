@@ -2,6 +2,7 @@
 @file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
@@ -17,6 +18,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.jdom.CDATA
+import org.jdom.Document
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
@@ -1339,6 +1343,27 @@ fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmAr
 
 internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
   Files.writeString(targetDirectory.resolve("build.txt"), context.fullBuildNumber)
+}
+
+internal fun generateLanguagePluginsXml(context: BuildContext, targetDirectory: Path) {
+  val root = Element("plugins")
+  root.addContent(createPluginNode(context, "com.intellij.ja", "ja", "7 MB"))
+  root.addContent(createPluginNode(context, "com.intellij.ko", "ko", "7 MB"))
+  root.addContent(createPluginNode(context, "com.intellij.zh", "zh-CN", "6 MB"))
+
+  val document = Document()
+  document.rootElement = root
+  JDOMUtil.writeDocument(document, targetDirectory.resolve("language-plugins.xml"))
+}
+
+private fun createPluginNode(context: BuildContext, id: String, language: String, size: String): Element {
+  val element = Element("plugin")
+  element.setAttribute("id", id)
+  element.setAttribute("language", language)
+  element.setAttribute("size", size)
+  element.addContent(CDATA("https://plugins.jetbrains.com/pluginManager?id=$id&build=${context.fullBuildNumber}"))
+
+  return element
 }
 
 internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {

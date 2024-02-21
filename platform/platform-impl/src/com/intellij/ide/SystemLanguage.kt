@@ -142,7 +142,7 @@ class SystemLanguage private constructor() {
     }
   }
 
-  private fun getSavedLanguageFile(): Path = Path.of(PathManager.getBinPath(), SAVED_LANGUAGE_FILE)
+  private fun getSavedLanguageFile(): Path = Path.of(PathManager.getConfigPath(), SAVED_LANGUAGE_FILE)
 
   private fun saveLanguage(language: String?) {
     val path = getSavedLanguageFile()

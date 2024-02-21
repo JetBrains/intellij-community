@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,6 +52,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/libdbm.so"), distBinDir)
         generateBuildTxt(context, targetPath)
+        generateLanguagePluginsXml(context, distBinDir)
         copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
 
         //todo converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
