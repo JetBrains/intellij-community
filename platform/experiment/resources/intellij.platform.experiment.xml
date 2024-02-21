@@ -1,5 +1,24 @@
 <idea-plugin package="com.intellij.platform.experiment">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.experiment.abExperimentOption"
+                    interface="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <experiment.abExperimentOption implementation="com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption"/>
+
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentOptionIdValidationRule"/>
+
+    <registryKey description="Key for manual specifying A/B experiment option for test purposes."
+                 key="platform.experiment.ab.manual.option"
+                 defaultValue=""/>
+  </extensions>
+
   <actions>
-    <action class="com.intellij.platform.experiment.demo.DemoABExperimentAction" internal="true"/>
+    <action class="com.intellij.platform.experiment.ab.demo.ABExperimentDemoAction" internal="true"/>
   </actions>
 </idea-plugin>
