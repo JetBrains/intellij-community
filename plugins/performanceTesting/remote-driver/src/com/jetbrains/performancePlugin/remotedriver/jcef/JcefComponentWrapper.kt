@@ -82,6 +82,7 @@ internal class JcefComponentWrapper(private val component: Component) {
           }
           callback = Consumer<String> {
             continuation.resumeWith(Result.success(it))
+            callback = null
           }
           cefBrowser.executeJavaScript(jsResultQuery.inject(js), cefBrowser.url, 0)
         }
