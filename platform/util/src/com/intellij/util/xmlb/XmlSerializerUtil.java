@@ -3,6 +3,7 @@ package com.intellij.util.xmlb;
 
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,5 +41,11 @@ public final class XmlSerializerUtil {
   static @Nullable SerializationFilter getPropertyFilter(@NotNull Property property) {
     Class<? extends SerializationFilter> filter = property.filter();
     return filter == SerializationFilter.class ? null : ReflectionUtil.newInstance(filter);
+  }
+
+  @SuppressWarnings("rawtypes")
+  static Class<? extends Converter> getConverter(@NotNull OptionTag optionTag) {
+    Class<? extends Converter> converter = optionTag.converter();
+    return converter == Converter.class ? null : converter;
   }
 }

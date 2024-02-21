@@ -4,6 +4,8 @@
 
 package com.intellij.util.xmlb
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.PropertyCollector
 import com.intellij.util.ThreeState
@@ -21,12 +23,24 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Type
 import java.util.*
 
+@JvmField
+internal val LOG: Logger = logger<Binding>()
+
+abstract class Converter<T> {
+  abstract fun fromString(value: String): T?
+
+  abstract fun toString(value: T): String?
+}
+
 interface NestedBinding : Binding {
   val accessor: MutableAccessor
 }
 
 interface PrimitiveValueBinding : NestedBinding {
   fun setValue(bean: Any, value: String?)
+
+  val isPrimitive: Boolean
+    get() = true
 }
 
 private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
@@ -36,6 +50,7 @@ fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECT
 
 open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding {
   private val tagName: String
+
   @JvmField
   var bindings: Array<NestedBinding>? = null
 
@@ -50,7 +65,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
   }
 
   @Synchronized
-  override fun init(originalType: Type, serializer: Serializer) {
+  final override fun init(originalType: Type, serializer: Serializer) {
     assert(bindings == null)
     val accessors = PROPERTY_COLLECTOR.collect(beanClass)
     if (accessors.isEmpty()) {
@@ -67,7 +82,11 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     }
   }
 
-  override fun serialize(bean: Any, context: Any?, filter: SerializationFilter?): Any? {
+  override fun serialize(bean: Any, filter: SerializationFilter?): Any? {
+    return serializeInto(bean = bean, preCreatedElement = null, filter = filter)
+  }
+
+  final override fun serialize(bean: Any, context: Element?, filter: SerializationFilter?): Any? {
     return serializeInto(bean = bean, preCreatedElement = if (context == null) null else Element(tagName), filter = filter)
   }
 
@@ -134,7 +153,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
         element.setAttribute(node)
       }
       else {
-        BasePrimitiveBinding.addContent(element, node)
+        addContent(element, node)
       }
     }
     return element
@@ -142,27 +161,16 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
 
   override fun deserialize(context: Any?, element: Element): Any {
     val instance = newInstance()
-    deserializeInto(result = instance, element = element)
+    deserializeInto(bean = instance, element = element)
     return instance
   }
 
-  fun deserializeInto(result: Any, element: Element) {
-    deserializeBeanInto(
-      result = result,
-      element = element,
-      accessorNameTracker = null,
-      bindings = bindings!!,
-    )
+  fun deserializeInto(bean: Any, element: Element) {
+    deserializeBeanInto(result = bean, element = element, accessorNameTracker = null, bindings = bindings!!)
   }
 
-  fun deserializeInto(result: Any, element: XmlElement) {
-    deserializeBeanInto(
-      result = result,
-      element = element,
-      bindings = bindings!!,
-      start = 0,
-      end = bindings!!.size,
-    )
+  fun deserializeInto(bean: Any, element: XmlElement) {
+    deserializeBeanInto(result = bean, element = element, bindings = bindings!!, start = 0, end = bindings!!.size)
   }
 
   override fun deserialize(context: Any?, element: XmlElement): Any {
@@ -416,29 +424,36 @@ private class MyPropertyCollectorConfiguration : PropertyCollector.Configuration
 }
 
 private fun createBinding(accessor: MutableAccessor, serializer: Serializer, propertyStyle: Property.Style): NestedBinding {
-  val attribute = accessor.getAnnotation(com.intellij.util.xmlb.annotations.Attribute::class.java)
-  if (attribute != null) {
-    return AttributeBinding(accessor, attribute)
+  accessor.getAnnotation(com.intellij.util.xmlb.annotations.Attribute::class.java)?.let {
+    return AttributeBinding(accessor, it)
   }
 
-  val text = accessor.getAnnotation(com.intellij.util.xmlb.annotations.Text::class.java)
-  if (text != null) {
+  if (accessor.isAnnotationPresent(com.intellij.util.xmlb.annotations.Text::class.java)) {
     return TextBinding(accessor)
   }
 
-  val optionTag = accessor.getAnnotation(OptionTag::class.java)
-  if (optionTag != null && optionTag.converter != Converter::class.java) {
-    return OptionTagBinding(accessor, optionTag)
+  val binding = serializer.getBinding(accessor)
+
+  val optionTag: OptionTag? = accessor.getAnnotation(OptionTag::class.java)
+  if (optionTag != null && XmlSerializerUtil.getConverter(optionTag) != null) {
+    return createOptionTagBindingByAnnotation(optionTag = optionTag, accessor = accessor, binding = binding)
   }
 
-  val binding = serializer.getBinding(accessor)
   if (binding is JDOMElementBinding) {
     return binding
   }
 
-  val tag = accessor.getAnnotation(Tag::class.java)
-  if (tag != null) {
-    return TagBinding(accessor, tag)
+  accessor.getAnnotation(Tag::class.java)?.let { tagAnnotation ->
+    return OptionTagBinding(
+      binding = binding,
+      accessor = accessor,
+      nameAttributeValue = null,
+      converterClass = null,
+      tag = tagAnnotation.value.ifEmpty { accessor.getName() },
+      nameAttribute = null,
+      valueAttribute = null,
+      textIfTagValueEmpty = tagAnnotation.textIfEmpty,
+    )
   }
 
   if (binding is CompactCollectionBinding) {
@@ -465,19 +480,67 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
 
   val xCollection = accessor.getAnnotation(XCollection::class.java)
   if (xCollection != null && (!xCollection.propertyElementName.isEmpty() || xCollection.style == XCollection.Style.v2)) {
-    return TagBinding(accessor, xCollection.propertyElementName)
+    return OptionTagBinding(
+      binding = binding,
+      accessor = accessor,
+      nameAttributeValue = null,
+      converterClass = null,
+      tag = xCollection.propertyElementName.ifEmpty { accessor.name },
+      nameAttribute = null,
+      valueAttribute = null,
+      textIfTagValueEmpty = "",
+    )
   }
 
   if (optionTag == null) {
-    accessor.getAnnotation(XMap::class.java)?.let {
-      return TagBinding(accessor, it.propertyElementName)
+    accessor.getAnnotation(XMap::class.java)?.let { xMapAnnotation ->
+      return OptionTagBinding(
+        binding = binding,
+        accessor = accessor,
+        nameAttributeValue = null,
+        converterClass = null,
+        tag = xMapAnnotation.propertyElementName.ifEmpty { accessor.name },
+        nameAttribute = null,
+        valueAttribute = null,
+      )
     }
   }
 
   if (propertyStyle == Property.Style.ATTRIBUTE) {
     return AttributeBinding(accessor, null)
   }
-  return OptionTagBinding(accessor, optionTag)
+
+  if (optionTag == null) {
+    return OptionTagBinding(
+      binding = binding,
+      accessor = accessor,
+      nameAttributeValue = accessor.name,
+      converterClass = null,
+      tag = Constants.OPTION,
+      nameAttribute = Constants.NAME,
+      valueAttribute = if (binding == null) Constants.VALUE else null,
+    )
+  }
+  else {
+    return createOptionTagBindingByAnnotation(optionTag = optionTag, accessor = accessor, binding = binding)
+  }
+}
+
+private fun createOptionTagBindingByAnnotation(optionTag: OptionTag, accessor: MutableAccessor, binding: Binding?): OptionTagBinding {
+  val customTag = optionTag.tag
+  val nameAttribute = optionTag.nameAttribute.takeIf { it.isNotEmpty() }
+  val converter = XmlSerializerUtil.getConverter(optionTag)
+  val isSerializedAsPrimitive = binding == null || converter != null
+  return OptionTagBinding(
+    binding = binding,
+    accessor = accessor,
+    nameAttributeValue = if (nameAttribute == null) null else optionTag.value.ifEmpty { accessor.name },
+    converterClass = converter,
+    tag = if (nameAttribute == null && customTag == Constants.OPTION) accessor.name else customTag,
+    nameAttribute = nameAttribute,
+    valueAttribute = if (isSerializedAsPrimitive) optionTag.valueAttribute.takeIf { it.isNotEmpty() } else null,
+    serializeBeanBindingWithoutWrapperTag = binding is BeanBinding && optionTag.valueAttribute.isEmpty()
+  )
 }
 
 private class XmlSerializerPropertyCollector(configuration: Configuration) : PropertyCollector(configuration) {

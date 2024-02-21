@@ -12,8 +12,8 @@ import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 final class CollectionBinding extends AbstractCollectionBinding  {
-  CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
-    super(ClassUtil.typeToClass(type.getActualTypeArguments()[0]), accessor);
+  CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor, @NotNull Serializer serializer) {
+    super(ClassUtil.typeToClass(type.getActualTypeArguments()[0]), accessor, serializer);
   }
 
   @SuppressWarnings("DuplicatedCode")

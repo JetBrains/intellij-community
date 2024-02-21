@@ -1,33 +1,49 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.util.xmlb
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.xml.dom.XmlElement
-import com.intellij.util.xmlb.annotations.OptionTag
+import org.jdom.Content
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
+import org.jdom.Namespace
+import org.jdom.Text
+import java.util.*
 
-@ApiStatus.Internal
-class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag: OptionTag?)
-  : BasePrimitiveBinding(accessor, optionTag?.value, optionTag?.converter?.java) {
-  private val tag: String
-  private val nameAttribute: String?
-  private val valueAttribute: String?
+internal class OptionTagBinding internal constructor(
+  @JvmField internal val binding: Binding?,
+  override val accessor: MutableAccessor,
+  private val nameAttributeValue: String?,
+  converterClass: Class<out Converter<*>>?,
+  private val tag: String,
+  private val nameAttribute: String?,
+  private val valueAttribute: String?,
+  private val serializeBeanBindingWithoutWrapperTag: Boolean = false,
+  private val textIfTagValueEmpty: String = "",
+) : PrimitiveValueBinding {
+  private val converter: Converter<Any>? = converterClass?.let {
+    val constructor = it.getDeclaredConstructor()
+    try {
+      constructor.setAccessible(true)
+    }
+    catch (ignored: SecurityException) {
+    }
+    @Suppress("UNCHECKED_CAST")
+    constructor.newInstance() as Converter<Any>
+  }
 
-  init {
-    if (optionTag == null) {
-      tag = Constants.OPTION
-      nameAttribute = Constants.NAME
-      valueAttribute = Constants.VALUE
-    }
-    else {
-      nameAttribute = optionTag.nameAttribute.takeIf { it.isNotEmpty() }
-      valueAttribute = optionTag.valueAttribute.takeIf { it.isNotEmpty() }
-      val customTag = optionTag.tag
-      tag = if (nameAttribute == null && customTag == Constants.OPTION) accessor.name else customTag
-    }
+  override val isPrimitive: Boolean
+    get() = binding == null || converter != null
+
+  override fun deserializeUnsafe(context: Any?, element: Element): Any {
+    return deserialize(host = context!!, element = element, domAdapter = JdomAdapter)
+  }
+
+  override fun deserializeUnsafe(context: Any?, element: XmlElement): Any {
+    return deserialize(host = context!!, element = element, domAdapter = XmlDomAdapter)
   }
 
   override fun setValue(bean: Any, value: String?) {
@@ -36,7 +52,7 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
         XmlSerializerImpl.doSet(bean, value, accessor, ClassUtil.typeToClass(accessor.genericType))
       }
       catch (e: Exception) {
-        throw RuntimeException("Cannot set value for field $name", e)
+        throw RuntimeException("Cannot set value for field ${accessor.name}", e)
       }
     }
     else {
@@ -44,131 +60,207 @@ class OptionTagBinding internal constructor(accessor: MutableAccessor, optionTag
     }
   }
 
-  override fun serialize(o: Any, filter: SerializationFilter?): Any {
-    val value = accessor.read(o)
-    val targetElement = Element(tag)
+  override fun serialize(bean: Any, filter: SerializationFilter?): Any {
+    val value = accessor.read(bean)
+    val targetElement = Element(true, tag, Namespace.NO_NAMESPACE)
     if (nameAttribute != null) {
-      targetElement.setAttribute(nameAttribute, name)
+      targetElement.setAttribute(nameAttribute, nameAttributeValue)
     }
 
     if (value == null) {
       return targetElement
     }
 
-    val converter = getConverter()
-    if (converter == null) {
-      val binding = binding
-      if (binding == null) {
-        targetElement.setAttribute(valueAttribute!!, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)))
-      }
-      else if (binding is BeanBinding && valueAttribute == null) {
-        binding.serializeInto(bean = value, preCreatedElement = targetElement, filter = filter)
+    if (valueAttribute == null) {
+      if (converter == null) {
+        if (binding == null) {
+          targetElement.addContent(Text(XmlSerializerImpl.convertToString(value)))
+        }
+        else if (serializeBeanBindingWithoutWrapperTag) {
+          (binding as BeanBinding).serializeInto(bean = value, preCreatedElement = targetElement, filter = filter)
+        }
+        else {
+          val node = binding.serialize(bean = value, context = targetElement, filter = filter)
+          if (node != null && targetElement !== node) {
+            addContent(targetElement, node)
+          }
+        }
       }
       else {
-        val node = binding.serialize(value, targetElement, filter)
-        if (node != null && targetElement !== node) {
-          addContent(targetElement, node)
+        converter.toString(value)?.let {
+          targetElement.addContent(Text(it))
         }
       }
     }
     else {
-      val text = converter.toString(value)
-      if (text != null) {
-        targetElement.setAttribute(valueAttribute, JDOMUtil.removeControlChars(text))
+      if (converter == null) {
+        if (binding == null) {
+          targetElement.setAttribute(valueAttribute, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)))
+        }
+        else {
+          val node = binding.serialize(value, targetElement, filter)
+          if (node != null && targetElement !== node) {
+            addContent(targetElement, node)
+          }
+        }
+      }
+      else {
+        converter.toString(value)?.let {
+          targetElement.setAttribute(valueAttribute, JDOMUtil.removeControlChars(it))
+        }
       }
     }
+
     return targetElement
   }
 
-  override fun deserialize(context: Any, element: Element): Any {
-    val value = valueAttribute?.let { element.getAttributeValue(it) }
-    if (value == null) {
-      if (valueAttribute == null) {
-        accessor.set(context, binding!!.deserializeUnsafe(context, element))
-      }
-      else {
-        val children = element.children
-        if (children.isEmpty()) {
-          if (binding is CollectionBinding || binding is MapBinding) {
-            val oldValue = accessor.read(context)
-            // do nothing if the field is already null
-            if (oldValue != null) {
-              val newValue = (binding as MultiNodeBinding).deserializeJdomList(oldValue, children)
-              if (oldValue !== newValue) {
-                accessor.set(context, newValue)
-              }
-            }
+  private fun <T : Any> deserialize(host: Any, element: T, domAdapter: DomAdapter<T>): Any {
+    if (valueAttribute == null) {
+      if (converter == null && binding != null) {
+        if (binding is BeanBinding) {
+          // yes, we must set `null` as well
+          val value = (if (serializeBeanBindingWithoutWrapperTag) element else domAdapter.firstElement(element))?.let {
+            binding.deserialize(context = null, element = it as Element)
           }
-          else {
-            accessor.set(context, null)
+          accessor.set(host, value)
+        }
+        else if (domAdapter.hasElementContent(element)) {
+          val oldValue = accessor.read(host)
+          val newValue = domAdapter.deserializeList(binding = binding, oldValue = oldValue, element = element)
+          if (oldValue !== newValue) {
+            accessor.set(host, newValue)
+          }
+        }
+        else if (binding is CollectionBinding || binding is MapBinding) {
+          val oldValue = accessor.read(host)
+          // do nothing if the field is already null
+          if (oldValue != null) {
+            val newValue = domAdapter.deserializeEmptyList(oldValue, element, binding as MultiNodeBinding)
+            if (oldValue !== newValue) {
+              accessor.set(host, newValue)
+            }
           }
         }
         else {
-          val oldValue = accessor.read(context)
-          val newValue = deserializeJdomList(binding = binding!!, context = oldValue, nodes = children)
-          if (oldValue !== newValue) {
-            accessor.set(context, newValue)
-          }
+          accessor.set(host, null)
         }
-      }
-    }
-    else {
-      setValue(bean = context, value = value)
-    }
-    return context
-  }
-
-  override fun deserialize(context: Any, element: XmlElement): Any {
-    val value = valueAttribute?.let { element.getAttributeValue(it) }
-    if (value == null) {
-      if (valueAttribute == null) {
-        accessor.set(context, binding!!.deserializeUnsafe(context, element))
       }
       else {
-        val children = element.children
-        if (children.isEmpty()) {
-          if (binding is CollectionBinding || binding is MapBinding) {
-            val oldValue = accessor.read(context)
-            // do nothing if the field is already null
-            if (oldValue != null) {
-              val newValue = (binding as MultiNodeBinding).deserializeList(oldValue, children)
-              if (oldValue !== newValue) {
-                accessor.set(context, newValue)
-              }
-            }
-          }
-          else {
-            accessor.set(context, null)
-          }
-        }
-        else {
-          val oldValue = accessor.read(context)
-          val newValue = deserializeList(binding = binding!!, context = oldValue, nodes = children)
-          if (oldValue !== newValue) {
-            accessor.set(context, newValue)
-          }
-        }
+        setValue(bean = host, value = domAdapter.getTextValue(element = element, defaultText = textIfTagValueEmpty))
       }
     }
     else {
-      setValue(bean = context, value = value)
+      val value = domAdapter.getAttributeValue(valueAttribute, element)
+      if (converter == null) {
+        if (binding == null) {
+          XmlSerializerImpl.doSet(host, value, accessor, ClassUtil.typeToClass(accessor.genericType))
+        }
+        else {
+          accessor.set(host, domAdapter.deserializeUnsafe(host, element, binding))
+        }
+      }
+      else {
+        accessor.set(host, value?.let { converter.fromString(it) })
+      }
     }
-    return context
+    return host
   }
 
   override fun isBoundTo(element: Element): Boolean {
-    if (element.name != tag) {
-      return false
-    }
-    return nameAttribute == null || element.getAttributeValue(nameAttribute) == this.name
+    return element.name == tag && (nameAttribute == null || element.getAttributeValue(nameAttribute) == nameAttributeValue)
   }
 
   override fun isBoundTo(element: XmlElement): Boolean {
-    if (element.name != tag) {
-      return false
-    }
-    return nameAttribute == null || element.getAttributeValue(nameAttribute) == this.name
+    return element.name == tag && (nameAttribute == null || element.getAttributeValue(nameAttribute) == nameAttributeValue)
   }
 
-  override fun toString(): String = "OptionTagBinding(name=$name, binding=$binding)"
+  override fun toString(): String = "OptionTagBinding(nameAttributeValue=$nameAttributeValue, tag=$tag, binding=$binding)"
+}
+
+private sealed interface DomAdapter<T : Any> {
+  fun getTextValue(element: T, defaultText: String): String
+
+  fun firstElement(element: T): T?
+
+  fun hasElementContent(element: T): Boolean
+
+  fun deserializeEmptyList(oldValue: Any?, element: T, binding: MultiNodeBinding): Any?
+
+  fun deserializeList(oldValue: Any?, element: T, binding: Binding): Any?
+
+  fun getAttributeValue(name: String, element: T): String?
+
+  fun deserializeUnsafe(host: Any, element: T, binding: Binding): Any?
+}
+
+private data object JdomAdapter : DomAdapter<Element> {
+  override fun getTextValue(element: Element, defaultText: String): String {
+    return XmlSerializerImpl.getTextValue(/* element = */ element, /* defaultText = */ defaultText)
+  }
+
+  override fun firstElement(element: Element) = element.content.firstOrNull() as Element?
+
+  override fun hasElementContent(element: Element) = element.content.any { it is Element }
+
+  override fun deserializeEmptyList(oldValue: Any?, element: Element, binding: MultiNodeBinding): Any? {
+    return binding.deserializeJdomList(oldValue, Collections.emptyList())
+  }
+
+  override fun deserializeList(oldValue: Any?, element: Element, binding: Binding): Any? {
+    return deserializeJdomList(binding = binding, context = oldValue, nodes = element.children)
+  }
+
+  override fun getAttributeValue(name: String, element: Element): String? = element.getAttributeValue(name)
+
+  override fun deserializeUnsafe(host: Any, element: Element, binding: Binding): Any? = binding.deserializeUnsafe(host, element)
+}
+
+private data object XmlDomAdapter : DomAdapter<XmlElement> {
+  override fun getTextValue(element: XmlElement, defaultText: String) = element.content ?: defaultText
+
+  override fun firstElement(element: XmlElement) = element.children.firstOrNull()
+
+  override fun hasElementContent(element: XmlElement) = element.children.isNotEmpty()
+
+  override fun deserializeEmptyList(oldValue: Any?, element: XmlElement, binding: MultiNodeBinding): Any? {
+    return binding.deserializeList(oldValue, Collections.emptyList())
+  }
+
+  override fun deserializeList(oldValue: Any?, element: XmlElement, binding: Binding): Any? {
+    return deserializeList(binding = binding, context = oldValue, nodes = element.children)
+  }
+
+  override fun getAttributeValue(name: String, element: XmlElement): String? = element.getAttributeValue(name)
+
+  override fun deserializeUnsafe(host: Any, element: XmlElement, binding: Binding): Any? = binding.deserializeUnsafe(host, element)
+}
+
+internal fun addContent(targetElement: Element, node: Any) {
+  when (node) {
+    is Content -> targetElement.addContent(node)
+    is List<*> -> {
+      @Suppress("UNCHECKED_CAST")
+      targetElement.addContent(node as Collection<Content>)
+    }
+    else -> throw IllegalArgumentException("Wrong node: $node")
+  }
+}
+
+
+internal fun deserializeJdomList(binding: Binding, context: Any?, nodes: List<Element>): Any? {
+  return when {
+    binding is MultiNodeBinding -> binding.deserializeJdomList(context = context, elements = nodes)
+    nodes.size == 1 -> binding.deserializeUnsafe(context, nodes.get(0))
+    nodes.isEmpty() -> null
+    else -> throw AssertionError("Duplicate data for $binding will be ignored")
+  }
+}
+
+internal fun deserializeList(binding: Binding, context: Any?, nodes: List<XmlElement>): Any? {
+  return when {
+    binding is MultiNodeBinding -> binding.deserializeList(context = context, elements = nodes)
+    nodes.size == 1 -> binding.deserializeUnsafe(context, nodes.get(0))
+    nodes.isEmpty() -> null
+    else -> throw AssertionError("Duplicate data for $binding will be ignored")
+  }
 }

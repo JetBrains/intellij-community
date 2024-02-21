@@ -29,7 +29,7 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public Object serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
     Object value = accessor.read(bean);
     if (value == null) {
       return null;

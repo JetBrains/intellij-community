@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PackageDirectoryMismatch", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.configurationStore
 
@@ -46,22 +46,22 @@ private fun doGetDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
 private class JdomSerializerImpl : JdomSerializer {
   override fun getDefaultSerializationFilter() = doGetDefaultSerializationFilter()
 
-  override fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean): Element? {
+  override fun <T : Any> serialize(bean: T, filter: SerializationFilter?, createElementIfEmpty: Boolean): Element? {
     try {
-      val binding = serializer.getRootBinding(obj.javaClass)
+      val binding = serializer.getRootBinding(bean.javaClass)
       if (binding is BeanBinding) {
         // top level expects not null (null indicates error, an empty element will be omitted)
-        return binding.serialize(obj, createElementIfEmpty, filter)
+        return binding.serialize(bean = bean, createElementIfEmpty = createElementIfEmpty, filter = filter)
       }
       else {
-        return binding.serialize(obj, null, filter) as Element
+        return binding.serialize(bean = bean, filter = filter) as Element
       }
     }
     catch (e: SerializationException) {
       throw e
     }
     catch (e: Exception) {
-      throw XmlSerializationException("Can't serialize instance of ${obj.javaClass}", e)
+      throw XmlSerializationException("Can't serialize instance of ${bean.javaClass}", e)
     }
   }
 
@@ -190,9 +190,10 @@ private abstract class OldBindingProducer<ROOT_BINDING> {
 }
 
 private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
+  @JvmField
   val bindingProducer = object : OldBindingProducer<Binding>() {
     override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
-      var binding = createClassBinding(aClass, null, type)
+      var binding = createClassBinding(/* aClass = */ aClass, /* accessor = */ null, /* originalType = */ type, this@MyXmlSerializer)
       if (binding == null) {
         if (aClass.isAnnotationPresent(Serializable::class.java)) {
           binding = KotlinxSerializationBinding(aClass)

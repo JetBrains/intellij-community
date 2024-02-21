@@ -81,7 +81,7 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
         }
         else {
           // maybe ArrayBinding
-          return binding.serialize(bean = state, context = null, filter = filter) as Element
+          return binding.serialize(bean = state, filter = filter) as Element
         }
       }
       catch (e: SerializationException) {

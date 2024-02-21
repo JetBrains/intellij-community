@@ -32,23 +32,27 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public @Nullable Object serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    return serialize(bean, null, filter);
+  }
+
+  @Override
+  public @Nullable Object serialize(@NotNull Object bean, @Nullable Element context, @Nullable SerializationFilter filter) {
     Object value = accessor.read(bean);
     if (value == null) {
       return null;
     }
     else if (isFlat) {
-      Element element = (Element)context;
       if (beanStyle == Property.Style.ATTRIBUTE && value instanceof Rectangle) {
         Rectangle bounds = (Rectangle)value;
-        assert element != null;
-        element.setAttribute("x", Integer.toString(bounds.x));
-        element.setAttribute("y", Integer.toString(bounds.y));
-        element.setAttribute("width", Integer.toString(bounds.width));
-        element.setAttribute("height", Integer.toString(bounds.height));
+        assert context != null;
+        context.setAttribute("x", Integer.toString(bounds.x));
+        context.setAttribute("y", Integer.toString(bounds.y));
+        context.setAttribute("width", Integer.toString(bounds.width));
+        context.setAttribute("height", Integer.toString(bounds.height));
       }
       else {
-        ((BeanBinding)binding).serializeInto(value, element, filter);
+        ((BeanBinding)binding).serializeInto(value, context, filter);
       }
       return null;
     }
@@ -138,7 +142,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = BindingKt.deserializeJdomList(binding, currentValue, elements);
+      Object deserializedValue = OptionTagBindingKt.deserializeJdomList(binding, currentValue, elements);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }
@@ -153,7 +157,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = BindingKt.deserializeList(binding, currentValue, elements);
+      Object deserializedValue = OptionTagBindingKt.deserializeList(binding, currentValue, elements);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }

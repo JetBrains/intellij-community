@@ -21,11 +21,11 @@ val jdomSerializer: JdomSerializer = run {
 
 @JvmOverloads
 fun <T : Any> serialize(
-  obj: T,
+  bean: T,
   filter: SerializationFilter? = jdomSerializer.getDefaultSerializationFilter(),
   createElementIfEmpty: Boolean = false,
 ): Element? {
-  return jdomSerializer.serialize(obj = obj, filter = filter, createElementIfEmpty = createElementIfEmpty)
+  return jdomSerializer.serialize(bean = bean, filter = filter, createElementIfEmpty = createElementIfEmpty)
 }
 
 inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.deserialize(element, T::class.java)
@@ -60,7 +60,7 @@ fun serializeStateInto(component: PersistentStateComponent<*>, element: Element)
 
 @ApiStatus.Internal
 interface JdomSerializer {
-  fun <T : Any> serialize(obj: T, filter: SerializationFilter?, createElementIfEmpty: Boolean = false): Element?
+  fun <T : Any> serialize(bean: T, filter: SerializationFilter?, createElementIfEmpty: Boolean = false): Element?
 
   fun serializeObjectInto(obj: Any, target: Element, filter: SerializationFilter? = null)
 

@@ -156,10 +156,13 @@ public final class PropertyAccessor implements MutableAccessor {
   @Override
   public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
     T annotation = readMethod.getAnnotation(annotationClass);
-    if (annotation == null && writeMethod != null) {
-      annotation = writeMethod.getAnnotation(annotationClass);
-    }
-    return annotation;
+    return annotation != null || writeMethod == null ? annotation : writeMethod.getAnnotation(annotationClass);
+  }
+
+  @Override
+  public <T extends Annotation> boolean isAnnotationPresent(@NotNull Class<T> annotationClass) {
+    boolean isPresent = readMethod.isAnnotationPresent(annotationClass);
+    return isPresent || writeMethod == null ? isPresent : writeMethod.isAnnotationPresent(annotationClass);
   }
 
   @Override

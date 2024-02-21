@@ -105,8 +105,13 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Element serialized = isSurroundWithTag() ? new Element(MAP) : (Element)context;
+  public @Nullable Object serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    return serialize(bean, null, filter);
+  }
+
+  @Override
+  public @Nullable Object serialize(@NotNull Object bean, @Nullable Element context, @Nullable SerializationFilter filter) {
+    Element serialized = isSurroundWithTag() ? new Element(MAP) : context;
     assert serialized != null;
 
     @SuppressWarnings("rawtypes")
@@ -343,7 +348,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       }
       else {
         assert binding != null;
-        return BindingKt.deserializeJdomList(binding, null, children);
+        return OptionTagBindingKt.deserializeJdomList(binding, null, children);
       }
     }
     return null;
@@ -374,7 +379,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       }
       else {
         assert binding != null;
-        return BindingKt.deserializeList(binding, null, children);
+        return OptionTagBindingKt.deserializeList(binding, null, children);
       }
     }
     return null;
