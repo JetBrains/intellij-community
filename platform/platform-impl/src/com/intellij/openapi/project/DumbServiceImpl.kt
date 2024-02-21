@@ -536,19 +536,29 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   override fun completeJustSubmittedTasks() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     LOG.assertTrue(myProject.isInitialized, "Project should have been initialized")
-    while (myState.value.isDumb && !myTaskQueue.isEmpty) {
-      val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
-      if (!queueProcessedUnderModalProgress) {
-        // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
-        break
+
+    // there is no race: myTaskQueue is only updated from EDT
+    if (myTaskQueue.isEmpty) {
+      return
+    }
+
+    incrementDumbCounter(Throwable())
+    try {
+      while (!myTaskQueue.isEmpty) {
+        val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
+        if (!queueProcessedUnderModalProgress) {
+          if (application.isUnitTestMode) {
+            LOG.assertTrue(myTaskQueue.isEmpty, "This behavior is valid, but most likely not expected in tests: " +
+                                                "completeJustSubmittedTasks does nothing because the queue is already " +
+                                                "being processed in the background thread.")
+          }
+          // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
+          break
+        }
       }
     }
-    if (myState.value.isSmart) { // we can reach this statement in dumb mode if queue is processed in background
-      // DumbServiceSyncTaskQueue does not respect threading policies: it can add tasks outside of EDT
-      // and process them without switching to dumb mode. This behavior has to be fixed, but for now just ignore
-      // it, because it has been working like this for years already.
-      // Reproducing in test: com.jetbrains.cidr.lang.refactoring.OCRenameMoveFileTest
-      LOG.assertTrue(useSynchronousTaskQueue || myTaskQueue.isEmpty, "Task queue is not empty. Current state is " + myState.value)
+    finally {
+      decrementDumbCounter()
     }
   }
 
