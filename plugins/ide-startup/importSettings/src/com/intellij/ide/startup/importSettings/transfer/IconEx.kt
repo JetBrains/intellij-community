@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.ide.startup.importSettings.StartupImportIcons
@@ -13,6 +13,12 @@ internal fun TransferableIdeId.icon(size: IconProductSize): Icon? =
       IconProductSize.SMALL -> StartupImportIcons.Vscode.VSCode_20
       IconProductSize.MIDDLE -> StartupImportIcons.Vscode.VSCode_24
       IconProductSize.LARGE -> StartupImportIcons.Vscode.VSCode_48
+    }
+    TransferableIdeId.VisualStudio -> when (size) {
+      IconProductSize.SMALL -> StartupImportIcons.VisualStudio.VisualStudio_20
+      IconProductSize.MIDDLE -> StartupImportIcons.VisualStudio.VisualStudio_24
+      // TODO: IconProductSize.LARGE -> StartupImportIcons.VisualStudio.VisualStudio_48
+      IconProductSize.LARGE -> StartupImportIcons.VisualStudio.VisualStudio_24
     }
     else -> {
       logger<TransferableIdeId>().error("Cannot find icon for transferable IDE $this.")

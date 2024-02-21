@@ -3,7 +3,7 @@ package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
-import com.intellij.ide.startup.importSettings.data.BaseService
+import com.intellij.ide.startup.importSettings.data.ExternalProductService
 import com.intellij.ide.startup.importSettings.data.ExternalService
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
@@ -70,13 +70,14 @@ class SettingTransferService(private val outerScope: CoroutineScope) : ExternalS
     loadIdeVersionsAsync(scope)
   }
 
-  override val productServices: List<BaseService> by lazy {
+  override val productServices: List<ExternalProductService> by lazy {
     config.dataProvider.providers.map { provider ->
+      val id = provider.transferableIdeId
       val ideVersions = outerScope.async {
         val versions = loadIdeVersionsAsync(outerScope).await()
-        versions.filterValues { it.product.transferableId == provider.transferableIdeId }
+        versions.filterValues { it.product.transferableId == id }
       }
-      SettingTransferProductService(ideVersions, config.controller)
+      SettingTransferProductService(id, ideVersions, config.controller)
     }
   }
 

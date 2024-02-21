@@ -255,14 +255,17 @@ class TestExternalService : ExternalService {
 
   override fun warmUp(scope: CoroutineScope) {}
 
-  override val productServices: List<BaseService> = listOf(TestExternalProductService())
+  override val productServices: List<ExternalProductService> = listOf(TestExternalProductService())
 }
 
-class TestExternalProductService : BaseService {
+class TestExternalProductService : ExternalProductService {
 
   companion object {
     private val LOG = logger<TestExternalService>()
   }
+
+  override val productTitle: String
+    get() = ""
 
   override fun products(): List<Product> {
     return listOf(TestJbService.main2)

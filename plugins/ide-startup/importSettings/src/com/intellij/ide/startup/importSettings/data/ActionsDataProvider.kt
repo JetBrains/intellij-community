@@ -206,7 +206,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
 
 }
 
-class ExtActionsDataProvider(override val productService: BaseService) : ActionsDataProvider<BaseService> {
+class ExtActionsDataProvider(override val productService: ExternalProductService) : ActionsDataProvider<BaseService> {
 
   override fun getProductIcon(productId: String, size: IconProductSize): Icon? {
     return productService.getProductIcon(productId, size)
@@ -221,7 +221,7 @@ class ExtActionsDataProvider(override val productService: BaseService) : Actions
   }
 
   override val title: String
-    get() = ""
+    get() = productService.productTitle
   override val main: List<Product>
     get() = productService.products()
   override val other: List<Product>?

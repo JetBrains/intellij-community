@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -191,9 +192,13 @@ interface SyncService : JbService {
 }
 
 interface ExternalService {
-  val productServices: List<BaseService>
+  val productServices: List<ExternalProductService>
   suspend fun hasDataToImport(): Boolean
   fun warmUp(scope: CoroutineScope)
+}
+
+interface ExternalProductService : BaseService {
+  val productTitle: @NlsSafe String
 }
 
 interface JbService : BaseService {

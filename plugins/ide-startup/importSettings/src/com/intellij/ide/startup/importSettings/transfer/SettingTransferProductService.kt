@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsController
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsListener
 import com.intellij.ide.startup.importSettings.data.*
@@ -28,9 +29,10 @@ import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 
 class SettingTransferProductService(
+  private val ideId: TransferableIdeId,
   private val ideVersions: Deferred<Map<String, ThirdPartyProductInfo>>,
   private val importController: TransferSettingsController
-) : BaseService {
+) : ExternalProductService {
 
   companion object {
     private val logger = logger<SettingTransferProductService>()
@@ -55,6 +57,14 @@ class SettingTransferProductService(
       }
     }
   }
+
+  override val productTitle: String
+    get() = when (ideId) {
+      TransferableIdeId.DummyIde -> ""
+      TransferableIdeId.VSCode -> ""
+      TransferableIdeId.VisualStudio -> "Visual Studio"
+      TransferableIdeId.VisualStudioForMac -> "Visual Studio for Mac"
+    }
 
   override fun products(): List<Product> {
     return logger.runAndLogException {

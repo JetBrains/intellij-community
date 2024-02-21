@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings;
 
 import com.intellij.ui.IconManager;
@@ -98,6 +98,11 @@ public final class StartupImportIcons {
     /** 154x29 */ public static final @NotNull Icon RM = load("ideNames/RM.svg", 1949968562, 2);
     /** 154x24 */ public static final @NotNull Icon RR = load("ideNames/RR.svg", -251128189, 2);
     /** 163x24 */ public static final @NotNull Icon WS = load("ideNames/WS.svg", 1353680367, 2);
+  }
+
+  public static final class VisualStudio {
+    /** 20x20 */ public static final @NotNull Icon VisualStudio_20 = load("visualStudio/VisualStudio_20.svg", -1754955621, 0);
+    /** 24x24 */ public static final @NotNull Icon VisualStudio_24 = load("visualStudio/VisualStudio_24.svg", 417451421, 0);
   }
 
   public static final class Vscode {
