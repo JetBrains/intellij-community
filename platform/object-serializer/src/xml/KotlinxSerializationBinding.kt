@@ -38,7 +38,7 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding 
     serializer = lookup.findVirtual(companion.javaClass, "serializer", kotlinMethodType).invoke(companion) as KSerializer<Any>
   }
 
-  override fun serialize(bean: Any, context: Any?, filter: SerializationFilter?): Element {
+  override fun serialize(bean: Any, filter: SerializationFilter?): Element {
     val element = Element("state")
     val json = encodeToJson(bean)
     if (!json.isEmpty() && json != "{\n}") {

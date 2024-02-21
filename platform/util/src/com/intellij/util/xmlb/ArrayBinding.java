@@ -14,8 +14,8 @@ import java.util.Collections;
 import java.util.List;
 
 final class ArrayBinding extends AbstractCollectionBinding  {
-  ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor) {
-    super(valueClass.getComponentType(), accessor);
+  ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor, @NotNull Serializer serializer) {
+    super(valueClass.getComponentType(), accessor, serializer);
   }
 
   @Override

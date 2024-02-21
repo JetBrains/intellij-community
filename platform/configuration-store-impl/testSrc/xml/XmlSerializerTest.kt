@@ -3,6 +3,7 @@ package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.clearBindingCache
 import com.intellij.configurationStore.deserialize
+import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -652,6 +653,26 @@ internal class XmlSerializerTest {
   }
 
   @Test
+  fun `option tag for bean and empty value attribute to serialize into`() {
+    @Tag("subBean")
+    data class SubBean(@Tag val description: String? = null)
+
+    @Tag("bean")
+    class Bean(
+      @OptionTag(value = "selected-file", nameAttribute = "id", tag = "todo-panel", valueAttribute = "")
+      val sub: SubBean? = null,
+    )
+
+    testSerializer("""
+      <bean>
+        <todo-panel id="selected-file">
+          <description>hello</description>
+        </todo-panel>
+      </bean>
+    """.trimIndent(), Bean(sub = SubBean(description = "hello")))
+  }
+
+  @Test
   fun nullCollection() {
     @Suppress("unused")
     class BeanWithCollection {
@@ -664,18 +685,18 @@ internal class XmlSerializerTest {
 }
 
 internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter? = null, description: String = "Serialization failure"): Element {
-  val element = serialize(bean, filter, createElementIfEmpty = true)!!
+  val element = jdomSerializer.serialize(bean = bean, filter = filter, createElementIfEmpty = true)!!
   com.intellij.testFramework.assertions.Assertions.assertThat(element).`as`(description).isEqualTo(expected)
   return element
 }
 
-fun <T: Any> testSerializer(@Language("XML") expectedText: String, bean: T, filter: SerializationFilter? = null): T {
+fun <T : Any> testSerializer(@Language("XML") expectedText: String, bean: T, filter: SerializationFilter? = null): T {
   val expectedTrimmed = expectedText.trimIndent()
-  val element = assertSerializer(bean, expectedTrimmed, filter)
+  val element = assertSerializer(bean = bean, expected = expectedTrimmed, filter = filter)
 
   // test deserializer
-  val o = element.deserialize(bean.javaClass)
-  assertSerializer(o, expectedTrimmed, filter, "Deserialization failure")
+  val o = jdomSerializer.deserialize(element, bean.javaClass)
+  assertSerializer(bean = o, expected = expectedTrimmed, filter = filter, description = "Deserialization failure")
   return o
 }
 

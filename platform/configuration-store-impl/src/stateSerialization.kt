@@ -7,7 +7,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.platform.settings.*
-import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.SerializationException
 import com.intellij.util.xmlb.*
 import org.jdom.Element
@@ -69,7 +68,7 @@ internal fun <T : Any> deserializeStateWithController(
         if (stateElement == null) {
           return mergeInto
         }
-        (rootBinding as BeanBinding).deserializeInto(result = mergeInto, element = stateElement)
+        (rootBinding as BeanBinding).deserializeInto(bean = mergeInto, element = stateElement)
       }
       else {
         return getXmlSerializationState(
@@ -122,7 +121,7 @@ internal fun serializeForController(bean: Any): Element? {
     return binding.serializeInto(bean = bean, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
   }
   else {
-    return binding.serialize(bean = bean, context = null, filter = jdomSerializer.getDefaultSerializationFilter()) as Element
+    return binding.serialize(bean = bean, filter = jdomSerializer.getDefaultSerializationFilter()) as Element
   }
 }
 
@@ -157,7 +156,7 @@ private fun <T : Any> getXmlSerializationState(
         result = rootBinding.newInstance() as T
       }
 
-      if (binding is PrimitiveValueBinding && ClassUtil.isPrimitive(binding.accessor.valueClass)) {
+      if (binding is PrimitiveValueBinding && binding.isPrimitive) {
         binding.setValue(bean = result, value = valueData?.decodeToString())
       }
       else if (valueData != null) {

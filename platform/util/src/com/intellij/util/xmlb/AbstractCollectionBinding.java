@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import static com.intellij.util.xmlb.BindingKt.LOG;
+import static com.intellij.util.xmlb.BeanBindingKt.LOG;
 
 abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding {
   private final MutableAccessor accessor;
@@ -28,16 +28,47 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   @SuppressWarnings("deprecation") private final @Nullable AbstractCollection annotation;
   protected final @Nullable XCollection newAnnotation;
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private Serializer serializer;
+  private final Serializer serializer;
 
-  AbstractCollectionBinding(@NotNull Class<?> elementType, @Nullable MutableAccessor accessor) {
+  AbstractCollectionBinding(@NotNull Class<?> elementType, @Nullable MutableAccessor accessor, @NotNull Serializer serializer) {
     this.accessor = accessor;
+    this.serializer = serializer;
 
     itemType = elementType;
     newAnnotation = accessor == null ? null : accessor.getAnnotation(XCollection.class);
     //noinspection deprecation
     annotation = newAnnotation == null ? (accessor == null ? null : accessor.getAnnotation(AbstractCollection.class)) : null;
+  }
+
+  @Override
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
+    assert itemBindings == null;
+
+    Binding binding = getItemBinding(itemType);
+    Class<?>[] elementTypes = getElementTypes();
+    if (elementTypes.length == 0) {
+      //noinspection SSBasedInspection
+      itemBindings = binding == null ? Collections.emptyList() : Collections.singletonList(binding);
+    }
+    else {
+      List<Binding> itemBindings;
+      if (binding == null) {
+        itemBindings = new SmartList<>();
+      }
+      else {
+        itemBindings = new ArrayList<>(elementTypes.length + 1);
+        itemBindings.add(binding);
+      }
+
+      for (Class<?> aClass : elementTypes) {
+        Binding b = getItemBinding(aClass);
+        if (b != null && !itemBindings.contains(b)) {
+          itemBindings.add(b);
+        }
+      }
+
+      this.itemBindings = itemBindings.isEmpty() ? Collections.emptyList() : itemBindings;
+    }
   }
 
   @Override
@@ -54,58 +85,25 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     return true;
   }
 
-  @Override
-  public final void init(@NotNull Type originalType, @NotNull Serializer serializer) {
-    this.serializer = serializer;
-  }
-
   private boolean isSurroundWithTag() {
     return newAnnotation == null && (annotation == null || annotation.surroundWithTag());
   }
 
   private @NotNull Class<?> @NotNull [] getElementTypes() {
-    if (newAnnotation != null) {
+    if (newAnnotation == null) {
+      return annotation == null ? ArrayUtilRt.EMPTY_CLASS_ARRAY : annotation.elementTypes();
+    }
+    else {
       return newAnnotation.elementTypes();
     }
-    return annotation == null ? ArrayUtilRt.EMPTY_CLASS_ARRAY : annotation.elementTypes();
   }
 
   private @Nullable Binding getItemBinding(@NotNull Class<?> aClass) {
     return ClassUtil.isPrimitive(aClass) ? null : serializer.getRootBinding(aClass, aClass);
   }
 
-  private synchronized @NotNull List<Binding> getItemBindings() {
-    if (itemBindings != null) {
-      return itemBindings;
-    }
-
-    Binding binding = getItemBinding(itemType);
-    Class<?>[] elementTypes = getElementTypes();
-    if (elementTypes.length == 0) {
-      //noinspection SSBasedInspection
-      itemBindings = binding == null ? Collections.emptyList() : Collections.singletonList(binding);
-    }
-    else {
-      itemBindings = new SmartList<>();
-      if (binding != null) {
-        itemBindings.add(binding);
-      }
-
-      for (Class<?> aClass : elementTypes) {
-        Binding b = getItemBinding(aClass);
-        if (b != null && !itemBindings.contains(b)) {
-          itemBindings.add(b);
-        }
-      }
-      if (itemBindings.isEmpty()) {
-        itemBindings = Collections.emptyList();
-      }
-    }
-    return itemBindings;
-  }
-
   private @Nullable Binding getElementBinding(@NotNull Element element) {
-    for (Binding binding : getItemBindings()) {
+    for (Binding binding : itemBindings) {
       if (binding.isBoundTo(element)) {
         return binding;
       }
@@ -114,7 +112,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   }
 
   private @Nullable Binding getElementBinding(@NotNull XmlElement element) {
-    for (Binding binding : getItemBindings()) {
+    for (Binding binding : itemBindings) {
       if (binding.isBoundTo(element)) {
         return binding;
       }
@@ -125,7 +123,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
   abstract @NotNull Collection<?> getIterable(@NotNull Object o);
 
   @Override
-  public final @NotNull Object serialize(@NotNull Object object, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public final @NotNull Object serialize(@NotNull Object object, @Nullable SerializationFilter filter) {
     Collection<?> collection = getIterable(object);
 
     String tagName = isSurroundWithTag() ? getCollectionTagName(object) : null;
@@ -133,7 +131,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
       List<Object> result = new SmartList<>();
       if (!collection.isEmpty()) {
         for (Object item : collection) {
-          Object element = serializeItem(item, result, filter);
+          Object element = serializeItem(item, null, filter);
           if (element != null) {
             result.add(element);
           }
@@ -211,7 +209,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
 
   protected abstract @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<XmlElement> elements);
 
-  private @Nullable Object serializeItem(@Nullable Object value, Object context, @Nullable SerializationFilter filter) {
+  private @Nullable Object serializeItem(@Nullable Object value, Element context, @Nullable SerializationFilter filter) {
     if (value == null) {
       LOG.warn("Collection " + accessor + " contains 'null' object");
       return null;
@@ -297,7 +295,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     if (isSurroundWithTag()) {
       return element.getName().equals(getCollectionTagName(null));
     }
-    else if (getItemBindings().isEmpty()) {
+    else if (itemBindings.isEmpty()) {
       return element.getName().equals(getElementName());
     }
     else {
@@ -310,11 +308,11 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     if (isSurroundWithTag()) {
       return element.name.equals(getCollectionTagName(null));
     }
-    else if (getItemBindings().isEmpty()) {
+    else if (itemBindings.isEmpty()) {
       return element.name.equals(getElementName());
     }
     else {
-      for (Binding binding : getItemBindings()) {
+      for (Binding binding : itemBindings) {
         if (binding.isBoundTo(element)) {
           return true;
         }

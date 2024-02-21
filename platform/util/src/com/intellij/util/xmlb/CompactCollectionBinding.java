@@ -29,7 +29,7 @@ final class CompactCollectionBinding implements NotNullDeserializeBinding, Neste
   }
 
   @Override
-  public @NotNull Object serialize(@NotNull Object bean, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public @NotNull Object serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
     Element result = new Element(name);
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)bean;
