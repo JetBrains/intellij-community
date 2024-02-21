@@ -7,6 +7,9 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 
 private class TerminalMoveCaretActionHandler(private val moveToStart: Boolean) : TerminalPromptEditorActionHandler() {
   override fun executeAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
@@ -23,7 +26,15 @@ private class TerminalMoveCaretActionHandler(private val moveToStart: Boolean) :
 }
 
 class TerminalMoveCaretToLineStartAction : TerminalPromotedEditorAction(TerminalMoveCaretActionHandler(moveToStart = true)),
-                                           ActionRemoteBehaviorSpecification.Disabled
+                                           ActionRemoteBehaviorSpecification.Disabled {
+  init {
+    shortcutSet = TerminalUiUtils.createSingleShortcutSet(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK)
+  }
+}
 
 class TerminalMoveCaretToLineEndAction : TerminalPromotedEditorAction(TerminalMoveCaretActionHandler(moveToStart = false)),
-                                         ActionRemoteBehaviorSpecification.Disabled
+                                         ActionRemoteBehaviorSpecification.Disabled {
+  init {
+    shortcutSet = TerminalUiUtils.createSingleShortcutSet(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK)
+  }
+}

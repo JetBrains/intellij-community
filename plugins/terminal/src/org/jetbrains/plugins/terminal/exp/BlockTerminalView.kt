@@ -21,8 +21,12 @@ import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import com.jediterm.terminal.TtyConnector
+import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
+import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineEndAction
+import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineStartAction
 import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalControllerListener
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.*
@@ -128,6 +132,8 @@ class BlockTerminalView(
 
     installPromptAndOutput()
 
+    installActions()
+
     focusModel.addListener(object: TerminalFocusModel.TerminalFocusListener {
       override fun activeStateChanged(isActive: Boolean) {
         if (isActive) {
@@ -200,6 +206,22 @@ class BlockTerminalView(
         }
       }
     })
+  }
+
+  // todo: Would be great to have a separate lists of actions for each shell
+  //  in something like TerminalShellSupport, to get them from the method instead of using if's.
+  private fun installActions() {
+    TerminalInterruptCommandAction().registerCustomShortcutSet(component, null)
+    if (session.shellIntegration.shellType != ShellType.POWERSHELL) {
+      // Do not add custom actions for moving the caret in PowerShell because Home and End shortcuts are used there.
+      // But Home and End are already handled by default editor action implementations.
+      listOf(
+        TerminalMoveCaretToLineStartAction(),
+        TerminalMoveCaretToLineEndAction()
+      ).forEach {
+        it.registerCustomShortcutSet(component, null)
+      }
+    }
   }
 
   override fun startCommandExecution(command: String) {
