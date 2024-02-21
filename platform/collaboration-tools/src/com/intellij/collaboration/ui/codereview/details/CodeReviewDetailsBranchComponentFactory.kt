@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBUI
 import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import java.awt.Dimension
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -46,6 +47,7 @@ object CodeReviewDetailsBranchComponentFactory {
       addActionListener { branchesVm.showBranches() }
       setDropDownLinkIcon()
       bindTextIn(scope, branchesVm.sourceBranch)
+      minimumSize = Dimension(0,0)
     }
 
     val panelWithIcon = HorizontalListPanel(BRANCH_ICON_LINK_GAP).apply {
