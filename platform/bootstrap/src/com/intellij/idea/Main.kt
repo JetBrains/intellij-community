@@ -218,6 +218,9 @@ private fun initLux() {
   System.setProperty("keymap.current.os.only", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
+  // disables AntiFlickeringPanel that slows down Lux rendering,
+  // see RDCT-1076 Debugger tree is rendered slowly under Lux
+  System.setProperty("debugger.anti.flickering.delay", 0.toString())
 
   setStaticField(Toolkit::class.java, "toolkit", IdeToolkit())
   System.setProperty("awt.toolkit", IdeToolkit::class.java.canonicalName)
