@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -83,7 +84,9 @@ public interface ContentManager extends Disposable, BusyObject {
   /**
    * Returns combined contents of this content manager and all nested content managers.
    */
-  @NotNull List<@NotNull Content> getContentsRecursively();
+  default @NotNull List<@NotNull Content> getContentsRecursively() {
+    return Arrays.asList(getContents());
+  }
 
   Content findContent(String displayName);
 
