@@ -70,7 +70,6 @@ class TerminalOutputView(
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
     editor.settings.isUseSoftWraps = true
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
-    TerminalInterruptCommandAction().registerCustomShortcutSet(editor.contentComponent, null)
     return editor
   }
 

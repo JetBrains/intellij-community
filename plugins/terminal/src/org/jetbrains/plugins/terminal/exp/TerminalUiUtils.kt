@@ -7,8 +7,10 @@ import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -47,6 +49,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JScrollPane
+import javax.swing.KeyStroke
 import kotlin.math.max
 
 object TerminalUiUtils {
@@ -104,6 +107,11 @@ object TerminalUiUtils {
     return DefaultActionGroup(actionsPerGroup.flatMapIndexed { index, actions ->
       if (index > 0) listOf(Separator.create()) + actions else actions
     })
+  }
+
+  fun createSingleShortcutSet(keyCode: Int, modifiers: Int): ShortcutSet {
+    val keyStroke = KeyStroke.getKeyStroke(keyCode, modifiers)
+    return CustomShortcutSet(keyStroke)
   }
 
   fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
