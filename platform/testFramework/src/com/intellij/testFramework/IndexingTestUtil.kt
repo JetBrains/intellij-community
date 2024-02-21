@@ -105,7 +105,7 @@ class IndexingTestUtil(private val project: Project) {
     return UnindexedFilesScannerExecutor.getInstance(project).isRunning.value || DumbServiceImpl.getInstance(project).isRunning()
   }
 
-  suspend fun suspendUntilIndexesAreReady() {
+  private suspend fun suspendUntilIndexesAreReady() {
     if (!isRunning()) {
       return
     } else {
@@ -115,7 +115,7 @@ class IndexingTestUtil(private val project: Project) {
     DumbServiceImpl.getInstance(project).waitUntilFinished()
   }
 
-  fun waitUntilFinished() {
+  private fun waitUntilFinished() {
     thisLogger().debug(Throwable("waitUntilFinished, thread=${Thread.currentThread()}, " +
                                  "WA=${ApplicationManager.getApplication().isWriteAccessAllowed}"))
     if (ApplicationManager.getApplication().isWriteAccessAllowed) {
