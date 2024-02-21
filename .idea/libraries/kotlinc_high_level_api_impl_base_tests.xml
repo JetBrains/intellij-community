@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.high-level-api-impl-base-tests">
+  <library name="kotlinc.high-level-api-impl-base-tests" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-tests-for-ide:2.0.0-dev-16305">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-dev-16305/high-level-api-impl-base-tests-for-ide-2.0.0-dev-16305.jar">
+          <sha256sum>25c88da16bf9f7bef14fb404876eb9ea037d23f4d5602fb9899af73a13dce280</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.255-dev-255/high-level-api-impl-base-tests-for-ide-2.0.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-dev-16305/high-level-api-impl-base-tests-for-ide-2.0.0-dev-16305.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.255-dev-255/high-level-api-impl-base-tests-for-ide-2.0.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-dev-16305/high-level-api-impl-base-tests-for-ide-2.0.0-dev-16305-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
