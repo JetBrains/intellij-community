@@ -4,8 +4,8 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 import org.gradle.tooling.BuildController;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
-import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializerConverter;
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.ModelConverter;
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 
 @ApiStatus.Internal
 public final class GradleModelFetchActionWithCustomSerializer extends GradleModelFetchAction {

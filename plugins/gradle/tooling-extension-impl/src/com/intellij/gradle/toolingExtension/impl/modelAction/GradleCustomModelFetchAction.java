@@ -13,7 +13,7 @@ import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.ModelConverter;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;

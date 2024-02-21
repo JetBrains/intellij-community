@@ -10,7 +10,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
+import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializer;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
