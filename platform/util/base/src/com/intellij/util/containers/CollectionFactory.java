@@ -41,13 +41,13 @@ public final class CollectionFactory {
 
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(
-    @NotNull Consumer<K> evictionListener) {
+    @NotNull Consumer<? super K> evictionListener) {
     return new ConcurrentWeakValueHashMap<>(evictionListener);
   }
 
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(
-    @NotNull Consumer<K> evictionListener) {
+    @NotNull Consumer<? super K> evictionListener) {
     return new ConcurrentSoftValueHashMap<>(evictionListener);
   }
 
