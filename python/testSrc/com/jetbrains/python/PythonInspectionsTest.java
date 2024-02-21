@@ -179,7 +179,8 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON34);
   }
 
-  public void testPyPropertyDefinitionInspectionLatest() {
+  // PY-40180
+  public void testEmptyProtocolProperty() {
     doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.getLatest());
   }
 
