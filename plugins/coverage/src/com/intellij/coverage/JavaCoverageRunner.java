@@ -66,7 +66,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     final ProjectData projectData = suite.getCoverageData();
     if (projectData == null) return;
     IDEACoverageRunner.setExcludeAnnotations(project, projectData);
-    UnloadedUtil.appendUnloaded(projectData, new IdeaClassFinder(project, suite), false, suite.isBranchCoverage());
+    UnloadedUtil.appendUnloaded(projectData, new IdeaClassFinder(project, suite), suite.isBranchCoverage());
 
     final long generationStartNs = System.nanoTime();
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);

@@ -3,6 +3,7 @@ package com.intellij.coverage
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.rt.coverage.data.ProjectData
+import com.intellij.rt.coverage.instrumentation.InstrumentationOptions
 import com.intellij.rt.coverage.util.CoverageReport
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
@@ -48,11 +49,11 @@ class PatternsTest : HeavyPlatformTestCase() {
 
     if (includes1.isNullOrEmpty() || includes2.isNullOrEmpty()) {
       // include patterns are merged, as suite2 include patterns are empty
-      assertTrue(data.incudePatterns.isNullOrEmpty())
+      assertTrue(data.includePatterns.isNullOrEmpty())
     }
     else {
       // include patterns are merged
-      TestCase.assertEquals((includes1.toSet() + includes2.toSet()).toList(), convertFromPatterns(data.incudePatterns))
+      TestCase.assertEquals((includes1.toSet() + includes2.toSet()).toList(), convertFromPatterns(data.includePatterns))
     }
 
     // exclude patterns are not merged
@@ -63,7 +64,7 @@ class PatternsTest : HeavyPlatformTestCase() {
     val suite = createSuite(includes, excludes, saveToSuite)
     val data = suite.getCoverageData(null)!!
     if (!saveToSuite) {
-      TestCase.assertEquals(includes.orEmpty(), convertFromPatterns(data.incudePatterns))
+      TestCase.assertEquals(includes.orEmpty(), convertFromPatterns(data.includePatterns))
       TestCase.assertEquals(excludes.orEmpty(), convertFromPatterns(data.excludePatterns))
     }
     TestCase.assertEquals(includes.orEmpty(), suite.includeFilters?.toList())
@@ -72,12 +73,12 @@ class PatternsTest : HeavyPlatformTestCase() {
 
   private fun createSuite(includes: List<String>?, excludes: List<String>?, saveToSuite: Boolean = false): JavaCoverageSuite {
     val data = ProjectData()
-    data.setIncludePatterns(convertPatterns(includes))
+    data.includePatterns = convertPatterns(includes)
     data.excludePatterns = convertPatterns(excludes)
 
     val file = FileUtil.createTempFile("coverage", ".ic")
     file.deleteOnExit()
-    CoverageReport.save(data, file, null)
+    CoverageReport.save(data, InstrumentationOptions.Builder().setDataFile(file).build())
 
     val engine = JavaCoverageEngine.getInstance()
     val runner = CoverageRunner.getInstance(IDEACoverageRunner::class.java)

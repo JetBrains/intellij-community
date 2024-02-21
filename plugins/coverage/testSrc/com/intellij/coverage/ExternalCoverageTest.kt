@@ -3,6 +3,7 @@ package com.intellij.coverage
 
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.rt.coverage.data.LineCoverage
+import com.intellij.rt.coverage.instrumentation.InstrumentationOptions
 import com.intellij.rt.coverage.util.CoverageReport
 import com.intellij.rt.coverage.util.ProjectDataLoader
 import kotlinx.coroutines.runBlocking
@@ -30,7 +31,7 @@ class ExternalCoverageTest : CoverageIntegrationBaseTest() {
       val lineData = classData.getLineData(9)
       lineData.hits = 1
       lineData.setStatus(LineCoverage.FULL)
-      CoverageReport.save(projectData, ijSuiteFile, null)
+      CoverageReport.save(projectData, InstrumentationOptions.Builder().setDataFile(ijSuiteFile).build())
 
       // does not work without force refreshing
       VirtualFileManager.getInstance().asyncRefresh()
