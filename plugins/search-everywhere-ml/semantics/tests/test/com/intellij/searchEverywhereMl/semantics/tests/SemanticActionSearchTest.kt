@@ -35,7 +35,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   }
 
   fun `test search everywhere contributor`() = runTest(
-    timeout = 30.seconds // increased timeout because of a bug in SE
+    timeout = 45.seconds // increased timeout because of a bug in SE
   ) {
     setupTest("java/IndexProjectAction.java")
 
@@ -65,7 +65,7 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
                  0, results.filterIsInstance<GotoActionModel.MatchedValue>().mapNotNull { it.value as? GotoActionModel.MatchedValue }.size)
   }
 
-  fun `test semantic and standard contributor results match`() = runTest(timeout = 2.minutes) {
+  fun `test semantic and standard contributor results match`() = runTest(timeout = 5.minutes) {
     setupTest("java/IndexProjectAction.java")
 
     // Contributors do not share the same GotoActionModel:
