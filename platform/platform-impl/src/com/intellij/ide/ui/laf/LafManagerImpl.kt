@@ -43,6 +43,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
 import com.intellij.ui.popup.HeavyWeightPopup
+import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
@@ -934,7 +935,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return result
     }
 
-    private inner class SchemeToggleAction(val scheme: EditorColorsScheme, private val isDark: Boolean) : ToggleAction(scheme.displayName) {
+    private inner class SchemeToggleAction(val scheme: EditorColorsScheme, private val isDark: Boolean) : ToggleAction(scheme.displayName),
+                                                                                                          KeepingPopupOpenAction {
       override fun isSelected(e: AnActionEvent): Boolean {
         return ((if (isDark) preferredDarkEditorSchemeId else preferredLightEditorSchemeId)
                 ?: associatedToPreferredLafOrDefaultEditorColorSchemeName(isDark)) == scheme.baseName
@@ -956,7 +958,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
       override fun isDumbAware() = true
-
     }
   }
 
@@ -967,7 +968,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private inner class LafToggleAction(name: @Nls String?,
                                       private val themeId: String,
                                       private val editorSchemeId: String,
-                                      private val isDark: Boolean) : ToggleAction(name) {
+                                      private val isDark: Boolean) : ToggleAction(name), KeepingPopupOpenAction {
     override fun isSelected(e: AnActionEvent): Boolean {
       return if (isDark) {
         (preferredDarkThemeId ?: defaultDarkLaf.id) == themeId
