@@ -2329,15 +2329,6 @@ open class FileEditorManagerImpl(
       }
     }
   }
-
-  override fun getFocusedEditor(): FileEditor? {
-    if (ClientId.isCurrentlyUnderLocalId) {
-      return super.getFocusedEditor()
-    }
-    else {
-      return clientFileEditorManager?.getFocusedEditor()
-    }
-  }
 }
 
 @Deprecated("Please use EditorComposite directly")
