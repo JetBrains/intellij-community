@@ -163,6 +163,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   private static final class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final List<? extends MergeableLineMarkerInfo<?>> myMarkers;
+    private final List<ActionGroup> myGroups;
 
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, int passId) {
       this(markers, markers.get(0), passId);
@@ -178,6 +179,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
             getCommonAccessibleNameProvider(markers), template.getCommonTooltip(markers),
             getCommonNavigationHandler(markers), template.getCommonIconAlignment(markers));
       myMarkers = markers;
+      myGroups = ContainerUtil.map(markers, info -> info.createGutterRenderer().getPopupMenuActions());
       updatePass = passId;
     }
 
@@ -186,27 +188,20 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     private DefaultActionGroup getCommonActionGroup(@NotNull MouseEvent mouseEvent) {
-      DefaultActionGroup commonActionGroup = null;
-      boolean first = true;
-      for (MergeableLineMarkerInfo<?> marker : myMarkers) {
-        GutterIconRenderer renderer = marker.createGutterRenderer();
-        if (renderer != null) {
-          ActionGroup actions = renderer.getPopupMenuActions();
-          boolean popup = actions != null;
-          if (actions == null) {
-            actions = new DefaultActionGroup(marker.getNavigateAction(mouseEvent));
+      DefaultActionGroup commonActionGroup = new DefaultActionGroup();
+      for (int i = 0; i < myGroups.size(); i++) {
+        ActionGroup popupActions = myGroups.get(i);
+        if (popupActions != null) {
+          if (commonActionGroup.getChildrenCount() > 0) {
+            commonActionGroup.addSeparator();
           }
-          if (commonActionGroup == null) {
-            commonActionGroup = new DefaultActionGroup();
-          }
-          if (!first && popup) {
-            commonActionGroup.add(Separator.getInstance());
-          }
-          first = false;
-          commonActionGroup.addAll(actions);
+          commonActionGroup.addAll(popupActions);
+        }
+        else {
+          commonActionGroup.add(myMarkers.get(i).getNavigateAction(mouseEvent));
         }
       }
-      return commonActionGroup;
+      return commonActionGroup.getChildrenCount() == 0 ? null : commonActionGroup;
     }
 
     private static @NotNull TextRange getCommonTextRange(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
@@ -304,7 +299,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
   }
 
-  private AnAction getNavigateAction(@NotNull MouseEvent originalEvent) {
+  protected AnAction getNavigateAction(@NotNull MouseEvent originalEvent) {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
