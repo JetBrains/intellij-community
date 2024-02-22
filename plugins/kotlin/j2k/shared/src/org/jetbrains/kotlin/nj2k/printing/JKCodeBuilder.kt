@@ -753,14 +753,17 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             ktPrimaryConstructor.annotationList.accept(this)
             renderModifiersList(ktPrimaryConstructor)
 
-            if (ktPrimaryConstructor.hasAnnotations || ktPrimaryConstructor.visibility != PUBLIC) {
+            val needConstructorKeyword = ktPrimaryConstructor.hasAnnotations || ktPrimaryConstructor.visibility != PUBLIC
+            if (needConstructorKeyword) {
                 printer.print("constructor")
             }
 
-            if (ktPrimaryConstructor.parameters.isNotEmpty()) {
+            val hasSecondaryConstructors =
+                ktPrimaryConstructor.parentOfType<JKClassBody>()?.declarations.orEmpty().filterIsInstance<JKConstructorImpl>().isNotEmpty()
+
+            if (ktPrimaryConstructor.parameters.isNotEmpty() || needConstructorKeyword || hasSecondaryConstructors) {
+                // Print explicit primary constructor `()` with parameters, if any
                 renderParameterList(ktPrimaryConstructor)
-            } else {
-                printer.print("()")
             }
         }
 

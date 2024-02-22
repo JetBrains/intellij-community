@@ -157,7 +157,8 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
             if ((initBlock.body as KtBlockExpression).statements.isEmpty()) {
                 val commentSaver = CommentSaver(initBlock)
                 initBlock.delete()
-                primaryConstructor?.let { commentSaver.restore(it) }
+                val target = primaryConstructor ?: this
+                commentSaver.restore(target)
             }
         }
     }

@@ -14,11 +14,11 @@ internal class B // this constructor will disappear // end of constructor body
     fun foo() {}
 }
 
-internal class CtorComment /*
+/*
      * The magic of comments
      */
 // single line magic comments
-{
+internal class CtorComment {
     var myA: String = "a"
 }
 

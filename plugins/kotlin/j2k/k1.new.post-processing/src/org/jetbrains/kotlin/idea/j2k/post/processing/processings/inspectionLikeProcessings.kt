@@ -8,6 +8,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
@@ -299,6 +300,9 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
 
     override fun apply(element: KtDeclaration) {
         element.visibilityModifierType()?.let { element.removeModifier(it) }
+        if (element is KtPrimaryConstructor && element.isRedundant()) {
+            element.delete()
+        }
     }
 }
 

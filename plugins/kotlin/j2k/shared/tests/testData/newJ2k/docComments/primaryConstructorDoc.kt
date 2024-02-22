@@ -1,8 +1,7 @@
-internal class CtorComment
 /**
  * This constructor is especially useful
  */
-{
+internal class CtorComment {
     var myA: String = "str"
 }
 

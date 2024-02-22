@@ -121,7 +121,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     DestructureForLoopParameterProcessing(),
     LiftReturnInspectionBasedProcessing(),
     LiftAssignmentInspectionBasedProcessing(),
-    intentionBasedProcessing(RemoveEmptyPrimaryConstructorIntention()),
     MayBeConstantInspectionBasedProcessing(),
     RemoveForExpressionLoopParameterTypeProcessing(),
     inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
