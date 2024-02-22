@@ -1,1 +1,1 @@
-<warning descr="Package requirement mypy is not satisfied">mypy</warning>
+<warning descr="Package mypy is not installed">mypy</warning>

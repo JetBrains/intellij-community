@@ -2,22 +2,17 @@
 package com.jetbrains.python.requirements
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.jetbrains.python.PyNames
-import com.jetbrains.python.PythonMockSdk
-import com.jetbrains.python.PythonTestUtil
-import com.jetbrains.python.fixtures.PyLightProjectDescriptor
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pythonSdk
 
 class UnsatisfiedRequirementInspectionTest : PythonDependencyTestCase() {
   fun testUnsatisfiedRequirement() {
     doMultiFileTest("requirements.txt")
+    assertContainsElements(myFixture.availableIntentions.map { it.text }, "Install package mypy", "Install all missing packages", "Run 'pip install -e .'")
+  }
+
+  fun testEmptyRequirementsFile() {
+    doMultiFileTest("requirements.txt")
+    assertContainsElements(myFixture.availableIntentions.map { it.text }, "Add imported packages to requirements…")
   }
 
   private fun doMultiFileTest(filename: String) {

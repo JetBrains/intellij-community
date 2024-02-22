@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
-import com.jetbrains.python.requirements.RequirementsFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -76,8 +75,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (!(holder.getFile() instanceof PyFile) && !(holder.getFile() instanceof RequirementsFile)
-        && !isPythonInTemplateLanguages(holder.getFile())) {
+    if (!(holder.getFile() instanceof PyFile) && !isPythonInTemplateLanguages(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new Visitor(holder, ignoredPackages, PyInspectionVisitor.getContext(session));
@@ -109,22 +107,6 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     @Override
     public void visitPyFile(@NotNull PyFile node) {
       checkPackagesHaveBeenInstalled(node, ModuleUtilCore.findModuleForPsiElement(node));
-    }
-
-    @Override
-    public void visitFile(@NotNull PsiFile file) {
-      if (file instanceof RequirementsFile) {
-        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-        if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
-          if (file.getText().trim().isEmpty()) {
-            registerProblem(file, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
-                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
-          }
-          else {
-            checkPackagesHaveBeenInstalled(file, module);
-          }
-        }
-      }
     }
 
     private void checkPackagesHaveBeenInstalled(@NotNull PsiElement file, @Nullable Module module) {
