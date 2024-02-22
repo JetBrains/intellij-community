@@ -76,6 +76,10 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     externalProject.setProjectDir(project.getProjectDir());
     externalProject.setTasks(getTasks(project, context));
     externalProject.setSourceSetModel(getSourceSetModel(project, context));
+    externalProject.setChildProjects(getChildProjects(project, context));
+
+    GradleExternalProjectCache.getInstance(context)
+      .setProjectModel(project, externalProject);
 
     return externalProject;
   }
@@ -134,6 +138,19 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     return sourceSetModel;
   }
 
+  private static @NotNull Map<String, DefaultExternalProject> getChildProjects(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context
+  ) {
+    GradleExternalProjectCache projectCache = GradleExternalProjectCache.getInstance(context);
+    Map<String, DefaultExternalProject> result = new TreeMap<>();
+    for (Map.Entry<String, Project> entry : project.getChildProjects().entrySet()) {
+      DefaultExternalProject childProject = projectCache.getProjectModel(entry.getValue());
+      result.put(entry.getKey(), childProject);
+    }
+    return result;
+  }
+
   private static @NotNull String wrap(@Nullable Object o) {
     return o instanceof CharSequence ? o.toString() : "";
   }
@@ -145,6 +162,9 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     @NotNull ModelBuilderContext context,
     @NotNull Exception exception
   ) {
+    GradleExternalProjectCache.getInstance(context)
+      .markProjectModelAsError(project);
+
     //Probably checked exception might still pop from poorly behaving implementation
     if (exception instanceof RuntimeException) {
       throw (RuntimeException)exception;
