@@ -10,19 +10,21 @@ import com.intellij.openapi.project.Project
  * @see <a href="https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter">About indexable.files.filter collector</a>
  */
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexable.files.filter", 5)
+  private val GROUP = EventLogGroup("indexable.files.filter", 6)
 
   override fun getGroup(): EventLogGroup = GROUP
 
   private val filterNameField = EventFields.StringValidatedByEnum("filter_name", "indexable_files_filter_name")
-  private val isOnProjectOpenField = EventFields.Boolean("is_on_project_open")
+  private val attemptNumberInProjectField = EventFields.Int("attempt_number_in_project")
+  private val successfulAttemptNumberInProjectField = EventFields.Int("successful_attempt_number_in_project")
   private val nonIndexableFilesInFilterField = EventFields.Int("non_indexable_files_in_filter_count")
   private val indexableFilesNotInFilterField = EventFields.Int("indexable_files_not_in_filter_count")
 
   private val indexableFilesFilterHealthCheck = GROUP.registerVarargEvent(
     "indexable_files_filter_health_check",
     filterNameField,
-    isOnProjectOpenField,
+    attemptNumberInProjectField,
+    successfulAttemptNumberInProjectField,
     nonIndexableFilesInFilterField,
     indexableFilesNotInFilterField,
   )
@@ -30,29 +32,31 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
   private val indexableFilesFilterHealthCheckStarted = GROUP.registerEvent(
     "indexable_files_filter_health_check_started",
     filterNameField,
-    isOnProjectOpenField,
+    attemptNumberInProjectField,
   )
 
   fun reportIndexableFilesFilterHealthcheckStarted(project: Project,
                                                    filter: ProjectIndexableFilesFilter,
-                                                   onProjectOpen: Boolean) {
+                                                   attemptNumber: Int) {
     indexableFilesFilterHealthCheckStarted.log(
       project,
       getFilterName(filter),
-      onProjectOpen,
+      attemptNumber,
     )
   }
 
 
   fun reportIndexableFilesFilterHealthcheck(project: Project,
                                             filter: ProjectIndexableFilesFilter,
-                                            onProjectOpen: Boolean,
+                                            attemptNumber: Int,
+                                            successfulAttemptNumber: Int,
                                             nonIndexableFilesInFilterCount: Int,
                                             indexableFilesNotInFilterCount: Int) {
     indexableFilesFilterHealthCheck.log(
       project,
       filterNameField.with(getFilterName(filter)),
-      isOnProjectOpenField.with(onProjectOpen),
+      attemptNumberInProjectField.with(attemptNumber),
+      successfulAttemptNumberInProjectField.with(successfulAttemptNumber),
       nonIndexableFilesInFilterField.with(nonIndexableFilesInFilterCount),
       indexableFilesNotInFilterField.with(indexableFilesNotInFilterCount),
     )

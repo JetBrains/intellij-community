@@ -17,6 +17,7 @@ import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.indexing.projectFilter.HealthCheckErrorType.INDEXABLE_FILE_NOT_IN_FILTER
 import com.intellij.util.indexing.projectFilter.HealthCheckErrorType.NON_INDEXABLE_FILE_IN_FILTER
+import com.jetbrains.rd.util.AtomicInteger
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ScheduledFuture
@@ -26,6 +27,8 @@ import java.util.concurrent.TimeUnit
 private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
 
 internal class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val filter: ProjectIndexableFilesFilter) {
+  private val attemptsCount = AtomicInteger()
+  private val successfulAttemptsCount = AtomicInteger()
   @Volatile
   private var healthCheckFuture: ScheduledFuture<*>? = null
 
@@ -34,12 +37,12 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       healthCheckFuture = AppExecutorUtil
         .getAppScheduledExecutorService()
         .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index files filter health check for project ${project.name}") {
-          runHealthCheck(false)
+          runHealthCheck()
         }, 5, 5, TimeUnit.MINUTES)
     }
   }
 
-  fun triggerHealthCheck(onProjectOpen: Boolean) {
+  fun triggerHealthCheck() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -47,7 +50,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     stopHealthCheck()
     AppExecutorUtil.getAppExecutorService().submit {
       try {
-        runHealthCheck(onProjectOpen)
+        runHealthCheck()
       }
       finally {
         setUpHealthCheck()
@@ -65,11 +68,12 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
    * 2. False negatives - files that were NOT found in filter but were iterated by [FileBasedIndexImpl.iterateIndexableFiles]
    */
   @Synchronized // don't allow two parallel health checks in case of triggerHealthCheck()
-  private fun runHealthCheck(onProjectOpen: Boolean) {
+  private fun runHealthCheck() {
     if (!IndexInfrastructure.hasIndices()) return
 
     try {
-      IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, onProjectOpen)
+      val attemptNumber = attemptsCount.incrementAndGet()
+      IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, attemptNumber)
 
       val errorsByType = doRunHealthCheckInReadAction()
 
@@ -78,7 +82,8 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(
         project,
         filter,
-        onProjectOpen,
+        attemptNumber,
+        successfulAttemptsCount.incrementAndGet(),
         errorsByType[NON_INDEXABLE_FILE_IN_FILTER]?.size ?: 0,
         errorsByType[INDEXABLE_FILE_NOT_IN_FILTER]?.size ?: 0)
 
