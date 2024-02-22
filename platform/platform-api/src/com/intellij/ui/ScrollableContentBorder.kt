@@ -1,12 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.openapi.util.Key
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import javax.swing.border.Border
@@ -29,7 +33,33 @@ class ScrollableContentBorder private constructor(
 
   fun isVisible(): Boolean = lineColor != UIUtil.TRANSPARENT_COLOR
 
+  override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    val alreadyHasBorder = when (mySideMask) {
+      TOP -> ClientProperty.isTrue(c, HEADER_WITH_BORDER_ABOVE) || ClientProperty.isTrue(c, TOOLBAR_WITH_BORDER_ABOVE)
+      LEFT -> ClientProperty.isTrue(c, TOOLBAR_WITH_BORDER_LEFT)
+      else -> false
+    }
+    if (!alreadyHasBorder) {
+      super.paintBorder(c, g, x, y, width, height)
+    }
+  }
+
   companion object {
+
+    @ApiStatus.Internal
+    @JvmField
+    val HEADER_WITH_BORDER_ABOVE: Key<Boolean> = Key.create("HEADER_WITH_BORDER_ABOVE")
+
+    @ApiStatus.Internal
+    @JvmField
+    val TOOLBAR_WITH_BORDER_ABOVE: Key<Boolean> = Key.create("TOOLBAR_WITH_BORDER_ABOVE")
+
+    @ApiStatus.Internal
+    @JvmField
+    val TOOLBAR_WITH_BORDER_LEFT: Key<Boolean> = Key.create("TOOLBAR_WITH_BORDER_LEFT")
+
+    private val TARGET_COMPONENT: Key<WeakReference<JComponent>> = Key.create("ScrollableContentBorder.TARGET_COMPONENT")
+
     @JvmStatic
     @JvmOverloads
     fun setup(scrollPane: JScrollPane,
@@ -44,6 +74,8 @@ class ScrollableContentBorder private constructor(
               sides: Set<Side>,
               targetComponent: JComponent = scrollPane) {
 
+      ClientProperty.put(scrollPane, TARGET_COMPONENT, WeakReference(targetComponent))
+
       val borders = sides.associateWith { side -> ScrollableContentBorder(side.toMask()) }
 
       val tracker = ScrollPaneScrolledStateTracker(scrollPane) { state ->
@@ -55,6 +87,7 @@ class ScrollableContentBorder private constructor(
         override fun propertyChange(evt: PropertyChangeEvent?) {
           targetComponent.removePropertyChangeListener("border", this)
           tracker.detach()
+          ClientProperty.put(scrollPane, TARGET_COMPONENT, null)
         }
       })
     }
@@ -66,6 +99,9 @@ class ScrollableContentBorder private constructor(
         sequenceOf(top, bottom, right, left).filter { it != 0 }.count() == 1
       }
     }
+
+    @JvmStatic
+    fun getTargetComponent(scrollPane: JScrollPane): JComponent? = ClientProperty.get(scrollPane, TARGET_COMPONENT)?.get()
   }
 }
 
