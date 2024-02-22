@@ -99,9 +99,9 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testSaveSettings() {
     JvmLoggerTestSetupUtil.setupLog4j(myFixture)
-    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
+    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerId, UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
     doTest()
-    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, "Log4j")
+    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerId, "Log4j")
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_21
