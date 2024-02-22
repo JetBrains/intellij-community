@@ -10859,6 +10859,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testPublicOverrideProtectedSetter6() throws Exception {
             runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicOverrideProtectedSetter6.kt");
         }
+
+        @TestMetadata("removeRedundantPrimaryConstructor.kt")
+        public void testRemoveRedundantPrimaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/removeRedundantPrimaryConstructor.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
