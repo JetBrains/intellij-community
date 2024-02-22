@@ -173,7 +173,7 @@ class TerminalOutputController(
       override fun commandOutputChanged(output: StyledCommandOutput) {
         updateEditorContent(output)
       }
-    }, disposable)
+    }, disposable, useExtendedDelayOnce = true)
   }
 
   private fun updateEditorContent(output: StyledCommandOutput) {
