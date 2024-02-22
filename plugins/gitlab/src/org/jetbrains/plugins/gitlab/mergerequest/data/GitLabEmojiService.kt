@@ -9,9 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.NlsSafe
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import java.io.File
 
 @Service(Service.Level.APP)
@@ -20,7 +18,7 @@ internal class GitLabEmojiService(cs: CoroutineScope) {
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
 
-  val emojis: Deferred<List<ParsedGitLabEmoji>> = cs.async {
+  val emojis: Deferred<List<ParsedGitLabEmoji>> = cs.async(Dispatchers.IO, CoroutineStart.LAZY) {
     parseEmojisFile()
   }
 
