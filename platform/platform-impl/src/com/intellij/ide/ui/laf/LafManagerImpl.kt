@@ -887,8 +887,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private inner class PreferredEditorColorSchemeAction : DefaultActionGroup(PreferredLightEditorColorSchemeAction(),
-                                                                            PreferredDarkEditorColorSchemeAction()),
+  private inner class PreferredEditorColorSchemeAction : DefaultActionGroup(PreferredDarkEditorColorSchemeAction(),
+                                                                            PreferredLightEditorColorSchemeAction()),
                                                          DumbAware {
     init {
       isPopup = true
