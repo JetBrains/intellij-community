@@ -11,8 +11,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.CachedValuesFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PsiCachedValuesFactory implements CachedValuesFactory {
 
   private static final boolean preferHardRefsForPsiCachedValue =

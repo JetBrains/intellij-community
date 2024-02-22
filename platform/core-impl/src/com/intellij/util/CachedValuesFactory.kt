@@ -21,10 +21,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.psi.util.ParameterizedCachedValueProvider
 
-/**
- * @author Dmitry Avdeev
- */
-interface CachedValuesFactory {
+internal interface CachedValuesFactory {
   fun <T> createCachedValue(provider: CachedValueProvider<T>, trackValue: Boolean): CachedValue<T>
 
   fun <T> createCachedValue(userDataHolder: UserDataHolder, provider: CachedValueProvider<T>, trackValue: Boolean): CachedValue<T>

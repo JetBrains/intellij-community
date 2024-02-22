@@ -9,10 +9,7 @@ import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Avdeev
- */
-public class DefaultCachedValuesFactory implements CachedValuesFactory {
+final class DefaultCachedValuesFactory implements CachedValuesFactory {
   private final Project myProject;
 
   DefaultCachedValuesFactory(@NotNull Project project) {
