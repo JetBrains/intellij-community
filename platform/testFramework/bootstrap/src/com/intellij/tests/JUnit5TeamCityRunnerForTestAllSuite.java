@@ -278,7 +278,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           attrs.put("message", limit(reason));
         }
         if (ex != null) {
-          attrs.put("details", getTrace(ex));
+          attrs.put("details", getTrace(ex, MAX_STACKTRACE_MESSAGE_LENGTH));
         }
         if (ex != null) {
           if (ex instanceof MultipleFailuresError && ((MultipleFailuresError)ex).hasFailures()) {
@@ -334,15 +334,12 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       return string;
     }
 
-    protected String getTrace(Throwable ex) {
+    protected static String getTrace(Throwable ex, int limit) {
       final StringWriter stringWriter = new StringWriter();
-      final PrintWriter writer = new PrintWriter(stringWriter);
+      final LimitedStackTracePrintWriter writer = new LimitedStackTracePrintWriter(stringWriter, limit);
       ex.printStackTrace(writer);
-      StringBuffer buffer = stringWriter.getBuffer();
-      if (buffer.length() > MAX_STACKTRACE_MESSAGE_LENGTH) {
-        return buffer.substring(0, MAX_STACKTRACE_MESSAGE_LENGTH);
-      }
-      return buffer.toString();
+      writer.close();
+      return stringWriter.toString();
     }
 
     private static String getId(TestIdentifier identifier) {
@@ -369,6 +366,87 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
 
     private static String escapeName(String str) {
       return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER2);
+    }
+
+    static class LimitedStackTracePrintWriter extends PrintWriter {
+      public static final String CAUSED_BY = "Caused by: ";
+      private final int headLimit;
+      private final int tailLimit;
+      private final List<String> tailLines = new ArrayList<>(0);
+      private boolean newLine = false;
+      private boolean inCausedBy = false;
+      private int headLength = 0;
+      private int tailLength = 0;
+
+      LimitedStackTracePrintWriter(StringWriter out, int limit) {
+        super(out);
+        // Leave 10% for final 'caused by'
+        tailLimit = limit / 10;
+        headLimit = limit - tailLimit;
+      }
+
+      @Override
+      public void print(String x) {
+        if (x == null) return;
+        int headLeft = headLimit - headLength;
+        if (headLeft > 0) {
+          // write while within head limit
+          if (x.length() >= headLeft) {
+            x = x.substring(0, headLeft - 1);
+          }
+          super.print(x);
+          headLength += x.length();
+          newLine = true;
+          return;
+        }
+        if (x.contains(CAUSED_BY)) {
+          tailLines.clear();
+          tailLength = 0;
+          inCausedBy = true;
+        }
+        if (inCausedBy) {
+          // add to last lines if they are within their tail limit
+          int tailLeft = tailLimit - tailLength;
+          if (tailLeft > 0) {
+            if (x.length() >= tailLeft) {
+              x = x.substring(0, tailLeft + 1);
+            }
+            tailLines.add(x);
+            tailLength += x.length() + 1;
+          }
+        }
+        else {
+          // just skip, it's not 'caused by' section (yet?)
+        }
+      }
+
+      @Override
+      public void println() {
+        if (newLine) {
+          newLine = false;
+          super.println();
+          headLength++;
+        }
+      }
+
+      private void finish() {
+        if (!tailLines.isEmpty()) {
+          super.print("...");
+          super.println();
+          for (String line : tailLines) {
+            super.print(line);
+            super.println();
+          }
+          tailLines.clear();
+        }
+        super.flush();
+      }
+
+      @Override
+      public void close() {
+        finish();
+        super.close();
+      }
     }
   }
 }

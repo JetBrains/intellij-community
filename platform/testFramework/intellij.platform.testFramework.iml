@@ -82,5 +82,6 @@
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>
