@@ -4,8 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -23,16 +21,14 @@ internal class GHReactionImageLoader(
   private val emojisNameToUrl: Deferred<Map<String, String>> = cs.async(Dispatchers.IO) {
     requestExecutor.executeSuspend(GithubApiRequests.Emojis.loadNameToUrlMap(serverPath))
   }
-  // seems to be a bug in github asset manager - loading emoji images in parallel sometimes leads to 404
-  private val mutex = Mutex()
 
   override suspend fun load(key: GHReactionContent): Image? {
     val map = emojisNameToUrl.await()
     val url = map[key.emojiName] ?: return null
     return withContext(Dispatchers.IO) {
-      mutex.withLock {
-        requestExecutor.executeSuspend(GithubApiRequests.Emojis.loadImage(url))
-      }
+      // seems to be a bug in github asset manager - loading emoji images with auth sometimes leads to 404
+      val exec = if (url.contains("githubassets")) GithubApiRequestExecutor.Factory.getInstance().create() else requestExecutor
+      return@withContext exec.executeSuspend(GithubApiRequests.Emojis.loadImage(url))
     }
   }
 }
