@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.logging
 
-import com.intellij.lang.logging.UnspecifiedLogger.Companion.UNSPECIFIED_LOGGER_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -83,17 +82,12 @@ interface JvmLogger {
   companion object {
     private val EP_NAME = ExtensionPointName<JvmLogger>("com.intellij.jvm.logging")
 
-    fun getAllLoggersNames(isOnlyOnStartup: Boolean): List<String> {
-      return getAllLoggers(isOnlyOnStartup).map { it.toString() }
-    }
-
     fun getAllLoggers(isOnlyOnStartup: Boolean): List<JvmLogger> {
       return EP_NAME.extensionList.filter { if (!isOnlyOnStartup) !it.isOnlyOnStartup() else true }.sortedByDescending { it.priority }
     }
 
-    fun getLoggerByName(loggerName: String?): JvmLogger? {
-      if (loggerName == UNSPECIFIED_LOGGER_NAME) return null
-      return EP_NAME.extensionList.find { it.toString() == loggerName }
+    fun getLoggerById(loggerId: String?): JvmLogger? {
+      return EP_NAME.extensionList.find { loggerId == it.id }
     }
   }
 }

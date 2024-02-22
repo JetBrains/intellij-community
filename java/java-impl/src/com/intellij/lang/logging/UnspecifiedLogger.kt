@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement
  * "unspecified" state, e.g. where there is no preferred logger selected.
  */
 class UnspecifiedLogger : JvmLogger {
-  override val id: String = UNSPECIFIED_LOGGER_NAME
+  override val id: String = UNSPECIFIED_LOGGER_ID
   override val loggerTypeName: String = "Unspecified"
   override val priority: Int = 1000
 
@@ -32,6 +32,6 @@ class UnspecifiedLogger : JvmLogger {
   override fun toString(): String = JavaBundle.message("java.configurable.logger.unspecified")
 
   companion object {
-    const val UNSPECIFIED_LOGGER_NAME: String = "Unspecified"
+    const val UNSPECIFIED_LOGGER_ID: String = "Unspecified"
   }
 }

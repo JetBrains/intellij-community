@@ -27,13 +27,14 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
   override fun getId(): String = JavaBundle.message("jvm.logging.configurable.id")
 
   override fun createComponent(): JComponent {
-    val loggers = JvmLogger.getAllLoggersNames(settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
+    val loggers = JvmLogger.getAllLoggers(settings.loggerId == UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
     panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
           label(JavaBundle.message("label.configurable.logger.type"))
           comboBox(loggers)
-            .bindItem(settings::loggerName.toNullableProperty())
+            .bindItem({ JvmLogger.getLoggerById(settings.loggerId) },
+                      { settings.loggerId = it?.id })
             .onChanged { updateWarningRow(it.item) }
         }
         warningRow = row {
@@ -42,16 +43,14 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
         }.visible(false)
       }
     }
-    updateWarningRow(settings.loggerName)
+    updateWarningRow(JvmLogger.getLoggerById(settings.loggerId))
     return panel
   }
 
-  private fun updateWarningRow(loggerDisplayName: String?) {
-    ReadAction.nonBlocking<Boolean> {
-      JvmLogger.getLoggerByName(loggerDisplayName)?.isAvailable(project) == false
-    }.finishOnUiThread(ModalityState.any()) { isVisible ->
-      warningRow.visible(isVisible)
-    }.submit(AppExecutorUtil.getAppExecutorService())
+  private fun updateWarningRow(logger: JvmLogger?) {
+    ReadAction.nonBlocking<Boolean> { logger?.isAvailable(project) == false && logger !is UnspecifiedLogger }
+      .finishOnUiThread(ModalityState.any()) { isVisible -> warningRow.visible(isVisible) }
+        .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   override fun isModified(): Boolean = panel.isModified()
