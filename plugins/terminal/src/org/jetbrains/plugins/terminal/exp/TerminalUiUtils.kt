@@ -41,12 +41,15 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.ui.AwtTransformers
+import org.intellij.lang.annotations.MagicConstant
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
@@ -109,7 +112,8 @@ object TerminalUiUtils {
     })
   }
 
-  fun createSingleShortcutSet(keyCode: Int, modifiers: Int): ShortcutSet {
+  fun createSingleShortcutSet(@MagicConstant(flagsFromClass = KeyEvent::class) keyCode: Int,
+                              @MagicConstant(flagsFromClass = InputEvent::class) modifiers: Int): ShortcutSet {
     val keyStroke = KeyStroke.getKeyStroke(keyCode, modifiers)
     return CustomShortcutSet(keyStroke)
   }
