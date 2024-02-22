@@ -2287,7 +2287,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private boolean isPopupAction(MouseEvent e) {
     GutterIconRenderer renderer = getGutterRenderer(e);
-    return renderer != null && renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
+    return renderer != null && renderer.getClickAction() == null && getPopupMenuActions(renderer, e) != null;
   }
 
   @Override
@@ -2594,8 +2594,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     EditorMouseEvent editorMouseEvent = new EditorMouseEvent(
       myEditor, e, editorArea, 0, new LogicalPosition(logicalLineAtCursor, 0),
       new VisualPosition(0, 0), true, null, null, null);
-    ActionGroup group = info != null ? info.renderer.getPopupMenuActions() :
-                        getPopupActionGroup(editorMouseEvent);
+    ActionGroup group;
+    if (info != null) {
+      group = getPopupMenuActions(info.renderer, e);
+    }
+    else {
+      group = getPopupActionGroup(editorMouseEvent);
+    }
     if (group == null) {
       // nothing
     }
@@ -2608,6 +2613,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                      ActionPlaces.EDITOR_ANNOTATIONS_AREA_POPUP : ActionPlaces.EDITOR_GUTTER_POPUP;
       showGutterContextMenu(group, e, place);
     }
+  }
+
+  private static @Nullable ActionGroup getPopupMenuActions(@NotNull GutterIconRenderer renderer, @NotNull MouseEvent e) {
+    return renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer
+            ? ((LineMarkerInfo.LineMarkerGutterIconRenderer<?>)renderer).getPopupMenuActions(e)
+            : renderer.getPopupMenuActions();
   }
 
   @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
