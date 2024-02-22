@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.terminal.JBTerminalWidget
 import com.intellij.ui.content.Content
 
 class TerminalTabCloseListener(val content: Content,
@@ -24,8 +25,8 @@ class TerminalTabCloseListener(val content: Content,
     if (content.getUserData(SILENT) == true) {
       return true
     }
-    val widget = TerminalToolWindowManager.getWidgetByContent(content)
-    if (widget == null || !widget.isSessionRunning) {
+    val widget = TerminalToolWindowManager.findWidgetByContent(content) ?: return true
+    if (JBTerminalWidget.asJediTermWidget(widget)?.isSessionRunning == false) {
       return true
     }
     val connector = ShellTerminalWidget.getProcessTtyConnector(widget.ttyConnector)
