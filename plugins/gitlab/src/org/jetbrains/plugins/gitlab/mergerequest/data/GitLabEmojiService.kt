@@ -10,7 +10,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.*
-import java.io.File
 
 @Service(Service.Level.APP)
 internal class GitLabEmojiService(cs: CoroutineScope) {
@@ -22,13 +21,10 @@ internal class GitLabEmojiService(cs: CoroutineScope) {
     parseEmojisFile()
   }
 
-  private fun parseEmojisFile(): List<ParsedGitLabEmoji> {
-    val path = GitLabEmojiService::class.java.classLoader.getResource("emoji/index.json") ?: error("File was not found")
-    val json = File(path.toURI())
-    val parsedData = mapper.readValue(json, object : TypeReference<Map<String, ParsedGitLabEmoji>>() {})
-
-    return parsedData.values.toList()
-  }
+  private fun parseEmojisFile(): List<ParsedGitLabEmoji> =
+    GitLabEmojiService::class.java.classLoader.getResourceAsStream("emoji/index.json")?.use {
+      mapper.readValue(it, object : TypeReference<Map<String, ParsedGitLabEmoji>>() {})
+    }?.values?.toList() ?: error("File was not found")
 }
 
 data class ParsedGitLabEmoji(
