@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
@@ -56,6 +57,7 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     }
     acceptedSourceRoots.map { sourceRoot ->
       withContext(Dispatchers.EDT) {
+        DumbService.getInstance(project).completeJustSubmittedTasks() // Waiting for smart mode
         CodeWriter.generate(
           project, module, sourceRoot.file!!,
           processAbstractTypes = module.withAbstractTypes,
