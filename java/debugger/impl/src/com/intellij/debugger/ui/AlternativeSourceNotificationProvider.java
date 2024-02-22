@@ -36,10 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public final class AlternativeSourceNotificationProvider implements EditorNotificationProvider {
 
@@ -91,16 +90,14 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
       altClasses = JavaPsiFacade.getInstance(project).findClasses(name, GlobalSearchScope.allScope(project));
     }
     setFileProcessed(file, true);
-    if (altClasses.length <= 1) {
+    Set<PsiClass> uniqClasses = ContainerUtil.newHashSet(altClasses);
+    if (uniqClasses.size() <= 1) {
       return null;
     }
-    ArrayList<PsiClass> alts = Arrays.stream(altClasses)
-      .distinct()
-      .filter(cls -> !(cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)))
-      .collect(Collectors.toCollection(()->new ArrayList<>()));
-    alts.add(0, baseClass);
-
-    ComboBoxClassElement[] elems = ContainerUtil.map2Array(alts,
+    List<PsiClass> otherClasses = ContainerUtil.filter(uniqClasses,
+      cls -> !(cls.equals(baseClass) || cls.getNavigationElement().equals(baseClass)));
+    List<PsiClass> allClasses = ContainerUtil.prepend(otherClasses, baseClass);
+    ComboBoxClassElement[] elems = ContainerUtil.map2Array(allClasses,
                                                            ComboBoxClassElement.class,
                                                            psiClass -> new ComboBoxClassElement((PsiClass)psiClass.getNavigationElement()));
 
