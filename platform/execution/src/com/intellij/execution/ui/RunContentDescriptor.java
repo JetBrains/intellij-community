@@ -9,8 +9,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.observable.properties.AtomicProperty;
-import com.intellij.openapi.observable.properties.ObservableProperty;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -32,8 +30,8 @@ public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final AtomicProperty<@TabTitle String> myDisplayNameView = new AtomicProperty<>(null);
-  private final AtomicProperty<Icon> myIconView = new AtomicProperty<>(null);
+  private final MutableReactiveProperty<@TabTitle @Nullable String> myDisplayNameView = new MutableReactiveProperty<>(null);
+  private final MutableReactiveProperty<@Nullable Icon> myIconView = new MutableReactiveProperty<>(null);
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
@@ -71,8 +69,8 @@ public class RunContentDescriptor implements Disposable {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
-    myDisplayNameView.set(displayName);
-    myIconView.set(icon);
+    myDisplayNameView.setValue(displayName);
+    myIconView.setValue(icon);
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
     myActivationCallback = activationCallback;
     if (myExecutionConsole != null) {
@@ -144,19 +142,21 @@ public class RunContentDescriptor implements Disposable {
    */
   @Nullable
   public Icon getIcon() {
-    return myIconView.get();
+    return myIconView.getValue();
   }
 
   /**
    * Returns the reactive property for an icon to show in the Run or Debug toolwindow tab corresponding to this content.
    * @return the icon property that can be observed for the most recent icon value.
    */
-  public ObservableProperty<Icon> getIconProperty() {
+  @ApiStatus.Experimental
+  public ReactiveProperty<Icon> getIconProperty() {
     return myIconView;
   }
 
+  @ApiStatus.Experimental
   protected void setIcon(@Nullable Icon icon) {
-    myIconView.set(icon);
+    myIconView.setValue(icon);
   }
 
   @Nullable
@@ -186,19 +186,21 @@ public class RunContentDescriptor implements Disposable {
    */
   @BuildEventsNls.Title
   public String getDisplayName() {
-    return myDisplayNameView.get();
+    return myDisplayNameView.getValue();
   }
 
   /**
    * Returns the reactive property for a title to show in the Run or Debug toolwindow tab corresponding to this content.
    * @return the title property that can be observed for the most recent title value.
    */
-  public ObservableProperty<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
+  @ApiStatus.Experimental
+  public ReactiveProperty<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
     return myDisplayNameView;
   }
 
+  @ApiStatus.Experimental
   protected void setDisplayName(@Nullable @TabTitle String displayName) {
-    myDisplayNameView.set(displayName);
+    myDisplayNameView.setValue(displayName);
   }
 
   public String getHelpId() {
