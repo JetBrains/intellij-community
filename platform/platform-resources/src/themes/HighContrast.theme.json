@@ -84,6 +84,24 @@
       }
     },
 
+    "Code": {
+      "Inline": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 0,
+        "borderColor": "#777",
+        "borderWidth": 1
+      },
+      "Block": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 100,
+        "inlineQuickDoc.borderColor": "#000000",
+        "inlineQuickDoc.backgroundColor": "#000000",
+        "inlineQuickDoc.backgroundOpacity": 100,
+        "borderColor":"#777",
+        "borderWidth": 1
+      }
+    },
+
     "ComboPopup.border": "1,1,1,1,E6E6E6",
 
     "CompletionPopup":  {

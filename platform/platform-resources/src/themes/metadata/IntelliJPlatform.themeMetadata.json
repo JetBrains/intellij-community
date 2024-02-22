@@ -125,6 +125,81 @@
       "description": "Minimum size of ComboBox"
     },
     {
+      "key": "Code.Inline.backgroundColor",
+      "description": "Inline code elements background",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.backgroundOpacity",
+      "description": "Inline code elements background opacity in percents",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.foregroundColor",
+      "description": "Inline code elements foreground",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.borderColor",
+      "description": "Inline code elements border color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.borderWidth",
+      "description": "Inline code elements border width in pixels",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.borderRadius",
+      "description": "Inline code elements border radius in pixels",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.backgroundColor",
+      "description": "Block code elements background",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.backgroundOpacity",
+      "description": "Block code elements background opacity in percents",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.inlineQuickDoc.backgroundColor",
+      "description": "Block code elements background in editor inline QuickDoc",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.inlineQuickDoc.backgroundOpacity",
+      "description": "Block code elements background opacity in editor inline QuickDoc in percents",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.inlineQuickDoc.borderColor",
+      "description": "Block code elements background in editor inline QuickDoc",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.foregroundColor",
+      "description": "Block code elements foreground",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.borderColor",
+      "description": "Block code elements border color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.borderWidth",
+      "description": "Block code elements border width in pixels",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.borderRadius",
+      "description": "Block code elements border radius in pixels",
+      "since": "2024.1"
+    },
+    {
       "key": "CombinedDiff.mainToolbarInsets",
       "description": "Main toolbar insets of the Combined (All in One) Diff",
       "since": "2023.3"
