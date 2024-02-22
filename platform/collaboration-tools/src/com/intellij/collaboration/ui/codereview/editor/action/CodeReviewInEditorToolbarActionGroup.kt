@@ -81,7 +81,7 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
   }
 
   private inner class ViewOptionToggleAction(private val option: DiscussionsViewOption,
-                                             text: @NlsActions.ActionText String) : ToggleAction(text) {
+                                             text: @NlsActions.ActionText String) : ToggleAction(text), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
     override fun isSelected(e: AnActionEvent): Boolean = vm.discussionsViewOption.value == option
     override fun setSelected(e: AnActionEvent, state: Boolean) = vm.setDiscussionsViewOption(option)
