@@ -20,9 +20,8 @@
   Please contact us if you are not satisfied with the data contained in this POM.
   URL : https://ant.apache.org
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
@@ -32,11 +31,12 @@
   <modelVersion>4.0.0</modelVersion>
   <url>https://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
-  <artifactId>ant-jai</artifactId>
+  <artifactId>ant-jakartamail</artifactId>
   <version>1.10.14</version>
-  <name>Apache Ant + JAI</name>
-  <description>image task and corresponding types.
-  </description>
+  <name>Apache Ant + JakartaMail</name>
+  <description>implementation of the mail task based on Jakarta EE mail.
+    Required to send emails to SMTP servers using user/password combinations
+  or to send mail over SSL</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
@@ -45,24 +45,14 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>javax.media</groupId>
-      <artifactId>jai-core</artifactId>
-      <version>1.1.3</version>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.media</groupId>
-      <artifactId>jai-codec</artifactId>
-      <version>1.1.3</version>
+      <!-- This brings in the necessary dependencies.
+      See https://eclipse-ee4j.github.io/mail/ -->
+      <groupId>com.sun.mail</groupId>
+      <artifactId>jakarta.mail</artifactId>
+      <version>2.0.1</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
-  <!-- Central has javax.media:jai-core:1.1.3 but only com.sun.media:jai-codec:1.1.2_01 -->
-  <repositories>
-    <repository>
-      <id>jboss</id>
-      <name>JBoss</name>
-      <url>https://repository.jboss.org/nexus/content/groups/public/</url>
-    </repository>
-  </repositories>
   <build>
     <plugins>
       <plugin>
@@ -70,12 +60,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <includes>
-            <include>org/apache/tools/ant/taskdefs/optional/image/Image.java</include>
-            <include>org/apache/tools/ant/types/optional/image/*</include>
+            <include>org/apache/tools/ant/taskdefs/email/JakartaMimeMailer*</include>
           </includes>
-          <testIncludes>
-            <include>org/apache/tools/ant/taskdefs/optional/image/ImageTest.java</include>
-          </testIncludes>
         </configuration>
       </plugin>
       <plugin>
@@ -92,20 +78,6 @@
           </archive>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <basedir>../../../..</basedir>
-          <workingDirectory>../../../..</workingDirectory>
-          <systemProperties>
-            <property>
-              <name>ant.test.basedir.ignore</name>
-              <value>true</value>
-            </property>
-          </systemProperties>
-        </configuration>
-      </plugin>
     </plugins>
     <resources>
       <resource>
@@ -118,7 +90,7 @@
       </resource>
     </resources>
     <sourceDirectory>../../../../src/main</sourceDirectory>
-    <testSourceDirectory>../../../../src/tests/junit</testSourceDirectory>
+    <testSourceDirectory>../../../../src/testcases</testSourceDirectory>
     <outputDirectory>../../../../target/${project.artifactId}/classes</outputDirectory>
     <testOutputDirectory>../../../../target/${project.artifactId}/testcases</testOutputDirectory>
     <directory>../../../../target/${project.artifactId}</directory>
