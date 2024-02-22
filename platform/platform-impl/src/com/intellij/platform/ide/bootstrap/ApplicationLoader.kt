@@ -39,6 +39,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
@@ -64,8 +65,6 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 import java.util.function.BiFunction
 import kotlin.coroutines.jvm.internal.CoroutineDumpState
 import kotlin.system.exitProcess
@@ -383,17 +382,8 @@ internal suspend fun executeApplicationStarter(starter: ApplicationStarter, args
       }
     }
     else {
-      // todo https://youtrack.jetbrains.com/issue/IDEA-298594
-      CompletableFuture.runAsync {
-        ForkJoinPool.managedBlock(object : ForkJoinPool.ManagedBlocker {
-          override fun block(): Boolean {
-            starter.main(args)
-            return true
-          }
-          override fun isReleasable(): Boolean {
-            return false
-          }
-        })
+      blockingContext {
+        starter.main(args)
       }
     }
   }
