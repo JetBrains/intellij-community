@@ -15,6 +15,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -132,7 +133,9 @@ public abstract class XDebuggerUtil {
 
   public static final String INLINE_BREAKPOINTS_KEY = "debugger.show.breakpoints.inline";
 
-  public static boolean areInlineBreakpointsEnabled() {
-    return Registry.is(INLINE_BREAKPOINTS_KEY);
+  public static boolean areInlineBreakpointsEnabled(@NotNull Document document) {
+    return Registry.is(INLINE_BREAKPOINTS_KEY) &&
+           !ContainerUtil.exists(InlineBreakpointsDisabler.Companion.getEP().getExtensionList(),
+                                 disabler -> disabler.areInlineBreakpointsDisabled(document));
   }
 }
