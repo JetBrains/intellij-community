@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class ZombieCodeVisionEntry(
+class ZombieCodeVisionEntry(
   providerId: String,
   @Nls longPresentation: String,
   @NlsContexts.Tooltip tooltip: String,
