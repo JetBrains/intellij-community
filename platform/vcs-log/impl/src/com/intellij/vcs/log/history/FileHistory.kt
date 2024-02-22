@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 
 @ApiStatus.Internal
-class FileHistory internal constructor(val commitToFileStateMap: Map<Int, CommitFileState>,
+class FileHistory internal constructor(internal val commitToFileStateMap: Map<Int, CommitFileState>,
                                        internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val commitToRename: MultiMap<UnorderedPair<Int>, Rename> = MultiMap.empty()) {
