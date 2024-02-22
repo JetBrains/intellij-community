@@ -119,7 +119,7 @@ class GitLabLazyProject(
     send(false)
   }.modelFlow(parentCs, LOG)
 
-  override val emojis: Deferred<List<ParsedGitLabEmoji>> = project.service<GitLabEmojiService>().emojis
+  override val emojis: Deferred<List<ParsedGitLabEmoji>> = service<GitLabEmojiService>().emojis
 
   @Throws(GitLabGraphQLMutationException::class)
   override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {
