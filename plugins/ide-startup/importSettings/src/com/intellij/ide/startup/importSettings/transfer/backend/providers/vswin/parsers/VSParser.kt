@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.providers.vswin.parsers
 
 import com.intellij.ide.startup.importSettings.db.KnownColorSchemes
@@ -32,7 +32,9 @@ class VSParser(private val hive: VSHive) {
       //    plugins.add(KnownPlugins.XAMLStyler)
       //}
 
-      recentProjects.addAll(regParser.recentProjects)
+      for (path in regParser.recentProjects) {
+        if (!addRecentProjectIfNeeded { path }) break
+      }
 
       if (laf == null) {
         logger.info("Got null for laf, trying registry method")
