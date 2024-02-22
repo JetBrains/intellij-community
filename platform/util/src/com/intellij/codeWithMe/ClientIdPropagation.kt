@@ -7,6 +7,8 @@ package com.intellij.codeWithMe
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 import java.util.function.Function
 
@@ -88,6 +90,38 @@ fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
   return BiConsumer { t, u ->
     withClientId(currentId) {
       biConsumer.accept(t, u)
+    }
+  }
+}
+
+fun <T> decorateFutureTask(futureTask: FutureTask<T>): FutureTask<T> {
+  if (!propagateClientIdAcrossThreads) return futureTask
+  val currentId = currentClientIdString
+  return object : FutureTask<T>({ null }) {
+    override fun run() {
+      withClientId(currentId) {
+        futureTask.run()
+      }
+    }
+
+    override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+      return futureTask.cancel(mayInterruptIfRunning)
+    }
+
+    override fun isCancelled(): Boolean {
+      return futureTask.isCancelled
+    }
+
+    override fun isDone(): Boolean {
+      return futureTask.isDone
+    }
+
+    override fun get(): T {
+      return futureTask.get()
+    }
+
+    override fun get(timeout: Long, unit: TimeUnit): T {
+      return futureTask.get(timeout, unit)
     }
   }
 }
