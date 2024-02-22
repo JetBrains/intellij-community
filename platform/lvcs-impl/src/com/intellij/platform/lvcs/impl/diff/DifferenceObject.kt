@@ -7,18 +7,18 @@ import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.platform.lvcs.impl.ActivityDiffObject
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.filePath
 import java.util.*
 
-internal open class DifferenceWrapper(protected val gateway: IdeaGateway,
-                                      protected open val scope: ActivityScope,
-                                      protected val selection: ChangeSetSelection,
-                                      protected val difference: Difference,
-                                      private val targetFilePath: FilePath,
-                                      protected val isOldContentUsed: Boolean) : ChangeViewDiffRequestProcessor.Wrapper() {
+internal open class DifferenceObject(protected val gateway: IdeaGateway,
+                                     protected open val scope: ActivityScope,
+                                     protected val selection: ChangeSetSelection,
+                                     protected val difference: Difference,
+                                     private val targetFilePath: FilePath,
+                                     protected val isOldContentUsed: Boolean) : ActivityDiffObject {
 
   constructor(gateway: IdeaGateway,
               scope: ActivityScope.File,
@@ -32,15 +32,13 @@ internal open class DifferenceWrapper(protected val gateway: IdeaGateway,
     return fileStatus(difference.left != null, difference.right != null)
   }
 
-  override fun getUserObject(): Any = difference
-  override fun getPresentableName(): String = targetFilePath.name
   override fun createProducer(project: Project?): DiffRequestProducer {
     return DifferenceDiffRequestProducer(project, gateway, scope, selection, difference, isOldContentUsed)
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is DifferenceWrapper) return false
+    if (other !is DifferenceObject) return false
     if (!super.equals(other)) return false
 
     if (scope != other.scope) return false

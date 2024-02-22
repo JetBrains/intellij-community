@@ -5,7 +5,6 @@ import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.containers.JBIterable
 
@@ -15,22 +14,22 @@ private data class ActivityDiffDataWithDifferences(val facade: LocalHistoryFacad
                                                    val selection: ChangeSetSelection,
                                                    val differences: List<Difference>,
                                                    val isOldContentUsed: Boolean) : ActivityDiffData {
-  override fun getPresentableChanges(project: Project): Iterable<ChangeViewDiffRequestProcessor.Wrapper> {
+  override fun getPresentableChanges(project: Project): Iterable<ActivityDiffObject> {
     val fileDifferences = JBIterable.from(differences).filter { it.isFile }
     return when (scope) {
       is ActivityScope.Selection -> {
         val calculator = selection.data.getSelectionCalculator(facade, gateway, scope, isOldContentUsed)
         fileDifferences.map {
-          SelectionDifferenceWrapper(gateway, scope, selection, it, calculator, isOldContentUsed)
+          SelectionDifferenceObject(gateway, scope, selection, it, calculator, isOldContentUsed)
         }
       }
       is ActivityScope.File -> {
-        fileDifferences.map { DifferenceWrapper(gateway, scope, selection, it, isOldContentUsed) }
+        fileDifferences.map { DifferenceObject(gateway, scope, selection, it, isOldContentUsed) }
       }
       ActivityScope.Recent -> {
         fileDifferences.map { difference ->
           difference.filePath?.let {
-            DifferenceWrapper(gateway, scope, selection, difference, it, isOldContentUsed)
+            DifferenceObject(gateway, scope, selection, difference, it, isOldContentUsed)
           }
         }.filterNotNull()
       }

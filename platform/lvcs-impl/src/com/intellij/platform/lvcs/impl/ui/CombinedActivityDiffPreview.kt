@@ -18,7 +18,9 @@ import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.platform.lvcs.impl.ActivityDiffData
+import com.intellij.platform.lvcs.impl.ActivityDiffObject
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.filePath
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
@@ -66,12 +68,20 @@ internal abstract class CombinedActivityDiffPreview(project: Project,
     CombinedDiffPreviewModel(project, null, parentDisposable) {
 
     override fun iterateAllChanges(): Iterable<Wrapper> {
-      return diffData?.getPresentableChanges(project)?.takeIf { it.any() } ?: listOf(EmptyChangeWrapper(project, scope))
+      val wrappers = diffData?.getPresentableChanges(project)?.map { DiffObjectWrapper(it) }
+      if (wrappers.isNullOrEmpty()) return listOf(EmptyChangeWrapper(project, scope))
+      return wrappers
     }
 
     override fun iterateSelectedChanges(): Iterable<Wrapper> = iterateAllChanges()
     override fun selectChangeInSourceComponent(change: Wrapper) = Unit
   }
+}
+
+private class DiffObjectWrapper(private val diffObject: ActivityDiffObject) : Wrapper(), PresentableChange by diffObject {
+  override fun getUserObject(): Any = diffObject
+  override fun getPresentableName(): String = diffObject.filePath.name
+  override fun createProducer(project: Project?): DiffRequestProducer = diffObject.createProducer(project)
 }
 
 private class EmptyChangeWrapper(private val project: Project, private val scope: ActivityScope) : Wrapper() {

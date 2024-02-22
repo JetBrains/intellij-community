@@ -13,13 +13,13 @@ import com.intellij.platform.lvcs.impl.ChangeSetSelection
 import com.intellij.platform.lvcs.impl.leftRevision
 import com.intellij.platform.lvcs.impl.rightRevision
 
-internal class SelectionDifferenceWrapper(gateway: IdeaGateway,
-                                          override val scope: ActivityScope.Selection,
-                                          selection: ChangeSetSelection,
-                                          difference: Difference,
-                                          private val selectionCalculator: SelectionCalculator,
-                                          isOldContentUsed: Boolean) :
-  DifferenceWrapper(gateway, scope, selection, difference, isOldContentUsed) {
+internal class SelectionDifferenceObject(gateway: IdeaGateway,
+                                         override val scope: ActivityScope.Selection,
+                                         selection: ChangeSetSelection,
+                                         difference: Difference,
+                                         private val selectionCalculator: SelectionCalculator,
+                                         isOldContentUsed: Boolean) :
+  DifferenceObject(gateway, scope, selection, difference, isOldContentUsed) {
   override fun getFileStatus(): FileStatus {
     val isLeftContentAvailable = difference.left != null && selectionCalculator.canCalculateFor(selection.leftRevision, RevisionProcessingProgress.EMPTY)
     val isRightContentAvailable = difference.right != null && selectionCalculator.canCalculateFor(selection.rightRevision, RevisionProcessingProgress.EMPTY)
