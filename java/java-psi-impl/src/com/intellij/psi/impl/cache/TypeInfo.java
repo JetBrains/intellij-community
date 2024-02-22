@@ -210,7 +210,10 @@ public /*sealed*/ abstract class TypeInfo {
       super(outer != null ?
             (components.length == 0 ?
              (outer.getKind() == TypeKind.REF ? TypeKind.INNER_SIMPLE : TypeKind.INNER) : TypeKind.INNER_GENERIC) :
-            (components.length == 0 ? TEXT_TO_KIND.getOrDefault(name, TypeKind.REF) : TypeKind.GENERIC));
+            (components.length == 0 ?
+            // Check prefix to spare hashCode computation 
+             (name.startsWith("java.") ? TEXT_TO_KIND.getOrDefault(name, TypeKind.REF) : TypeKind.REF) : 
+             TypeKind.GENERIC));
       myName = name;
       myComponents = components;
       myOuter = outer;
