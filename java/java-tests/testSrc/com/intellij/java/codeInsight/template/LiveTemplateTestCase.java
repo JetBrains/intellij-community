@@ -1,51 +1,57 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.codeInsight.template
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeInsight.template;
 
-import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.codeInsight.template.impl.TemplateState
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
-import groovy.transform.CompileStatic
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ui.UIUtil;
 
-@CompileStatic
-abstract class LiveTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
+public abstract class LiveTemplateTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected void setUp() {
-    super.setUp()
-    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable())
+  protected void setUp() throws Exception {
+    super.setUp();
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
   }
 
   @Override
-  protected void tearDown() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = false
-    if (state != null) {
-      WriteCommandAction.runWriteCommandAction project, {
-        state.gotoEnd()
+  protected void tearDown() throws Exception {
+    try {
+      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+      CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
+      TemplateState state = getState();
+      if (state != null) {
+        WriteCommandAction.runWriteCommandAction(getProject(), () -> state.gotoEnd());
       }
     }
-    super.tearDown()
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected TemplateState getState() {
-    editor?.with { TemplateManagerImpl.getTemplateState(it) }
+    Editor editor = getEditor();
+    return editor == null ? null : TemplateManagerImpl.getTemplateState(editor);
   }
 
   protected TemplateManagerImpl getTemplateManager() {
-    return TemplateManager.getInstance(project) as TemplateManagerImpl
+    return (TemplateManagerImpl)TemplateManager.getInstance(getProject());
   }
 
-  def startTemplate(Template template) {
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), template)
-    UIUtil.dispatchAllInvocationEvents()
+  public void startTemplate(Template template) {
+    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), template);
+    UIUtil.dispatchAllInvocationEvents();
   }
 
-  def startTemplate(String name, String group) {
-    startTemplate(TemplateSettings.getInstance().getTemplate(name, group))
+  public void startTemplate(String name, String group) {
+    startTemplate(TemplateSettings.getInstance().getTemplate(name, group));
   }
 }

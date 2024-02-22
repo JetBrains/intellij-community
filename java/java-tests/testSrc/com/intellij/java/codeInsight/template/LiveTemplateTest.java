@@ -1,1333 +1,1368 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.codeInsight.template
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeInsight.template;
 
-import com.intellij.JavaTestUtil
-import com.intellij.application.options.CodeStyle
-import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.template.*
-import com.intellij.codeInsight.template.impl.*
-import com.intellij.codeInsight.template.macro.CompleteMacro
-import com.intellij.codeInsight.template.macro.ConcatMacro
-import com.intellij.codeInsight.template.macro.FilePathMacroBase
-import com.intellij.codeInsight.template.macro.SplitWordsMacro
-import com.intellij.ide.DataManager
-import com.intellij.internal.statistic.FUCollectorTestCase
-import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.RecursionManager
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
-import com.intellij.testFramework.DumbModeTestUtils
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil
-import com.intellij.util.DocumentUtil
-import com.intellij.util.ui.UIUtil
-import org.jdom.Element
-import org.jetbrains.annotations.NotNull
+import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.impl.*;
+import com.intellij.codeInsight.template.macro.CompleteMacro;
+import com.intellij.codeInsight.template.macro.ConcatMacro;
+import com.intellij.codeInsight.template.macro.FilePathMacroBase;
+import com.intellij.codeInsight.template.macro.SplitWordsMacro;
+import com.intellij.ide.DataManager;
+import com.intellij.internal.statistic.FUCollectorTestCase;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import com.jetbrains.fus.reporting.model.lion3.LogEvent;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
 
 @SuppressWarnings("SpellCheckingInspection")
-class LiveTemplateTest extends LiveTemplateTestCase {
-  final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
-
+public class LiveTemplateTest extends LiveTemplateTestCase {
   private void doTestTemplateWithArg(@NotNull String templateName,
                                      @NotNull String templateText,
                                      @NotNull String fileText,
-                                     @NotNull String expected) throws IOException {
-    configureFromFileText("dummy.java", fileText)
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    String group = "user"
-    final Template template = manager.createTemplate(templateName, group, templateText)
-    template.addVariable("ARG", "", "", false)
-    TemplateContextType contextType = contextType(JavaCodeContextType.Generic.class)
-    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
-    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
+                                     @NotNull String expected) {
+    configureFromFileText("dummy.java", fileText);
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    String group = "user";
+    final Template template = manager.createTemplate(templateName, group, templateText);
+    template.addVariable("ARG", "", "", false);
+    TemplateContextType contextType = contextType(JavaCodeContextType.Generic.class);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
 
-    writeCommand { manager.startTemplate(editor, (char)'\t') }
-    UIUtil.dispatchAllInvocationEvents()
-    checkResultByText(expected)
+    writeCommand(() -> manager.startTemplate(getEditor(), '\t'));
+    UIUtil.dispatchAllInvocationEvents();
+    checkResultByText(expected);
   }
 
-  void testDependentSegmentsAtTheSamePosition() {
-    configureFromFileText("dummy.java", "class A { void test() { <caret> } }")
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("test_template", "user_group", '$A$$B$ then "$A$.$B$"')
-    template.addVariable("A", "", "", true)
-    template.addVariable("B", "", "", true)
-    startTemplate(template)
-    myFixture.type("HELLO")
-    myFixture.type("\t")
-    myFixture.type("THERE")
-    myFixture.type("\t")
-    assert state == null
-    checkResultByText("class A { void test() { HELLOTHERE then \"HELLO.THERE\" } }")
+  public void testDependentSegmentsAtTheSamePosition() {
+    configureFromFileText("dummy.java", "class A { void test() { <caret> } }");
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("test_template", "user_group", "$A$$B$ then \"$A$.$B$\"");
+    template.addVariable("A", "", "", true);
+    template.addVariable("B", "", "", true);
+    startTemplate(template);
+    myFixture.type("HELLO");
+    myFixture.type("\t");
+    myFixture.type("THERE");
+    myFixture.type("\t");
+    assertNull(getState());
+    checkResultByText("class A { void test() { HELLOTHERE then \"HELLO.THERE\" } }");
   }
 
-  void testTemplateWithSegmentsAtTheSamePosition_1() {
-    doTestTemplateWithThreeVariables("", "", "", "class A { void test() { for(TestValue1TestValue2TestValue3) {} } }")
+  public void testTemplateWithSegmentsAtTheSamePosition1() {
+    doTestTemplateWithThreeVariables("", "", "", "class A { void test() { for(TestValue1TestValue2TestValue3) {} } }");
   }
 
-  void testTemplateWithSegmentsAtTheSamePosition_2() {
-    doTestTemplateWithThreeVariables("Def1", "Def2", "DefaultValue", "class A { void test() { for(Def1Def2DefaultValue) {} } }")
+  public void testTemplateWithSegmentsAtTheSamePosition2() {
+    doTestTemplateWithThreeVariables("Def1", "Def2", "DefaultValue", "class A { void test() { for(Def1Def2DefaultValue) {} } }");
   }
 
-  void testTemplateWithSegmentsAtTheSamePosition_3() {
-    doTestTemplateWithThreeVariables("", "DefaultValue", "", "class A { void test() { for(TestValue1DefaultValueTestValue3) {} } }")
+  public void testTemplateWithSegmentsAtTheSamePosition3() {
+    doTestTemplateWithThreeVariables("", "DefaultValue", "", "class A { void test() { for(TestValue1DefaultValueTestValue3) {} } }");
   }
 
-  void testTemplateWithSegmentsAtTheSamePosition_4() {
-    configureFromFileText("dummy.java", "class A { void test() { <caret> } }")
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("test_template", "user_group", '$A$$B$ then "$A$$B$"')
-    template.addVariable("A", "", "\"Def1\"", true)
-    template.addVariable("B", "", "\"Def2\"", true)
-    startTemplate(template)
-    checkResultByText("class A { void test() { Def1Def2 then \"Def1Def2\" } }")
+  public void testTemplateWithSegmentsAtTheSamePosition4() {
+    configureFromFileText("dummy.java", "class A { void test() { <caret> } }");
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("test_template", "user_group", "$A$$B$ then \"$A$$B$\"");
+    template.addVariable("A", "", "\"Def1\"", true);
+    template.addVariable("B", "", "\"Def2\"", true);
+    startTemplate(template);
+    checkResultByText("class A { void test() { Def1Def2 then \"Def1Def2\" } }");
   }
 
-  private void doTestTemplateWithThreeVariables(String firstDefaultValue, String secondDefaultValue, String thirdDefaultValue, String expectedText) {
-    configureFromFileText("dummy.java", "class A { void test() { <caret> } }")
+  private void doTestTemplateWithThreeVariables(String firstDefaultValue,
+                                                String secondDefaultValue,
+                                                String thirdDefaultValue,
+                                                String expectedText) {
+    configureFromFileText("dummy.java", "class A { void test() { <caret> } }");
 
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    def templateName = "tst_template"
-    def templateGroup = "user"
-    final Template template = manager.createTemplate(templateName, templateGroup, 'for($TEST1$$TEST2$$TEST3$) {}')
-    template.addVariable("TEST1", "", StringUtil.wrapWithDoubleQuote(firstDefaultValue), true)
-    template.addVariable("TEST2", "", StringUtil.wrapWithDoubleQuote(secondDefaultValue), true)
-    template.addVariable("TEST3", "", StringUtil.wrapWithDoubleQuote(thirdDefaultValue), true)
-    startTemplate(template)
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    String templateName = "tst_template";
+    String templateGroup = "user";
+    final Template template = manager.createTemplate(templateName, templateGroup, "for($TEST1$$TEST2$$TEST3$) {}");
+    template.addVariable("TEST1", "", StringUtil.wrapWithDoubleQuote(firstDefaultValue), true);
+    template.addVariable("TEST2", "", StringUtil.wrapWithDoubleQuote(secondDefaultValue), true);
+    template.addVariable("TEST3", "", StringUtil.wrapWithDoubleQuote(thirdDefaultValue), true);
+    startTemplate(template);
 
-    if (firstDefaultValue.empty) myFixture.type("TestValue1")
-    myFixture.type("\t")
-    if (secondDefaultValue.empty) myFixture.type("TestValue2")
-    myFixture.type("\t")
-    if (thirdDefaultValue.empty) myFixture.type("TestValue3")
-    myFixture.type("\t")
-    assert state == null
-    checkResultByText(expectedText)
+    if (firstDefaultValue.isEmpty()) myFixture.type("TestValue1");
+    myFixture.type("\t");
+    if (secondDefaultValue.isEmpty()) myFixture.type("TestValue2");
+    myFixture.type("\t");
+    if (thirdDefaultValue.isEmpty()) myFixture.type("TestValue3");
+    myFixture.type("\t");
+    assertNull(getState());
+    checkResultByText(expectedText);
   }
 
-  void testTemplateWithArg1() throws IOException {
-    doTestTemplateWithArg("tst", 'wrap($ARG$)', "tst arg<caret>", "wrap(arg)")
+  public void testTemplateWithArg1() {
+    doTestTemplateWithArg("tst", "wrap($ARG$)", "tst arg<caret>", "wrap(arg)");
   }
 
-  void testTemplateWithArg2() throws IOException {
-    doTestTemplateWithArg("tst#", 'wrap($ARG$)', "tst#arg<caret>", "wrap(arg)")
+  public void testTemplateWithArg2() {
+    doTestTemplateWithArg("tst#", "wrap($ARG$)", "tst#arg<caret>", "wrap(arg)");
   }
 
-  void testTemplateWithArg3() throws IOException {
-    doTestTemplateWithArg("tst#", 'wrap($ARG$)', "tst# arg<caret>", "tst# arg")
+  public void testTemplateWithArg3() {
+    doTestTemplateWithArg("tst#", "wrap($ARG$)", "tst# arg<caret>", "tst# arg");
   }
 
-  void testTemplateAtEndOfFile() {
-    configureFromFileText("empty.java", "")
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("empty", "user", '$VAR$')
-    template.addVariable("VAR", "", "", false)
+  public void testTemplateAtEndOfFile() {
+    configureFromFileText("empty.java", "");
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("empty", "user", "$VAR$");
+    template.addVariable("VAR", "", "", false);
 
-    startTemplate(template)
-    checkResultByText("")
+    startTemplate(template);
+    checkResultByText("");
   }
 
-  void testTemplateWithEnd() {
-    configureFromFileText("empty.java", "")
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("empty", "user", '$VAR$$END$')
-    template.addVariable("VAR", "bar", "bar", true)
-    template.setToReformat(true)
+  public void testTemplateWithEnd() {
+    configureFromFileText("empty.java", "");
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("empty", "user", "$VAR$$END$");
+    template.addVariable("VAR", "bar", "bar", true);
+    template.setToReformat(true);
 
-    startTemplate(template)
-    myFixture.type("foo")
-    checkResultByText("foo")
+    startTemplate(template);
+    myFixture.type("foo");
+    checkResultByText("foo");
   }
 
-  void testTemplateWithIndentedEnd() {
-    configureFromFileText("empty.java", "class C {\n" +
-                                        "  bar() {\n" +
-                                        "    <caret>\n" +
-                                        "  }\n" +
-                                        "}")
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("empty", "user", 'foo();\n' +
-                                                                'int i = 0;    $END$\n' +
-                                                                'foo()')
-    template.setToReformat(true)
-    startTemplate(template)
-    checkResultByText("class C {\n" +
-                      "  bar() {\n" +
-                      "      foo();\n" +
-                      "      int i = 0;    <caret>\n" +
-                      "      foo()\n" +
-                      "  }\n" +
-                      "}")
+  public void testTemplateWithIndentedEnd() {
+    configureFromFileText("empty.java", """
+      class C {
+        bar() {
+          <caret>
+        }
+      }""");
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("empty", "user", """
+      foo();
+      int i = 0;    $END$
+      foo()""");
+    template.setToReformat(true);
+    startTemplate(template);
+    checkResultByText("""
+                        class C {
+                          bar() {
+                              foo();
+                              int i = 0;    <caret>
+                              foo()
+                          }
+                        }""");
   }
 
-
-  void testTemplateWithEndOnEmptyLine() {
-    configureFromFileText("empty.java", "class C {\n" +
-                                        "  bar() {\n" +
-                                        "    <caret>\n" +
-                                        "  }\n" +
-                                        "}")
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("empty", "user", 'foo()\n' +
-                                                                '  $END$\n' +
-                                                                'foo()')
-    template.setToReformat(true)
-    startTemplate(template)
-    checkResultByText("class C {\n" +
-                      "  bar() {\n" +
-                      "      foo()\n" +
-                      "      <caret>\n" +
-                      "      foo()\n" +
-                      "  }\n" +
-                      "}")
+  public void testTemplateWithEndOnEmptyLine() {
+    configureFromFileText("empty.java", """
+      class C {
+        bar() {
+          <caret>
+        }
+      }""");
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("empty", "user", """
+      foo()
+        $END$
+      foo()""");
+    template.setToReformat(true);
+    startTemplate(template);
+    checkResultByText("""
+                        class C {
+                          bar() {
+                              foo()
+                              <caret>
+                              foo()
+                          }
+                        }""");
   }
 
   private void checkResultByText(String text) {
-    myFixture.checkResult(text)
+    myFixture.checkResult(text);
   }
 
   private void configureFromFileText(String name, String text) {
-    myFixture.configureByText(name, text)
+    myFixture.configureByText(name, text);
   }
 
-  void testEndInTheMiddle() {
-    configure()
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("frm", "user", "javax.swing.JFrame frame = new javax.swing.JFrame();\n" +
-                                                                    '$END$\n' +
-                                                                    "frame.setVisible(true);\n" +
-                                                                    "frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);\n" +
-                                                                    "frame.pack();")
-    template.setToShortenLongNames(false)
-    template.setToReformat(true)
-    startTemplate(template)
-    checkResult()
+  public void testEndInTheMiddle() {
+    configure();
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("frm", "user", """
+      javax.swing.JFrame frame = new javax.swing.JFrame();
+      $END$
+      frame.setVisible(true);
+      frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+      frame.pack();""");
+    template.setToShortenLongNames(false);
+    template.setToReformat(true);
+    startTemplate(template);
+    checkResult();
   }
 
-  void "test honor custom completion caret placement"() {
-    myFixture.configureByText 'a.java', '''
-class Foo {
-  void foo(int a) {}
-  { <caret> }
-}
-'''
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("frm", "user", '$VAR$')
-    template.addVariable('VAR', new MacroCallNode(new CompleteMacro()), new EmptyNode(), true)
-    startTemplate(template)
-    myFixture.type('fo\n')
-    myFixture.checkResult '''
-class Foo {
-  void foo(int a) {}
-  { foo(<caret>); }
-}
-'''
-    assert !state.finished
+  public void testHonorCustomCompletionCaretPlacement() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(int a) {}
+        { <caret> }
+      }
+      """);
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("frm", "user", "$VAR$");
+    template.addVariable("VAR", new MacroCallNode(new CompleteMacro()), new EmptyNode(), true);
+    startTemplate(template);
+    myFixture.type("fo\n");
+    myFixture.checkResult("""
+                            class Foo {
+                              void foo(int a) {}
+                              { foo(<caret>); }
+                            }
+                            """);
+    assertFalse(getState().isFinished());
   }
 
-  void "test cancel template when completion placed caret outside the variable"() {
-    myFixture.configureByText 'a.java', '''
-class Foo {
-  void foo(int a) {}
-  { <caret>() }
-}
-'''
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("frm", "user", '$VAR$')
-    template.addVariable('VAR', new MacroCallNode(new CompleteMacro()), new EmptyNode(), true)
-    startTemplate(template)
-    myFixture.type('fo\n')
-    myFixture.checkResult '''
-class Foo {
-  void foo(int a) {}
-  { foo(<caret>); }
-}
-'''
-    assert !state
+  public void testCancelTemplateWhenCompletionPlacedCaretOutsideTheVariable() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        void foo(int a) {}
+        { <caret>() }
+      }
+      """);
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("frm", "user", "$VAR$");
+    template.addVariable("VAR", new MacroCallNode(new CompleteMacro()), new EmptyNode(), true);
+    startTemplate(template);
+    myFixture.type("fo\n");
+    myFixture.checkResult("""
+                            class Foo {
+                              void foo(int a) {}
+                              { foo(<caret>); }
+                            }
+                            """);
+    assertNull(getState());
   }
 
   private void checkResult() {
-    checkResultByFile(getTestName(false) + "-out.java")
+    checkResultByFile(getTestName(false) + "-out.java");
   }
 
   private void checkResultByFile(String s) {
-    myFixture.checkResultByFile(s)
+    myFixture.checkResultByFile(s);
   }
 
-  def startTemplate(String name, char expandKey) {
-    myFixture.type(name)
-    myFixture.type(expandKey)
+  public void startTemplate(String name, char expandKey) {
+    myFixture.type(name);
+    myFixture.type(expandKey);
   }
 
   private static <T extends TemplateContextType> T contextType(Class<T> clazz) {
-    return TemplateContextTypes.getByClass(clazz)
+    return TemplateContextTypes.getByClass(clazz);
   }
 
   private void configure() {
-    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.configureByFile(getTestName(false) + ".java");
   }
 
-  void testPreferStartMatchesInLookups() throws Throwable {
-    configure()
-    startTemplate("iter", "Java")
-    myFixture.type('ese\n') //for entrySet
-    assert myFixture.lookupElementStrings == ['barGooStringBuilderEntry', 'gooStringBuilderEntry', 'stringBuilderEntry', 'builderEntry', 'entry']
-    myFixture.type('e')
-    assert myFixture.lookupElementStrings == ['entry', 'barGooStringBuilderEntry', 'gooStringBuilderEntry', 'stringBuilderEntry', 'builderEntry']
-    assert LookupManager.getActiveLookup(editor).currentItem.lookupString == 'entry'
+  public void testPreferStartMatchesInLookups() {
+    configure();
+    startTemplate("iter", "Java");
+    myFixture.type("ese\n");//for entrySet
+    assertEquals(List.of("barGooStringBuilderEntry", "gooStringBuilderEntry", "stringBuilderEntry", "builderEntry", "entry"),
+                 myFixture.getLookupElementStrings());
+    myFixture.type("e");
+    assertEquals(List.of("entry", "barGooStringBuilderEntry", "gooStringBuilderEntry", "stringBuilderEntry", "builderEntry"),
+                 myFixture.getLookupElementStrings());
+    assertEquals("entry", LookupManager.getActiveLookup(getEditor()).getCurrentItem().getLookupString());
   }
 
-  void testClassNameDotInTemplate() {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    configure()
-    startTemplate("soutv", "Java")
-    myFixture.type('File')
-    assert myFixture.lookupElementStrings == ['file']
-    myFixture.type('.')
-    checkResult()
-    assert !state.finished
+  public void testClassNameDotInTemplate() {
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE);
+    configure();
+    startTemplate("soutv", "Java");
+    myFixture.type("File");
+    assertEquals(List.of("file"), myFixture.getLookupElementStrings());
+    myFixture.type(".");
+    checkResult();
+    assertFalse(getState().isFinished());
   }
 
-  void testFinishTemplateVariantWithDot() {
-    CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
-    configure()
-    startTemplate("soutv", "Java")
-    myFixture.type('fil')
-    assert myFixture.lookupElementStrings == ['file']
-    myFixture.type('.')
-    checkResult()
-    assert !state.finished
+  public void testFinishTemplateVariantWithDot() {
+    CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(true);
+    configure();
+    startTemplate("soutv", "Java");
+    myFixture.type("fil");
+    assertEquals(List.of("file"), myFixture.getLookupElementStrings());
+    myFixture.type(".");
+    checkResult();
+    assertFalse(getState().isFinished());
   }
 
-  void testAllowTypingRandomExpressionsWithLookupOpen() {
-    configure()
-    startTemplate("iter", "Java")
-    myFixture.type('file.')
-    checkResult()
-    assert !state.finished
+  public void testAllowTypingRandomExpressionsWithLookupOpen() {
+    configure();
+    startTemplate("iter", "Java");
+    myFixture.type("file.");
+    checkResult();
+    assertFalse(getState().isFinished());
   }
 
-  void "_testIterForceBraces"() {
-    def settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
-    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+  public void _testIterForceBraces() {
+    CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
 
     try {
-      configure()
-      startTemplate("iter", "Java")
-      checkResult()
+      configure();
+      startTemplate("iter", "Java");
+      checkResult();
     }
     finally {
-      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE
+      settings.IF_BRACE_FORCE = CommonCodeStyleSettings.DO_NOT_FORCE;
     }
   }
 
-  void testOtherContext() throws IOException {
-    configureFromFileText("a.java", "class Foo { <caret>xxx }")
-    assertInstanceOf(
-      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(),
-                                                                                                     getEditor()))),
-      JavaCodeContextType.Declaration.class)
+  public void testOtherContext() {
+    configureFromFileText("a.java", "class Foo { <caret>xxx }");
+    assertInstanceOf(assertOneElement(
+                       TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()))),
+                     JavaCodeContextType.Declaration.class);
 
-    configureFromFileText("a.txt", "class Foo { <caret>xxx }")
-    assertInstanceOf(
-      assertOneElement(TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(),
-                                                                                                     getEditor()))),
-      EverywhereContextType.class)
+    configureFromFileText("a.txt", "class Foo { <caret>xxx }");
+    assertInstanceOf(assertOneElement(
+                       TemplateManagerImpl.getApplicableContextTypes(TemplateActionContext.expanding(myFixture.getFile(), getEditor()))),
+                     EverywhereContextType.class);
   }
 
-  void testJavaOtherContext() throws IOException {
-    def stmtContext = TemplateContextTypes.getByClass(JavaCodeContextType.Statement)
+  public void testJavaOtherContext() {
+    JavaCodeContextType.Statement stmtContext = TemplateContextTypes.getByClass(JavaCodeContextType.Statement.class);
 
-    configureFromFileText("a.java", "class Foo {{ iter<caret>  }}")
+    configureFromFileText("a.java", "class Foo {{ iter<caret>  }}");
 
-    TemplateImpl template = TemplateSettings.instance.getTemplate("iter", "Java")
-    assert (template in templateManager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("iter", "Java");
+    assertTrue(getTemplateManager()
+                 .findMatchingTemplates(myFixture.getFile(), getEditor(), Lookup.REPLACE_SELECT_CHAR, TemplateSettings.getInstance())
+                 .containsKey(template));
 
-    assert template.templateContext.getOwnValue(stmtContext)
-    assert !template.templateContext.getOwnValue(stmtContext.baseContextType)
-    template.templateContext.setEnabled(stmtContext, false)
-    template.templateContext.setEnabled(stmtContext.baseContextType, true)
+    assertTrue(template.getTemplateContext().getOwnValue(stmtContext));
+    assertFalse(template.getTemplateContext().getOwnValue(stmtContext.getBaseContextType()));
+    template.getTemplateContext().setEnabled(stmtContext, false);
+    template.getTemplateContext().setEnabled(stmtContext.getBaseContextType(), true);
     try {
-      assert !(template in templateManager.findMatchingTemplates(myFixture.file, editor, Lookup.REPLACE_SELECT_CHAR, TemplateSettings.instance)?.keySet())
-    } finally {
-      template.templateContext.setEnabled(stmtContext, true)
-      template.templateContext.setEnabled(stmtContext.baseContextType, false)
+      assertFalse(getTemplateManager()
+                    .findMatchingTemplates(myFixture.getFile(), getEditor(), Lookup.REPLACE_SELECT_CHAR, TemplateSettings.getInstance())
+                    .containsKey(template));
+    }
+    finally {
+      template.getTemplateContext().setEnabled(stmtContext, true);
+      template.getTemplateContext().setEnabled(stmtContext.getBaseContextType(), false);
     }
   }
 
-  void testDontSaveDefaultContexts() {
-    def defElement = JDOMUtil.load('''\
-<context>
-  <option name="JAVA_STATEMENT" value="false"/>
-  <option name="JAVA_CODE" value="true"/>
-</context>''')
-    def defContext = new TemplateContext()
-    defContext.readTemplateContext(defElement)
+  public void testDontSaveDefaultContexts() throws IOException, JDOMException {
+    Element defElement = JDOMUtil.load("""
+                                         <context>
+                                           <option name="JAVA_STATEMENT" value="false"/>
+                                           <option name="JAVA_CODE" value="true"/>
+                                         </context>""");
+    TemplateContext defContext = new TemplateContext();
+    defContext.readTemplateContext(defElement);
 
-    assert !defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Statement))
-    assert defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Declaration))
-    assert defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic))
+    assertFalse(defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Statement.class)));
+    assertTrue(defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Declaration.class)));
+    assertTrue(defContext.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic.class)));
 
-    def copy = defContext.createCopy()
+    TemplateContext copy = defContext.createCopy();
 
-    def write = copy.writeTemplateContext(null)
-    assert write.children.size() == 2 : JDOMUtil.writeElement(write)
+    Element write = copy.writeTemplateContext(null);
+    assertEquals(2, write.getChildren().size());
 
-    copy.setEnabled(TemplateContextTypes.getByClass(JavaCommentContextType), false)
+    copy.setEnabled(TemplateContextTypes.getByClass(JavaCommentContextType.class), false);
 
-    write = copy.writeTemplateContext(null)
-    assert write.children.size() == 3 : JDOMUtil.writeElement(write)
+    write = copy.writeTemplateContext(null);
+    assertEquals(3, write.getChildren().size());
   }
 
-  void "test use default context when empty"() {
-    def context = new TemplateContext()
-    context.readTemplateContext(new Element("context"))
+  public void testUseDefaultContextWhenEmpty() {
+    TemplateContext context = new TemplateContext();
+    context.readTemplateContext(new Element("context"));
 
-    def defContext = new TemplateContext()
-    def commentContext = TemplateContextTypes.getByClass(JavaCommentContextType)
-    defContext.setEnabled(commentContext, true)
+    TemplateContext defContext = new TemplateContext();
+    JavaCommentContextType commentContext = TemplateContextTypes.getByClass(JavaCommentContextType.class);
+    defContext.setEnabled(commentContext, true);
 
-    context.setDefaultContext(defContext)
-    assert context.isEnabled(commentContext)
-    assert !context.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic))
+    context.setDefaultContext(defContext);
+    assertTrue(context.isEnabled(commentContext));
+    assertFalse(context.isEnabled(TemplateContextTypes.getByClass(JavaCodeContextType.Generic.class)));
   }
 
-  void "test adding new context to Other"() {
-    def defElement = JDOMUtil.load('''\
-<context>
-  <option name="OTHER" value="true"/>
-</context>''')
-    def context = new TemplateContext()
-    context.readTemplateContext(defElement)
+  public void testAddingNewContextToOther() throws IOException, JDOMException {
+    Element defElement = JDOMUtil.load("""
+                                         <context>
+                                           <option name="OTHER" value="true"/>
+                                         </context>""");
+    TemplateContext context = new TemplateContext();
+    context.readTemplateContext(defElement);
 
-    def javaContext = TemplateContextTypes.getByClass(JavaCodeContextType.Generic)
-    context.setEnabled(javaContext, true)
+    JavaCodeContextType.Generic javaContext = TemplateContextTypes.getByClass(JavaCodeContextType.Generic.class);
+    context.setEnabled(javaContext, true);
 
-    def saved = context.writeTemplateContext(null)
+    Element saved = context.writeTemplateContext(null);
 
-    context = new TemplateContext()
-    context.readTemplateContext(saved)
+    context = new TemplateContext();
+    context.readTemplateContext(saved);
 
-    assert context.isEnabled(javaContext)
-    assert context.isEnabled(TemplateContextTypes.getByClass(EverywhereContextType))
+    assertTrue(context.isEnabled(javaContext));
+    assertTrue(context.isEnabled(TemplateContextTypes.getByClass(EverywhereContextType.class)));
   }
 
-  private static writeCommand(Runnable runnable) {
-    WriteCommandAction.runWriteCommandAction(null, runnable)
+  private static void writeCommand(Runnable runnable) {
+    WriteCommandAction.runWriteCommandAction(null, runnable);
   }
 
-  void testSearchByDescriptionWhenTemplatesListed() {
-    myFixture.configureByText("a.java", "class A {{ <caret> }}")
+  public void testSearchByDescriptionWhenTemplatesListed() {
+    myFixture.configureByText("a.java", "class A {{ <caret> }}");
 
-    new ListTemplatesHandler().invoke(project, editor, myFixture.file)
-    myFixture.type('array')
-    assert 'itar' in myFixture.lookupElementStrings
+    new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
+    myFixture.type("array");
+    assertTrue(myFixture.getLookupElementStrings().contains("itar"));
   }
 
-  void testListTemplatesSearchesPrefixInDescription() {
-    myFixture.configureByText("a.java", "class A { main<caret> }")
+  public void testListTemplatesSearchesPrefixInDescription() {
+    myFixture.configureByText("a.java", "class A { main<caret> }");
 
-    new ListTemplatesHandler().invoke(project, editor, myFixture.file)
-    assert myFixture.lookupElementStrings == ['main', 'psvm']
+    new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
+    assertEquals(List.of("main", "psvm"), myFixture.getLookupElementStrings());
   }
 
-  void testListTemplatesAction() {
-    myFixture.configureByText("a.java", "class A {{ <caret> }}")
+  public void testListTemplatesAction() {
+    myFixture.configureByText("a.java", "class A {{ <caret> }}");
 
-    new ListTemplatesHandler().invoke(project, editor, myFixture.file)
-    assert myFixture.lookupElementStrings.containsAll(['iter', 'itco', 'toar'])
+    new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
+    assertTrue(myFixture.getLookupElementStrings().containsAll(List.of("iter", "itco", "toar")));
 
-    myFixture.type('it')
-    assert myFixture.lookupElementStrings[0].startsWith('it')
-    assert LookupManager.getInstance(project).activeLookup.currentItem == myFixture.getLookupElements()[0]
+    myFixture.type("it");
+    assertTrue(myFixture.getLookupElementStrings().get(0).startsWith("it"));
+    assertEquals(LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem(), myFixture.getLookupElements()[0]);
 
-    myFixture.type('e')
-    assert myFixture.lookupElementStrings[0].startsWith('ite')
-    assert LookupManager.getInstance(project).activeLookup.currentItem == myFixture.getLookupElements()[0]
-    LookupManager.getInstance(project).hideActiveLookup()
+    myFixture.type("e");
+    assertTrue(myFixture.getLookupElementStrings().get(0).startsWith("ite"));
+    assertEquals(LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem(), myFixture.getLookupElements()[0]);
+    LookupManager.getInstance(getProject()).hideActiveLookup();
 
-    myFixture.type('\b\b')
-    new ListTemplatesHandler().invoke(project, editor, myFixture.file)
-    assert myFixture.lookupElementStrings.containsAll(['iter', 'itco'])
-    LookupManager.getInstance(project).hideActiveLookup()
+    myFixture.type("\b\b");
+    new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
+    assertTrue(myFixture.getLookupElementStrings().containsAll(List.of("iter", "itco")));
+    LookupManager.getInstance(getProject()).hideActiveLookup();
 
-    myFixture.type('xxxxx')
-    new ListTemplatesHandler().invoke(project, editor, myFixture.file)
-    assert myFixture.lookupElementStrings.containsAll(['iter', 'itco', 'toar'])
-    LookupManager.getInstance(project).hideActiveLookup()
+    myFixture.type("xxxxx");
+    new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
+    assertTrue(myFixture.getLookupElementStrings().containsAll(List.of("iter", "itco", "toar")));
+    LookupManager.getInstance(getProject()).hideActiveLookup();
   }
 
-  void testSelectionFromLookupBySpace() {
-    myFixture.configureByText("a.java", "class A {{ itc<caret> }}")
+  public void testSelectionFromLookupBySpace() {
+    myFixture.configureByText("a.java", "class A {{ itc<caret> }}");
 
-    new ListTemplatesHandler().invoke(project, editor, myFixture.file)
-    myFixture.type ' '
-    myFixture.checkResult """\
-import java.util.Iterator;
+    new ListTemplatesHandler().invoke(getProject(), getEditor(), myFixture.getFile());
+    myFixture.type(" ");
+    myFixture.checkResult("""
+                            import java.util.Iterator;
 
-class A {{
-    for (Iterator <selection>iterator</selection> = collection.iterator(); iterator.hasNext(); ) {
-        Object next =  iterator.next();
-        \n\
-    }
-}}"""
+                            class A {{
+                                for (Iterator <selection>iterator</selection> = collection.iterator(); iterator.hasNext(); ) {
+                                    Object next =  iterator.next();
+                                   \s
+                                }
+                            }}""");
   }
 
-  void testNavigationActionsDontTerminateTemplate() throws Throwable {
-    configureFromFileText("a.txt", "")
+  public void testNavigationActionsDontTerminateTemplate() {
+    configureFromFileText("a.txt", "");
 
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("vn", "user", 'Hello $V1$ World $V1$\nHello $V2$ World $V2$\nHello $V3$ World $V3$')
-    template.addVariable("V1", "", "", true)
-    template.addVariable("V2", "", "", true)
-    template.addVariable("V3", "", "", true)
-    final Editor editor = getEditor()
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("vn", "user", "Hello $V1$ World $V1$\nHello $V2$ World $V2$\nHello $V3$ World $V3$");
+    template.addVariable("V1", "", "", true);
+    template.addVariable("V2", "", "", true);
+    template.addVariable("V3", "", "", true);
+    final Editor editor = getEditor();
 
-    startTemplate(template)
+    startTemplate(template);
 
-    final TemplateState state = getState()
+    final TemplateState state = getState();
 
     for (int i = 0; i < 3; i++) {
-      assertFalse(String.valueOf(i), state.isFinished())
-      myFixture.type('H')
-      final String docText = editor.getDocument().getText()
-      assertTrue(docText, docText.startsWith("Hello H World H\n"))
-      final int offset = editor.getCaretModel().getOffset()
+      assertFalse(String.valueOf(i), state.isFinished());
+      myFixture.type("H");
+      final String docText = editor.getDocument().getText();
+      assertTrue(docText, docText.startsWith("Hello H World H\n"));
+      final int offset = editor.getCaretModel().getOffset();
 
-      moveCaret(offset + 1)
-      moveCaret(offset)
+      moveCaret(offset + 1);
+      moveCaret(offset);
 
-      myFixture.completeBasic()
-      myFixture.type(' ')
+      myFixture.completeBasic();
+      myFixture.type(" ");
 
-      assertEquals(offset + 1, editor.getCaretModel().getOffset())
-      assertFalse(state.isFinished())
+      assertEquals(offset + 1, editor.getCaretModel().getOffset());
+      assertFalse(state.isFinished());
 
-      myFixture.type('\b')
-      assertFalse(state.isFinished())
-      writeCommand { state.nextTab() }
+      myFixture.type("\b");
+      assertFalse(state.isFinished());
+      writeCommand(() -> state.nextTab());
     }
-    assertTrue(state.isFinished())
-    checkResultByFile(getTestName(false) + "-out.txt")
+
+    assertTrue(state.isFinished());
+    checkResultByFile(getTestName(false) + "-out.txt");
   }
 
   private void moveCaret(final int offset) {
-    runInEdtAndWait {
-      getEditor().getCaretModel().moveToOffset(offset)
-    }
+    EdtTestUtil.runInEdtAndWait(() -> getEditor().getCaretModel().moveToOffset(offset));
   }
 
-  void testUseDefaultValueForQuickResultCalculation() {
-    myFixture.configureByText 'a.txt', '<caret>'
+  public void testUseDefaultValueForQuickResultCalculation() {
+    myFixture.configureByText("a.txt", "<caret>");
 
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("vn", "user", '$V1$ var = $V2$;')
-    template.addVariable("V1", "", "", true)
-    template.addVariable("V2", "", '"239"', true)
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("vn", "user", "$V1$ var = $V2$;");
+    template.addVariable("V1", "", "", true);
+    template.addVariable("V2", "", "\"239\"", true);
 
-    startTemplate(template)
+    startTemplate(template);
 
-    myFixture.checkResult '<caret> var = 239;'
+    myFixture.checkResult("<caret> var = 239;");
 
-    myFixture.type 'O'
-    myFixture.checkResult 'O<caret> var = 239;'
+    myFixture.type("O");
+    myFixture.checkResult("O<caret> var = 239;");
 
-    myFixture.type '\t'
-    myFixture.checkResult 'O var = <selection>239</selection>;'
+    myFixture.type("\t");
+    myFixture.checkResult("O var = <selection>239</selection>;");
   }
 
-  void testTemplateExpandingWithSelection() {
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("tpl", "user", 'expanded')
-    final JavaStringContextType contextType = contextType(JavaStringContextType.class)
-    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
+  public void testTemplateExpandingWithSelection() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("tpl", "user", "expanded");
+    final JavaStringContextType contextType = contextType(JavaStringContextType.class);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
 
-    myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }")
+    myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }");
 
-    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
-    myFixture.type '\t'
-    myFixture.checkResult '    class A { void f() { String s = "tpl"; } }'
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
+    myFixture.type("\t");
+    myFixture.checkResult("    class A { void f() { String s = \"tpl\"; } }");
   }
 
-  void "test expand current live template on no suggestions in lookup"() {
-    myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
-    myFixture.completeBasic()
-    assert myFixture.lookup
-    myFixture.type("sout")
+  public void testExpandCurrentLiveTemplateOnNoSuggestionsInLookup() {
+    myFixture.configureByText("a.java", "class Foo {{ <caret> }}");
+    myFixture.completeBasic();
+    assertNotNull(myFixture.getLookup());
+    myFixture.type("sout");
     //This assert fails sporadically
     //assert myFixture.lookup
     //assert myFixture.lookupElementStrings == []
-    myFixture.type('\t')
-    myFixture.checkResult "class Foo {{\n    System.out.println(<caret>);\n}}"
+    myFixture.type("\t");
+    myFixture.checkResult("class Foo {{\n    System.out.println(<caret>);\n}}");
   }
 
-  void "test invoke surround template by tab"() {
-    myFixture.configureByText "a.java", "class A { public void B() { I<caret> } }"
-    myFixture.type('\t')
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), {
-      def templateState = TemplateManagerImpl.getTemplateState(myFixture.getEditor())
-      assertNotNull(templateState)
-      templateState.nextTab() // Object
-      templateState.nextTab() // o
-    })
+  public void testInvokeSurroundTemplateByTab() {
+    myFixture.configureByText("a.java", "class A { public void B() { I<caret> } }");
+    myFixture.type("\t");
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      TemplateState templateState = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
+      assertNotNull(templateState);
+      templateState.nextTab();// Object
+      templateState.nextTab();// o
+    });
 
-    myFixture.checkResult("class A { public void B() {\n" +
-                          "    for (Object o :) {\n" +
-                          "        \n" +
-                          "    }\n" +
-                          "} }")
+    myFixture.checkResult("""
+                            class A { public void B() {
+                                for (Object o :) {
+                                   \s
+                                }
+                            } }""");
   }
 
-  void "test stop at END when invoked surround template by tab"() {
-    myFixture.configureByText "a.txt", "<caret>"
+  public void testStopAtENDWhenInvokedSurroundTemplateByTab() {
+    myFixture.configureByText("a.txt", "<caret>");
 
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("xxx", "user", 'foo $ARG$ bar $END$ goo $SELECTION$ after')
-    template.addVariable("ARG", "", "", true)
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", "foo $ARG$ bar $END$ goo $SELECTION$ after");
+    template.addVariable("ARG", "", "", true);
 
-    startTemplate(template)
-    myFixture.type('arg')
-    state.nextTab()
-    assert !state
-    checkResultByText 'foo arg bar <caret> goo  after'
+    startTemplate(template);
+    myFixture.type("arg");
+    getState().nextTab();
+    assertNull(getState());
+    checkResultByText("foo arg bar <caret> goo  after");
   }
 
-  void "test stop at SELECTION when invoked surround template by tab and END missing"() {
-    myFixture.configureByText "a.txt", "<caret>"
+  public void testStopAtSELECTIONWhenInvokedSurroundTemplateByTabAndENDMissing() {
+    myFixture.configureByText("a.txt", "<caret>");
 
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("xxx", "user", 'foo $ARG$ bar goo $SELECTION$ after')
-    template.addVariable("ARG", "", "", true)
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", "foo $ARG$ bar goo $SELECTION$ after");
+    template.addVariable("ARG", "", "", true);
 
-    startTemplate(template)
-    myFixture.type('arg')
-    state.nextTab()
-    assert !state
-    checkResultByText 'foo arg bar goo <caret> after'
+    startTemplate(template);
+    myFixture.type("arg");
+    getState().nextTab();
+    assertNull(getState());
+    checkResultByText("foo arg bar goo <caret> after");
   }
 
-  void "test concat macro"() {
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("result", "user", '$A$ $B$ c')
-    template.addVariable('A', new EmptyNode(), true)
+  public void testConcatMacro() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("result", "user", "$A$ $B$ c");
+    template.addVariable("A", new EmptyNode(), true);
 
-    def macroCallNode = new MacroCallNode(new ConcatMacro())
-    macroCallNode.addParameter(new VariableNode('A', null))
-    macroCallNode.addParameter(new TextExpression("ID"))
-    template.addVariable('B', macroCallNode, false)
+    MacroCallNode macroCallNode = new MacroCallNode(new ConcatMacro());
+    macroCallNode.addParameter(new VariableNode("A", null));
+    macroCallNode.addParameter(new TextExpression("ID"));
+    template.addVariable("B", macroCallNode, false);
 
-    myFixture.configureByText "a.txt", "<caret>"
-    startTemplate(template)
-    myFixture.type('tableName')
-    state.nextTab()
-    assert !state
-    myFixture.checkResult('tableName tableNameID c')
+    myFixture.configureByText("a.txt", "<caret>");
+    startTemplate(template);
+    myFixture.type("tableName");
+    getState().nextTab();
+    assertNull(getState());
+    myFixture.checkResult("tableName tableNameID c");
   }
 
-  void "test substringBefore macro"() {
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("result", "user", '$A$ $B$ $C$')
-    template.addVariable('A', 'substringBefore("hello.world", ".")', '"empty"', false)
-    template.addVariable('B', 'substringBefore("hello world", ".")', '"empty"', false)
-    template.addVariable('C', 'substringBefore("hello world")', '"empty"', false)
-    myFixture.configureByText "a.txt", "<caret>"
-    startTemplate(template)
-    state.nextTab()
-    assert !state
-    myFixture.checkResult('hello empty empty')
+  public void testSubstringBeforeMacro() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("result", "user", "$A$ $B$ $C$");
+    template.addVariable("A", "substringBefore(\"hello.world\", \".\")", "\"empty\"", false);
+    template.addVariable("B", "substringBefore(\"hello world\", \".\")", "\"empty\"", false);
+    template.addVariable("C", "substringBefore(\"hello world\")", "\"empty\"", false);
+    myFixture.configureByText("a.txt", "<caret>");
+    startTemplate(template);
+    getState().nextTab();
+    assertNull(getState());
+    myFixture.checkResult("hello empty empty");
   }
 
-  void "test snakeCase should convert hyphens to underscores"() {
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("result", "user", '$A$ $B$ c')
-    template.addVariable('A', new EmptyNode(), true)
+  public void testSnakeCaseShouldConvertHyphensToUnderscores() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("result", "user", "$A$ $B$ c");
+    template.addVariable("A", new EmptyNode(), true);
 
-    def macroCallNode = new MacroCallNode(new SplitWordsMacro.SnakeCaseMacro())
-    macroCallNode.addParameter(new VariableNode('A', null))
-    template.addVariable('B', macroCallNode, false)
+    MacroCallNode macroCallNode = new MacroCallNode(new SplitWordsMacro.SnakeCaseMacro());
+    macroCallNode.addParameter(new VariableNode("A", null));
+    template.addVariable("B", macroCallNode, false);
 
-    myFixture.configureByText "a.txt", "<caret>"
-    startTemplate(template)
-    myFixture.type('-foo-bar_goo-')
-    state.nextTab()
-    assert !state
-    myFixture.checkResult('-foo-bar_goo- _foo_bar_goo_ c<caret>')
+    myFixture.configureByText("a.txt", "<caret>");
+    startTemplate(template);
+    myFixture.type("-foo-bar_goo-");
+    getState().nextTab();
+    assertNull(getState());
+    myFixture.checkResult("-foo-bar_goo- _foo_bar_goo_ c<caret>");
   }
 
-  void "test do not replace macro value with null result"() {
-    myFixture.configureByText "a.java", """\
-class Foo {
-  {
-    <caret>
-  }
-}
-"""
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("xxx", "user", '$VAR1$ $VAR2$ $VAR1$')
-    template.addVariable("VAR1", "", "", true)
-    template.addVariable("VAR2", new MacroCallNode(new FilePathMacroBase.FileNameMacro()), new ConstantNode("default"), true)
-    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.Generic.class), true)
-    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
+  public void testDoNotReplaceMacroValueWithNullResult() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+          <caret>
+        }
+      }
+      """);
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", "$VAR1$ $VAR2$ $VAR1$");
+    template.addVariable("VAR1", "", "", true);
+    template.addVariable("VAR2", new MacroCallNode(new FilePathMacroBase.FileNameMacro()), new ConstantNode("default"), true);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType(JavaCodeContextType.Generic.class), true);
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
 
-    startTemplate(template)
-    myFixture.checkResult """\
-class Foo {
-  {
-    <caret> a.java """ + """
-  }
-}
-"""
-    myFixture.type 'test'
+    startTemplate(template);
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                <caret> a.java\s
+                              }
+                            }
+                            """);
+    myFixture.type("test");
 
-    myFixture.checkResult """\
-class Foo {
-  {
-    test<caret> a.java test
-  }
-}
-"""
-  }
-
-  void "test do replace macro value with empty result"() {
-    myFixture.configureByText "a.java", """\
-class Foo {
-  {
-    <caret>
-  }
-}
-"""
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("xxx", "user", '$VAR1$ $VAR2$')
-    template.addVariable("VAR1", "", "", true)
-    template.addVariable("VAR2", new MacroCallNode(new MyMirrorMacro("VAR1")), null, true)
-    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
-    CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
-
-    startTemplate(template)
-    myFixture.checkResult """\
-class Foo {
-  {
-    <caret> """ + """
-  }
-}
-"""
-    myFixture.type '42'
-    myFixture.checkResult """\
-class Foo {
-  {
-    42<caret> 42
-  }
-}
-"""
-
-    myFixture.type '\b\b'
-    myFixture.checkResult """\
-class Foo {
-  {
-    <caret> """ + """
-  }
-}
-"""
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                test<caret> a.java test
+                              }
+                            }
+                            """);
   }
 
-  void "test file path macros"() {
-    def file = myFixture.addFileToProject('foo/bar.txt', '').virtualFile
-    myFixture.configureFromExistingVirtualFile(file)
+  public void testDoReplaceMacroValueWithEmptyResult() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+          <caret>
+        }
+      }
+      """);
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", "$VAR1$ $VAR2$");
+    template.addVariable("VAR1", "", "", true);
+    template.addVariable("VAR2", new MacroCallNode(new MyMirrorMacro("VAR1")), null, true);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType(JavaCodeContextType.class), true);
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
 
-    Template template = templateManager.createTemplate("xxx", "user", '$VAR1$ $VAR2$')
-    template.addVariable("VAR1", "filePath()", "", false)
-    template.addVariable("VAR2", "fileRelativePath()", "", false)
-    templateManager.startTemplate(editor, template)
+    startTemplate(template);
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                <caret>\s
+                              }
+                            }
+                            """);
+    myFixture.type("42");
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                42<caret> 42
+                              }
+                            }
+                            """);
 
-    myFixture.checkResult(FileUtil.toSystemDependentName("${file.path} foo/bar.txt"))
+    myFixture.type("\b\b");
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                <caret>\s
+                              }
+                            }
+                            """);
   }
 
-  private static class MyMirrorMacro extends Macro {
-    private final String myVariableName
+  public void testFilePathMacros() {
+    final VirtualFile file = myFixture.addFileToProject("foo/bar.txt", "").getVirtualFile();
+    myFixture.configureFromExistingVirtualFile(file);
 
-    MyMirrorMacro(String variableName) {
-      this.myVariableName = variableName
-    }
+    Template template = getTemplateManager().createTemplate("xxx", "user", "$VAR1$ $VAR2$");
+    template.addVariable("VAR1", "filePath()", "", false);
+    template.addVariable("VAR2", "fileRelativePath()", "", false);
+    getTemplateManager().startTemplate(getEditor(), template);
 
-    @Override
-    String getName() {
-      return "mirror"
-    }
-
-    @Override
-    String getPresentableName() {
-      return getName()
-    }
-
-    @Override
-    Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
-      return context.getVariableValue(myVariableName)
-    }
-
-    @Override
-    Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
-      return calculateResult(params, context)
-    }
+    myFixture.checkResult(FileUtil.toSystemDependentName(file.getPath() + " foo/bar.txt"));
   }
 
-  void "test escape shouldn't move caret to the end marker"() {
-    myFixture.configureByText 'a.java', """
-class Foo {{
-  itar<caret>
-}}
-"""
-    myFixture.type '\ta'
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    myFixture.checkResult """
-class Foo {{
-    for (int a<caret> = 0; a < array.length; a++) {
-         = array[a];
-        
-    }
-}}
-"""
+  public void testEscapeShouldNotMoveCaretToTheEndMarker() {
+    myFixture.configureByText("a.java", """
+      class Foo {{
+        itar<caret>
+      }}
+      """);
+    myFixture.type("\ta");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    myFixture.checkResult("""
+                            class Foo {{
+                                for (int a<caret> = 0; a < array.length; a++) {
+                                     = array[a];
+                                   \s
+                                }
+                            }}
+                            """);
   }
 
-  void "test add new line on enter outside editing variable"() {
-    myFixture.configureByText 'a.java', """
-class Foo {{
-  <caret>
-}}
-"""
-    myFixture.type 'soutv\tabc'
-    myFixture.editor.caretModel.moveCaretRelatively(3, 0, false, false, false)
-    myFixture.type '\n'
-    myFixture.checkResult """
-class Foo {{
-    System.out.println("abc = " + abc);
-    <caret>
-}}
-"""
+  public void testAddNewLineOnEnterOutsideEditingVariable() {
+    myFixture.configureByText("a.java", """
+      class Foo {{
+        <caret>
+      }}
+      """);
+    myFixture.type("soutv\tabc");
+    myFixture.getEditor().getCaretModel().moveCaretRelatively(3, 0, false, false, false);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            class Foo {{
+                                System.out.println("abc = " + abc);
+                                <caret>
+                            }}
+                            """);
   }
 
-  void "test type tab character on tab outside editing variable"() {
-    myFixture.configureByText 'a.java', """
-class Foo {{
-  <caret>
-}}
-"""
-    myFixture.type 'soutv\tabc'
-    myFixture.editor.caretModel.moveCaretRelatively(2, 0, false, false, false)
-    myFixture.type '\t'
-    myFixture.checkResult """
-class Foo {{
-    System.out.println("abc = " + abc); <caret>
-}}
-"""
+  public void testTypeTabCharacterOnTabOutsideEditingVariable() {
+    myFixture.configureByText("a.java", """
+      class Foo {{
+        <caret>
+      }}
+      """);
+    myFixture.type("soutv\tabc");
+    myFixture.getEditor().getCaretModel().moveCaretRelatively(2, 0, false, false, false);
+    myFixture.type("\t");
+    myFixture.checkResult("""
+                            class Foo {{
+                                System.out.println("abc = " + abc); <caret>
+                            }}
+                            """);
   }
 
-  void "test next tab is not is evaluated on lookup element insert if template is finished or broken-off"() {
-    myFixture.configureByText 'a.java', '''
-<caret>
-'''
-    final TemplateManager manager = TemplateManager.getInstance(getProject())
-    final Template template = manager.createTemplate("imp", "user", 'import $PKG$')
+  public void testNextTabIsNotIsEvaluatedOnLookupElementInsertIfTemplateIsFinishedOrBrokenOff() {
+    myFixture.configureByText("a.java", """
+      <caret>
+      """);
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("imp", "user", "import $PKG$");
     Expression expr = new EmptyExpression() {
       @Override
-      LookupElement[] calculateLookupItems(ExpressionContext context) {
-        def finishTemplateHandler = new InsertHandler<LookupElement>() {
+      public LookupElement[] calculateLookupItems(ExpressionContext context) {
+        InsertHandler<LookupElement> finishTemplateHandler = new InsertHandler<>() {
           @Override
-          void handleInsert(@NotNull InsertionContext insertCtx, @NotNull LookupElement item) {
-            def stateRef = TemplateManagerImpl.getTemplateState(insertCtx.editor)
-            assertFalse(stateRef.isFinished())
-            stateRef.nextTab()
-            assertTrue(stateRef.isFinished())
-            stateRef.considerNextTabOnLookupItemSelected(item)
+          public void handleInsert(@NotNull InsertionContext insertCtx, @NotNull LookupElement item) {
+            TemplateState stateRef = TemplateManagerImpl.getTemplateState(insertCtx.getEditor());
+            assertFalse(stateRef.isFinished());
+            stateRef.nextTab();
+            assertTrue(stateRef.isFinished());
+            stateRef.considerNextTabOnLookupItemSelected(item);
           }
-        }
-        return LookupElementBuilder.create("com").withInsertHandler(finishTemplateHandler) as LookupElement[]
+        };
+        return new LookupElement[] { LookupElementBuilder.create("com").withInsertHandler(finishTemplateHandler) };
       }
-    }
-    template.addVariable('PKG', expr, true)
-    startTemplate(template)
-    assertNotNull(myFixture.lookup)
-    myFixture.type('\n')
-    myFixture.checkResult '''
-import com<caret>
-'''
-    assertNull(state)
+    };
+    template.addVariable("PKG", expr, true);
+    startTemplate(template);
+    assertNotNull(myFixture.getLookup());
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import com<caret>
+                            """);
+    assertNull(getState());
   }
 
-  void "test delete at the last template position"() {
-    myFixture.configureByText 'a.java', """
-class Foo {{
-  <caret>
-}}
-"""
-    myFixture.type 'iter\t'
-    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
-    myFixture.checkResult """
-class Foo {{
-    for (Object o : <caret> {
-        
-    }
-}}
-"""
+  public void testDeleteAtTheLastTemplatePosition() {
+    myFixture.configureByText("a.java", """
+      class Foo {{
+        <caret>
+      }}
+      """);
+    myFixture.type("iter\t");
+    LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
+    myFixture.checkResult("""
+                            class Foo {{
+                                for (Object o : <caret> {
+                                   \s
+                                }
+                            }}
+                            """);
   }
 
-  void "test delete at the last template position with selection"() {
-    myFixture.configureByText 'a.java', """
-class Foo {{
-  <caret>
-}}
-"""
-    myFixture.type 'iter\t'
-    def startOffset = myFixture.editor.caretModel.offset
-    myFixture.type "foo"
-    myFixture.editor.getSelectionModel().setSelection(startOffset, myFixture.editor.caretModel.offset)
-    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
-    assertNotNull(state)
+  public void testDeleteAtTheLastTemplatePositionWithSelection() {
+    myFixture.configureByText("a.java", """
+      class Foo {{
+        <caret>
+      }}
+      """);
+    myFixture.type("iter\t");
+    int startOffset = myFixture.getEditor().getCaretModel().getOffset();
+    myFixture.type("foo");
+    myFixture.getEditor().getSelectionModel().setSelection(startOffset, myFixture.getEditor().getCaretModel().getOffset());
+    LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
+    assertNotNull(getState());
   }
 
-
-
-  void "test multicaret expanding with space"() {
-    myFixture.configureByText "a.java", """\
-class Foo {
-  {
-    <caret>
-    <caret>
-    <caret>
-  }
-}
-"""
-    def defaultShortcutChar = TemplateSettings.instance.defaultShortcutChar
+  public void testMulticaretExpandingWithSpace() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+          <caret>
+          <caret>
+          <caret>
+        }
+      }
+      """);
+    char defaultShortcutChar = TemplateSettings.getInstance().getDefaultShortcutChar();
     try {
-      TemplateSettings.instance.defaultShortcutChar = TemplateSettings.SPACE_CHAR
-      startTemplate("sout", TemplateSettings.SPACE_CHAR)
+      TemplateSettings.getInstance().setDefaultShortcutChar(TemplateSettings.SPACE_CHAR);
+      startTemplate("sout", TemplateSettings.SPACE_CHAR);
     }
     finally {
-      TemplateSettings.instance.defaultShortcutChar = defaultShortcutChar
+      TemplateSettings.getInstance().setDefaultShortcutChar(defaultShortcutChar);
     }
-    myFixture.checkResult("""\
-class Foo {
-  {
-      System.out.println();
-      System.out.println();
-      System.out.println();
-  }
-}
-""")
+
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                  System.out.println();
+                                  System.out.println();
+                                  System.out.println();
+                              }
+                            }
+                            """);
   }
 
-  void "test multicaret expanding with enter"() {
-    myFixture.configureByText "a.java", """\
-class Foo {
-  {
-    <caret>
-    <caret>
-    <caret>
-  }
-}
-"""
-    def defaultShortcutChar = TemplateSettings.instance.defaultShortcutChar
+  public void testMulticaretExpandingWithEnter() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+          <caret>
+          <caret>
+          <caret>
+        }
+      }
+      """);
+    char defaultShortcutChar = TemplateSettings.getInstance().getDefaultShortcutChar();
     try {
-      TemplateSettings.instance.defaultShortcutChar = TemplateSettings.ENTER_CHAR
-      startTemplate("sout", TemplateSettings.ENTER_CHAR)
+      TemplateSettings.getInstance().setDefaultShortcutChar(TemplateSettings.ENTER_CHAR);
+      startTemplate("sout", TemplateSettings.ENTER_CHAR);
     }
     finally {
-      TemplateSettings.instance.defaultShortcutChar = defaultShortcutChar
+      TemplateSettings.getInstance().setDefaultShortcutChar(defaultShortcutChar);
     }
-    myFixture.checkResult("""\
-class Foo {
-  {
-      System.out.println();
-      System.out.println();
-      System.out.println();
-  }
-}
-""")
+
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                  System.out.println();
+                                  System.out.println();
+                                  System.out.println();
+                              }
+                            }
+                            """);
   }
 
-  void "test multicaret expanding with tab"() {
-    myFixture.configureByText "a.java", """\
-class Foo {
-  {
-    <caret>
-    <caret>
-    <caret>
-  }
-}
-"""
-    def defaultShortcutChar = TemplateSettings.instance.defaultShortcutChar
+  public void testMulticaretExpandingWithTab() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+          <caret>
+          <caret>
+          <caret>
+        }
+      }
+      """);
+    char defaultShortcutChar = TemplateSettings.getInstance().getDefaultShortcutChar();
     try {
-      TemplateSettings.instance.defaultShortcutChar = TemplateSettings.TAB_CHAR
-      startTemplate("sout", TemplateSettings.TAB_CHAR)
+      TemplateSettings.getInstance().setDefaultShortcutChar(TemplateSettings.TAB_CHAR);
+      startTemplate("sout", TemplateSettings.TAB_CHAR);
     }
     finally {
-      TemplateSettings.instance.defaultShortcutChar = defaultShortcutChar
+      TemplateSettings.getInstance().setDefaultShortcutChar(defaultShortcutChar);
     }
 
-    myFixture.checkResult("""\
-class Foo {
-  {
-      System.out.println();
-      System.out.println();
-      System.out.println();
-  }
-}
-""")
-  }
 
-  void "test finish template on moving caret by completion insert handler"() {
-    myFixture.configureByText('a.html', '<selection><p></p></selection>')
-    def template = TemplateSettings.instance.getTemplate("T", "HTML/XML")
-    myFixture.testAction(new InvokeTemplateAction(template, myFixture.editor, myFixture.project, new HashSet()))
-    myFixture.complete(CompletionType.BASIC)
-    myFixture.type("nofra")
-    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR)
-    myFixture.checkResult("<noframes><caret><p></p></noframes>")
-    assertNull(templateManager.getActiveTemplate(myFixture.editor))
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                  System.out.println();
+                                  System.out.println();
+                                  System.out.println();
+                              }
+                            }
+                            """);
   }
 
-  void "test goto next variable when completion insert handler moves toward it"() {
-    myFixture.configureByText('a.java', 'class C { void foo(C c, String s) {}; { <caret> } }')
-
-    Template template = templateManager.createTemplate("empty", "user", 'foo($CS$, "$S$");')
-    template.addVariable("CS", "completeSmart()", '', true)
-    template.addVariable("S", "", '""', true)
-    templateManager.startTemplate(myFixture.editor, template)
-    UIUtil.dispatchAllInvocationEvents()
-
-    assert myFixture.editor.document.text.contains('foo(this, "");')
-    assert state
-
-    myFixture.type("string\n")
-    assert myFixture.editor.document.text.contains('foo(this, "string");')
-    assert !state
+  public void testFinishTemplateOnMovingCaretByCompletionInsertHandler() {
+    myFixture.configureByText("a.html", "<selection><p></p></selection>");
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("T", "HTML/XML");
+    myFixture.testAction(new InvokeTemplateAction(template, myFixture.getEditor(), myFixture.getProject(), new HashSet<>()));
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("nofra");
+    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+    myFixture.checkResult("<noframes><caret><p></p></noframes>");
+    assertNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
   }
 
-  void "test escape with selection"() {
-    myFixture.configureByText "a.java", """
-class Foo {
-  {
-      soutv<caret>
-  }
-}
-"""
-    myFixture.type('\tfoo')
-    myFixture.editor.selectionModel.setSelection(myFixture.caretOffset - 3, myFixture.caretOffset)
-    assert myFixture.editor.selectionModel.hasSelection()
+  public void testGotoNextVariableWhenCompletionInsertHandlerMovesTowardIt() {
+    myFixture.configureByText("a.java", "class C { void foo(C c, String s) {}; { <caret> } }");
 
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !myFixture.editor.selectionModel.hasSelection()
-    assert templateManager.getActiveTemplate(myFixture.editor)
+    Template template = getTemplateManager().createTemplate("empty", "user", "foo($CS$, \"$S$\");");
+    template.addVariable("CS", "completeSmart()", "", true);
+    template.addVariable("S", "", "\"\"", true);
+    getTemplateManager().startTemplate(myFixture.getEditor(), template);
+    UIUtil.dispatchAllInvocationEvents();
 
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !templateManager.getActiveTemplate(myFixture.editor)
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("foo(this, \"\");"));
+    assertNotNull(getState());
 
-    myFixture.checkResult """
-class Foo {
-  {
-      System.out.println("foo = " + foo<caret>);
-  }
-}
-"""
+    myFixture.type("string\n");
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("foo(this, \"string\");"));
+    assertNull(getState());
   }
 
-  void "test escape with lookup"() {
-    myFixture.configureByText "a.java", """
-class Foo {
-  {
-      int foo_1, foo_2;
-      soutv<caret>
-  }
-}
-"""
-    myFixture.type('\t')
-    assert myFixture.lookup
+  public void testEscapeWithSelection() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+            soutv<caret>
+        }
+      }
+      """);
+    myFixture.type("\tfoo");
+    myFixture.getEditor().getSelectionModel().setSelection(myFixture.getCaretOffset() - 3, myFixture.getCaretOffset());
+    assertTrue(myFixture.getEditor().getSelectionModel().hasSelection());
 
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !myFixture.lookup
-    assert templateManager.getActiveTemplate(myFixture.editor)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertFalse(myFixture.getEditor().getSelectionModel().hasSelection());
+    assertNotNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
 
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !templateManager.getActiveTemplate(myFixture.editor)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
 
-    myFixture.checkResult """
-class Foo {
-  {
-      int foo_1, foo_2;
-      System.out.println("foo_1 = " + foo_1);
-  }
-}
-"""
-  }
-
-  void "test escape with lookup and selection"() {
-    myFixture.configureByText "a.java", """
-class Foo {
-  {
-      int foo_1, foo_2;
-      soutv<caret>
-  }
-}
-"""
-    myFixture.type('\tfoo')
-    myFixture.editor.selectionModel.setSelection(myFixture.caretOffset - 3, myFixture.caretOffset)
-    myFixture.completeBasic()
-    assert myFixture.editor.selectionModel.hasSelection()
-    assert myFixture.lookup
-
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !myFixture.editor.selectionModel.hasSelection()
-    assert !myFixture.lookup
-    assert templateManager.getActiveTemplate(myFixture.editor)
-
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !templateManager.getActiveTemplate(myFixture.editor)
-
-    myFixture.checkResult """
-class Foo {
-  {
-      int foo_1, foo_2;
-      System.out.println("foo = " + foo<caret>);
-  }
-}
-"""
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                  System.out.println("foo = " + foo<caret>);
+                              }
+                            }
+                            """);
   }
 
-  void "test escape with empty lookup"() {
-    myFixture.configureByText "a.java", """
-class Foo {
-  {
-      int foo_1, foo_2;
-      soutv<caret>
-  }
-}
-"""
-    myFixture.type('\tfoobar')
-    assert myFixture.lookup
-    assert !myFixture.lookup.currentItem
+  public void testEscapeWithLookup() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+            int foo_1, foo_2;
+            soutv<caret>
+        }
+      }
+      """);
+    myFixture.type("\t");
+    assertNotNull(myFixture.getLookup());
 
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE)
-    assert !myFixture.lookup
-    assert !templateManager.getActiveTemplate(myFixture.editor)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertNull(myFixture.getLookup());
+    assertNotNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
 
-    myFixture.checkResult """
-class Foo {
-  {
-      int foo_1, foo_2;
-      System.out.println("foobar = " + foobar);
-  }
-}
-"""
-  }
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
 
-  void "test home end go outside template fragments if already on their bounds"() {
-    myFixture.configureByText 'a.txt', ' <caret> g'
-
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("empty", "user", '$VAR$')
-    template.addVariable("VAR", "", '"foo"', true)
-    manager.startTemplate(myFixture.editor, template)
-
-    myFixture.checkResult ' <selection>foo<caret></selection> g'
-
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START)
-    myFixture.checkResult ' <caret>foo g'
-
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START)
-    myFixture.checkResult '<caret> foo g'
-
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
-    myFixture.checkResult ' foo<caret> g'
-
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
-    myFixture.checkResult ' foo g<caret>'
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                  int foo_1, foo_2;
+                                  System.out.println("foo_1 = " + foo_1);
+                              }
+                            }
+                            """);
   }
 
-  void testComments() {
-    myFixture.configureByText 'a.java', '<caret>'
+  public void testEscapeWithLookupAndSelection() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+            int foo_1, foo_2;
+            soutv<caret>
+        }
+      }
+      """);
+    myFixture.type("\tfoo");
+    myFixture.getEditor().getSelectionModel().setSelection(myFixture.getCaretOffset() - 3, myFixture.getCaretOffset());
+    myFixture.completeBasic();
+    assertTrue(myFixture.getEditor().getSelectionModel().hasSelection());
+    assertNotNull(myFixture.getLookup());
 
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("empty", "user", '$V1$ line comment\n$V2$ block comment $V3$\n$V4$ any comment $V5$')
-    template.addVariable("V1", 'lineCommentStart()', '', false)
-    template.addVariable("V2", 'blockCommentStart()', '', false)
-    template.addVariable("V3", 'blockCommentEnd()', '', false)
-    template.addVariable("V4", 'commentStart()', '', false)
-    template.addVariable("V5", 'commentEnd()', '', false)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertFalse(myFixture.getEditor().getSelectionModel().hasSelection());
+    assertNull(myFixture.getLookup());
+    assertNotNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
 
-    manager.startTemplate(myFixture.editor, template)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
 
-    myFixture.checkResult '// line comment\n/* block comment */\n// any comment '
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                  int foo_1, foo_2;
+                                  System.out.println("foo = " + foo<caret>);
+                              }
+                            }
+                            """);
   }
 
-  void "test show lookup with groovyScript collection result"() {
-    myFixture.configureByText 'a.java', '<caret>'
+  public void testEscapeWithEmptyLookup() {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        {
+            int foo_1, foo_2;
+            soutv<caret>
+        }
+      }
+      """);
+    myFixture.type("\tfoobar");
+    assertNotNull(myFixture.getLookup());
+    assertNull(myFixture.getLookup().getCurrentItem());
 
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("empty", "user", '$V$')
-    template.addVariable("V", 'groovyScript("[1, 2, true]")', '', true)
-    manager.startTemplate(myFixture.editor, template)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    assertNull(myFixture.getLookup());
+    assertNull(getTemplateManager().getActiveTemplate(myFixture.getEditor()));
 
-    assert myFixture.lookupElementStrings == ['1', '2', 'true']
-    myFixture.checkResult('1')
+    myFixture.checkResult("""
+                            class Foo {
+                              {
+                                  int foo_1, foo_2;
+                                  System.out.println("foobar = " + foobar);
+                              }
+                            }
+                            """);
   }
 
-  void "test unrelated command should not finish live template"() {
-    myFixture.configureByText 'a.txt', 'foo <caret>'
+  public void testHomeEndGoOutsideTemplateFragmentsIfAlreadyOnTheirBounds() {
+    myFixture.configureByText("a.txt", " <caret> g");
 
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("empty", "user", '$V$')
-    template.addVariable("V", '"Y"', '', true)
-    manager.startTemplate(myFixture.editor, template)
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("empty", "user", "$VAR$");
+    template.addVariable("VAR", "", "\"foo\"", true);
+    manager.startTemplate(myFixture.getEditor(), template);
+
+    myFixture.checkResult(" <selection>foo<caret></selection> g");
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    myFixture.checkResult(" <caret>foo g");
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    myFixture.checkResult("<caret> foo g");
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
+    myFixture.checkResult(" foo<caret> g");
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
+    myFixture.checkResult(" foo g<caret>");
+  }
+
+  public void testComments() {
+    myFixture.configureByText("a.java", "<caret>");
+
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("empty", "user", "$V1$ line comment\n$V2$ block comment $V3$\n$V4$ any comment $V5$");
+    template.addVariable("V1", "lineCommentStart()", "", false);
+    template.addVariable("V2", "blockCommentStart()", "", false);
+    template.addVariable("V3", "blockCommentEnd()", "", false);
+    template.addVariable("V4", "commentStart()", "", false);
+    template.addVariable("V5", "commentEnd()", "", false);
+
+    manager.startTemplate(myFixture.getEditor(), template);
+
+    myFixture.checkResult("// line comment\n/* block comment */\n// any comment ");
+  }
+
+  public void testShowLookupWithGroovyScriptCollectionResult() {
+    myFixture.configureByText("a.java", "<caret>");
+
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("empty", "user", "$V$");
+    template.addVariable("V", "groovyScript(\"[1, 2, true]\")", "", true);
+    manager.startTemplate(myFixture.getEditor(), template);
+
+    assertEquals(List.of("1", "2", "true"), myFixture.getLookupElementStrings());
+    myFixture.checkResult("1");
+  }
+
+  public void testUnrelatedCommandShouldNotFinishLiveTemplate() {
+    myFixture.configureByText("a.txt", "foo <caret>");
+
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("empty", "user", "$V$");
+    template.addVariable("V", "\"Y\"", "", true);
+    manager.startTemplate(myFixture.getEditor(), template);
 
     // undo-transparent document change (e.g. auto-import on the fly) doesn't currently terminate template
-    DocumentUtil.writeInRunUndoTransparentAction { myFixture.editor.document.insertString(0, 'bar ') }
-    assert state
+    DocumentUtil.writeInRunUndoTransparentAction(() -> myFixture.getEditor().getDocument().insertString(0, "bar "));
+    assertNotNull(getState());
 
-    myFixture.editor.caretModel.moveToOffset(0)
+    myFixture.getEditor().getCaretModel().moveToOffset(0);
     // it's just caret outside template, we shouldn't yet cancel it
-    assert state
-    myFixture.checkResult '<caret>bar foo <selection>Y</selection>'
+    assertNotNull(getState());
+    myFixture.checkResult("<caret>bar foo <selection>Y</selection>");
 
     // unrelated empty command should have no effect
-    WriteCommandAction.runWriteCommandAction(project) {}
-    assert state
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+    });
+    assertNotNull(getState());
 
     // undo-transparent change still doesn't terminate template
-    DocumentUtil.writeInRunUndoTransparentAction { myFixture.editor.document.insertString(0, 'bar ') }
-    assert state
-    myFixture.checkResult '<caret>bar bar foo <selection>Y</selection>'
+    DocumentUtil.writeInRunUndoTransparentAction(() -> myFixture.getEditor().getDocument().insertString(0, "bar "));
+    assertNotNull(getState());
+    myFixture.checkResult("<caret>bar bar foo <selection>Y</selection>");
 
     // now we're really typing outside template, so it should be canceled
-    myFixture.type('a')
-    assert !state
+    myFixture.type("a");
+    assertNull(getState());
   }
 
-  void "test start template that break injection inside injection"() {
-    myFixture.caresAboutInjection = false
-    def file = myFixture.configureByText 'a.java', """public class Main {
-    public static void main(String[] args) {
-        //language=Java prefix="public class A {" suffix=}
-        String s = "int a = <caret>;";
-    }
-}
-"""
+  public void testStartTemplateThatBreakInjectionInsideInjection() {
+    myFixture.setCaresAboutInjection(false);
+    PsiFile file = myFixture.configureByText("a.java", """
+      public class Main {
+          public static void main(String[] args) {
+              //language=Java prefix="public class A {" suffix=}
+              String s = "int a = <caret>;";
+          }
+      }
+      """);
 
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate("ttt", "user", '" + $VAR$ + $END$"')
-    template.addVariable("VAR", '', '', true)
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("ttt", "user", "\" + $VAR$ + $END$\"");
+    template.addVariable("VAR", "", "", true);
 
-    def injectionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myFixture.editor, file)
-    manager.startTemplate(injectionEditor, template)
-    UIUtil.dispatchAllInvocationEvents()
+    Editor injectionEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myFixture.getEditor(), file);
+    manager.startTemplate(injectionEditor, template);
+    UIUtil.dispatchAllInvocationEvents();
 
-    assert state
-    myFixture.type '123\t'
+    assertNotNull(getState());
+    myFixture.type("123\t");
 
-    assert !state
-    myFixture.checkResult """public class Main {
-    public static void main(String[] args) {
-        //language=Java prefix="public class A {" suffix=}
-        String s = "int a = " + 123 + <caret>";";
-    }
-}
-"""
+    assertNull(getState());
+    myFixture.checkResult("""
+                            public class Main {
+                                public static void main(String[] args) {
+                                    //language=Java prefix="public class A {" suffix=}
+                                    String s = "int a = " + 123 + <caret>";";
+                                }
+                            }
+                            """);
   }
 
-  void "test surround with template that uses SELECTION only inside an expression"() {
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    TemplateImpl template = manager.createTemplate("ttt", "user", '$VAR$+x') as TemplateImpl
-    template.addVariable("VAR", 'regularExpression(SELECTION, "_", "")', '', false)
-    assert template.isSelectionTemplate()
-    template.templateContext.setEnabled(contextType(JavaCommentContextType.class), true)
-    CodeInsightTestUtil.addTemplate(template, testRootDisposable)
+  public void testSurroundWithTemplateThatUsesSELECTIONOnlyInsideAnExpression() {
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    final TemplateImpl template = (TemplateImpl)manager.createTemplate("ttt", "user", "$VAR$+x");
+    template.addVariable("VAR", "regularExpression(SELECTION, \"_\", \"\")", "", false);
+    assertTrue(template.isSelectionTemplate());
+    template.getTemplateContext().setEnabled(contextType(JavaCommentContextType.class), true);
+    CodeInsightTestUtil.addTemplate(template, getTestRootDisposable());
 
-    myFixture.configureByText 'a.java', '//a <selection><caret>foo_bar</selection> b'
-    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, new HashSet())
-    def action = group.find { it.templatePresentation.text.contains(template.key) }
-    (action as InvokeTemplateAction).perform()
-    myFixture.checkResult('//a foobar+x b')
+    myFixture.configureByText("a.java", "//a <selection><caret>foo_bar</selection> b");
+    List<AnAction> group = SurroundWithTemplateHandler.createActionGroup(getEditor(), myFixture.getFile(), new HashSet<>());
+    InvokeTemplateAction action =
+      (InvokeTemplateAction)ContainerUtil.find(group, a -> a.getTemplatePresentation().getText().contains(template.getKey()));
+    assertNotNull(action);
+    action.perform();
+    myFixture.checkResult("//a foobar+x b");
   }
 
-  void "test completion in dumb mode"() {
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    Template template = manager.createTemplate('helloWorld', 'user', '"Hello, World"')
-    TemplateContextType contextType = contextType(JavaCodeContextType.class)
-    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
-    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable())
+  public void testCompletionInDumbMode() {
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("helloWorld", "user", "\"Hello, World\"");
+    TemplateContextType contextType = contextType(JavaCodeContextType.class);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
 
-    myFixture.configureByText "a.java", "class Foo {{ System.out.println(helloW<caret>) }}"
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
-    DumbModeTestUtils.runInDumbModeSynchronously(getProject()) {
-      RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-      myFixture.completeBasic()
-      assert myFixture.lookup
-      assert myFixture.lookupElementStrings.contains('helloWorld')
-      myFixture.type('\t')
-      myFixture.checkResult "class Foo {{ System.out.println(\"Hello, World\") }}"
-    }
+    myFixture.configureByText("a.java", "class Foo {{ System.out.println(helloW<caret>) }}");
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+      myFixture.completeBasic();
+      assertNotNull(myFixture.getLookup());
+      assertTrue(myFixture.getLookupElementStrings().contains("helloWorld"));
+      myFixture.type("\t");
+      myFixture.checkResult("class Foo {{ System.out.println(\"Hello, World\") }}");
+    });
   }
 
-  void "test log livetemplate started event"() {
-    def events = FUCollectorTestCase.INSTANCE.collectLogEvents(testRootDisposable) {
-      configureFromFileText("empty.java", "")
-      TemplateManager manager = TemplateManager.getInstance(getProject())
-      Template template = manager.createTemplate("empty", "user", '$VAR$')
-      template.addVariable("VAR", "", "", false)
-      startTemplate(template)
-    }
-    def logEvent = events.find { it.group.id == "live.templates" }
-    assert logEvent
-    assert logEvent.event.id == "started"
+  public void testLogLivetemplateStartedEvent() {
+    List<LogEvent> events = FUCollectorTestCase.INSTANCE.collectLogEvents(getTestRootDisposable(), () -> {
+      configureFromFileText("empty.java", "");
+      TemplateManager manager = TemplateManager.getInstance(getProject());
+      Template template = manager.createTemplate("empty", "user", "$VAR$");
+      template.addVariable("VAR", "", "", false);
+      startTemplate(template);
+      return null;
+    });
+    LogEvent logEvent = ContainerUtil.find(events, event -> event.getGroup().getId().equals("live.templates"));
+    assertNotNull(logEvent);
+    assertEquals("started", logEvent.getEvent().getId());
   }
 
-  void "test additional actions"() {
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    TemplateImpl template = (TemplateImpl)manager.createTemplate('doubleparen', 'user', '(($END$$SELECTION$))')
-    TemplateContextType contextType = contextType(JavaCodeContextType.class)
-    template.getTemplateContext().setEnabled(contextType, true)
-    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable())
-    myFixture.configureByText("a.java", "class X {{<selection>hello</selection>}}")
-    def group = SurroundWithTemplateHandler.createActionGroup(editor, myFixture.file, new HashSet<Character>())
-    def action = group.find { it.templateText == "doubleparen" }
-    assert action instanceof ActionGroup
-    final Presentation presentation = new Presentation()
-    final DataContext context = DataManager.getInstance().getDataContext()
+  public void testAdditionalActions() {
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    TemplateImpl template = (TemplateImpl)manager.createTemplate("doubleparen", "user", "(($END$$SELECTION$))");
+    TemplateContextType contextType = contextType(JavaCodeContextType.class);
+    template.getTemplateContext().setEnabled(contextType, true);
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
+    myFixture.configureByText("a.java", "class X {{<selection>hello</selection>}}");
+    List<AnAction> group = SurroundWithTemplateHandler.createActionGroup(getEditor(), myFixture.getFile(), new HashSet<>());
+    AnAction action = ContainerUtil.find(group, a -> a.getTemplateText().equals("doubleparen"));
+    assertTrue(action instanceof ActionGroup);
+    final Presentation presentation = new Presentation();
+    final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = new AnActionEvent(null, context, "", presentation, ActionManager.getInstance(), 0);
-    assert !presentation.performGroup
-    assert !presentation.popupGroup
-    action.update(event)
-    assert presentation.performGroup
-    assert presentation.popupGroup
-    def children = (action as ActionGroup).getChildren(event)
-    assert children[0].templateText == "Edit live template settings"
-    assert children[1].templateText == "Disable 'doubleparen' template"
-    assert !template.isDeactivated()
-    children[1].actionPerformed(event)
-    assert template.isDeactivated()
+    assertFalse(presentation.isPerformGroup());
+    assertFalse(presentation.isPopupGroup());
+    action.update(event);
+    assertTrue(presentation.isPerformGroup());
+    assertTrue(presentation.isPopupGroup());
+    AnAction[] children = ((ActionGroup)action).getChildren(event);
+    assertEquals("Edit live template settings", children[0].getTemplateText());
+    assertEquals("Disable 'doubleparen' template", children[1].getTemplateText());
+    assertFalse(template.isDeactivated());
+    children[1].actionPerformed(event);
+    assertTrue(template.isDeactivated());
   }
-  
-  void testEquality() {
-    TemplateManager manager = TemplateManager.getInstance(getProject())
-    TemplateImpl t1 = (TemplateImpl)manager.createTemplate('k', 'g', 't')
-    TemplateImpl t2 = (TemplateImpl)manager.createTemplate('k', 'g', 't')
-    assert t1 == t2
-    t1.setValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true)
-    assert t1 != t2
+
+  public void testEquality() {
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    TemplateImpl t1 = (TemplateImpl)manager.createTemplate("k", "g", "t");
+    TemplateImpl t2 = (TemplateImpl)manager.createTemplate("k", "g", "t");
+    assertEquals(t1, t2);
+    t1.setValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE, true);
+    //noinspection SimplifiableAssertion
+    assertFalse(t1.equals(t2));
+  }
+
+  @Override
+  public final String getBasePath() {
+    return basePath;
+  }
+
+  private final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/";
+
+  private static class MyMirrorMacro extends Macro {
+    MyMirrorMacro(String variableName) {
+      this.myVariableName = variableName;
+    }
+
+    @Override
+    public String getName() {
+      return "mirror";
+    }
+
+    @Override
+    public String getPresentableName() {
+      return getName();
+    }
+
+    @Override
+    public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
+      return context.getVariableValue(myVariableName);
+    }
+
+    @Override
+    public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+      return calculateResult(params, context);
+    }
+
+    private final String myVariableName;
   }
 }
