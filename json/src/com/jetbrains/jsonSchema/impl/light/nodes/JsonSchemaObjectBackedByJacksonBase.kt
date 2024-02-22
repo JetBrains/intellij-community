@@ -14,6 +14,7 @@ import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils
 import com.jetbrains.jsonSchema.impl.light.legacy.isOldParserAwareOfFieldName
 import com.jetbrains.jsonSchema.impl.light.legacy.tryReadEnumMetadata
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 private val ONE_OF_KEY = Key<List<JsonSchemaObject>>("oneOf")
 private val ANY_OF_KEY = Key<List<JsonSchemaObject>>("anyOf")
@@ -31,13 +32,24 @@ internal abstract class JsonSchemaObjectBackedByJacksonBase(
 
   abstract fun getRootSchemaObject(): RootJsonSchemaObjectBackedByJackson
 
-  private var myCompositeObjectsCache = KeyFMap.EMPTY_MAP
+  private var myCompositeObjectsCache = AtomicReference(KeyFMap.EMPTY_MAP)
 
   protected fun <V : Any> getOrComputeValue(key: Key<V>, computation: () -> V): V {
-    val existingValue = myCompositeObjectsCache.get(key)
-    if (existingValue != null) return existingValue
-    val newValue = computation()
-    myCompositeObjectsCache = myCompositeObjectsCache.plus(key, newValue)
+    var existingMap: KeyFMap
+    var newValue: V?
+
+    do {
+      existingMap = myCompositeObjectsCache.get()
+      newValue = existingMap[key]
+      if (newValue == null) {
+        val mapWithNewValue = existingMap.plus(key, computation())
+        if (myCompositeObjectsCache.compareAndSet(existingMap, mapWithNewValue)) {
+          newValue = mapWithNewValue.get(key)
+        }
+      }
+    }
+    while (newValue == null)
+
     return newValue
   }
 
