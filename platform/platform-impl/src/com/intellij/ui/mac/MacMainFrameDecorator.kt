@@ -43,6 +43,8 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
 
     const val FULL_SCREEN: String = "Idea.Is.In.FullScreen.Mode.Now"
 
+    const val FULL_SCREEN_PROGRESS: String = "Idea.Is.In.FullScreen.Mode.Progress"
+
     const val IGNORE_EXIT_FULL_SCREEN = "Idea.Ignore.Exit.FullScreen"
   }
 
@@ -166,11 +168,13 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     isInFullScreen = true
     LOG.debug { "Full screen set flag true for $frame" }
     storeFullScreenStateIfNeeded()
+    frame.rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, null)
     tabsHandler.enterFullScreen()
   }
 
   private fun exitFullScreen() {
     val rootPane = frame.rootPane
+    rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, null)
     isInFullScreen = rootPane?.getClientProperty(IGNORE_EXIT_FULL_SCREEN) != null
     LOG.debug { "Full screen set flag false/$isInFullScreen for $frame" }
     storeFullScreenStateIfNeeded()
@@ -249,6 +253,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
 
           dispatcher.addListener(listener)
           LOG.debug { "Toggling full screen for $frame" }
+          frame.rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, true)
           Application.getApplication().requestToggleFullScreen(frame)
           Foundation.executeOnMainThread(false, false, Runnable {
             SwingUtilities.invokeLater(
@@ -266,6 +271,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
                   LOG.debug { "pre-transitioning event not received for: $frame" }
                   continuation.resume(isInFullScreen)
                 }
+                frame.rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, null)
               })
           })
         }
