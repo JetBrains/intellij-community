@@ -74,15 +74,9 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
         is KtTypeParameterType -> {
             // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeParameterTypeRenderer.AS_SOURCE
             val symbol = type.symbol
-            val classId = (symbol.upperBounds.firstOrNull { it is KtNonErrorClassType } as? KtNonErrorClassType)?.classId
             text(
-                classId?.let { shortNameWithCompanionNameSkip(it) } ?: type.name.asString(),
-                classId?.let {
-                    InlayActionData(
-                        StringInlayActionPayload(classId.asFqNameString()),
-                        KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
-                    )
-                } ?: symbol.psi?.createSmartPointer()?.let {
+                type.name.asString(),
+                symbol.psi?.createSmartPointer()?.let {
                     InlayActionData(
                         PsiPointerInlayActionPayload(it),
                         PsiPointerInlayActionNavigationHandler.HANDLER_ID
