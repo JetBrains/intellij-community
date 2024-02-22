@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -163,6 +164,8 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
     private val typeCandidates = HashMap<TypeInfo, List<TypeCandidate>>()
 
     var placement: CallablePlacement? = null
+
+    var isStartTemplate: Boolean = true
 
     private val elementsToShorten = ArrayList<KtElement>()
 
@@ -589,6 +592,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                         val isVar = (callableInfo as PropertyInfo).writable
                         val const = if (callableInfo.isConst) "const " else ""
                         val valVar = if (isVar) "var" else "val"
+                        val braces = if (isStartTemplate) "<>" else ""
                         val accessors = if (isExtension && !isExpectClassMember) {
                             buildString {
                                 append("\nget() {}")
@@ -597,7 +601,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                 }
                             }
                         } else ""
-                        psiFactory.createProperty("$modifiers$const$valVar<> $header$accessors")
+                        psiFactory.createProperty("$modifiers$const$valVar$braces $header$accessors")
                     }
                 }
 
@@ -775,7 +779,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             if (elementToReplace == null) return null
 
             if (candidates.size == 1) {
-                builder.replaceElement(elementToReplace, (expression.calculateResult(null) as TextResult).text)
+                val resultType = (expression.calculateResult(null) as TextResult).text
+                if (isStartTemplate) {
+                    builder.replaceElement(elementToReplace, resultType)
+                } else {
+                    elementToReplace.replace(KtPsiFactory(declaration.project).createType(resultType))
+                }
                 return null
             }
 
@@ -828,7 +837,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val rangeStart = leftSpace?.startOffset ?: typeParameterList.startOffset
             val offset = typeParameterList.startOffset
             val range = UnfairTextRange(rangeStart - offset, typeParameterList.endOffset - offset)
-            builder.replaceElement(typeParameterList, range, "TYPE_PARAMETER_LIST", expression, false)
+            if (isStartTemplate || typeParameterMap.isEmpty() || typeParameterMap.size > 1) {
+                builder.replaceElement(typeParameterList, range, "TYPE_PARAMETER_LIST", expression, false)
+            }
             return expression
         }
 
@@ -947,7 +958,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             return true
         }
 
-        private fun setupEditor(declaration: KtNamedDeclaration) {
+        private fun setupEditor(declaration: KtNamedDeclaration, setupEditor: Boolean) {
             if (declaration is KtProperty && !declaration.hasInitializer() && containingElement is KtBlockExpression) {
                 val psiFactory = KtPsiFactory(declaration.project)
 
@@ -963,7 +974,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 containingFileEditor.caretModel.moveToOffset(declaration.getDelegationCall().valueArgumentList!!.startOffset + 1)
                 return
             }
-            setupEditorSelection(containingFileEditor, declaration)
+            if (setupEditor) {
+                setupEditorSelection(containingFileEditor, declaration)
+            }
         }
 
         // build templates
@@ -990,7 +1003,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
 
             val builder = TemplateBuilderImpl(ktFileToEdit)
             if (declaration is KtProperty) {
-                setupValVarTemplate(builder, declaration)
+                if (isStartTemplate) {
+                    setupValVarTemplate(builder, declaration)
+                }
             }
             if (!skipReturnType) {
                 setupReturnTypeTemplate(builder, declaration)
@@ -1006,10 +1021,12 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val expression = setupTypeParameterListTemplate(builder, declaration)
 
             documentManager.doPostponedOperationsAndUnblockDocument(document)
+
             // the template built by TemplateBuilderImpl is ordered by element position, but we want types to be first, so hack it
             val templateImpl = builder.buildInlineTemplate() as TemplateImpl
             val variables = templateImpl.variables!!
-            if (variables.isNotEmpty()) {
+
+            if (isStartTemplate && variables.isNotEmpty()) {
                 val typeParametersVar = if (expression != null) variables.removeAt(0) else null
                 for (i in callableInfo.parameterInfos.indices) {
                     Collections.swap(variables, i * 2, i * 2 + 1)
@@ -1021,7 +1038,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             templateImpl.isToShortenLongNames = false
 
             // run the template
-            TemplateManager.getInstance(project).startTemplate(containingFileEditor, templateImpl, object : TemplateEditingAdapter() {
+            val templateEditAdapter = object : TemplateEditingAdapter() {
                 private fun finishTemplate(brokenOff: Boolean) {
                     try {
                         documentManager.commitDocument(document)
@@ -1069,7 +1086,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             }
                             if (!transformToJavaMemberIfApplicable(newDeclaration)) {
                                 elementsToShorten.add(newDeclaration)
-                                setupEditor(newDeclaration)
+                                setupEditor(newDeclaration, isStartTemplate)
                             }
                         }
                     } finally {
@@ -1086,7 +1103,15 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                 override fun templateFinished(template: Template, brokenOff: Boolean) {
                     finishTemplate(brokenOff)
                 }
-            })
+            }
+
+            //silently complete template if no variables defined
+            if (!isStartTemplate && variables.isEmpty()) {
+                templateEditAdapter.templateFinished(templateImpl,false)
+                return
+            }
+
+            TemplateManager.getInstance(project).startTemplate(containingFileEditor, templateImpl, templateEditAdapter)
         }
 
         fun showDialogIfNeeded() {

@@ -62,11 +62,14 @@ internal class JavaFieldRenderer(
   fun doRender() {
     var field = renderField()
     field = insertField(field, javaUsage?.anchor)
-    startTemplate(field)
+    if (request.fieldType.isEmpty() || request.fieldType.size > 1 || request.isStartTemplate) {
+      startTemplate(field)
+    }
   }
 
   fun renderField(): PsiField {
-    val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, PsiTypes.intType())
+    val fieldType = if (expectedTypes.isNotEmpty()) expectedTypes[0].type else PsiTypes.intType()
+    val field = JavaPsiFacade.getElementFactory(project).createField(request.fieldName, fieldType)
 
     // clean template modifiers
     field.modifierList?.let { list ->
