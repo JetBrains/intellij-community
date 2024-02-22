@@ -21,6 +21,7 @@ class JvmLoggerFieldDelegate(
   private val factoryName: String,
   private val methodName: String,
   private val classNamePattern: String,
+  override val id: String,
   override val loggerTypeName: String,
   override val priority: Int,
 ) : JvmLogger {

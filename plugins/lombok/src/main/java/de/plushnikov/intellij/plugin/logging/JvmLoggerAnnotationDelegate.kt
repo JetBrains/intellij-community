@@ -21,6 +21,7 @@ import de.plushnikov.intellij.plugin.util.LombokLibraryUtil
  */
 class JvmLoggerAnnotationDelegate(
   private val fieldLoggerName: String,
+  override val id: String,
   override val loggerTypeName: String,
   override val priority: Int
 ) : JvmLogger {

@@ -16,6 +16,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface JvmLogger {
   /**
+   * This field represents id of the logger which is used to save the logger the settings
+   */
+  val id : String
+  /**
    * This field represents fully qualified name of the logger's type
    */
   val loggerTypeName: String
