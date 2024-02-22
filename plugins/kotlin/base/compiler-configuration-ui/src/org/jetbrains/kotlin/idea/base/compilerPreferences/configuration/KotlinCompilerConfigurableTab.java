@@ -149,11 +149,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
         warningLabel.setIcon(AllIcons.General.WarningDialog);
 
-        if (isProjectSettings) {
-            languageVersionComboBox.addActionListener(e -> onLanguageLevelChanged(getSelectedLanguageVersionView()));
-        }
-
         additionalArgsOptionsField.attachLabel(additionalArgsLabel);
+        kotlinJpsPluginVersionComboBox.addActionListener(
+                e -> onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()));
 
         fillVersions();
 
@@ -352,26 +350,35 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
 
         final VersionView latestStable = getLatestStableVersion();
 
+        int index = 0;
+        int latestStableIndex = languageVersions.size();
         for (LanguageVersion version : languageVersions) {
-            if (latestStable.getVersion() == version) break;
+            if (index > latestStableIndex) {
+                break;
+            }
             ApiVersion apiVersion = ApiVersion.createByLanguageVersion(version);
-            if (isLessOrEqual(apiVersion, upperBound) && !apiVersion.isUnsupported()) {
+            if (!isLessOrEqual(apiVersion, upperBound) && (index < latestStableIndex)) {
+                latestStableIndex = index;
+            }
+            if (!apiVersion.isUnsupported()) {
                 permittedAPIVersions.add(new VersionView.Specific(version));
             }
-
+            index++;
         }
 
-        if (isLessOrEqual(latestStable.getVersion(), upperBound)) {
+        if (isLessOrEqual(latestStable.getVersion(), upperBound) && !permittedAPIVersions.contains(latestStable)) {
             permittedAPIVersions.add(latestStable);
         }
 
         apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+        languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
 
-        apiVersionComboBox.setSelectedItem(
+        VersionView selectedItem =
                 VersionComparatorUtil.compare(selectedAPIVersion.getVersionString(), upperBound.getVersionString()) <= 0
                 ? selectedAPIView
-                : upperBoundView
-        );
+                : upperBoundView;
+        apiVersionComboBox.setSelectedItem(selectedItem);
+        languageVersionComboBox.setSelectedItem(selectedItem);
     }
 
     private void fillJvmVersionList() {
@@ -484,8 +491,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         }
 
         VersionView latestStable = getLatestStableVersion();
-        for (LanguageVersion languageVersion : LanguageVersion.getEntries()) {
-            if (languageVersion == latestStable.getVersion()) break;
+        int index = 0;
+        EnumEntries<LanguageVersion> languageVersions = LanguageVersion.getEntries();
+        int latestStableIndex = languageVersions.size();
+        for (LanguageVersion languageVersion : languageVersions) {
+            if (index > latestStableIndex) break;
+            if (!isLessOrEqual(languageVersion, latestStable.getVersion()) && (index < latestStableIndex)) {
+                latestStableIndex = index;
+            }
 
             if (!LanguageVersionSettingsKt.isStableOrReadyForPreview(languageVersion)) {
                 continue;
@@ -499,10 +512,8 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             if (!languageVersion.isUnsupported()) {
                 languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
             }
+            index++;
         }
-
-        languageVersionComboBox.addItem(latestStable);
-        apiVersionComboBox.addItem(latestStable);
 
         languageVersionComboBox.setRenderer(new DescriptionListCellRenderer());
         kotlinJpsPluginVersionComboBox.setRenderer(new DescriptionListCellRenderer());
@@ -628,6 +639,13 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     private VersionView getSelectedAPIVersionView() {
         Object item = apiVersionComboBox.getSelectedItem();
         return item != null ? (VersionView) item : getLatestStableVersion();
+    }
+
+    public VersionView getSelectedKotlinJpsPluginVersionView() {
+        JpsVersionItem selectedItem = (JpsVersionItem) kotlinJpsPluginVersionComboBox.getSelectedItem();
+        IdeKotlinVersion version = selectedItem != null ? selectedItem.getVersion() : null;
+        LanguageVersion languageVersion = version != null ? LanguageVersion.fromFullVersionString(version.toString()) : null;
+        return languageVersion != null ? new VersionView.Specific(languageVersion) : getLatestStableVersion();
     }
 
     private @NotNull String getSelectedKotlinJpsPluginVersion() {
