@@ -41,6 +41,12 @@ fun <T> SimpleTree<T>.getTreeString(): String {
   return result.toString()
 }
 
+fun <T> buildTree(configure: SimpleTreeBuilder<T>.() -> Unit): SimpleTree<T> {
+  val treeBuilder = SimpleTreeBuilder<T>()
+  treeBuilder.configure()
+  return treeBuilder.tree
+}
+
 fun <T> buildTree(roots: List<T>, nameGetter: T.() -> String, childrenGetter: T.() -> List<T>): SimpleTree<T> {
   val tree = SimpleTree<T>()
   val queue = ArrayDeque<SimpleTree.Node<T>>()
