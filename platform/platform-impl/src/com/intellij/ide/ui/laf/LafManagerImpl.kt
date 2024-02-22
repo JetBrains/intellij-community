@@ -798,6 +798,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     preferredLightThemeId = value.id
   }
 
+  override fun resetPreferredEditorColorScheme() {
+    preferredDarkEditorSchemeId = null
+    preferredLightEditorSchemeId = null
+  }
+
   private fun getPreviousSchemeForLaf(lookAndFeelInfo: UIThemeLookAndFeelInfo): EditorColorsScheme? {
     val schemeName = lafToPreviousScheme.get(lookAndFeelInfo.id)
                      ?: lafToPreviousScheme.get(lookAndFeelInfo.name)
@@ -810,7 +815,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun rememberSchemeForLaf(scheme: EditorColorsScheme) {
-    if (!rememberSchemeForLaf) {
+    if (!rememberSchemeForLaf || autodetect) {
       return
     }
 
