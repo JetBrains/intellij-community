@@ -31,7 +31,7 @@ import static com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil.g
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
+public class GradleExternalProjectModelBuilder extends AbstractModelBuilderService {
 
   @Override
   public boolean canBuild(@NotNull String modelName) {
