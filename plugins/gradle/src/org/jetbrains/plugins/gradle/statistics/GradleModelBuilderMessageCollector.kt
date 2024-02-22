@@ -12,7 +12,7 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 13)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 14)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
   private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
@@ -42,6 +42,13 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
     Messages.RESOURCE_FILTER_MODEL_GROUP,
 
+    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_GROUP,
+    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP,
+    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP,
+
+    Messages.SOURCE_SET_ARTIFACT_INDEX_GROUP,
+    Messages.SOURCE_SET_ARTIFACT_INDEX_CACHE_SET_GROUP,
+
     Messages.SOURCE_SET_DEPENDENCY_MODEL_GROUP,
     Messages.SOURCE_SET_DEPENDENCY_MODEL_CACHE_GET_GROUP,
     Messages.SOURCE_SET_DEPENDENCY_MODEL_CACHE_SET_GROUP,
@@ -49,12 +56,7 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.EAR_CONFIGURATION_MODEL_GROUP,
     Messages.WAR_CONFIGURATION_MODEL_GROUP,
 
-    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_GROUP,
-    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_GET_GROUP,
-    Messages.DEPENDENCY_DOWNLOAD_POLICY_MODEL_CACHE_SET_GROUP,
-
     Messages.DEPENDENCY_CLASSPATH_MODEL_GROUP,
-
     Messages.DEPENDENCY_ACCESSOR_MODEL_GROUP,
     Messages.DEPENDENCY_GRAPH_MODEL_GROUP,
 

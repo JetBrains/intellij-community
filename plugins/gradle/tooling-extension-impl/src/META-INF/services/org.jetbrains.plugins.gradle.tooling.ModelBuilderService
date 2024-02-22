@@ -4,6 +4,7 @@ com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.Tur
 com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelBuilder
+com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndexBuilder
 com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.dependencyGraphModel.GradleDependencyGraphModelBuilder
 com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyBuilder

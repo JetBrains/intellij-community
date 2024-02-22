@@ -18,6 +18,17 @@ public final class GradleModelProviderUtil {
 
   public static <M> void buildModels(
     @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer
+  ) {
+    for (GradleBuild buildModel : buildModels) {
+      buildModels(controller, buildModel, modelClass, consumer);
+    }
+  }
+
+  public static <M> void buildModels(
+    @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
     @NotNull Class<M> modelClass,
     @NotNull GradleModelConsumer consumer
@@ -65,6 +76,17 @@ public final class GradleModelProviderUtil {
       if (model != null) {
         consumer.consumeProjectModel(gradleProject, model, modelClass);
       }
+    }
+  }
+
+  public static <M> void buildModelsRecursively(
+    @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer
+  ) {
+    for (GradleBuild buildModel : buildModels) {
+      buildModelsRecursively(controller, buildModel, modelClass, consumer);
     }
   }
 

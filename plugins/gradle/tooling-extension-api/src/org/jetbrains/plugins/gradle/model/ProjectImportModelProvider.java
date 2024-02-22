@@ -10,6 +10,7 @@ import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.Collection;
 
 /**
  * Allows the Gradle model fetch action to be extended to allow extra flexibility to extensions when requesting the models.
@@ -20,6 +21,8 @@ import java.io.Serializable;
  * {@link #populateBuildModels} is called once for each {@link GradleBuild} that is
  * obtained from the Gradle Tooling API, for none-composite builds this will be called exactly once, for composite builds this will be
  * called once for each included build and once for the name build. This will always be called after {@link #populateProjectModels}.
+ * <p>
+ * {@link #populateModels} is called once for all {@link GradleBuild} that is obtained from the Gradle Tooling API.
  */
 public interface ProjectImportModelProvider extends Serializable {
 
@@ -30,6 +33,12 @@ public interface ProjectImportModelProvider extends Serializable {
   default @NotNull String getName() {
     return getClass().getSimpleName();
   }
+
+  default void populateModels(
+    @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull GradleModelConsumer modelConsumer
+  ) { }
 
   default void populateBuildModels(
     @NotNull BuildController controller,

@@ -267,6 +267,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
             for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
               for (ProjectImportModelProvider modelProvider : modelProviders) {
                 telemetry.runWithSpan(modelProvider.getName(), span -> {
+                  span.setAttribute("project-name", gradleProject.getName());
                   span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
                   span.setAttribute("model-type", "ProjectModel");
                   modelProvider.populateProjectModels(buildController, gradleProject, modelConsumer);
@@ -280,6 +281,12 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
                 modelProvider.populateBuildModels(buildController, gradleBuild, modelConsumer);
               });
             }
+          }
+          for (ProjectImportModelProvider modelProvider : modelProviders) {
+            telemetry.runWithSpan(modelProvider.getName(), span -> {
+              span.setAttribute("model-type", "GradleModel");
+              modelProvider.populateModels(buildController, gradleBuilds, modelConsumer);
+            });
           }
         });
       });

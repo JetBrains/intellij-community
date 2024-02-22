@@ -33,6 +33,8 @@ public final class Messages {
 
   public final static @NotNull String RESOURCE_FILTER_MODEL_GROUP = "gradle.resourceModel.group";
 
+  public final static @NotNull String SOURCE_SET_ARTIFACT_INDEX_GROUP = "gradle.sourceSetArtifactIndex.group";
+  public final static @NotNull String SOURCE_SET_ARTIFACT_INDEX_CACHE_SET_GROUP = "gradle.sourceSetArtifactIndex.cacheSet.group";
   public final static @NotNull String SOURCE_SET_DEPENDENCY_MODEL_GROUP = "gradle.sourceSetDependencyModel.group";
   public final static @NotNull String SOURCE_SET_DEPENDENCY_MODEL_CACHE_GET_GROUP = "gradle.sourceSetDependencyModel.cacheGet.group";
   public final static @NotNull String SOURCE_SET_DEPENDENCY_MODEL_CACHE_SET_GROUP = "gradle.sourceSetDependencyModel.cacheSet.group";
