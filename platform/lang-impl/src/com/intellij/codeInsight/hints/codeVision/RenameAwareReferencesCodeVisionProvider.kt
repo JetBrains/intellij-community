@@ -8,17 +8,10 @@ import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
@@ -53,15 +46,8 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     val stamp = ModificationStampUtil.getModificationStamp(editor)
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
 
-    try {
-      return ProgressManager.getInstance().runProcess(
-        Computable { runBlockingCancellable { readAction { recomputeLenses(editor, project, stamp, cacheService) } } },
-        EmptyProgressIndicator()
-      )
-    } catch (e: ProcessCanceledException) {
-      return CodeVisionState.NotReady
-    } catch (e: IndexNotReadyException) {
-      return CodeVisionState.NotReady
+    return InlayHintsUtils.computeCodeVisionUnderReadAction {
+      recomputeLenses(editor, project, stamp, cacheService)
     }
   }
 
