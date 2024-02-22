@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -289,4 +290,12 @@ public abstract class FileEditorManager {
    * @param file refreshed file
    */
   public void updateFileColor(@NotNull VirtualFile file) { }
+
+  /**
+   * Returns currently focused editor (if any). It is either {@code null} or the value returned by {@link #getSelectedEditor()}.
+   */
+  public @Nullable FileEditor getFocusedEditor() {
+    FileEditor editor = getSelectedEditor();
+    return editor != null && UIUtil.isFocusAncestor(editor.getComponent()) ? editor : null;
+  }
 }
