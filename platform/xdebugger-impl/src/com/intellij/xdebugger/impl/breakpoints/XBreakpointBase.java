@@ -52,6 +52,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.xdebugger.XDebuggerUtil.INLINE_BREAKPOINTS_KEY;
+
 public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends BreakpointState> extends UserDataHolderBase implements XBreakpoint<P>, Comparable<Self> {
   @NonNls private static final String BR_NBSP = "<br>" + CommonXmlStrings.NBSP;
   private final XBreakpointType<Self, P> myType;
@@ -786,7 +788,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     public @NotNull List<GutterMark> processMarkers(@NotNull List<GutterMark> marks) {
       // In general, it seems ok to merge breakpoints because they are drawn one over another in the new UI.
       // But we disable it in the old mode just for ease of regressions debugging.
-      if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return marks;
+
+      if (!Registry.is(INLINE_BREAKPOINTS_KEY)) return marks;
 
       var breakpointCount = ContainerUtil.count(marks, m -> m instanceof CommonBreakpointGutterIconRenderer);
       if (breakpointCount <= 1) {
