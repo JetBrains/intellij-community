@@ -737,7 +737,6 @@ public final class org/jetbrains/jewel/ui/component/TooltipPlacement : androidx/
 	public static final field $stable I
 	public synthetic fun <init> (JLandroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/unit/Density;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (JLandroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/unit/Density;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun positionProvider (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/window/PopupPositionProvider;
 	public fun positionProvider-9KIMszo (JLandroidx/compose/runtime/Composer;I)Landroidx/compose/ui/window/PopupPositionProvider;
 }
 

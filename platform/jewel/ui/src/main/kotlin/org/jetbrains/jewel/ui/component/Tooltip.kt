@@ -89,13 +89,7 @@ public class TooltipPlacement(
 ) : TooltipPlacement {
 
     @Composable
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun positionProvider(): PopupPositionProvider {
-        error("Not supported")
-    }
-
-    @Composable
-    override fun positionProvider(cursorPosition: Offset): PopupPositionProvider =
+    public override fun positionProvider(cursorPosition: Offset): PopupPositionProvider =
         rememberTooltipPositionProvider(
             cursorPosition = cursorPosition,
             contentOffset = contentOffset,

@@ -1,6 +1,6 @@
 [versions]
 commonmark = "0.21.0"
-composeDesktop = "1.6.0-dev1397"
+composeDesktop = "1.6.0-dev1440"
 detekt = "1.23.4"
 dokka = "1.8.20"
 idea = "241.12662.62-EAP-SNAPSHOT"
