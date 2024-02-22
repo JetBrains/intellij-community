@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.documentation
 
+import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEx
@@ -184,7 +185,9 @@ internal class TerminalDocumentationManager(private val project: Project, privat
       add(AdjustFontSizeAction())
     }
     val scrollPane = docComponent.getComponent() as? JScrollPane ?: error("JScrollPane expected")
-    val moreButton = actionButton(actions, scrollPane.viewport.view)
+    val docPanel = scrollPane.viewport.view as JComponent
+    val docEditor = docPanel.components.find { it is DocumentationEditorPane }
+    val moreButton = actionButton(actions, docEditor ?: docPanel)
     return scrollPaneWithCorner(parentDisposable, scrollPane, moreButton)
   }
 
@@ -203,6 +206,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
   private fun actionButton(actions: ActionGroup, contextComponent: Component): JComponent {
     val presentation = Presentation().also {
       it.icon = AllIcons.Actions.More
+      it.isPopupGroup = true
       it.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     }
     val button = object : ActionButton(actions, presentation, ActionPlaces.UNKNOWN, Dimension(20, 20)) {
