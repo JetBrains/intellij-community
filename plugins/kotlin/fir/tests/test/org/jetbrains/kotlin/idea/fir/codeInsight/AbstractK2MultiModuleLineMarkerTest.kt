@@ -15,7 +15,9 @@ abstract class AbstractK2MultiModuleLineMarkerTest: AbstractLineMarkerCodeMetaIn
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiplatform")
 
     override fun getConfigurations() = listOf(
-        LineMarkerConfiguration()
+        LineMarkerConfiguration(
+            renderTargetIcons = true,
+        )
     )
 
     override fun setUp() {
