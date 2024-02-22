@@ -679,6 +679,11 @@ fun <T : CommandChain> T.cut(): T = apply {
   executeEditorAction("\$Cut")
 }
 
+@Suppress("unused")
+fun <T : CommandChain> T.undo(): T = apply {
+  executeEditorAction("\$Undo")
+}
+
 fun <T : CommandChain> T.selectAll(): T = apply {
   executeEditorAction("\$SelectAll")
 }
@@ -733,6 +738,10 @@ fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T = apply 
 
 fun <T : CommandChain> T.collectAllFiles(extension: String, fromSources: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}collectAllFiles $extension $fromSources")
+}
+
+fun <T : CommandChain> T.storeHighlightingResults(fileName: String): T = apply {
+  addCommand("${CMD_PREFIX}storeHighlightingResults $fileName")
 }
 
 fun <T : CommandChain> T.recompileFiles(relativeFilePaths: List<String>): T = apply {
