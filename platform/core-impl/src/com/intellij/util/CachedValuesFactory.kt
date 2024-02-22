@@ -13,30 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.util
 
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.ParameterizedCachedValue;
-import com.intellij.psi.util.ParameterizedCachedValueProvider;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.ParameterizedCachedValue
+import com.intellij.psi.util.ParameterizedCachedValueProvider
 
 /**
  * @author Dmitry Avdeev
  */
-public interface CachedValuesFactory {
-  @NotNull
-  <T> CachedValue<T> createCachedValue(@NotNull CachedValueProvider<T> provider, boolean trackValue);
+interface CachedValuesFactory {
+  fun <T> createCachedValue(provider: CachedValueProvider<T>, trackValue: Boolean): CachedValue<T>
 
-  @NotNull
-  <T> CachedValue<T> createCachedValue(@NotNull UserDataHolder userDataHolder, @NotNull CachedValueProvider<T> provider, boolean trackValue);
+  fun <T> createCachedValue(userDataHolder: UserDataHolder, provider: CachedValueProvider<T>, trackValue: Boolean): CachedValue<T>
 
-  @NotNull
-  <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull ParameterizedCachedValueProvider<T,P> provider, boolean trackValue);
+  fun <T, P> createParameterizedCachedValue(provider: ParameterizedCachedValueProvider<T, P>,
+                                            trackValue: Boolean): ParameterizedCachedValue<T, P>
 
-  @NotNull
-  <T,P> ParameterizedCachedValue<T,P> createParameterizedCachedValue(@NotNull UserDataHolder userDataHolder,
-                                                                     @NotNull ParameterizedCachedValueProvider<T,P> provider,
-                                                                     boolean trackValue);
+  fun <T, P> createParameterizedCachedValue(userDataHolder: UserDataHolder,
+                                            provider: ParameterizedCachedValueProvider<T, P>,
+                                            trackValue: Boolean): ParameterizedCachedValue<T, P>
 }
