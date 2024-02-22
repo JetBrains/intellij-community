@@ -83,6 +83,10 @@ internal class EditorCellInput(
   fun updatePositions() {
     folding.updatePosition()
   }
+
+  fun onViewportChange() {
+    inputController?.onViewportChange()
+  }
 }
 
 private fun String.ellipsis(length: Int): String {

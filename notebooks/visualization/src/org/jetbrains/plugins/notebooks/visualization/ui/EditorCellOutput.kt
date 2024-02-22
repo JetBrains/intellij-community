@@ -17,4 +17,8 @@ internal class EditorCellOutput(editor: EditorEx, private val outputController: 
     folding.dispose()
   }
 
+  fun onViewportChange() {
+    outputController.onViewportChange()
+  }
+
 }

@@ -91,6 +91,9 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) : Not
             // Many UI instances has overridden getPreferredSize relying on editor dimensions.
             inlay.renderer?.asSafely<JComponent>()?.updateUI()
           }
+          _cells.forEach {
+            it.onViewportChange()
+          }
         }
       })
     }

@@ -114,6 +114,11 @@ class EditorCell(
     output?.updatePositions()
   }
 
+  fun onViewportChange() {
+    input.onViewportChange()
+    output?.onViewportChange()
+  }
+
   companion object {
     private val LOG = logger<EditorCell>()
   }
