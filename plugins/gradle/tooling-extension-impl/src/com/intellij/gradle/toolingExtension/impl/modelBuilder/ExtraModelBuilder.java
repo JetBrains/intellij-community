@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
-import com.intellij.gradle.toolingExtension.impl.model.projectModel.ExternalProjectBuilderImpl;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.api.Project;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.internal.impldep.com.google.common.collect.Lists;
@@ -93,10 +91,6 @@ public class ExtraModelBuilder implements ParameterizedToolingModelBuilder<Model
       }
     }
     catch (Exception exception) {
-      if (service instanceof ExternalProjectBuilderImpl) {
-        //Probably checked exception might still pop from poorly behaving implementation
-        throw asRuntimeException(exception);
-      }
       reportErrorMessage(modelName, project, context, service, exception);
       return null;
     }
@@ -135,13 +129,6 @@ public class ExtraModelBuilder implements ParameterizedToolingModelBuilder<Model
     String serviceName = service.getClass().getSimpleName();
     String msg = String.format("%s: service %s imported '%s' in %d ms", projectName, serviceName, modelName, timeInMs);
     project.getLogger().error(msg);
-  }
-
-  private static @NotNull RuntimeException asRuntimeException(@NotNull Exception exception) {
-    if (exception instanceof RuntimeException) {
-      return (RuntimeException)exception;
-    }
-    return new ExternalSystemException(exception);
   }
 
   @NotNull
