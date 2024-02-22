@@ -24,7 +24,10 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
     val shellCommandExecutor = parameters.editor.getUserData(ShellCommandExecutor.KEY)
-    if (session == null || shellCommandExecutor == null || parameters.completionType != CompletionType.BASIC) {
+    if (session == null ||
+        session.model.isCommandRunning ||
+        shellCommandExecutor == null ||
+        parameters.completionType != CompletionType.BASIC) {
       return
     }
     // stop even if we can't suggest something to not execute contributors from the ShellScript plugin

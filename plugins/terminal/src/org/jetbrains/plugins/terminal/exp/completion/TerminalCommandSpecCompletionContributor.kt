@@ -22,7 +22,10 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
     val runtimeDataProvider = parameters.editor.getUserData(IJShellRuntimeDataProvider.KEY)
-    if (session == null || runtimeDataProvider == null || parameters.completionType != CompletionType.BASIC) {
+    if (session == null ||
+        session.model.isCommandRunning ||
+        runtimeDataProvider == null ||
+        parameters.completionType != CompletionType.BASIC) {
       return
     }
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
