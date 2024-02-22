@@ -47,8 +47,8 @@ class BlockTerminalController(
 
   @RequiresEdt
   fun startCommandExecution(command: String) {
-    promptController.reset()
     if (command.isBlank()) {
+      promptController.reset()
       outputController.insertEmptyLine()
     }
     else startCommand(command)
@@ -87,6 +87,7 @@ class BlockTerminalController(
     model.isCommandRunning = false
 
     invokeLater {
+      promptController.reset()
       promptController.promptIsVisible = true
     }
   }
