@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKSymbolProvider
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-@ApiStatus.Internal
 interface JKSymbol {
     val target: Any
     val declaredIn: JKSymbol?
@@ -28,7 +26,6 @@ interface JKSymbol {
         get() = typeFactory.symbolProvider
 }
 
-@ApiStatus.Internal
 interface JKUniverseSymbol<T : JKDeclaration> : JKSymbol {
     override var target: T
     override val fqName: String
@@ -53,7 +50,6 @@ interface JKUniverseSymbol<T : JKDeclaration> : JKSymbol {
                 ?.let { symbolProvider.provideUniverseSymbol(it) }
 }
 
-@ApiStatus.Internal
 interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
     override val target: T
     override val declaredIn: JKSymbol?
@@ -64,7 +60,6 @@ interface JKMultiverseSymbol<T : PsiNamedElement> : JKSymbol {
         get() = target.name ?: SpecialNames.ANONYMOUS.asString()
 }
 
-@ApiStatus.Internal
 interface JKMultiverseKtSymbol<T : KtNamedDeclaration> : JKSymbol {
     override val target: T
     override val name: String
@@ -75,7 +70,6 @@ interface JKMultiverseKtSymbol<T : KtNamedDeclaration> : JKSymbol {
         get() = target.fqName?.asString() ?: name
 }
 
-@ApiStatus.Internal
 interface JKUnresolvedSymbol : JKSymbol {
     override val target: String
     override val declaredIn: JKSymbol?

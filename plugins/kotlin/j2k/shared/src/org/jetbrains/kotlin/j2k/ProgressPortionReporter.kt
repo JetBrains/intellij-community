@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 class ProgressPortionReporter(
     indicator: ProgressIndicator,
     private val start: Double,

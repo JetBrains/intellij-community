@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
-@ApiStatus.Internal
 class JKImportStorage(languageSettings: LanguageVersionSettings) {
     private val imports = mutableSetOf<FqName>()
 

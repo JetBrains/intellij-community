@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
-@ApiStatus.Internal
 data class NewJ2kConverterContext @ApiStatus.Internal constructor(
     @ApiStatus.Internal val symbolProvider: JKSymbolProvider,
     @ApiStatus.Internal val typeFactory: JKTypeFactory,

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKComment
 import org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 class FormattingCollector {
     private val commentCache = mutableMapOf<PsiElement, JKComment>()
 

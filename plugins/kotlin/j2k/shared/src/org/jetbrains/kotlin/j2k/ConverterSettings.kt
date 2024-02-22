@@ -2,9 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
 data class ConverterSettings(
     var forceNotNullTypes: Boolean,
     var specifyLocalVariableTypeByDefault: Boolean,

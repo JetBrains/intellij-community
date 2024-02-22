@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -10,13 +9,11 @@ import org.jetbrains.kotlin.nj2k.RecursiveConversion
 import org.jetbrains.kotlin.nj2k.toExpression
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKAnnotation.UseSiteTarget.PROPERTY_GETTER
-
 import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.isArrayType
 import org.jetbrains.kotlin.nj2k.types.replaceJavaClassWithKotlinClassType
 import org.jetbrains.kotlin.nj2k.types.updateNullabilityRecursively
 
-@ApiStatus.Internal
 class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

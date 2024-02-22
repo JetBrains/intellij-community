@@ -2,13 +2,11 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.symbols.JKUniverseFieldSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 
-@ApiStatus.Internal
 class MoveConstructorsAfterFieldsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

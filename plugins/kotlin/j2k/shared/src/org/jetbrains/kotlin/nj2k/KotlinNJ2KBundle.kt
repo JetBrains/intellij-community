@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.util.AbstractKotlinBundle
 @NonNls
 private const val BUNDLE = "messages.KotlinNJ2KBundle"
 
-@ApiStatus.Internal
 object KotlinNJ2KBundle : AbstractKotlinBundle(BUNDLE) {
     @Nls
     @JvmStatic

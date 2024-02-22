@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 import org.jetbrains.kotlin.psi.*
 
-@ApiStatus.Internal
 class JKSymbolProvider(private val resolver: JKResolver) {
     lateinit var typeFactory: JKTypeFactory
 

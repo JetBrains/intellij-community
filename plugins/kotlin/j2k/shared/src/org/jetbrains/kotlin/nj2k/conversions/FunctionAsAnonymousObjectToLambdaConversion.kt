@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.nj2k.tree.*
 
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 class FunctionAsAnonymousObjectToLambdaConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.types
 
 import com.intellij.psi.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedClassSymbol
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
-@ApiStatus.Internal
 class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
     fun fromPsiType(type: PsiType): JKType = createPsiType(type)
 

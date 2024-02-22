@@ -2,9 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
 data class FilesResult(
     val results: List<String>,
     val externalCodeProcessing: ExternalCodeProcessing?

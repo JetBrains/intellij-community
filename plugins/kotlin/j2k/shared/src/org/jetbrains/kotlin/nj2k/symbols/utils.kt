@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping
 import org.jetbrains.kotlin.name.SpecialNames
@@ -19,11 +18,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
-@get:ApiStatus.Internal
 val JKSymbol.isUnresolved
     get() = this is JKUnresolvedSymbol
 
-@ApiStatus.Internal
 fun JKSymbol.getDisplayFqName(): String {
     fun JKSymbol.isDisplayable() = this is JKClassSymbol || this is JKPackageSymbol
     if (this !is JKUniverseSymbol<*>) return fqName
@@ -32,7 +29,6 @@ fun JKSymbol.getDisplayFqName(): String {
     }.fold(name) { acc, symbol -> "${symbol.name}.$acc" }
 }
 
-@ApiStatus.Internal
 fun JKSymbol.deepestFqName(): String {
     fun Any.deepestFqNameForTarget(): String? =
         when (this) {
@@ -44,11 +40,9 @@ fun JKSymbol.deepestFqName(): String {
     return target.deepestFqNameForTarget() ?: fqName
 }
 
-@get:ApiStatus.Internal
 val JKSymbol.containingClass
     get() = declaredIn as? JKClassSymbol
 
-@get:ApiStatus.Internal
 val JKSymbol.isStaticMember
     get() = when (val target = target) {
         is PsiModifierListOwner -> target.hasModifier(JvmModifier.STATIC)
@@ -63,7 +57,6 @@ val JKSymbol.isStaticMember
         else -> false
     }
 
-@get:ApiStatus.Internal
 val JKSymbol.isEnumConstant
     get() = when (target) {
         is JKEnumConstant -> true
@@ -72,7 +65,6 @@ val JKSymbol.isEnumConstant
         else -> false
     }
 
-@get:ApiStatus.Internal
 val JKSymbol.isUnnamedCompanion
     get() = when (val target = target) {
         is JKClass -> target.classKind == JKClass.ClassKind.COMPANION

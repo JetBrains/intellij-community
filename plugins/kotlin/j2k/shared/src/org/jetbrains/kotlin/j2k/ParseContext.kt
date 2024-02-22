@@ -2,9 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
 enum class ParseContext {
     TOP_LEVEL,
     CODE_BLOCK

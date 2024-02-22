@@ -2,22 +2,16 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 
-@ApiStatus.Internal
 sealed class SuperFunctionInfo
 
-@ApiStatus.Internal
 data class ExternalSuperFunctionInfo(val descriptor: FunctionDescriptor) : SuperFunctionInfo()
 
-@ApiStatus.Internal
 data class InternalSuperFunctionInfo(val label: JKElementInfoLabel) : SuperFunctionInfo()
 
-@ApiStatus.Internal
 data class FunctionInfo(val superFunctions: List<SuperFunctionInfo>) : JKElementInfo
 
-@ApiStatus.Internal
 enum class JKTypeInfo(val unknownNullability: Boolean, val unknownMutability: Boolean) : JKElementInfo {
     KNOWN_NULLABILITY_KNOWN_MUTABILITY(unknownNullability = false, unknownMutability = false),
     UNKNOWN_NULLABILITY_KNOWN_MUTABILITY(unknownNullability = true, unknownMutability = false),

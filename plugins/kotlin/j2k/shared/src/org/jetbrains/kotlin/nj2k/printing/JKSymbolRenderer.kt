@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.escaped
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Project) {
     private val canBeShortenedClassNameCache = CanBeShortenedCache(project)
 

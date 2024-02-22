@@ -16,7 +16,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.refactoring.suggested.range
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
-@ApiStatus.Internal
 class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcessor {
     override val phasesCount: Int = 1
 

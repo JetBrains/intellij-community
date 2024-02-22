@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 sealed class JKMethodSymbol : JKSymbol {
     context(KtAnalysisSession)
     abstract val receiverType: JKType?
@@ -29,7 +27,6 @@ sealed class JKMethodSymbol : JKSymbol {
     abstract val returnType: JKType?
 }
 
-@ApiStatus.Internal
 class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethodSymbol(), JKUniverseSymbol<JKMethod> {
     context(KtAnalysisSession)
     override val receiverType: JKType?
@@ -48,7 +45,6 @@ class JKUniverseMethodSymbol(override val typeFactory: JKTypeFactory) : JKMethod
     override lateinit var target: JKMethod
 }
 
-@ApiStatus.Internal
 class JKMultiverseMethodSymbol(
     override val target: PsiMethod,
     override val typeFactory: JKTypeFactory
@@ -71,7 +67,6 @@ class JKMultiverseMethodSymbol(
         }
 }
 
-@ApiStatus.Internal
 class JKMultiverseFunctionSymbol(
     override val target: KtFunction,
     override val typeFactory: JKTypeFactory
@@ -100,7 +95,6 @@ class JKMultiverseFunctionSymbol(
         get() = target.typeReference?.toJK(typeFactory)
 }
 
-@ApiStatus.Internal
 class JKUnresolvedMethod(
     override val target: String,
     override val typeFactory: JKTypeFactory,
@@ -117,7 +111,6 @@ class JKUnresolvedMethod(
         get() = emptyList()
 }
 
-@ApiStatus.Internal
 class KtClassImplicitConstructorSymbol(
     override val target: KtLightMethod,
     override val typeFactory: JKTypeFactory

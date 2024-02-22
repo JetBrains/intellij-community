@@ -5,53 +5,43 @@ package org.jetbrains.kotlin.nj2k.types
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiTypes
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKTypeParameterSymbol
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 
-@ApiStatus.Internal
 interface JKType {
     val nullability: Nullability
 }
 
-@ApiStatus.Internal
 interface JKWildCardType : JKType
 
-@ApiStatus.Internal
 interface JKParametrizedType : JKType {
     val parameters: List<JKType>
 }
 
-@ApiStatus.Internal
 interface JKStarProjectionType : JKWildCardType {
     override val nullability: Nullability
         get() = Nullability.NotNull
 }
 
-@ApiStatus.Internal
 object JKNoType : JKType {
     override val nullability: Nullability = Nullability.NotNull
 }
 
-@ApiStatus.Internal
 data class JKClassType(
     val classReference: JKClassSymbol,
     override val parameters: List<JKType> = emptyList(),
     override val nullability: Nullability = Nullability.Default
 ) : JKParametrizedType
 
-@ApiStatus.Internal
 object JKStarProjectionTypeImpl : JKStarProjectionType
 
-@ApiStatus.Internal
 object JKContextType : JKType {
     override val nullability: Nullability
         get() = Nullability.Default
 }
 
-@ApiStatus.Internal
 data class JKVarianceTypeParameterType(
     val variance: Variance,
     val boundType: JKType
@@ -64,19 +54,16 @@ data class JKVarianceTypeParameterType(
     }
 }
 
-@ApiStatus.Internal
 data class JKTypeParameterType(
     val identifier: JKTypeParameterSymbol,
     override val nullability: Nullability = Nullability.Default
 ) : JKType
 
-@ApiStatus.Internal
 data class JKCapturedType(
     val wildcardType: JKWildCardType,
     override val nullability: Nullability = Nullability.Default
 ) : JKType
 
-@ApiStatus.Internal
 sealed class JKJavaPrimitiveTypeBase : JKType {
     abstract val jvmPrimitiveType: JvmPrimitiveType?
 }
@@ -86,7 +73,6 @@ private data object JKJavaNullPrimitiveType : JKJavaPrimitiveTypeBase() {
     override val nullability: Nullability = Nullability.Nullable
 }
 
-@ApiStatus.Internal
 class JKJavaPrimitiveType private constructor(override val jvmPrimitiveType: JvmPrimitiveType) : JKJavaPrimitiveTypeBase() {
     override val nullability: Nullability
         get() = Nullability.NotNull
@@ -115,19 +101,16 @@ class JKJavaPrimitiveType private constructor(override val jvmPrimitiveType: Jvm
 
 }
 
-@ApiStatus.Internal
 data class JKJavaArrayType(
     val type: JKType,
     override var nullability: Nullability = Nullability.Default
 ) : JKType
 
-@ApiStatus.Internal
 data class JKJavaDisjunctionType(
     val disjunctions: List<JKType>,
     override val nullability: Nullability = Nullability.Default
 ) : JKType
 
-@ApiStatus.Internal
 object JKJavaVoidType : JKType {
     override val nullability: Nullability
         get() = Nullability.NotNull

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.symbols
 
 import com.intellij.psi.PsiTypeParameter
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.JKTypeParameter
 import org.jetbrains.kotlin.nj2k.tree.JKTypeParameterListOwner
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -12,12 +11,10 @@ import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 sealed class JKTypeParameterSymbol : JKSymbol {
     abstract val index: Int
 }
 
-@ApiStatus.Internal
 class JKMultiverseTypeParameterSymbol(
     override val target: PsiTypeParameter,
     override val typeFactory: JKTypeFactory
@@ -26,7 +23,6 @@ class JKMultiverseTypeParameterSymbol(
         get() = target.index
 }
 
-@ApiStatus.Internal
 class JKUniverseTypeParameterSymbol(
     override val typeFactory: JKTypeFactory
 ) : JKTypeParameterSymbol(), JKUniverseSymbol<JKTypeParameter> {
@@ -35,7 +31,6 @@ class JKUniverseTypeParameterSymbol(
     override lateinit var target: JKTypeParameter
 }
 
-@ApiStatus.Internal
 class JKMultiverseKtTypeParameterSymbol(
     override val target: KtTypeParameter,
     override val typeFactory: JKTypeFactory

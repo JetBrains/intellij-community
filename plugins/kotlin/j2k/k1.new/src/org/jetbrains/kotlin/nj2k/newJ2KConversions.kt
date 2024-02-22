@@ -1,14 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.conversions.*
 import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
 import org.jetbrains.kotlin.nj2k.tree.JKParameter
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DuplicatedCode")
-@ApiStatus.Internal
 fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = listOf(
     ParenthesizeBitwiseOperationConversion(context),
     ParenthesizeMultilineBinaryExpressionConversion(context),

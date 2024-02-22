@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 class JavaToJKTreeBuilder(
     private val symbolProvider: JKSymbolProvider,
     private val typeFactory: JKTypeFactory,

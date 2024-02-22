@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 //copied from old j2k
-@ApiStatus.Internal
 fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
     if (left.isNullLiteral() || (right?.isNullLiteral() == true)) return true
     when (val type = left.type) {
@@ -48,7 +47,6 @@ fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
     }
 }
 
-@ApiStatus.Internal
 fun PsiMember.visibility(
     referenceSearcher: ReferenceSearcher,
     assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?
@@ -69,7 +67,6 @@ fun PsiMember.visibility(
         }
     }?.firstOrNull() ?: JKVisibilityModifierElement(Visibility.INTERNAL)
 
-@ApiStatus.Internal
 fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -> Unit)?): JKModalityModifierElement {
     val modalityFromModifier = modifierList?.children?.mapNotNull { child ->
         if (child !is PsiKeyword) return@mapNotNull null
@@ -92,7 +89,6 @@ fun PsiMember.modality(assignNonCodeElements: ((JKFormattingOwner, PsiElement) -
     }
 }
 
-@ApiStatus.Internal
 fun JvmClassKind.toJk(): JKClass.ClassKind = when (this) {
     JvmClassKind.CLASS -> JKClass.ClassKind.CLASS
     JvmClassKind.INTERFACE -> JKClass.ClassKind.INTERFACE
@@ -134,7 +130,6 @@ private fun allowProtected(element: PsiElement, member: PsiMember, originalClass
     }
 }
 
-@ApiStatus.Internal
 fun PsiClass.classKind(): JKClass.ClassKind =
     when {
         isAnnotationType -> JKClass.ClassKind.ANNOTATION
@@ -150,7 +145,6 @@ val KtDeclaration.fqNameWithoutCompanions
         .toList()
         .foldRight(containingKtFile.packageFqName) { container, acc -> acc.child(Name.identifier(container.name!!)) }
 
-@ApiStatus.Internal
 fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> T): T {
     var result: T? = null
     ApplicationManager.getApplication().invokeAndWait {
@@ -164,7 +158,6 @@ fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> T): 
     return result!!
 }
 
-@ApiStatus.Internal
 fun PsiElement.getContainingClass(): PsiClass? {
     var context = context
     while (context != null) {
@@ -176,6 +169,5 @@ fun PsiElement.getContainingClass(): PsiClass? {
     return null
 }
 
-@ApiStatus.Internal
 inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T> =
     flatMap { it.collectDescendantsOfType() }

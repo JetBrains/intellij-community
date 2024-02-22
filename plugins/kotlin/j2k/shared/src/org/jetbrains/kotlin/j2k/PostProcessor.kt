@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.j2k
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
-@ApiStatus.Internal
 interface PostProcessor {
     fun insertImport(file: KtFile, fqName: FqName)
 

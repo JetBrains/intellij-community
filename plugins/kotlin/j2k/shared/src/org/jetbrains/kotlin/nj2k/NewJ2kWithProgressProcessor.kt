@@ -8,7 +8,6 @@ import com.intellij.psi.PsiJavaFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.WithProgressProcessor
 
-@ApiStatus.Internal
 class NewJ2kWithProgressProcessor(
     private val progressIndicator: ProgressIndicator?,
     private val files: List<PsiJavaFile>?,

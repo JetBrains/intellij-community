@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.descendantsOfType
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
  * It's easier to remove them all at once in a dedicated processing,
  * because such lines may be introduced rather randomly from various other processings.
  */
-@ApiStatus.Internal
 class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         val containers = runReadAction {

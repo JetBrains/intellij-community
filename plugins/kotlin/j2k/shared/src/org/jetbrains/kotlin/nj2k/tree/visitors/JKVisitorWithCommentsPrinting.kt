@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.nj2k.tree.visitors
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.*
 
-@ApiStatus.Internal
 abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
     abstract fun printLeftNonCodeElements(element: JKFormattingOwner)
     abstract fun printRightNonCodeElements(element: JKFormattingOwner)

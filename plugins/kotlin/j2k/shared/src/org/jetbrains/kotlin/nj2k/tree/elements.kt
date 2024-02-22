@@ -3,18 +3,15 @@
 package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.symbols.JKClassSymbol
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKType
 
-@ApiStatus.Internal
 class JKTreeRoot(element: JKTreeElement) : JKTreeElement() {
     var element by child(element)
     override fun accept(visitor: JKVisitor) = visitor.visitTreeRoot(this)
 }
 
-@ApiStatus.Internal
 class JKFile(
     packageDeclaration: JKPackageDeclaration,
     importList: JKImportList,
@@ -27,7 +24,6 @@ class JKFile(
     var declarationList by children(declarationList)
 }
 
-@ApiStatus.Internal
 class JKTypeElement(var type: JKType, annotationList: JKAnnotationList = JKAnnotationList()) :
     JKTreeElement(), JKAnnotationListOwner {
 
@@ -35,7 +31,6 @@ class JKTypeElement(var type: JKType, annotationList: JKAnnotationList = JKAnnot
     override var annotationList: JKAnnotationList by child(annotationList)
 }
 
-@ApiStatus.Internal
 abstract class JKBlock : JKTreeElement() {
     abstract var statements: List<JKStatement>
 
@@ -43,7 +38,6 @@ abstract class JKBlock : JKTreeElement() {
     val rightBrace = JKTokenElementImpl("}")
 }
 
-@ApiStatus.Internal
 object JKBodyStub : JKBlock() {
     override val commentsBefore: MutableList<JKComment> = mutableListOf()
     override val commentsAfter: MutableList<JKComment> = mutableListOf()
@@ -67,7 +61,6 @@ object JKBodyStub : JKBlock() {
     override fun accept(visitor: JKVisitor) = Unit
 }
 
-@ApiStatus.Internal
 class JKInheritanceInfo(
     extends: List<JKTypeElement>,
     implements: List<JKTypeElement>
@@ -78,51 +71,42 @@ class JKInheritanceInfo(
     override fun accept(visitor: JKVisitor) = visitor.visitInheritanceInfo(this)
 }
 
-@ApiStatus.Internal
 class JKPackageDeclaration(name: JKNameIdentifier) : JKDeclaration() {
     override var name: JKNameIdentifier by child(name)
     override fun accept(visitor: JKVisitor) = visitor.visitPackageDeclaration(this)
 }
 
-@ApiStatus.Internal
 abstract class JKLabel : JKTreeElement()
 
-@ApiStatus.Internal
 class JKLabelEmpty : JKLabel() {
     override fun accept(visitor: JKVisitor) = visitor.visitLabelEmpty(this)
 }
 
-@ApiStatus.Internal
 class JKLabelText(label: JKNameIdentifier) : JKLabel() {
     val label: JKNameIdentifier by child(label)
     override fun accept(visitor: JKVisitor) = visitor.visitLabelText(this)
 }
 
-@ApiStatus.Internal
 class JKImportStatement(name: JKNameIdentifier) : JKTreeElement() {
     val name: JKNameIdentifier by child(name)
     override fun accept(visitor: JKVisitor) = visitor.visitImportStatement(this)
 }
 
-@ApiStatus.Internal
 class JKImportList(imports: List<JKImportStatement>) : JKTreeElement() {
     var imports by children(imports)
     override fun accept(visitor: JKVisitor) = visitor.visitImportList(this)
 }
 
-@ApiStatus.Internal
 abstract class JKAnnotationParameter : JKTreeElement() {
     abstract var value: JKAnnotationMemberValue
 }
 
-@ApiStatus.Internal
 class JKAnnotationParameterImpl(value: JKAnnotationMemberValue) : JKAnnotationParameter() {
     override var value: JKAnnotationMemberValue by child(value)
 
     override fun accept(visitor: JKVisitor) = visitor.visitAnnotationParameter(this)
 }
 
-@ApiStatus.Internal
 class JKAnnotationNameParameter(
     value: JKAnnotationMemberValue,
     name: JKNameIdentifier
@@ -132,12 +116,10 @@ class JKAnnotationNameParameter(
     override fun accept(visitor: JKVisitor) = visitor.visitAnnotationNameParameter(this)
 }
 
-@ApiStatus.Internal
 abstract class JKArgument : JKTreeElement() {
     abstract var value: JKExpression
 }
 
-@ApiStatus.Internal
 class JKNamedArgument(
     value: JKExpression,
     name: JKNameIdentifier
@@ -151,7 +133,6 @@ class JKNamedArgument(
     }
 }
 
-@ApiStatus.Internal
 class JKArgumentImpl(value: JKExpression) : JKArgument() {
     override var value by child(value)
     override fun accept(visitor: JKVisitor) = visitor.visitArgument(this)
@@ -165,7 +146,6 @@ class JKArgumentImpl(value: JKExpression) : JKArgument() {
  * @param hasTrailingComma - a trailing comma in Java can come from an array initializer,
  * which is converted to a regular method call in Kotlin, so it belongs to JKArgumentList
  */
-@ApiStatus.Internal
 class JKArgumentList(arguments: List<JKArgument> = emptyList(), var hasTrailingComma: Boolean = false) : JKTreeElement() {
     constructor(vararg arguments: JKArgument) : this(arguments.toList())
     constructor(vararg values: JKExpression) : this(values.map { JKArgumentImpl(it) })
@@ -174,19 +154,16 @@ class JKArgumentList(arguments: List<JKArgument> = emptyList(), var hasTrailingC
     override fun accept(visitor: JKVisitor) = visitor.visitArgumentList(this)
 }
 
-@ApiStatus.Internal
 class JKTypeParameterList(typeParameters: List<JKTypeParameter> = emptyList()) : JKTreeElement() {
     var typeParameters by children(typeParameters)
     override fun accept(visitor: JKVisitor) = visitor.visitTypeParameterList(this)
 }
 
-@ApiStatus.Internal
 class JKAnnotationList(annotations: List<JKAnnotation> = emptyList()) : JKTreeElement() {
     var annotations: List<JKAnnotation> by children(annotations)
     override fun accept(visitor: JKVisitor) = visitor.visitAnnotationList(this)
 }
 
-@ApiStatus.Internal
 class JKAnnotation(
     var classSymbol: JKClassSymbol,
     arguments: List<JKAnnotationParameter> = emptyList(),
@@ -209,7 +186,6 @@ class JKAnnotation(
     }
 }
 
-@ApiStatus.Internal
 class JKTypeArgumentList(typeArguments: List<JKTypeElement> = emptyList()) : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
     constructor(vararg typeArguments: JKTypeElement) : this(typeArguments.toList())
     constructor(vararg types: JKType) : this(types.map { JKTypeElement(it) })
@@ -218,17 +194,14 @@ class JKTypeArgumentList(typeArguments: List<JKTypeElement> = emptyList()) : JKT
     override fun accept(visitor: JKVisitor) = visitor.visitTypeArgumentList(this)
 }
 
-@ApiStatus.Internal
 class JKNameIdentifier(val value: String) : JKTreeElement() {
     override fun accept(visitor: JKVisitor) = visitor.visitNameIdentifier(this)
 }
 
-@ApiStatus.Internal
 interface JKAnnotationListOwner : JKFormattingOwner {
     var annotationList: JKAnnotationList
 }
 
-@ApiStatus.Internal
 class JKBlockImpl(statements: List<JKStatement> = emptyList()) : JKBlock() {
     constructor(vararg statements: JKStatement) : this(statements.toList())
 
@@ -236,28 +209,23 @@ class JKBlockImpl(statements: List<JKStatement> = emptyList()) : JKBlock() {
     override fun accept(visitor: JKVisitor) = visitor.visitBlock(this)
 }
 
-@ApiStatus.Internal
 class JKKtWhenCase(labels: List<JKKtWhenLabel>, statement: JKStatement) : JKTreeElement() {
     var labels: List<JKKtWhenLabel> by children(labels)
     var statement: JKStatement by child(statement)
     override fun accept(visitor: JKVisitor) = visitor.visitKtWhenCase(this)
 }
 
-@ApiStatus.Internal
 abstract class JKKtWhenLabel : JKTreeElement()
 
-@ApiStatus.Internal
 class JKKtElseWhenLabel : JKKtWhenLabel() {
     override fun accept(visitor: JKVisitor) = visitor.visitKtElseWhenLabel(this)
 }
 
-@ApiStatus.Internal
 class JKKtValueWhenLabel(expression: JKExpression) : JKKtWhenLabel() {
     var expression: JKExpression by child(expression)
     override fun accept(visitor: JKVisitor) = visitor.visitKtValueWhenLabel(this)
 }
 
-@ApiStatus.Internal
 class JKClassBody(declarations: List<JKDeclaration> = emptyList()) : JKTreeElement() {
     var declarations: List<JKDeclaration> by children(declarations)
     override fun accept(visitor: JKVisitor) = visitor.visitClassBody(this)
@@ -266,7 +234,6 @@ class JKClassBody(declarations: List<JKDeclaration> = emptyList()) : JKTreeEleme
     val rightBrace = JKTokenElementImpl("}")
 }
 
-@ApiStatus.Internal
 class JKJavaTryCatchSection(
     parameter: JKParameter,
     block: JKBlock
@@ -276,27 +243,23 @@ class JKJavaTryCatchSection(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaTryCatchSection(this)
 }
 
-@ApiStatus.Internal
 sealed class JKJavaSwitchCase : JKTreeElement() {
     abstract fun isDefault(): Boolean
     abstract var statements: List<JKStatement>
 }
 
-@ApiStatus.Internal
 class JKJavaDefaultSwitchCase(statements: List<JKStatement>) : JKJavaSwitchCase(), PsiOwner by PsiOwnerImpl() {
     override var statements: List<JKStatement> by children(statements)
     override fun isDefault(): Boolean = true
     override fun accept(visitor: JKVisitor) = visitor.visitJavaDefaultSwitchCase(this)
 }
 
-@ApiStatus.Internal
 sealed class JKJavaLabelSwitchCase : JKJavaSwitchCase() {
     abstract val labels: List<JKExpression>
     final override fun isDefault(): Boolean = false
     override fun accept(visitor: JKVisitor) = visitor.visitJavaLabelSwitchCase(this)
 }
 
-@ApiStatus.Internal
 class JKJavaClassicLabelSwitchCase(
     labels: List<JKExpression>,
     statements: List<JKStatement>
@@ -306,7 +269,6 @@ class JKJavaClassicLabelSwitchCase(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaClassicLabelSwitchCase(this)
 }
 
-@ApiStatus.Internal
 class JKJavaArrowSwitchLabelCase(
     labels: List<JKExpression>,
     statements: List<JKStatement>
@@ -316,7 +278,6 @@ class JKJavaArrowSwitchLabelCase(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaArrowLabelSwitchCase(this)
 }
 
-@ApiStatus.Internal
 class JKKtTryCatchSection(
     parameter: JKParameter,
     block: JKBlock
@@ -326,32 +287,26 @@ class JKKtTryCatchSection(
     override fun accept(visitor: JKVisitor) = visitor.visitKtTryCatchSection(this)
 }
 
-@ApiStatus.Internal
 interface JKJavaSwitchBlock : JKElement {
     val expression: JKExpression
     val cases: List<JKJavaSwitchCase>
 }
 
-@ApiStatus.Internal
 interface JKKtWhenBlock : JKElement, JKFormattingOwner {
     val expression: JKExpression
     val cases: List<JKKtWhenCase>
 }
 
-@ApiStatus.Internal
 sealed class JKJavaResourceElement : JKTreeElement(), PsiOwner by PsiOwnerImpl()
 
-@ApiStatus.Internal
 class JKJavaResourceExpression(expression: JKExpression) : JKJavaResourceElement() {
     var expression by child(expression)
 }
 
-@ApiStatus.Internal
 class JKJavaResourceDeclaration(declaration: JKLocalVariable) : JKJavaResourceElement() {
     var declaration by child(declaration)
 }
 
-@ApiStatus.Internal
 interface JKErrorElement : JKElement {
     val psi: PsiElement?
     val reason: String?

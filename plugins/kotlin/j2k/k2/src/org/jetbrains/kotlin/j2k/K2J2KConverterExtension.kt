@@ -9,7 +9,8 @@ import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.Conversion
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
+import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
 
 // TODO: reuse NewJ2kConverterExtension.doCheckBeforeConversion

@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-@ApiStatus.Internal
 class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
     private val conversions: MutableList<JKExternalConversion> = mutableListOf()
     private val jvmFieldAnnotatedDeclarations: MutableSet<KtNamedDeclaration> = mutableSetOf()
@@ -122,8 +121,7 @@ class ExternalUsagesFixer(private val usages: List<JKMemberInfoWithUsages>) {
         ShortenReferencesFacility.getInstance().shorten(annotation)
     }
 
-    @ApiStatus.Internal
-    data class JKMemberInfoWithUsages(
+        data class JKMemberInfoWithUsages(
         val member: JKMemberData,
         val javaUsages: List<PsiElement>,
         val kotlinUsages: List<KtElement>

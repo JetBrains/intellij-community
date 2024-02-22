@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
 
-@ApiStatus.Internal
 abstract class Conversion(val context: NewJ2kConverterContext) {
     val symbolProvider: JKSymbolProvider
         get() = context.symbolProvider
@@ -35,18 +34,15 @@ abstract class Conversion(val context: NewJ2kConverterContext) {
         org.jetbrains.kotlin.nj2k.tree.applyRecursive(element, data, func)
 }
 
-@get:ApiStatus.Internal
 val Conversion.languageVersionSettings: LanguageVersionSettings
     get() {
         val converter = context.converter
         return converter.targetModule?.languageVersionSettings ?: converter.project.languageVersionSettings
     }
 
-@get:ApiStatus.Internal
 val Conversion.moduleApiVersion: ApiVersion
     get() = languageVersionSettings.apiVersion
 
-@ApiStatus.Internal
 abstract class RecursiveConversion(context: NewJ2kConverterContext) : Conversion(context) {
     context(KtAnalysisSession)
     override fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext) {
@@ -61,7 +57,6 @@ abstract class RecursiveConversion(context: NewJ2kConverterContext) : Conversion
     protected fun <E : JKTreeElement> recurse(element: E): E = applyRecursive(element) { applyToElement(it) }
 }
 
-@ApiStatus.Internal
 abstract class RecursiveConversionWithData<D>(context: NewJ2kConverterContext, private val initialData: D) : Conversion(context) {
     context(KtAnalysisSession)
     override fun run(treeRoot: JKTreeElement, context: NewJ2kConverterContext) {

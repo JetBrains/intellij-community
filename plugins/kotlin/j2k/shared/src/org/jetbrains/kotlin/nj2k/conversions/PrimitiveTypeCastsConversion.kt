@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_5
 import org.jetbrains.kotlin.nj2k.*
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.LONG
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType.Companion.SHORT
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 class PrimitiveTypeCastsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

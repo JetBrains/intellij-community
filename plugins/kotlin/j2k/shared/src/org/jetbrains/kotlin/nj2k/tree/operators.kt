@@ -4,18 +4,15 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.types.JKType
 
-@ApiStatus.Internal
 interface JKOperator {
     val token: JKOperatorToken
     val returnType: JKType
 }
 
-@ApiStatus.Internal
 interface JKOperatorToken {
     val text: String
 
@@ -67,14 +64,11 @@ interface JKOperatorToken {
         val GTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTEQ)
         val GTGTGTEQ = JKJavaOperatorToken(JavaTokenType.GTGTGTEQ)
 
-        @ApiStatus.Internal
-        val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
+                val ARITHMETIC_OPERATORS = listOf(PLUS, MINUS, DIV, MUL, PERC)
 
-        @ApiStatus.Internal
-        val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
+                val BITWISE_LOGICAL_OPERATORS = listOf(AND, OR, XOR)
 
-        @ApiStatus.Internal
-        val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
+                val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
 
         private val elementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
             JavaTokenType.DIV to DIV,
@@ -123,32 +117,25 @@ interface JKOperatorToken {
     }
 }
 
-@ApiStatus.Internal
 class JKKtWordOperatorToken(override val text: String) : JKKtOperatorToken
 
-@ApiStatus.Internal
 class JKKtOperatorImpl(override val token: JKOperatorToken, override val returnType: JKType) : JKOperator
 
-@ApiStatus.Internal
 interface JKKtOperatorToken : JKOperatorToken
 
-@ApiStatus.Internal
 class JKJavaOperatorToken(private val psiToken: IElementType) : JKOperatorToken {
     override val text: String
         get() = error("Java token '$psiToken' should not be printed, it should be replaced with the corresponding Kotlin one")
 }
 
-@ApiStatus.Internal
 class JKKtSingleValueOperatorToken(val psiToken: KtSingleValueToken) : JKKtOperatorToken {
     override val text: String = psiToken.value
 }
 
-@ApiStatus.Internal
 object JKKtSpreadOperatorToken : JKKtOperatorToken {
     override val text: String = "*"
 }
 
-@ApiStatus.Internal
 class JKKtSpreadOperator(override val returnType: JKType) : JKOperator {
     override val token: JKOperatorToken = JKKtSpreadOperatorToken
 }

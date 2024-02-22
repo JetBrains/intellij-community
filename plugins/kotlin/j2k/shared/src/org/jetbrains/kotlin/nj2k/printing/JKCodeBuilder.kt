@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.printing
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.nj2k.*
@@ -10,8 +9,7 @@ import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
-import org.jetbrains.kotlin.nj2k.tree.Modality.*
-import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.JKContextType
@@ -20,7 +18,6 @@ import org.jetbrains.kotlin.nj2k.types.isInterface
 import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 class JKCodeBuilder(context: NewJ2kConverterContext) {
     private val elementInfoStorage = context.elementsInfoStorage
     private val printer = JKPrinter(context.project, context.importStorage, elementInfoStorage)

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.nj2k.symbols.JKUniverseClassSymbol
 import org.jetbrains.kotlin.nj2k.symbols.isStaticMember
 import org.jetbrains.kotlin.nj2k.tree.*
 
-@ApiStatus.Internal
 class RemoveRedundantQualifiersForCallsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

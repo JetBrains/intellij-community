@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
-@ApiStatus.Internal
 class NewJavaToKotlinConverter(
     val project: Project,
     val targetModule: Module?,

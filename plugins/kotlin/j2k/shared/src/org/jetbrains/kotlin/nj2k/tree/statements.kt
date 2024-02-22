@@ -3,37 +3,30 @@
 package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 
-@ApiStatus.Internal
 abstract class JKStatement : JKTreeElement(), PsiOwner by PsiOwnerImpl()
 
-@ApiStatus.Internal
 class JKEmptyStatement : JKStatement() {
     override fun accept(visitor: JKVisitor) = visitor.visitEmptyStatement(this)
 }
 
-@ApiStatus.Internal
 abstract class JKLoopStatement : JKStatement() {
     abstract var body: JKStatement
 }
 
-@ApiStatus.Internal
 class JKWhileStatement(condition: JKExpression, body: JKStatement) : JKLoopStatement() {
     var condition by child(condition)
     override var body by child(body)
     override fun accept(visitor: JKVisitor) = visitor.visitWhileStatement(this)
 }
 
-@ApiStatus.Internal
 class JKDoWhileStatement(body: JKStatement, condition: JKExpression) : JKLoopStatement() {
     var condition by child(condition)
     override var body by child(body)
     override fun accept(visitor: JKVisitor) = visitor.visitDoWhileStatement(this)
 }
 
-@ApiStatus.Internal
 class JKForInStatement(declaration: JKDeclaration, iterationExpression: JKExpression, body: JKStatement) : JKStatement() {
     var declaration: JKDeclaration by child(declaration)
     var iterationExpression: JKExpression by child(iterationExpression)
@@ -41,7 +34,6 @@ class JKForInStatement(declaration: JKDeclaration, iterationExpression: JKExpres
     override fun accept(visitor: JKVisitor) = visitor.visitForInStatement(this)
 }
 
-@ApiStatus.Internal
 class JKIfElseStatement(condition: JKExpression, thenBranch: JKStatement, elseBranch: JKStatement) : JKStatement() {
     var condition by child(condition)
     var thenBranch by child(thenBranch)
@@ -49,49 +41,41 @@ class JKIfElseStatement(condition: JKExpression, thenBranch: JKStatement, elseBr
     override fun accept(visitor: JKVisitor) = visitor.visitIfElseStatement(this)
 }
 
-@ApiStatus.Internal
 class JKBreakStatement(label: JKLabel) : JKStatement() {
     val label: JKLabel by child(label)
     override fun accept(visitor: JKVisitor) = visitor.visitBreakStatement(this)
 }
 
-@ApiStatus.Internal
 class JKJavaYieldStatement(expression: JKExpression) : JKStatement() {
     val expression: JKExpression by child(expression)
     override fun accept(visitor: JKVisitor) = visitor.visitJavaYieldStatement(this)
 }
 
-@ApiStatus.Internal
 class JKContinueStatement(label: JKLabel) : JKStatement() {
     var label: JKLabel by child(label)
     override fun accept(visitor: JKVisitor) = visitor.visitContinueStatement(this)
 }
 
-@ApiStatus.Internal
 class JKBlockStatement(block: JKBlock) : JKStatement() {
     var block by child(block)
     override fun accept(visitor: JKVisitor) = visitor.visitBlockStatement(this)
 }
 
-@ApiStatus.Internal
 class JKBlockStatementWithoutBrackets(statements: List<JKStatement>) : JKStatement() {
     var statements by children(statements)
     override fun accept(visitor: JKVisitor) = visitor.visitBlockStatementWithoutBrackets(this)
 }
 
-@ApiStatus.Internal
 class JKExpressionStatement(expression: JKExpression) : JKStatement() {
     var expression: JKExpression by child(expression)
     override fun accept(visitor: JKVisitor) = visitor.visitExpressionStatement(this)
 }
 
-@ApiStatus.Internal
 class JKDeclarationStatement(declaredStatements: List<JKDeclaration>) : JKStatement() {
     val declaredStatements by children(declaredStatements)
     override fun accept(visitor: JKVisitor) = visitor.visitDeclarationStatement(this)
 }
 
-@ApiStatus.Internal
 class JKKtWhenStatement(
     expression: JKExpression,
     cases: List<JKKtWhenCase>
@@ -102,7 +86,6 @@ class JKKtWhenStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitKtWhenStatement(this)
 }
 
-@ApiStatus.Internal
 class JKKtConvertedFromForLoopSyntheticWhileStatement(
     variableDeclarations: List<JKStatement>,
     whileStatement: JKWhileStatement
@@ -112,7 +95,6 @@ class JKKtConvertedFromForLoopSyntheticWhileStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitKtConvertedFromForLoopSyntheticWhileStatement(this)
 }
 
-@ApiStatus.Internal
 class JKKtAssignmentStatement(
     field: JKExpression,
     expression: JKExpression,
@@ -123,7 +105,6 @@ class JKKtAssignmentStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitKtAssignmentStatement(this)
 }
 
-@ApiStatus.Internal
 class JKReturnStatement(
     expression: JKExpression,
     label: JKLabel = JKLabelEmpty()
@@ -133,7 +114,6 @@ class JKReturnStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitReturnStatement(this)
 }
 
-@ApiStatus.Internal
 class JKJavaSwitchStatement(
     expression: JKExpression,
     cases: List<JKJavaSwitchCase>
@@ -143,7 +123,6 @@ class JKJavaSwitchStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaSwitchStatement(this)
 }
 
-@ApiStatus.Internal
 class JKJavaTryStatement(
     resourceDeclarations: List<JKJavaResourceElement>,
     tryBlock: JKBlock,
@@ -159,7 +138,6 @@ class JKJavaTryStatement(
     val isTryWithResources get() = resourceDeclarations.isNotEmpty()
 }
 
-@ApiStatus.Internal
 class JKJavaSynchronizedStatement(
     lockExpression: JKExpression,
     body: JKBlock
@@ -169,14 +147,12 @@ class JKJavaSynchronizedStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaSynchronizedStatement(this)
 }
 
-@ApiStatus.Internal
 class JKJavaAssertStatement(condition: JKExpression, description: JKExpression) : JKStatement() {
     val description by child(description)
     val condition by child(condition)
     override fun accept(visitor: JKVisitor) = visitor.visitJavaAssertStatement(this)
 }
 
-@ApiStatus.Internal
 class JKJavaForLoopStatement(
     initializers: List<JKStatement>,
     condition: JKExpression,
@@ -191,7 +167,6 @@ class JKJavaForLoopStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaForLoopStatement(this)
 }
 
-@ApiStatus.Internal
 class JKJavaAnnotationMethod(
     returnType: JKTypeElement,
     name: JKNameIdentifier,
@@ -214,7 +189,6 @@ class JKJavaAnnotationMethod(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaAnnotationMethod(this)
 }
 
-@ApiStatus.Internal
 class JKErrorStatement(override var psi: PsiElement?, override val reason: String? = null) : JKStatement(), JKErrorElement {
     override fun accept(visitor: JKVisitor) = visitor.visitErrorStatement(this)
 }

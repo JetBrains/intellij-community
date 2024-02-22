@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKBinaryExpression
 import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.tree.hasLineBreakAfter
 
-@ApiStatus.Internal
 class ParenthesizeMultilineBinaryExpressionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

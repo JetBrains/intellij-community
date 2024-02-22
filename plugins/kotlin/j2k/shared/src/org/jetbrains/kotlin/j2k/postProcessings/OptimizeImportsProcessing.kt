@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.j2k.postProcessings
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.refactoring.suggested.range
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -16,7 +15,6 @@ import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 /**
  * NOTE: This class is J2K-specific, do not confuse it with [com.intellij.codeInsight.actions.OptimizeImportsProcessor].
  */
-@ApiStatus.Internal
 class OptimizeImportsProcessing : FileBasedPostProcessing() {
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         if (!shouldTryToOptimizeImports(file, rangeMarker)) return

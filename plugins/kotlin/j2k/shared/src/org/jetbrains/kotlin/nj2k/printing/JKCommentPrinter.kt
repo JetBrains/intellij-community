@@ -3,10 +3,8 @@
 package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.*
 
-@ApiStatus.Internal
 class JKCommentPrinter(private val printer: JKPrinter) {
     // some comments may appear in the AST multiple times, so we keep track
     // of the already printed comments to avoid printing the same comment twice

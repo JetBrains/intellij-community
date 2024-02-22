@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.*
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.hasWriteAccesses
@@ -12,7 +11,6 @@ import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.symbols.deepestFqName
 import org.jetbrains.kotlin.nj2k.tree.*
-
 import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.JKJavaPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.JKNoType
@@ -22,7 +20,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.extractRadix
 import kotlin.math.abs
 
-@ApiStatus.Internal
 class ForConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     private val forToWhile = ForToWhileConverter(context, symbolProvider)
     private val forToForeach = ForToForeachConverter(context, symbolProvider, typeFactory)

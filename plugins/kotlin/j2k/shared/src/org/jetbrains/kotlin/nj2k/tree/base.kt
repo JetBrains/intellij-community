@@ -3,12 +3,10 @@
 package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-@ApiStatus.Internal
 interface JKElement {
     val parent: JKElement?
     fun detach(from: JKElement)
@@ -43,7 +41,6 @@ private class JKListChild<T : JKElement>(val value: Int) : ReadWriteProperty<JKT
     }
 }
 
-@ApiStatus.Internal
 abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
     override val commentsBefore: MutableList<JKComment> = mutableListOf()
     override val commentsAfter: MutableList<JKComment> = mutableListOf()
@@ -144,23 +141,18 @@ abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
     }
 }
 
-@ApiStatus.Internal
 abstract class JKAnnotationMemberValue : JKTreeElement()
 
-@ApiStatus.Internal
 interface PsiOwner {
     var psi: PsiElement?
 }
 
-@ApiStatus.Internal
 class PsiOwnerImpl(override var psi: PsiElement? = null) : PsiOwner
 
-@ApiStatus.Internal
 interface JKTypeArgumentListOwner : JKFormattingOwner {
     var typeArgumentList: JKTypeArgumentList
 }
 
-@ApiStatus.Internal
 interface JKTypeParameterListOwner : JKFormattingOwner {
     var typeParameterList: JKTypeParameterList
 }

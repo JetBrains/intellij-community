@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.resolve.ImportPath
 
-@ApiStatus.Internal
 class JKResolver(val project: Project, module: Module?, private val contextElement: PsiElement) {
     private val scope = module?.let {
         GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(it)

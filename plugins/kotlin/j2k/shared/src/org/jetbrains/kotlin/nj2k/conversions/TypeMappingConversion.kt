@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiClass
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.j2k.Nullability
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtClass
 
-@ApiStatus.Internal
 class TypeMappingConversion(
     context: NewJ2kConverterContext,
     inline val filter: (typeElement: JKTypeElement) -> Boolean = { true }

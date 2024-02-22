@@ -2,10 +2,8 @@
 
 package org.jetbrains.kotlin.nj2k.tree.visitors
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.tree.*
 
-@ApiStatus.Internal
 abstract class JKVisitor {
     abstract fun visitTreeElement(treeElement: JKElement)
     open fun visitDeclaration(declaration: JKDeclaration) = visitTreeElement(declaration)

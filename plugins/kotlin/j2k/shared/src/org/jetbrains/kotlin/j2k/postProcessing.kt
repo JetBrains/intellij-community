@@ -7,14 +7,12 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.suggested.range
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 
-@ApiStatus.Internal
 interface PostProcessing {
     val options: PostProcessingOptions
         get() = PostProcessingOptions.DEFAULT
@@ -22,7 +20,6 @@ interface PostProcessing {
     fun runProcessing(target: PostProcessingTarget, converterContext: NewJ2kConverterContext)
 }
 
-@ApiStatus.Internal
 fun PostProcessing.runProcessingConsideringOptions(target: PostProcessingTarget, converterContext: NewJ2kConverterContext) {
     if (options.disablePostprocessingFormatting) {
         PostprocessReformattingAspect.getInstance(converterContext.project).disablePostprocessFormattingInside {
@@ -33,7 +30,6 @@ fun PostProcessing.runProcessingConsideringOptions(target: PostProcessingTarget,
     }
 }
 
-@ApiStatus.Internal
 abstract class FileBasedPostProcessing : PostProcessing {
     final override fun runProcessing(target: PostProcessingTarget, converterContext: NewJ2kConverterContext) {
         when (target) {
@@ -51,7 +47,6 @@ abstract class FileBasedPostProcessing : PostProcessing {
     abstract fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext)
 }
 
-@ApiStatus.Internal
 abstract class ElementsBasedPostProcessing : PostProcessing {
     final override fun runProcessing(target: PostProcessingTarget, converterContext: NewJ2kConverterContext) {
         runProcessing(target.elements(), converterContext)
@@ -60,23 +55,19 @@ abstract class ElementsBasedPostProcessing : PostProcessing {
     abstract fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext)
 }
 
-@ApiStatus.Internal
 data class NamedPostProcessingGroup(val description: String, val processings: List<PostProcessing>)
 
-@ApiStatus.Internal
 data class PostProcessingOptions(val disablePostprocessingFormatting: Boolean = true) {
     companion object {
         val DEFAULT = PostProcessingOptions()
     }
 }
 
-@ApiStatus.Internal
 sealed class PostProcessingTarget {
     data class PieceOfCodePostProcessingTarget(val file: KtFile, val rangeMarker: RangeMarker) : PostProcessingTarget()
     data class MultipleFilesPostProcessingTarget(val files: List<KtFile>) : PostProcessingTarget()
 }
 
-@ApiStatus.Internal
 fun PostProcessingTarget.elements(): List<PsiElement> = when (this) {
     is PieceOfCodePostProcessingTarget -> runReadAction {
         val range = rangeMarker.range ?: return@runReadAction emptyList()
@@ -86,7 +77,6 @@ fun PostProcessingTarget.elements(): List<PsiElement> = when (this) {
     is MultipleFilesPostProcessingTarget -> files
 }
 
-@ApiStatus.Internal
 fun PostProcessingTarget.files(): List<KtFile> = when (this) {
     is PieceOfCodePostProcessingTarget -> listOf(file)
     is MultipleFilesPostProcessingTarget -> files

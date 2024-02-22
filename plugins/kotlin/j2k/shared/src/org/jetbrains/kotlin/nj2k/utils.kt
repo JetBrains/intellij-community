@@ -2,13 +2,11 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
 
-@ApiStatus.Internal
 inline fun <T> List<T>.mutate(mutate: MutableList<T>.() -> Unit): List<T> {
     val mutableList = toMutableList()
     mutate(mutableList)
@@ -18,7 +16,6 @@ inline fun <T> List<T>.mutate(mutate: MutableList<T>.() -> Unit): List<T> {
 // Examples:
 //   getMyProperty -> myProperty
 //   isMyProperty -> isMyProperty
-@ApiStatus.Internal
 fun String.asGetterName(): String? =
     takeIf { JvmAbi.isGetterName(it) }
         ?.removePrefix("get")
@@ -29,7 +26,6 @@ fun String.asGetterName(): String? =
         ?.escaped()
 
 // Example: setMyProperty -> myProperty
-@ApiStatus.Internal
 fun String.asSetterName(): String? =
     takeIf { JvmAbi.isSetterName(it) }
         ?.removePrefix("set")
@@ -37,13 +33,11 @@ fun String.asSetterName(): String? =
         ?.decapitalizeAsciiOnly()
         ?.escaped()
 
-@ApiStatus.Internal
 fun String.canBeGetterOrSetterName(): Boolean =
     asGetterName() != null || asSetterName() != null
 
 private val KEYWORDS: Set<String> = KtTokens.KEYWORDS.types.map { (it as KtKeywordToken).value }.toSet()
 
-@ApiStatus.Internal
 fun String.escaped(): String {
     val onlyUnderscores = isNotEmpty() && this.count { it == '_' } == length
     return if (this in KEYWORDS || '$' in this || onlyUnderscores) "`$this`" else this

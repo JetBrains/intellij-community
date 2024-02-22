@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.j2k.Nullability
 import org.jetbrains.kotlin.nj2k.JKElementInfoStorage
@@ -14,7 +13,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 open class JKPrinterBase {
     private val stringBuilder: StringBuilder = StringBuilder()
     var currentIndent = 0
@@ -103,7 +101,6 @@ open class JKPrinterBase {
     }
 }
 
-@ApiStatus.Internal
 class JKPrinter(
     project: Project,
     importStorage: JKImportStorage,

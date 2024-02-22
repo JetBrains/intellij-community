@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.nj2k.hasWritableUsages
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.determineType
 
-@ApiStatus.Internal
 class ParameterModificationInMethodCallsConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

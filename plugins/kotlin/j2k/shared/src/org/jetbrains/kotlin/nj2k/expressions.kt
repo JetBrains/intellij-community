@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 fun JKOperator.isEquals(): Boolean =
     token.safeAs<JKKtSingleValueOperatorToken>()?.psiToken in equalsOperators
 
@@ -44,7 +43,6 @@ private val equalsOperators: TokenSet =
     )
 
 context(KtAnalysisSession)
-@ApiStatus.Internal
 fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -61,7 +59,6 @@ fun untilToExpression(
 }
 
 context(KtAnalysisSession)
-@ApiStatus.Internal
 fun downToExpression(
     from: JKExpression,
     to: JKExpression,
@@ -74,23 +71,19 @@ fun downToExpression(
         conversionContext
     )
 
-@ApiStatus.Internal
 fun JKExpression.parenthesizeIfCompoundExpression(): JKExpression = when (this) {
     is JKIfElseExpression, is JKBinaryExpression, is JKTypeCastExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 
-@ApiStatus.Internal
 fun JKExpression.parenthesize(): JKParenthesizedExpression = JKParenthesizedExpression(this)
 
-@ApiStatus.Internal
 fun JKBinaryExpression.parenthesizedWithFormatting(): JKParenthesizedExpression =
     JKParenthesizedExpression(
         JKBinaryExpression(::left.detached(), ::right.detached(), operator).withFormattingFrom(this)
     )
 
 context(KtAnalysisSession)
-@ApiStatus.Internal
 fun rangeExpression(
     from: JKExpression,
     to: JKExpression,
@@ -106,15 +99,12 @@ fun rangeExpression(
         )
     )
 
-@ApiStatus.Internal
 fun blockStatement(vararg statements: JKStatement): JKBlockStatement =
     JKBlockStatement(JKBlockImpl(statements.toList()))
 
-@ApiStatus.Internal
 fun blockStatement(statements: List<JKStatement>): JKBlockStatement =
     JKBlockStatement(JKBlockImpl(statements))
 
-@ApiStatus.Internal
 fun useExpression(
     receiver: JKExpression,
     variableIdentifier: JKNameIdentifier?,
@@ -128,20 +118,17 @@ fun useExpression(
     return JKQualifiedExpression(receiver, methodCall)
 }
 
-@ApiStatus.Internal
 fun kotlinAssert(assertion: JKExpression, message: JKExpression?, symbolProvider: JKSymbolProvider): JKCallExpressionImpl =
     JKCallExpressionImpl(
         symbolProvider.provideMethodSymbol("kotlin.assert"),
         listOfNotNull(assertion, message).toArgumentList()
     )
 
-@ApiStatus.Internal
 fun jvmAnnotation(name: String, symbolProvider: JKSymbolProvider): JKAnnotation =
     JKAnnotation(
         symbolProvider.provideClassSymbol("kotlin.jvm.$name")
     )
 
-@ApiStatus.Internal
 fun throwsAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider): JKAnnotation =
     JKAnnotation(
         symbolProvider.provideClassSymbol(KOTLIN_THROWS_ANNOTATION_FQ_NAME.asString()),
@@ -152,11 +139,9 @@ fun throwsAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider): JK
         }
     )
 
-@ApiStatus.Internal
 fun JKAnnotationList.annotationByFqName(fqName: String): JKAnnotation? =
     annotations.firstOrNull { it.classSymbol.fqName == fqName }
 
-@ApiStatus.Internal
 fun stringLiteral(content: String, typeFactory: JKTypeFactory): JKExpression {
     val lines = content.split('\n')
     return lines.mapIndexed { i, line ->
@@ -168,7 +153,6 @@ fun stringLiteral(content: String, typeFactory: JKTypeFactory): JKExpression {
 }
 
 context(KtAnalysisSession)
-@ApiStatus.Internal
 fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext): List<JKFieldAccessExpression> {
     val symbol = context.symbolProvider.provideUniverseSymbol(this)
     val usages = mutableListOf<JKFieldAccessExpression>()
@@ -189,29 +173,24 @@ fun JKVariable.findUsages(scope: JKTreeElement, context: NewJ2kConverterContext)
     return usages
 }
 
-@ApiStatus.Internal
 fun JKTreeElement.forEachDescendant(action: (JKElement) -> Unit) {
     action(this)
     this.forEachChild { it.forEachDescendant(action) }
 }
 
-@ApiStatus.Internal
 inline fun <reified E : JKElement> JKTreeElement.forEachDescendantOfType(crossinline action: (E) -> Unit) {
     forEachDescendant { if (it is E) action(it) }
 }
 
-@ApiStatus.Internal
 fun JKExpression.unboxFieldReference(): JKFieldAccessExpression? = when {
     this is JKFieldAccessExpression -> this
     this is JKQualifiedExpression && receiver is JKThisExpression -> selector as? JKFieldAccessExpression
     else -> null
 }
 
-@ApiStatus.Internal
 fun JKFieldAccessExpression.asAssignmentFromTarget(): JKKtAssignmentStatement? =
     parent.safeAs<JKKtAssignmentStatement>()?.takeIf { it.field == this }
 
-@ApiStatus.Internal
 fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
     when (parent.safeAs<JKUnaryExpression>()?.operator?.token) {
         JKOperatorToken.PLUSPLUS, JKOperatorToken.MINUSMINUS -> true
@@ -219,19 +198,16 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
     }
 
 context(KtAnalysisSession)
-@ApiStatus.Internal
 fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
 
 context(KtAnalysisSession)
-@ApiStatus.Internal
 fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).any {
         it.asAssignmentFromTarget() != null
                 || it.isInDecrementOrIncrement()
     }
 
-@ApiStatus.Internal
 fun equalsExpression(left: JKExpression, right: JKExpression, typeFactory: JKTypeFactory) =
     JKBinaryExpression(
         left,
@@ -242,7 +218,6 @@ fun equalsExpression(left: JKExpression, right: JKExpression, typeFactory: JKTyp
         )
     )
 
-@ApiStatus.Internal
 fun createCompanion(declarations: List<JKDeclaration>): JKClass =
     JKClass(
         JKNameIdentifier(""),
@@ -256,23 +231,19 @@ fun createCompanion(declarations: List<JKDeclaration>): JKClass =
         JKModalityModifierElement(Modality.FINAL)
     )
 
-@ApiStatus.Internal
 fun JKClass.getCompanion(): JKClass? =
     declarationList.firstOrNull { it is JKClass && it.classKind == JKClass.ClassKind.COMPANION } as? JKClass
 
-@ApiStatus.Internal
 fun JKClass.getOrCreateCompanionObject(): JKClass =
     getCompanion()
         ?: createCompanion(declarations = emptyList())
             .also { classBody.declarations += it }
 
-@ApiStatus.Internal
 fun runExpression(body: JKStatement, symbolProvider: JKSymbolProvider): JKExpression {
     val lambda = JKLambdaExpression(body)
     return JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.run"), JKArgumentList(lambda))
 }
 
-@ApiStatus.Internal
 fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProvider: JKSymbolProvider): JKKtAssignmentStatement =
     JKKtAssignmentStatement(
         field = JKFieldAccessExpression(symbolProvider.provideUniverseSymbol(target)),
@@ -280,7 +251,6 @@ fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProv
         token = JKOperatorToken.EQ,
     )
 
-@ApiStatus.Internal
 fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKExpression {
     fun handleAnnotationParameter(element: JKTreeElement): JKTreeElement =
         when (element) {
@@ -326,7 +296,6 @@ fun JKAnnotationMemberValue.toExpression(symbolProvider: JKSymbolProvider): JKEx
     ) as JKExpression
 }
 
-@ApiStatus.Internal
 fun JKExpression.asLiteralTextWithPrefix(): String? = when {
     this is JKPrefixExpression
             && (operator.token == JKOperatorToken.MINUS || operator.token == JKOperatorToken.PLUS)
@@ -337,29 +306,23 @@ fun JKExpression.asLiteralTextWithPrefix(): String? = when {
     else -> null
 }
 
-@ApiStatus.Internal
 fun JKClass.primaryConstructor(): JKKtPrimaryConstructor? = classBody.declarations.firstIsInstanceOrNull()
 
-@ApiStatus.Internal
 fun List<JKExpression>.toArgumentList(): JKArgumentList =
     JKArgumentList(map { JKArgumentImpl(it) })
 
-@ApiStatus.Internal
 fun JKExpression.asStatement(): JKExpressionStatement =
     JKExpressionStatement(this)
 
-@ApiStatus.Internal
 fun <T : JKExpression> T.nullIfStubExpression(): T? =
     if (this is JKStubExpression) null
     else this
 
-@ApiStatus.Internal
 fun JKExpression.qualified(qualifier: JKExpression?) =
     if (qualifier != null && qualifier !is JKStubExpression) {
         JKQualifiedExpression(qualifier, this)
     } else this
 
-@ApiStatus.Internal
 fun JKExpression.callOn(
     symbol: JKMethodSymbol,
     arguments: List<JKExpression> = emptyList(),
@@ -373,25 +336,20 @@ fun JKExpression.callOn(
     )
 )
 
-@get:ApiStatus.Internal
 val JKStatement.statements: List<JKStatement>
     get() = when (this) {
         is JKBlockStatement -> block.statements
         else -> listOf(this)
     }
 
-@get:ApiStatus.Internal
 val JKElement.psi: PsiElement?
     get() = (this as? PsiOwner)?.psi
 
-@ApiStatus.Internal
 inline fun <reified Elem : PsiElement> JKElement.psi(): Elem? =
     (this as? PsiOwner)?.psi as? Elem
 
-@ApiStatus.Internal
 fun JKTypeElement.present(): Boolean = type != JKNoType
 
-@ApiStatus.Internal
 fun JKStatement.isEmpty(): Boolean = when (this) {
     is JKEmptyStatement -> true
     is JKBlockStatement -> block is JKBodyStub
@@ -399,31 +357,24 @@ fun JKStatement.isEmpty(): Boolean = when (this) {
     else -> false
 }
 
-@ApiStatus.Internal
 fun JKInheritanceInfo.present(): Boolean =
     extends.isNotEmpty() || implements.isNotEmpty()
 
-@ApiStatus.Internal
 fun JKInheritanceInfo.supertypeCount(): Int =
     extends.size + implements.size
 
-@ApiStatus.Internal
 fun JKClass.isLocalClass(): Boolean =
     parent !is JKClassBody && parent !is JKFile && parent !is JKTreeRoot
 
-@ApiStatus.Internal
 fun JKClass.isInterface(): Boolean =
     classKind == INTERFACE
 
-@ApiStatus.Internal
 fun JKMethod.isTopLevel(): Boolean =
     parent is JKFile || parent is JKTreeRoot
 
-@get:ApiStatus.Internal
 val JKClass.declarationList: List<JKDeclaration>
     get() = classBody.declarations
 
-@get:ApiStatus.Internal
 val JKTreeElement.identifier: JKSymbol?
     get() = when (this) {
         is JKFieldAccessExpression -> identifier
@@ -434,13 +385,11 @@ val JKTreeElement.identifier: JKSymbol?
         else -> null
     }
 
-@get:ApiStatus.Internal
 val JKClass.isObjectOrCompanionObject
     get() = classKind == JKClass.ClassKind.OBJECT || classKind == JKClass.ClassKind.COMPANION
 
 const val EXPERIMENTAL_STDLIB_API_ANNOTATION = "kotlin.ExperimentalStdlibApi"
 
-@ApiStatus.Internal
 fun LanguageVersionSettings.isPossibleToUseRangeUntil(module: Module, project: Project): Boolean =
     areKotlinVersionsSufficientToUseRangeUntil(module, project) &&
             FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION).asString() in getFlag(AnalysisFlags.optIn)
@@ -451,7 +400,6 @@ fun LanguageVersionSettings.isPossibleToUseRangeUntil(module: Module, project: P
  *
  * Note that this check is not enough. You also need to check for OptIn (because stdlib declarations are annotated with OptIn)
  */
-@ApiStatus.Internal
 fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: Module, project: Project): Boolean {
     val compilerVersion = ExternalCompilerVersionProvider.get(module)
         ?: IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
@@ -462,6 +410,5 @@ fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: M
 
 private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")
 
-@get:ApiStatus.Internal
 val JKAnnotationListOwner.hasAnnotations: Boolean
     get() = annotationList.annotations.isNotEmpty()

@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.psi.KtFile
 
-@ApiStatus.Internal
 class FormatCodeProcessing : FileBasedPostProcessing() {
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         val codeStyleManager = CodeStyleManager.getInstance(file.project)

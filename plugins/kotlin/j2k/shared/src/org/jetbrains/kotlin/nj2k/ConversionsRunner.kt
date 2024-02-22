@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.tree.JKTreeRoot
 
-@ApiStatus.Internal
 object ConversionsRunner {
     context(KtAnalysisSession)
     fun doApply(

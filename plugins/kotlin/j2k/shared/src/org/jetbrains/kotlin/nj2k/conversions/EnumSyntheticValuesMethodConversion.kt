@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.SyntheticElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.config.LanguageFeature.EnumEntries
 import org.jetbrains.kotlin.nj2k.*
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 private const val ENUM_VALUES_METHOD_NAME = "values"
 private const val ENUM_ENTRIES_PROPERTY_NAME = "entries"
 
-@ApiStatus.Internal
 class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

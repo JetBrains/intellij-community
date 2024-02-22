@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 
 import com.intellij.psi.PsiMethod
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
@@ -20,7 +19,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKTypeElement
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@ApiStatus.Internal
 class AddElementsInfoConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

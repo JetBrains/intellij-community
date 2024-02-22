@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
-@ApiStatus.Internal
 interface JKMemberData {
     var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>?
     var isStatic: Boolean
@@ -31,7 +30,6 @@ interface JKMemberData {
         get() = kotlinElement?.isPrivate() != true && (searchInJavaFiles || searchInKotlinFiles)
 }
 
-@ApiStatus.Internal
 interface JKMemberDataCameFromJava<J : PsiMember> : JKMemberData {
     val javaElement: J
 
@@ -39,10 +37,8 @@ interface JKMemberDataCameFromJava<J : PsiMember> : JKMemberData {
         get() = javaElement.kotlinFqName
 }
 
-@ApiStatus.Internal
 interface JKFieldData : JKMemberData
 
-@ApiStatus.Internal
 data class JKFakeFieldData(
     override var isStatic: Boolean,
     override var kotlinElementPointer: SmartPsiElementPointer<KtNamedDeclaration>? = null,
@@ -55,7 +51,6 @@ data class JKFakeFieldData(
         get() = false
 }
 
-@ApiStatus.Internal
 data class JKFieldDataFromJava(
     override val javaElement: PsiField,
     override var isStatic: Boolean = false,
@@ -69,12 +64,10 @@ data class JKFieldDataFromJava(
         get() = javaElement.name != name
 }
 
-@ApiStatus.Internal
 interface JKMethodData : JKMemberDataCameFromJava<PsiMethod> {
     var usedAsAccessorOfProperty: JKFieldData?
 }
 
-@ApiStatus.Internal
 data class JKPhysicalMethodData @ApiStatus.Internal constructor(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,
@@ -84,7 +77,6 @@ data class JKPhysicalMethodData @ApiStatus.Internal constructor(
     override var name: String = javaElement.name
 }
 
-@ApiStatus.Internal
 data class JKLightMethodData(
     override val javaElement: PsiMethod,
     override var isStatic: Boolean = false,

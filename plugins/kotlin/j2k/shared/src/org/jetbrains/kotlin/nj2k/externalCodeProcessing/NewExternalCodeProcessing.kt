@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.nj2k.types.typeFqNamePossiblyMappedToKotlin
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
-@ApiStatus.Internal
 class NewExternalCodeProcessing @ApiStatus.Internal constructor(
     private val referenceSearcher: ReferenceSearcher,
     private val isInConversionContext: (PsiElement) -> Boolean
@@ -55,8 +54,7 @@ class NewExternalCodeProcessing @ApiStatus.Internal constructor(
     }
 
     context(KtAnalysisSession)
-    @ApiStatus.Internal
-    fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
+        fun getMember(element: JKDeclaration): JKMemberData? = members[element.psi<PsiMember>()?.buildKey()]
 
     context(KtAnalysisSession)
     fun getMember(element: KtNamedDeclaration): JKMemberData? {

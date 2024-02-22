@@ -2,7 +2,4 @@
 
 package org.jetbrains.kotlin.j2k
 
-import org.jetbrains.annotations.ApiStatus
-
-@ApiStatus.Internal
 interface ConverterContext
