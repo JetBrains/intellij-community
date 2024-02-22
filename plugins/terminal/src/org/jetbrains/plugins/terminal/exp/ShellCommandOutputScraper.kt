@@ -18,11 +18,14 @@ internal class ShellCommandOutputScraper(private val session: BlockTerminalSessi
                                          textBuffer: TerminalTextBuffer,
                                          parentDisposable: Disposable) {
 
-  constructor(session: BlockTerminalSession): this(session, session.model.textBuffer, session)
+  constructor(session: BlockTerminalSession) : this(session, session.model.textBuffer, session)
 
   private val listeners: MutableList<ShellCommandOutputListener> = CopyOnWriteArrayList()
   private val contentChangedAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
   private val scheduled: AtomicBoolean = AtomicBoolean(false)
+
+  @Volatile
+  private var useExtendedDelayOnce: Boolean = false
 
   init {
     TerminalUtil.addModelListener(textBuffer, parentDisposable) {
@@ -30,8 +33,12 @@ internal class ShellCommandOutputScraper(private val session: BlockTerminalSessi
     }
   }
 
-  fun addListener(listener: ShellCommandOutputListener, parentDisposable: Disposable) {
+  /**
+   * @param useExtendedDelayOnce whether to send first content update with greater delay than default
+   */
+  fun addListener(listener: ShellCommandOutputListener, parentDisposable: Disposable, useExtendedDelayOnce: Boolean = false) {
     TerminalUtil.addItem(listeners, listener, parentDisposable)
+    this.useExtendedDelayOnce = useExtendedDelayOnce
   }
 
   private fun onContentChanged() {
@@ -46,7 +53,9 @@ internal class ShellCommandOutputScraper(private val session: BlockTerminalSessi
             }
           }
         }
-        contentChangedAlarm.addRequest(request, 50)
+        val delay = if (useExtendedDelayOnce) 150 else 50
+        useExtendedDelayOnce = false
+        contentChangedAlarm.addRequest(request, delay)
       }
     }
   }
