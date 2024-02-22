@@ -51,15 +51,13 @@ public class GradleSourceSetCachedFinder {
   }
 
   private @NotNull Set<File> findSourcesByArtifact(@NotNull String path) {
-    if (!mySourceMap.containsKey(path)) {
-      SourceSet sourceSet = myArtifactsMap.myArtifactsMap.get(path);
-      if (sourceSet != null) {
-        Set<File> sources = sourceSet.getAllJava().getSrcDirs();
-        Set<File> calculatedSources = mySourceMap.putIfAbsent(path, sources);
-        return calculatedSources != null ? calculatedSources : sources;
+    return mySourceMap.computeIfAbsent(path, it -> {
+      SourceSet sourceSet = myArtifactsMap.myArtifactsMap.get(it);
+      if (sourceSet == null) {
+        return Collections.emptySet();
       }
-    }
-    return Collections.emptySet();
+      return sourceSet.getAllJava().getSrcDirs();
+    });
   }
 
   public @Nullable SourceSet findByArtifact(@NotNull String artifactPath) {
