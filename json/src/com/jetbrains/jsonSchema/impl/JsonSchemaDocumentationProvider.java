@@ -2,12 +2,14 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsSafe;
@@ -222,7 +224,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     private final PsiElement myContextElement;
     private final String myAltName;
 
-    private FakeDocElement(PsiElement context, String name) {
+    private FakeDocElement(PsiElement context, @NotNull String name) {
       myContextElement = context;
       myAltName = name;
     }
@@ -235,6 +237,11 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     @Override
     public @NotNull TextRange getTextRangeInParent() {
       return myContextElement.getTextRange().shiftLeft(myContextElement.getTextOffset());
+    }
+
+    @Override
+    public @NotNull ItemPresentation getPresentation() {
+      return new PresentationData(myAltName, null, null, null);
     }
   }
 }
