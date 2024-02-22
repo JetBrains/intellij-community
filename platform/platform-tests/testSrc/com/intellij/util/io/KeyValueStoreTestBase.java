@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.io.dev.StorageFactory;
@@ -24,7 +24,7 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
 
   protected static int[] keyValuesSubstrate;
 
-  protected abstract @NotNull StorageFactory<S> factory();
+  protected abstract @NotNull StorageFactory<? extends S> factory();
 
   private Path storagePath;
   protected S storage;
@@ -36,7 +36,7 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
 
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
-    StorageFactory<S> factory = factory();
+    StorageFactory<? extends S> factory = factory();
     storagePath = tempDir.resolve("storage");
     storage = factory.open(storagePath);
   }

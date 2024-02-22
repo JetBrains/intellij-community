@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.durablemaps;
 
 import com.intellij.openapi.Forceable;
@@ -22,6 +22,10 @@ public interface DurableMap<K, V> extends KeyValueStore<K, V>,
                                           Compactable<DurableMap<K, V>>,
                                           CleanableStorage, Forceable, Closeable {
 
+  boolean isEmpty() throws IOException;
+
+  int size() throws IOException;
+
   //TODO RC:
   //  1. Nullability: do we need to allow null keys? null values?
   //     So far I decided to allow null values, but prohibit null keys.
@@ -42,6 +46,8 @@ public interface DurableMap<K, V> extends KeyValueStore<K, V>,
   void remove(@NotNull K key) throws IOException;
 
   boolean containsMapping(@NotNull K key) throws IOException;
+
+
 
   /**
    * Process all keys registered in the map.

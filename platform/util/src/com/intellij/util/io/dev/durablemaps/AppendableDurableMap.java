@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.durablemaps;
 
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.AppendablePersistentMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Set;
@@ -14,6 +16,7 @@ import java.util.Set;
  */
 public interface AppendableDurableMap<K, VItem> extends DurableMap<K, Set<VItem>> {
 
+  @Nullable
   Items<VItem> items(@NotNull K key) throws IOException;
 
   interface Items<VItem> {
@@ -21,5 +24,7 @@ public interface AppendableDurableMap<K, VItem> extends DurableMap<K, Set<VItem>
     void append(@NotNull VItem item) throws IOException;
 
     void remove(@NotNull VItem item) throws IOException;
+
+    <E extends Throwable> boolean forEach(@NotNull ThrowableConsumer<? super VItem, E> consumer) throws IOException, E;
   }
 }

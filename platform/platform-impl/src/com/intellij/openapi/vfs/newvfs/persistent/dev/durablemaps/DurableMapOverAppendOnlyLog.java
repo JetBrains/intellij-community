@@ -28,7 +28,7 @@ import java.util.function.BiPredicate;
  * Simplest implementation: (key, value) pairs stored in append-only log, {@link DurableIntToMultiIntMap} is used to keep
  * and update the mapping.
  * <p/>
- * Intended for read-dominant use-cases: i.e. for not too much updates -- otherwise ao-log grows up quickly.
+ * Intended for read-dominant use-cases: i.e. for not too many updates -- otherwise ao-log grows up quickly.
  * <p/>
  * Map doesn't allow null keys. It does allow null values, but {@code .put(key,null)} is equivalent to {@code .remove(key)}
  * Map needs a compaction from time to time
@@ -46,6 +46,16 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   //         serialization and store key-value themself (EHMap _could_ be made more concurrent, but it is harder, and
   //         I'm not convinced it is worth the complexity exactly because it should be very fast, and lock should
   //         almost never be contended then)
+
+  //RC: important property: .keyHashToIdMap must be non-essential for the Map persistence. The map state is fully contained in
+  // .keyValuesLog -- i.e. in any moment .keyHashToIdMap content could be dropped, and fully rebuild from .keyValuesLog.
+  // Keeping this invariant is crucial for crash-tolerance, because current [int->int*] implementation is NOT crash-tolerant
+  // -- so if we want to have crash-tolerance for the DurableMap, we're forced to see the .keyHashToIdMap as
+  // non-essential, drop it if any doubts, and recover from the .keyValuesLog, relying on AppendOnlyLog _being_ crash-tolerant.
+  // This invariant is implied in the current Map implementation: e.g. for remove(key) just removing the key.hash from .keyHashToIdMap
+  // is not enough -- if we do only that, the remove could be lost on crash. So we need to append 'key removed' entry to
+  // .keyValuesLog first, and only after that remove the hash from .keyHashToIdMap -- so the remove survives potential crash.
+  //
 
   //Append-only-log records format: <keySize:int32><keyBytes><valueBytes>
   //  keySize sign bit is used for marking 'deleted'/value=null records: keySize<0 means record is deleted
@@ -80,10 +90,12 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     int foundRecordId = keyHashToIdMap.lookup(keyHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
-        int keyRecordSize = recordBuffer.getInt(0);
-        if (keyRecordSize < 0) {
-          return false;//negative key-size => value=null <=> no mapping
+        int header = readHeader(recordBuffer);
+        if (isValueVoid(header)) {
+          return false;
         }
+
+        int keyRecordSize = keySize(header);
         ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
         K candidateKey = keyDescriptor.read(keyRecordSlice);
         if (keyDescriptor.isEqual(key, candidateKey)) {
@@ -218,10 +230,12 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   }
 
 
+  @Override
   public boolean isEmpty() throws IOException {
     return keyHashToIdMap.isEmpty();
   }
 
+  @Override
   public int size() throws IOException {
     return keyHashToIdMap.size();
   }
@@ -252,8 +266,8 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   ) throws IOException {
     //FIXME RC: design the new map creation: how/where to create it? Paths should somehow be
     //          passed from outside, but also maybe tuned here?
-    //          Maybe just use the storageFactory? Keep the factory created the Map in a fields, and use either it,
-    //          or the one passed from outside?
+    //          Maybe just use the storageFactory? Keep the factory by which the current Map was created in a fields, and
+    //          use either it, or the one passed from outside?
     //MAYBE RC: should we do a compaction if there is nothing to compact really -- i.e. if there is 0 wasted records?
     //          Or maybe we should return current map in this case? Or reject explicitly, by throwing exception?
     //          Or just leave it on caller decision?
@@ -339,7 +353,10 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     return false;
   }
 
-  /** @return [key, value] pair by logRecordId, if key==expectedKey, null if the record contains key!=expectedKey */
+  /**
+   * @return [key, value] pair by logRecordId, if key==expectedKey, null if the record contains key!=expectedKey
+   * I.e. it is just short-circuit version of {@link #readEntry(long)} and check entry.key.equals(expectedKey)
+   */
   private Pair<K, V> readEntryIfKeyMatch(long logRecordId,
                                          @NotNull K expectedKey) throws IOException {
     return keyValuesLog.read(logRecordId, recordBuffer -> {
