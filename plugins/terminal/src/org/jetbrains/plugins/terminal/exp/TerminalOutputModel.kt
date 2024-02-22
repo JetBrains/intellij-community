@@ -46,6 +46,8 @@ class TerminalOutputModel(val editor: EditorEx) {
 
     val block = CommandBlock(command, prompt, marker)
     blocks.add(block)
+
+    listeners.forEach { it.blockCreated(block) }
     return block
   }
 
@@ -256,6 +258,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   interface TerminalOutputListener {
+    fun blockCreated(block: CommandBlock) {}
     fun blockRemoved(block: CommandBlock) {}
 
     /** Block length is finalized, so block bounds won't expand if the text is added before or after the block. */

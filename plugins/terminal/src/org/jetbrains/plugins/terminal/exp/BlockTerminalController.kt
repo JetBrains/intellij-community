@@ -10,10 +10,10 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
+import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -26,7 +26,6 @@ class BlockTerminalController(
   private val focusModel: TerminalFocusModel
 ) : ShellCommandListener {
   private val listeners: MutableList<BlockTerminalControllerListener> = CopyOnWriteArrayList()
-  private val promptVisibilityAlarm: Alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
 
   var searchSession: BlockTerminalSearchSession? = null
     private set
@@ -59,11 +58,16 @@ class BlockTerminalController(
 
   private fun startCommand(command: String) {
     outputController.startCommandBlock(command, promptController.promptRenderingInfo)
-    // Hide the prompt with delay, so it will be possible to cancel hide request if command is extra fast.
-    // And there will be no blinking of prompt in this case.
-    promptVisibilityAlarm.addRequest(Runnable {
-      promptController.promptIsVisible = false
-    }, 150)
+    // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
+    // If the command is finished very fast, the prompt will be shown back before repainting.
+    // So it will look like it was not hidden at all.
+    val disposable = Disposer.newDisposable()
+    outputController.outputModel.addListener(object : TerminalOutputListener {
+      override fun blockCreated(block: CommandBlock) {
+        promptController.promptIsVisible = false
+        Disposer.dispose(disposable)
+      }
+    }, disposable)
     session.commandManager.sendCommandToExecute(command)
     session.model.isCommandRunning = true
   }
@@ -82,7 +86,6 @@ class BlockTerminalController(
     val model = session.model
     model.isCommandRunning = false
 
-    promptVisibilityAlarm.cancelAllRequests()
     invokeLater {
       promptController.promptIsVisible = true
     }
