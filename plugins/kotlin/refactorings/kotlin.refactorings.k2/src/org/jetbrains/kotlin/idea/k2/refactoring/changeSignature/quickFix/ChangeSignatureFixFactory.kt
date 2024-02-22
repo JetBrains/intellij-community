@@ -62,13 +62,14 @@ object ChangeSignatureFixFactory {
         ADD, TOO_MANY_ARGUMENTS_WITH_TYPE_MISMATCH, REMOVE, TYPE_MISMATCH, CHANGE_FUNCTIONAL
     }
 
-    class Input(
+    private data class ParameterInfo(val name: String, val type: String)
+    private class Input(
         val type: ChangeType,
         val name: String,
         val isConstructor: Boolean,
         val idx: Int,
         val parameterCount: Int,
-        val expectedType: KtType? = null
+        val expectedParameterTypes: Array<ParameterInfo>? = null
     ) : KotlinApplicatorInput
 
     private val applicator = applicator<PsiElement, Input> {
@@ -132,7 +133,7 @@ object ChangeSignatureFixFactory {
             }
 
             ChangeType.TYPE_MISMATCH -> {
-                assert(newParametersCnt > 0)
+                if (newParametersCnt <= 0) return ""
                 KotlinBundle.message(
                     if (isConstructor) "fix.add.function.parameters.add.parameter.constructor" else "fix.add.function.parameters.add.parameter.function",
                     input.idx + 1,
@@ -221,8 +222,8 @@ object ChangeSignatureFixFactory {
     private fun prepareFunctionalLiteralChangeInfo(psi: KtLambdaExpression, input: Input): KotlinChangeInfo? {
         val callable = psi.functionLiteral
         val descriptor = KotlinMethodDescriptor(callable)
-        val expectedType = input.expectedType as? KtFunctionalType
-        if (expectedType == null) {
+        val paramInfos = input.expectedParameterTypes
+        if (paramInfos == null) {
             return null
         }
 
@@ -231,12 +232,12 @@ object ChangeSignatureFixFactory {
 
         val nameValidator = getNameValidator(callable)
 
-        for (ktType in expectedType.parameterTypes) {
-            val paramName = KotlinNameSuggester().suggestTypeNames(ktType).firstOrNull() ?: "param"
+        for (paramInfo in paramInfos.dropLast(1)) {
+            val paramName = paramInfo.name
             changeInfo.addParameter(
                 KotlinParameterInfo(
                     -1,
-                    KotlinTypeInfo(ktType.render(position = Variance.IN_VARIANCE), callable),
+                    KotlinTypeInfo(paramInfo.type, callable),
                     suggestNameByName(paramName, nameValidator),
                     KotlinValVar.None,
                     null,
@@ -247,7 +248,7 @@ object ChangeSignatureFixFactory {
             )
         }
 
-        changeInfo.newReturnTypeInfo = KotlinTypeInfo(expectedType.returnType.render(position = Variance.OUT_VARIANCE), callable)
+        changeInfo.newReturnTypeInfo = KotlinTypeInfo(paramInfos.last().type, callable)
         return changeInfo
     }
 
@@ -380,14 +381,25 @@ object ChangeSignatureFixFactory {
 
         if (newParametersCnt <= 0 && psi !is KtLambdaExpression) return emptyList()
 
+        val functionalType = expectedType as? KtFunctionalType
+        val ktTypes = functionalType?.let { it.parameterTypes + it.returnType }
         return listOf(
             psi withInput Input(
-                if (psi is KtLambdaExpression) ChangeType.CHANGE_FUNCTIONAL else ChangeType.TYPE_MISMATCH,
+                if (psi is KtLambdaExpression) {
+                    ChangeType.CHANGE_FUNCTIONAL
+                } else {
+                    ChangeType.TYPE_MISMATCH
+                },
                 name,
                 isConstructor,
                 callElement.valueArguments.indexOf(valueArgument),
                 functionLikeSymbol.valueParameters.size,
-                expectedType
+                ktTypes?.map {
+                    ParameterInfo(
+                        KotlinNameSuggester().suggestTypeNames(it).firstOrNull() ?: "param",
+                        it.render(position = Variance.IN_VARIANCE)
+                    )
+                }?.toTypedArray()
             )
         )
     }
