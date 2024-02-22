@@ -29,7 +29,7 @@ import javax.swing.Icon
 import kotlin.time.Duration.Companion.seconds
 
 class SettingTransferProductService(
-  private val ideId: TransferableIdeId,
+  override val productId: TransferableIdeId,
   private val ideVersions: Deferred<Map<String, ThirdPartyProductInfo>>,
   private val importController: TransferSettingsController
 ) : ExternalProductService {
@@ -58,8 +58,9 @@ class SettingTransferProductService(
     }
   }
 
+
   override val productTitle: String
-    get() = when (ideId) {
+    get() = when (productId) {
       TransferableIdeId.DummyIde -> ""
       TransferableIdeId.VSCode -> ""
       TransferableIdeId.VisualStudio -> "Visual Studio"

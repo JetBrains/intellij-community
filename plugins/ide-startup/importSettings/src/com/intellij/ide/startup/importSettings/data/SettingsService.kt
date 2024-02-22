@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.data
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.StartupImportIcons
+import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
@@ -198,6 +199,7 @@ interface ExternalService {
 }
 
 interface ExternalProductService : BaseService {
+  val productId: TransferableIdeId
   val productTitle: @NlsSafe String
 }
 

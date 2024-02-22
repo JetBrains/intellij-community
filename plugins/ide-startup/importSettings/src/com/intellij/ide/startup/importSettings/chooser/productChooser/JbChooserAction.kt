@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.transfer.icon
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.ui.scale.JBUIScale
 import java.awt.Component
@@ -19,7 +20,10 @@ class JbChooserAction(callback: ImportSettingsController) : MainChooserAction<Jb
 class ExpChooserAction(
   provider: ExtActionsDataProvider,
   callback: ImportSettingsController
-) : MainChooserAction<BaseService>(provider, callback)
+) : MainChooserAction<ExternalProductService>(provider, callback) {
+  override fun getIcon(products: List<Product>): Icon? =
+    provider.productService.productId.icon(IconProductSize.SMALL)
+}
 
 class SyncChooserAction(callback: ImportSettingsController) : MainChooserAction<SyncService>(SyncActionsDataProvider.getInstance(),
                                                                                              callback) {

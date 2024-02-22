@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -264,6 +265,8 @@ class TestExternalProductService : ExternalProductService {
     private val LOG = logger<TestExternalService>()
   }
 
+  override val productId: TransferableIdeId
+    get() = TransferableIdeId.VSCode
   override val productTitle: String
     get() = ""
 
