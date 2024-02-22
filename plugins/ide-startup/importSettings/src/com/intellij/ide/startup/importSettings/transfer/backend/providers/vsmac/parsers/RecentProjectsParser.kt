@@ -54,7 +54,7 @@ class RecentProjectsParser(private val settings: Settings) {
           }
         }
 
-        settings.recentProjects.add(RecentPathInfo(path.invariantSeparatorsPathString, rpmi))
+        settings.addRecentProjectIfNeeded { RecentPathInfo(path.invariantSeparatorsPathString, rpmi) }
       }
       catch (t: Throwable) {
         logger.warn(t)

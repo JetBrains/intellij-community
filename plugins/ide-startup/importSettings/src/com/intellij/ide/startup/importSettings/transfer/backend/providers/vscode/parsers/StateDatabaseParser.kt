@@ -42,14 +42,11 @@ class StateDatabaseParser(private val settings: Settings) {
                ?: error("Unexpected JSON data; expected: ${JsonNodeType.OBJECT}")
 
     val paths = (root["entries"] as ArrayNode).mapNotNull { it["folderUri"]?.textValue() }
-
-    paths.forEach { uri ->
-      logger.runAndLogException {
-        val res = StorageParser.parsePath(URI(uri))
-        if (res != null) {
-          settings.recentProjects.add(res)
-        }
-      }
+    for (uri in paths) {
+      val shouldBreak = logger.runAndLogException {
+        !settings.addRecentProjectIfNeeded { StorageParser.parsePath(URI(uri)) }
+      } ?: false
+      if (shouldBreak) break
     }
   }
 
