@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.psi;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -8,7 +8,7 @@ import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
@@ -88,15 +88,13 @@ public class AnnotatedTypeTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testDisjunctionType() {
-    PsiTryStatement psi =
-      (PsiTryStatement)factory.createStatementFromText("try { } catch (@A @TA(1) E1 | @TA(2) E2 e) { }", context);
+    PsiTryStatement psi = (PsiTryStatement)factory.createStatementFromText("try { } catch (@A @TA(1) E1 | @TA(2) E2 e) { }", context);
     assertTypeText(psi.getCatchBlockParameters()[0].getType(), "pkg.E1 | pkg.E2", "pkg.@pkg.TA(1) E1 | pkg.@pkg.TA(2) E2", "E1 | E2",
                    "@TA E1 | @TA E2");
   }
 
   public void testDiamondType() {
-    PsiDeclarationStatement psi =
-      (PsiDeclarationStatement)factory.createStatementFromText("Class<@TA String> cs = new Class<>()", context);
+    PsiDeclarationStatement psi = (PsiDeclarationStatement)factory.createStatementFromText("Class<@TA String> cs = new Class<>()", context);
     PsiVariable var = (PsiVariable)psi.getDeclaredElements()[0];
     assertTypeText(var.getInitializer().getType(), "java.lang.Class<java.lang.String>", "java.lang.Class<java.lang.@pkg.TA String>",
                    "Class<String>", "Class<@TA String>");
@@ -148,6 +146,6 @@ public class AnnotatedTypeTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static void assertAnnotations(PsiType type, String... annotations) {
-    assertEquals(Arrays.asList(annotations), ContainerUtil.map(type.getAnnotations(), PsiAnnotation::getText));
+    assertEquals(List.of(annotations), ContainerUtil.map(type.getAnnotations(), PsiAnnotation::getText));
   }
 }

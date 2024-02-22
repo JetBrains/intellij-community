@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import junit.framework.TestCase;
@@ -134,9 +134,8 @@ public class NormalizeTextTest extends TestCase {
              """);
   }
 
-  public void test_do_not_merge_words() {
+  public void testDoNotMergeWords() {
     String text = """
-
       "Performance watcher" #35 prio=1 os_prio=-2 tid=0x3ea60c00 nid=0xbfc
       waiting on condition [0x445ef000]
        java.lang.Thread.State: TIMED_WAITING (parking)
@@ -154,8 +153,6 @@ public class NormalizeTextTest extends TestCase {
        at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)
       """;
     doTest(text, """
-
-
       "Performance watcher" #35 prio=1 os_prio=-2 tid=0x3ea60c00 nid=0xbfc waiting on condition [0x445ef000]
        java.lang.Thread.State: TIMED_WAITING (parking)
        at sun.misc.Unsafe.park(Native Method)
@@ -168,7 +165,7 @@ public class NormalizeTextTest extends TestCase {
        at sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:284)
        at sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:326)
        at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)""");
-    assert ThreadDumpParser.parse(UnscrambleDialog.normalizeText(text)).size() == 2;
+    assertEquals(2, ThreadDumpParser.parse(UnscrambleDialog.normalizeText(text)).size());
   }
 
   public void testJsonEscapes() {
@@ -185,7 +182,6 @@ public class NormalizeTextTest extends TestCase {
   }
 
   private static void doTest(@NonNls String stackTrace, @NonNls String expected) {
-    String normalized = UnscrambleDialog.normalizeText(stackTrace);
-    TestCase.assertEquals(expected, normalized);
+    assertEquals(expected, UnscrambleDialog.normalizeText(stackTrace));
   }
 }

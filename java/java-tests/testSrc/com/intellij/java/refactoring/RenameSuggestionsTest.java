@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -11,13 +11,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
-  public void test_by_parameter_name() {
+  public void testByParameterName() {
     String text = """
          class Test {
              void foo(int foo) {}
@@ -30,7 +28,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo");
   }
 
-  public void test_lambda_parameter_name() {
+  public void testLambdaParameterName() {
     String text = """
       import java.util.Map;
 
@@ -45,7 +43,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     doTestSuggestionAvailable(text, "lambdaRename", "rename", "v");
   }
 
-  public void test_foreach_scope() {
+  public void testForeachScope() {
     String text = """
          class Foo {
             {
@@ -57,7 +55,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo");
   }
 
-  public void test_by_super_parameter_name() {
+  public void testBySuperParameterName() {
     String text = """
          class Test {
              void foo(int foo) {}
@@ -70,7 +68,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
     doTestSuggestionAvailable(text, "foo");
   }
 
-  public void test_by_Optional_of_initializer() {
+  public void testByOptionalOfInitializer() {
     List<String> suggestions = getNameSuggestions("""
                                                     import java.util.*;
                                                     
@@ -79,10 +77,10 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
                                                       Optional<Foo> <caret>o = Optional.of(typeValue);
                                                     }}
                                                     """);
-    assertEquals(Arrays.asList("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
   }
 
-  public void test_by_Optional_ofNullable_initializer() {
+  public void testByOptionalOfNullableInitializer() {
     List<String> suggestions = getNameSuggestions("""
         import java.util.*;
         
@@ -90,19 +88,19 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
           Foo typeValue = this;
           Optional<Foo> <caret>o = Optional.ofNullable(typeValue);
         }}""");
-    assertEquals(Arrays.asList("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
   }
 
-  public void test_by_Optional_of_initializer_with_constructor() {
+  public void testByOptionalOfInitializerWithConstructor() {
     List<String> suggestions = getNameSuggestions("""
         import java.util.*;
         class Foo {{
           Optional<Foo> <caret>o = Optional.ofNullable(new Foo());
         }}""");
-    assertEquals(Arrays.asList("foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("foo", "optionalFoo", "fooOptional", "optional", "o"), suggestions);
   }
 
-  public void test_by_Optional_flatMap() {
+  public void testByOptionalFlatMap() {
     List<String> suggestions = getNameSuggestions("""
         import java.util.*;
         
@@ -114,10 +112,10 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
         }
         class Car {}
         """);
-    assertEquals(Arrays.asList("car", "optionalCar", "carOptional", "optional", "o"), suggestions);
+    assertEquals(List.of("car", "optionalCar", "carOptional", "optional", "o"), suggestions);
   }
 
-  public void test_long_qualified_name() {
+  public void testLongQualifiedName() {
     List<String> suggestions = getNameSuggestions("""
                                                     class Foo {
                                                       Inner inner;
@@ -130,7 +128,7 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
                                                       }
                                                     }
                                                     """);
-    assertEquals(Arrays.asList("cat", "innerCat", "string", "s"), suggestions);
+    assertEquals(List.of("cat", "innerCat", "string", "s"), suggestions);
   }
 
   private void doTestSuggestionAvailable(String text, String... expectedSuggestions) {
@@ -141,32 +139,25 @@ public class RenameSuggestionsTest extends LightJavaCodeInsightTestCase {
   }
 
   private List<String> getNameSuggestions(String text) {
-    configure(text);
+    configureFromFileText("a.java", text);
     boolean oldPreselectSetting = getEditor().getSettings().isPreselectRename();
     try {
       TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
       final PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.getInstance().getAllAccepted());
-
-      TestCase.assertNotNull(element);
+      assertNotNull(element);
 
       VariableInplaceRenameHandler handler = new VariableInplaceRenameHandler();
-
-
       handler.doRename(element, getEditor(), null);
 
       LookupEx lookup = LookupManager.getActiveLookup(getEditor());
-      TestCase.assertNotNull(lookup);
+      assertNotNull(lookup);
       return ContainerUtil.map(lookup.getItems(), LookupElement::getLookupString);
     }
     finally {
       getEditor().getSettings().setPreselectRename(oldPreselectSetting);
       TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-      TestCase.assertNotNull(state);
+      assertNotNull(state);
       state.gotoEnd(false);
     }
-  }
-
-  private void configure(String text) {
-    configureFromFileText("a.java", text);
   }
 }

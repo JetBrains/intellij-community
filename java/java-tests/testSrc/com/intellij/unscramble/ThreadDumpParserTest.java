@@ -1,21 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import groovy.lang.Closure;
-import groovy.lang.IntRange;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.codehaus.groovy.runtime.StringGroovyMethods;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class ThreadDumpParserTest extends TestCase {
-  public void test_waiting_threads_are_not_locking() {
+  public void testWaitingThreadsAreNotLocking() {
     String text = """
-
       "1" daemon prio=10 tid=0x00002b5bf8065000 nid=0x4294 waiting for monitor entry [0x00002b5aadb5d000]
          java.lang.Thread.State: BLOCKED (on object monitor)
           at bitronix.tm.resource.common.XAPool.findXAResourceHolder(XAPool.java:213)
@@ -81,18 +77,15 @@ public class ThreadDumpParserTest extends TestCase {
 
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(5, threads.size());
-    for (Integer i : new IntRange(0, 4)) {
-      assertEquals(threads.get(i).getName(), String.valueOf(i));
+    for (int i = 0; i < 5; i++) {
+      assertEquals(String.valueOf(i), threads.get(i).getName());
     }
-
-
     assertTrue(threads.get(4).isAwaitedBy(threads.get(0)));
     assertTrue(threads.get(0).isAwaitedBy(threads.get(1)));
   }
 
-  public void test_YourKit_format() {
+  public void testYourKitFormat() {
     String text = """
-
       Stacks at 2017-05-03 01:07:25 PM (uptime 4h 21m 28s) Threads shown: 38 of 46
 
       ApplicationImpl pooled thread 228 [WAITING]
@@ -108,40 +101,19 @@ public class ThreadDumpParserTest extends TestCase {
       java.lang.Thread.run() Thread.java:745
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<String>(this, this) {
-      public String doCall(ThreadState it) { return it.getName(); }
-
-      public String doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<String>(
-      Arrays.asList("ApplicationImpl pooled thread 228", "ApplicationImpl pooled thread 234", "ApplicationImpl pooled thread 6"))));
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<String>(this, this) {
-      public String doCall(ThreadState it) { return it.getState(); }
-
-      public String doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<String>(Arrays.asList("WAITING", "WAITING", "RUNNABLE, IN_NATIVE"))));
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<Boolean>(this, this) {
-      public Boolean doCall(ThreadState it) { return it.isDaemon(); }
-
-      public Boolean doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<Boolean>(Arrays.asList(false, true, false))));
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<Integer>(this, this) {
-      public Integer doCall(ThreadState it) { return StringGroovyMethods.readLines(it.getStackTrace()).size(); }
-
-      public Integer doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<Integer>(Arrays.asList(2, 2, 5))));// thread name is included into stack trace
+    
+    assertEquals(Arrays.asList("ApplicationImpl pooled thread 228", "ApplicationImpl pooled thread 234", "ApplicationImpl pooled thread 6"),
+                 ContainerUtil.map(threads, ThreadState::getName));
+    assertEquals(Arrays.asList("WAITING", "WAITING", "RUNNABLE, IN_NATIVE"),
+                 ContainerUtil.map(threads, ThreadState::getState));
+    assertEquals(Arrays.asList(false, true, false), ContainerUtil.map(threads, ThreadState::isDaemon));
+    
+    // the thread name is included into the stack trace
+    assertEquals(Arrays.asList(2, 2, 5), ContainerUtil.map(threads, state -> StringUtil.countNewLines(state.getStackTrace())));
   }
 
-  public void test_YourKit_2017_format() {
+  public void testYourKit2017Format() {
     String text = """
-
       Stacks at 2017-06-08 12:56:31 PM. Uptime is 23m 47s 200ms.
 
       thread 23 State: RUNNABLE CPU usage on sample: 968ms
@@ -186,25 +158,13 @@ public class ThreadDumpParserTest extends TestCase {
       java.util.concurrent.locks.LockSupport.park(Object) LockSupport.java:175
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<String>(this, this) {
-      public String doCall(ThreadState it) { return it.getName(); }
-
-      public String doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<String>(Arrays.asList("thread 23", "thread 24", "thread 25", "Swing-Shell"))));
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<Boolean>(this, this) {
-      public Boolean doCall(ThreadState it) { return it.isDaemon(); }
-
-      public Boolean doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<Boolean>(Arrays.asList(false, false, false, true))));
+    assertEquals(ContainerUtil.map(threads, ThreadState::getName), Arrays.asList("thread 23", "thread 24", "thread 25", "Swing-Shell"));
+    
+    assertEquals(ContainerUtil.map(threads, ThreadState::isDaemon), Arrays.asList(false, false, false, true));
   }
 
-  public void test_YourKit_2018_format() {
+  public void testYourKit2018Format() {
     String text = """
-
       ApplicationImpl pooled thread 81  Waiting CPU usage on sample: 0ms
         sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
         java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
@@ -239,17 +199,13 @@ public class ThreadDumpParserTest extends TestCase {
         java.lang.Thread.run() Thread.java:745
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<String>(this, this) {
-      public String doCall(ThreadState it) { return it.getName(); }
-
-      public String doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<String>(
-      Arrays.asList("ApplicationImpl pooled thread 81", "ApplicationImpl pooled thread 82", "ApplicationImpl pooled thread 90"))));
+    assertEquals(ContainerUtil.map(threads, ThreadState::getName), 
+                 Arrays.asList("ApplicationImpl pooled thread 81",
+                               "ApplicationImpl pooled thread 82",
+                               "ApplicationImpl pooled thread 90"));
   }
 
-  public void test_log_is_not_a_thread_dump() {
+  public void testLogIsNotAThreadDump() {
     List<ThreadState> threads = ThreadDumpParser.parse("""
                                                          2017-05-11 15:37:22,031 [100664612]   INFO - krasa.visualvm.VisualVMContext - saving context: VisualVMContext{appId=322303893654749}\s
                                                          2017-05-11 15:53:08,057 [101610638]   INFO - krasa.visualvm.VisualVMContext - saving context: VisualVMContext{appId=323249981117880}\s
@@ -260,9 +216,8 @@ public class ThreadDumpParserTest extends TestCase {
     assertTrue(threads.size() <= 1);
   }
 
-  public void test_trace_with_trailing_jar_names_is_not_a_thread_dump() {
+  public void testTraceWithTrailingJarNamesIsNotAThreadDump() {
     List<ThreadState> threads = ThreadDumpParser.parse("""
-
                                                          Jun 27 02:58:45.222 WARN  [][Atomikos:2]  Error while retrieving xids from resource - will retry later... (com.atomikos.recovery.xa.XaResourceRecoveryManager:40)\s
                                                          javax.transaction.xa.XAException
                                                          \tat oracle.jdbc.xa.OracleXAResource.recover(OracleXAResource.java:730) ~[ojdbc-12.1.0.2.jar.8754835619381084897.jar:12.1.0.2.0]
@@ -282,11 +237,8 @@ public class ThreadDumpParserTest extends TestCase {
     assertTrue(threads.size() <= 1);
   }
 
-  public void test_yourkit_threads_with_indented_names() {
+  public void testYourkitThreadsWithIndentedNames() {
     String text = """
-
-
-
        Stacks at 2017-07-13 07:15:35 AM (uptime 1d 2h 59m 6 sec) Threads shown: 3 of 55
 
 
@@ -306,19 +258,13 @@ public class ThreadDumpParserTest extends TestCase {
 
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<String>(this, this) {
-      public String doCall(ThreadState it) { return it.getName(); }
-
-      public String doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<String>(Arrays.asList("ApplicationImpl pooled thread 1007",
-                                            "AWT-EventQueue-0 2017.3#IC-173.SNAPSHOT IDEA, eap:true, os:Linux 3.13.0-117-generic, java-version:JetBrains s.r.o 1.8.0_152-release-867-b1"))));
+    assertEquals(ContainerUtil.map(threads, ThreadState::getName), 
+                 Arrays.asList("ApplicationImpl pooled thread 1007",
+                               "AWT-EventQueue-0 2017.3#IC-173.SNAPSHOT IDEA, eap:true, os:Linux 3.13.0-117-generic, java-version:JetBrains s.r.o 1.8.0_152-release-867-b1"));
   }
 
-  public void test_jstack__F_format() {
+  public void testJstackFFormat() {
     String text = """
-
       Attaching to process ID 7370, please wait...
       Debugger attached successfully.
       Server compiler detected.
@@ -350,21 +296,14 @@ public class ThreadDumpParserTest extends TestCase {
       Thread 7381: (state = BLOCKED)
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
-    assertTrue(DefaultGroovyMethods.equals(DefaultGroovyMethods.collect(threads, new Closure<String>(this, this) {
-      public String doCall(ThreadState it) { return it.getName(); }
-
-      public String doCall() {
-        return doCall(null);
-      }
-    }), new ArrayList<String>(Arrays.asList("8393", "7399", "7381"))));
+    assertEquals(ContainerUtil.map(threads, ThreadState::getName), List.of("8393", "7399", "7381"));
     assertTrue(threads.get(0).getStackTrace().contains("ThreadPoolExecutor"));
     assertTrue(threads.get(1).getStackTrace().contains("XToolkit"));
     assertTrue(threads.get(2).isEmptyStackTrace());
   }
 
-  public void test_jdk_11_format() {
+  public void testJdk11Format() {
     String text = """
-
       "main" #1 prio=5 os_prio=0 cpu=171.88ms elapsed=101.93s tid=0x0000026392746000 nid=0x3bc4 runnable  [0x000000d7ed0fe000]
          java.lang.Thread.State: RUNNABLE
       \tat java.io.FileInputStream.readBytes(java.base@11.0.2/Native Method)
@@ -402,7 +341,7 @@ public class ThreadDumpParserTest extends TestCase {
     assertEquals(4, threads.size());
   }
 
-  public void test_coroutine_dump() {
+  public void testCoroutineDump() {
     String text = """
       "Timer-0" prio=0 tid=0x0 nid=0x0 waiting on condition
            java.lang.Thread.State: TIMED_WAITING
@@ -423,10 +362,10 @@ public class ThreadDumpParserTest extends TestCase {
       """;
     List<ThreadState> threads = ThreadDumpParser.parse(text);
     assertEquals(2, threads.size());
-    assertEquals("Coroutine dump", DefaultGroovyMethods.last(threads).getName());
+    assertEquals("Coroutine dump", threads.get(1).getName());
   }
 
-  public void test_ownable_locks() {
+  public void testOwnableLocks() {
     String text = """
       "DefaultDispatcher-worker-4" #47 daemon prio=5 os_prio=0 cpu=4308.76ms elapsed=599.17s tid=0x00007f82b41796c0 nid=0x14907 runnable  [0x00007f8280bb4000]
          java.lang.Thread.State: TIMED_WAITING (parking)
@@ -447,17 +386,17 @@ public class ThreadDumpParserTest extends TestCase {
     assertEquals("0x00000000a7140250", threads.get(0).getOwnableSynchronizers());
   }
 
-  public void test_very_long_line_parsing_performance() {
-    final String spaces = StringGroovyMethods.multiply(" ", 1_000_000);
-    final String letters = StringGroovyMethods.multiply("a", 1_000_000);
+  public void testVeryLongLineParsingPerformance() {
+    final String spaces = " ".repeat(1_000_000);
+    final String letters = "a".repeat(1_000_000);
     PlatformTestUtil.newPerformanceTest("parsing spaces", () -> {
-        List<ThreadState> threads = ThreadDumpParser.parse(spaces);
+      List<ThreadState> threads = ThreadDumpParser.parse(spaces);
       assertTrue(threads.isEmpty());
-      }).startAsSubtest();
+    }).startAsSubtest();
 
     PlatformTestUtil.newPerformanceTest("parsing letters", () -> {
-        List<ThreadState> threads = ThreadDumpParser.parse(letters);
+      List<ThreadState> threads = ThreadDumpParser.parse(letters);
       assertTrue(threads.isEmpty());
-      }).startAsSubtest();
+    }).startAsSubtest();
   }
 }
