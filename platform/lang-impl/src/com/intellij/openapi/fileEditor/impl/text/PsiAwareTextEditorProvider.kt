@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.impl.EditorGutterLayout
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createAsyncEditorLoader
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,8 +44,6 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
-    val asyncLoader = createAsyncEditorLoader(provider = this, project = project)
-
     val effectiveDocument = if (document == null) {
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
       fileDocumentManager.getCachedDocument(file) ?: readActionBlocking {
@@ -76,7 +73,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       val editorDeferred = CompletableDeferred<EditorEx>()
 
-      val task = asyncLoader.coroutineScope.async(CoroutineName("TextEditorInitializer")) {
+      val task = TextEditorImpl.editorLoaderScope(project).async(CoroutineName("call TextEditorInitializers")) {
         val editorSupplier = suspend { editorDeferred.await() }
         val highlighterReady = suspend { highlighterDeferred.join() }
 
@@ -122,9 +119,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         override fun build(): FileEditor {
           val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter)
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
-          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
-          editorDeferred.complete(textEditor.editor)
-          asyncLoader.start(textEditor = textEditor, tasks = listOf(task))
+          editorDeferred.complete(editor)
+          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, provider = this@PsiAwareTextEditorProvider, editor = editor, task = task)
           return textEditor
         }
       }
