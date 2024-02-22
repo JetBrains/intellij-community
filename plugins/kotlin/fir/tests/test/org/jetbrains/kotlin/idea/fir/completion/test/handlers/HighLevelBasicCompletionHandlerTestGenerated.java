@@ -512,6 +512,19 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../completion/testData/handlers/basic/incompleteCode")
+        public static class IncompleteCode extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("parameterList.kt")
+            public void testParameterList() throws Exception {
+                runTest("../../completion/testData/handlers/basic/incompleteCode/parameterList.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../completion/testData/handlers/basic/kdoc")
         public static class Kdoc extends AbstractHighLevelBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
