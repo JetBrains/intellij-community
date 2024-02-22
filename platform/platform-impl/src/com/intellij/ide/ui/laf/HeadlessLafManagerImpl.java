@@ -101,6 +101,9 @@ final class HeadlessLafManagerImpl extends LafManager {
   public void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value) { }
 
   @Override
+  public void resetPreferredEditorColorScheme() { }
+
+  @Override
   public void setRememberSchemeForLaf(boolean rememberSchemeForLaf) { }
 
   @Override

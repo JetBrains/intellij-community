@@ -228,6 +228,7 @@ private fun resetLafSettingsToDefault() {
   if (lafManager.autodetect) {
     lafManager.setPreferredLightLaf(defaultLightLaf)
     lafManager.setPreferredDarkLaf(defaultDarkLaf)
+    lafManager.resetPreferredEditorColorScheme()
   }
 }
 

@@ -81,6 +81,8 @@ public abstract class LafManager {
 
   public abstract void setPreferredLightLaf(@NotNull UIThemeLookAndFeelInfo value);
 
+  public abstract void resetPreferredEditorColorScheme();
+
   @ApiStatus.Internal
   public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);
 
