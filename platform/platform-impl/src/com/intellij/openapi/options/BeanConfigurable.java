@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
 
   private final @NotNull T myInstance;
-  private @NlsContexts.BorderTitle String myTitle;
+  private @NlsContexts.BorderTitle @Nullable String myTitle;
 
   private final List<BeanField> myFields = new ArrayList<>();
 
@@ -36,7 +36,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myInstance = beanInstance;
   }
 
-  protected BeanConfigurable(@NotNull T beanInstance, @NlsContexts.BorderTitle String title) {
+  protected BeanConfigurable(@NotNull T beanInstance, @NlsContexts.BorderTitle @Nullable String title) {
     this(beanInstance);
     setTitle(title);
   }
@@ -47,10 +47,10 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private static final class BeanFieldAccessor extends BeanPropertyAccessor {
-    private final String myFieldName;
-    private final Class myValueClass;
+    private final @NotNull String myFieldName;
+    private final @NotNull Class myValueClass;
 
-    private BeanFieldAccessor(String fieldName, Class valueClass) {
+    private BeanFieldAccessor(@NotNull String fieldName, @NotNull Class valueClass) {
       myFieldName = fieldName;
       myValueClass = valueClass;
     }
@@ -104,10 +104,10 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private static final class BeanMethodAccessor<T> extends BeanPropertyAccessor {
-    private final Supplier<? extends T> myGetter;
-    private final Setter<? super T> mySetter;
+    private final @NotNull Supplier<? extends T> myGetter;
+    private final @NotNull Setter<? super T> mySetter;
 
-    private BeanMethodAccessor(Supplier<? extends T> getter, Setter<? super T> setter) {
+    private BeanMethodAccessor(@NotNull Supplier<? extends T> getter, @NotNull Setter<? super T> setter) {
       myGetter = getter;
       mySetter = setter;
     }
@@ -125,9 +125,9 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private static final class BeanKPropertyAccessor<T> extends BeanPropertyAccessor {
-    private final KMutableProperty0<T> myProperty;
+    private final @NotNull KMutableProperty0<T> myProperty;
 
-    private BeanKPropertyAccessor(KMutableProperty0<T> property) {
+    private BeanKPropertyAccessor(@NotNull KMutableProperty0<T> property) {
       myProperty = property;
     }
 
@@ -144,14 +144,14 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private abstract static class BeanField<T extends JComponent> {
-    BeanPropertyAccessor myAccessor;
-    T myComponent;
+    @NotNull BeanPropertyAccessor myAccessor;
+    @Nullable T myComponent;
 
     private BeanField(@NotNull BeanPropertyAccessor accessor) {
       myAccessor = accessor;
     }
 
-    T getComponent() {
+    @NotNull T getComponent() {
       if (myComponent == null) {
         myComponent = createComponent();
       }
@@ -186,7 +186,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
       myTitle = title;
     }
 
-    private CheckboxField(BeanPropertyAccessor accessor, @NlsContexts.Checkbox String title) {
+    private CheckboxField(@NotNull BeanPropertyAccessor accessor, @NlsContexts.Checkbox @NotNull String title) {
       super(accessor);
       myTitle = title;
     }
@@ -224,7 +224,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     return myTitle;
   }
 
-  protected void setTitle(@NlsContexts.BorderTitle String title) {
+  protected void setTitle(@NlsContexts.BorderTitle @Nullable String title) {
     myTitle = title;
   }
 
