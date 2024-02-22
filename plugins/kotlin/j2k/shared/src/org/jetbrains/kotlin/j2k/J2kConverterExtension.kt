@@ -10,6 +10,7 @@ import com.intellij.psi.PsiJavaFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.nj2k.Conversion
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
+import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
 abstract class J2kConverterExtension {
@@ -20,7 +21,8 @@ abstract class J2kConverterExtension {
     abstract fun createJavaToKotlinConverter(
         project: Project,
         targetModule: Module?,
-        settings: ConverterSettings
+        settings: ConverterSettings,
+        targetFile: KtFile? = null
     ): JavaToKotlinConverter
 
     abstract fun createPostProcessor(formatCode: Boolean = true): PostProcessor

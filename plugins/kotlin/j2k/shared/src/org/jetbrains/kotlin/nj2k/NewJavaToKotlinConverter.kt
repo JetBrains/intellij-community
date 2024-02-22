@@ -35,7 +35,8 @@ import org.jetbrains.kotlin.resolve.ImportPath
 class NewJavaToKotlinConverter(
     val project: Project,
     val targetModule: Module?,
-    val settings: ConverterSettings
+    val settings: ConverterSettings,
+    val targetFile: KtFile? = null
 ) : JavaToKotlinConverter() {
     val phasesCount = J2KConversionPhase.entries.size
     val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
@@ -82,14 +83,26 @@ class NewJavaToKotlinConverter(
         forInlining: Boolean = false
     ): Result = allowAnalysisOnEdt {
         val contextElement = inputElements.firstOrNull() ?: return Result.EMPTY
-        val targetKtModule = targetModule?.productionOrTestSourceModuleInfo?.toKtModule() ?: return Result.EMPTY
+        val targetKtModule = targetModule?.productionOrTestSourceModuleInfo?.toKtModule()
 
         // TODO
         // val originKtModule = ProjectStructureProvider.getInstance(project).getModule(contextElement, contextualModule = null)
         // doesn't work for copy-pasted code, in this case the module is NotUnderContentRootModuleByModuleInfo, which can't be analyzed
 
-        analyze(targetKtModule) {
-            doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
+        when {
+            targetKtModule != null -> {
+                analyze(targetKtModule) {
+                    doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
+                }
+            }
+
+            targetFile != null -> {
+                analyze(targetFile) {
+                    doConvertElementsToKotlin(contextElement, inputElements, processor, bodyFilter, forInlining)
+                }
+            }
+
+            else -> Result.EMPTY
         }
     }
 

@@ -97,7 +97,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         val dataForConversion = DataForConversion.prepare(data, project)
 
         fun doConversion(): Result {
-            val result = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetModule, j2kKind)
+            val result = dataForConversion.elementsAndTexts.convertCodeToKotlin(project, targetModule, targetFile, j2kKind)
             val referenceData = buildReferenceData(result.text, result.parseContext, dataForConversion.importsAndPackage, targetFile)
             val text = if (result.textChanged) result.text else null
             return Result(text, referenceData, result.importsToAdd, result.converterContext)
@@ -244,13 +244,15 @@ internal class ConversionResult(
 internal fun ElementAndTextList.convertCodeToKotlin(
     project: Project,
     targetModule: Module?,
+    targetFile: KtFile,
     j2kKind: J2kConverterExtension.Kind
 ): ConversionResult {
     val converter =
         J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(
             project,
             targetModule,
-            ConverterSettings.defaultSettings
+            ConverterSettings.defaultSettings,
+            targetFile
         )
 
     val inputElements = toList().filterIsInstance<PsiElement>()

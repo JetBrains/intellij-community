@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
+import org.jetbrains.kotlin.psi.KtFile
 
 class OldJ2kConverterExtension : J2kConverterExtension() {
     override val kind: Kind = K1_OLD
@@ -14,7 +15,8 @@ class OldJ2kConverterExtension : J2kConverterExtension() {
     override fun createJavaToKotlinConverter(
         project: Project,
         targetModule: Module?,
-        settings: ConverterSettings
+        settings: ConverterSettings,
+        targetFile: KtFile?
     ): JavaToKotlinConverter =
         OldJavaToKotlinConverter(project, settings)
 

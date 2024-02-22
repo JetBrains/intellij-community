@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.Conversion
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.*
+import org.jetbrains.kotlin.psi.KtFile
 
 // TODO: reuse NewJ2kConverterExtension.doCheckBeforeConversion
 class K2J2KConverterExtension : J2kConverterExtension() {
@@ -18,10 +19,11 @@ class K2J2KConverterExtension : J2kConverterExtension() {
     override fun createJavaToKotlinConverter(
         project: Project,
         targetModule: Module?,
-        settings: ConverterSettings
+        settings: ConverterSettings,
+        targetFile: KtFile?
     ): JavaToKotlinConverter =
         // TODO: rename/refactor
-        NewJavaToKotlinConverter(project, targetModule, settings)
+        NewJavaToKotlinConverter(project, targetModule, settings, targetFile)
 
     override fun createPostProcessor(formatCode: Boolean): PostProcessor =
         K2J2KPostProcessor()

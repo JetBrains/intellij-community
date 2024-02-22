@@ -110,9 +110,9 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
         fun convert() {
             val additionalImports = dataForConversion.tryResolveImports(targetFile)
             ProgressManager.checkCanceled()
-            var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetModule, j2kKind).text
+            var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetModule, targetFile, j2kKind).text
 
-            val convertedResult = dataForConversion.convertCodeToKotlin(project, targetModule, j2kKind)
+            val convertedResult = dataForConversion.convertCodeToKotlin(project, targetModule, targetFile, j2kKind)
             val convertedText = convertedResult.text
             ProgressManager.checkCanceled()
             val newBounds = runWriteAction {
@@ -160,9 +160,10 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
     private fun DataForConversion.convertCodeToKotlin(
         project: Project,
         targetModule: Module?,
+        targetFile: KtFile,
         j2kKind: J2kConverterExtension.Kind
     ): ConversionResult {
-        return elementsAndTexts.convertCodeToKotlin(project, targetModule, j2kKind)
+        return elementsAndTexts.convertCodeToKotlin(project, targetModule, targetFile, j2kKind)
     }
 
     private val KtElement.pasteContext: KotlinContext
