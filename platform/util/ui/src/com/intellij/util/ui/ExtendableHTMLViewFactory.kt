@@ -5,11 +5,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.html.*
-import com.intellij.util.ui.html.FitToWidthImageView
-import com.intellij.util.ui.html.HiDpiScalingImageView
-import com.intellij.util.ui.html.InlineViewEx
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -48,8 +46,11 @@ class ExtendableHTMLViewFactory internal constructor(
 
   companion object {
     @JvmField
-    val DEFAULT_EXTENSIONS: List<Extension> = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
-                                                     Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT, Extensions.PARAGRAPH_VIEW_EX)
+    val DEFAULT_EXTENSIONS: List<Extension> = listOf(
+      Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
+      Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT, Extensions.PARAGRAPH_VIEW_EX,
+      Extensions.BLOCK_VIEW_EX
+    )
 
     @JvmField
     val DEFAULT: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
@@ -115,10 +116,18 @@ class ExtendableHTMLViewFactory internal constructor(
     val WORD_WRAP: Extension = WordWrapExtension()
 
     /**
-     * Supports rendering of inline elements, like <span>, with paddings, margins and rounded corners.
+     * Supports rendering of inline elements, like <span>, with paddings, margins
+     * and rounded corners (through `caption-side` CSS property).
      */
     @JvmField
     val INLINE_VIEW_EX: Extension = InlineViewExExtension()
+
+    /**
+     * Supports rendering of block elements, like <div>,
+     * with rounded corners (through `caption-side` CSS property).
+     */
+    @JvmField
+    val BLOCK_VIEW_EX: Extension = BlockViewExExtension()
 
     /**
      * Supports line-height property (%, px and no-unit) in paragraphs.
@@ -387,8 +396,22 @@ class ExtendableHTMLViewFactory internal constructor(
           || attrs.getAttribute(CSS.Attribute.MARGIN_BOTTOM) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_LEFT) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_TOP) != null
-          || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null) {
+          || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null
+          || attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
+            ?.asSafely<String>()?.endsWith("px") == true) {
         return InlineViewEx(element)
+      }
+      return null
+    }
+  }
+
+  private class BlockViewExExtension : Extension {
+    override fun invoke(element: Element, view: View): View? {
+      if (view.javaClass != BlockView::class.java) return null
+      val attrs = view.attributes
+      if (attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
+          ?.asSafely<String>()?.endsWith("px") == true) {
+        return BlockViewEx(element, (view as BlockView).axis)
       }
       return null
     }

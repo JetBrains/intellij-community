@@ -15,6 +15,7 @@ import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.html.UtilsKt;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +37,7 @@ import java.util.function.Function;
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
-import static com.intellij.util.ui.html.UtilsKt.getCssMargin;
-import static com.intellij.util.ui.html.UtilsKt.getCssPadding;
+import static com.intellij.util.ui.html.UtilsKt.*;
 
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane implements Disposable {
@@ -85,6 +85,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
                                     Extensions.BASE64_IMAGES,
                                     Extensions.INLINE_VIEW_EX,
                                     Extensions.PARAGRAPH_VIEW_EX,
+                                    Extensions.BLOCK_VIEW_EX,
                                     Extensions.FIT_TO_WIDTH_IMAGES,
                                     Extensions.WBR_SUPPORT)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
@@ -199,10 +200,10 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     View definition = findSection(getUI().getRootView(this), sectionClassName);
     var result = definition == null ? -1 : (int)definition.getPreferredSpan(View.X_AXIS);
     if (result > 0) {
-      result += getCssMargin(definition).width();
+      result += UtilsKt.getWidth(getCssMargin(definition));
       var parent = definition.getParent();
       while (parent != null) {
-        result += getCssMargin(parent).width() + getCssPadding(parent).width();
+        result += UtilsKt.getWidth(getCssMargin(parent)) + UtilsKt.getWidth(getCssPadding(parent));
         parent = parent.getParent();
       }
     }

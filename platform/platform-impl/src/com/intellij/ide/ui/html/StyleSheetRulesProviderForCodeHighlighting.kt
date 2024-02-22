@@ -74,19 +74,16 @@ object StyleSheetRulesProviderForCodeHighlighting {
       }
     })
     val codeFg = ColorUtil.toHtmlColor(colorScheme.defaultForeground)
-
-    val codeColorStyle = "{ background-color: $codeBg; color: $codeFg; }"
-
     if (enableInlineCodeBackground) {
       val selectors = inlineCodeParentSelectors.asSequence().map { "$it code" }.joinToString(", ")
-      result.add("$selectors $codeColorStyle")
+      result.add("$selectors { background-color: $codeBg; color: $codeFg; }")
       // 'caption-side' is a hack to support 'border-radius'.
       // See also: com.intellij.util.ui.html.InlineViewEx
       result.add("$selectors { padding: ${scale(1)}px ${scale(4)}px; margin: ${scale(1)}px 0px; caption-side: ${scale(10)}px; }")
     }
     if (enableCodeBlocksBackground) {
-      result.add("div.styled-code $codeColorStyle")
-      result.add("div.styled-code {  margin: $codeBlockMargin; padding: ${scale(6)}px ${scale(6)}px ${scale(6)}px ${scale(10)}px; }")
+      result.add("div.styled-code { background-color: $codeBg; color: $codeFg; }")
+      result.add("div.styled-code { margin: $codeBlockMargin; padding: ${scale(6)}px ${scale(6)}px ${scale(6)}px ${scale(10)}px; caption-side: ${scale(10)}px; }")
       result.add("div.styled-code pre { padding: 0px; margin: 0px }")
     }
     return result
