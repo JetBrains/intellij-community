@@ -20,6 +20,8 @@ public final class Messages {
   public final static @NotNull String TASK_CACHE_SET_GROUP = "gradle.taskModel.cacheSet.group";
 
   public final static @NotNull String SOURCE_SET_MODEL_GROUP = "gradle.sourceSetModel.group";
+  public final static @NotNull String SOURCE_SET_MODEL_CACHE_GET_GROUP = "gradle.sourceSetModel.cacheGet.group";
+  public final static @NotNull String SOURCE_SET_MODEL_CACHE_SET_GROUP = "gradle.sourceSetModel.cacheSet.group";
   public final static @NotNull String SOURCE_SET_MODEL_PROJECT_TASK_ARTIFACT_GROUP = "gradle.sourceSetModel.projectArtifact.group";
   public final static @NotNull String SOURCE_SET_MODEL_SKIPPED_PROJECT_TASK_ARTIFACT_GROUP = "gradle.sourceSetModel.projectArtifact.skipped.group";
   public final static @NotNull String SOURCE_SET_MODEL_NON_SOURCE_SET_ARTIFACT_GROUP = "gradle.sourceSetModel.nonSourceSetArtifact.group";
@@ -28,8 +30,6 @@ public final class Messages {
   public final static @NotNull String SOURCE_SET_MODEL_SKIPPED_PROJECT_CONFIGURATION_ARTIFACT_GROUP = "gradle.sourceSetModel.projectConfigurationArtifact.skipped.group";
   public final static @NotNull String SOURCE_SET_MODEL_SOURCE_SET_ARTIFACT_GROUP = "gradle.sourceSetModel.sourceSetArtifact.group";
   public final static @NotNull String SOURCE_SET_MODEL_SKIPPED_SOURCE_SET_ARTIFACT_GROUP = "gradle.sourceSetModel.sourceSetArtifact.skipped.group";
-  public final static @NotNull String SOURCE_SET_CACHE_GET_GROUP = "gradle.sourceSetModel.cacheGet.group";
-  public final static @NotNull String SOURCE_SET_CACHE_SET_GROUP = "gradle.sourceSetModel.cacheSet.group";
 
   public final static @NotNull String RESOURCE_FILTER_MODEL_GROUP = "gradle.resourceModel.group";
 
