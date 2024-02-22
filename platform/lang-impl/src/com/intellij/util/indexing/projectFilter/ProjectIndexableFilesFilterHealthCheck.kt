@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -73,7 +71,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     try {
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, onProjectOpen)
 
-      val errorsByType = doRunHealthCheckInReadAction() ?: return
+      val errorsByType = doRunHealthCheckInReadAction()
 
       errorsByType.fix(filter)
 
@@ -102,13 +100,10 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     }
   }
 
-  private fun doRunHealthCheckInReadAction(): Map<HealthCheckErrorType, List<InconsistentFile>>? {
-    var errors: Map<HealthCheckErrorType, List<InconsistentFile>>? = null
-    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
-      if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
-      errors = doRunHealthCheck()
-    }
-    return errors
+  private fun doRunHealthCheckInReadAction(): Map<HealthCheckErrorType, List<InconsistentFile>> {
+    return ReadAction.nonBlocking(Callable {
+      doRunHealthCheck()
+    }).inSmartMode(project).executeSynchronously()
   }
 
   private fun doRunHealthCheck(): Map<HealthCheckErrorType, List<InconsistentFile>> {
