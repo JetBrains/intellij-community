@@ -17,8 +17,7 @@ internal fun TransferableIdeId.icon(size: IconProductSize): Icon? =
     TransferableIdeId.VisualStudio -> when (size) {
       IconProductSize.SMALL -> StartupImportIcons.VisualStudio.VisualStudio_20
       IconProductSize.MIDDLE -> StartupImportIcons.VisualStudio.VisualStudio_24
-      // TODO: IconProductSize.LARGE -> StartupImportIcons.VisualStudio.VisualStudio_48
-      IconProductSize.LARGE -> StartupImportIcons.VisualStudio.VisualStudio_24
+      IconProductSize.LARGE -> StartupImportIcons.VisualStudio.VisualStudio_48
     }
     else -> {
       logger<TransferableIdeId>().error("Cannot find icon for transferable IDE $this.")
