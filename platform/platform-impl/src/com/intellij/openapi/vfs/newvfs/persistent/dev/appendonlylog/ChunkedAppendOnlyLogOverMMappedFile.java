@@ -89,7 +89,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
   //
   //    3) Recovery: if app crashes, append-only log is able to keep its state, because OS is responsible for flushing
   //       memory-mapped file content regardless of app status.
-  //       FIXME RC: below desciription is not correct with chunks being append-only logs themselves
+  //       FIXME RC: below description is not correct with chunks being append-only logs themselves
   //       Chunks < committed cursor are fully written, so no problems with them.
   //       Chunks in [committed..allocated] range could be fully of partially written, so we need to sort them out: if we
   //       see (committed < allocated) on log opening => we execute 'recovery' protocol to find out which chunks from that
@@ -377,6 +377,12 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       int header = readHeader();
       int allocatedCursor = unpackAllocatedCursor(header);
       return capacity() - allocatedCursor;
+    }
+
+    @Override
+    public boolean isAppendable() {
+      //TODO read bits from the header
+      return true;
     }
 
 
