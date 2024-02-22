@@ -71,6 +71,8 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     if (!IndexInfrastructure.hasIndices()) return
 
     try {
+      IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, onProjectOpen)
+
       val errorsByType = doRunHealthCheckInReadAction() ?: return
 
       errorsByType.fix(filter)

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexable.files.filter", 4)
+  private val GROUP = EventLogGroup("indexable.files.filter", 5)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -23,6 +23,23 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
     nonIndexableFilesInFilterField,
     indexableFilesNotInFilterField,
   )
+
+  private val indexableFilesFilterHealthCheckStarted = GROUP.registerEvent(
+    "indexable_files_filter_health_check_started",
+    filterNameField,
+    isOnProjectOpenField,
+  )
+
+  fun reportIndexableFilesFilterHealthcheckStarted(project: Project,
+                                                   filter: ProjectIndexableFilesFilter,
+                                                   onProjectOpen: Boolean) {
+    indexableFilesFilterHealthCheckStarted.log(
+      project,
+      getFilterName(filter),
+      onProjectOpen,
+    )
+  }
+
 
   fun reportIndexableFilesFilterHealthcheck(project: Project,
                                             filter: ProjectIndexableFilesFilter,
