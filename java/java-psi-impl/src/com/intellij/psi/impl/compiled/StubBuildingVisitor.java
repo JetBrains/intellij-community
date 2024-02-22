@@ -340,7 +340,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     byte flags = PsiFieldStubImpl.packFlags(isSet(access, Opcodes.ACC_ENUM), isSet(access, Opcodes.ACC_DEPRECATED), false, false);
     TypeInfo type = fieldType(desc, signature);
-    String initializer = constToString(value, type, false, myFirstPassData);
+    String initializer = null;
+    if (value != null) {
+      StringBuilder sb = new StringBuilder();
+      constToString(sb, value, type, false, myFirstPassData);
+      initializer = sb.toString();
+    }
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new FieldAnnotationCollectingVisitor(stub, modList, myFirstPassData);
@@ -708,90 +713,77 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
   }
 
-  @Nullable
-  static String constToString(@Nullable Object value, TypeInfo type, boolean anno, TypeInfoProvider mapping) {
-    if (value == null) return null;
-
+  static void constToString(@NotNull StringBuilder builder, @NotNull Object value, TypeInfo type, boolean anno, TypeInfoProvider mapping) {
     if (value instanceof String) {
-      return "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
-    }
-
-    if (value instanceof Boolean || value instanceof Short || value instanceof Byte) {
-      return value.toString();
-    }
-
-    if (value instanceof Character) {
-      return "'" + StringUtil.escapeCharCharacters(value.toString()) + "'";
-    }
-
-    if (value instanceof Long) {
-      return value.toString() + 'L';
-    }
-
-    if (value instanceof Integer) {
+      builder.append('"');
+      StringUtil.escapeStringCharacters(((String)value).length(), (String)value, "\"", builder);
+      builder.append('"');
+    } else if (value instanceof Boolean || value instanceof Short || value instanceof Byte) {
+      builder.append(value);
+    } else if (value instanceof Character) {
+      builder.append('\'');
+      String s = value.toString();
+      StringUtil.escapeStringCharacters(s.length(), s, "'", builder);
+      builder.append('\'');
+    } else if (value instanceof Long) {
+      builder.append(value).append('L');
+    } else if (value instanceof Integer) {
       if (type.getKind() == TypeInfo.TypeKind.BOOLEAN) {
-        if (value.equals(0)) return "false";
-        if (value.equals(1)) return "true";
-      }
-      if (type.getKind() == TypeInfo.TypeKind.CHAR) {
+        builder.append(value.equals(0) ? "false" : "true");
+      } else if (type.getKind() == TypeInfo.TypeKind.CHAR) {
         char ch = (char)((Integer)value).intValue();
-        return "'" + StringUtil.escapeCharCharacters(String.valueOf(ch)) + "'";
+        builder.append('\'');
+        String s = String.valueOf(ch);
+        StringUtil.escapeStringCharacters(s.length(), s, "'", builder);
+        builder.append('\'');
+      } else {
+        builder.append(value);
       }
-      return value.toString();
-    }
-
-    if (value instanceof Double) {
+    } else if (value instanceof Double) {
       double d = (Double)value;
       if (Double.isInfinite(d)) {
-        return d > 0 ? DOUBLE_POSITIVE_INF : DOUBLE_NEGATIVE_INF;
+        builder.append(d > 0 ? DOUBLE_POSITIVE_INF : DOUBLE_NEGATIVE_INF);
+      } else if (Double.isNaN(d)) {
+        builder.append(DOUBLE_NAN);
+      } else {
+        builder.append(d);
       }
-      if (Double.isNaN(d)) {
-        return DOUBLE_NAN;
-      }
-      return Double.toString(d);
-    }
-
-    if (value instanceof Float) {
+    } else if (value instanceof Float) {
       float v = (Float)value;
-
       if (Float.isInfinite(v)) {
-        return v > 0 ? FLOAT_POSITIVE_INF : FLOAT_NEGATIVE_INF;
+        builder.append(v > 0 ? FLOAT_POSITIVE_INF : FLOAT_NEGATIVE_INF);
       }
       else if (Float.isNaN(v)) {
-        return FLOAT_NAN;
+        builder.append(FLOAT_NAN);
       }
       else {
-        return Float.toString(v) + 'f';
+        builder.append(v).append('f');
       }
-    }
-
-    if (value.getClass().isArray()) {
-      StringBuilder buffer = new StringBuilder();
-      buffer.append('{');
+    } else if (value.getClass().isArray()) {
+      builder.append('{');
       for (int i = 0, length = Array.getLength(value); i < length; i++) {
-        if (i > 0) buffer.append(", ");
-        buffer.append(constToString(Array.get(value, i), type, anno, mapping));
+        if (i > 0) builder.append(", ");
+        constToString(builder, Array.get(value, i), type, anno, mapping);
       }
-      buffer.append('}');
-      return buffer.toString();
+      builder.append('}');
+    } else if (anno && value instanceof Type) {
+      toJavaType(builder, (Type)value, mapping);
+      builder.append(".class");
+    } else {
+      builder.append("null");
     }
-
-    if (anno && value instanceof Type) {
-      return toJavaType((Type)value, mapping) + ".class";
-    }
-
-    return null;
   }
 
-  static String toJavaType(Type type, @NotNull TypeInfoProvider mapping) {
+  static void toJavaType(@NotNull StringBuilder sb, Type type, @NotNull TypeInfoProvider mapping) {
     int dimensions = 0;
     if (type.getSort() == Type.ARRAY) {
       dimensions = type.getDimensions();
       type = type.getElementType();
     }
-    String text = type.getSort() == Type.OBJECT ? mapping.toTypeInfo(type.getInternalName()).text() : type.getClassName();
-    if (dimensions > 0) text += StringUtil.repeat("[]", dimensions);
-    return text;
+    sb.append(type.getSort() == Type.OBJECT ? mapping.toTypeInfo(type.getInternalName()).text() : type.getClassName());
+    while (dimensions-- > 0) {
+      sb.append("[]");
+    }
   }
 
   private static TypeInfo toTypeInfo(Type type, @NotNull FirstPassData mapping) {
