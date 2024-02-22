@@ -218,6 +218,8 @@ private object IdeStartupExperiment {
   }
 
   fun isExperimentEnabled(): Boolean {
+    @Suppress("DEPRECATION")
+    if (PlatformUtils.isCLion()) return false
     return when (experimentGroupKind) {
       GroupKind.Experimental -> true
       GroupKind.Control -> false
