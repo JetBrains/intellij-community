@@ -911,6 +911,14 @@
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <!--Must be available both in data and template language-->
+      <language/>
+      <className>com.intellij.psi.templateLanguages.ChooseTemplateDataLanguageIntention</className>
+      <bundleName>messages.LangBundle</bundleName>
+      <categoryKey>template.data.language.chooser.intention.title</categoryKey>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
 
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.DoNotShowInspectionIntentionMenuContributor"/>
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor"/>
