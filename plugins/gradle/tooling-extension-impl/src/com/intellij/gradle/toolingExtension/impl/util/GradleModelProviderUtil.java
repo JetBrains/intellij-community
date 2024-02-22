@@ -7,6 +7,7 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
 
 import java.util.*;
@@ -81,7 +82,25 @@ public final class GradleModelProviderUtil {
     });
   }
 
-  private static <T> void traverseTree(
+  public static <M> void buildModelsBackwardRecursively(
+    @NotNull BuildController controller,
+    @NotNull GradleBuild buildModel,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer
+  ) {
+    backwardTraverseTree(buildModel.getRootProject(), BasicGradleProject::getChildren, (gradleProject) -> {
+      M model = controller.findModel(gradleProject, modelClass);
+      if (model != null) {
+        consumer.consumeProjectModel(gradleProject, model, modelClass);
+      }
+    });
+  }
+
+  /**
+   * Traverses a tree from root to leaf.
+   */
+  @VisibleForTesting
+  public static <T> void traverseTree(
     @NotNull T root,
     @NotNull Function<T, Iterable<? extends T>> children,
     @NotNull Consumer<T> action
@@ -94,6 +113,35 @@ public final class GradleModelProviderUtil {
       for (T child : children.apply(parent)) {
         action.accept(child);
         queue.add(child);
+      }
+    }
+  }
+
+  /**
+   * Traverses a tree from leaves to root.
+   */
+  @VisibleForTesting
+  public static <T> void backwardTraverseTree(
+    @NotNull T root,
+    @NotNull Function<T, Collection<? extends T>> getChildren,
+    @NotNull Consumer<T> action
+  ) {
+    T previous = root;
+
+    Deque<T> stack = new ArrayDeque<>();
+    stack.push(root);
+    while (!stack.isEmpty()) {
+      T current = stack.peek();
+      List<? extends T> children = new ArrayList<>(getChildren.apply(current));
+      if (children.isEmpty() || children.get(children.size() - 1) == previous) {
+        current = stack.pop();
+        action.accept(current);
+        previous = current;
+      }
+      else {
+        for (int i = children.size() - 1; i >= 0; i--) {
+          stack.push(children.get(i));
+        }
       }
     }
   }
