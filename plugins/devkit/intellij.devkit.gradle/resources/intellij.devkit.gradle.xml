@@ -9,6 +9,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <attachSourcesProvider implementation="org.jetbrains.idea.devkit.gradle.IntelliJPlatformAttachSourcesProvider"/>
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.gradle.GradlePluginConsoleFilterProvider"/>
   </extensions>
 </idea-plugin>
