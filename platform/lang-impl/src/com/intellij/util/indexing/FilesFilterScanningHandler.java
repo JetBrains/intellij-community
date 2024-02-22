@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public interface FilesFilterScanningHandler {
   void addFileId(@NotNull Project project, int fileId);
 
-  default void scanningCompleted(@NotNull Project project, boolean onProjectOpen) {
+  default void scanningCompleted(@NotNull Project project) {
 
   }
 
@@ -49,11 +49,10 @@ public interface FilesFilterScanningHandler {
     }
 
     @Override
-    public void scanningCompleted(@NotNull Project project, boolean onProjectOpen) {
-      assert onProjectOpen : "IdleFilesFilterScanningHandler should only be used on project open";
+    public void scanningCompleted(@NotNull Project project) {
       ProjectIndexableFilesFilterHealthCheck healthCheck = myFilterHolder.getHealthCheck(project);
       if (healthCheck != null) {
-        healthCheck.triggerHealthCheck(onProjectOpen);
+        healthCheck.triggerHealthCheck();
       }
     }
 
