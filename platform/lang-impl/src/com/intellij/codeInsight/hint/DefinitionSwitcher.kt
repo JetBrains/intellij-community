@@ -6,18 +6,41 @@ import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.util.preferredHeight
+import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.KeyStroke
+import javax.swing.SwingConstants
 
 private const val NAVIGATION_PLACE = "DefinitionChooser"
 
-class DefinitionSwitcher<T>(var elements: Array<T>,
+class DefinitionSwitcher<T>(elements: Array<T>,
                             private val component: JComponent,
                             private val onUpdate: (T)-> Unit) {
+  var elements = elements
+    set(value) {
+      field = value
+      maxLabelSize = getMaxLabelSize()
+    }
+
+  private var maxLabelSize = getMaxLabelSize()
+  private fun jbEmptyBorder() = JBUI.Borders.empty(0, 2)
+
+  private fun getMaxLabelSize(): Dimension {
+    val label = JBLabel().withFont(JBUI.Fonts.toolbarFont()).withBorder(jbEmptyBorder())
+    val maxWidth = (1..elements.size).maxOf {
+      label.text = "${it}/${elements.size}"
+      label.preferredWidth
+    }
+    return Dimension(maxWidth, label.preferredHeight)
+  }
+
   var index = 0
   fun getCurrentElement() = elements[index]
 
@@ -30,11 +53,11 @@ class DefinitionSwitcher<T>(var elements: Array<T>,
 
     group.add(object : ToolbarLabelAction() {
       override fun createCustomComponent(presentation: Presentation,
-                                         place: String): JComponent {
-        val component = super.createCustomComponent(presentation, place)
-        component.border = JBUI.Borders.empty(0, 2)
-        return component
-      }
+                                         place: String): JComponent =
+        (super.createCustomComponent(presentation, place) as JBLabel).apply {
+          border = jbEmptyBorder()
+          horizontalAlignment = SwingConstants.TRAILING
+        }
 
       override fun update(e: AnActionEvent) {
         super.update(e)
@@ -46,6 +69,11 @@ class DefinitionSwitcher<T>(var elements: Array<T>,
         else {
           presentation.isVisible = false
         }
+      }
+
+      override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+        super.updateCustomComponent(component, presentation)
+        component.preferredSize = maxLabelSize
       }
 
       override fun getActionUpdateThread(): ActionUpdateThread {
