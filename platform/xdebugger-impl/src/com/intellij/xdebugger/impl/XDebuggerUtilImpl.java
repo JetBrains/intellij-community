@@ -291,7 +291,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
 
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
-    if (areInlineBreakpointsEnabled()) {
+    if (areInlineBreakpointsEnabled(editor.getDocument())) {
       return variantsAsync.then(variantsWithAll -> {
         var variants = variantsWithAll.stream().filter(v -> !v.isMultiVariant()).toList();
 
