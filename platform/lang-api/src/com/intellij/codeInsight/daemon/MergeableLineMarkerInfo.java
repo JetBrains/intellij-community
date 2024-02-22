@@ -162,7 +162,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   private static final class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
-    private final DefaultActionGroup myCommonActionGroup;
     private final List<? extends MergeableLineMarkerInfo<?>> myMarkers;
 
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers, int passId) {
@@ -178,26 +177,24 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       super(template.getElement(), getCommonTextRange(markers), template.getCommonIcon(markers),
             getCommonAccessibleNameProvider(markers), template.getCommonTooltip(markers),
             getCommonNavigationHandler(markers), template.getCommonIconAlignment(markers));
-      myCommonActionGroup = getCommonActionGroup(markers);
       myMarkers = markers;
       updatePass = passId;
     }
-
 
     public @NotNull List<? extends MergeableLineMarkerInfo<?>> getInfos() {
       return myMarkers;
     }
 
-    private static DefaultActionGroup getCommonActionGroup(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
+    private DefaultActionGroup getCommonActionGroup(@NotNull MouseEvent mouseEvent) {
       DefaultActionGroup commonActionGroup = null;
       boolean first = true;
-      for (MergeableLineMarkerInfo<?> marker : markers) {
+      for (MergeableLineMarkerInfo<?> marker : myMarkers) {
         GutterIconRenderer renderer = marker.createGutterRenderer();
         if (renderer != null) {
           ActionGroup actions = renderer.getPopupMenuActions();
           boolean popup = actions != null;
           if (actions == null) {
-            actions = new DefaultActionGroup(marker.getNavigateAction());
+            actions = new DefaultActionGroup(marker.getNavigateAction(mouseEvent));
           }
           if (commonActionGroup == null) {
             commonActionGroup = new DefaultActionGroup();
@@ -228,8 +225,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
     @Override
     public GutterIconRenderer createGutterRenderer() {
-      if (myCommonActionGroup == null) return super.createGutterRenderer();
-
       return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
@@ -242,8 +237,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         }
 
         @Override
-        public ActionGroup getPopupMenuActions() {
-          return myCommonActionGroup;
+        public ActionGroup getPopupMenuActions(@NotNull MouseEvent mouseEvent) {
+          return getCommonActionGroup(mouseEvent);
         }
       };
     }
@@ -309,12 +304,12 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
   }
 
-  private AnAction getNavigateAction() {
+  private AnAction getNavigateAction(@NotNull MouseEvent originalEvent) {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         InputEvent event = e.getInputEvent();
-        MouseEvent mouseEvent = event instanceof MouseEvent ? (MouseEvent)event : null;
+        MouseEvent mouseEvent = event instanceof MouseEvent ? (MouseEvent)event : originalEvent;
         getNavigationHandler().navigate(mouseEvent, getElement());
       }
 
