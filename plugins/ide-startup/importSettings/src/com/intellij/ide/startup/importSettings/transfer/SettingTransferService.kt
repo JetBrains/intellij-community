@@ -32,7 +32,6 @@ class SettingTransferService(private val outerScope: CoroutineScope) : ExternalS
   private val config: TransferSettingsConfiguration
   init {
     val providers = buildList {
-      add(VSCodeTransferSettingsProvider(outerScope))
       ThirdPartyProductSettingsTransfer.EP_NAME.forEachExtensionSafe { extension ->
         addAll(extension.getProviders())
       }

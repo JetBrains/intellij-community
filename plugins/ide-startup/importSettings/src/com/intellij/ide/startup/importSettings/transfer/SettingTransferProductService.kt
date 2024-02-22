@@ -58,7 +58,6 @@ class SettingTransferProductService(
     }
   }
 
-
   override val productTitle: String
     get() = when (productId) {
       TransferableIdeId.DummyIde -> ""

@@ -22,6 +22,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <transferSettings.thirdPartyProductSettingsTransfer id="VSCodeSettingsTransfer"
+                                                       implementation="com.intellij.ide.startup.importSettings.transfer.VsCodeSettingsTransfer"/>
+
     <!--suppress PluginXmlDynamicPlugin -->
     <ideStartupWizard implementation="com.intellij.ide.startup.importSettings.IdeStartupWizardImpl"/>
 
