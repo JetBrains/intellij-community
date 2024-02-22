@@ -668,6 +668,18 @@ internal class MutableEntityStorageImpl(
     }
   }
 
+  override fun getOneChildBuilder(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>? {
+    return getOneChildData(connectionId, (parent as ModifiableWorkspaceEntityBase<*, *>).id)?.wrapAsModifiable(this)
+  }
+
+  override fun getManyChildrenBuilders(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): Sequence<WorkspaceEntity.Builder<*>> {
+    return getManyChildrenData(connectionId, (parent as ModifiableWorkspaceEntityBase<*, *>).id).map { it.wrapAsModifiable(this) }
+  }
+
+  override fun getParentBuilder(connectionId: ConnectionId, child: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>? {
+    return getParentData(connectionId, (child as ModifiableWorkspaceEntityBase<*, *>).id)?.wrapAsModifiable(this)
+  }
+
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
 
   override fun applyChangesFrom(builder: MutableEntityStorage) = applyChangesFromTimeMs.addMeasuredTime {
@@ -995,16 +1007,19 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   }
 
   override fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity? {
+    return getOneChildData(connectionId, parent.asBase().id)?.createEntity(this)
+  }
+
+  protected fun getOneChildData(connectionId: ConnectionId, parentEntityId: EntityId): WorkspaceEntityData<*>? {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_ONE -> {
-        return refs.getOneToOneChild(connectionId, parent.asBase().id.arrayId) {
-          entityDataByIdOrDie(createEntityId(it, connectionId.childClass)).createEntity(this)
+        return refs.getOneToOneChild(connectionId, parentEntityId.arrayId) {
+          entityDataByIdOrDie(createEntityId(it, connectionId.childClass))
         }
       }
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
-        val parentId = parent.asBase().id
-        val childId = refs.getChildrenByParent(connectionId, parentId.asParent()).singleOrNull()?.id ?: return null
-        return entityDataByIdOrDie(childId).createEntity(this)
+        val childId = refs.getChildrenByParent(connectionId, parentEntityId.asParent()).singleOrNull()?.id ?: return null
+        return entityDataByIdOrDie(childId)
       }
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, ConnectionId.ConnectionType.ONE_TO_MANY -> {
         error("This function works only with one-to-one connections")
@@ -1013,19 +1028,20 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   }
 
   override fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity> {
+    return getManyChildrenData(connectionId, parent.asBase().id).map { it.createEntity(this) }
+  }
+
+  protected fun getManyChildrenData(connectionId: ConnectionId, parentEntityId: EntityId): Sequence<WorkspaceEntityData<*>> {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_MANY -> {
-        val parentId = parent.asBase().id
-        return refs.getChildrenByParent(connectionId, parentId.asParent())
+        return refs.getChildrenByParent(connectionId, parentEntityId.asParent())
           .asSequence()
           .map { entityDataByIdOrDie(it.id) }
-          .map { it.createEntity(this) }
       }
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
-        return refs.getChildrenByParent(connectionId, parent.asBase().id.asParent())
+        return refs.getChildrenByParent(connectionId, parentEntityId.asParent())
                  .asSequence()
                  .map { entityDataByIdOrDie(it.id) }
-                 .map { it.createEntity(this) }
       }
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, ConnectionId.ConnectionType.ONE_TO_ONE -> {
         error("This function works only with one-to-many connections")
@@ -1034,26 +1050,30 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
   }
 
   override fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity? {
+    return getParentData(connectionId, child.asBase().id)?.createEntity(this)
+  }
+
+  protected fun getParentData(connectionId: ConnectionId, childEntityId: EntityId): WorkspaceEntityData<*>? {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_ONE -> {
-        return refs.getOneToOneParent(connectionId, child.asBase().id.arrayId) {
+        return refs.getOneToOneParent(connectionId, childEntityId.arrayId) {
           val entityId = createEntityId(it, connectionId.parentClass)
-          entityDataByIdOrDie(entityId).createEntity(this)
+          entityDataByIdOrDie(entityId)
         }
       }
       ConnectionId.ConnectionType.ONE_TO_MANY -> {
-        return refs.getOneToManyParent(connectionId, child.asBase().id.arrayId) {
+        return refs.getOneToManyParent(connectionId, childEntityId.arrayId) {
           val entityId = createEntityId(it, connectionId.parentClass)
-          entityDataByIdOrDie(entityId).createEntity(this)
+          entityDataByIdOrDie(entityId)
         }
       }
       ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
-        return refs.getOneToAbstractManyParent(connectionId, child.asBase().id.asChild())
-          ?.let { entityDataByIdOrDie(it.id).createEntity(this) }
+        return refs.getOneToAbstractManyParent(connectionId, childEntityId.asChild())
+          ?.let { entityDataByIdOrDie(it.id) }
       }
       ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
-        return refs.getOneToAbstractOneParent(connectionId, child.asBase().id.asChild())
-          ?.let { entityDataByIdOrDie(it.id).createEntity(this) }
+        return refs.getOneToAbstractOneParent(connectionId, childEntityId.asChild())
+          ?.let { entityDataByIdOrDie(it.id) }
       }
     }
   }
