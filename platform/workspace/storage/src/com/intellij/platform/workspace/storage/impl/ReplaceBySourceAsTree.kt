@@ -212,7 +212,7 @@ internal class ReplaceBySourceAsTree {
       targetParents.groupBy { it::class }.forEach { (_, entities) ->
         modifiableEntity.updateReferenceToEntity(entities.first().getEntityInterface(), false, entities)
       }
-      targetStorage.addEntity(modifiableEntity)
+      targetStorage.addEntity(modifiableEntity as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
       replaceToTarget[replaceWithDataSource] = modifiableEntity.id
     }

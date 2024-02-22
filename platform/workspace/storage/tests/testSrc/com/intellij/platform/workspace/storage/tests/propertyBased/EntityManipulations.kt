@@ -90,7 +90,7 @@ private class AddDetachedToStorage(private val storage: MutableEntityStorageImpl
     val entityIndex = env.generateValue(Generator.integers(0, entities.size - 1), null)
     val someEntity = entities.removeAt(entityIndex)
     if (someEntity is ModifiableWorkspaceEntityBase<*, *> && someEntity.diff == null) {
-      storage.addEntity(someEntity)
+      storage.addEntity(someEntity as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
       env.logMessage("Added ${someEntity.id.asString()} to storage")
     }
     else {

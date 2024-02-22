@@ -223,6 +223,22 @@ internal class MutableEntityStorageImpl(
     }
   }
 
+  override fun <M : WorkspaceEntity.Builder<T>, T : WorkspaceEntity> addEntity(entity: M): T = addEntityTimeMs.addMeasuredTime {
+    try {
+      lockWrite()
+      val entityToAdd = entity as ModifiableWorkspaceEntityBase<*, *>
+
+      entityToAdd.applyToBuilder(this)
+      entityToAdd.changedProperty.clear()
+
+      // TODO Do not re-request entities
+      return@addMeasuredTime this.entityDataByIdOrDie(entityToAdd.id).createEntity(this) as T
+    }
+    finally {
+      unlockWrite()
+    }
+  }
+
   @Suppress("UNCHECKED_CAST")
   override fun <T : WorkspaceEntity> addEntity(entity: T): T = addEntityTimeMs.addMeasuredTime {
     try {

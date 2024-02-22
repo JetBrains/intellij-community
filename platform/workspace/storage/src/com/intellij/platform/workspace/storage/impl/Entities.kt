@@ -169,7 +169,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
             if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
               @Suppress("KotlinConstantConditions")
               item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] =  this
-              myDiff.addEntity(item)
+              myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
             }
           }
           if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
@@ -183,7 +183,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
           if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
             @Suppress("KotlinConstantConditions")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
-            myDiff.addEntity(item)
+            myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
           }
           if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
             myDiff.instrumentation.replaceChildren(foundConnectionId, this, listOfNotNull(item))
@@ -200,7 +200,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
           if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
             @Suppress("KotlinConstantConditions", "UNCHECKED_CAST")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = (item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] as? List<Any> ?: emptyList()) + this
-            myDiff.addEntity(item)
+            myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
           }
           if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
             myDiff.instrumentation.addChild(foundConnectionId, item, this)
@@ -215,7 +215,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
           if (item != null && item is ModifiableWorkspaceEntityBase<*, *> && item.diff == null) {
             @Suppress("KotlinConstantConditions")
             item.entityLinks[EntityLink(!isThisFieldChild, foundConnectionId)] = this
-            myDiff.addEntity(item)
+            myDiff.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
           }
           if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE) {
             myDiff.instrumentation.addChild(foundConnectionId, item, this)
@@ -401,7 +401,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
     else if (entity is WorkspaceEntity) {
       if (entity is ModifiableWorkspaceEntityBase<*, *> && entity.diff == null) {
-        builder.addEntity(entity)
+        builder.addEntity(entity as ModifiableWorkspaceEntityBase<T, *>)
       }
       builder.instrumentation.addChild(entityLink.connectionId, entity, this)
       parentKeysToRemove.add(entityLink)
@@ -415,7 +415,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     if (entity is List<*>) {
       for (item in entity) {
         if (item is ModifiableWorkspaceEntityBase<*, *>) {
-          builder.addEntity(item)
+          builder.addEntity(item as ModifiableWorkspaceEntityBase<T, *>)
         }
       }
       if (connectionId.isOneToOne) error("Only one-to-many connection is supported")
@@ -426,7 +426,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
     else if (entity is WorkspaceEntity) {
       if (entity is ModifiableWorkspaceEntityBase<*, *> && entity.diff == null) {
-        builder.addEntity(entity)
+        builder.addEntity(entity as ModifiableWorkspaceEntityBase<T, *>)
       }
       if (!connectionId.isOneToOne) error("Only one-to-one connection is supported")
       builder.instrumentation.replaceChildren(connectionId, this, listOfNotNull(entity))
