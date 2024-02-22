@@ -3,6 +3,7 @@ package com.intellij.java.lomboktest
 import com.intellij.codeInsight.generation.GenerateLoggerHandler
 import com.intellij.codeInsight.generation.ui.ChooseLoggerDialogWrapper
 import com.intellij.java.codeInsight.JvmLoggerTestSetupUtil
+import com.intellij.lang.logging.JvmLogger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightProjectDescriptor
@@ -43,14 +44,14 @@ class LombokGenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
     doTest("Lombok ${getTestName(false)}")
   }
 
-  private fun doTest(displayName : String) {
+  private fun doTest(loggerId : String) {
     val name = getTestName(false)
     myFixture.configureByFile("before$name.java")
     UiInterceptors.register(
       object : UiInterceptors.UiInterceptor<ChooseLoggerDialogWrapper>(ChooseLoggerDialogWrapper::class.java) {
         override fun doIntercept(component: ChooseLoggerDialogWrapper) {
           Disposer.register(myFixture.testRootDisposable, component.disposable)
-          component.setComboBoxItem(displayName)
+          component.setComboBoxItem(JvmLogger.getLoggerById(loggerId)!!)
           component.close(DialogWrapper.OK_EXIT_CODE)
         }
       }
