@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.GenerateLoggerHandler
-import com.intellij.codeInsight.generation.GenerateLoggerUtil
+import com.intellij.lang.logging.JvmLogger
 import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.JBPopup
@@ -56,10 +56,10 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
                                 }
                                 """.trimIndent())
 
-    val loggers = GenerateLoggerUtil.findSuitableLoggers(module)
+    val loggers = JvmLogger.findSuitableLoggers(module)
     TestCase.assertTrue(loggers.isNotEmpty())
     val element = file.findElementAt(editor.caretModel.offset)!!
-    val places = GenerateLoggerUtil.getPossiblePlacesForLogger(element, loggers)
+    val places = JvmLogger.getPossiblePlacesForLogger(element, loggers)
 
     TestCase.assertTrue(places.isEmpty())
   }

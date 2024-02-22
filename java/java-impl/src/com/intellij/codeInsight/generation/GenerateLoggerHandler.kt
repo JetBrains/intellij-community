@@ -34,9 +34,9 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     val currentElement = file.findElementAt(editor.caretModel.offset) ?: return
 
     val module = ModuleUtil.findModuleForFile(file)
-    val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module)
+    val availableLoggers = JvmLogger.findSuitableLoggers(module)
 
-    val places = GenerateLoggerUtil.getPossiblePlacesForLogger(currentElement, availableLoggers)
+    val places = JvmLogger.getPossiblePlacesForLogger(currentElement, availableLoggers)
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
     when (places.size) {
