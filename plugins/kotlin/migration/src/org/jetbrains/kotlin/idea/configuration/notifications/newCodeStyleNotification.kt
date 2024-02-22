@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.util.isInDumbMode
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
@@ -68,8 +69,9 @@ class KotlinCodeStyleChangedFileListener : FileEditorManagerListener {
         val app = ApplicationManager.getApplication()
         if (app.isUnitTestMode || app.isHeadlessEnvironment) return
         if (!file.nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)) return
-        if (!shouldShowCodeStyleNotification()) return
         val project = source.project
+        if (project.isInDumbMode) return
+        if (!shouldShowCodeStyleNotification()) return
         val service = project.service<KotlinCodeStyleChangedFileListenerService>()
         service.coroutineScope.launch {
             val shouldDisplayNotification = readAction {
