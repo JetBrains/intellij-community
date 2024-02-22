@@ -120,6 +120,10 @@ private class JdomSerializerImpl : JdomSerializer {
     clearBindingCache()
   }
 
+  override fun <T> getBeanBinding(aClass: Class<T>): BeanBinding {
+    return serializer.getRootBinding(aClass, aClass) as BeanBinding
+  }
+
   override fun deserializeInto(obj: Any, element: Element) {
     try {
       (serializer.getRootBinding(obj.javaClass) as BeanBinding).deserializeInto(obj, element)

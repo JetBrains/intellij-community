@@ -5,6 +5,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.util.xml.dom.XmlElement
+import com.intellij.util.xmlb.BeanBinding
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import org.jdom.Element
@@ -76,4 +77,6 @@ interface JdomSerializer {
   fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter
 
   fun clearSerializationCaches()
+
+  fun <T> getBeanBinding(aClass: Class<T>): BeanBinding
 }
