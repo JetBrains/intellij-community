@@ -57,7 +57,8 @@ public final class XmlSerializer {
 
   public static void deserializeInto(@NotNull Object bean, @NotNull Element element) {
     try {
-      getBeanBinding(bean.getClass()).deserializeInto(bean, element);
+      Class<?> aClass = bean.getClass();
+      ((BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass)).deserializeInto(bean, element);
     }
     catch (SerializationException e) {
       throw e;
@@ -67,10 +68,8 @@ public final class XmlSerializer {
     }
   }
 
-  /**
-   * Use only if it is a hot spot, otherwise use {@link #deserializeInto(Object, Element)} or {@link #serializeInto(Object, Element)}.
-   */
   @ApiStatus.Internal
+  @ApiStatus.Obsolete
   public static @NotNull BeanBinding getBeanBinding(@NotNull Class<?> aClass) {
     return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass);
   }
@@ -81,7 +80,8 @@ public final class XmlSerializer {
 
   public static void serializeInto(@NotNull Object bean, @NotNull Element element, @Nullable SerializationFilter filter) {
     try {
-      getBeanBinding(bean.getClass()).serializeInto(bean, element, filter);
+      Class<?> aClass = bean.getClass();
+      ((BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass)).serializeInto(bean, element, filter);
     }
     catch (SerializationException e) {
       throw e;

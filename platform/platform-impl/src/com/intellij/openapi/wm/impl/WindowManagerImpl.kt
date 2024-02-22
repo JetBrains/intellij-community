@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.sun.jna.platform.WindowUtils
@@ -351,7 +350,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
     state.getChild(DesktopLayout.TAG)?.let {
       val layout = DesktopLayout()
-      layout.readExternal(it, ExperimentalUI.isNewUI())
+      layout.readExternal(it)
       oldLayout = layout
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("RAW_RUN_BLOCKING")
 
 package com.intellij.toolWindow
@@ -31,7 +31,7 @@ class HideSidebarButtonTest : ToolWindowManagerTestCase() {
           "<window_info id=\"Project\" active=\"false\" anchor=\"left\" auto_hide=\"false\" internal_type=\"DOCKED\" type=\"DOCKED\" visible=\"false\"" +
           " show_stripe_button=\"true\" weight=\"0.37235227\" sideWeight=\"0.6060991\" order=\"0\" side_tool=\"false\" content_ui=\"tabs\" x=\"116\"" +
           " y=\"80\" width=\"487\" height=\"787\"/>" +
-          "</layout>"), false, false)
+          "</layout>"), false)
         for (extension in ToolWindowEP.EP_NAME.extensionList) {
           if (listOf(ToolWindowId.TODO_VIEW, ToolWindowId.FIND, ToolWindowId.PROJECT_VIEW).contains(extension.id)) {
             manager!!.initToolWindow(extension)
