@@ -200,6 +200,10 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public static @Nullable PsiElement findSingleConditionalReturn(@NotNull PsiFile file, int line) {
+    // Decompiled binary classfiles have no one-liners, so all these checks are pointless for them.
+    // This check is expected to fix problems like IDEA-339925.
+    if (file.getFileType().isBinary()) return null;
+
     Project project = file.getProject();
     Document document = file.getViewProvider().getDocument();
     if (document == null) return null;
