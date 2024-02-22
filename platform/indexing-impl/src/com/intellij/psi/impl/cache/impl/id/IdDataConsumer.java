@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.cache.impl.id;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -22,10 +23,37 @@ public final class IdDataConsumer {
 
   public void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask) {
     if (end == start || occurrenceMask == 0) return;
-    int hash = IdIndexEntry.getWordHash(charSequence, start, end, true);
+    int hash, hashNoCase;
+    if (IdIndexEntry.useStrongerHash()) {
+      hash = hashNoCase = 0;
+      boolean different = false;
+      for (int off = start; off < end; off++) {
+        char c = charSequence.charAt(off);
+        char lowerC = StringUtil.toLowerCase(c);
+        if (!different && c != lowerC) {
+          different = true;
+          hashNoCase = hash;
+        }
+        hash = 31 * hash + c;
+        if (different) {
+          hashNoCase = 31 * hashNoCase + lowerC;
+        }
+      }
+      if (!different) {
+        hashNoCase = hash;
+      }
+    }
+    else {
+      char firstChar = charSequence.charAt(start);
+      char lastChar = charSequence.charAt(end - 1);
+      hash = (firstChar << 8) + (lastChar << 4) + end - start;
+      char firstCharLower = StringUtil.toLowerCase(firstChar);
+      char lastCharLower = StringUtil.toLowerCase(lastChar);
+      hashNoCase = (firstCharLower == firstChar && lastCharLower == lastChar) ? hash : 
+                   (firstCharLower << 8) + (lastCharLower << 4) + end - start;
+    }
     myResult.mergeInt(new IdIndexEntry(hash), occurrenceMask, (prev, cur) -> prev | cur);
 
-    int hashNoCase = IdIndexEntry.getWordHash(charSequence, start, end, false);
     if (hashNoCase != hash) {
       myResult.mergeInt(new IdIndexEntry(hashNoCase), occurrenceMask, (prev, cur) -> prev | cur);
     }
