@@ -366,6 +366,7 @@ class ProjectWizardJdkComboBox(
   val comment: String?
     get() = when (selectedItem) {
       is DownloadJdk -> JavaUiBundle.message("jdk.download.comment")
+      is NoJdk -> JavaUiBundle.message("jdk.missing.item.comment")
       else -> null
     }
 }
