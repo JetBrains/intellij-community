@@ -87,7 +87,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
 
   private fun paintStickyLine(graphicsOrDumb: Graphics?) {
     assert(!isEmpty()) { "sticky panel should mark this line as not visible" }
-    val stickyLineY = editor.visualLineToY(primaryVisualLine)
+    val editorY = editorY()
     val lineHeight = lineHeight()
     val gutterWidth = editor.gutterComponentEx.width
     val textWidth = lineWidth() - gutterWidth
@@ -95,35 +95,36 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     try {
       editor.isStickyLineHovered = isHovered
       if (graphicsOrDumb != null) {
-        paintGutter(graphicsOrDumb, stickyLineY, lineHeight, gutterWidth)
-        paintText(graphicsOrDumb, stickyLineY, lineHeight, gutterWidth, textWidth)
+        val editorStartY = if (isLineOutOfPanel()) editorY + y else editorY
+        graphicsOrDumb.translate(0, -editorStartY)
+        paintGutter(graphicsOrDumb, editorY, lineHeight, gutterWidth)
+        paintText(graphicsOrDumb, editorY, lineHeight, gutterWidth, textWidth)
       } else {
-        dumbTextImage = prepareDumbTextImage(stickyLineY, lineHeight, textWidth)
+        dumbTextImage = prepareDumbTextImage(editorY, lineHeight, textWidth)
       }
     } finally {
       editor.isStickyLinePainting = false
     }
   }
 
-  private fun paintGutter(g: Graphics, stickyLineY: Int, lineHeight: Int, gutterWidth: Int) {
-    g.translate(0, -stickyLineY)
-    g.setClip(0, stickyLineY, gutterWidth, lineHeight)
+  private fun paintGutter(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int) {
+    g.setClip(0, editorY, gutterWidth, lineHeight)
     editor.gutterComponentEx.paint(g)
   }
 
-  private fun paintText(g: Graphics, stickyLineY: Int, lineHeight: Int, gutterWidth: Int, textWidth: Int) {
+  private fun paintText(g: Graphics, editorY: Int, lineHeight: Int, gutterWidth: Int, textWidth: Int) {
     g.translate(gutterWidth, 0)
-    g.setClip(0, stickyLineY, textWidth, lineHeight)
+    g.setClip(0, editorY, textWidth, lineHeight)
     val textImage = dumbTextImage
     if (textImage != null && (editor as EditorImpl).isDumb) {
-      StartupUiUtil.drawImage(g, textImage, 0, stickyLineY, null)
+      StartupUiUtil.drawImage(g, textImage, 0, editorY, null)
     } else {
       doPaintText(g)
       dumbTextImage = null
     }
   }
 
-  private fun prepareDumbTextImage(stickyLineY: Int, lineHeight: Int, textWidth: Int): BufferedImage {
+  private fun prepareDumbTextImage(editorY: Int, lineHeight: Int, textWidth: Int): BufferedImage {
     val textImage = UIUtil.createImage(
       editor.contentComponent,
       textWidth,
@@ -132,8 +133,8 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
     )
     val textGraphics = textImage.graphics
     EditorUIUtil.setupAntialiasing(textGraphics)
-    textGraphics.translate(0, -stickyLineY)
-    textGraphics.setClip(0, stickyLineY, textWidth, lineHeight)
+    textGraphics.translate(0, -editorY)
+    textGraphics.setClip(0, editorY, textWidth, lineHeight)
     doPaintText(textGraphics)
     textGraphics.dispose()
     return textImage
@@ -148,7 +149,19 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
   }
 
   private fun lineHeight(): Int {
-    return editor.lineHeight
+    val height= editor.lineHeight
+    return if (isLineOutOfPanel()) height + y else height
+  }
+
+  private fun editorY(): Int {
+    val editorY = editor.visualLineToY(primaryVisualLine)
+    return if (isLineOutOfPanel()) editorY - y else editorY
+  }
+
+  private fun isLineOutOfPanel(): Boolean {
+    // IDEA-346734 special case when sticky line is out of sticky panel,
+    // need to adjust painting to avoid overlapping sticky line and tab panel
+    return y < 0
   }
 
   override fun toString(): String {
