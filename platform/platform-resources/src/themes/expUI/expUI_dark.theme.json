@@ -219,6 +219,20 @@
       "padding": "1,9,1,6"
     },
 
+    "Code": {
+      "Inline": {
+        "backgroundColor": "Grey10",
+        "backgroundOpacity": 15
+      },
+      "Block": {
+        "backgroundOpacity": 100,
+        "borderColor":"Grey3",
+        "inlineQuickDoc.backgroundColor": "Grey5",
+        "inlineQuickDoc.backgroundOpacity": 20,
+        "inlineQuickDoc.borderColor": "Grey3"
+      }
+    },
+
     "ComboPopup.border": "1,1,1,1,#43454A",
 
     "ContextHelp": {

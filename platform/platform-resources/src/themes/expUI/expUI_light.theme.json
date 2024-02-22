@@ -212,6 +212,20 @@
       }
     },
 
+    "Code": {
+      "Inline": {
+        "backgroundColor": "Grey5",
+        "backgroundOpacity": 10
+      },
+      "Block": {
+        "backgroundOpacity": 100,
+        "borderColor":"Grey12",
+        "inlineQuickDoc.backgroundColor": "Grey5",
+        "inlineQuickDoc.backgroundOpacity": 4,
+        "inlineQuickDoc.borderColor":"Grey12"
+      }
+    },
+
     "ComboPopup.border": {
       "os.windows": "1,1,1,1,#B9BDC9"
     },

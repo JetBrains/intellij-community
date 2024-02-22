@@ -885,7 +885,7 @@ public class IdeTooltipManager implements Disposable {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     return StyleSheetRulesProviderForCodeHighlighting.getRules(
       globalScheme, background, Collections.singletonList(""), Collections.emptyList(),
-      true, true, "5px 0 5px 0",
-      UIUtil.getToolTipActionBackground());
+      true, true, "5px 0 5px 0"
+    );
   }
 }

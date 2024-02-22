@@ -166,6 +166,20 @@
       "UI": "com.intellij.ide.ui.laf.intellij.IntelliJCheckBoxUI"
     },
 
+    "Code": {
+      "Inline": {
+        "backgroundColor": "#5A5D6B",
+        "backgroundOpacity": 10
+      },
+      "Block": {
+        "backgroundOpacity": 100,
+        "borderColor":"#EBECF0",
+        "inlineQuickDoc.backgroundColor": "#5A5D6B",
+        "inlineQuickDoc.backgroundOpacity": 4,
+        "inlineQuickDoc.borderColor":"#EBECF0"
+      }
+    },
+
     "CodeWithMe": {
       "AccessDisabled.accessDot": "#DB5860",
       "AccessEnabled.accessDot":"#59A869",
