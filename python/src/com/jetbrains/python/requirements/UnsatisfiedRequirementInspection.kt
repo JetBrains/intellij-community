@@ -4,22 +4,35 @@ package com.jetbrains.python.requirements
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.icons.AllIcons
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.findDocument
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
+import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.createSpecification
 import com.jetbrains.python.packaging.management.runPackagingTool
+import com.jetbrains.python.packaging.syncWithImports
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.requirements.psi.NameReq
 import com.jetbrains.python.requirements.psi.Requirement
@@ -53,6 +66,11 @@ private class RequirementsUnresolvedRequirementInspectionVisitor(holder: Problem
         }
       }
 
+      if (element.text.isNullOrBlank()) {
+        holder.registerProblem(element, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
+                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, PyGenerateRequirementsFileQuickFix(module))
+      }
+
       val project = element.project
       val sdk = project.pythonSdk ?: return
       val packageManager = PythonPackageManager.forSdk(project, sdk)
@@ -60,7 +78,7 @@ private class RequirementsUnresolvedRequirementInspectionVisitor(holder: Problem
       val unsatisfiedRequirements = element.requirements().filter { requirement -> requirement.displayName !in packages }
       unsatisfiedRequirements.forEach { requirement ->
         holder.registerProblem(requirement,
-                               PyBundle.message("INSP.requirements.package.requirements.not.satisfied", requirement.displayName),
+                               PyBundle.message("INSP.requirements.package.not.installed", requirement.displayName),
                                ProblemHighlightType.WARNING,
                                InstallRequirementQuickFix(requirement),
                                InstallAllRequirementsQuickFix(unsatisfiedRequirements),
@@ -78,21 +96,8 @@ class InstallAllRequirementsQuickFix(requirements: List<Requirement>) : LocalQui
   }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement
-    val file = descriptor.psiElement.containingFile ?: return
-    val sdk = ModuleUtilCore.findModuleForPsiElement(element)?.pythonSdk ?: return
-    val manager = PythonPackageManager.forSdk(project, sdk)
-
     requirements.forEach {
-      val req = it.element ?: return@forEach
-      val versionSpec = if (req is NameReq) req.versionspec?.text else ""
-      val name = req.displayName
-      project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
-        val specification = manager.repositoryManager.createSpecification(name, versionSpec)
-                            ?: return@launch
-        manager.installPackage(specification)
-        DaemonCodeAnalyzer.getInstance(project).restart(file)
-      }
+      InstallRequirementQuickFix.checkAndInstall(project, descriptor, it)
     }
   }
 
@@ -113,19 +118,43 @@ class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickFix {
     return PyBundle.message("QFIX.NAME.install.requirement", requirement.element?.displayName ?: "")
   }
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val element = descriptor.psiElement
-    val file = descriptor.psiElement.containingFile ?: return
-    val sdk = ModuleUtilCore.findModuleForPsiElement(element)?.pythonSdk ?: return
-    val manager = PythonPackageManager.forSdk(project, sdk)
-    val req = requirement.element ?: return
+  companion object {
+    private const val CONFIRM_PACKAGE_INSTALLATION_PROPERTY: String = "python.confirm.package.installation"
 
-    val versionSpec = if (req is NameReq) req.versionspec?.text else ""
-    val name = req.displayName
-    project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
-      manager.installPackage(manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch)
-      DaemonCodeAnalyzer.getInstance(project).restart(file)
+    fun checkAndInstall(project: Project, descriptor: ProblemDescriptor, requirement: SmartPsiElementPointer<Requirement>) {
+      val req = requirement.element ?: return
+      val versionSpec = if (req is NameReq) req.versionspec?.text else ""
+      val name = req.displayName
+      val isWellKnownPackage = ApplicationManager.getApplication()
+        .getService(PyPIPackageRanking::class.java)
+        .packageRank.containsKey(name)
+      val confirmationEnabled = PropertiesComponent.getInstance().getBoolean(CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
+      if (!isWellKnownPackage && confirmationEnabled) {
+        val confirmed = yesNo(PyBundle.message("python.packaging.dialog.title.install.package.confirmation"),
+                              PyBundle.message("python.packaging.dialog.message.install.package.confirmation", name))
+          .icon(AllIcons.General.WarningDialog)
+          .doNotAsk(ConfirmPackageInstallationDoNotAskOption())
+          .ask(project)
+        if (!confirmed) {
+          return
+        }
+      }
+
+      val element = descriptor.psiElement
+      val file = descriptor.psiElement.containingFile ?: return
+      val sdk = ModuleUtilCore.findModuleForPsiElement(element)?.pythonSdk ?: return
+      val manager = PythonPackageManager.forSdk(project, sdk)
+
+
+      project.service<PyPackagingToolWindowService>().serviceScope.launch(Dispatchers.IO) {
+        manager.installPackage(manager.repositoryManager.createSpecification(name, versionSpec) ?: return@launch)
+        DaemonCodeAnalyzer.getInstance(project).restart(file)
+      }
     }
+  }
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    checkAndInstall(project, descriptor, requirement)
   }
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
@@ -134,6 +163,14 @@ class InstallRequirementQuickFix(requirement: Requirement) : LocalQuickFix {
 
   override fun startInWriteAction(): Boolean {
     return false
+  }
+
+  private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {
+    override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+      if (isSelected && exitCode == Messages.OK) {
+        PropertiesComponent.getInstance().setValue(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, false, true)
+      }
+    }
   }
 }
 
@@ -168,5 +205,19 @@ class InstallProjectAsEditableQuickfix : LocalQuickFix {
 
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
     return IntentionPreviewInfo.EMPTY
+  }
+}
+
+class PyGenerateRequirementsFileQuickFix(private val myModule: Module) : LocalQuickFix {
+  override fun getFamilyName(): @IntentionFamilyName String {
+    return PyPsiBundle.message("QFIX.add.imported.packages.to.requirements")
+  }
+
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    syncWithImports(myModule)
+  }
+
+  override fun startInWriteAction(): Boolean {
+    return false
   }
 }
