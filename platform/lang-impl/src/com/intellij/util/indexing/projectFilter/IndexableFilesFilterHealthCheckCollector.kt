@@ -6,6 +6,9 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
+/**
+ * @see <a href="https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter">About indexable.files.filter collector</a>
+ */
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("indexable.files.filter", 5)
 
