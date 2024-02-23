@@ -1,96 +1,80 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.java.codeInsight
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.codeInsight;
 
-import com.intellij.codeInspection.InspectionEngine
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
-import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.psi.PsiMethod
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import groovy.transform.CompileStatic
-import org.intellij.lang.annotations.Language
+import com.intellij.codeInspection.GlobalInspectionContext;
+import com.intellij.codeInspection.InspectionEngine;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import org.intellij.lang.annotations.Language;
 
-@CompileStatic
-class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
-  void "test inspection outside source root"() {
-    PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
-    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
+import java.io.IOException;
 
-    @Language("JAVA")
-    def generic = """
-package foo;
-public interface GenericQuery<T> {
-    public T execute();
-}
-"""
-    myFixture.addFileToProject("src/foo/GenericQuery.java", generic)
+public class NonSourceInspectionTest extends JavaCodeInsightFixtureTestCase {
+  public void testInspectionOutsideSourceRoot() throws IOException {
+    PsiTestUtil.removeAllRoots(getModule(), ModuleRootManager.getInstance(getModule()).getSdk());
+    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("src"));
 
-    @Language("JAVA")
-    def some = """
-import foo.GenericQuery;
-import java.util.Collection;
+    @Language("JAVA") String generic = """
+      package foo;
+      public interface GenericQuery<T> {
+          public T execute();
+      }
+      """;
+    myFixture.addFileToProject("src/foo/GenericQuery.java", generic);
 
-class SomeClass {
-  Collection<User> foo(GenericQuery<Collection<User>> query) {
-    return query.execute();
-  }
-  class User {}
-}
+    @Language("JAVA") String some = """
+      import foo.GenericQuery;
+      import java.util.Collection;
+
+      class SomeClass {
+        Collection<User> foo(GenericQuery<Collection<User>> query) {
+          return query.execute();
+        }
+        class User {}
+      }
 
 
-"""
-    def file = myFixture.addFileToProject("SomeClass.java", some)
+      """;
+    PsiFile file = myFixture.addFileToProject("SomeClass.java", some);
 
-    def wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection())
-    def context = InspectionManager.getInstance(project).createNewGlobalContext()
-    assertEmpty InspectionEngine.runInspectionOnFile(file, wrapper, context)
+    LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(new UncheckedWarningLocalInspection());
+    GlobalInspectionContext context = InspectionManager.getInstance(getProject()).createNewGlobalContext();
+    assertEmpty(InspectionEngine.runInspectionOnFile(file, wrapper, context));
   }
 
-  void "test resolve super constructor reference"() {
-    PsiTestUtil.removeAllRoots(module, ModuleRootManager.getInstance(module).sdk)
-    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("src"))
+  public void testResolveSuperConstructorReference() throws IOException {
+    PsiTestUtil.removeAllRoots(getModule(), ModuleRootManager.getInstance(getModule()).getSdk());
+    PsiTestUtil.addSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir("src"));
 
-    @Language("JAVA")
-    def foo = """
-class Foo<T> {
-    public Foo(T x) {
-    }
-}
-"""
-    myFixture.addFileToProject("src/Foo.java", foo)
+    @Language("JAVA") String foo = """
+      class Foo<T> {
+          public Foo(T x) {
+          }
+      }
+      """;
+    myFixture.addFileToProject("src/Foo.java", foo);
 
-    @Language("JAVA")
-    def foo2 = """
-class Foo<T> {
-    public Foo(T x) {
-    }
-}
+    @Language("JAVA") String foo2 = """
+      class Foo<T> {
+          public Foo(T x) {
+          }
+      }
 
-class Bar extends Foo<String> {
-    public Bar() {
-        sup<caret>er("a");
-    }
-}
-"""
-    myFixture.configureByText("Foo.java", foo2)
+      class Bar extends Foo<String> {
+          public Bar() {
+              sup<caret>er("a");
+          }
+      }
+      """;
+    myFixture.configureByText("Foo.java", foo2);
 
-    assert myFixture.file.physical
-    assert assertInstanceOf(myFixture.elementAtCaret, PsiMethod).name == 'Foo'
+    assertTrue(myFixture.getFile().isPhysical());
+    assertEquals("Foo", assertInstanceOf(myFixture.getElementAtCaret(), PsiMethod.class).getName());
   }
 }
