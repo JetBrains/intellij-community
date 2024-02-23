@@ -84,7 +84,6 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     UIUtil.forEachComponentInHierarchy(this) {
       it.isFocusable = false
     }
-    updateRendering()
   }
 
   private fun updateRendering() {
@@ -195,6 +194,8 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       isVisible = counter != null
       border = JBUI.Borders.emptyRight(1)
     }
+
+    updateRendering()
 
     return this
   }
