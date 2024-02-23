@@ -55,6 +55,11 @@
     "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
     "vsCodeId": "formulahendry.auto-rename-tag",
     "ideaName": "Auto Rename Tag",
     "builtIn": true
@@ -106,7 +111,7 @@
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
-    "ideaName": "Kotlin Language",
+    "ideaName": "Kotlin",
     "builtIn": true
   },
   {
@@ -115,14 +120,19 @@
     "ideaId": "Docker"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
+  },
+  {
     "vsCodeId": "ms-python.black-formatter",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python",
-    "ideaId": "Pythonid"
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -146,7 +156,7 @@
   },
   {
     "vsCodeId": "redhat.java",
-    "ideaName": "Language Support for Java(TM) by Red Hat",
+    "ideaName": "Java",
     "builtIn": true
   },
   {
@@ -170,6 +180,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
@@ -181,7 +196,7 @@
   },
   {
     "vsCodeId": "vscjava.vscode-java-debug",
-    "ideaName": "Debugger",
+    "ideaName": "Debugger for Java",
     "builtIn": true
   },
   {
@@ -213,6 +228,11 @@
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
     "ideaId": "IdeaVIM"
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   },
   {
     "vsCodeId": "zxh404.vscode-proto3",

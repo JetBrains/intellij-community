@@ -17,7 +17,7 @@
   {
     "vsCodeId": "bmewburn.vscode-intelephense-client",
     "ideaName": "PHP",
-    "ideaId": "com.jetbrains.php"
+    "builtIn": true
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
@@ -48,6 +48,11 @@
     "vsCodeId": "ecmel.vscode-html-css",
     "ideaName": "HTML CSS Support",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
   },
   {
     "vsCodeId": "esbenp.prettier-vscode",
@@ -115,6 +120,11 @@
     "ideaId": "Docker"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
+  },
+  {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
     "ideaId": "com.intellij.kubernetes"
@@ -170,6 +180,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
     "vsCodeId": "svelte.svelte-vscode",
     "ideaName": "Svelte",
     "ideaId": "dev.blachut.svelte.lang"
@@ -185,13 +200,18 @@
     "ideaId": "com.jetbrains.php"
   },
   {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
+  },
+  {
     "vsCodeId": "Zignd.html-css-class-completion",
     "ideaName": "CSS",
     "ideaId": "com.intellij.css"
   },
   {
     "vsCodeId": "zobo.php-intellisense",
-    "ideaName": "PHP IntelliSense",
+    "ideaName": "PHP",
     "builtIn": true
   }
 ]

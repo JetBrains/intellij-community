@@ -95,6 +95,11 @@
     "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
     "ideaId": "intellij.prettierJS"
@@ -170,6 +175,11 @@
     "ideaId": "Docker"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
+  },
+  {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
     "ideaName": "Korean Language Pack / 한국어 언어 팩",
     "ideaId": "com.intellij.ko"
@@ -191,8 +201,8 @@
   },
   {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python",
-    "ideaId": "Pythonid"
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -301,8 +311,8 @@
   },
   {
     "vsCodeId": "streetsidesoftware.code-spell-checker",
-    "ideaName": "Code Spell Checker",
-    "builtIn": true
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
   },
   {
     "vsCodeId": "swellaby.rust-pack",
@@ -346,8 +356,8 @@
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",
-    "ideaName": "Markdown All in One",
-    "builtIn": true
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",
