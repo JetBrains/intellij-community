@@ -44,7 +44,6 @@ import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
 import com.intellij.ui.popup.HeavyWeightPopup
 import com.intellij.ui.popup.KeepingPopupOpenAction
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.scaleFontSize
@@ -144,7 +143,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   companion object {
     private var ourTestInstance: LafManagerImpl? = null
-    private val LANGUAGE_WITH_PACK_LIST = listOf(Locale.CHINESE.language, Locale.KOREAN.language, Locale.JAPANESE.language)
 
     @OptIn(DelicateCoroutinesApi::class)
     @TestOnly
@@ -716,15 +714,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private val defaultInterFont: FontUIResource
     get() {
       val userScaleFactor = defaultUserScaleFactor
-      val fontName =
-        if (shouldFallbackToSystemFont) JBUIScale.getSystemFontDataIfInitialized()?.first ?: INTER_NAME
-        else INTER_NAME
-
-      return getFontWithFallback(fontName, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
+      return getFontWithFallback(INTER_NAME, Font.PLAIN, scaleFontSize(INTER_SIZE.toFloat(), userScaleFactor).toFloat())
     }
-
-  private val shouldFallbackToSystemFont: Boolean get() =
-    LANGUAGE_WITH_PACK_LIST.contains(Locale.getDefault().language)
 
   private val storedLafFont: Font?
     get() = storedDefaults.get(currentTheme?.id)?.get("Label.font") as Font?
@@ -1224,8 +1215,12 @@ private fun fixPopupWeight() {
 }
 
 private fun useInterFont(): Boolean {
-  return (ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm) || Registry.`is`("ide.ui.font.force.use.inter.font", false)
+  return ((ExperimentalUI.isNewUI() && SystemInfo.isJetBrainsJvm) || Registry.`is`("ide.ui.font.force.use.inter.font", false))
+         && !shouldFallbackToSystemFont
 }
+
+private val LANGUAGE_WITH_PACK_LIST = listOf(Locale.CHINESE.language, Locale.KOREAN.language, Locale.JAPANESE.language)
+private val shouldFallbackToSystemFont: Boolean get() = LANGUAGE_WITH_PACK_LIST.contains(Locale.getDefault().language)
 
 private fun updateUI(window: Window) {
   IJSwingUtilities.updateComponentTreeUI(window)
