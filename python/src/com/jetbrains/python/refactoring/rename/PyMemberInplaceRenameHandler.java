@@ -41,11 +41,9 @@ public class PyMemberInplaceRenameHandler extends MemberInplaceRenameHandler {
   protected @NotNull MemberInplaceRenamer createMemberRenamer(@NotNull PsiElement element,
                                                               @NotNull PsiNameIdentifierOwner elementToRename,
                                                               @NotNull Editor editor) {
-    if (element instanceof PyClass elementClass && elementToRename instanceof PyFunction &&
-        ((PyFunction)elementToRename).getContainingClass() == element && PyUtil.isInitOrNewMethod(elementToRename)) {
-      if (PyUtil.isInitOrNewMethod(elementToRename)) {
-        return new MemberInplaceRenamer(elementClass, element, editor);
-      }
+    if (element instanceof PyClass elementClass && elementToRename instanceof PyFunction function &&
+        function.getContainingClass() == element && PyUtil.isInitOrNewMethod(elementToRename)) {
+      return new MemberInplaceRenamer(elementClass, element, editor);
     }
     return new MemberInplaceRenamer(elementToRename, element, editor);
   }
