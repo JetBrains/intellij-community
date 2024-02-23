@@ -529,7 +529,7 @@ class PyDB(object):
         '''
         set_fallback_excepthook()
         if USE_LOW_IMPACT_MONITORING:
-            enable_pep699_monitoring(self)
+            enable_pep699_monitoring()
             return
         if self.frame_eval_func is not None:
             self.frame_eval_func()
@@ -1312,7 +1312,7 @@ class PyDB(object):
         if USE_LOW_IMPACT_MONITORING:
             debugger = get_global_debugger()
             if debugger:
-                enable_pep699_monitoring(debugger)
+                enable_pep699_monitoring()
         else:
             while frame is not None:
                 try:
@@ -1370,7 +1370,7 @@ class PyDB(object):
 
         if enable_tracing_from_start:
             if USE_LOW_IMPACT_MONITORING:
-                enable_pep699_monitoring(self)
+                enable_pep699_monitoring()
             else:
                 pydevd_tracing.SetTrace(self.trace_dispatch)
 
