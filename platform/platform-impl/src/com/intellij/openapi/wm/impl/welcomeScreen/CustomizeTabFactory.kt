@@ -93,6 +93,8 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
   private val keymapProperty = propertyGraph.lazyProperty { keymapManager.activeKeymap }
   private val colorBlindnessProperty = propertyGraph.lazyProperty { settings.colorBlindness ?: supportedColorBlindness.firstOrNull() }
   private val adjustColorsProperty = propertyGraph.lazyProperty { settings.colorBlindness != null }
+  private val lafConnection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+
 
   private var keymapComboBox: ComboBox<Keymap>? = null
   private var colorThemeComboBox: ComboBox<LafReference>? = null
@@ -204,8 +206,8 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
         themeBuilder.component.renderer = laf.getLookAndFeelCellRenderer(themeBuilder.component)
 
         colorThemeComboBox = themeBuilder.component
-        checkBox(IdeBundle.message("preferred.theme.autodetect.selector"))
-          .bindSelected(syncThemeProperty)
+        val checkBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"))
+        checkBox.bindSelected(syncThemeProperty)
           .applyToComponent {
             isOpaque = false
             isVisible = laf.autodetectSupported
@@ -215,6 +217,12 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
         themeBuilder.enabledIf(syncThemeAndEditorSchemePredicate.not())
         cell(laf.createSettingsToolbar())
           .visible(laf.autodetectSupported)
+
+        lafConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener { source: LafManager? ->
+          if (laf.autodetect != syncThemeProperty.get()) {
+            checkBox.selected(laf.autodetect)
+          }
+        })
       }
 
       indent {
