@@ -12,6 +12,7 @@ import com.intellij.util.io.dev.appendonlylog.ChunkedAppendOnlyLog;
 import com.intellij.util.io.dev.appendonlylog.ChunkedAppendOnlyLog.LogChunk;
 import com.intellij.util.io.dev.durablemaps.AppendableDurableMap;
 import com.intellij.util.io.dev.durablemaps.DurableMap;
+import com.intellij.util.io.dev.enumerator.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.util.io.dev.intmultimaps.HashUtils;
@@ -65,19 +66,19 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
 
   @Override
   public Items<VItem> items(@NotNull K key) throws IOException {
-    int hash = keyDescriptor.getHashCode(key);
-    int adjustedHash = HashUtils.adjustHash(hash);
-    Ref<Pair<K, ItemsImpl<VItem>>> resultRef = new Ref<>();
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
+    Ref<Pair<K, ItemsImpl>> resultRef = new Ref<>();
     keyHashToChunkIdMap.lookup(adjustedHash, candidateId -> {
       long candidateChunkId = convertStoredIdToChunkId(candidateId);
-      Pair<K, ItemsImpl<VItem>> entry = readEntryIfKeyMatch(candidateChunkId, key);
+      Pair<K, ItemsImpl> entry = readEntryIfKeyMatch(candidateChunkId, key);
       if (entry == null) {
         return false;
       }
       resultRef.set(entry);
       return true;
     });
-    Pair<K, ItemsImpl<VItem>> entry = resultRef.get();
+    Pair<K, ItemsImpl> entry = resultRef.get();
     if (entry == null) {
       return null;
     }
@@ -86,42 +87,62 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
 
   @Override
   public boolean containsMapping(@NotNull K key) throws IOException {
-    int hash = keyDescriptor.getHashCode(key);
-    int keyHash = HashUtils.adjustHash(hash);
-
-    int foundRecordId = keyHashToChunkIdMap.lookup(keyHash, recordId -> {
-      long logChunkId = convertStoredIdToChunkId(recordId);
-      LogChunk chunk = keyValuesLog.read(logChunkId);
-      ByteBuffer recordBuffer = chunk.read();
-      int header = recordBuffer.getInt(0);
-      if (isValueVoid(header)) {
-        return false;
-      }
-
-      int keyRecordSize = keySize(header);
-      ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
-      K candidateKey = keyDescriptor.read(keyRecordSlice);
-      if (keyDescriptor.isEqual(key, candidateKey)) {
-        return true;
-      }
-      else {
-        return false;
-      }
-    });
+    int foundRecordId = lookupRecordId(key);
 
     return foundRecordId != DurableIntToMultiIntMap.NO_VALUE;
   }
 
   @Override
-  public void put(@NotNull K key, @Nullable Set<VItem> value) throws IOException {
-    //TODO please, implement me
-    throw new UnsupportedOperationException("Method is not implemented yet");
+  public void put(@NotNull K key,
+                  @Nullable Set<VItem> values) throws IOException {
+    KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
+    int keySize = keyWriter.recordSize();
+    int keyRecordSize = keySize + Integer.BYTES;
+
+    if (values == null) {
+      LogChunk chunk = keyValuesLog.append(keyRecordSize);
+      chunk.append(
+        buffer -> {
+          putHeader(buffer, keySize, /*empty: */true);
+          return keyWriter.write(buffer.slice(Integer.BYTES, keySize).order(buffer.order()));
+        },
+        keyRecordSize
+      );
+      return;
+    }
+
+    int chunkSize = Math.max(keyRecordSize, 512);
+    LogChunk chunk = keyValuesLog.append(chunkSize);
+    chunk.append(
+      buffer -> {
+        putHeader(buffer, keySize, /*empty: */false);
+        return keyWriter.write(buffer.slice(Integer.BYTES, keySize).order(buffer.order()));
+      },
+      keyRecordSize
+    );
+
+    ItemsImpl items = new ItemsImpl(chunk);
+    for (VItem item : values) {
+      items.append(item);
+    }
+
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
+    int newRecordId = convertChunkIdToStoredId(chunk.id());
+    synchronized (keyHashToChunkIdMap) {
+      int foundRecordId = lookupRecordId(key);
+      if (foundRecordId != DurableIntToMultiIntMap.NO_VALUE) {
+        keyHashToChunkIdMap.replace(adjustedHash, foundRecordId, newRecordId);
+      }
+      else {
+        keyHashToChunkIdMap.put(adjustedHash, newRecordId);
+      }
+    }
   }
 
   @Override
   public void remove(@NotNull K key) throws IOException {
-    //TODO please, implement me
-    throw new UnsupportedOperationException("Method is not implemented yet");
+    put(key, null);
   }
 
   @Override
@@ -207,7 +228,32 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
     return storedRecordId;
   }
 
-  private Pair<K, ItemsImpl<VItem>> readEntry(long logChunkId) throws IOException {
+  private int lookupRecordId(@NotNull K key) throws IOException {
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
+
+    return keyHashToChunkIdMap.lookup(adjustedHash, recordId -> {
+      long logChunkId = convertStoredIdToChunkId(recordId);
+      LogChunk chunk = keyValuesLog.read(logChunkId);
+      ByteBuffer recordBuffer = chunk.read();
+      int header = recordBuffer.getInt(0);
+      if (isValueVoid(header)) {
+        return false;
+      }
+
+      int keyRecordSize = keySize(header);
+      ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
+      K candidateKey = keyDescriptor.read(keyRecordSlice);
+      if (keyDescriptor.isEqual(key, candidateKey)) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    });
+  }
+
+  private Pair<K, ItemsImpl> readEntry(long logChunkId) throws IOException {
     LogChunk chunk = keyValuesLog.read(logChunkId);
     ByteBuffer chunkBuffer = chunk.read();
     int header = readHeader(chunkBuffer);
@@ -221,24 +267,23 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
       return Pair.pair(key, null);
     }
 
-    int valueLength = chunkBuffer.remaining() - keyRecordSize - Integer.BYTES;
-    ByteBuffer valueRecordSlice = chunkBuffer.slice(Integer.BYTES + keyRecordSize, valueLength);
-    return Pair.pair(key, new ItemsImpl<>(chunk, valueRecordSlice));
+    return Pair.pair(key, new ItemsImpl(chunk));
   }
 
   /**
    * @return [key, value] pair by logRecordId, if key==expectedKey, null if the record contains key!=expectedKey.
    * I.e. it is just short-circuit version of {@link #readEntry(long)} and check entry.key.equals(expectedKey)
    */
-  private Pair<K, ItemsImpl<VItem>> readEntryIfKeyMatch(long logChunkId,
-                                                        @NotNull K expectedKey) throws IOException {
+  private Pair<K, ItemsImpl> readEntryIfKeyMatch(long logChunkId,
+                                                 @NotNull K expectedKey) throws IOException {
     LogChunk chunk = keyValuesLog.read(logChunkId);
     ByteBuffer chunkBuffer = chunk.read();
     int header = readHeader(chunkBuffer);
     int keyRecordSize = keySize(header);
     boolean valueIsNull = isValueVoid(header);
 
-    ByteBuffer keyRecordSlice = chunkBuffer.slice(Integer.BYTES, keyRecordSize);
+    ByteBuffer keyRecordSlice = chunkBuffer.slice(Integer.BYTES, keyRecordSize)
+      .order(chunkBuffer.order());
     K candidateKey = keyDescriptor.read(keyRecordSlice);
     if (!keyDescriptor.isEqual(expectedKey, candidateKey)) {
       return null;
@@ -248,13 +293,11 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
       return Pair.pair(expectedKey, null);
     }
 
-    int valueLength = chunkBuffer.remaining() - keyRecordSize - Integer.BYTES;
-    ByteBuffer valueRecordSlice = chunkBuffer.slice(Integer.BYTES + keyRecordSize, valueLength);
-    return Pair.pair(expectedKey, new ItemsImpl<>(chunk, valueRecordSlice));
+    return Pair.pair(expectedKey, new ItemsImpl(chunk));
   }
 
   private static int readHeader(@NotNull ByteBuffer keyBuffer) {
-    return keyBuffer.get(0);
+    return keyBuffer.getInt(0);
   }
 
   private static void putHeader(@NotNull ByteBuffer keyBuffer,
@@ -286,20 +329,33 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
   }
 
   //FIXME RC: give the class actual implementation
-  private static class ItemsImpl<VItem> implements Items<VItem> {
+  private class ItemsImpl implements Items<VItem> {
     private final LogChunk startingChunk;
-    private final ByteBuffer valueBuffer;
+    private final LogChunk currentChunk;
 
-    private ItemsImpl(LogChunk startingChunk,
-                      ByteBuffer valueBuffer) {
+    private ItemsImpl(LogChunk startingChunk) {
       this.startingChunk = startingChunk;
-      this.valueBuffer = valueBuffer;
+      this.currentChunk = startingChunk;
     }
 
     @Override
     public void append(@NotNull VItem item) throws IOException {
-      //TODO please, implement me
-      throw new UnsupportedOperationException("Method is not implemented yet");
+      KnownSizeRecordWriter writer = valueDescriptor.writerFor(item);
+      int valueSize = writer.recordSize();
+      int totalRecordSize = valueSize + Integer.BYTES;
+      boolean appended = currentChunk.append(buffer -> {
+        //TODO RC: do we need a valueSize, or value writer/readers should do it themselves?
+        //         this is really a question of KeyDescriptorEx/KnownSizeRecordWriter contract:
+        //         should they ensure record size stored? Or should they rely on calling code (i.e. storage)
+        //         provide the buffer (slice) of exact size -- hence, it is storage's responsibility to
+        //         keep record size somehow?
+        buffer.putInt(valueSize);
+        return writer.write(buffer);
+      }, totalRecordSize);
+      if (!appended) {
+        //TODO RC: allocate next chunk, set nextChunkId, etc
+        throw new UnsupportedOperationException("Chunk chaining is not implemented yet");
+      }
     }
 
     @Override
@@ -310,8 +366,26 @@ public class DurableMapWithAppendableValues<K, VItem> implements AppendableDurab
 
     @Override
     public <E extends Throwable> boolean forEach(@NotNull ThrowableConsumer<? super VItem, E> consumer) throws IOException, E {
-      //TODO please, implement me
-      throw new UnsupportedOperationException("Method is not implemented yet");
+      ByteBuffer buffer = startingChunk.read();
+      int header = buffer.getInt();
+      if (isValueVoid(header)) {
+        return true;//nothing
+      }
+      int keySize = keySize(header);
+      buffer.position(Integer.BYTES + keySize);
+      while (buffer.hasRemaining()) {
+        int valueSize = buffer.getInt();
+        VItem item = valueDescriptor.read(
+          buffer.slice(buffer.position(), valueSize)
+            .order(buffer.order())
+        );
+
+        consumer.consume(item);
+
+        buffer.position(buffer.position() + valueSize);
+      }
+      //TODO RC: continue chain if nextChunkId
+      return true;
     }
   }
 }
