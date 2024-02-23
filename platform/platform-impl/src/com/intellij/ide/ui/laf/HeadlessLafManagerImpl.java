@@ -58,7 +58,7 @@ final class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public @NotNull JComponent getSettingsToolbar() {
+  public @NotNull JComponent createSettingsToolbar() {
     return new JComponent() {};
   }
 

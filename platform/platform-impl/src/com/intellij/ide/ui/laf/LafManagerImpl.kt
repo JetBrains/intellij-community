@@ -118,13 +118,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> {
     LafComboBoxModel(ThemeListProvider.getInstance().getShownThemes())
   }
-  private val settingsToolbar = lazy {
-    val group = DefaultActionGroup(PreferredLafAndSchemeAction())
-    val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
-    toolbar.targetComponent = toolbar.component
-    toolbar.component.isOpaque = false
-    toolbar
-  }
 
   // SystemDarkThemeDetector must be created as part of LafManagerImpl initialization and not on demand because system listeners are added
   private var themeDetector: SystemDarkThemeDetector? = null
@@ -495,7 +488,13 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> =
     LafCellRenderer(lafComboBoxModel.value as? LafComboBoxModel, component)
 
-  override fun getSettingsToolbar(): JComponent = settingsToolbar.value.component
+  override fun createSettingsToolbar(): JComponent {
+    val group = DefaultActionGroup(PreferredLafAndSchemeAction())
+    val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true)
+    toolbar.targetComponent = toolbar.component
+    toolbar.component.isOpaque = false
+    return toolbar.component
+  }
 
   private fun loadDefaultTheme(): Supplier<out UIThemeLookAndFeelInfo?> {
     // use HighContrast theme for IDE in Windows if HighContrast desktop mode is set

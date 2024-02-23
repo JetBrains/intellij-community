@@ -210,9 +210,11 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
             isOpaque = false
             isVisible = laf.autodetectSupported
           }
+          .gap(RightGap.SMALL)
 
         themeBuilder.enabledIf(syncThemeAndEditorSchemePredicate.not())
-        cell(laf.settingsToolbar).visibleIf(syncThemeAndEditorSchemePredicate)
+        cell(laf.createSettingsToolbar())
+          .visible(laf.autodetectSupported)
       }
 
       indent {
