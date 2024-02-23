@@ -94,15 +94,14 @@ public final class XLineBreakpointManager {
       Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          // Multiple breakpoints on the single line should be joined in this case.
           for (String fileUrl : myBreakpoints.keySet()) {
             var file = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
             if (file == null) continue;
+            if (XDebuggerUtil.areInlineBreakpointsEnabled(file)) continue;
             var document = FileDocumentManager.getInstance().getDocument(file);
             if (document == null) continue;
-            if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) {
-              updateBreakpoints(document);
-            }
+            // Multiple breakpoints on the single line should be joined in this case.
+            updateBreakpoints(document);
           }
         }
       }, project);
@@ -156,11 +155,13 @@ public final class XLineBreakpointManager {
       return;
     }
 
+    boolean areInlineBreakpoints = XDebuggerUtil.areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document));
+
     IntSet positions = new IntOpenHashSet();
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !positions.add(XDebuggerUtil.areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document)) ? breakpoint.getOffset() : breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(areInlineBreakpoints ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }
