@@ -253,8 +253,8 @@ class PythonOnboardingTourLesson :
 
     task {
       rehighlightPreviousUi = true
-      gotItStep(Balloon.Position.above, width = 0,
-                PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
+      gotItStep(Balloon.Position.above, width = 0, cornerToPointerDistance = 140,
+                text = PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                             strong(UIBundle.message("tool.window.name.debug")),
                                             strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreByUi(debuggerGotItTaskId)
@@ -264,7 +264,7 @@ class PythonOnboardingTourLesson :
     task {
       val position = if (UIExperiment.isNewDebuggerUIEnabled()) Balloon.Position.above else Balloon.Position.atRight
       showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging"),
-                                         position) { list -> list.maxByOrNull { it.locationOnScreen.y } }
+                                         position, cornerToPointerDistance = 35) { list -> list.maxByOrNull { it.locationOnScreen.y } }
       text(PythonLessonsBundle.message("python.onboarding.stop.debugging",
                                        icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)

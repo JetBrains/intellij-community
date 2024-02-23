@@ -716,13 +716,15 @@ fun TaskContext.triggerOnEditorText(text: String, centerOffset: Int? = null, hig
 
 fun TaskContext.showBalloonOnHighlightingComponent(@Language("HTML") @Nls message: String,
                                                    position: Balloon.Position = Balloon.Position.below,
+                                                   cornerToPointerDistance: Int = -1,
                                                    chooser: (List<JComponent>) -> JComponent? = { it.firstOrNull() }) {
   val highlightingComponent = chooser(LearningUiHighlightingManager.highlightingComponents.filterIsInstance<JComponent>())
   val useBalloon = LearningBalloonConfig(
     side = position,
     width = 0,
     highlightingComponent = highlightingComponent,
-    duplicateMessage = false)
+    duplicateMessage = false,
+    cornerToPointerDistance = cornerToPointerDistance)
   text(message, useBalloon)
 }
 

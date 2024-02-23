@@ -329,10 +329,10 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
 
     task {
       rehighlightPreviousUi = true
-      gotItStep(Balloon.Position.above, width = 0,
-                JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
-                                          strong(UIBundle.message("tool.window.name.debug")),
-                                          strong(LessonsBundle.message("debug.workflow.lesson.name"))))
+      gotItStep(Balloon.Position.above, width = 0, cornerToPointerDistance = 130,
+                text = JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
+                                                 strong(UIBundle.message("tool.window.name.debug")),
+                                                 strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreByUi(debuggerGotItTaskId)
     }
 
@@ -340,7 +340,7 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
     task {
       val position = if (UIExperiment.isNewDebuggerUIEnabled()) Balloon.Position.above else Balloon.Position.atRight
       showBalloonOnHighlightingComponent(JavaLessonsBundle.message("java.onboarding.balloon.stop.debugging"),
-                                         position) { list -> list.maxByOrNull { it.locationOnScreen.y } }
+                                         position, cornerToPointerDistance = 35) { list -> list.maxByOrNull { it.locationOnScreen.y } }
       text(JavaLessonsBundle.message("java.onboarding.stop.debugging", icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
       stateCheck {
