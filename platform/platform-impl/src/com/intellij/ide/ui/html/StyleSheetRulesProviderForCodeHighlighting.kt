@@ -73,7 +73,7 @@ object StyleSheetRulesProviderForCodeHighlighting {
       val defaultBgColor = colorScheme.defaultBackground
       val blockCodeStyling = if (ColorUtil.getContrast(defaultBgColor, editorPaneBackgroundColor) < 1.1)
         blockCodeStyling.copy(
-          suffix = ".inlineQuickDoc",
+          suffix = ".EditorPane",
           defaultBackgroundColor = Color(0x5A5D6B),
           defaultBackgroundOpacity = 4,
         )

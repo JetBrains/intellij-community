@@ -227,9 +227,11 @@
       "Block": {
         "backgroundOpacity": 100,
         "borderColor":"Grey3",
-        "inlineQuickDoc.backgroundColor": "Grey5",
-        "inlineQuickDoc.backgroundOpacity": 20,
-        "inlineQuickDoc.borderColor": "Grey3"
+        "EditorPane": {
+          "backgroundColor": "Grey5",
+          "backgroundOpacity": 20,
+          "borderColor": "Grey3"
+        }
       }
     },
 

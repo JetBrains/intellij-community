@@ -135,19 +135,21 @@
 
     "Code": {
       "Inline": {
-        "backgroundColor": "#9DA0A8",
-        "backgroundOpacity": 15,
+        "backgroundColor": "#1E1F22",
+        "backgroundOpacity": 25,
         "borderRadius": 10,
         "borderWidth": 0
       },
       "Block": {
         "backgroundOpacity": 50,
-        "inlineQuickDoc.background": "#9DA0A8",
-        "inlineQuickDoc.backgroundOpacity": 10,
-        "inlineQuickDoc.borderColor": "#393B40",
         "borderColor":"#5A5D63",
         "borderRadius": 10,
-        "borderWidth": 1
+        "borderWidth": 1,
+        "EditorPane": {
+          "background": "#9DA0A8",
+          "backgroundOpacity": 10,
+          "borderColor": "#393B40"
+        }
       }
     },
 
