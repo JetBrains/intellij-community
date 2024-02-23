@@ -42,6 +42,11 @@ public final class PathsList  {
     addAllLast(chooseFirstTimeItems(path), myPath);
   }
 
+  public void remove(@NotNull VirtualFile file) {
+    String path = LOCAL_PATH.fun(file);
+    remove(path);
+  }
+
   public void remove(@NotNull String path) {
     myPath.remove(path);
     myPathTail.remove(path);

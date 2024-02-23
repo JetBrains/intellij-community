@@ -164,7 +164,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
             .map(mavenProjectsManager::findModule)
             .map(CompilerModuleExtension::getInstance)
             .map(CompilerModuleExtension::getCompilerOutputPath)
-            .ifPresent(compilerOutputPath -> javaParameters.getClassPath().remove(compilerOutputPath.getPath()));
+            .ifPresent(compilerOutputPath -> javaParameters.getClassPath().remove(compilerOutputPath));
         }
       }
     }

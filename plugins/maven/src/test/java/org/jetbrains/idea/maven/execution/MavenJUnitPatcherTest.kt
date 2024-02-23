@@ -19,6 +19,7 @@ import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
@@ -108,11 +109,11 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
     }
 
     javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
-    assertEquals(listOf("dep/target/classes", "junit-4.0.jar", "m/target/classes"),
+    assertEquals(listOf("dep/target/classes", "junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
                  javaParameters.classPath.getPathList().map(pathTransformer).sorted())
 
     mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
-    assertEquals(listOf("junit-4.0.jar", "m/target/classes"),
+    assertEquals(listOf("junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
                  javaParameters.classPath.getPathList().map(pathTransformer).sorted())
   }
 
