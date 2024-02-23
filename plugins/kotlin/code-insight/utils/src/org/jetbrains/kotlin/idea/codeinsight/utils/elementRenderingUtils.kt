@@ -119,7 +119,9 @@ fun KtElement.renderTrimmed(): String {
             val arguments = list.arguments
             builder.append("(")
             if (arguments.isNotEmpty()) {
-                if (arguments.size <= 3 && arguments.all { it.getArgumentExpression() is KtConstantExpression }) {
+                if (arguments.size <= 3 &&
+                    arguments.all { it.getArgumentExpression() is KtConstantExpression } &&
+                    arguments.sumOf { it.text.length } < 8) {
                     arguments.joinTo(builder) { it.text }
                 } else {
                     builder.append(ellipsis)
