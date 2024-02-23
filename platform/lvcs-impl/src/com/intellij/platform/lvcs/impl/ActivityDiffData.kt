@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface ActivityDiffData {
-  fun getPresentableChanges(project: Project): Iterable<ActivityDiffObject>
+  fun getPresentableChanges(): Iterable<ActivityDiffObject>
 }
 
 interface ActivityDiffObject: PresentableChange {

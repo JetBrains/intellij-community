@@ -4,7 +4,6 @@ package com.intellij.platform.lvcs.impl.diff
 import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
-import com.intellij.openapi.project.Project
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.containers.JBIterable
 
@@ -14,7 +13,7 @@ private data class ActivityDiffDataWithDifferences(val facade: LocalHistoryFacad
                                                    val selection: ChangeSetSelection,
                                                    val differences: List<Difference>,
                                                    val isOldContentUsed: Boolean) : ActivityDiffData {
-  override fun getPresentableChanges(project: Project): Iterable<ActivityDiffObject> {
+  override fun getPresentableChanges(): Iterable<ActivityDiffObject> {
     val fileDifferences = JBIterable.from(differences).filter { it.isFile }
     return when (scope) {
       is ActivityScope.Selection -> {

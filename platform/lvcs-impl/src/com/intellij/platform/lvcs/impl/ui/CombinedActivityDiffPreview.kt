@@ -68,7 +68,7 @@ internal abstract class CombinedActivityDiffPreview(project: Project,
     CombinedDiffPreviewModel(project, null, parentDisposable) {
 
     override fun iterateAllChanges(): Iterable<Wrapper> {
-      val wrappers = diffData?.getPresentableChanges(project)?.map { DiffObjectWrapper(it) }
+      val wrappers = diffData?.getPresentableChanges()?.map { DiffObjectWrapper(it) }
       if (wrappers.isNullOrEmpty()) return listOf(EmptyChangeWrapper(project, scope))
       return wrappers
     }
