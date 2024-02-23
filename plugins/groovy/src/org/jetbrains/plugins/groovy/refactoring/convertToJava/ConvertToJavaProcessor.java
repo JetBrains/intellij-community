@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix;
@@ -18,6 +18,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.git.RenameTrackingKt;
@@ -72,6 +73,18 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       StringBuilder builder = new StringBuilder();
       boolean first = true;
       for (PsiClass aClass : classes) {
+        if (first) {
+          int offset = aClass.getTextOffset();
+          for (PsiElement child : file.getChildren()) {
+            if (child.getTextOffset() >= offset) break;
+            if (child instanceof PsiComment) {
+              if (child instanceof GrDocComment docComment) {
+                if (docComment.getOwner() != null) break;
+              }
+              builder.append(child.getText()).append('\n'); // keep copyright comments
+            }
+          }
+        }
         classGenerator.writeTypeDefinition(builder, aClass, true, first);
         first = false;
         builder.append('\n');
