@@ -44,13 +44,15 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
     SETUP_NO_JDK.log()
   }
 
-  private fun findSdkVersion(sdkVersionString: String?): Int {
-    val versionRegex = Regex("([0-9]+)(?:[.0-9]+)?")
-    val version = when (sdkVersionString) {
-      null -> -1
-      else -> versionRegex.find(sdkVersionString)?.groups?.get(1)?.value?.toInt() ?: -1
+  private fun findSdkVersion(sdkVersionString: String?): Int = when (sdkVersionString) {
+    null -> -1
+    else -> {
+      val matchResult = when {
+        "GraalVM" in sdkVersionString -> Regex("Java ([0-9]+)(?:[.0-9]+)?").find(sdkVersionString)
+        else -> Regex("([0-9]+)(?:[.0-9]+)?").find(sdkVersionString)
+      }
+      matchResult?.groups?.get(1)?.value?.toInt() ?: -1
     }
-    return version
   }
 
   fun jdkDownloaded(item: JdkItem) {
