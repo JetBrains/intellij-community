@@ -526,6 +526,10 @@ fun <T : CommandChain> T.importMavenProject(): T = apply {
   addCommand("${CMD_PREFIX}importMavenProject")
 }
 
+fun <T : CommandChain> T.updateMavenFolders(): T = apply {
+  addCommand("${CMD_PREFIX}updateMavenFolders")
+}
+
 enum class AssertModuleJdkVersionMode {
   CONTAINS,
   EQUALS
