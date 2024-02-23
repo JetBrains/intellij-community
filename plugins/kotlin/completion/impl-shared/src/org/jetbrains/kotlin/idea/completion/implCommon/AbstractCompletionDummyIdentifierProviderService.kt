@@ -197,7 +197,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 val containsErrorElement = !PsiTreeUtil.processElements(file) { it !is PsiErrorElement }
                 return if (containsErrorElement) null else "$tail$DEFAULT_PARSING_BREAKER"
             }
-            if (tokenType !in declarationTokens) return null
+            if (tokenType !in typeArgumentsTokens) return null
             if (tokenType == KtTokens.LT) ltCount++
             if (tokenType == KtTokens.GT) gtCount++
             builder.append(token.text!!.reversed())
@@ -236,22 +236,13 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         }
     }
 
-    private val callTypeArgsTokens = TokenSet.orSet(
-        TokenSet.create(
-            KtTokens.IDENTIFIER, KtTokens.LT, KtTokens.GT,
-            KtTokens.COMMA, KtTokens.DOT, KtTokens.QUEST, KtTokens.COLON,
-            KtTokens.LPAR, KtTokens.RPAR, KtTokens.ARROW
-        ),
-        KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
-    )
-
     // if the leaf could be located inside type argument list of a call (if parsed properly)
     // then it returns the call name reference this type argument list would belong to
     private fun findCallNameTokenIfInTypeArgs(leaf: PsiElement): PsiElement? {
         var current = leaf
         while (true) {
             val tokenType = current.node!!.elementType
-            if (tokenType !in callTypeArgsTokens) return null
+            if (tokenType !in typeArgumentsTokens) return null
 
             if (tokenType == KtTokens.LT) {
                 val nameToken = current.prevLeaf(skipEmptyElements = true) ?: return null
@@ -287,8 +278,8 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         private const val DEFAULT_PARSING_BREAKER: String = "$" // add '$' to ignore context after the caret
         private const val EMPTY_SUFFIX: String = ""
 
-        private val declarationKeywords = TokenSet.create(KtTokens.FUN_KEYWORD, KtTokens.VAL_KEYWORD, KtTokens.VAR_KEYWORD)
-        private val declarationTokens = TokenSet.orSet(
+        private val declarationKeywords: TokenSet = TokenSet.create(KtTokens.FUN_KEYWORD, KtTokens.VAL_KEYWORD, KtTokens.VAR_KEYWORD)
+        private val typeArgumentsTokens: TokenSet = TokenSet.orSet(
             TokenSet.create(
                 KtTokens.IDENTIFIER, KtTokens.LT, KtTokens.GT,
                 KtTokens.COMMA, KtTokens.DOT, KtTokens.QUEST, KtTokens.COLON,

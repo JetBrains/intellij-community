@@ -526,6 +526,26 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/incompleteCode/parameterList.kt");
         }
 
+        @TestMetadata("SecondTypeArg.kt")
+        public void testSecondTypeArg() throws Exception {
+            runTest("../completion/testData/handlers/basic/incompleteCode/SecondTypeArg.kt");
+        }
+
+        @TestMetadata("SecondTypeArg2.kt")
+        public void testSecondTypeArg2() throws Exception {
+            runTest("../completion/testData/handlers/basic/incompleteCode/SecondTypeArg2.kt");
+        }
+
+        @TestMetadata("SecondTypeArg3.kt")
+        public void testSecondTypeArg3() throws Exception {
+            runTest("../completion/testData/handlers/basic/incompleteCode/SecondTypeArg3.kt");
+        }
+
+        @TestMetadata("SecondTypeArgAfterVarianceModifier.kt")
+        public void testSecondTypeArgAfterVarianceModifier() throws Exception {
+            runTest("../completion/testData/handlers/basic/incompleteCode/SecondTypeArgAfterVarianceModifier.kt");
+        }
+
         @TestMetadata("SecondTypeArgNested.kt")
         public void testSecondTypeArgNested() throws Exception {
             runTest("../completion/testData/handlers/basic/incompleteCode/SecondTypeArgNested.kt");
@@ -1527,21 +1547,6 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("ReplaceFunctionCallByPropertyArgs.kt")
         public void testReplaceFunctionCallByPropertyArgs() throws Exception {
             runTest("../completion/testData/handlers/basic/ReplaceFunctionCallByPropertyArgs.kt");
-        }
-
-        @TestMetadata("SecondTypeArg.kt")
-        public void testSecondTypeArg() throws Exception {
-            runTest("../completion/testData/handlers/basic/SecondTypeArg.kt");
-        }
-
-        @TestMetadata("SecondTypeArg2.kt")
-        public void testSecondTypeArg2() throws Exception {
-            runTest("../completion/testData/handlers/basic/SecondTypeArg2.kt");
-        }
-
-        @TestMetadata("SecondTypeArg3.kt")
-        public void testSecondTypeArg3() throws Exception {
-            runTest("../completion/testData/handlers/basic/SecondTypeArg3.kt");
         }
 
         @TestMetadata("SpaceAfterParenthesisBug.kt")
