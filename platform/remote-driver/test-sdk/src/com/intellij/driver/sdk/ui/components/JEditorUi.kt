@@ -27,6 +27,13 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
       }
     }
 
+  val getCaretPosition
+    get() = editor.getCaretModel().getLogicalPosition()
+
+  fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
+    if (it.size < line) "" else it[line - 1]
+  }
+
   fun interact(block: Editor.() -> Unit) {
     driver.withContext(OnDispatcher.EDT) {
       block.invoke(editor)
