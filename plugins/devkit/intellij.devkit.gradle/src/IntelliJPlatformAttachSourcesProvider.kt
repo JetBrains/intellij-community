@@ -26,10 +26,8 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
   override fun getActions(orderEntries: MutableList<out LibraryOrderEntry>, psiFile: PsiFile): List<AttachSourcesAction> {
     // Search for a product that matches any of the entry coordinates. Return both product and coordinates, to refer to the same version.
-    val (product, libraryCoordinates) = orderEntries.mapNotNull {
-      it.library
-    }.firstNotNullOfOrNull {
-      val coordinates = it.getMavenCoordinates() ?: return@firstNotNullOfOrNull null
+    val (product, libraryCoordinates) = orderEntries.firstNotNullOfOrNull {
+      val coordinates = it.library?.getMavenCoordinates() ?: return@firstNotNullOfOrNull null
       val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
       if (product == null) {
         return@firstNotNullOfOrNull null
