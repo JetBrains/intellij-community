@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.j2k.ast.*
 import org.jetbrains.kotlin.j2k.ast.Annotation
 import org.jetbrains.kotlin.load.java.components.JavaAnnotationTargetMapper
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.isInSingleLine
 import java.lang.annotation.ElementType
 import java.lang.annotation.Target
 

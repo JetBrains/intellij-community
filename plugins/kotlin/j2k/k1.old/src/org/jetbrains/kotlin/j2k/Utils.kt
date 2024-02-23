@@ -40,37 +40,23 @@ fun PsiReferenceExpression.isQualifierEmptyOrClass(psiClass: PsiClass): Boolean 
     return qualifier == null || (qualifier is PsiReferenceExpression && qualifier.isReferenceTo(psiClass))
 }
 
-fun PsiElement.isInSingleLine(): Boolean {
-    if (this is PsiWhiteSpace) {
-        val text = text!!
-        return text.indexOf('\n') < 0 && text.indexOf('\r') < 0
-    }
-
-    var child = firstChild
-    while (child != null) {
-        if (!child.isInSingleLine()) return false
-        child = child.nextSibling
-    }
-    return true
-}
-
 @Deprecated("This declaration will be removed in a future release along with the whole Old J2K module")
 fun PsiElement.getContainingMethod(): PsiMethod? {
     var context = context
     while (context != null) {
-        val _context = context
+        @Suppress("LocalVariableName") val _context = context
         if (_context is PsiMethod) return _context
         context = _context.context
     }
     return null
 }
 
-@Suppress("unused") // used from a 3rd-party plugin
+@Suppress("unused", "DuplicatedCode") // used from a 3rd-party plugin
 @Deprecated("This declaration will be removed in a future release along with the whole Old J2K module")
 fun PsiElement.getContainingClass(): PsiClass? {
     var context = context
     while (context != null) {
-        val _context = context
+        @Suppress("LocalVariableName") val _context = context
         if (_context is PsiClass) return _context
         if (_context is PsiMember) return _context.containingClass
         context = _context.context
@@ -79,7 +65,7 @@ fun PsiElement.getContainingClass(): PsiClass? {
 }
 
 fun PsiElement.getContainingConstructor(): PsiMethod? {
-    val method = getContainingMethod()
+    @Suppress("DEPRECATION") val method = getContainingMethod()
     return if (method?.isConstructor == true) method else null
 }
 
@@ -117,6 +103,7 @@ fun PsiMember.isImported(file: PsiJavaFile): Boolean {
 // TODO: set origin for facade classes in library
 fun isFacadeClassFromLibrary(element: PsiElement?) = element is KtLightClass && element.kotlinOrigin == null
 
+@Suppress("UnusedReceiverParameter")
 fun Converter.convertToKotlinAnalog(classQualifiedName: String?, mutability: Mutability): String? {
     if (classQualifiedName == null) return null
     return (if (mutability.isMutable()) toKotlinMutableTypesMap[classQualifiedName] else null)

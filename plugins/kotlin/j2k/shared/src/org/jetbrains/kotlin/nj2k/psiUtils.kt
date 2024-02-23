@@ -13,7 +13,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.isNullLiteral
 import org.jetbrains.kotlin.name.Name
@@ -25,7 +24,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-//copied from old j2k
+@Suppress("DuplicatedCode") // copied from old J2K
 fun canKeepEqEq(left: PsiExpression, right: PsiExpression?): Boolean {
     if (left.isNullLiteral() || (right?.isNullLiteral() == true)) return true
     when (val type = left.type) {
@@ -106,6 +105,7 @@ private fun PsiMember.handleProtectedVisibility(referenceSearcher: ReferenceSear
     else Visibility.PROTECTED
 }
 
+@Suppress("DuplicatedCode") // Copied from old J2K
 private fun allowProtected(element: PsiElement, member: PsiMember, originalClass: PsiClass): Boolean {
     if (element.parent is PsiNewExpression && member is PsiMethod && member.isConstructor) {
         // calls to for protected constructors are allowed only within same class or as super calls
@@ -158,6 +158,7 @@ fun <T> runUndoTransparentActionInEdt(inWriteAction: Boolean, action: () -> T): 
     return result!!
 }
 
+@Suppress("LocalVariableName")
 fun PsiElement.getContainingClass(): PsiClass? {
     var context = context
     while (context != null) {
