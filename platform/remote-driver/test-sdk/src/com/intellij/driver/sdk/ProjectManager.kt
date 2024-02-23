@@ -15,7 +15,7 @@ fun Driver.getOpenProjects(): List<Project> {
 
 fun Driver.singleProject(): Project {
   return withContext {
-    service<ProjectManager>().getOpenProjects().single()
+    service<ProjectManager>().getOpenProjects().singleOrNull() ?: throw IllegalStateException("No projects are opened")
   }
 }
 
