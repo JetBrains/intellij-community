@@ -41,6 +41,7 @@ final class InstallPluginInfo {
   }
 
   public synchronized void toBackground(@Nullable StatusBarEx statusBar) {
+    if (myPluginModel == null) return; // IDEA-355719 TODO add lifecycle assertions
     myPluginModel = null;
     indicator.removeStateDelegates();
     if (statusBar != null) {
