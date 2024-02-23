@@ -65,7 +65,8 @@ class BuildContextImpl(
     }
     else {
       val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(options.buildDateInSeconds), ZoneOffset.UTC)
-      "$baseBuildNumber.${pluginDateFormat.format(buildDate)}"
+      // .SNAPSHOT suffix is required for a remote dev + IDE built from sources scenario, IJI-1603
+      "$baseBuildNumber.${pluginDateFormat.format(buildDate)}.SNAPSHOT"
     }
   }
 
