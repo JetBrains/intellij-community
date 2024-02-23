@@ -6,7 +6,10 @@ import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import kotlin.Unit;
+import kotlinx.serialization.json.JsonElement;
 import org.jdom.Element;
+import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,16 +33,28 @@ final class AttributeBinding implements PrimitiveValueBinding {
     valueClass = ClassUtil.typeToClass(accessor.getGenericType());
   }
 
+  @Nullable
+  @Override
+  public JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    return JsonHelperKt.toJson(bean, accessor, converter);
+  }
+
+  @Override
+  public Object fromJson(@NotNull Object bean, @NotNull JsonElement data) {
+    JsonHelperKt.fromJson(bean, data, accessor, valueClass, converter);
+    return Unit.INSTANCE;
+  }
+
   @Override
   public @NotNull MutableAccessor getAccessor() {
     return accessor;
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
+  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
     Object value = accessor.read(bean);
     if (value == null) {
-      return null;
+      return;
     }
 
     String stringValue;
@@ -49,10 +64,12 @@ final class AttributeBinding implements PrimitiveValueBinding {
     else {
       stringValue = converter.toString(value);
       if (stringValue == null) {
-        return null;
+        return;
       }
     }
-    return new org.jdom.Attribute(name, stringValue);
+
+    org.jdom.Attribute attribute = new org.jdom.Attribute(true, name, stringValue, Namespace.NO_NAMESPACE);
+    parent.setAttribute(attribute);
   }
 
   @Override

@@ -4,7 +4,6 @@ package com.intellij.configurationStore.xml
 import com.intellij.configurationStore.deserialize
 import com.intellij.openapi.components.BaseState
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.SmartList
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.Tag
@@ -26,15 +25,27 @@ internal class XmlSerializerCollectionTest {
     bean.list.add("two")
     bean.list.add("three")
     testSerializer(
-      """
-      <b>
-        <list>
-          <item value="one" />
-          <item value="two" />
-          <item value="three" />
-        </list>
-      </b>""",
-      bean, SkipDefaultsSerializationFilter())
+      expectedXml = """
+        <b>
+          <list>
+            <item value="one" />
+            <item value="two" />
+            <item value="three" />
+          </list>
+        </b>
+      """,
+      expectedJson = """
+        {
+          "list": [
+            "one",
+            "two",
+            "three"
+          ]
+        }
+      """,
+      bean = bean,
+      filter = SkipDefaultsSerializationFilter(),
+    )
   }
 
   @Test
@@ -47,7 +58,7 @@ internal class XmlSerializerCollectionTest {
       listElement.addContent(Element("item").setAttribute("itemvalue", id))
     }
 
-    val result = SmartList<String>()
+    val result = ArrayList<String>()
     @Suppress("DEPRECATION")
     com.intellij.openapi.util.JDOMExternalizableStringList.readList(result, element)
     assertThat(result).isEqualTo(testList.toList())
@@ -58,14 +69,28 @@ internal class XmlSerializerCollectionTest {
     bean.list.add("one")
     bean.list.add("two")
     bean.list.add("three")
-    testSerializer("""
+    testSerializer(
+      expectedXml = """
       <b>
         <list>
           <item value="one" />
           <item value="two" />
           <item value="three" />
         </list>
-      </b>""", bean, SkipDefaultsSerializationFilter())
+      </b>
+      """,
+      expectedJson = """
+        {
+          "list": [
+            "one",
+            "two",
+            "three"
+          ]
+        }
+      """,
+      bean = bean,
+      filter = SkipDefaultsSerializationFilter(),
+    )
   }
 
   @Test fun collectionBeanReadJDOMExternalizableStringList() {
@@ -90,40 +115,89 @@ internal class XmlSerializerCollectionTest {
 
     val bean = BeanWithPolymorphicArray()
 
-    testSerializer("<bean>\n  <option name=\"v\">\n    <array />\n  </option>\n</bean>", bean)
+    testSerializer(
+      expectedXml = """
+      <bean>
+        <option name="v">
+          <array />
+        </option>
+      </bean>
+      """,
+      expectedJson = """
+        {
+          "v": []
+        }
+      """,
+      bean = bean,
+    )
 
     bean.v = arrayOf(BeanWithPublicFields(), BeanWithPublicFieldsDescendant(), BeanWithPublicFields())
 
-    testSerializer("""<bean>
-  <option name="v">
-    <array>
-      <BeanWithPublicFields>
-        <option name="INT_V" value="1" />
-        <option name="STRING_V" value="hello" />
-      </BeanWithPublicFields>
-      <BeanWithPublicFieldsDescendant>
-        <option name="NEW_S" value="foo" />
-        <option name="INT_V" value="1" />
-        <option name="STRING_V" value="hello" />
-      </BeanWithPublicFieldsDescendant>
-      <BeanWithPublicFields>
-        <option name="INT_V" value="1" />
-        <option name="STRING_V" value="hello" />
-      </BeanWithPublicFields>
-    </array>
-  </option>
-</bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="v">
+            <array>
+              <BeanWithPublicFields>
+                <option name="INT_V" value="1" />
+                <option name="STRING_V" value="hello" />
+              </BeanWithPublicFields>
+              <BeanWithPublicFieldsDescendant>
+                <option name="NEW_S" value="foo" />
+                <option name="INT_V" value="1" />
+                <option name="STRING_V" value="hello" />
+              </BeanWithPublicFieldsDescendant>
+              <BeanWithPublicFields>
+                <option name="INT_V" value="1" />
+                <option name="STRING_V" value="hello" />
+              </BeanWithPublicFields>
+            </array>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "v": [
+            {
+              "int_v": 1,
+              "string_v": "hello"
+            },
+            {
+              "new_s": "foo",
+              "int_v": 1,
+              "string_v": "hello"
+            },
+            {
+              "int_v": 1,
+              "string_v": "hello"
+            }
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
-  @Test fun xCollection() {
+  @Test
+  fun xCollection() {
     val bean = BeanWithArrayWithoutTagName()
-     testSerializer(
-     """
-      <BeanWithArrayWithoutTagName>
-        <option name="foo">
-          <option value="a" />
-        </option>
-      </BeanWithArrayWithoutTagName>""".trimIndent(), bean)
+    testSerializer(
+      expectedXml = """
+        <BeanWithArrayWithoutTagName>
+          <option name="foo">
+            <option value="a" />
+          </option>
+        </BeanWithArrayWithoutTagName>
+      """,
+      expectedJson = """
+        {
+          "foo": [
+            "a"
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Test
@@ -135,14 +209,25 @@ internal class XmlSerializerCollectionTest {
     }
 
     val bean = Bean()
-     testSerializer(
-     """
-      <Bean>
-        <option name="foo">
-          <option value="a" />
-          <option value="b" />
-        </option>
-      </Bean>""".trimIndent(), bean)
+    testSerializer(
+      expectedXml = """
+        <Bean>
+          <option name="foo">
+            <option value="a" />
+            <option value="b" />
+          </option>
+        </Bean>
+      """,
+      expectedJson = """
+        {
+          "foo": [
+            "a",
+            "b"
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Test
@@ -157,15 +242,28 @@ internal class XmlSerializerCollectionTest {
 
     val bean = Bean()
     testSerializer(
-      """
-      <Bean>
-        <option name="firstElement">
-          <option value="gradle" />
-        </option>
-        <option name="secondElement">
-          <option value="maven" />
-        </option>
-      </Bean>""".trimIndent(), bean)
+      expectedXml = """
+        <Bean>
+          <option name="firstElement">
+            <option value="gradle" />
+          </option>
+          <option name="secondElement">
+            <option value="maven" />
+          </option>
+        </Bean>
+      """,
+      expectedJson = """
+        {
+          "firstElement": [
+            "gradle"
+          ],
+          "secondElement": [
+            "maven"
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Test fun arrayAnnotationWithElementTag() {
@@ -189,16 +287,29 @@ internal class XmlSerializerCollectionTest {
 
     bean.v = arrayOf("1", "2", "3")
 
-    testSerializer("""
-      <bean>
-        <option name="v">
-          <array>
-            <vValue v="1" />
-            <vValue v="2" />
-            <vValue v="3" />
-          </array>
-        </option>
-      </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="v">
+            <array>
+              <vValue v="1" />
+              <vValue v="2" />
+              <vValue v="3" />
+            </array>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "v": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      """.trimIndent(),
+      bean = bean,
+    )
   }
 
   @Test fun arrayWithoutTag() {
@@ -240,13 +351,53 @@ internal class XmlSerializerCollectionTest {
   @Test fun array() {
     val bean = BeanWithArray()
     testSerializer(
-      "<BeanWithArray>\n  <option name=\"ARRAY_V\">\n    <array>\n      <option value=\"a\" />\n      <option value=\"b\" />\n    </array>\n  </option>\n</BeanWithArray>",
-      bean)
+      expectedXml = """
+        <BeanWithArray>
+        <option name="ARRAY_V">
+          <array>
+            <option value="a" />
+            <option value="b" />
+          </array>
+        </option>
+      </BeanWithArray>
+      """,
+      expectedJson = """
+        {
+          "array_v": [
+            "a",
+            "b"
+          ]
+        }
+      """.trimIndent(),
+      bean = bean,
+    )
 
     bean.ARRAY_V = arrayOf("1", "2", "3", "")
     testSerializer(
-      "<BeanWithArray>\n  <option name=\"ARRAY_V\">\n    <array>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n      <option value=\"\" />\n    </array>\n  </option>\n</BeanWithArray>",
-      bean)
+      expectedXml = """
+        <BeanWithArray>
+          <option name="ARRAY_V">
+            <array>
+              <option value="1" />
+              <option value="2" />
+              <option value="3" />
+              <option value="" />
+            </array>
+          </option>
+        </BeanWithArray>
+      """,
+      expectedJson = """
+        {
+          "array_v": [
+            "1",
+            "2",
+            "3",
+            ""
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Test
@@ -259,23 +410,33 @@ internal class XmlSerializerCollectionTest {
     val bean = Bean()
     assertThat(bean.isEqualToDefault()).isTrue()
     testSerializer(
-      "<Bean />",
-      bean)
+      expectedXml = "<Bean />",
+      expectedJson = """null""",
+      bean = bean,
+    )
 
     bean.names.clear()
     bean.intIncrementModificationCount()
     assertThat(bean.isEqualToDefault()).isFalse()
     testSerializer(
-      "<Bean>\n" +
-      "  <names />\n" +
-      "</Bean>",
-      bean)
+      expectedXml = """
+        <Bean>
+          <names />
+        </Bean>
+        """,
+      expectedJson = """
+        {
+          "names": []
+        }
+      """.trimIndent(),
+      bean = bean,
+    )
   }
 
   @Tag("b")
   private class Bean4 {
     @CollectionBean
-    val list = SmartList<String>()
+    val list = ArrayList<String>()
   }
 
   @Suppress("unused")

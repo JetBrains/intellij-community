@@ -50,11 +50,10 @@ private class JdomSerializerImpl : JdomSerializer {
     try {
       val binding = serializer.getRootBinding(bean.javaClass)
       if (binding is BeanBinding) {
-        // top level expects not null (null indicates error, an empty element will be omitted)
         return binding.serialize(bean = bean, createElementIfEmpty = createElementIfEmpty, filter = filter)
       }
       else {
-        return binding.serialize(bean = bean, filter = filter) as Element
+        return (binding as RootBinding).serialize(bean = bean, filter = filter) as Element
       }
     }
     catch (e: SerializationException) {
@@ -82,7 +81,7 @@ private class JdomSerializerImpl : JdomSerializer {
     }
 
     val beanBinding = serializer.getRootBinding(obj.javaClass) as KotlinAwareBeanBinding
-    beanBinding.serializeInto(obj, target, filter ?: getDefaultSerializationFilter())
+    beanBinding.serializeProperties(obj, target, filter ?: getDefaultSerializationFilter())
   }
 
   override fun <T> deserialize(element: XmlElement, clazz: Class<T>): T {
