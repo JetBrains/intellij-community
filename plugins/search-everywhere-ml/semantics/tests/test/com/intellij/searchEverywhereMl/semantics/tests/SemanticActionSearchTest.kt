@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager
 import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
 import com.intellij.searchEverywhereMl.semantics.contributors.SemanticActionSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
@@ -117,6 +118,6 @@ class SemanticActionSearchTest : SemanticSearchBaseTestCase() {
   private suspend fun setupTest(vararg filePaths: String) {
     myFixture.configureByFiles(*filePaths)
     SearchEverywhereSemanticSettings.getInstance().enabledInActionsTab = true
-    storage.generateEmbeddingsIfNecessary(project)
+    ActionEmbeddingStorageManager.getInstance().prepareForSearch(project).join()
   }
 }
