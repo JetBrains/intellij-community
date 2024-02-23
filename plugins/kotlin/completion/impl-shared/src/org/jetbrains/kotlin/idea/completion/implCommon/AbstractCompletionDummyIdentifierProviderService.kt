@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.completion.implCommon
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.CompletionUtilCore
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
@@ -64,28 +63,30 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         val offset = context.startOffset
         val tokenBefore = psiFile.findElementAt(max(0, offset - 1))
 
-        return when {
-            context.completionType == CompletionType.SMART -> DEFAULT_DUMMY_IDENTIFIER
+        val suffixToAffectParsingIfNecessary = when {
+            context.completionType == CompletionType.SMART -> DEFAULT_PARSING_BREAKER
 
             // TODO package completion
 
-            isInClassHeader(tokenBefore) -> CompletionUtilCore.DUMMY_IDENTIFIER // do not add '$' to not interrupt class declaration parsing
+            isInClassHeader(tokenBefore) -> EMPTY_SUFFIX // do not add '$' to not interrupt class declaration parsing
 
-            isInUnclosedSuperQualifier(tokenBefore) -> CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + ">"
+            isInUnclosedSuperQualifier(tokenBefore) -> ">"
 
-            isInSimpleStringTemplate(tokenBefore) -> CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
+            isInSimpleStringTemplate(tokenBefore) -> EMPTY_SUFFIX
 
-            else -> specialLambdaSignatureDummyIdentifier(tokenBefore)
-                ?: specialExtensionReceiverDummyIdentifier(tokenBefore)
-                ?: specialInTypeArgsDummyIdentifier(tokenBefore)
-                ?: specialInArgumentListDummyIdentifier(tokenBefore)
+            else -> specialLambdaSignatureDummyIdentifierSuffix(tokenBefore)
+                ?: specialExtensionReceiverDummyIdentifierSuffix(tokenBefore)
+                ?: specialInTypeArgsDummyIdentifierSuffix(tokenBefore)
+                ?: specialInArgumentListDummyIdentifierSuffix(tokenBefore)
                 ?: specialInNameWithQuotes(tokenBefore)
-                ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
+                ?: specialInBinaryExpressionDummyIdentifierSuffix(tokenBefore)
                 ?: isInValueOrTypeParametersList(tokenBefore)
                 ?: handleDefaultCase(context)
                 ?: isInAnnotationEntry(tokenBefore)
-                ?: DEFAULT_DUMMY_IDENTIFIER
+                ?: DEFAULT_PARSING_BREAKER
         }
+
+        return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + suffixToAffectParsingIfNecessary
     }
 
     private fun isInAnnotationEntry(tokenBefore: PsiElement?): String? {
@@ -93,7 +94,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
         val typeReference = tokenBefore.parentOfType<KtTypeReference>(true) ?: return null
         return if (typeReference.parentOfType<KtAnnotationEntry>() != null) {
-            CompletionUtilCore.DUMMY_IDENTIFIER
+            EMPTY_SUFFIX
         } else {
             null
         }
@@ -104,12 +105,12 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
     private fun isInValueOrTypeParametersList(tokenBefore: PsiElement?): String? {
         if (tokenBefore == null) return null
         if (tokenBefore.parents.any { it is KtTypeParameterList || it is KtParameterList }) {
-            return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
+            return EMPTY_SUFFIX
         }
         return null
     }
 
-    private fun specialLambdaSignatureDummyIdentifier(tokenBefore: PsiElement?): String? {
+    private fun specialLambdaSignatureDummyIdentifierSuffix(tokenBefore: PsiElement?): String? {
         var leaf = tokenBefore
         while (leaf is PsiWhiteSpace || leaf is PsiComment) {
             leaf = leaf.prevLeaf(true)
@@ -120,7 +121,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         val lambdaChild = leaf.parents.takeWhile { it != lambda }.lastOrNull()
 
         return if (lambdaChild is KtParameterList)
-            CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
+            EMPTY_SUFFIX
         else
             null
 
@@ -134,9 +135,9 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         return name.endOffset <= offset && offset <= headerEnd
     }
 
-    private fun specialInBinaryExpressionDummyIdentifier(tokenBefore: PsiElement?): String? {
+    private fun specialInBinaryExpressionDummyIdentifierSuffix(tokenBefore: PsiElement?): String? {
         if (tokenBefore.elementType == KtTokens.IDENTIFIER && tokenBefore?.context?.context is KtBinaryExpression)
-            return CompletionUtilCore.DUMMY_IDENTIFIER
+            return EMPTY_SUFFIX
         return null
     }
 
@@ -147,7 +148,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
             else -> null
         }
         val quote = "`"
-        if (badCharacterBefore?.text == quote) return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + quote + "$"
+        if (badCharacterBefore?.text == quote) return "$quote$DEFAULT_PARSING_BREAKER"
         return null
     }
 
@@ -166,7 +167,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
     }
 
 
-    private fun specialExtensionReceiverDummyIdentifier(tokenBefore: PsiElement?): String? {
+    private fun specialExtensionReceiverDummyIdentifierSuffix(tokenBefore: PsiElement?): String? {
         var token = tokenBefore ?: return null
         var ltCount = 0
         var gtCount = 0
@@ -179,9 +180,13 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 builder.append(token.text!!.reversed())
                 builder.reverse()
 
-                var tail = "X" + ">".repeat(balance) + ".f"
+                var tail = ">".repeat(balance) + ".f"
                 if (tokenType == KtTokens.FUN_KEYWORD) {
                     tail += "()"
+                }
+
+                if (tokenBefore.elementType != KtTokens.IDENTIFIER) {
+                    builder.append("X") // insert fake receiver before checking built declaration for the presence of error elements
                 }
                 builder.append(tail)
 
@@ -190,7 +195,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 val declaration = file.declarations.singleOrNull() ?: return null
                 if (declaration.textLength != text.length) return null
                 val containsErrorElement = !PsiTreeUtil.processElements(file) { it !is PsiErrorElement }
-                return if (containsErrorElement) null else "$tail$"
+                return if (containsErrorElement) null else "$tail$DEFAULT_PARSING_BREAKER"
             }
             if (tokenType !in declarationTokens) return null
             if (tokenType == KtTokens.LT) ltCount++
@@ -200,11 +205,11 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         }
     }
 
-    private fun specialInTypeArgsDummyIdentifier(tokenBefore: PsiElement?): String? {
+    private fun specialInTypeArgsDummyIdentifierSuffix(tokenBefore: PsiElement?): String? {
         if (tokenBefore == null) return null
 
         if (tokenBefore.getParentOfType<KtTypeArgumentList>(true) != null) { // already parsed inside type argument list
-            return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED // do not insert '$' to not break type argument list parsing
+            return EMPTY_SUFFIX // do not insert '$' to not break type argument list parsing
         }
 
         val pair = unclosedTypeArgListNameAndBalance(tokenBefore) ?: return null
@@ -213,7 +218,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
         val nameRef = nameToken.parent as? KtNameReferenceExpression ?: return null
         return if (allTargetsAreFunctionsOrClasses(nameRef)) {
-            CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + ">".repeat(balance) + "$"
+            ">".repeat(balance) + DEFAULT_PARSING_BREAKER
         } else {
             null
         }
@@ -266,21 +271,21 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
     }
 
 
-    private fun specialInArgumentListDummyIdentifier(tokenBefore: PsiElement?): String? {
+    private fun specialInArgumentListDummyIdentifierSuffix(tokenBefore: PsiElement?): String? {
         // If we insert `$` in the argument list of a delegation specifier, this will break parsing
         // and the following block will not be attached as a body to the constructor. Therefore
         // we need to use a regular identifier.
         val argumentList = tokenBefore?.getNonStrictParentOfType<KtValueArgumentList>() ?: return null
-        if (argumentList.parent is KtConstructorDelegationCall) return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
+        if (argumentList.parent is KtConstructorDelegationCall) return EMPTY_SUFFIX
         // If there is = in the argument list after caret, then breaking parsing with just $ prevents K2 from resolving function call,
         // i.e. `f ($ = )` is resolved to variable assignment and left part `f ($` is resolved to erroneous name reference,
         // so we need to use `$,` to avoid resolving to variable assignment
-        return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + "$,"
+        return "$DEFAULT_PARSING_BREAKER,"
     }
 
     private companion object {
-        private const val DEFAULT_DUMMY_IDENTIFIER: String =
-            CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + "$" // add '$' to ignore context after the caret
+        private const val DEFAULT_PARSING_BREAKER: String = "$" // add '$' to ignore context after the caret
+        private const val EMPTY_SUFFIX: String = ""
 
         private val declarationKeywords = TokenSet.create(KtTokens.FUN_KEYWORD, KtTokens.VAL_KEYWORD, KtTokens.VAR_KEYWORD)
         private val declarationTokens = TokenSet.orSet(

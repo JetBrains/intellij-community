@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext
-import com.intellij.codeInsight.completion.CompletionUtilCore
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.completion.implCommon.AbstractCompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -13,7 +12,7 @@ class FirCompletionDummyIdentifierProviderService : AbstractCompletionDummyIdent
     override fun handleDefaultCase(context: CompletionInitializationContext): String? {
         val elementAtOffset = context.file.findElementAt(context.startOffset) ?: return null
         return when {
-            elementAtOffset.parentOfType<KtWhenEntry>() != null -> CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
+            elementAtOffset.parentOfType<KtWhenEntry>() != null -> ""
             else -> null
         }
     }
