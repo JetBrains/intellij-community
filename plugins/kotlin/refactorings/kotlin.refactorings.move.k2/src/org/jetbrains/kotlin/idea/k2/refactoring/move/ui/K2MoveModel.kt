@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.Panel
@@ -161,6 +162,14 @@ sealed class K2MoveModel {
 
             val correctedTarget = if (targetContainer is KtElement) targetContainer.correctForProjectView() else targetContainer
             val elementsToMove = elements.map { (it as? KtElement)?.correctForProjectView() }.toSet()
+
+            if (elementsToMove.any { it?.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
+                val message = RefactoringBundle.getCannotRefactorMessage(
+                    KotlinBundle.message("text.move.declaration.no.support.for.nested.declarations")
+                )
+                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
+                return null
+            }
 
             if (elementsToMove.any { it is KtEnumEntry }) {
                 val message = RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.no.support.for.enums"))
