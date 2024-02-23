@@ -112,25 +112,73 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/callableReference")
-    public static class CallableReference extends AbstractK2BindToElementTest {
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference")
+    public static class CallableMemberReference extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("FullyQualified.kt")
         public void testFullyQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/callableReference/FullyQualified.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference/FullyQualified.kt");
+        }
+
+        @TestMetadata("FullyQualifiedToTopLevel.kt")
+        public void testFullyQualifiedToTopLevel() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference/FullyQualifiedToTopLevel.kt");
         }
 
         @TestMetadata("RootPkg.kt")
         public void testRootPkg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/callableReference/RootPkg.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference/RootPkg.kt");
+        }
+
+        @TestMetadata("RootPkgToTopLevel.kt")
+        public void testRootPkgToTopLevel() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference/RootPkgToTopLevel.kt");
         }
 
         @TestMetadata("UnQualified.kt")
         public void testUnQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/callableReference/UnQualified.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference/UnQualified.kt");
+        }
+
+        @TestMetadata("UnQualifiedToTopLevel.kt")
+        public void testUnQualifiedToTopLevel() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableMemberReference/UnQualifiedToTopLevel.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/callableTopLevelReference")
+    public static class CallableTopLevelReference extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ConflictingImport.kt")
+        public void testConflictingImport() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableTopLevelReference/ConflictingImport.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableTopLevelReference/RootPkg.kt");
+        }
+
+        @TestMetadata("RootPkgToMember.kt")
+        public void testRootPkgToMember() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableTopLevelReference/RootPkgToMember.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableTopLevelReference/UnQualified.kt");
+        }
+
+        @TestMetadata("UnQualifiedToMember.kt")
+        public void testUnQualifiedToMember() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/callableTopLevelReference/UnQualifiedToMember.kt");
         }
     }
 
