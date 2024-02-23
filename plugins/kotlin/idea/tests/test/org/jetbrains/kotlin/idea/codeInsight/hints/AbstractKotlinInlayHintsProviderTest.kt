@@ -23,7 +23,7 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
             val path = jarFileSystem?.let {
                 val root = VfsUtilCore.getRootFile(virtualFile)
                 "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
-            } ?: virtualFile.toString()
+            } ?: virtualFile.name
             "[$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}]"
         }
         checkPluginIsCorrect(isK2Plugin())
@@ -51,7 +51,21 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
             defaultFile
         }
 
+        configureDependencies(defaultFile)
         assertThatActualHintsMatch(file)
+    }
+
+    private val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
+
+    protected fun configureDependencies(file: File) {
+        val parentFile = file.parentFile
+        for (suffix in dependencySuffixes) {
+            val dependency = file.name.replace(".kt", suffix)
+            val dependencyFile = File(parentFile, dependency)
+            if (dependencyFile.exists()) {
+                myFixture.configureByFile(dependencyFile.absolutePath)
+            }
+        }
     }
 
     protected abstract fun inlayHintsProvider(): InlayHintsProvider
