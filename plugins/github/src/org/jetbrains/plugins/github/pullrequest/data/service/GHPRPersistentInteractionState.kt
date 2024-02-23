@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.serialization.Serializable
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.time.Duration
@@ -25,7 +26,11 @@ class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPR
   @Serializable
   data class State(val prStates: List<PRState>)
 
-  fun isSeen(pr: GHPullRequestShort): Boolean {
+  fun isSeen(pr: GHPullRequestShort, currentUser: GHUser): Boolean {
+    if (pr.author?.id != currentUser.id && pr.reviewRequests.none { it.requestedReviewer?.id == currentUser.id }) {
+      return true
+    }
+
     val lastSeen = state.prStates.find { it.id == pr.prId }?.lastSeen
     val isSeen = (lastSeen != null && Date(lastSeen) >= pr.updatedAt)
 
