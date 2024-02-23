@@ -3,11 +3,9 @@ package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 public enum IntelliJPlatformProduct {
@@ -20,7 +18,7 @@ public enum IntelliJPlatformProduct {
   DATASPELL("DS", "DataSpell", PlatformUtils.DATASPELL_PREFIX, null),
   PYCHARM_EDU("PE", "PyCharm Educational Edition", PlatformUtils.PYCHARM_EDU_PREFIX, null),
   PHPSTORM("PS", "PhpStorm", PlatformUtils.PHP_PREFIX, "com.jetbrains.intellij.phpstorm:phpstorm"),
-  WEBSTORM("WS", "WebStorm", PlatformUtils.WEB_PREFIX, null),
+  WEBSTORM("WS", "WebStorm", PlatformUtils.WEB_PREFIX, "com.jetbrains.intellij.webstorm:webstorm"),
   APPCODE("OC", "AppCode", PlatformUtils.APPCODE_PREFIX, null),
   CLION("CL", "CLion", PlatformUtils.CLION_PREFIX, "com.jetbrains.intellij.clion:clion"),
   MOBILE_IDE("MI", "Mobile IDE", PlatformUtils.MOBILE_IDE_PREFIX, null),
@@ -74,6 +72,7 @@ public enum IntelliJPlatformProduct {
   }
 
   public static @Nullable IntelliJPlatformProduct fromMavenCoordinates(String groupId, String artifactId) {
-    return ContainerUtil.find(values(), product -> Objects.equals(product.getMavenCoordinates(), groupId + ":" + artifactId));
+    String coordinates = groupId + ":" + artifactId;
+    return ContainerUtil.find(values(), product -> Objects.equals(product.getMavenCoordinates(), coordinates));
   }
 }

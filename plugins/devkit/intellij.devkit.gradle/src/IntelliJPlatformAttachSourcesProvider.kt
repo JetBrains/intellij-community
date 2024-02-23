@@ -27,8 +27,9 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
   override fun getActions(orderEntries: MutableList<out LibraryOrderEntry>, psiFile: PsiFile): List<AttachSourcesAction> {
     // Search for a product that matches any of the entry coordinates. Return both product and coordinates, to refer to the same version.
     val (product, libraryCoordinates) = orderEntries.mapNotNull {
-      it.library?.getMavenCoordinates()
-    }.firstNotNullOfOrNull { coordinates ->
+      it.library
+    }.firstNotNullOfOrNull {
+      val coordinates = it.getMavenCoordinates() ?: return@firstNotNullOfOrNull null
       val product = IntelliJPlatformProduct.fromMavenCoordinates(coordinates.groupId, coordinates.artifactId)
       if (product == null) {
         return@firstNotNullOfOrNull null
@@ -50,7 +51,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
       else -> createAttachPlatformSourcesAction(psiFile, product, libraryCoordinates)
     }
 
-    return action?.let { listOf(it) } ?: emptyList()
+    return listOfNotNull(action)
   }
 
   /**
@@ -83,7 +84,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
 
         GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, externalProjectPath).whenComplete { path, error ->
           if (error != null) {
-            executionResult.setRejected()
+            executionResult.reject(error.message)
           }
           else {
             attachSources(path, orderEntries) {
