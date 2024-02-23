@@ -277,10 +277,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   private void redrawInlineInlays(@Nullable VirtualFile file, int line) {
     if (file == null) return;
 
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
+
     var document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return;
-
-    if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
 
     if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
       document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);

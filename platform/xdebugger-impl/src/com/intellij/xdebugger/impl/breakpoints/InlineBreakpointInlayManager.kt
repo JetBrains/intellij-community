@@ -46,6 +46,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
   private fun areInlineBreakpointsEnabled(virtualFile: VirtualFile?) = XDebuggerUtil.areInlineBreakpointsEnabled(virtualFile)
 
+  private fun areInlineBreakpointsEnabled(document: Document) =
+    areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))
+
   private val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
 
   private fun shouldAlwaysShowAllInlays() = Registry.`is`(SHOW_EVEN_TRIVIAL_KEY)
@@ -91,7 +94,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * Try to do it as soon as possible.
    */
   fun redrawLine(document: Document, line: Int) {
-    if (!areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))) return
+    if (!areInlineBreakpointsEnabled(document)) return
     scope.launch {
       redraw(document, line, null)
     }
@@ -103,7 +106,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * This request might be merged with subsequent requests for the same location.
    */
   private fun redrawLineQueued(document: Document, line: Int) {
-    if (!areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))) return
+    if (!areInlineBreakpointsEnabled(document)) return
     redrawQueue.queue(Update.create(Pair(document, line)) {
       redrawLine(document, line)
     })
