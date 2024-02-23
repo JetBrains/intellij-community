@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.platform.lvcs.impl.ActivityDiffObject
 import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ChangeSetSelection
-import com.intellij.platform.lvcs.impl.filePath
 import java.util.*
 
 internal class DifferenceObject(private val gateway: IdeaGateway,
@@ -19,13 +18,6 @@ internal class DifferenceObject(private val gateway: IdeaGateway,
                                 private val difference: Difference,
                                 private val targetFilePath: FilePath,
                                 private val isOldContentUsed: Boolean) : ActivityDiffObject {
-
-  constructor(gateway: IdeaGateway,
-              scope: ActivityScope.File,
-              selection: ChangeSetSelection,
-              difference: Difference,
-              isOldContentUsed: Boolean) :
-    this(gateway, scope, selection, difference, difference.filePath ?: scope.filePath, isOldContentUsed)
 
   override fun getFilePath() = targetFilePath
   override fun getFileStatus(): FileStatus {

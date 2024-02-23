@@ -18,25 +18,18 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
   val rootEntry = selection.data.getRootEntry(gateway)
   val entryPath = getEntryPath(gateway, scope)
   val differences = getDiff(rootEntry, selection, entryPath, isOldContentUsed)
-  val differenceObjects = mapToDiffObjects(gateway, scope, selection, isOldContentUsed, differences)
+  val differenceObjects = JBIterable.from(differences).filter { it.isFile }
+    .mapNotNull { it.toDiffObject(gateway, scope, selection, isOldContentUsed) }
   return ActivityDiffDataImpl(differenceObjects)
 }
 
-private fun mapToDiffObjects(gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection, isOldContentUsed: Boolean,
-                             differences: List<Difference>): Iterable<DifferenceObject> {
-  val fileDifferences = JBIterable.from(differences).filter { it.isFile }
-  return when (scope) {
-    is ActivityScope.File -> {
-      fileDifferences.map { DifferenceObject(gateway, scope, selection, it, isOldContentUsed) }
-    }
-    ActivityScope.Recent -> {
-      fileDifferences.map { difference ->
-        difference.filePath?.let {
-          DifferenceObject(gateway, scope, selection, difference, it, isOldContentUsed)
-        }
-      }.filterNotNull()
-    }
+private fun Difference.toDiffObject(gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection, isOldContentUsed: Boolean): DifferenceObject? {
+  val targetFilePath = if (scope is ActivityScope.File) {
+    filePath ?: scope.filePath
   }
+  else filePath
+  if (targetFilePath == null) return null
+  return DifferenceObject(gateway, scope, selection, this, targetFilePath, isOldContentUsed)
 }
 
 internal fun LocalHistoryFacade.createSingleFileDiffRequestProducer(project: Project,
