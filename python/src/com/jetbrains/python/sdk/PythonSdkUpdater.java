@@ -132,7 +132,8 @@ public final class PythonSdkUpdater {
         return;
       }
       // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress
-      cancelIndicatorOnProjectDisposal(indicator);
+      Disposable indicatorDisposable = getIndicatorDisposable(indicator);
+      Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
       if (Trigger.LOG.isDebugEnabled()) {
         Trigger.LOG.debug(
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
@@ -161,20 +162,24 @@ public final class PythonSdkUpdater {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
       finally {
-        // restart code analysis
-        ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Disposer.dispose(indicatorDisposable);
+          // restart code analysis
+          DaemonCodeAnalyzer.getInstance(myProject).restart();
+        }, myProject.getDisposed());
       }
     }
 
-    private void cancelIndicatorOnProjectDisposal(@NotNull ProgressIndicator indicator) {
-      Disposable indicatorDisposable = indicator instanceof Disposable disposable ? disposable : new Disposable() {
+    private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
+      return indicator instanceof Disposable disposable ? disposable : new Disposable() {
         @Override
         public void dispose() {
-          LOG.info("Cancelling update for " + mySdk + " due to project " + myProject + " disposal");
-          indicator.cancel();
+          LOG.info("Cancelling update for " + mySdk);
+          if (indicator.isRunning()) {
+            indicator.cancel();
+          }
         }
       };
-      Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
     }
 
     private void refreshPackages(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {
