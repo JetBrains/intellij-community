@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtilRt;
@@ -192,14 +193,22 @@ public final class VfsData {
 
     Object existingData = segment.objectFieldsArray.get(offset);
     if (existingData != null) {
-      //TODO RC: it seems like concurrency issue, really -- check the locks acquired up the stack in all invocation traces
-
       //FIXME RC: move .describeAlreadyCreatedFile() from FSRecordsImpl -- here, and replace static call with
       //  vfs instance call:
+
+      //RC: it seems like concurrency issue, really -- check the locks acquired up the stack in all invocation traces
+      VfsData owningVfsData = segment.owningVfsData;
+      FSRecordsImpl vfsPeer = owningVfsData.owningPersistentFS.peer();
+      int parentId = vfsPeer.getParent(id);
+      Segment parentSegment = owningVfsData.getSegment(parentId, false);
+      DirectoryData parentData = (DirectoryData)parentSegment.objectFieldsArray.get(objectOffsetInSegment(parentId));
+
       throw new FileAlreadyCreatedException(
         FSRecords.describeAlreadyCreatedFile(id, nameId)
         + " data: " + data
         + ", alreadyExistingData: " + existingData
+        + ", parentData: " + parentData
+        + ", synchronized(parentData): " + (parentData != null ? Thread.holdsLock(parentData) : "...")
       );
     }
     segment.objectFieldsArray.set(offset, data);

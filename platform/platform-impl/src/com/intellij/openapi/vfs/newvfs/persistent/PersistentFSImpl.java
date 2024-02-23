@@ -2376,8 +2376,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                             long newTimestamp) {
     if (reloadContentFromFS) {
       setFlag(file, Flags.MUST_RELOAD_CONTENT, true);
-      //TODO RC: but this flag is immediately reset back to false in .setLength() below -- so reloadContentFromFS
-      //         has no effect at all!
     }
 
     int fileId = getFileId(file);
