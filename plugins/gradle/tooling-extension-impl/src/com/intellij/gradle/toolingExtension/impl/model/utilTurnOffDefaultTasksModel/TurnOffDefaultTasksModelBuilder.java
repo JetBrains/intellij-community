@@ -23,7 +23,7 @@ public class TurnOffDefaultTasksModelBuilder extends AbstractModelBuilderService
     List<String> taskNames = startParameter.getTaskNames();
     if (taskNames.isEmpty()) {
       startParameter.setTaskNames(null);
-      List<String> helpTask = Collections.singletonList("help");
+      List<String> helpTask = Collections.singletonList(":help");
       project.setDefaultTasks(helpTask);
       startParameter.setExcludedTaskNames(helpTask);
     }
