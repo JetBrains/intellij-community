@@ -77,7 +77,7 @@ class MatchedRatioAt(showByDefault: Boolean = false, val n: Int) : SimilarityMet
 }
 
 class MatchedRatioWithRelevanceModel(showByDefault: Boolean = false, private val relevance: String) : SimilarityMetric(showByDefault) {
-  override val name = "With ${relevance.capitalize()} Model Matched Ratio"
+  override val name = "Matched Ratio With ${relevance.capitalize()} Model"
   override val description: String = "Length of selected proposal normalized by expected text (avg by invocations) " +
                                      "taking $relevance model into account"
 

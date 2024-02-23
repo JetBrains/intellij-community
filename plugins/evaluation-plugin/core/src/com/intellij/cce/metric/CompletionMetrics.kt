@@ -10,7 +10,7 @@ fun createBaseCompletionMetrics(showByDefault: Boolean): List<Metric> =
     RecallAtMetric(showByDefault = showByDefault, n = 1),
     RecallAtMetric(showByDefault = showByDefault, n = 5),
     RecallMetric(),
-    Precision(),
+    PrecisionMetric(),
     MeanRankMetric(),
     MeanLatencyMetric(),
     SuccessMeanLatencyMetric(),
@@ -45,8 +45,6 @@ fun createBenchmarkMetrics(): List<Metric> =
     MatchedRatio(showByDefault = true),
     MatchedRatioAt(showByDefault = false, n = 1),
     MatchedRatioAt(showByDefault = false, n = 3),
-    MatchedRatioWithRelevanceModel(showByDefault = true, "filter"),
-    MatchedRatioWithRelevanceModel(showByDefault = false, "trigger"),
     PrefixSimilarity(showByDefault = false),
     EditSimilarity(showByDefault = false),
     PerfectLine(showByDefault = true),
@@ -57,6 +55,13 @@ fun createBenchmarkMetrics(): List<Metric> =
     CancelledAtMetric(showByDefault = false, n = 5),
     MatchedLineLength(),
     FirstPerfectLineSession(),
+  )
+
+fun createCompletionRelevanceMetrics(showByDefault: Boolean, relevanceType: String): List<Metric> =
+  listOf(
+    PrecisionWithRelevanceMetric(showByDefault = showByDefault, relevanceType),
+    RecallWithRelevanceMetric(showByDefault = showByDefault, relevanceType),
+    MatchedRatioWithRelevanceModel(showByDefault = showByDefault, relevanceType)
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {

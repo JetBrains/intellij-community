@@ -1,11 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.metric
 
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
 
-class Precision : Metric {
+open class PrecisionMetric : Metric {
   private val sample = mutableListOf<Double>()
   override val name = "Precision"
   override val description: String = "Ratio of selected proposals by all proposals"
@@ -17,20 +18,28 @@ class Precision : Metric {
   override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
 
   override fun evaluate(sessions: List<Session>): Double {
-    val lookups = sessions.flatMap { session -> session.lookups }
+    val lookups = getLookups(sessions)
     val fileSample = Sample()
     lookups.forEach { lookup ->
       for (suggestion in lookup.suggestions) {
-        if (suggestion.isRelevant) {
-          fileSample.add(1.0)
-          sample.add(1.0)
-        }
-        else {
-          fileSample.add(0.0)
-          sample.add(0.0)
-        }
+        val value = if (suggestion.isRelevant) 1.0 else 0.0
+        fileSample.add(value)
+        sample.add(value)
       }
     }
     return fileSample.mean()
+  }
+
+  protected open fun getLookups(sessions: List<Session>): List<Lookup> {
+    return sessions.flatMap { session -> session.lookups }
+  }
+}
+
+class PrecisionWithRelevanceMetric(override val showByDefault: Boolean, private val relevance: String) : PrecisionMetric() {
+  override val name = "Precision With ${relevance.capitalize()} Model"
+  override val description: String = "Ratio of selected proposals by all proposals taking $relevance model into account"
+
+  override fun getLookups(sessions: List<Session>): List<Lookup> {
+    return super.getLookups(sessions).filter { it.additionalInfo["${relevance}_decision"] != "SKIP" }
   }
 }
