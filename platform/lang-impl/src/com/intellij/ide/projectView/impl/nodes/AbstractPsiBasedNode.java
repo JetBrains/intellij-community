@@ -35,8 +35,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredText;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.icons.IconWithOverlay;
-import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.icons.IconWithRectangularOverlay;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
@@ -48,7 +47,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -249,13 +247,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
     if (file.is(VFileProperty.SYMLINK)) {
       if (ExperimentalUI.isNewUI()) {
-        icon = new IconWithOverlay(icon, PlatformIcons.SYMLINK_ICON) {
-          @Override
-          public @NotNull Shape getOverlayShape(int x, int y) {
-            var scale = (float) getScale(DerivedScaleType.EFF_USR_SCALE);
-            return new Rectangle2D.Float(x + scale * (16 - 7), y, 7 * scale, 7 * scale);
-          }
-        };
+        icon = new IconWithRectangularOverlay(
+          icon,
+          PlatformIcons.SYMLINK_ICON,
+          new Rectangle(16 - 7, 0, 7, 7)
+        );
       }
       else {
         icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
