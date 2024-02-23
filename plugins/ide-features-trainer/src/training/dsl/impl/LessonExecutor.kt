@@ -412,11 +412,20 @@ internal class LessonExecutor(val lesson: KLesson,
     // do not process the next task if the current task is not fully completed
     // or lesson has been stopped during task completion (dialogs in Recent Files and Restore removed code lessons)
     // or the next task already has been processed
-    val allStepsAreCompleted = taskContext.steps.all { it.isDone && it.get() }
-    if (!allStepsAreCompleted || hasBeenStopped || taskInfo.nextTaskHasBeenScheduled) return
+    val stepIsDone: (CompletableFuture<Boolean>) -> Boolean = { it.isDone && it.get() }
+    val taskBecomesCompleted = when (taskContext.passMode) {
+      TaskContext.PassMode.AllSteps -> taskContext.steps.all(stepIsDone)
+      TaskContext.PassMode.AnyStep -> taskContext.steps.any(stepIsDone)
+    }
+    if (!taskBecomesCompleted || hasBeenStopped || taskInfo.nextTaskHasBeenScheduled) return
 
     clearRestore()
     LessonManager.instance.passExercise()
+    for (step in taskContext.steps) {
+      if (!step.isDone) {
+        step.cancel(true)
+      }
+    }
     if (taskContext.propagateHighlighting != false) {
       if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
       if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent

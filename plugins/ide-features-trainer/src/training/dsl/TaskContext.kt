@@ -25,6 +25,12 @@ abstract class TaskContext : LearningDslBase {
   open val taskId: TaskId = TaskId(0)
 
   /**
+   * By default, the engine requires all steps become completed before move to the next task.
+   * The behavior can be changed to pass the task if at least one step becomes completed.
+   */
+  var passMode: PassMode = PassMode.AllSteps
+
+  /**
    * This property can be set to the true if you want that the next task restore will jump over the current task.
    * Default `null` value is reserved for the future automatic transparent restore calculation.
    */
@@ -221,6 +227,11 @@ abstract class TaskContext : LearningDslBase {
   }
 
   data class TaskId(val idx: Int)
+
+  enum class PassMode {
+    AllSteps,
+    AnyStep
+  }
 
   companion object {
     val CaretRestoreProposal: String
