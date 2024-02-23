@@ -433,7 +433,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   }
 
   private static int readHeader(@NotNull ByteBuffer keyBuffer) {
-    return keyBuffer.get(0);
+    return keyBuffer.getInt(0);
   }
 
   private static void putHeader(@NotNull ByteBuffer keyBuffer,

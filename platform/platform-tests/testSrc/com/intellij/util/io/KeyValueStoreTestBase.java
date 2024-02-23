@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.dev.StorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
@@ -30,10 +31,21 @@ public abstract class KeyValueStoreTestBase<K, V, S extends KeyValueStore<K, V>>
   private static final int ENOUGH_KEY_VALUES = 1_000_000;
 
   /** Simplest key-value substrate decoder */
-  public static final IntFunction<Entry<String, String>> STRING_SUBSTRATE_DECODER = substrate -> Map.entry(
-    String.valueOf(substrate),
-    String.valueOf(substrate) + '.' + substrate
-  );
+  public static final IntFunction<Entry<String, String>> STRING_SUBSTRATE_DECODER = substrate -> {
+    String key = String.valueOf(substrate);
+    if(substrate % 1024 == 1023){
+      String veryLongKey = StringUtil.repeat(key, 1024);
+      return Map.entry(
+        veryLongKey,
+        String.valueOf(substrate) + '.' + veryLongKey
+      );
+    }
+
+    return Map.entry(
+      key,
+      String.valueOf(substrate) + '.' + substrate
+    );
+  };
 
   protected static int[] keyValuesSubstrate;
 
