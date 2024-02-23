@@ -237,6 +237,15 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/itor")
+    public static class Itor extends AbstractK2PostfixTemplateTest {
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            performTest();
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/listOf")
     public static class ListOf extends AbstractK2PostfixTemplateTest {
         @TestMetadata("classLiteral.kt")

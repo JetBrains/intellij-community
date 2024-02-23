@@ -15,10 +15,14 @@ import org.jetbrains.kotlin.name.ClassId
 
 internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("for", provider)
 
-internal class KotlinIterPostfixTemplate(
+@Suppress("SpellCheckingInspection")
+internal class KotlinIterPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("iter", provider)
+
+@Suppress("SpellCheckingInspection")
+internal class KotlinItorPostfixTemplate(
     provider: KotlinPostfixTemplateProvider
 ) : StringBasedPostfixTemplate(
-    "iter",
+    "itor",
     /* example = */ "val iterator = expr.iterator(); while (iterator.hasNext()) { val next = iterator.next() }",
     /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { canBeIterated(it) }),
     /* provider = */ provider

@@ -19,6 +19,7 @@ internal class KotlinPostfixTemplateProvider : PostfixTemplateProvider {
             KotlinSpreadPostfixTemplate(this),
             KotlinForPostfixTemplate(this),
             KotlinIterPostfixTemplate(this),
+            KotlinItorPostfixTemplate(this),
             KotlinForReversedPostfixTemplate(this),
             KotlinForWithIndexPostfixTemplate(this),
             KotlinForLoopNumbersPostfixTemplate(this),
