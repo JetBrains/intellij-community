@@ -230,6 +230,9 @@
     <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
                         serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.ui.icons.PredefinedIconOverlayService"
+                        serviceImplementation="com.intellij.ui.PredefinedIconOverlayServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.psi.search.PredefinedSearchScopeProvider"
                         serviceImplementation="com.intellij.psi.search.PredefinedSearchScopeProviderImpl"/>
 

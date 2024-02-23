@@ -573,7 +573,7 @@ private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int
     }
   }
   if (file.`is`(VFileProperty.SYMLINK)) {
-    icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.SYMLINK_ICON))
+    icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon)
   }
   if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
       Registry.`is`("ide.locked.icon.enabled", false) &&
