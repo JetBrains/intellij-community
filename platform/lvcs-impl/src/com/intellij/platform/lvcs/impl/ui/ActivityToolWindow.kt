@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.history.integration.LocalHistoryBundle
@@ -77,5 +77,16 @@ object ActivityToolWindow {
     })
 
     onVisibilityChanged(isVisiblePredicate())
+  }
+
+  internal fun onOrientationChanged(project: Project, disposable: Disposable, onOrientationChanged: (Boolean) -> Unit) {
+    val activityToolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID) ?: return
+    val isVerticalPredicate = { !activityToolWindow.anchor.isHorizontal }
+
+    project.messageBus.connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) = onOrientationChanged(isVerticalPredicate())
+    })
+
+    onOrientationChanged(isVerticalPredicate())
   }
 }

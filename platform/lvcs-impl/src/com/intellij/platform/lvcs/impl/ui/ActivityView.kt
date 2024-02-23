@@ -72,6 +72,8 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private val changesBrowser = createChangesBrowser()
   private val editorDiffPreview = createDiffPreview(changesBrowser)
 
+  private val changesSplitter: TwoKeySplitter
+
   init {
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
     val scrollPane = ScrollPaneFactory.createScrollPane(activityList,
@@ -106,9 +108,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     mainComponent.add(progressStripe, BorderLayout.CENTER)
     mainComponent.add(toolbarComponent, BorderLayout.NORTH)
 
-    val changesSplitter = TwoKeySplitter(true,
-                                         ProportionKey("lvcs.changes.splitter.vertical", 0.5f,
-                                                       "lvcs.changes.splitter.horizontal", 0.5f))
+    changesSplitter = TwoKeySplitter(true,
+                                     ProportionKey("lvcs.changes.splitter.vertical", 0.5f,
+                                                   "lvcs.changes.splitter.horizontal", 0.5f))
     changesSplitter.firstComponent = mainComponent
     changesSplitter.secondComponent = changesBrowser
 
@@ -286,6 +288,10 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
   internal fun showDiff() = editorDiffPreview.performDiffAction()
 
+  internal fun setVertical(isVertical: Boolean) {
+    changesSplitter.orientation = isVertical
+  }
+
   override fun dispose() {
     coroutineScope.cancel()
   }
@@ -314,6 +320,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       ActivityToolWindow.showTab(project, content)
       ActivityToolWindow.onContentVisibilityChanged(project, content, activityView) { isVisible ->
         activityView.model.setVisible(isVisible)
+      }
+      ActivityToolWindow.onOrientationChanged(project, activityView) { isVertical ->
+        activityView.setVertical(isVertical)
       }
     }
 
