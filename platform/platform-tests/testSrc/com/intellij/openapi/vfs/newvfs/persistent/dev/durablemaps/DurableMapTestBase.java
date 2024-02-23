@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.StorageTestingUtils;
 import com.intellij.util.io.KeyValueStoreTestBase;
 import com.intellij.util.io.dev.durablemaps.Compactable;
 import com.intellij.util.io.dev.durablemaps.DurableMap;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -12,10 +13,17 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.IntFunction;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public abstract class DurableMapTestBase<M extends DurableMap<String, String>> extends KeyValueStoreTestBase<M> {
+public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> extends KeyValueStoreTestBase<K, V, M> {
+
+  protected DurableMapTestBase(@NotNull IntFunction<Map.Entry<K, V>> decoder) {
+    super(decoder);
+  }
+
   //TODO RC: most of the tests are actual for PersistentMap also! So better extract them into
   //         the superclass, if DurableMap/PersistentMap ifaces merge.
 
@@ -27,8 +35,9 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
 
   @Test
   public void containsMappingReturnsTrue_forSingleMappingPut() throws IOException {
-    String key = "testKey";
-    String value = "testValue";
+    Map.Entry<K, V> entry = keyValue(43);
+    K key = entry.getKey();
+    V value = entry.getValue();
 
     assertNull(storage.get(key),
                "Empty store contains no keys");
@@ -40,8 +49,9 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
 
   @Test
   public void ifSingleMappingPut_AndRemoved_containsMappingReturnsFalse() throws IOException {
-    String key = "testKey";
-    String value = "testValue";
+    Map.Entry<K, V> entry = keyValue(43);
+    K key = entry.getKey();
+    V value = entry.getValue();
 
     assertNull(storage.get(key),
                "Empty store contains no keys");
@@ -55,12 +65,13 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
 
   @Test
   public void secondPutWithSameKey_overridesValuePreviouslyPut() throws IOException {
-    String key = "testKey";
-    String value = "testValue";
+    Map.Entry<K, V> entry = keyValue(43);
+    K key = entry.getKey();
+    V value = entry.getValue();
 
     storage.put(key, value);
 
-    String anotherValue = "anotherTestValue";
+    V anotherValue = keyValue(45).getValue();
     storage.put(key, anotherValue);
 
     assertEquals(anotherValue,
@@ -71,7 +82,7 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
   @Test
   public void compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(@TempDir Path tempDir) throws Exception {
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
+      Map.Entry<K, V> entry = keyValue(substrate);
       storage.put(entry.getKey(), entry.getValue());
     }
     assertTrue(
@@ -93,9 +104,9 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
       );
 
       for (int substrate : keyValuesSubstrate) {
-        Map.Entry<String, String> entry = keyValue(substrate);
-        String key = entry.getKey();
-        String value = entry.getValue();
+        Map.Entry<K, V> entry = keyValue(substrate);
+        K key = entry.getKey();
+        V value = entry.getValue();
         assertEquals(value,
                      compactedStorage.get(key),
                      "compacted map[" + key + "] must contain the same mapping as original");
@@ -110,14 +121,14 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
   public void compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(@TempDir Path tempDir) throws Exception {
     //store original values:
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
+      Map.Entry<K, V> entry = keyValue(substrate);
       storage.put(entry.getKey(), entry.getValue());
     }
     //overwrite with new values:
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String newValue = entry.getValue() + "_random_Suffix";
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V newValue = differentValue(substrate, 17);
 
       storage.put(key, newValue);
     }
@@ -144,9 +155,9 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
       );
 
       for (int substrate : keyValuesSubstrate) {
-        Map.Entry<String, String> entry = keyValue(substrate);
-        String key = entry.getKey();
-        String value = entry.getValue() + "_random_Suffix";
+        Map.Entry<K, V> entry = keyValue(substrate);
+        K key = entry.getKey();
+        V value = differentValue(substrate, 17);
         assertEquals(value,
                      compactedStorage.get(key),
                      "compacted map[" + key + "] must contain the most recent value from original");
@@ -157,18 +168,16 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
     }
   }
 
-
   @Test
   public void forManyMappings_Put_ContainsMappingReturnsTrue() throws IOException {
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
+      Map.Entry<K, V> entry = keyValue(substrate);
       storage.put(entry.getKey(), entry.getValue());
     }
 
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      //String value = entry.getValue();
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
       assertTrue(storage.containsMapping(key),
                  "store[" + key + "] must contain mapping");
     }
@@ -177,9 +186,9 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
   @Test
   public void storageIsEmpty_afterManyMappingsPut_AndRemoved() throws IOException {
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String value = entry.getValue();
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V value = entry.getValue();
 
       storage.put(key, value);
 
@@ -201,7 +210,7 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
     assertTrue(storage.isEmpty(),
                "Storage must be empty after removing all the entries");
 
-    HashSet<String> keys = new HashSet<>();
+    HashSet<K> keys = new HashSet<>();
     storage.processKeys(key -> {
       keys.add(key);
       return true;
@@ -214,27 +223,27 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
   public void forManyMappings_putWithSameKey_overridesValuesPreviouslyPut() throws IOException {
     //store original values:
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String value = entry.getValue();
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V value = entry.getValue();
 
       storage.put(key, value);
     }
 
     //overwrite with new values:
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String newValue = entry.getValue() + "_random_Suffix";
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V newValue = differentValue(substrate, 17);
 
       storage.put(key, newValue);
     }
 
     //check new values is returned:
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String expectedValue = entry.getValue() + "_random_Suffix";
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V expectedValue = differentValue(substrate, 17);
       assertEquals(expectedValue,
                    storage.get(key),
                    "store[" + key + "] must return value from last put()");
@@ -244,9 +253,9 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
   @Test
   public void forManyMappings_AfterPutAndRemove_containsMappingReturnsFalse() throws IOException {
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String value = entry.getValue();
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V value = entry.getValue();
 
       storage.put(key, value);
 
@@ -263,13 +272,29 @@ public abstract class DurableMapTestBase<M extends DurableMap<String, String>> e
     }
 
     for (int substrate : keyValuesSubstrate) {
-      Map.Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
+      Map.Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
       assertFalse(storage.containsMapping(key),
                   "store[" + key + "] must NOT contain mapping after .remove()");
 
       assertNull(storage.get(key),
                  "store[" + key + "] must return null after .remove()");
     }
+  }
+
+
+  /** given salt!=0 return value which is different from keyValue(substrate).getValue() */
+  private V differentValue(int substrate,
+                           int salt) {
+    V originalValue = keyValue(substrate).getValue();
+    int differentSubstrate = substrate + salt;
+    V differentValue = keyValue(differentSubstrate).getValue();
+    if (Objects.equals(originalValue, differentValue)) {
+      //implicit assumption: (key, value) pairs are uniquely identified by substrate
+      // so modifying substrate => we must get different _both_ key and value
+      throw new AssertionError("value(" + substrate + ")(=" + originalValue + ") happens to be == " +
+                               "value(" + differentSubstrate + ")(=" + differentValue + ")");
+    }
+    return differentValue;
   }
 }

@@ -15,7 +15,11 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<DurableMapOverAppendOnlyLog<String, String>> {
+public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, String, DurableMapOverAppendOnlyLog<String, String>> {
+
+  public DurableMapOverAppendOnlyLogTest() {
+    super(STRING_SUBSTRATE_DECODER);
+  }
 
   @Override
   protected @NotNull StorageFactory<DurableMapOverAppendOnlyLog<String, String>> factory() {
