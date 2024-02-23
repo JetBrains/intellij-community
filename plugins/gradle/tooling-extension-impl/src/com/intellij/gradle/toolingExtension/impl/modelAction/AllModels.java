@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
-import com.intellij.util.ArrayUtilRt;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
@@ -26,7 +25,8 @@ import java.util.function.Consumer;
 public final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
   @NotNull private final List<Build> includedBuilds = new ArrayList<>();
   private transient Map<String, String> myBuildsKeyPrefixesMapping;
-  private byte[] openTelemetryTrace = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+
+  private final List<byte[]> myOpenTelemetryTraces = new ArrayList<>();
 
   public AllModels(
     @NotNull GradleBuild mainGradleBuild,
@@ -77,12 +77,12 @@ public final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     }
   }
 
-  public byte[] getOpenTelemetryTrace() {
-    return openTelemetryTrace;
+  public List<byte[]> getOpenTelemetryTraces() {
+    return myOpenTelemetryTraces;
   }
 
-  public void setOpenTelemetryTrace(byte[] openTelemetryTrace) {
-    this.openTelemetryTrace = openTelemetryTrace;
+  public void addOpenTelemetryTrace(byte[] openTelemetryTrace) {
+    myOpenTelemetryTraces.add(openTelemetryTrace);
   }
 
   @Override

@@ -321,7 +321,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       gradleCallSpan.end();
     }
 
-    exportRecordedTraces(allModels);
+    exportRecordedTraces(allModels.getOpenTelemetryTraces());
 
     resolverCtx.checkCancelled();
     if (useCustomSerialization) {
@@ -979,17 +979,19 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return context;
   }
 
-  private static void exportRecordedTraces(@NotNull AllModels allModels) {
-    byte[] traces = allModels.getOpenTelemetryTrace();
-    if (traces.length == 0) {
+  private static void exportRecordedTraces(@NotNull List<byte[]> openTelemetryTraces) {
+    if (openTelemetryTraces.isEmpty()) {
       return;
     }
     URI telemetryHost = getOpenTelemetryAddress();
     if (telemetryHost == null) {
       return;
     }
-    ApplicationManager.getApplication()
-      .executeOnPooledThread(() -> GradleOpenTelemetryTraceExporter.export(telemetryHost, traces));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      for (byte[] traces : openTelemetryTraces) {
+        GradleOpenTelemetryTraceExporter.export(telemetryHost, traces);
+      }
+    });
   }
 
   private static @Nullable URI getOpenTelemetryAddress() {
