@@ -100,7 +100,7 @@ public final class XLineBreakpointManager {
             if (file == null) continue;
             var document = FileDocumentManager.getInstance().getDocument(file);
             if (document == null) continue;
-            if (!XDebuggerUtil.areInlineBreakpointsEnabled(document)) {
+            if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) {
               updateBreakpoints(document);
             }
           }
@@ -160,7 +160,7 @@ public final class XLineBreakpointManager {
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !positions.add(XDebuggerUtil.areInlineBreakpointsEnabled(document) ? breakpoint.getOffset() : breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(XDebuggerUtil.areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document)) ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -43,7 +44,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     300, true, null, project, null, false
   ).setRestartTimerOnAdd(true)
 
-  private fun areInlineBreakpointsEnabled(document: Document) = XDebuggerUtil.areInlineBreakpointsEnabled(document)
+  private fun areInlineBreakpointsEnabled(virtualFile: VirtualFile?) = XDebuggerUtil.areInlineBreakpointsEnabled(virtualFile)
 
   private val SHOW_EVEN_TRIVIAL_KEY = "debugger.show.breakpoints.inline.even.trivial"
 
@@ -90,7 +91,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * Try to do it as soon as possible.
    */
   fun redrawLine(document: Document, line: Int) {
-    if (!areInlineBreakpointsEnabled(document)) return
+    if (!areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))) return
     scope.launch {
       redraw(document, line, null)
     }
@@ -102,7 +103,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * This request might be merged with subsequent requests for the same location.
    */
   private fun redrawLineQueued(document: Document, line: Int) {
-    if (!areInlineBreakpointsEnabled(document)) return
+    if (!areInlineBreakpointsEnabled(FileDocumentManager.getInstance().getFile(document))) return
     redrawQueue.queue(Update.create(Pair(document, line)) {
       redrawLine(document, line)
     })
@@ -110,9 +111,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
 
   fun redrawDocument(e: DocumentEvent) {
     val document = e.document
-    if (!XDebuggerUtil.areInlineBreakpointsEnabled(document)) return
     val file = FileDocumentManager.getInstance().getFile(document)
     if (file == null) return
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return
     val firstLine: Int = document.getLineNumber(e.offset)
     val lastLine: Int = document.getLineNumber(e.offset + e.newLength)
     redrawLineQueued(document, firstLine)
@@ -125,7 +126,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    * Refresh all inlays in the editor.
    */
   private fun initializeInNewEditor(editor: Editor) {
-    if (!areInlineBreakpointsEnabled(editor.document)) return
+    if (!areInlineBreakpointsEnabled(editor.virtualFile)) return
     if (!isSuitableEditor(editor)) return
     scope.launch {
       val document = editor.document
@@ -148,7 +149,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       if (!isSuitableEditor(editor)) continue
 
       val document = editor.document
-      val enabled = areInlineBreakpointsEnabled(document)
+      val enabled = areInlineBreakpointsEnabled(editor.virtualFile)
       if (enabled) {
         // We might be able to iterate all editors inside redraw,
         // but this procedure is a really cold path and doesn't worse any optimization.
