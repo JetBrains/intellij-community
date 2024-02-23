@@ -165,17 +165,17 @@
       "since": "2024.1"
     },
     {
-      "key": "Code.Block.inlineQuickDoc.backgroundColor",
+      "key": "Code.Block.EditorPane.backgroundColor",
       "description": "Block code elements background in editor inline QuickDoc",
       "since": "2024.1"
     },
     {
-      "key": "Code.Block.inlineQuickDoc.backgroundOpacity",
+      "key": "Code.Block.EditorPane.backgroundOpacity",
       "description": "Block code elements background opacity in editor inline QuickDoc in percents",
       "since": "2024.1"
     },
     {
-      "key": "Code.Block.inlineQuickDoc.borderColor",
+      "key": "Code.Block.EditorPane.borderColor",
       "description": "Block code elements background in editor inline QuickDoc",
       "since": "2024.1"
     },

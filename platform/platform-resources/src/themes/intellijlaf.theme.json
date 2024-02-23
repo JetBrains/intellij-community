@@ -169,14 +169,16 @@
     "Code": {
       "Inline": {
         "backgroundColor": "#5A5D6B",
-        "backgroundOpacity": 10
+        "backgroundOpacity": 7
       },
       "Block": {
         "backgroundOpacity": 100,
         "borderColor":"#EBECF0",
-        "inlineQuickDoc.backgroundColor": "#5A5D6B",
-        "inlineQuickDoc.backgroundOpacity": 4,
-        "inlineQuickDoc.borderColor":"#EBECF0"
+        "EditorPane": {
+          "backgroundColor": "#5A5D6B",
+          "backgroundOpacity": 4,
+          "borderColor": "#EBECF0"
+        }
       }
     },
 
