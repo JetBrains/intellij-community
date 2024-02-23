@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.border;
 
 import com.intellij.ui.JBColor;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UpdateScaleHelper;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ public class CustomLineBorder implements Border {
   private final Insets myUnscaledInsets;
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets myInsets = new Insets(0, 0, 0, 0);
-  private final UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
+  private final LazyInitializer.LazyValue<UpdateScaleHelper> myUpdateScaleHelper = LazyInitializer.create(UpdateScaleHelper::new);
 
   private CustomLineBorder(@Nullable Color color, @NotNull Insets insets, boolean preScaled) {
     myColor = color;
@@ -59,7 +60,7 @@ public class CustomLineBorder implements Border {
   }
 
   private void updateInsetsIfNeeded() {
-    myUpdateScaleHelper.saveScaleAndRunIfChanged(() -> {
+    myUpdateScaleHelper.get().saveScaleAndRunIfChanged(() -> {
       updateInsets();
     });
   }
