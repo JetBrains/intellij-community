@@ -95,7 +95,7 @@ data class PythonSimplePackageSpecification(override val name: String,
                                             override val repository: PyPackageRepository?,
                                             val relation: PyRequirementRelation? = null) : PythonPackageSpecification {
   override var versionSpecs: String? = null
-    get() = if (field == null && version != null) "${relation?.presentableText ?: "=="}$version" else ""
+    get() = if (field != null) field else if (version != null) "${relation?.presentableText ?: "=="}$version" else ""
 }
 
 data class PythonLocalPackageSpecification(override val name: String,
