@@ -192,7 +192,7 @@ class GitLabMergeRequestDraftNoteImpl(
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
           // Checked by canEdit
-          api.rest.updateDraftNote(project, mr.iid, noteData.id.restId.toLong(), newText)
+          api.rest.updateDraftNote(project, mr.iid, noteData.id.restId, noteData.position, newText)
         }
       }
       data.update { it.copy(note = newText) }
