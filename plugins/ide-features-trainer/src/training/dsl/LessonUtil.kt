@@ -49,7 +49,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
-import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
@@ -263,15 +262,6 @@ object LessonUtil {
   }
 
   fun rawShift() = rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
-
-  fun checkToolbarIsShowing(ui: ActionButton): Boolean {
-    // Some buttons are duplicated to several tab-panels. It is a way to find an active one.
-    val parentOfType = UIUtil.getParentOfType(JBTabsImpl.Toolbar::class.java, ui)
-    val location = parentOfType?.location
-    val x = location?.x
-    return x != 0
-  }
-
 
   val breakpointXRange: (width: Int) -> IntRange = { IntRange(14, it - 30) }
 
@@ -640,7 +630,7 @@ fun LessonContext.highlightButtonById(actionId: String,
       invokeInBackground {
         val result = try {
           LearningUiUtil.findAllShowingComponentWithTimeout(project, ActionButton::class.java, seconds01) { ui ->
-            ui.action == needToFindButton && LessonUtil.checkToolbarIsShowing(ui)
+            ui.action == needToFindButton
           }
         }
         catch (e: Throwable) {
