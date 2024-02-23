@@ -73,6 +73,8 @@ open class IdeStarter : ModernApplicationStarter() {
 
       val openProjectBlock: suspend CoroutineScope.() -> Unit = {
         openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
+        // update "open projects" state to whichever projects were decided to be opened in openProjectIfNeeded (=which are open now)
+        serviceAsync<RecentProjectsManager>().updateLastProjectPath()
       }
 
       val starter = FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter(this@IdeStarter)
