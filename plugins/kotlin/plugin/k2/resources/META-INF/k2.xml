@@ -214,6 +214,22 @@
             bundle="messages.KotlinBundle"
             nameKey="hints.settings.values.ranges"
             descriptionKey="inlay.kotlin.values.hints"/>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KtParameterHintsProvider"
+            isEnabledByDefault="false"
+            group="PARAMETERS_GROUP"
+            providerId="kotlin.parameters.hints"
+            bundle="messages.KotlinBundle"
+            nameKey="hints.settings.parameters"
+            descriptionKey="inlay.kotlin.parameters.hints">
+<!--        <option bundle="messages.KotlinBundle"-->
+<!--              optionId="hints.parameters.blacklisted"-->
+<!--              enabledByDefault="false"-->
+<!--              nameKey="hints.settings.parameters.blacklisted"-->
+<!--              descriptionKey="inlay.kotlin.parameters.hints.blacklisted"/>-->
+    </codeInsight.declarativeInlayProvider>
   </extensions>
 
   <extensionPoints>

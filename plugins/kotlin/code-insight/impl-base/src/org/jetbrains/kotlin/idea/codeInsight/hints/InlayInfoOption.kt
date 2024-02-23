@@ -14,3 +14,5 @@ val SHOW_FUNCTION_PARAMETER_TYPES = NamedInlayInfoOption("hints.type.function.pa
 
 val SHOW_RETURN_EXPRESSIONS = NamedInlayInfoOption("hints.lambda.return")
 val SHOW_IMPLICIT_RECEIVERS_AND_PARAMS = NamedInlayInfoOption("hints.lambda.receivers.parameters")
+
+val SHOW_BLACKLISTED_PARAMETERS = NamedInlayInfoOption("hints.parameters.blacklisted")
