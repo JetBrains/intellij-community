@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
@@ -108,9 +109,29 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assert(targetElement.asString() == "")
     }
 
+    fun `test move top level declaration`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            class Foo { }
+            
+            class B<caret>ar { }
+        """.trimIndent())
+        val barClass = myFixture.elementAtCaret
+        val moveModel = K2MoveModel.create(arrayOf(barClass), null)
+        assertInstanceOf<K2MoveModel.Members>(moveModel)
+        val moveMembersModel = moveModel as K2MoveModel.Members
+        assertSize(1, moveMembersModel.source.elements)
+        val sourceElement = moveMembersModel.source.elements.firstOrNull()
+        assert(sourceElement is KtClass && sourceElement.name == "Bar")
+        val targetElement = moveMembersModel.target.pkgName
+        assert(targetElement.asString() == "foo")
+    }
+
     fun `test move enum entry should fail`() {
         PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
-        myFixture.configureByText("Foo.kt", """
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
             enum Foo {
@@ -120,6 +141,53 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         val barEnumEntry = myFixture.elementAtCaret
         assertThrows(RefactoringErrorHintException::class.java) {
             K2MoveModel.create(arrayOf(barEnumEntry), null)
+        }
+    }
+
+    fun `test move nested class should fail`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            class Foo {
+                class Ba<caret>r { }
+            }
+        """.trimIndent())
+        val nestedClass = myFixture.elementAtCaret
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(nestedClass), null)
+        }
+    }
+
+    fun `test move instance method should fail`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            class Foo {
+                fun fo<caret>o() { }
+            }
+        """.trimIndent())
+        val instanceMethod = myFixture.elementAtCaret
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(instanceMethod), null)
+        }
+    }
+
+    fun `test move companion object method should fail`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            package foo
+            
+            class Foo {
+                companion object {
+                    fun fo<caret>o() { }
+                } 
+            }
+        """.trimIndent())
+        val companionObjectMethod = myFixture.elementAtCaret
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(companionObjectMethod), null)
         }
     }
 }
