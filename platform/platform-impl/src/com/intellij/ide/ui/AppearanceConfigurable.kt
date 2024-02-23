@@ -193,7 +193,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .gap(RightGap.SMALL)
 
           theme.enabledIf(syncThemeAndEditorSchemePredicate.not())
-          cell(lafManager.settingsToolbar)
+          cell(lafManager.createSettingsToolbar())
             .visible(lafManager.autodetectSupported)
         }
       }

@@ -48,7 +48,7 @@ public abstract class LafManager {
   public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer(JComponent component);
 
   @ApiStatus.Internal
-  public abstract @NotNull JComponent getSettingsToolbar();
+  public abstract @NotNull JComponent createSettingsToolbar();
 
   /**
    * @deprecated Use {@link LafManager#setCurrentUIThemeLookAndFeel(UIThemeLookAndFeelInfo)}
