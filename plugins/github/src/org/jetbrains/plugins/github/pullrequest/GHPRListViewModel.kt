@@ -10,10 +10,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -23,7 +23,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListPersistentSea
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchHistoryModel
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import javax.swing.ListModel
 
 @ApiStatus.Experimental
@@ -39,6 +38,7 @@ class GHPRListViewModel internal constructor(
   private val listLoader = dataContext.listLoader
 
   val account: GithubAccount = dataContext.securityService.account
+  private val currentUser: GHUser = dataContext.securityService.currentUser
   val repository: @NlsSafe String = repositoryDataService.repositoryCoordinates.repositoryPath.repository
 
   val listModel: ListModel<GHPullRequestShort> = CollectionListModel(listLoader.loadedData).also { model ->
@@ -46,16 +46,16 @@ class GHPRListViewModel internal constructor(
       override fun onDataAdded(startIdx: Int) {
         val loadedData = listLoader.loadedData
         model.add(loadedData.subList(startIdx, loadedData.size))
-        hasUpdatesState.update { hasUpdates -> hasUpdates || loadedData.any { !interactionStateService.isSeen(it) } }
+        hasUpdatesState.update { hasUpdates -> hasUpdates || loadedData.any { !interactionStateService.isSeen(it, currentUser) } }
       }
 
       override fun onDataUpdated(idx: Int) {
         model.setElementAt(listLoader.loadedData[idx], idx)
-        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it) } }
+        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it, currentUser) } }
       }
       override fun onDataRemoved(idx: Int) {
         model.remove(idx)
-        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it) } }
+        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it, currentUser) } }
       }
 
       override fun onAllDataRemoved() {
