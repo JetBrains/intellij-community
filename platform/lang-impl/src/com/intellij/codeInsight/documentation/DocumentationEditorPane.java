@@ -16,6 +16,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.html.UtilsKt;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +40,8 @@ import java.util.function.Function;
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
-import static com.intellij.util.ui.html.UtilsKt.*;
+import static com.intellij.util.ui.html.UtilsKt.getCssMargin;
+import static com.intellij.util.ui.html.UtilsKt.getCssPadding;
 
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane implements Disposable {
@@ -61,6 +65,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
   private StyleSheet myCurrentDefaultStyleSheet = null;
   private Dimension myCachedPreferredSize = null;
+  private final MutableStateFlow<Color> editorBackgroundFlow;
 
   protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
@@ -80,6 +85,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       UIUtil.doNotScrollToCaret(this);
     }
     setBackground(BACKGROUND_COLOR);
+    editorBackgroundFlow = StateFlowKt.MutableStateFlow(getBackground());
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
       .replaceViewFactoryExtensions(getIconsExtension(iconResolver),
                                     Extensions.BASE64_IMAGES,
@@ -96,6 +102,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       var propertyName = evt.getPropertyName();
       if ("background".equals(propertyName) || "UI".equals(propertyName)) {
         updateDocumentationPaneDefaultCssRules(editorKit);
+        editorBackgroundFlow.setValue(getBackground());
       }
     });
 
@@ -118,6 +125,10 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     myText = t;
     myCachedPreferredSize = null;
     super.setText(t);
+  }
+
+  public StateFlow<Color> getEditorBackgroundFlow() {
+    return editorBackgroundFlow;
   }
 
   private void updateDocumentationPaneDefaultCssRules(@NotNull HTMLEditorKit editorKit) {
