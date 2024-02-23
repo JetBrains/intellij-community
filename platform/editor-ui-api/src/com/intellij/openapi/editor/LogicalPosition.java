@@ -56,6 +56,14 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     this.leansForward = leansForward;
   }
 
+  public int getLine() {
+    return line;
+  }
+
+  public int getColumn() {
+    return column;
+  }
+
   /**
    * Constructs a new {@code LogicalPosition} instance with a given value of {@link #leansForward} flag.
    */
