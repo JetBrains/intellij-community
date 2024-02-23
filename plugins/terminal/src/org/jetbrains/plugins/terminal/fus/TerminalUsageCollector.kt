@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.fus
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -76,11 +78,18 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>, isBlockTerminal: Boolean) =
+  fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>, isBlockTerminal: Boolean) {
     localExecEvent.log(project,
                        Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
                        getShellNameForStat(shellCommand.firstOrNull()),
                        isBlockTerminal)
+    if (isBlockTerminal) {
+      val propertiesComponent = PropertiesComponent.getInstance()
+      val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
+      propertiesComponent.setValue(BLOCK_TERMINAL_LAST_USED_VERSION, version)
+      propertiesComponent.setValue(BLOCK_TERMINAL_LAST_USED_DATE, (System.currentTimeMillis() / 1000).toInt(), 0)
+    }
+  }
 
   internal fun triggerPromotionShown(project: Project) {
     promotionShownEvent.log(project)
@@ -162,3 +171,7 @@ private val KNOWN_SHELLS = setOf("unspecified",
                                  "xonsh",
                                  "zsh")
 private val KNOWN_EXTENSIONS = setOf("exe", "bat", "cmd")
+
+private const val BLOCK_TERMINAL_LAST_USED_VERSION = "BLOCK_TERMINAL_LAST_USED_VERSION"
+/** Timestamp in seconds */
+private const val BLOCK_TERMINAL_LAST_USED_DATE = "BLOCK_TERMINAL_LAST_USED_DATE"
