@@ -413,10 +413,10 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun waitForSmartMode() {
-    waitForSmartMode(Long.MAX_VALUE)
+    waitForSmartMode(null)
   }
 
-  fun waitForSmartMode(milliseconds: Long): Boolean {
+  fun waitForSmartMode(milliseconds: Long?): Boolean {
     if (ALWAYS_SMART) return true
     val application = ApplicationManager.getApplication()
     if (application.isReadAccessAllowed) {
@@ -440,7 +440,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       catch (ignored: InterruptedException) {
       }
       ProgressManager.checkCanceled()
-      if (startTime + milliseconds < System.currentTimeMillis()) return false
+      if (milliseconds != null && startTime + milliseconds < System.currentTimeMillis()) return false
     }
     return true
   }
