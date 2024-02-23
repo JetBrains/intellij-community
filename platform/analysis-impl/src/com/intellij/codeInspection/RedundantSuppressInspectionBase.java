@@ -197,8 +197,9 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
 
   public @NotNull LocalInspectionTool createLocalTool(@NotNull RedundantSuppressionDetector suppressor,
                                                       @NotNull Map<String, ? extends Set<PsiElement>> toolToSuppressScopes,
-                                                      @NotNull Set<String> activeTools) {
-    return new LocalRedundantSuppressionInspection(suppressor, activeTools, toolToSuppressScopes);
+                                                      @NotNull Set<String> activeTools,
+                                                      @NotNull TextRange restrictRange) {
+    return new LocalRedundantSuppressionInspection(suppressor, activeTools, toolToSuppressScopes, restrictRange);
   }
 
   protected @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(@NotNull PsiElement psiElement, @NotNull InspectionProfile profile) {
@@ -317,13 +318,16 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
     private final @NotNull RedundantSuppressionDetector mySuppressor;
     private final @NotNull Set<String> myActiveTools;
     private final @NotNull Map<String, ? extends Set<PsiElement>> myToolToSuppressScopes;
+    private final @NotNull TextRange myRestrictRange;
 
     private LocalRedundantSuppressionInspection(@NotNull RedundantSuppressionDetector suppressor,
                                                 @NotNull Set<String> activeTools,
-                                                @NotNull Map<String, ? extends Set<PsiElement>> toolToSuppressScopes) {
+                                                @NotNull Map<String, ? extends Set<PsiElement>> toolToSuppressScopes,
+                                                @NotNull TextRange restrictRange) {
       mySuppressor = suppressor;
       myActiveTools = activeTools;
       myToolToSuppressScopes = toolToSuppressScopes;
+      myRestrictRange = restrictRange;
     }
 
     @Override
@@ -337,6 +341,19 @@ public abstract class RedundantSuppressInspectionBase extends GlobalSimpleInspec
 
         @Override
         public void visitElement(@NotNull PsiElement element) {
+          if (!myRestrictRange.contains(element.getTextRange())) {
+            // We are analyzing element `suppressionElement1` which has attached suppression `suppression1` for inspection `tool1`.
+            // E.g. for `@SuppressWarnings("rawtypes") int parameter1`,
+            //      suppression1 = @SuppressWarnings("rawtypes"),
+            //      suppressionElement1 = PsiParameter("parameter1"),
+            //      tool1 = RawUseOfParameterizedTypeInspection (its shortName="rawtypes")
+            // The contract is:
+            //  the inspection tool `tool1` must be run for all elements inside element `suppressionElement1`,
+            //  because some of these elements might have generated the warning, which suppression we are analyzing.
+            // If the inspection `tool1` hasn't run for all these elements,
+            // we have no enough information to decide whether `suppression1` is redundant or not
+            return;
+          }
           super.visitElement(element);
           HashMap<PsiElement, Collection<String>> scopes = new HashMap<>();
           boolean suppressAll = collectSuppressions(element, scopes, IGNORE_ALL, mySuppressor);

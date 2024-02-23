@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
+import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.debugger.DebugException;
 import com.intellij.diagnostic.ThreadDumper;
@@ -959,5 +960,31 @@ public class DaemonInspectionsRespondToChangesTest extends DaemonAnalyzerTestCas
     }
     assertTrue(fieldIdentifierVisited.get());
     assertTrue(fieldHighlightsUpdated.get());
+  }
+
+  public void testRedundantWarningMustNotBlinkOnTypingInsideParameterModifierList() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    enableInspectionTools(new RedundantSuppressInspection(), new RawUseOfParameterizedTypeInspection());
+    @Language("JAVA")
+    String text = """
+     abstract class Converter<T> {
+       abstract T fromString(String value);
+     }
+     class Base {
+      protected Base(String accessor,
+                     /*caret goes here*/Class<? extends Converter> converter) {
+        System.out.println(accessor + converter);
+      }
+     }
+     """;
+    configureByText(JavaFileType.INSTANCE, text);
+    List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
+    assertTrue(infos.toString(), ContainerUtil.exists(infos, info-> new RawUseOfParameterizedTypeInspection().getShortName()
+      .equals(info.getInspectionToolId())));
+    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("Class<?"));
+    type("@SuppressWarnings(\"rawtypes\")    ") ;
+    assertEmpty(doHighlighting(HighlightSeverity.WARNING));
+    type("\n");
+    assertEmpty(doHighlighting(HighlightSeverity.WARNING));
   }
 }
