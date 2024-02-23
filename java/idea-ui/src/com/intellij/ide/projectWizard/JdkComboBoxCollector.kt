@@ -48,7 +48,7 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
     val versionRegex = Regex("([0-9]+)(?:[.0-9]+)?")
     val version = when (sdkVersionString) {
       null -> -1
-      else -> versionRegex.find(sdkVersionString)?.groups?.firstOrNull()?.value?.toInt() ?: -1
+      else -> versionRegex.find(sdkVersionString)?.groups?.get(1)?.value?.toInt() ?: -1
     }
     return version
   }
