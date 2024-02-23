@@ -171,3 +171,17 @@ fun PsiElement.getContainingClass(): PsiClass? {
 
 inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T> =
     flatMap { it.collectDescendantsOfType() }
+
+fun PsiElement.isInSingleLine(): Boolean {
+    if (this is PsiWhiteSpace) {
+        val text = text!!
+        return text.indexOf('\n') < 0 && text.indexOf('\r') < 0
+    }
+
+    var child = firstChild
+    while (child != null) {
+        if (!child.isInSingleLine()) return false
+        child = child.nextSibling
+    }
+    return true
+}

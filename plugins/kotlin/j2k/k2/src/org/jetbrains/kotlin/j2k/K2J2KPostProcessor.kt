@@ -6,10 +6,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.j2k.postProcessings.FormatCodeProcessing
+import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.j2k.postProcessings.K2ShortenReferenceProcessing
-import org.jetbrains.kotlin.j2k.postProcessings.OptimizeImportsProcessing
-import org.jetbrains.kotlin.j2k.postProcessings.RemoveRedundantEmptyLinesProcessing
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
@@ -59,6 +57,17 @@ internal class K2J2KPostProcessor : PostProcessor {
 }
 
 private val processings: List<NamedPostProcessingGroup> = listOf(
+    NamedPostProcessingGroup(
+        KotlinJ2KK2Bundle.message("processing.step.cleaning.up.code"),
+        listOf(
+            InspectionLikeProcessingGroup(
+                runSingleTime = true,
+                listOf(
+                    RemoveExplicitPropertyTypeProcessing(),
+                )
+            ),
+        )
+    ),
     NamedPostProcessingGroup(
         KotlinJ2KK2Bundle.message("processing.step.optimizing.imports.and.formatting.code"),
         listOf(

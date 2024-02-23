@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
@@ -42,47 +40,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-internal class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
-        if (element.isMember && !element.isPrivate()) return false
-
-        val typeReference = element.typeReference
-        if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
-
-        val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
-        if (needLocalVariablesTypes && element.isLocal) return false
-
-        val initializer = element.initializer ?: return false
-        val initializerType =
-            initializer.analyzeInContext(initializer.getResolutionScope()).getType(initializer) ?: return false
-
-        // https://kotlinlang.org/docs/coding-conventions.html#platform-types
-        // Any property initialized with an expression of a platform type must declare its Kotlin type explicitly
-        if (element.isMember && initializerType.isFlexible()) {
-            return false
-        }
-
-        val propertyType = element.resolveToDescriptorIfAny().safeAs<CallableDescriptor>()?.returnType ?: return false
-        return KotlinTypeChecker.DEFAULT.equalTypes(initializerType, propertyType)
-    }
-
-    override fun apply(element: KtProperty) {
-        val typeReference = element.typeReference ?: return
-        element.colon?.let { colon ->
-            val followingWhiteSpace = colon.nextSibling?.takeIf { following ->
-                following is PsiWhiteSpace && following.isInSingleLine()
-            }
-            followingWhiteSpace?.delete()
-            colon.delete()
-        }
-        typeReference.delete()
-    }
-}
 
 internal class RemoveRedundantNullabilityProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
