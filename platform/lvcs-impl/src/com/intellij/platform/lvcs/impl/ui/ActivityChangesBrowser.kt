@@ -2,6 +2,8 @@
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ui.*
@@ -41,6 +43,21 @@ class ActivityChangesBrowser(project: Project) : AsyncChangesBrowserBase(project
   override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     val diffObject = userObject as? ActivityDiffObject ?: return null
     return diffObject.createProducer(myProject)
+  }
+
+  override fun getData(dataId: String): Any? {
+    if (ActivityViewDataKeys.SELECTED_DIFFERENCES.`is`(dataId)) {
+      return VcsTreeModelData.selected(myViewer).iterateUserObjects(ActivityDiffObject::class.java)
+    }
+    return super.getData(dataId)
+  }
+
+  override fun createToolbarActions(): List<AnAction> {
+    return super.createToolbarActions() + ActionManager.getInstance().getAction("ActivityView.ChangesBrowser.Toolbar")
+  }
+
+  override fun createPopupMenuActions(): List<AnAction> {
+    return super.createPopupMenuActions() + ActionManager.getInstance().getAction("ActivityView.ChangesBrowser.Popup")
   }
 
   override fun dispose() = shutdown()

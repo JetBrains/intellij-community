@@ -2,6 +2,7 @@
 package com.intellij.platform.lvcs.impl.operations
 
 import com.intellij.history.core.LocalHistoryFacade
+import com.intellij.history.core.revisions.Difference
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.integration.revertion.DifferenceReverter
@@ -34,6 +35,16 @@ internal fun LocalHistoryFacade.createReverter(project: Project, gateway: IdeaGa
   val entryPath = getEntryPath(gateway, scope)
   val diff = getDiff(rootEntry, selection, entryPath, isOldContentUsed)
   return DifferenceReverter(project, this, gateway, diff, commandNameSupplier)
+}
+
+internal fun LocalHistoryFacade.createDifferenceReverter(project: Project, gateway: IdeaGateway, selection: ChangeSetSelection, differences: List<Difference>,
+                                                         isOldContentUsed: Boolean): Reverter? {
+  val targetRevisionId = selection.leftRevision
+  if (targetRevisionId == RevisionId.Current) return null
+  if (differences.isEmpty()) return null
+  return DifferenceReverter(project, this, gateway, differences) {
+    getRevertCommandName(selection.leftItem, isOldContentUsed)
+  }
 }
 
 private fun getRevertCommandName(item: ChangeSetActivityItem?, isOldContentUsed: Boolean): @Nls String? {

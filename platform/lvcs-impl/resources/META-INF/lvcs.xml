@@ -43,6 +43,7 @@
 
     <!--Activity View-->
     <action id="ActivityView.Revert" class="com.intellij.platform.lvcs.impl.actions.RevertAction" icon="AllIcons.Actions.Rollback"/>
+    <action id="ActivityView.RevertDifferences" class="com.intellij.platform.lvcs.impl.actions.RevertDifferencesAction" icon="AllIcons.Actions.Rollback"/>
     <action id="ActivityView.CreatePatch" class="com.intellij.platform.lvcs.impl.actions.CreatePatchAction" icon="AllIcons.Vcs.Patch"/>
 
     <group id="ActivityView.Toolbar">
@@ -53,6 +54,12 @@
       <reference id="ActivityView.Revert"/>
       <reference id="ActivityView.CreatePatch"/>
       <reference id="Diff.ShowDiff"/>
+    </group>
+    <group id="ActivityView.ChangesBrowser.Toolbar">
+      <reference id="ActivityView.RevertDifferences"/>
+    </group>
+    <group id="ActivityView.ChangesBrowser.Popup">
+      <reference id="ActivityView.RevertDifferences"/>
     </group>
   </actions>
 
