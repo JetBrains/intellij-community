@@ -183,23 +183,15 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/changeImport")
-    public static class ChangeImport extends AbstractK2BindToElementTest {
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/constructorCall")
+    public static class ConstructorCall extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("ChangeImport.kt")
         public void testChangeImport() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/changeImport/ChangeImport.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/constructorCall")
-    public static class ConstructorCall extends AbstractK2BindToElementTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            runTest("../../idea/tests/testData/refactoring/bindToElement/constructorCall/ChangeImport.kt");
         }
 
         @TestMetadata("FullyQualified.kt")
