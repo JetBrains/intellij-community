@@ -49,7 +49,7 @@ class ExtendableHTMLViewFactory internal constructor(
     val DEFAULT_EXTENSIONS: List<Extension> = listOf(
       Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
       Extensions.INLINE_VIEW_EX, Extensions.WBR_SUPPORT, Extensions.PARAGRAPH_VIEW_EX,
-      Extensions.BLOCK_VIEW_EX
+      Extensions.LINE_VIEW_EX, Extensions.BLOCK_VIEW_EX
     )
 
     @JvmField
@@ -134,6 +134,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val PARAGRAPH_VIEW_EX: Extension = ParagraphViewExExtension()
+
+    /**
+     * Supports line-height property (%, px and no-unit) in paragraphs.
+     */
+    @JvmField
+    val LINE_VIEW_EX: Extension = LineViewExExtension()
 
     /**
      * Renders images with proper scaling according to sysScale
@@ -425,6 +431,13 @@ class ExtendableHTMLViewFactory internal constructor(
         return ParagraphViewEx(element)
       }
       return null
+    }
+  }
+
+  private class LineViewExExtension : Extension {
+    override fun invoke(element: Element, view: View): View? {
+      if (view !is ParagraphView || view.javaClass.simpleName != "LineView") return null
+      return LineViewEx(element)
     }
   }
 

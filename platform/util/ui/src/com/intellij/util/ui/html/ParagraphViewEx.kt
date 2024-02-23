@@ -16,7 +16,7 @@ import kotlin.math.min
 /**
  * Supports line-height (%, px and no-unit) property in paragraphs.
  */
-class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
+open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
 
   @Suppress("ProtectedInFinal")
   @JvmField
