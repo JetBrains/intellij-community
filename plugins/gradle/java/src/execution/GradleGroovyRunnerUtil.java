@@ -6,23 +6,26 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+
+import static com.intellij.psi.util.InheritanceUtil.isInheritor;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER;
 
 public final class GradleGroovyRunnerUtil {
   @NotNull
@@ -32,9 +35,7 @@ public final class GradleGroovyRunnerUtil {
       parent = parent.getParent();
     }
 
-    if (parent instanceof GrMethodCallExpression methodCall
-        && isTaskDeclarationMethod(methodCall)
-    ) {
+    if (parent instanceof GrMethodCallExpression methodCall && isTaskDeclarationMethod(methodCall)) {
       String taskName = getStringArgument(methodCall);
       if (taskName != null) return Collections.singletonList(taskName);
     } else if (parent instanceof GrApplicationStatement) {
@@ -72,9 +73,18 @@ public final class GradleGroovyRunnerUtil {
   }
 
   private static boolean isTaskDeclarationMethod(GrMethodCallExpression methodCall) {
-    return PsiUtil.isMethodCall(methodCall, "createTask")
-           || isTaskContainerMethodToDeclare(methodCall)
-           || isTaskMethodFromProject(methodCall);
+    PsiMethod resolved = methodCall.resolveMethod();
+    if (resolved == null) return false;
+    PsiClass containingClass = resolved.getContainingClass();
+    if (containingClass == null) return false;
+
+    if (isInheritor(containingClass, GRADLE_API_TASK_CONTAINER)) {
+      return "create".equals(resolved.getName()) || "register".equals(resolved.getName());
+    } else if (isInheritor(containingClass, GRADLE_API_PROJECT)) {
+      return "task".equals(resolved.getName());
+    } else {
+      return false;
+    }
   }
 
   @Nullable
@@ -99,40 +109,6 @@ public final class GradleGroovyRunnerUtil {
       }
     }
     return null;
-  }
-
-  private static boolean isTaskContainerMethodToDeclare(GrMethodCallExpression methodCall) {
-    PsiElement lastMethod = PsiTreeUtil.lastChild(methodCall.getInvokedExpression());
-    if (!"create".equals(lastMethod.getText()) && !"register".equals(lastMethod.getText())) {
-      return false;
-    }
-    PsiElement maybeTaskContainer = getPrevSiblingSkipDots(lastMethod);
-    if (maybeTaskContainer instanceof GrMethodCallExpression maybeGetTasksCall) {
-      PsiElement maybeGetTasks = maybeGetTasksCall.getInvokedExpression().getLastChild();
-      return "getTasks".equals(maybeGetTasks.getText());
-    } else if (maybeTaskContainer instanceof GrReferenceExpression maybeTasks) {
-      return "tasks".equals(maybeTasks.getLastChild().getText());
-    }
-    return false;
-  }
-
-  private static boolean isTaskMethodFromProject(GrMethodCallExpression methodCall) {
-    PsiElement lastMethod = PsiTreeUtil.lastChild(methodCall.getInvokedExpression());
-    if (!"task".equals(lastMethod.getText())) return false;
-
-    PsiElement maybeProject = getPrevSiblingSkipDots(lastMethod);
-    if (maybeProject instanceof GrMethodCallExpression maybeGetProjectCall) {
-      PsiElement maybeGetProject = maybeGetProjectCall.getInvokedExpression().getLastChild();
-      return "getProject".equals(maybeGetProject.getText());
-    } else if (maybeProject instanceof GrReferenceExpression) {
-      return "project".equals(maybeProject.getText());
-    }
-    return false;
-  }
-
-  @Nullable
-  private static PsiElement getPrevSiblingSkipDots(PsiElement lastMethod) {
-    return PsiUtil.skipSet(lastMethod, false, TokenSet.orSet(TokenSets.WHITE_SPACES_SET, TokenSets.DOTS));
   }
 
   @NotNull
