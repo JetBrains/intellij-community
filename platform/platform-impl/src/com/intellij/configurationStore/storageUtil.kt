@@ -173,6 +173,7 @@ class UnknownMacroNotification(
   }
 }
 
+/** Used in constructed configuration store events to trigger VFS content reloading for files updated via NIO. */
 @ApiStatus.Internal
 @JvmField
 val RELOADING_STORAGE_WRITE_REQUESTOR = object : StorageManagerFileWriteRequestor { }
