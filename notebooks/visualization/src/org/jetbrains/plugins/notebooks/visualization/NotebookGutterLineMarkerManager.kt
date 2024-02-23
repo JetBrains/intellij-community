@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -19,7 +21,7 @@ import java.awt.Rectangle
 class NotebookGutterLineMarkerManager {
 
   fun attachHighlighters(editor: EditorEx) {
-    NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(object: NotebookIntervalPointerFactory.ChangeListener  {
+    NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(object : NotebookIntervalPointerFactory.ChangeListener {
       override fun onUpdated(event: NotebookIntervalPointersEvent) {
         putHighlighters(editor)
       }
@@ -38,9 +40,10 @@ class NotebookGutterLineMarkerManager {
     val highlighters = editor.markupModel.allHighlighters.filter { it.lineMarkerRenderer is NotebookLineMarkerRenderer }
     highlighters.forEach { editor.markupModel.removeHighlighter(it) }
 
-    val notebookCellLines = NotebookCellLines.get(editor)
-
-    for (interval in notebookCellLines.intervals) {
+    val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
+    for (cell in notebookCellInlayManager.cells) {
+      if (!cell.visible) continue
+      val interval = cell.intervalPointer.get() ?: error("Invalid interval")
       val startOffset = editor.document.getLineStartOffset(interval.lines.first)
       val endOffset = editor.document.getLineEndOffset(interval.lines.last)
       editor.markupModel.addRangeHighlighter(
@@ -77,17 +80,18 @@ class NotebookGutterLineMarkerManager {
         editor.markupModel.addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE, false, changeAction)
       }
 
-      val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
-      for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {
-        controller.createGutterRendererLineMarker(editor, interval)
+      cell.view?.also { view ->
+        for (controller: NotebookCellInlayController in view.controllers) {
+          controller.createGutterRendererLineMarker(editor, interval)
+        }
       }
     }
   }
 
   fun paintBackground(editor: EditorImpl,
-                     g: Graphics,
-                     r: Rectangle,
-                     interval: NotebookCellLines.Interval) {
+                      g: Graphics,
+                      r: Rectangle,
+                      interval: NotebookCellLines.Interval) {
     val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
 
     for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {

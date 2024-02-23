@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
@@ -57,6 +59,10 @@ internal class EditorCellInput(
 
   internal var inputController: NotebookCellInlayController? = createOrUpdateController()
 
+  private var highlighters: List<RangeHighlighter>? = null
+
+  private var gutterAction: AnAction? = null
+
   init {
     folding.bindTo(inputController)
     folding.bindTo(intervalPointer)
@@ -65,10 +71,12 @@ internal class EditorCellInput(
   fun dispose() {
     folding.dispose()
     inputController?.let { controller -> Disposer.dispose(controller.inlay) }
+    disposeExistingHighlighter()
   }
 
   fun update() {
     inputController = createOrUpdateController()
+    updateGutterIcons()
   }
 
   private fun createOrUpdateController(): NotebookCellInlayController? {
@@ -77,7 +85,45 @@ internal class EditorCellInput(
       inputController?.let { controller -> Disposer.dispose(controller.inlay) }
       folding.bindTo(actualController)
     }
+    updateGutterIcons()
     return actualController
+  }
+
+  private fun updateGutterIcons() {
+    val actualController = inputController
+    if (actualController != null) {
+      val inlay = actualController.inlay
+      inlay.putUserData(NotebookCellInlayController.gutterActionKey, gutterAction)
+      inlay.update()
+    }
+    else {
+      disposeExistingHighlighter()
+      val action = gutterAction
+      if (action != null) {
+        val markupModel = editor.markupModel
+        val interval = intervalPointer.get()!!
+        val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+        val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+        val highlighter = markupModel.addRangeHighlighter(
+          startOffset,
+          endOffset,
+          HighlighterLayer.FIRST - 100,
+          TextAttributes(),
+          HighlighterTargetArea.LINES_IN_RANGE
+        )
+        highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(action)
+        this.highlighters = listOf(highlighter)
+      }
+    }
+  }
+
+  private fun disposeExistingHighlighter() {
+    if (highlighters != null) {
+      highlighters?.forEach {
+        it.dispose()
+      }
+      highlighters = null
+    }
   }
 
   fun updatePositions() {
@@ -86,6 +132,11 @@ internal class EditorCellInput(
 
   fun onViewportChange() {
     inputController?.onViewportChange()
+  }
+
+  fun setGutterAction(action: AnAction) {
+    gutterAction = action
+    updateGutterIcons()
   }
 }
 
