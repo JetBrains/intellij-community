@@ -5,8 +5,10 @@ package com.intellij.util.xmlb
 
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.xml.dom.XmlElement
+import kotlinx.serialization.json.JsonElement
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.Type
 
 interface Serializer {
@@ -23,10 +25,13 @@ fun interface SerializationFilter {
   fun accepts(accessor: Accessor, bean: Any): Boolean
 }
 
-interface Binding {
-  fun serialize(bean: Any, context: Element?, filter: SerializationFilter?): Any? = serialize(bean, filter)
+@Internal
+interface RootBinding : Binding {
+  fun serialize(bean: Any, filter: SerializationFilter?): Element?
+}
 
-  fun serialize(bean: Any, filter: SerializationFilter?): Any?
+interface Binding {
+  fun serialize(bean: Any, parent: Element, filter: SerializationFilter?)
 
   fun isBoundTo(element: Element): Boolean
 
@@ -38,6 +43,18 @@ interface Binding {
   fun deserializeUnsafe(context: Any?, element: Element): Any?
 
   fun deserializeUnsafe(context: Any?, element: XmlElement): Any?
+
+  fun toJson(bean: Any, filter: SerializationFilter?): JsonElement?
+
+  fun fromJson(bean: Any?, element: JsonElement): Any?
+}
+
+interface NestedBinding : Binding {
+  val accessor: MutableAccessor
+
+  // used only by kotlinx serialization
+  val propertyName: String
+    get() = accessor.name
 }
 
 @ApiStatus.Internal

@@ -60,13 +60,13 @@ final class CollectionBinding extends AbstractCollectionBinding  {
 
   @NotNull
   @Override
-  Collection<?> getIterable(@NotNull Object o) {
-    Collection<?> collection = (Collection<?>)o;
-    if (collection.size() < 2 || ((isSortOrderedSet() && o instanceof LinkedHashSet)) || o instanceof SortedSet) {
+  Collection<?> getCollection(@NotNull Object bean) {
+    Collection<?> collection = (Collection<?>)bean;
+    if (collection.size() < 2 || ((isSortOrderedSet() && bean instanceof LinkedHashSet)) || bean instanceof SortedSet) {
       // no need to sort
       return collection;
     }
-    else if (o instanceof Set) {
+    else if (bean instanceof Set) {
       List<?> result = new ArrayList<>(collection);
       result.sort(null);
       return result;

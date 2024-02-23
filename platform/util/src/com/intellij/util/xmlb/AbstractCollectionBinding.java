@@ -9,8 +9,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jdom.Content;
+import kotlin.Unit;
+import kotlinx.serialization.json.JsonArray;
+import kotlinx.serialization.json.JsonElement;
+import kotlinx.serialization.json.JsonNull;
+import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jdom.Namespace;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,8 +24,10 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static com.intellij.util.xmlb.BeanBindingKt.LOG;
+import static com.intellij.util.xmlb.JsonHelperKt.fromJsonPrimitive;
+import static com.intellij.util.xmlb.JsonHelperKt.primitiveToJsonElement;
 
-abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding {
+abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding, RootBinding {
   private final MutableAccessor accessor;
   private List<Binding> itemBindings;
 
@@ -53,7 +60,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     else {
       List<Binding> itemBindings;
       if (binding == null) {
-        itemBindings = new SmartList<>();
+        itemBindings = elementTypes.length == 1 ? new SmartList<>() : new ArrayList<>(elementTypes.length);
       }
       else {
         itemBindings = new ArrayList<>(elementTypes.length + 1);
@@ -120,36 +127,103 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     return null;
   }
 
-  abstract @NotNull Collection<?> getIterable(@NotNull Object o);
+  abstract @NotNull Collection<?> getCollection(@NotNull Object bean);
 
   @Override
-  public final @NotNull Object serialize(@NotNull Object object, @Nullable SerializationFilter filter) {
-    Collection<?> collection = getIterable(object);
+  public @NotNull JsonArray toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    Collection<?> collection = getCollection(bean);
+    if (collection.isEmpty()) {
+      return new JsonArray(Collections.emptyList());
+    }
 
-    String tagName = isSurroundWithTag() ? getCollectionTagName(object) : null;
-    if (tagName == null) {
-      List<Object> result = new SmartList<>();
-      if (!collection.isEmpty()) {
-        for (Object item : collection) {
-          Object element = serializeItem(item, null, filter);
-          if (element != null) {
-            result.add(element);
-          }
-        }
+    List<JsonElement> content = new ArrayList<>();
+    for (Object value : collection) {
+      if (value == null) {
+        content.add(JsonNull.INSTANCE);
+        continue;
       }
-      return result;
+
+      Binding binding = getItemBinding(value.getClass());
+      if (binding == null) {
+        content.add(primitiveToJsonElement(value));
+      }
+      else {
+        content.add(binding.toJson(value, filter));
+      }
+    }
+    return new JsonArray(content);
+  }
+
+  @Override
+  public Object fromJson(@Nullable Object bean, @NotNull JsonElement element) {
+    @SuppressWarnings("unchecked")
+    Collection<Object> collection = bean == null ? null : (Collection<Object>)getCollection(bean);
+
+    if (!(element instanceof JsonArray)) {
+      // yes, `null` is also not expected
+      LOG.warn("Expected JsonArray but got " + element);
+      return collection;
+    }
+
+    boolean isContextMutable = collection != null && ClassUtil.isMutableCollection(collection);
+    if (isContextMutable) {
+      collection.clear();
     }
     else {
-      Element result = new Element(tagName);
-      if (!collection.isEmpty()) {
-        for (Object item : collection) {
-          Content child = (Content)serializeItem(item, result, filter);
-          if (child != null) {
-            result.addContent(child);
-          }
-        }
+      collection = collection instanceof Set ? new HashSet<>() : new ArrayList<>();
+    }
+
+    int size = itemBindings.size();
+    if (size == 0) {
+      for (JsonElement itemElement : (JsonArray)element) {
+        collection.add(fromJsonPrimitive(itemElement));
       }
-      return result;
+    }
+    else if (size == 1) {
+      Binding binding = itemBindings.get(0);
+      for (JsonElement itemElement : (JsonArray)element) {
+        Object o = binding.fromJson(bean, itemElement);
+        assert o != Unit.INSTANCE;
+        collection.add(o);
+      }
+    }
+    else {
+      throw new RuntimeException("not supported");
+    }
+
+    return collection;
+  }
+
+  @Override
+  public final @NotNull Element serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    String tagName = isSurroundWithTag() ? getCollectionTagName(bean) : null;
+    Element result = new Element(Objects.requireNonNull(tagName, "Do not use CollectionBinding as a root bean"));
+    Collection<?> collection = getCollection(bean);
+    if (!collection.isEmpty()) {
+      for (Object item : collection) {
+        serializeItem(item, result, filter);
+      }
+    }
+    return result;
+  }
+
+  @Override
+  public final void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
+    String tagName = isSurroundWithTag() ? getCollectionTagName(bean) : null;
+    Element listElement;
+    if (tagName == null) {
+      listElement = parent;
+    }
+    else {
+      listElement = new Element(true, tagName, Namespace.NO_NAMESPACE);
+      parent.addContent(listElement);
+    }
+
+    Collection<?> collection = getCollection(bean);
+    if (!collection.isEmpty()) {
+      for (Object item : collection) {
+        serializeItem(item, listElement, filter);
+      }
     }
   }
 
@@ -209,10 +283,10 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
 
   protected abstract @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<XmlElement> elements);
 
-  private @Nullable Object serializeItem(@Nullable Object value, Element context, @Nullable SerializationFilter filter) {
+  private void serializeItem(@Nullable Object value, @NotNull Element parent, @Nullable SerializationFilter filter) {
     if (value == null) {
       LOG.warn("Collection " + accessor + " contains 'null' object");
-      return null;
+      return;
     }
 
     Binding binding = getItemBinding(value.getClass());
@@ -222,21 +296,21 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
         throw new Error("elementName must be not empty");
       }
 
-      Element serializedItem = new Element(elementName);
+      Element serializedItem = new Element(true, elementName, Namespace.NO_NAMESPACE);
       String attributeName = getValueAttributeName();
       String serialized = XmlSerializerImpl.convertToString(value);
       if (attributeName.isEmpty()) {
         if (!serialized.isEmpty()) {
-          serializedItem.addContent(new Text(serialized));
+          serializedItem.addContent(new Text(true, serialized));
         }
       }
       else {
-        serializedItem.setAttribute(attributeName, JDOMUtil.removeControlChars(serialized));
+        serializedItem.setAttribute(new Attribute(true, attributeName, JDOMUtil.removeControlChars(serialized), Namespace.NO_NAMESPACE));
       }
-      return serializedItem;
+      parent.addContent(serializedItem);
     }
     else {
-      return binding.serialize(value, context, filter);
+      binding.serialize(value, parent, filter);
     }
   }
 
@@ -244,13 +318,7 @@ abstract class AbstractCollectionBinding implements MultiNodeBinding, NestedBind
     Binding binding = getElementBinding(node);
     if (binding == null) {
       String attributeName = getValueAttributeName();
-      String value;
-      if (attributeName.isEmpty()) {
-        value = XmlSerializerImpl.getTextValue(node, "");
-      }
-      else {
-        value = node.getAttributeValue(attributeName);
-      }
+      String value = attributeName.isEmpty() ? XmlSerializerImpl.getTextValue(node, "") : node.getAttributeValue(attributeName);
       return XmlSerializerImpl.convert(value, itemType);
     }
     else {

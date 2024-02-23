@@ -81,7 +81,7 @@ public final class XmlSerializer {
   public static void serializeInto(@NotNull Object bean, @NotNull Element element, @Nullable SerializationFilter filter) {
     try {
       Class<?> aClass = bean.getClass();
-      ((BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass)).serializeInto(bean, element, filter);
+      ((BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass)).serializeProperties(bean, element, filter);
     }
     catch (SerializationException e) {
       throw e;

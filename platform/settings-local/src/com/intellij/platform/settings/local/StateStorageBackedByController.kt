@@ -209,10 +209,10 @@ private class ControllerBackedSaveSessionProducer(
               continue
             }
 
-            val element = beanBinding.serializePropertyInto(
+            val element = beanBinding.serializeProperty(
               binding = binding,
               bean = state,
-              preCreatedElement = null,
+              parentElement = null,
               filter = filter,
               isFilterPropertyItself = true,
             )

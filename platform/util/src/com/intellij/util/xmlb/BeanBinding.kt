@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:ApiStatus.Internal
 
 package com.intellij.util.xmlb
@@ -13,8 +13,12 @@ import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.annotations.*
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
-import org.jdom.Attribute
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import org.jdom.Element
+import org.jdom.Namespace
 import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.AccessibleObject
@@ -32,10 +36,6 @@ abstract class Converter<T> {
   abstract fun toString(value: T): String?
 }
 
-interface NestedBinding : Binding {
-  val accessor: MutableAccessor
-}
-
 interface PrimitiveValueBinding : NestedBinding {
   fun setValue(bean: Any, value: String?)
 
@@ -48,7 +48,7 @@ private val EMPTY_BINDINGS = arrayOf<NestedBinding>()
 
 fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
 
-open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding {
+open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding, RootBinding {
   private val tagName: String
 
   @JvmField
@@ -82,80 +82,89 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     }
   }
 
-  override fun serialize(bean: Any, filter: SerializationFilter?): Any? {
-    return serializeInto(bean = bean, preCreatedElement = null, filter = filter)
+  override fun toJson(bean: Any, filter: SerializationFilter?): JsonElement? {
+    // do not waste time to compute hashCode and preserving uniqueness, use simple Object2ObjectArrayMap
+    var keys: Array<String?>? = null
+    var values: Array<JsonElement?>? = null
+    val bindings = bindings!!
+    var index = 0
+    for (binding in bindings) {
+      if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean)) {
+        continue
+      }
+
+      if (isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = true)) {
+        continue
+      }
+
+      // yes, empty map to denote an empty object
+      if (keys == null) {
+        keys = arrayOfNulls(bindings.size)
+        values = arrayOfNulls(bindings.size)
+      }
+
+      val jsonElement = binding.toJson(bean = bean, filter = filter)
+      if (jsonElement != null) {
+        keys[index] = normalizePropertyNameForKotlinx(binding)
+        values!![index] = jsonElement
+        index++
+      }
+    }
+    return if (keys == null) null else JsonObject(Object2ObjectArrayMap(keys, values!!, index))
   }
 
-  final override fun serialize(bean: Any, context: Element?, filter: SerializationFilter?): Any? {
-    return serializeInto(bean = bean, preCreatedElement = if (context == null) null else Element(tagName), filter = filter)
+  override fun fromJson(bean: Any?, element: JsonElement): Any? {
+    if (element === JsonNull) {
+      return null
+    }
+
+    val result = newInstance()
+    if (element !is JsonObject) {
+      LOG.warn("JsonObject is expected but got $element")
+      return result
+    }
+
+    for (binding in bindings!!) {
+      val key = normalizePropertyNameForKotlinx(binding)
+      val value = element.get(key) ?: continue
+      binding.fromJson(result, value)
+    }
+    return result
+  }
+
+  override fun serialize(bean: Any, filter: SerializationFilter?): Element? {
+    return serializeProperties(bean = bean, preCreatedElement = null, filter = filter)
+  }
+
+  final override fun serialize(bean: Any, parent: Element, filter: SerializationFilter?) {
+    val element = Element(true, tagName, Namespace.NO_NAMESPACE)
+    serializeProperties(bean = bean, preCreatedElement = element, filter = filter)
+    parent.addContent(element)
   }
 
   fun serialize(bean: Any, createElementIfEmpty: Boolean, filter: SerializationFilter?): Element? {
-    return serializeInto(bean = bean, preCreatedElement = if (createElementIfEmpty) Element(tagName) else null, filter = filter)
+    return serializeProperties(bean = bean, preCreatedElement = if (createElementIfEmpty) Element(tagName) else null, filter = filter)
   }
 
-  open fun serializeInto(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+  open fun serializeProperties(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
     var element = preCreatedElement
     for (binding in bindings!!) {
       if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean)) {
         continue
       }
 
-      element = serializePropertyInto(
-        binding = binding,
-        bean = bean,
-        preCreatedElement = element,
-        filter = filter,
-        isFilterPropertyItself = true,
-      )
+      element = serializeProperty(binding = binding, bean = bean, parentElement = element, filter = filter, isFilterPropertyItself = true)
     }
     return element
   }
 
-  fun serializePropertyInto(
-    binding: NestedBinding,
-    bean: Any,
-    preCreatedElement: Element?,
-    filter: SerializationFilter?,
-    isFilterPropertyItself: Boolean,
-  ): Element? {
-    var element = preCreatedElement
-    val accessor = binding.accessor
-    val property = accessor.getAnnotation(Property::class.java)
-    if (property == null || !property.alwaysWrite) {
-      if (filter != null && isFilterPropertyItself) {
-        if (filter is SkipDefaultsSerializationFilter) {
-          if (filter.equal(binding, bean)) {
-            return element
-          }
-        }
-        else if (!filter.accepts(accessor, bean)) {
-          return element
-        }
-      }
-
-      //todo: optimize. Cache it.
-      if (property != null) {
-        val propertyFilter = XmlSerializerUtil.getPropertyFilter(property)
-        if (propertyFilter != null && !propertyFilter.accepts(accessor, bean)) {
-          return element
-        }
-      }
+  fun serializeProperty(binding: NestedBinding, bean: Any, parentElement: Element?, filter: SerializationFilter?, isFilterPropertyItself: Boolean): Element? {
+    if (isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = isFilterPropertyItself)) {
+      return parentElement
     }
 
-    if (element == null) {
-      element = Element(tagName)
-    }
-
-    val node = binding.serialize(bean = bean, context = element, filter = filter)
-    if (node != null) {
-      if (node is Attribute) {
-        element.setAttribute(node)
-      }
-      else {
-        addContent(element, node)
-      }
-    }
+    val element = parentElement ?: Element(tagName)
+    binding.serialize(bean = bean, parent = element, filter = filter)
     return element
   }
 
@@ -237,10 +246,15 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
   }
 
   override fun isBoundTo(element: Element): Boolean = element.name == tagName
-
+  //
   override fun isBoundTo(element: XmlElement): Boolean = element.name == tagName
 
-  override fun toString(): String = "BeanBinding[${beanClass.name}, tagName=$tagName]"
+  override fun toString(): String = "BeanBinding(${beanClass.name}, tagName=$tagName)"
+
+  @Deprecated("Don't use internal API", ReplaceWith(""))
+  fun serializeInto(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+    return serializeProperties(bean, preCreatedElement, filter)
+  }
 }
 
 // binding value will be not set if no data
@@ -404,6 +418,30 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
   return data
 }
 
+fun deserializeBeanFromControllerInto(result: Any, element: XmlElement, binding: NestedBinding): List<XmlElement>? {
+  var data: MutableList<XmlElement>? = null
+  nextNode@ for (child in element.children) {
+    if (binding.isBoundTo(child)) {
+      if (binding is MultiNodeBinding && binding.isMulti) {
+        if (data == null) {
+          data = ArrayList()
+        }
+        data.add(child)
+      }
+      else {
+        binding.deserializeUnsafe(result, child)
+        break
+      }
+    }
+  }
+
+  if (binding is AccessorBindingWrapper && binding.isFlat) {
+    binding.deserializeUnsafe(result, element)
+  }
+
+  return data
+}
+
 // must be static class and not anonymous
 private class MyPropertyCollectorConfiguration : PropertyCollector.Configuration(true, false, false) {
   override fun isAnnotatedAsTransient(element: AnnotatedElement): Boolean = element.isAnnotationPresent(Transient::class.java)
@@ -457,7 +495,7 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
   }
 
   if (binding is CompactCollectionBinding) {
-    return AccessorBindingWrapper(accessor, binding, false, Property.Style.OPTION_TAG)
+    return binding
   }
 
   var surroundWithTag = true
@@ -609,3 +647,37 @@ private fun getTagName(aClass: Class<*>): String {
 }
 
 private fun getTagNameFromAnnotation(aClass: Class<*>): String? = aClass.getAnnotation(Tag::class.java)?.value?.takeIf { it.isNotEmpty() }
+
+private fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, bean: Any, isFilterPropertyItself: Boolean): Boolean {
+  val accessor = binding.accessor
+  val property = accessor.getAnnotation(Property::class.java)
+  if (property == null || !property.alwaysWrite) {
+    if (filter != null && isFilterPropertyItself) {
+      if (filter is SkipDefaultsSerializationFilter) {
+        if (filter.equal(binding, bean)) {
+          return true
+        }
+      }
+      else if (!filter.accepts(accessor, bean)) {
+        return true
+      }
+    }
+
+    if (property != null) {
+      val propertyFilter = XmlSerializerUtil.getPropertyFilter(property)
+      if (propertyFilter != null && !propertyFilter.accepts(accessor, bean)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+private fun normalizePropertyNameForKotlinx(binding: NestedBinding): String {
+  val s = binding.propertyName
+  if (s.all { it.isUpperCase() || it == '_' || it.isDigit() }) {
+    // lower-case it
+    return s.lowercase()
+  }
+  return s
+}

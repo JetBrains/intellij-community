@@ -14,6 +14,7 @@ import com.intellij.platform.settings.SetResult
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serialization.SerializationException
 import com.intellij.util.xmlb.BeanBinding
+import com.intellij.util.xmlb.RootBinding
 import com.intellij.util.xmlb.XmlSerializationException
 import org.jdom.Element
 
@@ -77,11 +78,11 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
         val binding = __platformSerializer().getRootBinding(state.javaClass)
         if (binding is BeanBinding) {
           // top level expects not null (null indicates error, an empty element will be omitted)
-          return binding.serializeInto(bean = state, preCreatedElement = null, filter = filter)
+          return binding.serializeProperties(bean = state, preCreatedElement = null, filter = filter)
         }
         else {
           // maybe ArrayBinding
-          return binding.serialize(bean = state, filter = filter) as Element
+          return (binding as RootBinding).serialize(bean = state, filter = filter) as Element
         }
       }
       catch (e: SerializationException) {

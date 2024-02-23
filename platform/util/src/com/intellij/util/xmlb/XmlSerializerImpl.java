@@ -19,10 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
@@ -86,7 +83,7 @@ public final class XmlSerializerImpl {
           return new JDOMElementBinding(accessor);
         }
         //noinspection deprecation
-        if (JDOMExternalizableStringList.class == aClass) {
+        if (aClass == JDOMExternalizableStringList.class) {
           return new CompactCollectionBinding(accessor);
         }
       }
@@ -137,11 +134,11 @@ public final class XmlSerializerImpl {
       Binding binding = serializer.getRootBinding(aClass, aClass);
       if (binding instanceof BeanBinding) {
         // top level expects not null (null indicates error, an empty element will be omitted)
-        return ((BeanBinding)binding).serialize(object, true, filter);
+        return Objects.requireNonNull(((BeanBinding)binding).serialize(object, true, filter));
       }
       else {
         //noinspection ConstantConditions
-        return (Element)binding.serialize(object, filter);
+        return (Element)((RootBinding)binding).serialize(object, filter);
       }
     }
     catch (SerializationException e) {

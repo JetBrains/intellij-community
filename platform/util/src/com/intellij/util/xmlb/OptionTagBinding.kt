@@ -7,13 +7,14 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.xml.dom.XmlElement
+import kotlinx.serialization.json.JsonElement
 import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
 import java.util.*
 
-internal class OptionTagBinding internal constructor(
+internal class OptionTagBinding(
   @JvmField internal val binding: Binding?,
   override val accessor: MutableAccessor,
   private val nameAttributeValue: String?,
@@ -60,7 +61,32 @@ internal class OptionTagBinding internal constructor(
     }
   }
 
-  override fun serialize(bean: Any, filter: SerializationFilter?): Any {
+  override fun toJson(bean: Any, filter: SerializationFilter?): JsonElement? {
+    if (binding == null || converter != null) {
+      return toJson(bean = bean, accessor = accessor, converter = converter)
+    }
+    else {
+      val value = accessor.read(bean) ?: return null
+      return binding.toJson(value, filter)
+    }
+  }
+
+  override fun fromJson(bean: Any?, element: JsonElement): Any {
+    if (binding == null || converter != null) {
+      fromJson(bean = bean!!, data = element, accessor = accessor, valueClass = ClassUtil.typeToClass(accessor.genericType), converter = converter)
+    }
+    else {
+      val value = binding.fromJson(accessor.read(bean!!), element)
+      check(value !== Unit)
+      accessor.set(bean, value)
+    }
+    return Unit
+  }
+
+  override val propertyName: String
+    get() = nameAttributeValue ?: tag
+
+  override fun serialize(bean: Any, parent: Element, filter: SerializationFilter?) {
     val value = accessor.read(bean)
     val targetElement = Element(true, tag, Namespace.NO_NAMESPACE)
     if (nameAttribute != null) {
@@ -68,7 +94,8 @@ internal class OptionTagBinding internal constructor(
     }
 
     if (value == null) {
-      return targetElement
+      parent.addContent(targetElement)
+      return
     }
 
     if (valueAttribute == null) {
@@ -77,13 +104,10 @@ internal class OptionTagBinding internal constructor(
           targetElement.addContent(Text(XmlSerializerImpl.convertToString(value)))
         }
         else if (serializeBeanBindingWithoutWrapperTag) {
-          (binding as BeanBinding).serializeInto(bean = value, preCreatedElement = targetElement, filter = filter)
+          (binding as BeanBinding).serializeProperties(bean = value, preCreatedElement = targetElement, filter = filter)
         }
         else {
-          val node = binding.serialize(bean = value, context = targetElement, filter = filter)
-          if (node != null && targetElement !== node) {
-            addContent(targetElement, node)
-          }
+          binding.serialize(bean = value, parent = targetElement, filter = filter)
         }
       }
       else {
@@ -98,10 +122,7 @@ internal class OptionTagBinding internal constructor(
           targetElement.setAttribute(valueAttribute, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)))
         }
         else {
-          val node = binding.serialize(value, targetElement, filter)
-          if (node != null && targetElement !== node) {
-            addContent(targetElement, node)
-          }
+          binding.serialize(bean = value, parent = targetElement, filter = filter)
         }
       }
       else {
@@ -111,7 +132,7 @@ internal class OptionTagBinding internal constructor(
       }
     }
 
-    return targetElement
+    parent.addContent(targetElement)
   }
 
   private fun <T : Any> deserialize(host: Any, element: T, domAdapter: DomAdapter<T>): Any {

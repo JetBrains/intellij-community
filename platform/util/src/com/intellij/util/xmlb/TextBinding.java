@@ -4,6 +4,8 @@ package com.intellij.util.xmlb;
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xml.dom.XmlElement;
+import kotlin.Unit;
+import kotlinx.serialization.json.JsonElement;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
@@ -19,14 +21,27 @@ final class TextBinding implements PrimitiveValueBinding {
   }
 
   @Override
+  public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    return JsonHelperKt.toJson(bean, accessor, null);
+  }
+
+  @Override
+  public Object fromJson(@NotNull Object bean, @NotNull JsonElement element) {
+    JsonHelperKt.fromJson(bean, element, accessor, valueClass, null);
+    return Unit.INSTANCE;
+  }
+
+  @Override
   public @NotNull MutableAccessor getAccessor() {
     return accessor;
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
+  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
     Object value = accessor.read(bean);
-    return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
+    if (value != null) {
+      parent.addContent(new Text(true, XmlSerializerImpl.convertToString(value)));
+    }
   }
 
   @Override

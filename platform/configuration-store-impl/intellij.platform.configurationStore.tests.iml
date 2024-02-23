@@ -7,20 +7,22 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
-    <orderEntry type="library" name="fastutil-min" level="project" />
+    <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.settings.local" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinx-serialization-core" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.configurationStore.impl" />
 </module>

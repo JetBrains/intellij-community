@@ -8,6 +8,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.platform.settings.*
 import com.intellij.serialization.SerializationException
+import com.intellij.util.xml.dom.readXmlAsModel
 import com.intellij.util.xmlb.*
 import org.jdom.Element
 
@@ -118,10 +119,10 @@ internal fun serializeForController(bean: Any): Element? {
   val serializer = __platformSerializer()
   val binding = serializer.getRootBinding(aClass)
   if (binding is BeanBinding) {
-    return binding.serializeInto(bean = bean, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
+    return binding.serializeProperties(bean = bean, preCreatedElement = null, filter = jdomSerializer.getDefaultSerializationFilter())
   }
   else {
-    return binding.serialize(bean = bean, filter = jdomSerializer.getDefaultSerializationFilter()) as Element
+    return (binding as RootBinding).serialize(bean = bean, filter = jdomSerializer.getDefaultSerializationFilter())
   }
 }
 
@@ -160,18 +161,18 @@ private fun <T : Any> getXmlSerializationState(
         binding.setValue(bean = result, value = valueData?.decodeToString())
       }
       else if (valueData != null) {
-        val element = buildNsUnawareJdom(valueData)
-        val l = deserializeBeanInto(result = result, element = element, binding = binding, checkAttributes = false)
+        val element = readXmlAsModel(valueData)
+        val l = deserializeBeanFromControllerInto(result = result, element = element, binding = binding)
         if (l != null) {
-          var effectiveL = l
-          if (value.isPartial && oldData != null) {
-            val oldL = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = false)
-            if (oldL != null) {
-              // XML serialization framework is aware of multi-list, even if an old format (surrounded by a tag) is used
-              effectiveL = l + oldL
-            }
-          }
-          (binding as MultiNodeBinding).deserializeJdomList(context = result, elements = effectiveL)
+          //var effectiveL = l
+          //if (value.isPartial && oldData != null) {
+          //  val oldL = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = false)
+          //  if (oldL != null) {
+          //    // XML serialization framework is aware of multi-list, even if an old format (surrounded by a tag) is used
+          //    effectiveL = l + oldL
+          //  }
+          //}
+          (binding as MultiNodeBinding).deserializeList(context = result, elements = l)
         }
       }
     }

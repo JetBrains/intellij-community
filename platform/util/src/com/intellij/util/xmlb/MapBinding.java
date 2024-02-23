@@ -10,8 +10,10 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.XMap;
+import kotlinx.serialization.json.JsonElement;
+import kotlinx.serialization.json.JsonObject;
+import kotlinx.serialization.json.JsonPrimitive;
 import org.jdom.Attribute;
-import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,9 +23,10 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
+import static com.intellij.util.xmlb.JsonHelperKt.primitiveToJsonElement;
 
 @SuppressWarnings("LoggingSimilarMessage")
-final class MapBinding implements MultiNodeBinding, NestedBinding {
+final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
   private static final Logger LOG = Logger.getInstance(MapBinding.class);
 
   @SuppressWarnings("rawtypes")
@@ -105,13 +108,49 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
-    return serialize(bean, null, filter);
+  public @NotNull JsonObject toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    @SuppressWarnings("rawtypes")
+    Map map = (Map)bean;
+
+    if (map.isEmpty()) {
+      return new JsonObject(Collections.emptyMap());
+    }
+
+    Object[] keys = ArrayUtil.toObjectArray(map.keySet());
+    if (isSortMap(map)) {
+      Arrays.sort(keys, KEY_COMPARATOR);
+    }
+
+    Map<String, JsonElement> content = new LinkedHashMap<>();
+    for (Object k : keys) {
+      JsonElement kJ = keyOrValueToJson(k, keyBinding, filter);
+      JsonElement vJ = keyOrValueToJson(k, valueBinding, filter);
+      // todo non-primitive keys
+      content.put(kJ == null ? null : ((JsonPrimitive)kJ).getContent(), vJ);
+    }
+    return new JsonObject(content);
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object bean, @Nullable Element context, @Nullable SerializationFilter filter) {
-    Element serialized = isSurroundWithTag() ? new Element(MAP) : context;
+  public Object fromJson(@NotNull Object bean, @NotNull JsonElement data) {
+    return null;
+  }
+
+  @Override
+  public @Nullable Element serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    throw new IllegalStateException("Do not use MapBinding as a root bean");
+  }
+
+  @Override
+  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
+    Element serialized;
+    if (isSurroundWithTag()) {
+      serialized = new Element(MAP);
+      parent.addContent(serialized);
+    }
+    else {
+      serialized = parent;
+    }
     assert serialized != null;
 
     @SuppressWarnings("rawtypes")
@@ -128,8 +167,6 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       serializeKeyOrValue(entry, getKeyAttributeName(), k, keyBinding, filter);
       serializeKeyOrValue(entry, getValueAttributeName(), map.get(k), valueBinding, filter);
     }
-
-    return serialized == context ? null : serialized;
   }
 
   private boolean isSurroundWithTag() {
@@ -296,11 +333,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
     return map;
   }
 
-  private void serializeKeyOrValue(@NotNull Element entry,
-                                   @NotNull String attributeName,
-                                   @Nullable Object value,
-                                   @Nullable Binding binding,
-                                   @Nullable SerializationFilter filter) {
+  private void serializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, @Nullable Object value, @Nullable Binding binding, @Nullable SerializationFilter filter) {
     if (value == null) {
       return;
     }
@@ -309,25 +342,32 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
       entry.setAttribute(attributeName, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
     }
     else {
-      Object serialized = binding.serialize(value, entry, filter);
-      if (serialized != null) {
-        if (isSurroundKey()) {
-          Element container = new Element(attributeName);
-          container.addContent((Content)serialized);
-          entry.addContent(container);
-        }
-        else {
-          entry.addContent((Content)serialized);
-        }
+      Element container;
+      if (isSurroundKey()) {
+        container = new Element(attributeName);
+        entry.addContent(container);
       }
+      else {
+        container = entry;
+      }
+      binding.serialize(value, container, filter);
     }
   }
 
-  private Object deserializeKeyOrValue(@NotNull Element entry,
-                                       @NotNull String attributeName,
-                                       Object context,
-                                       @Nullable Binding binding,
-                                       @NotNull Class<?> valueClass) {
+  private static @Nullable JsonElement keyOrValueToJson(@Nullable Object value, @Nullable Binding binding, @Nullable SerializationFilter filter) {
+    if (value == null) {
+      return null;
+    }
+
+    if (binding == null) {
+      return primitiveToJsonElement(value);
+    }
+    else {
+      return binding.toJson(value, filter);
+    }
+  }
+
+  private Object deserializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, Object context, @Nullable Binding binding, @NotNull Class<?> valueClass) {
     Attribute attribute = entry.getAttribute(attributeName);
     if (attribute != null) {
       return XmlSerializerImpl.convert(attribute.getValue(), valueClass);

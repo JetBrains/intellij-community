@@ -37,10 +37,10 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
     return -1
   }
 
-  override fun serializeInto(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+  override fun serializeProperties(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
     return when (bean) {
       is BaseState -> serializeBaseStateInto(o = bean, _element = preCreatedElement, filter = filter)
-      else -> super.serializeInto(bean = bean, preCreatedElement = preCreatedElement, filter = filter)
+      else -> super.serializeProperties(bean = bean, preCreatedElement = preCreatedElement, filter = filter)
     }
   }
 
@@ -75,10 +75,10 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
       val bindings = bindings!!
       bindingIndices.sort()
       for (i in 0 until bindingIndices.size) {
-        element = serializePropertyInto(
+        element = serializeProperty(
           binding = bindings[bindingIndices.getInt(i)],
           bean = o,
-          preCreatedElement = element,
+          parentElement = element,
           filter = filter,
           isFilterPropertyItself = false,
         )

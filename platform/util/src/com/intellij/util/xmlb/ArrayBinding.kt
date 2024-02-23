@@ -8,6 +8,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +37,7 @@ final class ArrayBinding extends AbstractCollectionBinding  {
   @Override
   protected @NotNull Object doDeserializeList(@Nullable Object context, @NotNull List<XmlElement> elements) {
     int size = elements.size();
-    Object[] result = ArrayUtil.newArray(itemType, size);
+    Object[] result = (Object[])Array.newInstance(itemType, size);
     for (int i = 0; i < size; i++) {
       result[i] = deserializeItem(elements.get(i), context);
     }
@@ -45,8 +46,8 @@ final class ArrayBinding extends AbstractCollectionBinding  {
 
   @NotNull
   @Override
-  Collection<Object> getIterable(@NotNull Object o) {
-    Object[] list = (Object[])o;
+  Collection<Object> getCollection(@NotNull Object bean) {
+    Object[] list = (Object[])bean;
     return list.length == 0 ? Collections.emptyList() : Arrays.asList(list);
   }
 }
