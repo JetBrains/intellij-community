@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
 
@@ -56,10 +57,12 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     this.leansForward = leansForward;
   }
 
+  @VisibleForTesting
   public int getLine() {
     return line;
   }
 
+  @VisibleForTesting
   public int getColumn() {
     return column;
   }
