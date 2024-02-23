@@ -40,6 +40,11 @@
     "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
     "vsCodeId": "formulahendry.auto-rename-tag",
     "ideaName": "Auto Rename Tag",
     "builtIn": true
@@ -95,6 +100,11 @@
     "ideaId": "Docker"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
+  },
+  {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
     "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
     "ideaId": "com.intellij.zh"
@@ -112,7 +122,7 @@
   {
     "vsCodeId": "ms-python.python",
     "ideaName": "Python",
-    "ideaId": "Pythonid"
+    "ideaId": "com.intellij.python"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
@@ -140,6 +150,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
     "vsCodeId": "techer.open-in-browser",
     "ideaName": "Open in browser",
     "builtIn": true
@@ -156,7 +171,7 @@
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",
-    "ideaName": "Markdown All in One",
-    "builtIn": true
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   }
 ]
