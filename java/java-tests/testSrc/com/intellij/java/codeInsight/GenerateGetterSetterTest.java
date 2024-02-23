@@ -167,7 +167,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   public void testNullableStuff() {
-    myFixture.addClass("package org.jetbrains.annotations;\n" + "public @interface NotNull {}");
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         public @interface NotNull {}""");
     myFixture.configureByText("a.java", """
       class Foo {
           @org.jetbrains.annotations.NotNull
@@ -191,6 +193,42 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
 
                                 @NotNull
                                 public String getMyName() {
+                                    return myName;
+                                }
+                            }
+                            """);
+  }
+
+  public void testNullableStuffTypeUse() {
+    myFixture.addClass("""
+                          package org.jetbrains.annotations;
+                          import java.lang.annotation.ElementType;
+                          import java.lang.annotation.Target;
+                          
+                          @Target(ElementType.TYPE_USE)
+                          public @interface NotNull {}""");
+    myFixture.configureByText("a.java", """
+      class Foo {
+          @org.jetbrains.annotations.NotNull
+          private String myName;
+
+          <caret>
+      }
+      """);
+    generateGetter();
+    generateSetter();
+    myFixture.checkResult("""
+                            import org.jetbrains.annotations.NotNull;
+
+                            class Foo {
+                                @org.jetbrains.annotations.NotNull
+                                private String myName;
+
+                                public void setMyName(@NotNull String myName) {
+                                    this.myName = myName;
+                                }
+
+                                public @NotNull String getMyName() {
                                     return myName;
                                 }
                             }
