@@ -21,13 +21,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,7 +41,7 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
 
   @Override
   protected boolean hasMembers(@NotNull PsiClass aClass) {
-    return GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass).stream().anyMatch(ecm -> !ecm.isReadOnlyMember());
+    return ContainerUtil.exists(GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass), ecm -> !ecm.isReadOnlyMember());
   }
 
   @Nullable
@@ -72,8 +72,8 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
                                  ClassMember[] members,
                                  List<? extends GenerationInfo> generatedMembers) {
     super.notifyOnSuccess(editor, members, generatedMembers);
-    if (Arrays.stream(members).anyMatch(fm -> fm instanceof PsiFieldMember &&
-                                              GetterSetterPrototypeProvider.isReadOnlyProperty(((PsiFieldMember)fm).getElement()))) {
+    if (ContainerUtil.exists(members, member -> member instanceof PsiFieldMember fm &&
+                                                GetterSetterPrototypeProvider.isReadOnlyProperty(fm.getElement()))) {
       HintManager.getInstance().showErrorHint(editor,
                                               JavaBundle.message("generate.getter.and.setter.error.setters.for.read.only.not.generated"), HintManager.ABOVE);
     }
