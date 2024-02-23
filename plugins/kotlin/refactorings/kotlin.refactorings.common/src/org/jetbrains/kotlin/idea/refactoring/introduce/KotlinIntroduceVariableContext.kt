@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.jetbrains.kotlin.utils.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.sure
@@ -133,7 +133,13 @@ abstract class KotlinIntroduceVariableContext(
         } else {
             val propertyText = buildString {
                 append("$varOvVal ")
-                append(nameSuggestions.single().first())
+                val single = nameSuggestions.single()
+                checkWithAttachment(single.isNotEmpty(), lazyMessage = {
+                    "nameSuggestions: $nameSuggestions"
+                }, {
+                    it.withPsiAttachment("expression", expression)
+                })
+                append(single.first())
                 append(" = ")
                 append(initializerText)
             }
