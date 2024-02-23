@@ -95,7 +95,7 @@ class PyDBAdditionalThreadInfo(object):
         self.pydev_call_inside_jinja2 = None
         self.is_tracing = False
         self.conditional_breakpoint_exception = None
-        self.pydev_message = ''
+        self.pydev_message = None
         self.suspend_type = PYTHON_SUSPEND
         self.pydev_next_line = -1
         self.pydev_func_name = '.invalid.'  # Must match the type in cython

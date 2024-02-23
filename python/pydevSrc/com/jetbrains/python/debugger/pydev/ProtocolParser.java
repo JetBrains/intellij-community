@@ -187,10 +187,7 @@ public final class ProtocolParser {
     final String id = readString(reader, "id", null);
     final String name = readString(reader, "name", "");
     final int stopReason = readInt(reader, "stop_reason", 0);
-    String message = readString(reader, "message", "None");
-    if ("None".equals(message) || message.isEmpty()) {
-      message = null;
-    }
+    String message = read(reader, "message", false);
 
     final List<PyStackFrameInfo> frames = new LinkedList<>();
     while (reader.hasMoreChildren()) {
