@@ -56,7 +56,8 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.bundledPluginModules.add("intellij.tasks.core")
         productLayout.bundledPluginModules.add("intellij.vcs.git")
         productLayout.bundledPluginModules.add("intellij.vcs.svn")
-        productLayout.bundledPluginModules.add("intellij.vcs.github")
+        productLayout.bundledPluginModules.add("intellij.vcs.github.community")
+        productLayout.bundledPluginModules.add("intellij.yaml")
         productLayout.bundledPluginModules.add("intellij.ant")
         productLayout.bundledPluginModules.add("intellij.sh")
         productLayout.bundledPluginModules.add("intellij.vcs.changeReminder")
@@ -69,7 +70,7 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = persistentListOf("intellij.java.plugin")
 
-        val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin()
+        val pluginLayouts = productLayout.pluginLayouts + JavaPluginLayout.javaPlugin() + CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community")
         productLayout.pluginLayouts = pluginLayouts.toPersistentList()
 
         productLayout.addPlatformSpec { layout, _ ->
