@@ -76,9 +76,8 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     PopupHandler.installPopupMenu(activityList, "ActivityView.Popup", "ActivityView.Popup")
     val scrollPane = ScrollPaneFactory.createScrollPane(activityList,
                                                         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
-      border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
+                                                        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
+    ScrollableContentBorder.setup(scrollPane, Side.TOP)
     val progressStripe = ProgressStripe(scrollPane, this)
     add(progressStripe, BorderLayout.CENTER)
 
