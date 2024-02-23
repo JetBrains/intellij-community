@@ -23,6 +23,8 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
 
   public void testEscapedNewLineNotUnnecessary() { doTest(); }
   public void testBrokenCode() { doTest(); }
+  
+  public void testInInjection() { doTest(); }
 
   protected void doQuickFixTest() {
     myFixture.addClass("""
@@ -55,6 +57,6 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    return JAVA_21_ANNOTATED;
   }
 }
