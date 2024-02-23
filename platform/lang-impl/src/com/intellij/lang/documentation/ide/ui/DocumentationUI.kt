@@ -37,11 +37,13 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
-import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JScrollPane
@@ -60,7 +62,6 @@ internal class DocumentationUI(
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
-  private val editorBackground: MutableStateFlow<Color>
   private val myContentUpdates = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val contentUpdates: SharedFlow<Unit> = myContentUpdates.asSharedFlow()
   private val myContentSizeUpdates = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -71,12 +72,6 @@ internal class DocumentationUI(
     scrollPane = DocumentationScrollPane()
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane)) {
       imageResolver?.resolveImage(it)
-    }
-    editorBackground = MutableStateFlow(editorPane.background)
-    editorPane.addPropertyChangeListener { evt: PropertyChangeEvent ->
-      if (evt.propertyName.let { it == "background" || it == "UI" }) {
-        editorBackground.value = editorPane.background
-      }
     }
     Disposer.register(this, editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
@@ -161,7 +156,7 @@ internal class DocumentationUI(
 
   fun trackDocumentationBackgroundChange(disposable: Disposable, onChange: (Color) -> Unit) {
     val job = cs.launch {
-      editorBackground.collectLatest {
+      editorPane.editorBackgroundFlow.collectLatest {
         withContext(Dispatchers.EDT) {
           onChange(it)
         }
