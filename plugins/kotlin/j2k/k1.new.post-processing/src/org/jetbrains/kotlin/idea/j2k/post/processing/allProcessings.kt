@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix.ReturnTypeMismatchOnOverrideFactory
 import org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix.SetExplicitVisibilityFactory
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
 import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
 import org.jetbrains.kotlin.j2k.postProcessings.FormatCodeProcessing
 import org.jetbrains.kotlin.j2k.postProcessings.OptimizeImportsProcessing

@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.DestructureIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
-import org.jetbrains.kotlin.idea.j2k.post.processing.InspectionLikeProcessingForElement
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.idea.j2k.post.processing.isInspectionEnabledInCurrentProfile
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
