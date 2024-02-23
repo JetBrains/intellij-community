@@ -517,14 +517,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       return
     }
 
-    toolbar?.let {
-      disposeIfNeeded(it)
-      northPanel.remove(it)
-    }
     coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      toolbar = createToolbar(coroutineScope.childScope(), frame)
-      northPanel.add(toolbar, 0)
-      toolbar!!.isVisible = isToolbarVisible { computeMainActionGroups() }
+      toolbar?.let { it.isVisible = isToolbarVisible { computeMainActionGroups() } }
       contentPane!!.revalidate()
     }
   }
