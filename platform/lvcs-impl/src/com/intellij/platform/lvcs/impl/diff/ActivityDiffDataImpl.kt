@@ -7,7 +7,7 @@ import com.intellij.history.integration.IdeaGateway
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.util.containers.JBIterable
 
-private class ActivityDiffDataWithDifferences(override val presentableChanges: Iterable<ActivityDiffObject>) : ActivityDiffData
+private class ActivityDiffDataImpl(override val presentableChanges: Iterable<ActivityDiffObject>) : ActivityDiffData
 
 internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
                                                scope: ActivityScope,
@@ -24,7 +24,7 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
     getDiff(rootEntry, selection, entryPath, isOldContentUsed)
   }
   val differenceObjects = mapToDiffObjects(gateway, scope, selection, isOldContentUsed, differences)
-  return ActivityDiffDataWithDifferences(differenceObjects)
+  return ActivityDiffDataImpl(differenceObjects)
 }
 
 private fun LocalHistoryFacade.mapToDiffObjects(gateway: IdeaGateway,
