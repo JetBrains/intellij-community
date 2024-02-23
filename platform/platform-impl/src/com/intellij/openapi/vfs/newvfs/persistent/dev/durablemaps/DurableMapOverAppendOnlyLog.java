@@ -84,10 +84,10 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public boolean containsMapping(@NotNull K key) throws IOException {
-    int hash = keyDescriptor.getHashCode(key);
-    int keyHash = HashUtils.adjustHash(hash);
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
 
-    int foundRecordId = keyHashToIdMap.lookup(keyHash, recordId -> {
+    int foundRecordId = keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
         int header = readHeader(recordBuffer);
@@ -112,11 +112,11 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public V get(@NotNull K key) throws IOException {
-    int hash = keyDescriptor.getHashCode(key);
-    int keyHash = HashUtils.adjustHash(hash);
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
 
     Ref<Pair<K, V>> resultRef = new Ref<>();
-    keyHashToIdMap.lookup(keyHash, recordId -> {
+    keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       Pair<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
       if (entry != null) {
@@ -140,14 +140,14 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   @Override
   public void put(@NotNull K key,
                   @Nullable V value) throws IOException {
-    int hash = keyDescriptor.getHashCode(key);
-    int keyHash = HashUtils.adjustHash(hash);
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
     //Abstraction break: synchronize on keyHashToIdMap because we know keyHashToIdMap uses this-monitor to synchronize
     //    itself
     synchronized (keyHashToIdMap) {
       Ref<Pair<K, V>> resultRef = new Ref<>();
       int foundRecordId = keyHashToIdMap.lookup(
-        keyHash,
+        adjustedHash,
         candidateRecordId -> {
           long logRecordId = convertStoredIdToLogId(candidateRecordId);
           Pair<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
@@ -180,16 +180,16 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
       if (keyRecordExists) {
         // (key) record exist, but with different value => replace recordId:
         if (value != null) {
-          keyHashToIdMap.replace(keyHash, foundRecordId, storedRecordId);
+          keyHashToIdMap.replace(adjustedHash, foundRecordId, storedRecordId);
         }
         else {//remove deleted mapping
-          keyHashToIdMap.remove(keyHash, foundRecordId);
+          keyHashToIdMap.remove(adjustedHash, foundRecordId);
         }
       }
       else {
         // (key) record don't exist yet => put it:
         if (value != null) {
-          keyHashToIdMap.put(keyHash, storedRecordId);
+          keyHashToIdMap.put(adjustedHash, storedRecordId);
         }
       }
     }
