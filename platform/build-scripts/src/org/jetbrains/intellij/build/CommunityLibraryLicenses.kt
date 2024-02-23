@@ -1228,6 +1228,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-ruby-exp"),
     jetbrainsLibrary("completion-ranking-rust-exp"),
     jetbrainsLibrary("completion-ranking-scala-exp"),
+    jetbrainsLibrary("completion-ranking-sh"),
     jetbrainsLibrary("completion-ranking-sh-exp"),
     jetbrainsLibrary("completion-ranking-swift-exp"),
     jetbrainsLibrary("completion-ranking-typescript-exp"),
