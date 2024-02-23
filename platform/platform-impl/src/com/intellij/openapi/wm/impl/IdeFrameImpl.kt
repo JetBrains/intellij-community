@@ -18,7 +18,6 @@ import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
@@ -106,14 +105,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
       }
     }
 
-    if (maximized && StartupUiUtil.isXToolkit() && X11UiUtil.isInitialized()
-        && (state and Frame.ICONIFIED == 0) && isShowing) {
-      // Ubuntu (and may be other linux distros) doesn't set maximized correctly if the frame is MAXIMIZED_VERT already. Use X11 API
-      X11UiUtil.setMaximized(this, true)
-    }
-    else {
-      super.setExtendedState(state)
-    }
+    super.setExtendedState(state)
   }
 
   override fun paint(g: Graphics) {
