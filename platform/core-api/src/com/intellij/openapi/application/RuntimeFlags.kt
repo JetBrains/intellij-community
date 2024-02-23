@@ -7,4 +7,4 @@ private const val ENABLE_NEW_LOCK_PROPERTY = "idea.enable.new.lock"
 
 @get:ApiStatus.Internal
 val isNewLockEnabled: Boolean
-  get() = "false" != System.getProperty(ENABLE_NEW_LOCK_PROPERTY)
+  get() = System.getProperty(ENABLE_NEW_LOCK_PROPERTY, "false").toBoolean()
