@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
-import static com.intellij.codeWithMe.ClientIdPropagation.decorateFutureTask;
-import static com.intellij.codeWithMe.ClientIdPropagation.decorateRunnable;
+import static com.intellij.concurrency.client.ClientIdPropagation.decorateFutureTask;
+import static com.intellij.concurrency.client.ClientIdPropagation.decorateRunnable;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 /**

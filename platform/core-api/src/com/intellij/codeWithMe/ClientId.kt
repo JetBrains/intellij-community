@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeWithMe
 
+import com.intellij.concurrency.client.currentClientIdString
+import com.intellij.concurrency.client.propagateClientIdAcrossThreads
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
@@ -358,32 +360,32 @@ data class ClientId(val value: String) {
 
     @JvmStatic
     fun <T> decorateFunction(action: () -> T): () -> T {
-      return com.intellij.codeWithMe.decorateFunction(action)
+      return com.intellij.concurrency.client.decorateFunction(action)
     }
 
     @JvmStatic
     fun decorateRunnable(runnable: Runnable): Runnable {
-      return com.intellij.codeWithMe.decorateRunnable(runnable)
+      return com.intellij.concurrency.client.decorateRunnable(runnable)
     }
 
     @JvmStatic
     fun <T> decorateCallable(callable: Callable<T>): Callable<T> {
-      return com.intellij.codeWithMe.decorateCallable(callable)
+      return com.intellij.concurrency.client.decorateCallable(callable)
     }
 
     @JvmStatic
     fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> {
-      return com.intellij.codeWithMe.decorateFunction(function)
+      return com.intellij.concurrency.client.decorateFunction(function)
     }
 
     @JvmStatic
     fun <T, U> decorateBiConsumer(biConsumer: BiConsumer<T, U>): BiConsumer<T, U> {
-      return com.intellij.codeWithMe.decorateBiConsumer(biConsumer)
+      return com.intellij.concurrency.client.decorateBiConsumer(biConsumer)
     }
 
     @JvmStatic
     fun <T> decorateProcessor(processor: Processor<T>): Processor<T> {
-      return com.intellij.codeWithMe.decorateProcessor(processor)
+      return com.intellij.concurrency.client.decorateProcessor(processor)
     }
 
     fun coroutineContext(): CoroutineContext = currentOrNull?.asContextElement() ?: EmptyCoroutineContext

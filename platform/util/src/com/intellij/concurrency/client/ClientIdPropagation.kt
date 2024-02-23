@@ -2,7 +2,7 @@
 
 @file:JvmName("ClientIdPropagation")
 
-package com.intellij.codeWithMe
+package com.intellij.concurrency.client
 
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
