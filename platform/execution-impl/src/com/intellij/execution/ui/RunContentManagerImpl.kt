@@ -265,7 +265,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.displayName, getReuseCondition(toolWindowId))
     val content: Content?
     if (oldDescriptor == null) {
-      content = createNewContent(descriptor)
+      content = createNewContent(descriptor, executor)
     }
     else {
       content = oldDescriptor.attachedContent!!
@@ -724,11 +724,11 @@ private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentD
   return descriptor?.contentToolWindowId ?: executor.toolWindowId
 }
 
-private fun createNewContent(descriptor: RunContentDescriptor): Content {
+private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {
   val content = ContentFactory.getInstance().createContent(descriptor.component, descriptor.displayName, true)
   content.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
   if (AdvancedSettings.getBoolean("start.run.configurations.pinned")) content.isPinned = true
-
+  content.icon = descriptor.icon ?: executor.toolWindowIcon
   return content
 }
 
