@@ -133,9 +133,9 @@ public abstract class XDebuggerUtil {
 
   public static final String INLINE_BREAKPOINTS_KEY = "debugger.show.breakpoints.inline";
 
-  public static boolean areInlineBreakpointsEnabled(@NotNull Document document) {
+  public static boolean areInlineBreakpointsEnabled(@Nullable VirtualFile file) {
     return Registry.is(INLINE_BREAKPOINTS_KEY) &&
            !ContainerUtil.exists(InlineBreakpointsDisabler.Companion.getEP().getExtensionList(),
-                                 disabler -> disabler.areInlineBreakpointsDisabled(document));
+                                 disabler -> disabler.areInlineBreakpointsDisabled(file));
   }
 }

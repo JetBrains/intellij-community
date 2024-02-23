@@ -94,7 +94,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       if (file == null) return -1;
       var document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return -1;
-      if (!XDebuggerUtil.areInlineBreakpointsEnabled(document)) return -1;
+      if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return -1;
       if (0 > offset || offset > document.getTextLength()) return -1;
       return offset - document.getLineStartOffset(document.getLineNumber(offset));
     });
