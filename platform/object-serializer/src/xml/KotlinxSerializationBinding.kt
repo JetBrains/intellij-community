@@ -4,6 +4,7 @@ package com.intellij.serialization.xml
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.serialization.LOG
 import com.intellij.util.xml.dom.XmlElement
+import com.intellij.util.xmlb.DomAdapter
 import com.intellij.util.xmlb.NotNullDeserializeBinding
 import com.intellij.util.xmlb.RootBinding
 import com.intellij.util.xmlb.SerializationFilter
@@ -66,24 +67,16 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding,
 
   private fun decodeFromJson(data: String): Any = json.decodeFromString(serializer, data)
 
-  override fun isBoundTo(element: Element): Boolean {
+  override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean {
     throw UnsupportedOperationException("Only root object is supported")
   }
 
-  override fun isBoundTo(element: XmlElement): Boolean {
-    throw UnsupportedOperationException("Only root object is supported")
-  }
-
-  override fun deserialize(context: Any?, element: Element): Any {
-    val cdata = element.content.firstOrNull() as? Text
+  override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
+    val cdata = if (element is Element) (element.content.firstOrNull() as? Text)?.text else (element as XmlElement).content
     if (cdata == null) {
       LOG.debug { "incorrect data (old format?) for $serializer" }
       return json.decodeFromString(serializer, "{}")
     }
-    return decodeFromJson(cdata.text)
-  }
-
-  override fun deserialize(context: Any?, element: XmlElement): Any {
-    throw UnsupportedOperationException("Only JDOM is supported for now")
+    return decodeFromJson(cdata)
   }
 }

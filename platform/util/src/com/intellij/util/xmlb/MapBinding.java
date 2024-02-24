@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 import static com.intellij.util.xmlb.Constants.*;
+import static com.intellij.util.xmlb.JsonHelperKt.fromJsonPrimitive;
 import static com.intellij.util.xmlb.JsonHelperKt.primitiveToJsonElement;
 
 @SuppressWarnings("LoggingSimilarMessage")
@@ -131,9 +132,56 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
     return new JsonObject(content);
   }
 
+  @SuppressWarnings({"rawtypes", "DuplicatedCode"})
   @Override
-  public Object fromJson(@NotNull Object bean, @NotNull JsonElement data) {
-    return null;
+  public @Nullable Object fromJson(@Nullable Object currentValue, @NotNull JsonElement element) {
+    // if accessor is null, it is sub-map, and we must not use context
+    Map map = accessor == null ? null : (Map<?, ?>)currentValue;
+
+    if (!(element instanceof JsonObject)) {
+      // yes, `null` is also not expected
+      LOG.warn("Expected JsonObject but got " + element);
+      return map;
+    }
+
+    JsonObject jsonObject = (JsonObject)element;
+
+    if (map != null) {
+      if (jsonObject.isEmpty()) {
+        return map;
+      }
+      else if (ClassUtil.isMutableMap(map)) {
+        map.clear();
+      }
+      else {
+        map = null;
+      }
+    }
+
+    for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
+      if (map == null) {
+        if (mapClass == Map.class) {
+          map = new HashMap();
+        }
+        else {
+          try {
+            map = ReflectionUtil.newInstance(mapClass);
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+            map = new HashMap();
+          }
+        }
+      }
+
+      //noinspection unchecked
+      map.put(entry.getKey(), keyOrValueFromJson(entry.getValue(), valueBinding));
+    }
+    return map;
+  }
+
+  @Override
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement data) {
   }
 
   @Override
@@ -196,46 +244,28 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
   }
 
   @Override
-  public @Nullable Object deserializeJdomList(@Nullable Object context, @NotNull List<? extends Element> elements) {
-    List<Element> childNodes;
-    if (isSurroundWithTag()) {
-      if (elements.size() == 1) {
-        childNodes = elements.get(0).getChildren();
-      }
-      else {
-        childNodes = new ArrayList<>();
-        for (Element element : elements) {
-          childNodes.addAll(element.getChildren());
-        }
-      }
-    }
-    else {
-      //noinspection unchecked
-      childNodes = (List<Element>)elements;
-    }
-    return deserialize(context, childNodes);
-  }
-
-  @Override
-  public @Nullable Object deserializeList(@Nullable Object context, @NotNull List<XmlElement> elements) {
-    List<XmlElement> childNodes;
+  public @Nullable <T> Object deserializeList(@Nullable Object bean, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    List<? extends T> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
-      childNodes = elements.get(0).children;
+      childNodes = adapter.getChildren(elements.get(0));
     }
     else {
       childNodes = elements;
     }
-    return deserialize2(context, childNodes);
+
+    if (adapter == XmlDomAdapter.INSTANCE) {
+      //noinspection unchecked
+      return deserialize2(bean, (List<XmlElement>)childNodes);
+    }
+    else {
+      //noinspection unchecked
+      return deserialize(bean, (List<Element>)childNodes);
+    }
   }
 
   @Override
-  public Object deserializeUnsafe(Object context, @NotNull Element element) {
-    return null;
-  }
-
-  @Override
-  public Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
+  public @Nullable <T> Object deserializeUnsafe(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     return null;
   }
 
@@ -367,6 +397,15 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
     }
   }
 
+  private static @Nullable Object keyOrValueFromJson(@NotNull JsonElement element, @Nullable Binding binding) {
+    if (binding == null) {
+      return fromJsonPrimitive(element);
+    }
+    else {
+      return ((RootBinding)binding).fromJson(null, element);
+    }
+  }
+
   private Object deserializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, Object context, @Nullable Binding binding, @NotNull Class<?> valueClass) {
     Attribute attribute = entry.getAttribute(attributeName);
     if (attribute != null) {
@@ -375,8 +414,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
     else if (!isSurroundKey()) {
       assert binding != null;
       for (Element element : entry.getChildren()) {
-        if (binding.isBoundTo(element)) {
-          return binding.deserializeUnsafe(context, element);
+        if (binding.isBoundTo(element, JdomAdapter.INSTANCE)) {
+          return binding.deserializeUnsafe(context, element, JdomAdapter.INSTANCE);
         }
       }
     }
@@ -388,7 +427,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
       }
       else {
         assert binding != null;
-        return OptionTagBindingKt.deserializeJdomList(binding, null, children);
+        return OptionTagBindingKt.deserializeList(binding, null, children, JdomAdapter.INSTANCE);
       }
     }
     return null;
@@ -406,8 +445,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
     else if (!isSurroundKey()) {
       assert binding != null;
       for (XmlElement element : entry.children) {
-        if (binding.isBoundTo(element)) {
-          return binding.deserializeUnsafe(context, element);
+        if (binding.isBoundTo(element, XmlDomAdapter.INSTANCE)) {
+          return binding.deserializeUnsafe(context, element, XmlDomAdapter.INSTANCE);
         }
       }
     }
@@ -419,7 +458,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
       }
       else {
         assert binding != null;
-        return OptionTagBindingKt.deserializeList(binding, null, children);
+        return OptionTagBindingKt.deserializeList(binding, null, children, XmlDomAdapter.INSTANCE);
       }
     }
     return null;
@@ -445,28 +484,15 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
     if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
-      return oldAnnotation.entryTagName().equals(element.getName());
+      return oldAnnotation.entryTagName().equals(adapter.getName(element));
     }
     else if (annotation != null) {
-      return annotation.propertyElementName().equals(element.getName());
+      return annotation.propertyElementName().equals(adapter.getName(element));
     }
     else {
-      return element.getName().equals(MAP);
-    }
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
-    if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
-      return oldAnnotation.entryTagName().equals(element.name);
-    }
-    else if (annotation != null) {
-      return annotation.propertyElementName().equals(element.name);
-    }
-    else {
-      return element.name.equals(MAP);
+      return adapter.getName(element).equals(MAP);
     }
   }
 }

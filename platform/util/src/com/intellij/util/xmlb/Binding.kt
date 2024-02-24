@@ -4,10 +4,8 @@
 package com.intellij.util.xmlb
 
 import com.intellij.serialization.MutableAccessor
-import com.intellij.util.xml.dom.XmlElement
 import kotlinx.serialization.json.JsonElement
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.Type
 
@@ -15,8 +13,6 @@ interface Serializer {
   fun getRootBinding(aClass: Class<*>, originalType: Type): Binding
 
   fun getRootBinding(aClass: Class<*>): Binding = getRootBinding(aClass = aClass, originalType = aClass)
-
-  fun getBinding(accessor: MutableAccessor): Binding?
 
   fun getBinding(aClass: Class<*>, type: Type): Binding?
 }
@@ -28,50 +24,43 @@ fun interface SerializationFilter {
 @Internal
 interface RootBinding : Binding {
   fun serialize(bean: Any, filter: SerializationFilter?): Element?
+
+  // currentValue is used in collection binding and is modified in place if it's mutable
+  fun fromJson(currentValue: Any?, element: JsonElement): Any?
 }
 
 interface Binding {
   fun serialize(bean: Any, parent: Element, filter: SerializationFilter?)
 
-  fun isBoundTo(element: Element): Boolean
-
-  fun isBoundTo(element: XmlElement): Boolean
+  fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean
 
   fun init(originalType: Type, serializer: Serializer) {
   }
 
-  fun deserializeUnsafe(context: Any?, element: Element): Any?
-
-  fun deserializeUnsafe(context: Any?, element: XmlElement): Any?
+  fun <T : Any> deserializeUnsafe(context: Any?, element: T, adapter: DomAdapter<T>): Any?
 
   fun toJson(bean: Any, filter: SerializationFilter?): JsonElement?
-
-  fun fromJson(bean: Any?, element: JsonElement): Any?
 }
 
 interface NestedBinding : Binding {
   val accessor: MutableAccessor
+
+  fun setFromJson(bean: Any, element: JsonElement)
 
   // used only by kotlinx serialization
   val propertyName: String
     get() = accessor.name
 }
 
-@ApiStatus.Internal
+@Internal
 interface MultiNodeBinding : Binding {
   val isMulti: Boolean
 
-  fun deserializeJdomList(context: Any?, elements: List<Element>): Any?
-
-  fun deserializeList(context: Any?, elements: List<XmlElement>): Any?
+  fun <T : Any> deserializeList(bean: Any?, elements: List<T>, adapter: DomAdapter<T>): Any?
 }
 
 interface NotNullDeserializeBinding : Binding {
-  fun deserialize(context: Any?, element: Element): Any
+  fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any
 
-  fun deserialize(context: Any?, element: XmlElement): Any
-
-  override fun deserializeUnsafe(context: Any?, element: Element): Any = deserialize(context = context, element = element)
-
-  override fun deserializeUnsafe(context: Any?, element: XmlElement): Any = deserialize(context = context, element = element)
+  override fun <T : Any> deserializeUnsafe(context: Any?, element: T, adapter: DomAdapter<T>): Any = deserialize(context = context, element = element, adapter)
 }

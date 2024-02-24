@@ -36,7 +36,7 @@ public final class XmlSerializer {
   public static @NotNull <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws SerializationException {
     try {
       NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass);
-      return (T)binding.deserialize(null, element);
+      return (T)binding.deserialize(null, element, JdomAdapter.INSTANCE);
     }
     catch (SerializationException e) {
       throw e;

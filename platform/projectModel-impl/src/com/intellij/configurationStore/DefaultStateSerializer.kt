@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.util.xmlb.JdomAdapter
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
@@ -15,7 +16,7 @@ fun <T : Any> deserializeState(stateElement: Element?, stateClass: Class<T>): T?
     com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass) -> {
       deserializeJdomExternalizable(stateClass, stateElement)
     }
-    else -> jdomSerializer.deserialize(stateElement, stateClass)
+    else -> jdomSerializer.deserialize(stateElement, stateClass, JdomAdapter)
   }
 }
 

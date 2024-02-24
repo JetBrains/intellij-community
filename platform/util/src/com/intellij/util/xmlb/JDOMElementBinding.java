@@ -5,7 +5,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Tag;
-import kotlin.Unit;
 import kotlinx.serialization.json.JsonArray;
 import kotlinx.serialization.json.JsonElement;
 import kotlinx.serialization.json.JsonElementKt;
@@ -62,7 +61,7 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public Object fromJson(@NotNull Object bean, @NotNull JsonElement element) {
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
     if (element instanceof JsonPrimitive) {
       try {
         accessor.set(bean, buildNsUnawareJdom(new StringReader(((JsonPrimitive)element).getContent())));
@@ -83,7 +82,6 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
       }
       accessor.set(bean, result.toArray(new Element[0]));
     }
-    return Unit.INSTANCE;
   }
 
   @Override
@@ -111,8 +109,19 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
+  public <T> @NotNull Object deserializeList(@Nullable Object bean, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    assert bean != null;
+    if (adapter == JdomAdapter.INSTANCE) {
+      return deserializeJdomList(bean, (List<Element>)elements);
+    }
+    else {
+      return deserializeList(bean, (List<XmlElement>)elements);
+    }
+  }
+
+  @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     if (accessor.getValueClass().isArray()) {
       accessor.set(context, elements.toArray(new Element[0]));
     }
@@ -122,7 +131,6 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
     return context;
   }
 
-  @Override
   public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
     throw new UnsupportedOperationException("XmlElement is not supported by JDOMElementBinding");
   }
@@ -133,23 +141,14 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
   }
 
   @Override
-  public @NotNull Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull Element element) {
+  public @NotNull <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+    assert context != null;
     accessor.set(context, element);
     return context;
   }
 
   @Override
-  public @NotNull Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull XmlElement element) {
-    throw new UnsupportedOperationException("XmlElement is not supported by JDOMElementBinding");
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull Element element) {
-    return element.getName().equals(tagName);
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
-    return element.name.equals(tagName);
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
+    return adapter.getName(element).equals(tagName);
   }
 }

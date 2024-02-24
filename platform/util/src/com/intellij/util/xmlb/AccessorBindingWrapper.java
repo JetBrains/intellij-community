@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Property;
-import kotlin.Unit;
 import kotlinx.serialization.json.JsonElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +39,12 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public Object fromJson(@NotNull Object bean, @NotNull JsonElement element) {
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
     Object currentValue = accessor.read(bean);
-    Object value = binding.fromJson(bean, element);
+    Object value = ((RootBinding)binding).fromJson(currentValue, element);
     if (currentValue != value) {
       accessor.set(bean, value);
     }
-    return Unit.INSTANCE;
   }
 
   @Override
@@ -74,9 +72,18 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     }
   }
 
-  @SuppressWarnings("DuplicatedCode")
   @Override
-  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+  public @Nullable <T> Object deserializeUnsafe(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+    if (adapter == JdomAdapter.INSTANCE) {
+      return deserializeUnsafe(context, (Element)element);
+    }
+    else {
+      return deserializeUnsafe(context, (XmlElement)element);
+    }
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  Object deserializeUnsafe(Object context, @NotNull Element element) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, element);
@@ -102,7 +109,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       }
     }
     else {
-      deserializedValue = binding.deserializeUnsafe(currentValue, element);
+      deserializedValue = binding.deserializeUnsafe(currentValue, element, JdomAdapter.INSTANCE);
     }
 
     if (currentValue != deserializedValue) {
@@ -112,8 +119,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @SuppressWarnings("DuplicatedCode")
-  @Override
-  public Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
+  Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, element);
@@ -138,7 +144,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
         }
       }
       else {
-        deserializedValue = binding.deserializeUnsafe(currentValue, element);
+        deserializedValue = binding.deserializeUnsafe(currentValue, element, XmlDomAdapter.INSTANCE);
       }
 
       if (currentValue != deserializedValue) {
@@ -148,14 +154,27 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     return context;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
+  public @Nullable <T> Object deserializeList(@Nullable Object bean, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    if (adapter == JdomAdapter.INSTANCE) {
+      assert bean != null;
+      //noinspection unchecked
+      deserializeJdomList(bean, (List<? extends Element>)elements);
+    }
+    else {
+      deserializeList(bean, (List<XmlElement>)elements);
+    }
+    return null;
+  }
+
+  private @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = OptionTagBindingKt.deserializeJdomList(binding, currentValue, elements);
+      Object deserializedValue = OptionTagBindingKt.deserializeList(binding, currentValue, elements, JdomAdapter.INSTANCE);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }
@@ -163,14 +182,13 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     return context;
   }
 
-  @Override
   public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = OptionTagBindingKt.deserializeList(binding, currentValue, elements);
+      Object deserializedValue = OptionTagBindingKt.deserializeList(binding, currentValue, elements, XmlDomAdapter.INSTANCE);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }
@@ -184,22 +202,12 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
     if (binding instanceof MapBinding) {
-      return ((MapBinding)binding).isBoundToWithoutProperty(element.getName());
+      return ((MapBinding)binding).isBoundToWithoutProperty(adapter.getName(element));
     }
     else {
-      return binding.isBoundTo(element);
-    }
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
-    if (binding instanceof MapBinding) {
-      return ((MapBinding)binding).isBoundToWithoutProperty(element.name);
-    }
-    else {
-      return binding.isBoundTo(element);
+      return binding.isBoundTo(element, adapter);
     }
   }
 

@@ -3,8 +3,10 @@ package com.intellij.util.xmlb;
 
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,5 +49,13 @@ public final class XmlSerializerUtil {
   static Class<? extends Converter> getConverter(@NotNull OptionTag optionTag) {
     Class<? extends Converter> converter = optionTag.converter();
     return converter == Converter.class ? null : converter;
+  }
+
+  static Class<?>[] getElementTypes(@NotNull XCollection annotation) {
+    return annotation.elementTypes();
+  }
+
+  static Class<?>[] getElementTypes(@SuppressWarnings("deprecation") @NotNull AbstractCollection annotation) {
+    return annotation.elementTypes();
   }
 }

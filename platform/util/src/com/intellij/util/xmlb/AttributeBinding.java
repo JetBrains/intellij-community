@@ -4,9 +4,7 @@ package com.intellij.util.xmlb;
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Attribute;
-import kotlin.Unit;
 import kotlinx.serialization.json.JsonElement;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -40,9 +38,8 @@ final class AttributeBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public Object fromJson(@NotNull Object bean, @NotNull JsonElement data) {
-    JsonHelperKt.fromJson(bean, data, accessor, valueClass, converter);
-    return Unit.INSTANCE;
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement data) {
+    JsonHelperKt.setFromJson(bean, data, accessor, valueClass, converter);
   }
 
   @Override
@@ -73,12 +70,7 @@ final class AttributeBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public Object deserializeUnsafe(Object context, @NotNull Element element) {
-    return deserialize(context);
-  }
-
-  @Override
-  public Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
+  public @Nullable <T> Object deserializeUnsafe(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     return context;
   }
 
@@ -101,12 +93,7 @@ final class AttributeBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
-    return false;
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
     return false;
   }
 }

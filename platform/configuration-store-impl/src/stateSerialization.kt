@@ -10,6 +10,8 @@ import com.intellij.platform.settings.*
 import com.intellij.serialization.SerializationException
 import com.intellij.util.xml.dom.readXmlAsModel
 import com.intellij.util.xmlb.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonPrimitive
 import org.jdom.Element
 
 @Suppress("DEPRECATION", "UNCHECKED_CAST")
@@ -52,7 +54,7 @@ internal fun <T : Any> deserializeStateWithController(
         if (stateElement == null) {
           return null
         }
-        return rootBinding.deserialize(context = null, element = stateElement) as T
+        return rootBinding.deserialize(context = null, element = stateElement, JdomAdapter) as T
       }
 
       return getXmlSerializationState<T>(
@@ -158,7 +160,13 @@ private fun <T : Any> getXmlSerializationState(
       }
 
       if (binding is PrimitiveValueBinding && binding.isPrimitive) {
-        binding.setValue(bean = result, value = valueData?.decodeToString())
+        if (valueData == null) {
+          binding.setValue(bean = result, value = null)
+        }
+        else {
+          val s = Json.parseToJsonElement(valueData.decodeToString()).jsonPrimitive.content
+          binding.setValue(bean = result, value = s)
+        }
       }
       else if (valueData != null) {
         val element = readXmlAsModel(valueData)
@@ -172,7 +180,7 @@ private fun <T : Any> getXmlSerializationState(
           //    effectiveL = l + oldL
           //  }
           //}
-          (binding as MultiNodeBinding).deserializeList(context = result, elements = l)
+          (binding as MultiNodeBinding).deserializeList(bean = result, elements = l, adapter = XmlDomAdapter)
         }
       }
     }
@@ -184,7 +192,7 @@ private fun <T : Any> getXmlSerializationState(
       }
       val l = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = true)
       if (l != null) {
-        (binding as MultiNodeBinding).deserializeJdomList(context = result, elements = l)
+        (binding as MultiNodeBinding).deserializeList(bean = result, elements = l, adapter = JdomAdapter)
       }
     }
   }
@@ -192,10 +200,5 @@ private fun <T : Any> getXmlSerializationState(
 }
 
 internal fun createSettingDescriptor(key: String, pluginId: PluginId, tags: Collection<SettingTag>): SettingDescriptor<ByteArray> {
-  return SettingDescriptor(
-    key = key,
-    pluginId = pluginId,
-    tags = tags,
-    serializer = RawSettingSerializerDescriptor,
-  )
+  return SettingDescriptor(key = key, pluginId = pluginId, tags = tags, serializer = RawSettingSerializerDescriptor)
 }

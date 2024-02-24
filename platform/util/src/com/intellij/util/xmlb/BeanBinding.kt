@@ -6,10 +6,12 @@ package com.intellij.util.xmlb
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.PropertyCollector
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
+import com.intellij.util.xmlb.XmlSerializerImpl.XmlSerializerBase
 import com.intellij.util.xmlb.annotations.*
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
@@ -17,6 +19,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
@@ -48,8 +51,11 @@ private val EMPTY_BINDINGS = arrayOf<NestedBinding>()
 
 fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECTOR.collect(aClass)
 
+internal const val JSON_CLASS_DISCRIMINATOR_KEY: String = "_class"
+
 open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding, RootBinding {
-  private val tagName: String
+  @JvmField
+  internal val tagName: String
 
   @JvmField
   var bindings: Array<NestedBinding>? = null
@@ -83,11 +89,27 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
   }
 
   override fun toJson(bean: Any, filter: SerializationFilter?): JsonElement? {
+    val map = serializeToJsonImpl(bean, filter, includeClassDiscriminator = false)
+    return if (map == null) JsonObject(Collections.emptyMap()) else JsonObject(map)
+  }
+
+  internal fun toJson(bean: Any, filter: SerializationFilter?, includeClassDiscriminator: Boolean): JsonElement {
+    val map = serializeToJsonImpl(bean, filter, includeClassDiscriminator = includeClassDiscriminator)
+    return if (map == null) {
+      JsonObject(if (includeClassDiscriminator) Collections.singletonMap(JSON_CLASS_DISCRIMINATOR_KEY, JsonPrimitive(tagName)) else Collections.emptyMap())
+    }
+    else {
+      JsonObject(map)
+    }
+  }
+
+  private fun serializeToJsonImpl(bean: Any, filter: SerializationFilter?, includeClassDiscriminator: Boolean): Map<String, JsonElement>? {
     // do not waste time to compute hashCode and preserving uniqueness, use simple Object2ObjectArrayMap
     var keys: Array<String?>? = null
     var values: Array<JsonElement?>? = null
     val bindings = bindings!!
     var index = 0
+    val extraSize = if (includeClassDiscriminator) 1 else 0
     for (binding in bindings) {
       if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean)) {
         continue
@@ -99,8 +121,14 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
 
       // yes, empty map to denote an empty object
       if (keys == null) {
-        keys = arrayOfNulls(bindings.size)
-        values = arrayOfNulls(bindings.size)
+        keys = arrayOfNulls(bindings.size + extraSize)
+        values = arrayOfNulls(bindings.size + extraSize)
+
+        if (includeClassDiscriminator) {
+          keys[index] = JSON_CLASS_DISCRIMINATOR_KEY
+          values[index] = JsonPrimitive(tagName)
+          index++
+        }
       }
 
       val jsonElement = binding.toJson(bean = bean, filter = filter)
@@ -110,10 +138,10 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
         index++
       }
     }
-    return if (keys == null) null else JsonObject(Object2ObjectArrayMap(keys, values!!, index))
+    return if (keys == null) null else Object2ObjectArrayMap(keys, values!!, index)
   }
 
-  override fun fromJson(bean: Any?, element: JsonElement): Any? {
+  override fun fromJson(currentValue: Any?, element: JsonElement): Any? {
     if (element === JsonNull) {
       return null
     }
@@ -127,7 +155,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     for (binding in bindings!!) {
       val key = normalizePropertyNameForKotlinx(binding)
       val value = element.get(key) ?: continue
-      binding.fromJson(result, value)
+      binding.setFromJson(result, value)
     }
     return result
   }
@@ -168,9 +196,12 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     return element
   }
 
-  override fun deserialize(context: Any?, element: Element): Any {
+  override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
     val instance = newInstance()
-    deserializeInto(bean = instance, element = element)
+    when (adapter) {
+      JdomAdapter -> deserializeInto(bean = instance, element = element as Element)
+      XmlDomAdapter -> deserializeInto(bean = instance, element = element as XmlElement)
+    }
     return instance
   }
 
@@ -180,12 +211,6 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
 
   fun deserializeInto(bean: Any, element: XmlElement) {
     deserializeBeanInto(result = bean, element = element, bindings = bindings!!, start = 0, end = bindings!!.size)
-  }
-
-  override fun deserialize(context: Any?, element: XmlElement): Any {
-    val instance = newInstance()
-    deserializeBeanInto(result = instance, element = element, bindings = bindings!!)
-    return instance
   }
 
   open fun newInstance(): Any {
@@ -245,9 +270,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBi
     }
   }
 
-  override fun isBoundTo(element: Element): Boolean = element.name == tagName
-  //
-  override fun isBoundTo(element: XmlElement): Boolean = element.name == tagName
+  override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean = adapter.getName(element) == tagName
 
   override fun toString(): String = "BeanBinding(${beanClass.name}, tagName=$tagName)"
 
@@ -287,7 +310,7 @@ fun deserializeBeanInto(
   nextNode@ for (child in element.children) {
     for (i in start until end) {
       val binding = bindings[i]
-      if (binding is AttributeBinding || binding is TextBinding || !binding.isBoundTo(child)) {
+      if (binding is AttributeBinding || binding is TextBinding || !binding.isBoundTo(child, XmlDomAdapter)) {
         continue
       }
 
@@ -298,7 +321,7 @@ fun deserializeBeanInto(
         data.computeIfAbsent(binding) { ArrayList() }.add(child)
       }
       else {
-        binding.deserializeUnsafe(result, child)
+        binding.deserializeUnsafe(result, child, XmlDomAdapter)
       }
       continue@nextNode
     }
@@ -307,13 +330,13 @@ fun deserializeBeanInto(
   for (i in start until end) {
     val binding = bindings[i]
     if (binding is AccessorBindingWrapper && binding.isFlat) {
-      binding.deserializeUnsafe(result, element)
+      binding.deserializeUnsafe(result, element, XmlDomAdapter)
     }
   }
 
   if (data != null) {
     for (binding in data.keys) {
-      binding.deserializeList(result, data.get(binding)!!)
+      binding.deserializeList(result, data.get(binding)!!, XmlDomAdapter)
     }
   }
 }
@@ -347,7 +370,7 @@ fun deserializeBeanInto(
       }
 
       val child = content as Element
-      if (binding.isBoundTo(child)) {
+      if (binding.isBoundTo(child, JdomAdapter)) {
         if (binding is MultiNodeBinding && binding.isMulti) {
           if (data == null) {
             data = LinkedHashMap()
@@ -356,7 +379,7 @@ fun deserializeBeanInto(
         }
         else {
           accessorNameTracker?.add(binding.accessor.name)
-          binding.deserializeUnsafe(result, child)
+          binding.deserializeUnsafe(result, child, JdomAdapter)
         }
         continue@nextNode
       }
@@ -365,14 +388,14 @@ fun deserializeBeanInto(
 
   for (binding in bindings) {
     if (binding is AccessorBindingWrapper && binding.isFlat) {
-      binding.deserializeUnsafe(result, element)
+      binding.deserializeUnsafe(result, element, JdomAdapter)
     }
   }
 
   if (data != null) {
     for (binding in data.keys) {
       accessorNameTracker?.add(binding.accessor.name)
-      (binding as MultiNodeBinding).deserializeJdomList(result, data.get(binding)!!)
+      (binding as MultiNodeBinding).deserializeList(result, data.get(binding)!!, JdomAdapter)
     }
   }
 }
@@ -397,7 +420,7 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
     }
 
     val child = content as Element
-    if (binding.isBoundTo(child)) {
+    if (binding.isBoundTo(child, JdomAdapter)) {
       if (binding is MultiNodeBinding && binding.isMulti) {
         if (data == null) {
           data = ArrayList()
@@ -405,14 +428,14 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
         data.add(child)
       }
       else {
-        binding.deserializeUnsafe(result, child)
+        binding.deserializeUnsafe(result, child, JdomAdapter)
         break
       }
     }
   }
 
   if (binding is AccessorBindingWrapper && binding.isFlat) {
-    binding.deserializeUnsafe(result, element)
+    binding.deserializeUnsafe(result, element, JdomAdapter)
   }
 
   return data
@@ -421,7 +444,7 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
 fun deserializeBeanFromControllerInto(result: Any, element: XmlElement, binding: NestedBinding): List<XmlElement>? {
   var data: MutableList<XmlElement>? = null
   nextNode@ for (child in element.children) {
-    if (binding.isBoundTo(child)) {
+    if (binding.isBoundTo(child, XmlDomAdapter)) {
       if (binding is MultiNodeBinding && binding.isMulti) {
         if (data == null) {
           data = ArrayList()
@@ -429,14 +452,14 @@ fun deserializeBeanFromControllerInto(result: Any, element: XmlElement, binding:
         data.add(child)
       }
       else {
-        binding.deserializeUnsafe(result, child)
+        binding.deserializeUnsafe(result, child, XmlDomAdapter)
         break
       }
     }
   }
 
   if (binding is AccessorBindingWrapper && binding.isFlat) {
-    binding.deserializeUnsafe(result, element)
+    binding.deserializeUnsafe(result, element, XmlDomAdapter)
   }
 
   return data
@@ -470,7 +493,23 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
     return TextBinding(accessor)
   }
 
-  val binding = serializer.getBinding(accessor)
+  val type = accessor.genericType
+  val aClass = ClassUtil.typeToClass(type)
+  var binding: Binding?
+  if (ClassUtil.isPrimitive(aClass)) {
+    binding = null
+  }
+  else {
+    // do not cache because it depends on accessor
+    binding = XmlSerializerBase.createClassBinding(aClass, accessor, type, serializer)
+    if (binding == null) {
+      // BeanBinding doesn't depend on accessor, get from cache or compute
+      binding = serializer.getRootBinding(aClass, type)
+    }
+    else {
+      binding.init(type, serializer)
+    }
+  }
 
   val optionTag: OptionTag? = accessor.getAnnotation(OptionTag::class.java)
   if (optionTag != null && XmlSerializerUtil.getConverter(optionTag) != null) {

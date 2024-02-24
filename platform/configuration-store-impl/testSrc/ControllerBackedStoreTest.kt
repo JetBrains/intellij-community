@@ -23,6 +23,9 @@ import com.intellij.util.xmlb.annotations.Text
 import com.intellij.util.xmlb.annotations.XCollection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.junit.jupiter.api.BeforeEach
@@ -78,8 +81,8 @@ class ControllerBackedStoreTest {
     store.save(forceSavingAllSettings = true)
 
     val propertyName = "bar"
-    data.put("TestState.$propertyName", "12".toByteArray())
-    data.put("TestState.text", "a long sad story".toByteArray())
+    data.put("TestState.$propertyName", encodePrimitiveValue("12"))
+    data.put("TestState.text", encodePrimitiveValue("a long sad story"))
     data.put("TestState.list", JDOMUtil.write(serializeForController(ControllerTestState(list = listOf("a", "b")))!!).toByteArray())
 
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
@@ -87,6 +90,8 @@ class ControllerBackedStoreTest {
     assertThat(component.state.text).isEqualTo("a long sad story")
     assertThat(component.state.list).containsExactlyElementsOf(listOf("a", "b"))
   }
+
+  private fun encodePrimitiveValue(v: String) = Json.encodeToString(JsonPrimitive(v)).encodeToByteArray()
 
   @Test
   fun `pass Element`() = runBlocking<Unit>(Dispatchers.Default) {
