@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
@@ -27,14 +29,25 @@ internal class XmlSerializerMapTest {
 
     val data = Bean()
     data.values = mapOf("foo" to "boo")
-    testSerializer("""
+    testSerializer(
+      expectedXml = """
         <bean>
           <option name="values">
             <map>
               <entry key="foo" value="boo" />
             </map>
           </option>
-        </bean>""", data)
+        </bean>
+      """,
+      expectedJson = """
+        {
+        "values": {
+          "foo": "foo"
+        }
+       }
+      """,
+      bean = data,
+    )
   }
 
 
@@ -71,11 +84,23 @@ internal class XmlSerializerMapTest {
     val bean = BeanWithMapAtTopLevel()
     bean.map.put("a", "b")
     bean.option = "xxx"
-    testSerializer("""
-    <bean>
-      <option name="option" value="xxx" />
-      <entry key="a" value="b" />
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="option" value="xxx" />
+          <entry key="a" value="b" />
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "option": "xxx",
+          "map": {
+            "a": "a"
+          }
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Test fun propertyElementName() {
@@ -87,12 +112,13 @@ internal class XmlSerializerMapTest {
 
     val bean = Bean()
     bean.map.put("a", "b")
-    testSerializer("""
-    <bean>
-      <map>
-        <entry key="a" value="b" />
-      </map>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <map>
+            <entry key="a" value="b" />
+          </map>
+        </bean>""", bean = bean)
   }
 
   @Test fun notSurroundingKeyAndValue() {

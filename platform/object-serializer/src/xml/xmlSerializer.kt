@@ -8,7 +8,6 @@ import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.io.URLUtil
-import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.*
 import kotlinx.serialization.Serializable
 import org.jdom.Element
@@ -84,28 +83,15 @@ private class JdomSerializerImpl : JdomSerializer {
     beanBinding.serializeProperties(obj, target, filter ?: getDefaultSerializationFilter())
   }
 
-  override fun <T> deserialize(element: XmlElement, clazz: Class<T>): T {
-    try {
-      @Suppress("UNCHECKED_CAST")
-      return (serializer.getRootBinding(clazz, clazz) as NotNullDeserializeBinding).deserialize(null, element) as T
-    }
-    catch (e: SerializationException) {
-      throw e
-    }
-    catch (e: Exception) {
-      throw XmlSerializationException("Cannot deserialize class ${clazz.name}", e)
-    }
-  }
-
-  override fun <T> deserialize(element: Element, clazz: Class<T>): T {
-    if (clazz == Element::class.java) {
+  override fun <T, E : Any> deserialize(element: E, clazz: Class<T>, adapter: DomAdapter<E>): T {
+    if (clazz === Element::class.java && adapter === JdomAdapter) {
       @Suppress("UNCHECKED_CAST")
       return element as T
     }
 
-    @Suppress("UNCHECKED_CAST")
     try {
-      return (serializer.getRootBinding(clazz, clazz) as NotNullDeserializeBinding).deserialize(null, element) as T
+      @Suppress("UNCHECKED_CAST")
+      return (serializer.getRootBinding(clazz, clazz) as NotNullDeserializeBinding).deserialize(null, element, adapter) as T
     }
     catch (e: SerializationException) {
       throw e
@@ -137,7 +123,7 @@ private class JdomSerializerImpl : JdomSerializer {
 
   override fun <T> deserialize(url: URL, aClass: Class<T>): T {
     try {
-      return deserialize(JDOMUtil.load(URLUtil.openStream(url)), aClass)
+      return deserialize(JDOMUtil.load(URLUtil.openStream(url)), aClass, JdomAdapter)
     }
     catch (e: IOException) {
       throw XmlSerializationException(e)

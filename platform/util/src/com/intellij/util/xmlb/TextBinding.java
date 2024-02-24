@@ -3,8 +3,6 @@ package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.xml.dom.XmlElement;
-import kotlin.Unit;
 import kotlinx.serialization.json.JsonElement;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -26,9 +24,8 @@ final class TextBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public Object fromJson(@NotNull Object bean, @NotNull JsonElement element) {
-    JsonHelperKt.fromJson(bean, element, accessor, valueClass, null);
-    return Unit.INSTANCE;
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
+    JsonHelperKt.setFromJson(bean, element, accessor, valueClass, null);
   }
 
   @Override
@@ -45,22 +42,13 @@ final class TextBinding implements PrimitiveValueBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
     return false;
   }
 
+  @Nullable
   @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
-    return false;
-  }
-
-  @Override
-  public Object deserializeUnsafe(Object context, @NotNull Element element) {
-    return context;
-  }
-
-  @Override
-  public Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
+  public <T> Object deserializeUnsafe(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     return context;
   }
 

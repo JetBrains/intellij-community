@@ -4,10 +4,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.util.xml.dom.XmlElement
-import com.intellij.util.xmlb.BeanBinding
-import com.intellij.util.xmlb.SerializationFilter
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
+import com.intellij.util.xmlb.*
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
@@ -29,9 +26,9 @@ fun <T : Any> serialize(
   return jdomSerializer.serialize(bean = bean, filter = filter, createElementIfEmpty = createElementIfEmpty)
 }
 
-inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.deserialize(element, T::class.java)
+inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.deserialize(element, T::class.java, JdomAdapter)
 
-fun <T> Element.deserialize(clazz: Class<T>): T = jdomSerializer.deserialize(this, clazz)
+fun <T> Element.deserialize(clazz: Class<T>): T = jdomSerializer.deserialize(this, clazz, JdomAdapter)
 
 fun Element.deserializeInto(bean: Any) {
   jdomSerializer.deserializeInto(obj = bean, element = this)
@@ -43,7 +40,7 @@ fun <T : Any> deserializeAndLoadState(
   element: Element,
   clazz: Class<T> = ComponentSerializationUtil.getStateClass(component::class.java),
 ) {
-  val state = jdomSerializer.deserialize(element, clazz)
+  val state = jdomSerializer.deserialize(element, clazz, JdomAdapter)
   (state as? BaseState)?.resetModificationCount()
   component.loadState(state)
 }
@@ -65,9 +62,7 @@ interface JdomSerializer {
 
   fun serializeObjectInto(obj: Any, target: Element, filter: SerializationFilter? = null)
 
-  fun <T> deserialize(element: Element, clazz: Class<T>): T
-
-  fun <T> deserialize(element: XmlElement, clazz: Class<T>): T
+  fun <T, E : Any> deserialize(element: E, clazz: Class<T>, adapter: DomAdapter<E>): T
 
   fun deserializeInto(obj: Any, element: Element)
 

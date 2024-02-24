@@ -3,8 +3,6 @@ package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.MutableAccessor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.dom.XmlElement;
 import kotlinx.serialization.json.JsonArray;
 import kotlinx.serialization.json.JsonElement;
 import kotlinx.serialization.json.JsonElementKt;
@@ -50,21 +48,19 @@ final class CompactCollectionBinding implements NotNullDeserializeBinding, Neste
   }
 
   @Override
-  public Object fromJson(@NotNull Object bean, @NotNull JsonElement element) {
-    @SuppressWarnings("unchecked")
-    List<String> list = (List<String>)bean;
-
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
     if (!(element instanceof JsonArray)) {
       // yes, `null` is also not expected
       BeanBindingKt.LOG.warn("Expected JsonArray but got " + element);
-      return list;
+      return;
     }
 
+    @SuppressWarnings("unchecked")
+    List<String> list = (List<String>)accessor.read(bean);
     list.clear();
     for (JsonElement child : (JsonArray)element) {
       list.add(((JsonPrimitive)child).getContent());
     }
-    return list;
   }
 
   @Override
@@ -88,39 +84,14 @@ final class CompactCollectionBinding implements NotNullDeserializeBinding, Neste
   }
 
   @Override
-  public @NotNull Object deserialize(Object bean, @NotNull Element element) {
+  public @NotNull <T> Object deserialize(@Nullable Object bean, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)accessor.read(bean);
     list.clear();
-    if (element.getName().equals(name)) {
-      for (Element item : element.getChildren("item")) {
-        ContainerUtil.addIfNotNull(list, item.getAttributeValue("value"));
-      }
-    }
-    else {
-      // JDOMExternalizableStringList format
-      Element value = element.getChild("value");
-      if (value != null) {
-        value = value.getChild("list");
-      }
-      if (value != null) {
-        for (Element item : value.getChildren("item")) {
-          ContainerUtil.addIfNotNull(list, item.getAttributeValue("itemvalue"));
-        }
-      }
-    }
-    return list;
-  }
-
-  @Override
-  public @NotNull Object deserialize(Object context, @NotNull XmlElement element) {
-    @SuppressWarnings("unchecked")
-    List<String> list = (List<String>)context;
-    list.clear();
-    if (element.name.equals(name)) {
-      for (XmlElement item : element.children) {
-        if (item.name.equals("item")) {
-          String v = item.attributes.get("value");
+    if (adapter.getName(element).equals(name)) {
+      for (T item : adapter.getChildren(element)) {
+        if (adapter.getName(item).equals("item")) {
+          String v = adapter.getAttributeValue(item, "value");
           if (v != null) {
             list.add(v);
           }
@@ -129,17 +100,15 @@ final class CompactCollectionBinding implements NotNullDeserializeBinding, Neste
     }
     else {
       // JDOMExternalizableStringList format
-      XmlElement value = element.getChild("value");
+      T value = adapter.getChild(element, "value");
       if (value != null) {
-        value = value.getChild("list");
+        value = adapter.getChild(value, "list");
       }
       if (value != null) {
-        for (XmlElement item : value.children) {
-          if (item.name.equals("item")) {
-            String v = item.getAttributeValue("itemvalue");
-            if (v != null) {
-              list.add(v);
-            }
+        for (T item : adapter.getChildren(value)) {
+          String v = adapter.getName(item).equals("item") ? adapter.getAttributeValue(item, "itemvalue") : null;
+          if (v != null) {
+            list.add(v);
           }
         }
       }
@@ -148,27 +117,14 @@ final class CompactCollectionBinding implements NotNullDeserializeBinding, Neste
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
-    String elementName = element.getName();
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
+    String elementName = adapter.getName(element);
     if (isNameEqual(elementName)) {
       return true;
     }
     else if (elementName.equals(Constants.OPTION)) {
       // JDOMExternalizableStringList format
-      return isNameEqual(element.getAttributeValue(Constants.NAME));
-    }
-    return false;
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
-    String elementName = element.name;
-    if (isNameEqual(elementName)) {
-      return true;
-    }
-    else if (elementName.equals(Constants.OPTION)) {
-      // JDOMExternalizableStringList format
-      return isNameEqual(element.getAttributeValue(Constants.NAME));
+      return isNameEqual(adapter.getAttributeValue(element, Constants.NAME));
     }
     return false;
   }

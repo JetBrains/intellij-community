@@ -73,6 +73,31 @@ These could be added if necessary.
 ]
 ```
 
+For polymorphic collections, a special key `_class` is used as a class discriminator.
+
+```json
+{
+  "v": [
+    {
+      "_class": "BeanWithPublicFields",
+      "int_v": 1,
+      "string_v": "hello"
+    },
+    {
+      "_class": "BeanWithPublicFieldsDescendant",
+      "new_s": "foo",
+      "int_v": 1,
+      "string_v": "hello"
+    },
+    {
+      "_class": "BeanWithPublicFields",
+      "int_v": 1,
+      "string_v": "hello"
+    }
+  ]
+}
+```
+
 ### Custom Binding
 
 A value for a custom binding is a black box.

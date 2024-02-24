@@ -41,7 +41,7 @@ internal fun primitiveToJsonElement(value: Any): JsonElement {
 //  return builder.toString()
 //}
 
-internal fun fromJson(bean: Any, data: JsonElement, accessor: MutableAccessor, valueClass: Class<*>, converter: Converter<Any>?) {
+internal fun setFromJson(bean: Any, data: JsonElement, accessor: MutableAccessor, valueClass: Class<*>, converter: Converter<Any>?) {
   val s = when {
     data === JsonNull -> null
     data is JsonPrimitive -> data.content

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.fileSizeSafe
+import com.intellij.util.xmlb.JdomAdapter
 import org.jdom.Element
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -60,7 +61,7 @@ private object OtherXmlHandler : JbImportXmlHandler {
   // IDEA-344035
   fun processDFMInPropertiesService(componentElement: Element) {
     val propertiesService = PropertiesComponent.getInstance()
-    val extState = jdomSerializer.deserialize(componentElement, BasePropertyService.MyState::class.java)
+    val extState = jdomSerializer.deserialize(componentElement, BasePropertyService.MyState::class.java, JdomAdapter)
 
     extState.keyToString.forEach { (key, value) ->
       if (key.contains(DistractionFreeModeController.DISTRACTION_MODE_PROPERTY_KEY)) {

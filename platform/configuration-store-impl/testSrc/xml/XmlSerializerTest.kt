@@ -12,10 +12,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.SerializationException
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertConcurrent
-import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.SerializationFilter
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
-import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
@@ -66,7 +63,7 @@ internal class XmlSerializerTest {
   @Test fun `no error if no accessors`() {
     class EmptyBean
 
-    testSerializer("<EmptyBean />", EmptyBean(), expectedJson = """null""")
+    testSerializer("<EmptyBean />", EmptyBean(), expectedJson = """{}""")
   }
 
   @Test fun `suppress no accessors warn`() {
@@ -592,7 +589,7 @@ internal class XmlSerializerTest {
       expectedXml = """
         <BeanWithPropertyFilter />
       """,
-      expectedJson = """null""",
+      expectedJson = """{}""",
       bean = bean,
     )
   }
@@ -867,7 +864,7 @@ fun <T : Any> testSerializer(
   val element = assertSerializer(bean = bean, expected = expectedTrimmed, filter = filter)
 
   // test deserializer
-  val o = jdomSerializer.deserialize(element, bean.javaClass)
+  val o = jdomSerializer.deserialize(element, bean.javaClass, JdomAdapter)
   assertSerializer(bean = o, expected = expectedTrimmed, filter = filter, description = "Deserialization failure")
 
   if (expectedJson != null) {
@@ -877,7 +874,7 @@ fun <T : Any> testSerializer(
     val expectedNormalizedJson = PrettyJson.encodeToString(expectedTree)
     assertThat(PrettyJson.encodeToString(jsonTree)).isEqualTo(expectedNormalizedJson)
 
-    val deserializedBean = binding.fromJson(bean = null, element = expectedTree)!!
+    val deserializedBean = binding.fromJson(currentValue = null, element = expectedTree)!!
     assertThat(PrettyJson.encodeToString(binding.toJson(deserializedBean, filter))).isEqualTo(expectedNormalizedJson)
   }
   return o

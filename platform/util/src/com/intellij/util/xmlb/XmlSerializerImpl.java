@@ -30,26 +30,6 @@ public final class XmlSerializerImpl {
       return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type);
     }
 
-    @Override
-    public final @Nullable Binding getBinding(@NotNull MutableAccessor accessor) {
-      Type type = accessor.getGenericType();
-      Class<?> aClass = ClassUtil.typeToClass(type);
-      if (ClassUtil.isPrimitive(aClass)) {
-        return null;
-      }
-
-      // do not cache because it depends on accessor
-      Binding binding = createClassBinding(aClass, accessor, type, this);
-      if (binding == null) {
-        // BeanBinding doesn't depend on accessor, get from cache or compute
-        return getRootBinding(aClass, type);
-      }
-      else {
-        binding.init(type, this);
-        return binding;
-      }
-    }
-
     protected static @Nullable Binding createClassBinding(
       @NotNull Class<?> aClass,
       @Nullable MutableAccessor accessor,
@@ -62,7 +42,7 @@ public final class XmlSerializerImpl {
           return new JDOMElementBinding(accessor);
         }
         else {
-          return new ArrayBinding(aClass, accessor, serializer);
+          return new CollectionBinding(aClass, accessor, serializer, ArrayStrategy.INSTANCE);
         }
       }
       else if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
@@ -72,7 +52,7 @@ public final class XmlSerializerImpl {
             return new CompactCollectionBinding(accessor);
           }
         }
-        return new CollectionBinding((ParameterizedType)originalType, accessor, serializer);
+        return new CollectionBinding(ClassUtil.typeToClass((((ParameterizedType)originalType).getActualTypeArguments()[0])), accessor, serializer, CollectionStrategyImpl.INSTANCE);
       }
       else if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
         //noinspection unchecked
@@ -138,7 +118,7 @@ public final class XmlSerializerImpl {
       }
       else {
         //noinspection ConstantConditions
-        return (Element)((RootBinding)binding).serialize(object, filter);
+        return ((RootBinding)binding).serialize(object, filter);
       }
     }
     catch (SerializationException e) {

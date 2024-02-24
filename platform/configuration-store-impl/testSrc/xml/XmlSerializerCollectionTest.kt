@@ -159,15 +159,18 @@ internal class XmlSerializerCollectionTest {
         {
           "v": [
             {
+              "_class": "BeanWithPublicFields",
               "int_v": 1,
               "string_v": "hello"
             },
             {
+              "_class": "BeanWithPublicFieldsDescendant",
               "new_s": "foo",
               "int_v": 1,
               "string_v": "hello"
             },
             {
+              "_class": "BeanWithPublicFields",
               "int_v": 1,
               "string_v": "hello"
             }
@@ -411,7 +414,7 @@ internal class XmlSerializerCollectionTest {
     assertThat(bean.isEqualToDefault()).isTrue()
     testSerializer(
       expectedXml = "<Bean />",
-      expectedJson = """null""",
+      expectedJson = """{}""",
       bean = bean,
     )
 
