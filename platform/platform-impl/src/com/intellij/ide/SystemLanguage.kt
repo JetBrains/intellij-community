@@ -159,7 +159,7 @@ class SystemLanguage private constructor() {
     }
   }
 
-  val locale: Locale get() = myLocale
+  val locale: Locale get() = Locale.getDefault()
 
   fun doChooseLanguage() {
     if (!myNeedInstallPlugin || myPluginId == null || myPluginUrl == null) {

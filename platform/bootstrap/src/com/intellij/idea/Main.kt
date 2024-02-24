@@ -8,7 +8,6 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.SystemLanguage
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
@@ -60,7 +59,6 @@ internal fun mainImpl(rawArgs: Array<String>,
     PathManager.loadProperties()
     addBootstrapTiming("properties loading", startupTimings)
     PathManager.customizePaths()
-    SystemLanguage.getInstance().loadState()
     addBootstrapTiming("customizePaths", startupTimings)
 
     @Suppress("RAW_RUN_BLOCKING")
