@@ -470,10 +470,16 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
             // restore possibly invalidated elements
             elementSetToUpdate.addAll(elementSetToUpdatePointers.mapNotNull { it.element })
 
+            // Replace the old element with the new element in elementSetToUpdate if it was changed.
             if (elementWasInElementsToUpdate && element != newElement) {
-                // add the new element in case the old was changed and remove the old element
                 elementSetToUpdate.remove(element)
-                elementSetToUpdate.add(newElement)
+
+                // It is possible for the new element to be invalid, for example,
+                // when shortening string templates and the curly braces are dropped.
+                // For such cases, we have this extra check
+                if (newElement.isValid) {
+                    elementSetToUpdate.add(newElement)
+                }
             }
         }
 

@@ -380,6 +380,26 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/ReferencedElementAlsoCopied.kt");
         }
 
+        @TestMetadata("StringTemplateMultipleImports.kt")
+        public void testStringTemplateMultipleImports() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImports.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsCurlyBraces.kt")
+        public void testStringTemplateMultipleImportsCurlyBraces() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsCurlyBraces.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsQualified.kt")
+        public void testStringTemplateMultipleImportsQualified() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsQualified.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleWithFunctionCall.kt")
+        public void testStringTemplateMultipleWithFunctionCall() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleWithFunctionCall.kt");
+        }
+
         @TestMetadata("Super.kt")
         public void testSuper() throws Exception {
             runTest("testData/copyPaste/imports/Super.kt");
@@ -806,6 +826,26 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ReferencedElementAlsoCopied.kt")
         public void testReferencedElementAlsoCopied() throws Exception {
             runTest("testData/copyPaste/imports/ReferencedElementAlsoCopied.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImports.kt")
+        public void testStringTemplateMultipleImports() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImports.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsCurlyBraces.kt")
+        public void testStringTemplateMultipleImportsCurlyBraces() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsCurlyBraces.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleImportsQualified.kt")
+        public void testStringTemplateMultipleImportsQualified() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleImportsQualified.kt");
+        }
+
+        @TestMetadata("StringTemplateMultipleWithFunctionCall.kt")
+        public void testStringTemplateMultipleWithFunctionCall() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateMultipleWithFunctionCall.kt");
         }
 
         @TestMetadata("Super.kt")
