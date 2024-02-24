@@ -233,8 +233,9 @@ final class AnnotatorRunner {
   private void addConvertedToHostInfo(@NotNull HighlightInfo info, @NotNull List<? super HighlightInfo> newInfos) {
     Document document = myPsiFile.getFileDocument();
     if (document instanceof DocumentWindow window) {
+      PsiFile hostPsiFile = InjectedLanguageManager.getInstance(myProject).getTopLevelFile(myPsiFile);
       addPatchedInfos(info, myPsiFile, window, InjectedLanguageManager.getInstance(myProject), patched -> {
-        if (HighlightInfoB.isAcceptedByFilters(patched, myPsiFile)) {
+        if (HighlightInfoB.isAcceptedByFilters(patched, hostPsiFile)) {
           newInfos.add(patched);
         }
       });
