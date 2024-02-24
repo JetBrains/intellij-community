@@ -40,6 +40,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.jetbrains.rd.util.enumSetOf
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -570,6 +571,20 @@ class InternalDecoratorImpl internal constructor(
         return JBInsets.emptyInsets()
       }
       val anchor = windowInfo.anchor
+      val adjacentDividers = findAdjacentDividers(c)
+      val toolWindowDecorator = toolWindow.decorator
+      val top = if (Side.TOP !in adjacentDividers && toolWindow.type != ToolWindowType.FLOATING &&
+                    locationOnScreen.y == toolWindowDecorator?.locationOnScreen?.y) 1 else 0
+      val bottom = 0
+      var left = if (Side.LEFT !in adjacentDividers && anchor == ToolWindowAnchor.RIGHT &&
+                    locationOnScreen.x == toolWindowDecorator?.locationOnScreen?.x) 1 else 0
+      var right = if (Side.RIGHT !in adjacentDividers && anchor == ToolWindowAnchor.LEFT &&
+                      rightEdgeLocationOnScreen == toolWindowDecorator?.rightEdgeLocationOnScreen) 1 else 0
+      paintLeftExternalBorder = left > 0
+      paintRightExternalBorder = right > 0
+      paintLeftInternalBorder = false
+      paintRightInternalBorder = false
+
       var component: Component = window.component
       var parent = component.parent
       var isSplitter = false
@@ -586,21 +601,13 @@ class InternalDecoratorImpl internal constructor(
           break
         }
         component = parent
-        parent = component.getParent()
+        parent = component.parent
       }
       val isTouchingTheEditor = when (anchor) {
         ToolWindowAnchor.RIGHT -> !isSplitter || isVerticalSplitter || isFirstInSplitter
         ToolWindowAnchor.LEFT -> !isSplitter || isVerticalSplitter || !isFirstInSplitter
         else -> false
       }
-      val top = if (isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) && windowInfo.isSplit && isVerticalSplitter) -1 else 0
-      var left = if (anchor == ToolWindowAnchor.RIGHT && isTouchingTheEditor) 1 else 0
-      paintLeftExternalBorder = left > 0
-      val bottom = 0
-      var right = if (anchor == ToolWindowAnchor.LEFT && isTouchingTheEditor) 1 else 0
-      paintRightExternalBorder = right > 0
-      paintLeftInternalBorder = false
-      paintRightInternalBorder = false
       if (JBColor.border() == EditorColorsManager.getInstance().globalScheme.defaultBackground) {
         // Might need another border if the tool window has an editor-like component touching the corresponding edge.
         // Five cases overall:
@@ -639,6 +646,37 @@ class InternalDecoratorImpl internal constructor(
     override fun isBorderOpaque(): Boolean {
       return false
     }
+
+    /**
+     * Determines what sides of the component [c] are adjacent to dividers.
+     */
+    private fun findAdjacentDividers(c: Component): Set<Side> {
+      val result = enumSetOf<Side>()
+      var component = c
+      var parent = component.parent
+      while (parent != null) {
+        when (parent) {
+          is Splitter -> {
+            val splitter = parent
+            val side = if (component == splitter.firstComponent) {
+              if (splitter.isVertical) Side.BOTTOM else Side.RIGHT
+            }
+            else if (splitter.isVertical) Side.TOP else Side.LEFT
+            result.add(side)
+          }
+
+          is InternalDecoratorImpl -> {}
+          else -> break
+        }
+        component = parent
+        parent = component.parent
+      }
+
+      return result
+    }
+
+    val Component.rightEdgeLocationOnScreen: Int
+      get() = locationOnScreen.x + width
   }
 
   private fun hasEditorLikeComponentOnTheLeft(): Boolean = componentsWithEditorLikeBackground.any {
@@ -907,6 +945,8 @@ class InternalDecoratorImpl internal constructor(
       return AccessibilityUtils.GROUPED_ELEMENTS
     }
   }
+
+  private enum class Side { LEFT, RIGHT, TOP, BOTTOM }
 
   private fun log(): Logger = toolWindow.toolWindowManager.log()
 }
