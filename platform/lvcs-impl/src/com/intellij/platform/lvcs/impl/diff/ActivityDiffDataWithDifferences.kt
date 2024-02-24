@@ -13,27 +13,28 @@ private data class ActivityDiffDataWithDifferences(val facade: LocalHistoryFacad
                                                    val selection: ChangeSetSelection,
                                                    val differences: List<Difference>,
                                                    val isOldContentUsed: Boolean) : ActivityDiffData {
-  override fun getPresentableChanges(): Iterable<ActivityDiffObject> {
-    val fileDifferences = JBIterable.from(differences).filter { it.isFile }
-    return when (scope) {
-      is ActivityScope.Selection -> {
-        val calculator = selection.data.getSelectionCalculator(facade, gateway, scope, isOldContentUsed)
-        fileDifferences.map {
-          SelectionDifferenceObject(gateway, scope, selection, it, calculator, isOldContentUsed)
+  override val presentableChanges: Iterable<ActivityDiffObject>
+    get() {
+      val fileDifferences = JBIterable.from(differences).filter { it.isFile }
+      return when (scope) {
+        is ActivityScope.Selection -> {
+          val calculator = selection.data.getSelectionCalculator(facade, gateway, scope, isOldContentUsed)
+          fileDifferences.map {
+            SelectionDifferenceObject(gateway, scope, selection, it, calculator, isOldContentUsed)
+          }
+        }
+        is ActivityScope.File -> {
+          fileDifferences.map { DifferenceObject(gateway, scope, selection, it, isOldContentUsed) }
+        }
+        ActivityScope.Recent -> {
+          fileDifferences.map { difference ->
+            difference.filePath?.let {
+              DifferenceObject(gateway, scope, selection, difference, it, isOldContentUsed)
+            }
+          }.filterNotNull()
         }
       }
-      is ActivityScope.File -> {
-        fileDifferences.map { DifferenceObject(gateway, scope, selection, it, isOldContentUsed) }
-      }
-      ActivityScope.Recent -> {
-        fileDifferences.map { difference ->
-          difference.filePath?.let {
-            DifferenceObject(gateway, scope, selection, difference, it, isOldContentUsed)
-          }
-        }.filterNotNull()
-      }
     }
-  }
 }
 
 internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
