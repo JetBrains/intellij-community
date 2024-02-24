@@ -205,16 +205,17 @@ internal class PrivateVarToValProcessing : InspectionLikeProcessingForElement<Kt
         )
     }
 
-    private fun KtProperty.hasWriteUsages(): Boolean =
-        ReferencesSearch.search(this, useScope).any { usage ->
-            (usage as? KtSimpleNameReference)?.element?.let { nameReference ->
-                val receiver = nameReference.parent?.safeAs<KtDotQualifiedExpression>()?.receiverExpression
-                if (nameReference.getStrictParentOfType<KtAnonymousInitializer>() != null
-                    && (receiver == null || receiver is KtThisExpression)
-                ) return@let false
-                nameReference.readWriteAccess(useResolveForReadWrite = true).isWrite
-            } == true
+    private fun KtProperty.hasWriteUsages(): Boolean {
+        val usages = ReferencesSearch.search(this, useScope)
+        return usages.any { usage ->
+            val nameReference = (usage as? KtSimpleNameReference)?.element ?: return@any false
+            val receiver = (nameReference.parent as? KtDotQualifiedExpression)?.receiverExpression
+            if (nameReference.getStrictParentOfType<KtAnonymousInitializer>() != null
+                && (receiver == null || receiver is KtThisExpression)
+            ) return@any false
+            nameReference.readWriteAccess(useResolveForReadWrite = true).isWrite
         }
+    }
 
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
         if (!element.isVar) return false
