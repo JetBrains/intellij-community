@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.util.concurrent.CancellationException
 import java.util.function.Supplier
 
 internal class ProviderWithSettings<T : Any>(
@@ -303,6 +304,9 @@ object InlayHintsUtils {
       return CodeVisionState.NotReady
     }
     catch (e: ProcessCanceledException) {
+      return CodeVisionState.NotReady
+    }
+    catch (e: CancellationException) {
       return CodeVisionState.NotReady
     }
   }
