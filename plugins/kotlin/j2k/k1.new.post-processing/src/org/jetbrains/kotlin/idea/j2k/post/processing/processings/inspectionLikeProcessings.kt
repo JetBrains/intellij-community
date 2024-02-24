@@ -4,13 +4,10 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
@@ -30,9 +27,7 @@ import org.jetbrains.kotlin.j2k.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.idea.j2k.post.processing.isInspectionEnabledInCurrentProfile
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
@@ -194,46 +189,6 @@ internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessi
 
     override fun apply(element: KtSimpleNameExpression) {
         element.replaced(KtPsiFactory(element.project).createThisExpression())
-    }
-}
-
-internal class PrivateVarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    companion object {
-        private val JPA_COLUMN_ANNOTATIONS: Set<FqName> = setOf(
-            FqName("javax.persistence.Column"),
-            FqName("jakarta.persistence.Column"),
-        )
-    }
-
-    private fun KtProperty.hasWriteUsages(): Boolean {
-        val usages = ReferencesSearch.search(this, useScope)
-        return usages.any { usage ->
-            val nameReference = (usage as? KtSimpleNameReference)?.element ?: return@any false
-            val receiver = (nameReference.parent as? KtDotQualifiedExpression)?.receiverExpression
-            if (nameReference.getStrictParentOfType<KtAnonymousInitializer>() != null
-                && (receiver == null || receiver is KtThisExpression)
-            ) return@any false
-            nameReference.readWriteAccess(useResolveForReadWrite = true).isWrite
-        }
-    }
-
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
-        if (!element.isVar) return false
-        if (!element.isPrivate()) return false
-        val descriptor = element.resolveToDescriptorIfAny() as? PropertyDescriptor ?: return false
-        if (descriptor.overriddenDescriptors.any { it.safeAs<VariableDescriptor>()?.isVar == true }) return false
-
-        descriptor.backingField?.annotations?.let { annotations ->
-            JPA_COLUMN_ANNOTATIONS.forEach {
-                if (annotations.hasAnnotation(it)) return false
-            }
-        }
-        return !element.hasWriteUsages()
-    }
-
-    override fun apply(element: KtProperty) {
-        val psiFactory = KtPsiFactory(element.project)
-        element.valOrVarKeyword.replace(psiFactory.createValKeyword())
     }
 }
 

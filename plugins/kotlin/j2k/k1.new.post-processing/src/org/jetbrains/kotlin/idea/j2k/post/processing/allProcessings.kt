@@ -19,10 +19,7 @@ import org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix.ReturnType
 import org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix.SetExplicitVisibilityFactory
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
 import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
-import org.jetbrains.kotlin.j2k.postProcessings.FormatCodeProcessing
-import org.jetbrains.kotlin.j2k.postProcessings.OptimizeImportsProcessing
-import org.jetbrains.kotlin.j2k.postProcessings.RemoveExplicitPropertyTypeProcessing
-import org.jetbrains.kotlin.j2k.postProcessings.RemoveRedundantEmptyLinesProcessing
+import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
