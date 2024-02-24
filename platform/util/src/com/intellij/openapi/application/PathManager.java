@@ -174,8 +174,8 @@ public final class PathManager {
   }
 
   private static boolean isIdeaHome(Path root) {
-    return Files.isRegularFile(SystemInfoRt.isMac
-                               ? root.resolve("Resources").resolve(PRODUCT_INFO_JSON) : root.resolve(PRODUCT_INFO_JSON)) ||
+    return Files.isRegularFile(root.resolve(PRODUCT_INFO_JSON)) ||
+           Files.isRegularFile(root.resolve("Resources").resolve(PRODUCT_INFO_JSON)) ||
            Files.isRegularFile(root.resolve(COMMUNITY_MARKER)) ||
            Files.isRegularFile(root.resolve(ULTIMATE_MARKER));
   }
