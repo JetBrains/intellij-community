@@ -15,6 +15,7 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
@@ -60,6 +61,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.xml.util.XmlStringUtil;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -451,7 +453,10 @@ public class ShelvedChangesViewManager implements Disposable {
                                                  int fileListSize,
                                                  @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
     String message = constructDeleteSuccessfullyMessage(fileListSize, shelvedListsToDelete.size(), getFirstItem(shelvedListsToDelete));
-    Notification shelfDeletionNotification = new ShelfDeleteNotification(message);
+    Notification shelfDeletionNotification = new Notification(VcsNotifier.STANDARD_NOTIFICATION.getDisplayId(),
+                                                              VcsBundle.message("shelve.deletion.title"),
+                                                              XmlStringUtil.wrapInHtml(message),
+                                                              NotificationType.INFORMATION);
     shelfDeletionNotification.setDisplayId(VcsNotificationIdsHolder.SHELF_UNDO_DELETE);
     shelfDeletionNotification.addAction(new UndoShelfDeletionAction(project, createdDeletedListsWithOriginalDate));
     VcsNotifier.getInstance(project).showNotificationAndHideExisting(shelfDeletionNotification);
