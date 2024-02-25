@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
@@ -18,25 +19,24 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val barFile = myFixture.addFileToProject("Bar.kt", """
             class Bar { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val moveModel = K2MoveModel.create(arrayOf(fooFile), barFile)
         assertInstanceOf<K2MoveModel.Members>(moveModel)
         val moveMembersModel = moveModel as K2MoveModel.Members
         assertSize(1, moveMembersModel.source.elements)
         val sourceElement = moveMembersModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        val targetElement = moveMembersModel.target.fileName
-        assert(targetElement == "Bar.kt")
+        assert(moveMembersModel.target.fileName == "Bar.kt")
     }
 
     fun `test file from source directory to source directory move`() {
         PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
             class Foo { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val barDir = runWriteAction { fooFile.containingDirectory?.createSubdirectory("bar") }
         val moveModel = K2MoveModel.create(arrayOf(fooFile), barDir)
         assertInstanceOf<K2MoveModel.Files>(moveModel)
@@ -44,8 +44,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
         assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        val targetElement = moveFilesModel.target.pkgName
-        assert(targetElement.asString() == "bar")
+        assert(moveFilesModel.target.pkgName.asString() == "bar")
     }
 
     fun `test file from non-source directory move`() {
@@ -54,15 +53,15 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             package bar
             
             class Foo { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val moveModel = K2MoveModel.create(arrayOf(fooFile), null)
-        assertInstanceOf<K2MoveModel.Files>(moveModel)
-        val moveFilesModel = moveModel as K2MoveModel.Files
+        assertInstanceOf<K2MoveModel.Members>(moveModel)
+        val moveFilesModel = moveModel as K2MoveModel.Members
         assertSize(1, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
-        assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        val targetElement = moveFilesModel.target.pkgName
-        assert(targetElement.asString() == "bar")
+        assert(sourceElement is KtClass && sourceElement.name == "Foo")
+        assert(moveFilesModel.target.pkgName.asString() == "bar")
+        assert(moveFilesModel.target.fileName == "Foo.kt")
     }
 
     fun `test multiple files with the same packages from non-source directory move`() {
@@ -71,20 +70,19 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             package foo
             
             class Foo { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val barFile = myFixture.addFileToProject("Bar.kt", """
             package foo
             
             class Bar { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
         assertInstanceOf<K2MoveModel.Files>(moveModel)
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
         assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        val targetElement = moveFilesModel.target.pkgName
-        assert(targetElement.asString() == "foo")
+        assert(moveFilesModel.target.pkgName.asString() == "foo")
     }
 
     fun `test multiple files with different packages from non-source directory move`() {
@@ -93,20 +91,19 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             package foo
             
             class Foo { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val barFile = myFixture.addFileToProject("Bar.kt", """
             package bar
             
             class Bar { }
-        """.trimIndent())
+        """.trimIndent()) as KtFile
         val moveModel = K2MoveModel.create(arrayOf(fooFile, barFile), null)
         assertInstanceOf<K2MoveModel.Files>(moveModel)
         val moveFilesModel = moveModel as K2MoveModel.Files
         assertSize(2, moveFilesModel.source.elements)
         val sourceElement = moveFilesModel.source.elements.firstOrNull()
         assert(sourceElement is KtFile && sourceElement.name == "Foo.kt")
-        val targetElement = moveFilesModel.target.pkgName
-        assert(targetElement.asString() == "")
+        assert(moveFilesModel.target.pkgName.asString() == "foo")
     }
 
     fun `test move top level declaration`() {
@@ -114,11 +111,9 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
             package foo
             
-            class Foo { }
-            
             class B<caret>ar { }
         """.trimIndent())
-        val barClass = myFixture.elementAtCaret
+        val barClass = myFixture.elementAtCaret as KtNamedDeclaration
         val moveModel = K2MoveModel.create(arrayOf(barClass), null)
         assertInstanceOf<K2MoveModel.Members>(moveModel)
         val moveMembersModel = moveModel as K2MoveModel.Members
@@ -138,7 +133,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
                 B<caret>AR, FOOBAR
             }
         """.trimIndent())
-        val barEnumEntry = myFixture.elementAtCaret
+        val barEnumEntry = myFixture.elementAtCaret as KtNamedDeclaration
         assertThrows(RefactoringErrorHintException::class.java) {
             K2MoveModel.create(arrayOf(barEnumEntry), null)
         }
@@ -153,7 +148,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
                 class Ba<caret>r { }
             }
         """.trimIndent())
-        val nestedClass = myFixture.elementAtCaret
+        val nestedClass = myFixture.elementAtCaret as KtNamedDeclaration
         assertThrows(RefactoringErrorHintException::class.java) {
             K2MoveModel.create(arrayOf(nestedClass), null)
         }
@@ -168,7 +163,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
                 fun fo<caret>o() { }
             }
         """.trimIndent())
-        val instanceMethod = myFixture.elementAtCaret
+        val instanceMethod = myFixture.elementAtCaret as KtNamedDeclaration
         assertThrows(RefactoringErrorHintException::class.java) {
             K2MoveModel.create(arrayOf(instanceMethod), null)
         }
@@ -185,7 +180,7 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
                 } 
             }
         """.trimIndent())
-        val companionObjectMethod = myFixture.elementAtCaret
+        val companionObjectMethod = myFixture.elementAtCaret as KtNamedDeclaration
         assertThrows(RefactoringErrorHintException::class.java) {
             K2MoveModel.create(arrayOf(companionObjectMethod), null)
         }

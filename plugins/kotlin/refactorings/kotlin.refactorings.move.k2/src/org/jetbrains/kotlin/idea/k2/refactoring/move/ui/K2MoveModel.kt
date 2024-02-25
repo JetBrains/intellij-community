@@ -138,18 +138,11 @@ sealed class K2MoveModel {
             get() = KotlinBundle.message("text.move.declarations")
 
         fun create(
-            elements: Array<out PsiElement>,
+            elements: Array<out KtElement>,
             targetContainer: PsiElement?,
             editor: Editor? = null
         ): K2MoveModel? {
             val project = elements.firstOrNull()?.project ?: error("Elements not part of project")
-
-            /** When moving elements to or from a class we expect the user to want to move them to the containing file instead */
-            fun KtElement.correctForProjectView(): KtElement {
-                val containingFile = containingKtFile
-                if (containingFile.declarations.singleOrNull() == this) return containingFile
-                return this
-            }
 
             fun inSourceRoot(): Boolean {
                 val sourceFiles = elements.map { it.containingFile }.toSet()
@@ -160,10 +153,7 @@ sealed class K2MoveModel {
                 return fileIndex.isInSourceContent(targetFile)
             }
 
-            val correctedTarget = if (targetContainer is KtElement) targetContainer.correctForProjectView() else targetContainer
-            val elementsToMove = elements.map { (it as? KtElement)?.correctForProjectView() }.toSet()
-
-            if (elementsToMove.any { it?.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
+            if (elements.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
                 val message = RefactoringBundle.getCannotRefactorMessage(
                     KotlinBundle.message("text.move.declaration.no.support.for.nested.declarations")
                 )
@@ -171,7 +161,7 @@ sealed class K2MoveModel {
                 return null
             }
 
-            if (elementsToMove.any { it is KtEnumEntry }) {
+            if (elements.any { it is KtEnumEntry }) {
                 val message = RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.declaration.no.support.for.enums"))
                 CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
                 return null
@@ -179,37 +169,40 @@ sealed class K2MoveModel {
 
             val inSourceRoot = inSourceRoot()
             return when {
-                elementsToMove.all { it is KtFile } && correctedTarget !is KtFile -> {
-                    val source = K2MoveSourceModel.FileSource(elementsToMove.filterIsInstance<KtFile>().toSet())
-                    val target = if (correctedTarget is PsiDirectory) {
-                        val pkg = correctedTarget.getFqNameWithImplicitPrefixOrRoot()
-                        K2MoveTargetModel.SourceDirectory(pkg, correctedTarget)
+                targetContainer is PsiDirectory || (elements.all { it is KtFile } && elements.size > 1) -> {
+                    val source = K2MoveSourceModel.FileSource(elements.filterIsInstance<KtFile>().toSet())
+                    val target = if (targetContainer is PsiDirectory) {
+                        val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
+                        K2MoveTargetModel.SourceDirectory(pkg, targetContainer)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
-                        val file = elementsToMove.firstOrNull()?.containingKtFile ?: error("No default target found")
+                        val file = elements.firstOrNull()?.containingKtFile ?: error("No default target found")
                         val directory = file.containingDirectory ?: error("No default target found")
-                        val pkgName = elementsToMove.mapNotNull { it?.containingKtFile?.packageFqName }.toSet().singleOrNull() ?: FqName.ROOT
+                        val pkgName = elements.map { it.containingKtFile.packageFqName }.toSet().firstOrNull() ?: FqName.ROOT
                         K2MoveTargetModel.SourceDirectory(pkgName, directory)
                     }
                     Files(project, source, target, inSourceRoot)
                 }
-
-                elementsToMove.all { it is KtNamedDeclaration } || correctedTarget is KtFile -> {
-                    val elementsFromFiles = elementsToMove.flatMap { elem ->
+                targetContainer is KtFile || elements.all { it is KtNamedDeclaration } || elements.singleOrNull() is KtFile -> {
+                    val elementsFromFiles = elements.flatMap { elem ->
                         when (elem) {
                             is KtFile -> elem.declarations.filterIsInstance<KtNamedDeclaration>()
                             is KtNamedDeclaration -> listOf(elem)
-                            else -> emptyList()
+                            else -> error("Element to move should be a file or declaration")
                         }
                     }.toSet()
                     val source = K2MoveSourceModel.ElementSource(elementsFromFiles)
-                    val target = if (correctedTarget is KtFile) {
-                        K2MoveTargetModel.File(correctedTarget)
+                    val target = if (targetContainer is KtFile) {
+                        K2MoveTargetModel.File(targetContainer)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
-                        val element = elementsToMove.firstOrNull() as KtNamedDeclaration
-                        val elementName = "${element.name}.${KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension}"
-                        val containingFile = element.containingKtFile
+                        val firstElem = elements.firstOrNull()
+                        val fileName = when (firstElem) {
+                            is KtFile -> firstElem.name
+                            is KtNamedDeclaration -> "${firstElem.name}.${KotlinLanguage.INSTANCE.associatedFileType?.defaultExtension}"
+                            else -> error("Element to move should be a file or declaration")
+                        }
+                        val containingFile = firstElem.containingKtFile
                         val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
-                        K2MoveTargetModel.File(elementName, containingFile.packageFqName, psiDirectory)
+                        K2MoveTargetModel.File(fileName, containingFile.packageFqName, psiDirectory)
                     }
                     Members(project, source, target, inSourceRoot)
                 }
