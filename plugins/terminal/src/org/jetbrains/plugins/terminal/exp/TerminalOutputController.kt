@@ -17,7 +17,6 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
 import java.awt.Font
 
@@ -215,7 +214,7 @@ class TerminalOutputController(
 
   private fun toHighlightedCommandOutput(output: StyledCommandOutput, baseOffset: Int): CommandOutput {
     return CommandOutput(output.text, output.styleRanges.map {
-      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.style.toTextAttributes())
+      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.style.toTextAttributesProvider())
     })
   }
 
@@ -267,7 +266,7 @@ class TerminalOutputController(
     }
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
+  private fun TextStyle.toTextAttributesProvider(): TextAttributesProvider = TextStyleAdapter(this, session.colorPalette)
 
   private fun appendLineToBlock(block: CommandBlock, text: String, highlightings: List<HighlightingInfo>, addTrailingNewLine: Boolean) {
     val existingHighlightings = outputModel.getHighlightings(block) ?: emptyList()
@@ -277,13 +276,16 @@ class TerminalOutputController(
 
   /** It is implied that [CommandBlock.command] is not null */
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
-    val attributes = TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
-    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length, attributes)
+    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length, object: TextAttributesProvider {
+      override fun getTextAttributes(): TextAttributes {
+        return TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
+      }
+    })
   }
 
   private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
     return highlightings.map {
-      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributes)
+      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributesProvider)
     }
   }
 

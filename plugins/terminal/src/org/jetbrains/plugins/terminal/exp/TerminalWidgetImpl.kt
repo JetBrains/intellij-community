@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -55,8 +54,7 @@ class TerminalWidgetImpl(private val project: Project,
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
     view = if (options.shellIntegration?.commandBlockIntegration != null) {
-      val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().getGlobalScheme())
-      val session = BlockTerminalSession(settings, colorPalette, options.shellIntegration)
+      val session = BlockTerminalSession(settings, BlockTerminalColorPalette(), options.shellIntegration)
       Disposer.register(this, session)
       BlockTerminalView(project, session, settings, terminalTitle)
     }
