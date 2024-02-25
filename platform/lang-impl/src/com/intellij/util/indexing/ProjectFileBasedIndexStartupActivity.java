@@ -30,7 +30,6 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
   @Override
   public void runActivity(@NotNull Project project) {
-    myOpenProjects.add(project);
     ProgressManager.progress(IndexingBundle.message("progress.text.loading.indexes"));
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
@@ -38,20 +37,28 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       ((PushedFilePropertiesUpdaterImpl)propertiesUpdater).initializeProperties();
     }
 
-    fileBasedIndex.registerProjectFileSets(project);
+    // Add project to various lists in read action to make sure that
+    // they are not added to lists during disposing of project (in this case project may be stuck forever in those lists)
+    boolean registered = ReadAction.compute(() -> {
+      if (project.isDisposed()) return false;
+      myOpenProjects.add(project);
+      // done mostly for tests. In real life this is no-op, because the set was removed on project closing
+      Disposer.register(project, () -> onProjectClosing(project));
+
+      fileBasedIndex.registerProjectFileSets(project);
+      fileBasedIndex.getIndexableFilesFilterHolder().onProjectOpened(project);
+      return true;
+    });
+
+    if (!registered) return;
 
     // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
     fileBasedIndex.loadIndexes();
     fileBasedIndex.waitUntilIndicesAreInitialized();
 
-    fileBasedIndex.getIndexableFilesFilterHolder().onProjectOpened(project);
-
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
     scanAndIndexProjectAfterOpen(project, suspended, "On project open");
-
-    // done mostly for tests. In real life this is no-op, because the set was removed on project closing
-    Disposer.register(project, () -> onProjectClosing(project));
   }
 
   private void onProjectClosing(@NotNull Project project) {
