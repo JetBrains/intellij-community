@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.CollectionFactory
-import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<InspectionToolRegistrar>()
 private val EP_NAME = ExtensionPointName<InspectionToolProvider>("com.intellij.inspectionToolProvider")
@@ -29,12 +28,6 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
   companion object {
     @JvmStatic
     fun getInstance(): InspectionToolRegistrar = service<InspectionToolRegistrar>()
-
-    @ApiStatus.Internal
-    @JvmStatic
-    fun wrapTool(profileEntry: InspectionProfileEntry): InspectionToolWrapper<*, *> {
-      return InspectionWrapperUtil.wrapTool(profileEntry)
-    }
   }
 
   private val toolFactories: Collection<List<InspectionFactory>>
@@ -152,7 +145,7 @@ private fun registerToolProvider(provider: InspectionToolProvider,
       try {
         val constructor = aClass.getDeclaredConstructor()
         constructor.isAccessible = true
-        InspectionToolRegistrar.wrapTool(constructor.newInstance())
+        InspectionWrapperUtil.wrapTool(constructor.newInstance())
       }
       catch (e: ProcessCanceledException) {
         throw e
