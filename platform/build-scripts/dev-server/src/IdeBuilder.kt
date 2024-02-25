@@ -372,9 +372,11 @@ private suspend fun createBuildContext(
           outRootDir = runDir,
         )
         options.setTargetOsAndArchToCurrent()
-        options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
-        options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
-        options.buildStepsToSkip.add(BuildOptions.FUS_METADATA_BUNDLE_STEP)
+        options.buildStepsToSkip += listOf(
+          BuildOptions.PREBUILD_SHARED_INDEXES,
+          BuildOptions.GENERATE_JAR_ORDER_STEP,
+          BuildOptions.FUS_METADATA_BUNDLE_STEP,
+        )
 
         if (isUnpackedDist && options.enableEmbeddedJetBrainsClient) {
           options.enableEmbeddedJetBrainsClient = false

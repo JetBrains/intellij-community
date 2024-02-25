@@ -123,8 +123,10 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
     val currentOs = OsFamily.currentOs
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = persistentListOf(currentOs)
-    context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
-    context.options.buildStepsToSkip.add(SoftwareBillOfMaterials.STEP_ID)
+    context.options.buildStepsToSkip += listOf(
+      BuildOptions.GENERATE_JAR_ORDER_STEP,
+      SoftwareBillOfMaterials.STEP_ID,
+    )
     BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)

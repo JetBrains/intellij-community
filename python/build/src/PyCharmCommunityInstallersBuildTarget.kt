@@ -24,10 +24,10 @@ object PyCharmCommunityInstallersBuildTarget {
         // just remove out/ directory for clean build
         incrementalCompilation = true
         useCompiledClassesFromProjectOutput = false
-        buildStepsToSkip.addAll(listOf(
+        buildStepsToSkip += listOf(
           BuildOptions.MAC_SIGN_STEP,
           PyCharmBuildUtils.SKELETONS_COPY_STEP,
-        ))
+        )
       }
       val context = BuildContextImpl.createContext(
         projectHome = COMMUNITY_ROOT.communityRoot,
