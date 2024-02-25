@@ -1,14 +1,14 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
-  fun testResolvePropertyFromActivationSection() = runBlocking {
+  fun testResolvePropertyFromActivationSection() = runBlocking(Dispatchers.EDT) {
     importProjectAsync(
       """
           <groupId>example</groupId>

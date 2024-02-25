@@ -18,9 +18,11 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenProjectSettings
@@ -30,9 +32,8 @@ import java.nio.file.Paths
 import kotlin.io.path.name
 
 class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = true
   @Throws(Exception::class)
-  override fun setUp() {
+  override fun setUp() = runBlocking(Dispatchers.EDT){
     super.setUp()
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassArgLine = true
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassEnvironmentVariables = true
@@ -41,7 +42,7 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   @Throws(CantRunException::class)
-  fun ExcludeProjectDependencyInClassPathElement() {
+  fun ExcludeProjectDependencyInClassPathElement() = runBlocking(Dispatchers.EDT) {
     val m = createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
@@ -119,7 +120,7 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   @Throws(CantRunException::class)
-  fun ExcludeClassPathElement() {
+  fun ExcludeClassPathElement() = runBlocking(Dispatchers.EDT){
     val excludeSpecifications = arrayOf(
       """
 <classpathDependencyExcludes>
@@ -191,7 +192,7 @@ org.jetbrains:annotations
 
   @Test
   @Throws(CantRunException::class)
-  fun ExcludeScope() {
+  fun ExcludeScope() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -238,7 +239,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun AddClassPath() = runBlocking {
+  fun AddClassPath() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -272,7 +273,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgList() = runBlocking {
+  fun ArgList() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -307,7 +308,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun IgnoreJaCoCoOption() = runBlocking {
+  fun IgnoreJaCoCoOption() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><build>
         <plugins>
@@ -342,7 +343,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ImplicitArgLine() = runBlocking {
+  fun ImplicitArgLine() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
         <argLine>-Dfoo=${'$'}{version}</argLine>
@@ -370,7 +371,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun VmPropertiesResolve() = runBlocking {
+  fun VmPropertiesResolve() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -408,7 +409,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineLateReplacement() = runBlocking {
+  fun ArgLineLateReplacement() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -437,7 +438,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineLateReplacementParentProperty() = runBlocking {
+  fun ArgLineLateReplacementParentProperty() = runBlocking(Dispatchers.EDT) {
     createProjectPom(
       """
         <groupId>test</groupId>
@@ -493,7 +494,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineRefersAnotherProperty() = runBlocking {
+  fun ArgLineRefersAnotherProperty() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
@@ -526,7 +527,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ArgLineProperty() = runBlocking {
+  fun ArgLineProperty() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
       <argLine>-DsomeProp=Hello</argLine>
@@ -545,7 +546,7 @@ org.jetbrains:annotations
   }
 
   @Test
-  fun ResolvePropertiesUsingAt() = runBlocking {
+  fun ResolvePropertiesUsingAt() = runBlocking(Dispatchers.EDT) {
     val m1 = createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>

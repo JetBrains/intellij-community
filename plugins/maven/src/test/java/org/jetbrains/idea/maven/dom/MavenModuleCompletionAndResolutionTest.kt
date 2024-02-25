@@ -15,16 +15,17 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = true
   @Test
-  fun testCompleteFromAllAvailableModules() = runBlocking {
+  fun testCompleteFromAllAvailableModules() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -93,7 +94,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotCompeteIfThereIsNoModules() = runBlocking {
+  fun testDoesNotCompeteIfThereIsNoModules() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -116,7 +117,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testIncludesAllThePomsAvailable() = runBlocking {
+  fun testIncludesAllThePomsAvailable() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -153,7 +154,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolution() = runBlocking {
+  fun testResolution() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -221,7 +222,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolutionWithSlashes() = runBlocking {
+  fun testResolutionWithSlashes() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -267,7 +268,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolutionWithProperties() = runBlocking {
+  fun testResolutionWithProperties() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -322,7 +323,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFix() = runBlocking {
+  fun testCreatePomQuickFix() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -365,7 +366,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixCustomPomFileName() = runBlocking {
+  fun testCreatePomQuickFixCustomPomFileName() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -408,7 +409,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixInDotXmlFolder() = runBlocking {
+  fun testCreatePomQuickFixInDotXmlFolder() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -452,7 +453,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() = runBlocking {
+  fun testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -498,7 +499,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixWithProperties() = runBlocking {
+  fun testCreatePomQuickFixWithProperties() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -529,7 +530,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() = runBlocking {
+  fun testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -569,7 +570,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix() = runBlocking {
+  fun testCreateModuleWithParentQuickFix() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -617,7 +618,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix2() = runBlocking {
+  fun testCreateModuleWithParentQuickFix2() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -666,7 +667,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix3() = runBlocking {
+  fun testCreateModuleWithParentQuickFix3() = runBlocking(Dispatchers.EDT) {
     val parentPom = createModulePom("parent",
                                     """
                                               <groupId>test</groupId>
@@ -718,7 +719,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotShowCreatePomQuickFixForEmptyModuleTag() = runBlocking {
+  fun testDoesNotShowCreatePomQuickFixForEmptyModuleTag() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -741,7 +742,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotShowCreatePomQuickFixExistingModule() = runBlocking {
+  fun testDoesNotShowCreatePomQuickFixExistingModule() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>

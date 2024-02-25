@@ -2,13 +2,13 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyRenameTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
-  override fun setUp() = runBlocking {
+  override fun setUp() = runBlocking(Dispatchers.EDT) {
     super.setUp()
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -18,7 +18,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testRenamingPropertyTag() = runBlocking {
+  fun testRenamingPropertyTag() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -42,7 +42,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoNotRuinTextAroundTheReferenceWhenRenaming() = runBlocking {
+  fun testDoNotRuinTextAroundTheReferenceWhenRenaming() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -66,7 +66,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testRenamingChangesTheReferenceAccordingly() = runBlocking {
+  fun testRenamingChangesTheReferenceAccordingly() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -101,7 +101,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testRenamingPropertyFromReference() = runBlocking {
+  fun testRenamingPropertyFromReference() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -125,7 +125,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoNotRenameModelProperties() = runBlocking {
+  fun testDoNotRenameModelProperties() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -138,7 +138,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoNotRenameModelPropertiesFromReference() = runBlocking {
+  fun testDoNotRenameModelPropertiesFromReference() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -151,7 +151,7 @@ class MavenPropertyRenameTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testDoNotRenameModelPropertiesTag() = runBlocking {
+  fun testDoNotRenameModelPropertiesTag() = runBlocking(Dispatchers.EDT) {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>

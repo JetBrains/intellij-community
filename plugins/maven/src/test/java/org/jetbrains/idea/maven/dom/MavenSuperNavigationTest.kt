@@ -2,14 +2,14 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSuperNavigationTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
-  fun testNavigationToManagingDependencyWithoutModules() = runBlocking {
+  fun testNavigationToManagingDependencyWithoutModules() = runBlocking(Dispatchers.EDT) {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -59,7 +59,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingPluginWithoutModules() = runBlocking {
+  fun testNavigationToManagingPluginWithoutModules() = runBlocking(Dispatchers.EDT) {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -113,7 +113,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testGotoToParentProject() = runBlocking {
+  fun testGotoToParentProject() = runBlocking(Dispatchers.EDT) {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
@@ -144,7 +144,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingDependencyWithModules() = runBlocking {
+  fun testNavigationToManagingDependencyWithModules() = runBlocking(Dispatchers.EDT) {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
@@ -210,7 +210,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingPluginWithModules() = runBlocking {
+  fun testNavigationToManagingPluginWithModules() = runBlocking(Dispatchers.EDT) {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
