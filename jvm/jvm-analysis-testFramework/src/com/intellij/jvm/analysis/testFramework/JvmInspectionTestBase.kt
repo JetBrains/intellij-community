@@ -3,8 +3,8 @@ package com.intellij.jvm.analysis.testFramework
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.InspectionWrapperUtil
 import com.intellij.codeInspection.InspectionsBundle
-import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
@@ -25,7 +25,7 @@ abstract class JvmInspectionTestBase : LightJvmCodeInsightFixtureTestCase() {
 
   protected fun enableWarnings() {
     val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-    val toolWrapper = InspectionToolRegistrar.wrapTool(inspection)
+    val toolWrapper = InspectionWrapperUtil.wrapTool(inspection)
     profile.setErrorLevel(toolWrapper.displayKey!!, HighlightDisplayLevel.WARNING, project)
   }
 
