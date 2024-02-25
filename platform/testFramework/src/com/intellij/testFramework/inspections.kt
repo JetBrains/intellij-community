@@ -115,7 +115,7 @@ inline fun <T> runInInitMode(runnable: () -> T): T {
 fun disableInspections(project: Project, vararg inspections: InspectionProfileEntry) {
   val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
   for (inspection in inspections) {
-    profile.setToolEnabled(inspection.shortName, false)
+    profile.setToolEnabled(InspectionToolRegistrar.wrapTool(inspection).shortName, false)
   }
 }
 

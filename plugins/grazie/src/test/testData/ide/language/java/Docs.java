@@ -47,11 +47,11 @@ class ExampleClassWithNoTypos<T> {
 }
 
 /**
- * It is <warning descr="EN_A_VS_AN">an</warning> friend there
+ * It is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend there
  *
  * </unopenedTag>
  *
- * @param T the <warning descr="KIND_OF_A">type of a</warning> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
+ * @param T the <GRAMMAR_ERROR descr="KIND_OF_A">type of a</GRAMMAR_ERROR> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
  */
 class ExampleClassWithTypos<T> {
 
@@ -60,36 +60,36 @@ class ExampleClassWithTypos<T> {
     /**
      * Creates an empty group.
      *
-     * @param name the <warning descr="COMMA_WHICH">name which</warning> group
+     * @param name the <GRAMMAR_ERROR descr="COMMA_WHICH">name which</GRAMMAR_ERROR> group
      */
     public ExampleClassWithTypos(String name) {
         this.name = name;
     }
 
     /**
-     * It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
-     * <warning descr="UPPERCASE_SENTENCE_START">second</warning> sentence.
+     * It <GRAMMAR_ERROR descr="IT_VBZ">add</GRAMMAR_ERROR> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
+     * <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">second</GRAMMAR_ERROR> sentence.
      * 
      * @param member member to add. And another sentence.
-     * @return the new size of <warning descr="DT_DT">a the</warning> group. <warning descr="UPPERCASE_SENTENCE_START">and</warning> another sentence.
+     * @return the new size of <GRAMMAR_ERROR descr="DT_DT">a the</GRAMMAR_ERROR> group. <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">and</GRAMMAR_ERROR> another sentence.
      */
     Integer badFunction(T member) {
-        return 1; // It <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO> in the comment
+        return 1; // It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> <TYPO descr="Typo: In word 'eror'">eror</TYPO> in the comment
     }
 }
 
 /**
- * В коробке лежало <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.
- * А <warning descr="grammar_vse_li_noun">все ли ошибка</warning> найдены?
- * Это случилось <warning descr="INVALID_DATE">31 ноября</warning> 2014 г.
- * За весь вечер она <warning descr="ne_proronila_ni">не проронила и слово</warning>.
- * Собрание состоится в <warning descr="RU_COMPOUNDS">конференц зале</warning>.
- * <warning descr="WORD_REPEAT_RULE">Он он</warning> ошибка.
+ * В коробке лежало <GRAMMAR_ERROR descr="Sklonenije_NUM_NN">пять карандаша</GRAMMAR_ERROR>.
+ * А <GRAMMAR_ERROR descr="grammar_vse_li_noun">все ли ошибка</GRAMMAR_ERROR> найдены?
+ * Это случилось <GRAMMAR_ERROR descr="INVALID_DATE">31 ноября</GRAMMAR_ERROR> 2014 г.
+ * За весь вечер она <GRAMMAR_ERROR descr="ne_proronila_ni">не проронила и слово</GRAMMAR_ERROR>.
+ * Собрание состоится в <GRAMMAR_ERROR descr="RU_COMPOUNDS">конференц зале</GRAMMAR_ERROR>.
+ * <GRAMMAR_ERROR descr="WORD_REPEAT_RULE">Он он</GRAMMAR_ERROR> ошибка.
  */
 class ForMultiLanguageSupport {
-    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
-    // das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
-    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
+    // er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+    // das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
+    // das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.
 
   /**
    * @throws Exception wenn ein Fehler auftritt

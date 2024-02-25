@@ -4,6 +4,7 @@ package org.intellij.lang.regexp.inspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionWrapperUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -55,6 +56,6 @@ public abstract class RegExpInspectionTestCase extends BasePlatformTestCase {
 
   protected final void quickfixAllTest(@Language("RegExp") String before, @Language("RegExp") String after) {
     InspectionProfileEntry inspection = getInspection();
-    quickfixTest(before, after, InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.getDisplayName()));
+    quickfixTest(before, after, InspectionsBundle.message("fix.all.inspection.problems.in.file", InspectionWrapperUtil.wrapTool(inspection).getDisplayName()));
   }
 }
