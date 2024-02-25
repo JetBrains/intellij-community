@@ -3,7 +3,10 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.CaretVisualAttributes
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -84,6 +87,9 @@ class TerminalPromptView(
         IdeFocusManager.getInstance(project).requestFocus(editor.contentComponent, true)
       }
     })
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      promptContentUpdated(controller.promptRenderingInfo)
+    })
   }
 
   override fun promptVisibilityChanged(visible: Boolean) {
@@ -91,6 +97,10 @@ class TerminalPromptView(
   }
 
   override fun promptContentUpdated(renderingInfo: PromptRenderingInfo) {
+    updatePrompt(renderingInfo)
+  }
+
+  private fun updatePrompt(renderingInfo: PromptRenderingInfo) {
     val changePrompt = {
       promptComponent.clear()
       promptComponent.setContent(renderingInfo)
@@ -108,7 +118,7 @@ class TerminalPromptView(
         append(textPart)
       }
       val textPart = renderingInfo.text.substring(highlighting.startOffset, highlighting.endOffset)
-      val attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, highlighting.textAttributes.foregroundColor)
+      val attributes = SimpleTextAttributes.fromTextAttributes(highlighting.textAttributesProvider.getTextAttributes())
       append(textPart, attributes)
       curOffset = highlighting.endOffset
     }

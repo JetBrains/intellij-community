@@ -3,15 +3,12 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.getAwtForegroundByIndex
-import java.awt.Font
 import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalPromptModel(private val session: BlockTerminalSession) {
@@ -41,20 +38,19 @@ class TerminalPromptModel(private val session: BlockTerminalSession) {
     for (component in components) {
       val startOffset = builder.length
       builder.append(component.text)
-      highlightings.add(HighlightingInfo(startOffset, builder.length, component.attributes))
+      highlightings.add(HighlightingInfo(startOffset, builder.length, component.attributesProvider))
     }
     return PromptRenderingInfo(builder.toString(), highlightings)
   }
 
   private fun getPromptComponents(state: TerminalPromptState): List<PromptComponentInfo> {
     val result = mutableListOf<PromptComponentInfo>()
-    // numbers are the indexes in BlockTerminalColors.KEYS array
-    val greenAttributes = plainAttributes(2)
-    val yellowAttributes = plainAttributes(3)
-    val defaultAttributes = plainAttributes(-1)
+    val greenAttributes = plainAttributes(TerminalUiUtils.GREEN_COLOR_INDEX)
+    val yellowAttributes = plainAttributes(TerminalUiUtils.YELLOW_COLOR_INDEX)
+    val defaultAttributes = EmptyTextAttributesProvider
 
-    fun addComponent(text: String, attributes: TextAttributes) {
-      result.add(PromptComponentInfo(text, attributes))
+    fun addComponent(text: String, attributesProvider: TextAttributesProvider) {
+      result.add(PromptComponentInfo(text, attributesProvider))
     }
 
     if (!state.virtualEnv.isNullOrBlank()) {
@@ -83,16 +79,15 @@ class TerminalPromptModel(private val session: BlockTerminalSession) {
     else "~"
   }
 
-  private fun plainAttributes(colorIndex: Int): TextAttributes {
-    val color = session.colorPalette.getAwtForegroundByIndex(colorIndex)
-    return TextAttributes(color, null, null, null, Font.PLAIN)
+  private fun plainAttributes(colorIndex: Int): TextAttributesProvider {
+    return TerminalUiUtils.plainAttributesProvider(colorIndex, session.colorPalette)
   }
 
   fun addListener(listener: TerminalPromptStateListener, disposable: Disposable) {
     TerminalUtil.addItem(listeners, listener, disposable)
   }
 
-  private class PromptComponentInfo(val text: String, val attributes: TextAttributes)
+  private class PromptComponentInfo(val text: String, val attributesProvider: TextAttributesProvider)
 }
 
 interface TerminalPromptStateListener {

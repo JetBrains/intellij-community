@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
-import com.intellij.execution.process.ConsoleHighlighter
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.*
-import org.jetbrains.plugins.terminal.exp.*
+import org.jetbrains.plugins.terminal.exp.HighlightingInfo
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.plainAttributesProvider
+import org.jetbrains.plugins.terminal.exp.TextAttributesProvider
+import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -25,7 +27,7 @@ class TerminalTextHighlighterTest {
     val outputManager = TestTerminalOutputManager(projectRule.project, disposableRule.disposable)
     outputManager.createBlock("echo foo", TestCommandOutput("foo bar baz",
                                                             listOf(HighlightingInfo(1, 2, green()),
-                                                                   HighlightingInfo(5, 6, red()))))
+                                                                   HighlightingInfo(5, 6, yellow()))))
     checkHighlighter(outputManager, listOf(TextRange(0, 1),
                                            TextRange(1, 2),
                                            TextRange(2, 5),
@@ -44,7 +46,7 @@ class TerminalTextHighlighterTest {
   }
 
   companion object {
-    fun green(): TextAttributes = ConsoleHighlighter.GREEN.defaultAttributes
-    fun red(): TextAttributes = ConsoleHighlighter.RED.defaultAttributes
+    fun green(): TextAttributesProvider = plainAttributesProvider(TerminalUiUtils.GREEN_COLOR_INDEX, BlockTerminalColorPalette())
+    fun yellow(): TextAttributesProvider = plainAttributesProvider(TerminalUiUtils.YELLOW_COLOR_INDEX, BlockTerminalColorPalette())
   }
 }
