@@ -4,17 +4,17 @@ function formatName(user) {
 
 const user = {
     firstName: '<TYPO descr="Typo: In word 'eror'">eror</TYPO>',
-    lastName: 'it <warning descr="IT_VBZ">are</warning> bad'
+    lastName: 'it <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> bad'
 };
 
 const element = (
     <h1>
-        { (a, b) -> a + "it <warning descr="IT_VBZ">are</warning> <TYPO descr="Typo: In word 'eror'">eror</TYPO>. And here are some correct English words to make the language detector work." + user  }
-        First sentence. it <warning descr="IT_VBZ">are</warning> bad,
+        { (a, b) -> a + "it <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> <TYPO descr="Typo: In word 'eror'">eror</TYPO>. And here are some correct English words to make the language detector work." + user  }
+        First sentence. it <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> bad,
         <p>
             it is <TYPO descr="Typo: In word 'frend'">frend</TYPO> of human
         </p>
 
-        <warning descr="PRP_VBG">It working</warning> for <warning descr="MUCH_COUNTABLE">much</warning> warnings, {formatName(user)}!
+        <GRAMMAR_ERROR descr="PRP_VBG">It working</GRAMMAR_ERROR> for <GRAMMAR_ERROR descr="MUCH_COUNTABLE">much</GRAMMAR_ERROR> warnings, {formatName(user)}!
     </h1>
 );
