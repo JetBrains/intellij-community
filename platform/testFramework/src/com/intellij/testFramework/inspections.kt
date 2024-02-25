@@ -4,6 +4,7 @@ package com.intellij.testFramework
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.codeInspection.InspectionWrapperUtil
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.*
 import com.intellij.openapi.Disposable
@@ -21,7 +22,7 @@ import java.util.*
 fun configureInspections(tools: Array<InspectionProfileEntry>,
                          project: Project,
                          parentDisposable: Disposable): InspectionProfileImpl {
-  val toolSupplier = InspectionToolsSupplier.Simple(tools.mapSmart { InspectionToolRegistrar.wrapTool(it) })
+  val toolSupplier = InspectionToolsSupplier.Simple(tools.mapSmart { InspectionWrapperUtil.wrapTool(it) })
   Disposer.register(parentDisposable, toolSupplier)
   val profile = InspectionProfileImpl(UUID.randomUUID().toString(), toolSupplier, null)
   val profileManager = ProjectInspectionProfileManager.getInstance(project)
@@ -63,12 +64,12 @@ fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInsp
 }
 
 fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) {
-  enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
+  enableInspectionTool(project, InspectionWrapperUtil.wrapTool(tool), disposable)
 }
 
 fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools: InspectionProfileEntry) {
   for (tool in tools) {
-    enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
+    enableInspectionTool(project, InspectionWrapperUtil.wrapTool(tool), disposable)
   }
 }
 
@@ -115,7 +116,7 @@ inline fun <T> runInInitMode(runnable: () -> T): T {
 fun disableInspections(project: Project, vararg inspections: InspectionProfileEntry) {
   val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
   for (inspection in inspections) {
-    profile.setToolEnabled(InspectionToolRegistrar.wrapTool(inspection).shortName, false)
+    profile.setToolEnabled(InspectionWrapperUtil.wrapTool(inspection).shortName, false)
   }
 }
 
