@@ -19,7 +19,17 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
-class PrivateVarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
+/**
+ * Shared between K1 and K2 J2K.
+ * Handles two cases:
+ *   1. Local 'var' with initializer
+ *   2. Private 'var' property
+ *
+ * To handle a local 'var' without an initializer, we need to use control-flow analysis to determine
+ * if the variable has been definitely assigned. Currently, this is implemented only in K1 J2K with
+ * [org.jetbrains.kotlin.idea.j2k.post.processing.processings.LocalVarToValInspectionBasedProcessing].
+ */
+class VarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     companion object {
         private val JPA_COLUMN_ANNOTATIONS: Set<ClassId> = setOf(
             ClassId.fromString("javax/persistence/Column"),
@@ -30,11 +40,18 @@ class PrivateVarToValProcessing : InspectionLikeProcessingForElement<KtProperty>
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
         if (!element.isVar) return false
-        if (!element.isPrivate()) return false
-        allowAnalysisOnEdt {
-            analyze(element) {
-                return isApplicableToByAnalyze(element)
+
+        return when {
+            element.isLocal && element.initializer != null ->
+                !element.hasWriteUsages(isLocal = true)
+
+            element.isPrivate() -> allowAnalysisOnEdt {
+                analyze(element) {
+                    isApplicableToByAnalyze(element)
+                }
             }
+
+            else -> false
         }
     }
 
@@ -48,17 +65,22 @@ class PrivateVarToValProcessing : InspectionLikeProcessingForElement<KtProperty>
         val annotationClassIds = symbol.backingFieldSymbol?.annotationClassIds.orEmpty()
         if (annotationClassIds.any { JPA_COLUMN_ANNOTATIONS.contains(it) }) return false
 
-        return !element.hasWriteUsages()
+        return !element.hasWriteUsages(isLocal = false)
     }
 
-    private fun KtProperty.hasWriteUsages(): Boolean {
+    private fun KtProperty.hasWriteUsages(isLocal: Boolean): Boolean {
         val usages = ReferencesSearch.search(this, useScope)
         return usages.any { usage ->
             val nameReference = (usage as? KtSimpleNameReference)?.element ?: return@any false
-            val receiver = (nameReference.parent as? KtDotQualifiedExpression)?.receiverExpression
-            if (nameReference.getStrictParentOfType<KtAnonymousInitializer>() != null
-                && (receiver == null || receiver is KtThisExpression)
-            ) return@any false
+
+            // Skip usages of private property from 'init' block
+            if (!isLocal) {
+                val receiver = (nameReference.parent as? KtDotQualifiedExpression)?.receiverExpression
+                if (nameReference.getStrictParentOfType<KtAnonymousInitializer>() != null
+                    && (receiver == null || receiver is KtThisExpression)
+                ) return@any false
+            }
+
             nameReference.readWriteAccess(useResolveForReadWrite = true).isWrite
         }
     }

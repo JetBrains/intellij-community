@@ -141,7 +141,7 @@ private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
     listOf(
         InspectionLikeProcessingGroup(
             processings = listOf(
-                PrivateVarToValProcessing(),
+                VarToValProcessing(),
                 LocalVarToValInspectionBasedProcessing()
             ),
             runSingleTime = true
