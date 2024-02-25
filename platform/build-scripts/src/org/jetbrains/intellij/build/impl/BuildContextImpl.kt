@@ -100,7 +100,7 @@ class BuildContextImpl(
     check(!systemSelector.contains(' ')) {
       "System selector must not contain spaces: $systemSelector"
     }
-    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
+    options.buildStepsToSkip += productProperties.incompatibleBuildSteps
     if (!options.buildStepsToSkip.isEmpty()) {
       Span.current().addEvent("build steps to be skipped", Attributes.of(
         AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
@@ -243,7 +243,6 @@ class BuildContextImpl(
       options.pathToCompiledClassesArchivesMetadata = null
       options.pathToCompiledClassesArchive = null
     }
-    options.buildStepsToSkip = sourceOptions.buildStepsToSkip
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs
 

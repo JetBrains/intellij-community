@@ -57,7 +57,23 @@ data class BuildOptions(
    * By default, the build process produces temporary and resulting files under `<projectHome>/out/<productName>` directory.
    * Use this property to change the output directory.
    */
-  var outRootDir: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() }
+  var outRootDir: Path? = System.getProperty(INTELLIJ_BUILD_OUTPUT_ROOT)?.let { Path.of(it).toAbsolutePath().normalize() },
+
+  /**
+   * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
+   */
+  var buildStepsToSkip: Set<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
+    .split(',')
+    .dropLastWhile { it.isEmpty() }
+    .filterNot { it.isBlank() }
+    .toMutableSet()
+    .apply {
+      /* Skip signing and notarization for local builds */
+      if (isInDevelopmentMode) {
+        add(MAC_SIGN_STEP)
+        add(MAC_NOTARIZE_STEP)
+      }
+    }
 ) {
   companion object {
     /**
@@ -285,22 +301,6 @@ data class BuildOptions(
     targetOs = persistentListOf(OsFamily.currentOs)
     targetArch = JvmArchitecture.currentJvmArch
   }
-
-  /**
-   * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
-   */
-  var buildStepsToSkip: MutableSet<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
-    .split(',')
-    .dropLastWhile { it.isEmpty() }
-    .filterNot { it.isBlank() }
-    .toMutableSet()
-    .apply {
-      /* Skip signing and notarization for local builds */
-      if (isInDevelopmentMode) {
-        add(MAC_SIGN_STEP)
-        add(MAC_NOTARIZE_STEP)
-      }
-    }
 
   /**
    * Pass `true` to this system property to produce .snap packages.
