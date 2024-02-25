@@ -1,10 +1,13 @@
 package com.intellij.jvm.analysis.testFramework
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -18,6 +21,12 @@ abstract class JvmInspectionTestBase : LightJvmCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(inspection)
+  }
+
+  protected fun enableWarnings() {
+    val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+    val toolWrapper = InspectionToolRegistrar.wrapTool(inspection)
+    profile.setErrorLevel(toolWrapper.displayKey!!, HighlightDisplayLevel.WARNING, project)
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor = ProjectDescriptor(LanguageLevel.HIGHEST)

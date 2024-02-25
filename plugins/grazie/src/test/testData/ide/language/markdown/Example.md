@@ -12,46 +12,46 @@ Of course, it has an `inline` fragment.
 
 Even big fragment with injected code.
 ```html
-<tag>This is <warning descr="EN_A_VS_AN">a</warning> error in article, making this paragraph so damn big!</tag>
+<tag>This is <GRAMMAR_ERROR descr="EN_A_VS_AN">a</GRAMMAR_ERROR> error in article, making this paragraph so damn big!</tag>
 ```
 
-## Now <warning descr="EN_A_VS_AN">an</warning> bad part
+## Now <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> bad part
 
-It <warning descr="IT_VBZ">are</warning> written not many good .
+It <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> written not many good .
 
-Of <warning descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course</warning> it has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> in lists:
+Of <GRAMMAR_ERROR descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course</GRAMMAR_ERROR> it has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> in lists:
 * so much <TYPO descr="Typo: In word 'errorsss'">errorsss</TYPO>!
-* even here it is <warning descr="EN_A_VS_AN">an</warning> friend of human
+* even here it is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend of human
 
-<warning descr="UPPERCASE_SENTENCE_START">once</warning> more we have an inline fragment and it is `a` friend.
+<GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">once</GRAMMAR_ERROR> more we have an inline fragment and it is `a` friend.
 
-We immediately need to start the drafting of the Longview turbine contract<warning descr="COMMA_COMPOUND_SENTENCE"> and</warning> I'd like to see if we are close enough to get that started.
+We immediately need to start the drafting of the Longview turbine contract<GRAMMAR_ERROR descr="COMMA_COMPOUND_SENTENCE"> and</GRAMMAR_ERROR> I'd like to see if we are close enough to get that started.
 
-It is <warning descr="EN_A_VS_AN">an</warning> friend of human
+It is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend of human
 
 And we've got error in injected code!
 ```kotlin
 val b = "It is friend."
 ```
 
-It's a <warning descr="A_GOOGLE">react</warning> method. (An LT warning here)
+It's a <GRAMMAR_ERROR descr="A_GOOGLE">react</GRAMMAR_ERROR> method. (An LT warning here)
 It's a *react* method. (Fine, as it's emphasized)
 
-Defined field String name = "John<warning descr="EN_QUOTES">"</warning>
-System.out.println(<warning descr="EN_QUOTES">"</warning>Hello <warning descr="EN_QUOTES">"</warning> + name)
-foo(<warning descr="THE_PUNCT">a,</warning> <warning descr="THE_PUNCT">the,</warning> an)
+Defined field String name = "John<GRAMMAR_ERROR descr="EN_QUOTES">"</GRAMMAR_ERROR>
+System.out.println(<GRAMMAR_ERROR descr="EN_QUOTES">"</GRAMMAR_ERROR>Hello <GRAMMAR_ERROR descr="EN_QUOTES">"</GRAMMAR_ERROR> + name)
+foo(<GRAMMAR_ERROR descr="THE_PUNCT">a,</GRAMMAR_ERROR> <GRAMMAR_ERROR descr="THE_PUNCT">the,</GRAMMAR_ERROR> an)
 
 ## Немного русского
 
-В коробке лежало <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.
-А <warning descr="grammar_vse_li_noun">все ли ошибка</warning> найдены?
-Это случилось <warning descr="INVALID_DATE">31 ноября</warning> 2014 г.
-За весь вечер она <warning descr="ne_proronila_ni">не проронила и слово</warning>.
-Собрание состоится в <warning descr="RU_COMPOUNDS">конференц зале</warning>.
-<warning descr="WORD_REPEAT_RULE">Он он</warning> ошибка.
+В коробке лежало <GRAMMAR_ERROR descr="Sklonenije_NUM_NN">пять карандаша</GRAMMAR_ERROR>.
+А <GRAMMAR_ERROR descr="grammar_vse_li_noun">все ли ошибка</GRAMMAR_ERROR> найдены?
+Это случилось <GRAMMAR_ERROR descr="INVALID_DATE">31 ноября</GRAMMAR_ERROR> 2014 г.
+За весь вечер она <GRAMMAR_ERROR descr="ne_proronila_ni">не проронила и слово</GRAMMAR_ERROR>.
+Собрание состоится в <GRAMMAR_ERROR descr="RU_COMPOUNDS">конференц зале</GRAMMAR_ERROR>.
+<GRAMMAR_ERROR descr="WORD_REPEAT_RULE">Он он</GRAMMAR_ERROR> ошибка.
 
 Я предлагаю в&nbsp;своём приложении создавать что-нибудь.
 
-Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
-das ist <warning descr="FUEHR_FUER">führ</warning> Dich!
-das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <warning descr="MANNSTUNDE">Mannstunden</warning>.
+Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <GRAMMAR_ERROR descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</GRAMMAR_ERROR>.
+das ist <GRAMMAR_ERROR descr="FUEHR_FUER">führ</GRAMMAR_ERROR> Dich!
+das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_ERROR descr="MANNSTUNDE">Mannstunden</GRAMMAR_ERROR>.

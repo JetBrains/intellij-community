@@ -3,10 +3,10 @@
            xsi:noNamespaceSchemaLocation="Example.xsd">
     <orderperson><TYPO descr="Typo: In word 'johnn'">johnn</TYPO> Smith</orderperson>
     <shipto>
-        <name>First sentence. <warning descr="UPPERCASE_SENTENCE_START">it</warning> <warning descr="EN_A_VS_AN">an</warning> friend. Last sentence.</name>
+        <name>First sentence. <GRAMMAR_ERROR descr="UPPERCASE_SENTENCE_START">it</GRAMMAR_ERROR> <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend. Last sentence.</name>
         <address>Some street 23</address>
     </shipto>
-  <russian_with_newline>Не удалось авторизоваться.\nПопробуйте ещё раз. И <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.</russian_with_newline>
+  <russian_with_newline>Не удалось авторизоваться.\nПопробуйте ещё раз. И <GRAMMAR_ERROR descr="Sklonenije_NUM_NN">пять карандаша</GRAMMAR_ERROR>.</russian_with_newline>
   <code>
     Defined field String name = "John"
 

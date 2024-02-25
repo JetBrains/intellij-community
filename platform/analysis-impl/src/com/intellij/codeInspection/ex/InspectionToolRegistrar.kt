@@ -33,11 +33,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
     @ApiStatus.Internal
     @JvmStatic
     fun wrapTool(profileEntry: InspectionProfileEntry): InspectionToolWrapper<*, *> {
-      return when (profileEntry) {
-        is LocalInspectionTool -> LocalInspectionToolWrapper(profileEntry)
-        is GlobalInspectionTool -> GlobalInspectionToolWrapper(profileEntry)
-        else -> throw RuntimeException("unknown inspection class: " + profileEntry + "; " + profileEntry.javaClass)
-      }
+      return InspectionWrapperUtil.wrapTool(profileEntry)
     }
   }
 
