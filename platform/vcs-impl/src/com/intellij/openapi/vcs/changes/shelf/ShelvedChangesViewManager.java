@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diagnostic.Activity;
@@ -454,7 +454,7 @@ public class ShelvedChangesViewManager implements Disposable {
     Notification shelfDeletionNotification = new ShelfDeleteNotification(message);
     shelfDeletionNotification.setDisplayId(VcsNotificationIdsHolder.SHELF_UNDO_DELETE);
     shelfDeletionNotification.addAction(new UndoShelfDeletionAction(project, createdDeletedListsWithOriginalDate));
-    VcsNotifier.getInstance(project).showNotificationAndHideExisting(shelfDeletionNotification, ShelfDeleteNotification.class);
+    VcsNotifier.getInstance(project).showNotificationAndHideExisting(shelfDeletionNotification);
   }
 
   private static final class ShelfTree extends AsyncChangesTree {
