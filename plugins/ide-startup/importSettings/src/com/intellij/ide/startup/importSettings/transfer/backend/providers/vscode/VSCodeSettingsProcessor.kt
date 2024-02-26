@@ -9,13 +9,14 @@ import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
 
-class VSCodeSettingsProcessor {
+class VSCodeSettingsProcessor(private val scope: CoroutineScope) {
   companion object {
     private val homeDirectory = System.getProperty("user.home")
 
@@ -72,7 +73,7 @@ class VSCodeSettingsProcessor {
       GeneralSettingsParser(settings).process(generalSettingsFile)
     }
     if (database.exists()) {
-      StateDatabaseParser(settings).process(database)
+      StateDatabaseParser(scope, settings).process(database)
     }
 
     return settings

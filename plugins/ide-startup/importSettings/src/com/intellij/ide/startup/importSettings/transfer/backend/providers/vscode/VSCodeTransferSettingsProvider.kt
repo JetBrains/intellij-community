@@ -9,16 +9,17 @@ import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvide
 import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeSettingsProcessor.Companion.vsCodeHome
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.util.SmartList
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Paths
 
-class VSCodeTransferSettingsProvider : TransferSettingsProvider {
+class VSCodeTransferSettingsProvider(scope: CoroutineScope) : TransferSettingsProvider {
 
   override val transferableIdeId = TransferableIdeId.VSCode
 
-  private val processor = VSCodeSettingsProcessor()
+  private val processor = VSCodeSettingsProcessor(scope)
   override val name: String
     get() = "Visual Studio Code"
 

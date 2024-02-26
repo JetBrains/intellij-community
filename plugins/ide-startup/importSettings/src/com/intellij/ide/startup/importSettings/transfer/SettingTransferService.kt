@@ -44,7 +44,7 @@ class SettingTransferService(private val outerScope: CoroutineScope) : ExternalS
 
   private val config = DefaultTransferSettingsConfiguration(
     TransferSettingsDataProvider(
-      VSCodeTransferSettingsProvider()
+      VSCodeTransferSettingsProvider(outerScope)
     ),
     shouldDisplayFailedVersions = false
   )
