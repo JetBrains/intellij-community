@@ -39,20 +39,24 @@ class KtDeclarationTreeNode private constructor(
 
         @ApiStatus.Internal
         @NlsSafe
-        fun tryGetRepresentableText(declaration: KtDeclaration, renderArguments: Boolean = true): String {
+        fun tryGetRepresentableText(declaration: KtDeclaration, renderReceiverType: Boolean = true, renderArguments: Boolean = true, renderReturnType: Boolean = true): String {
 
             fun KtProperty.presentableText() = buildString {
                 append(name.orErrorName())
-                typeReference?.text?.let { reference ->
-                    append(": ")
-                    append(reference)
+                if (renderReturnType) {
+                    typeReference?.text?.let { reference ->
+                        append(": ")
+                        append(reference)
+                    }
                 }
             }
 
             fun KtFunction.presentableText() = buildString {
-                receiverTypeReference?.text?.let { receiverReference ->
-                    append(receiverReference)
-                    append('.')
+                if (renderReceiverType) {
+                    receiverTypeReference?.text?.let { receiverReference ->
+                        append(receiverReference)
+                        append('.')
+                    }
                 }
                 append(name.orErrorName())
                 if (renderArguments) {
@@ -74,9 +78,11 @@ class KtDeclarationTreeNode private constructor(
                     append(")")
                 }
 
-                typeReference?.text?.let { returnTypeReference ->
-                    append(": ")
-                    append(returnTypeReference)
+                if (renderReturnType) {
+                    typeReference?.text?.let { returnTypeReference ->
+                        append(": ")
+                        append(returnTypeReference)
+                    }
                 }
             }
 
