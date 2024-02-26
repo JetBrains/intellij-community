@@ -52,7 +52,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
     productLayout.productImplementationModules = listOf(
       "intellij.platform.main",
-      "intellij.idea.customization.base",
       "intellij.idea.community.customization",
     )
     productLayout.bundledPluginModules = IDEA_BUNDLED_PLUGINS
