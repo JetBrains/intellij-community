@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
@@ -60,13 +59,12 @@ internal class CoroutineScopeModel internal constructor(
   }
 
   override fun refreshScopes(dataContext: DataContext?) {
-    val asyncDataContext = dataContext?.let { Utils.createAsyncDataContext(it) }
-    var asyncDataContextPromise: Promise<DataContext>? = null
-    if (asyncDataContext == null && EDT.isCurrentThreadEdt()) {
+    val givenDataContext = dataContext?.let { Utils.createAsyncDataContext(it) }
+    var earlyDataContextPromise: Promise<DataContext>? = null
+    if (givenDataContext == null && EDT.isCurrentThreadEdt()) {
       // We need to capture the data context from focus as early as possible,
       // because focus might change very soon (important when invoking a dialog, e.g., Find in Files).
-      asyncDataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
-        .then { Utils.createAsyncDataContext(it) }
+      earlyDataContextPromise = dataContextFromFocusPromise()
     }
     coroutineScope.launch(
       start = CoroutineStart.UNDISPATCHED,
@@ -75,22 +73,20 @@ internal class CoroutineScopeModel internal constructor(
       semaphore.withPermit {
         yield() // dispatch
         runCatching {
-          val scopes = if (asyncDataContext == null) {
-            if (asyncDataContextPromise == null) {
-              getScopeDescriptors(filter)
-            }
-            else {
-              getScopeDescriptors(asyncDataContextPromise.await(), filter)
-            }
+          val effectiveDataContext: DataContext = when {
+            givenDataContext != null -> givenDataContext
+            earlyDataContextPromise != null -> earlyDataContextPromise.await()
+            else -> dataContextFromFocusPromise().await()
           }
-          else {
-            getScopeDescriptors(asyncDataContext, filter)
-          }
-          fireScopesUpdated(scopes)
+          fireScopesUpdated(getScopeDescriptors(effectiveDataContext, filter))
         }.getOrLogException(LOG)
       }
     }
   }
+
+  private fun dataContextFromFocusPromise(): Promise<DataContext> =
+    DataManager.getInstance().dataContextFromFocusAsync
+      .then { Utils.createAsyncDataContext(it) }
 
   private fun fireScopesUpdated(scopesSnapshot: ScopesSnapshot) {
     listeners.forEach { it.scopesUpdated(scopesSnapshot) }
@@ -101,13 +97,6 @@ internal class CoroutineScopeModel internal constructor(
   @Deprecated("Slow and blocking, use getScopes() in a suspending context, or addScopeModelListener() and refreshScopes()")
   override fun getScopesImmediately(dataContext: DataContext): ScopesSnapshot =
     ScopeModel.getScopeDescriptors(project, dataContext, options, filter)
-
-  private suspend fun getScopeDescriptors(filter: Predicate<in ScopeDescriptor>): ScopesSnapshot {
-    val dataContext = withContext(Dispatchers.EDT) {
-      DataManager.getInstance().dataContextFromFocusAsync.then { Utils.createAsyncDataContext(it) }
-    }.await()
-    return getScopeDescriptors(dataContext, filter)
-  }
 
   private suspend fun getScopeDescriptors(
     dataContext: DataContext,
