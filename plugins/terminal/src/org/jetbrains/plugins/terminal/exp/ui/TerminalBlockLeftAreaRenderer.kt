@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp.ui
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import org.jetbrains.plugins.terminal.exp.TerminalUi
@@ -12,10 +13,10 @@ import java.awt.geom.Rectangle2D
 
 /**
  * Paints the left part of the rounded block frame in the gutter area.
- * Also, can paint the border if [strokeBackground] is specified and [strokeWidth] is greater than 0.
+ * Also, can paint the border if [strokeBackgroundKey] is specified and [strokeWidth] is greater than 0.
  */
-class TerminalBlockLeftAreaRenderer(private val background: Color,
-                                    private val strokeBackground: Color? = null,
+class TerminalBlockLeftAreaRenderer(private val backgroundKey: ColorKey,
+                                    private val strokeBackgroundKey: ColorKey? = null,
                                     private val strokeWidth: Int = 0) : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val topIns = toFloatAndScale(TerminalUi.blockTopInset)
@@ -44,7 +45,10 @@ class TerminalBlockLeftAreaRenderer(private val background: Color,
       lineTo(rect.x + rect.width, rect.y + rect.height)
       closePath()
     }
-    val strokePath = if (strokeWidth > 0 && strokeBackground != null) {
+    val strokeBackgroundColor = strokeBackgroundKey.takeIf { strokeWidth > 0 }?.let {
+      editor.colorsScheme.getColor(it)
+    }
+    val strokePath = if (strokeBackgroundColor != null) {
       val stroke = toFloatAndScale(strokeWidth)
       // from right top corner to the right bottom corner
       val innerPath = Path2D.Float(Path2D.WIND_EVEN_ODD).apply {
@@ -71,10 +75,10 @@ class TerminalBlockLeftAreaRenderer(private val background: Color,
     val g2d = g.create() as Graphics2D
     try {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.color = background
+      g2d.color = editor.colorsScheme.getColor(backgroundKey)
       g2d.fill(path)
       if (strokePath != null) {
-        g2d.color = strokeBackground
+        g2d.color = strokeBackgroundColor
         g2d.fill(strokePath)
       }
     }
