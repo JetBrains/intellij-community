@@ -386,16 +386,22 @@ open class CodeVisionHost(val project: Project) {
                                                                                         }
                                                                                       })
 
-    editor.document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        pokeEditor()
-      }
-    }, editorLifetime.createNestedDisposable())
+    subscribeForDocumentChanges(editor, editorLifetime) { 
+      pokeEditor() 
+    }
 
     editorLifetime.onTermination {
       editor.project?.service<CodeVisionGrave>()?.bury(editor, context.getValidPairResult())
       context.clearLenses()
     }
+  }
+
+  protected open fun subscribeForDocumentChanges(editor: Editor, editorLifetime: Lifetime, onDocumentChanged: () -> Unit) {
+    editor.document.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) {
+        onDocumentChanged()
+      }
+    }, editorLifetime.createNestedDisposable())
   }
 
   private fun calculateFrontendLenses(calcLifetime: Lifetime,
