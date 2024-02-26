@@ -24,10 +24,7 @@ private const val eapFeedbackRegistryKey = "eap.feedback.notification.enabled"
 
 class EAPApplicationInitializedListener : ApplicationInitializedListener {
   init {
-    val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode ||
-        app.isHeadlessEnvironment() ||
-        !app.isEAP) {
+    if (!isEAPEnv()) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -48,7 +45,7 @@ class EAPApplicationInitializedListener : ApplicationInitializedListener {
     val propComponent = PropertiesComponent.getInstance()
 
     val parsedValue = getParseTimerStarted(propComponent)
-    if (parsedValue == -1) return
+    if (parsedValue == -1L) return
 
     val currentTimeMillis = System.currentTimeMillis()
     if (parsedValue != null) {
@@ -65,7 +62,7 @@ class EAPApplicationInitializedListener : ApplicationInitializedListener {
   }
 
   private fun showNotificationAndDisableTimer(propComponent: PropertiesComponent) {
-    setShown(propComponent)
+    setEAPFeedbackShown(propComponent)
     showNotification()
     return
   }
@@ -74,18 +71,14 @@ class EAPApplicationInitializedListener : ApplicationInitializedListener {
     val notification = RequestFeedbackNotification(
       "Feedback In IDE",
       EAPFeedbackBundle.message("notification.request.eap.feedback.title"),
-      EAPFeedbackBundle.message("notification.request.eap.feedback.text", getProductName())
+      EAPFeedbackBundle.message("notification.request.eap.feedback.text")
     )
 
     @Suppress("DialogTitleCapitalization")
     notification.addAction(
       NotificationAction.createSimpleExpiring(
         EAPFeedbackBundle.message("notification.request.eap.feedback.action.respond.text")) {
-        BrowserUtil.browse(
-          " https://surveys.jetbrains.com/s3/${getProductName().lowercase()}-${
-            getProductVersion().replace('.', '-')
-          }-eap-user-survey",
-          null)
+        executeEAPFeedbackAction()
       }
     )
 
@@ -97,28 +90,46 @@ class EAPApplicationInitializedListener : ApplicationInitializedListener {
 
     notification.notify(null)
   }
+}
 
-  private fun getProductVersion(): @NlsSafe String = ApplicationInfo.getInstance().shortVersion
+fun executeEAPFeedbackAction() {
+  BrowserUtil.browse(
+    "https://surveys.jetbrains.com/s3/${getProductName().lowercase()}-${
+      getProductVersion().replace('.', '-')
+    }-eap-user-survey",
+    null)
+}
 
-  private fun getParseTimerStarted(propComponent: PropertiesComponent): Int? {
-    val value = propComponent.getValue(getTimerStartedKey()) ?: return null
-    return try {
-      value.toInt()
-    }
-    catch (e: NumberFormatException) {
-      setShown(propComponent)
-      -1
-    }
+fun isEAPEnv(): Boolean {
+  val app = ApplicationManager.getApplication()
+  return !app.isUnitTestMode && !app.isHeadlessEnvironment() && app.isEAP
+}
+
+fun isEAPFeedbackAvailable(): Boolean {
+  if (!Registry.`is`(eapFeedbackRegistryKey)) return false
+
+  return getParseTimerStarted(PropertiesComponent.getInstance()) != -1L
+}
+
+fun setEAPFeedbackShown(propComponent: PropertiesComponent = PropertiesComponent.getInstance()) {
+  propComponent.setValue(getTimerStartedKey(), (-1L).toString())
+}
+
+private fun getProductName(): @NlsSafe String = ApplicationNamesInfo.getInstance().productName
+private fun getProductVersion(): @NlsSafe String = ApplicationInfo.getInstance().shortVersion
+
+private fun getTimerStartedKey(): String {
+  val productName = getProductName()
+  return "$productName.$timerStartedKey.${getProductVersion()}"
+}
+
+private fun getParseTimerStarted(propComponent: PropertiesComponent): Long? {
+  val value = propComponent.getValue(getTimerStartedKey()) ?: return null
+  return try {
+    value.toLong()
   }
-
-  private fun setShown(propComponent: PropertiesComponent) {
-    propComponent.setValue(getTimerStartedKey(), (-1).toString())
+  catch (e: NumberFormatException) {
+    setEAPFeedbackShown(propComponent)
+    -1
   }
-
-  private fun getTimerStartedKey(): String {
-    val productName = getProductName()
-    return "$productName.$timerStartedKey.${getProductVersion()}"
-  }
-
-  private fun getProductName(): @NlsSafe String = ApplicationNamesInfo.getInstance().productName
 }
