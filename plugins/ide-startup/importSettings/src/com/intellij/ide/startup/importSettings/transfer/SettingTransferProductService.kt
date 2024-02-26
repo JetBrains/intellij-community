@@ -11,8 +11,8 @@ import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.PluginFeature
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
-import com.intellij.ide.startup.importSettings.providers.PluginInstallationState
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.PluginInstallationState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
