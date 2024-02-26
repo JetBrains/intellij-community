@@ -55,7 +55,9 @@ enum class IdeaPluginPlatform {
     }
 
     private fun looksLikePlatformId(idString: String): Boolean {
-      return idString.startsWith(moduleNamePrefix) && idString != "com.intellij.platform.images"
+      return idString.startsWith(moduleNamePrefix) &&
+             idString != "com.intellij.platform.images" &&
+             idString != "com.intellij.platform.ide.provisioner"
     }
   }
 }
