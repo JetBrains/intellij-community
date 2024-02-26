@@ -9,7 +9,7 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class TextBinding implements PrimitiveValueBinding {
+final class TextBinding implements NestedBinding {
   private final Class<?> valueClass;
   private final MutableAccessor accessor;
 
@@ -46,14 +46,12 @@ final class TextBinding implements PrimitiveValueBinding {
     return false;
   }
 
-  @Nullable
   @Override
-  public <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+  public @Nullable <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     return context;
   }
 
-  @Override
-  public void setValue(@NotNull Object context, @Nullable String value) {
+  void setValue(@NotNull Object context, @Nullable String value) {
     XmlSerializerImpl.doSet(context, value, accessor, valueClass);
   }
 }

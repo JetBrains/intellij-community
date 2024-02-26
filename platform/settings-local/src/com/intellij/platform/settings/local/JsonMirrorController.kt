@@ -11,10 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.settings.DelegatedSettingsController
-import com.intellij.platform.settings.GetResult
-import com.intellij.platform.settings.SetResult
-import com.intellij.platform.settings.SettingDescriptor
+import com.intellij.platform.settings.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -22,6 +19,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -41,6 +39,14 @@ private class JsonMirrorController : DelegatedSettingsController {
   }
 
   override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
+    for (tag in key.tags) {
+      if (tag is OldLocalValueSupplierTag) {
+        // Element - save it to storage
+        tag.value?.jsonObject?.let {
+          service.setItem(key, it)
+        }
+      }
+    }
     //println("${key.pluginId.idString}/${key.key}")
     return GetResult.inapplicable()
   }

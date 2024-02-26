@@ -2,6 +2,9 @@
 @file:Suppress("ConvertObjectToDataObject")
 package com.intellij.platform.settings
 
+import kotlinx.serialization.json.JsonElement
+import org.jetbrains.annotations.ApiStatus.Internal
+
 /**
  * See [SettingDescriptor.tags].
  */
@@ -34,6 +37,16 @@ object CacheTag : SettingTag {
   override fun toString(): String = this::class.java.simpleName
 }
 
+@Internal
 class PersistenceStateComponentPropertyTag(val componentName: String) : SettingTag {
   override fun toString(): String = "PersistenceStateComponentPropertyTag(componentName=$componentName)"
+}
+
+// for now, is supported only for PSC with Element state class
+@Internal
+class OldLocalValueSupplierTag(private val supplier: Lazy<JsonElement?>) : SettingTag {
+  val value: JsonElement?
+    get() = supplier.value
+
+  override fun toString(): String = "OldLocalValueSupplierTag"
 }

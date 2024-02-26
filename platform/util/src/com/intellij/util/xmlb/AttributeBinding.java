@@ -11,7 +11,7 @@ import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class AttributeBinding implements PrimitiveValueBinding {
+final class AttributeBinding implements NestedBinding {
   private final Class<?> valueClass;
 
   private final MutableAccessor accessor;
@@ -78,7 +78,6 @@ final class AttributeBinding implements PrimitiveValueBinding {
     return context;
   }
 
-  @Override
   public void setValue(@NotNull Object bean, @Nullable String value) {
     if (converter == null) {
       XmlSerializerImpl.doSet(bean, value, accessor, valueClass);

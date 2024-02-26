@@ -22,7 +22,7 @@ internal class OptionTagBinding(
   private val valueAttribute: String?,
   private val serializeBeanBindingWithoutWrapperTag: Boolean = false,
   private val textIfTagValueEmpty: String = "",
-) : PrimitiveValueBinding {
+) : NestedBinding {
   private val converter: Converter<Any>? = converterClass?.let {
     val constructor = it.getDeclaredConstructor()
     try {
@@ -34,10 +34,7 @@ internal class OptionTagBinding(
     constructor.newInstance() as Converter<Any>
   }
 
-  override val isPrimitive: Boolean
-    get() = binding == null || converter != null
-
-  override fun setValue(bean: Any, value: String?) {
+  private fun setValue(bean: Any, value: String?) {
     if (converter == null) {
       try {
         XmlSerializerImpl.doSet(bean, value, accessor, ClassUtil.typeToClass(accessor.genericType))
