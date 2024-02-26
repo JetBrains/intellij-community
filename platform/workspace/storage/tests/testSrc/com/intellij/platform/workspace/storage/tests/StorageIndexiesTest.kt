@@ -6,9 +6,11 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.io.URLUtil
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -92,7 +94,8 @@ class StorageIndexesTest {
   private fun compareEntityByProperty(builder: MutableEntityStorage, originEntity: VFUEntity2,
                                       propertyName: String, virtualFileUrl: VirtualFileUrl,
                                       propertyExtractor: (VFUEntity2) -> VirtualFileUrl) {
-    val entities = builder.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).toList()
+    val virtualFileUrlIndex = builder.getVirtualFileUrlIndex() as VirtualFileIndex
+    val entities = virtualFileUrlIndex.findEntitiesToPropertyNameByUrl(virtualFileUrl).toList()
     assertEquals(1, entities.size)
     val entity = entities[0]
     assertEquals(propertyName, entity.second)

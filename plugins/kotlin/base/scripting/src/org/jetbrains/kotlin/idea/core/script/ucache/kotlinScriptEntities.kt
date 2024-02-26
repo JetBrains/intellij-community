@@ -50,7 +50,7 @@ fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>
         }
 
         return entities
-            .mapNotNull { it.first as? KotlinScriptLibraryEntity }
+            .filterIsInstance<KotlinScriptLibraryEntity>()
             .flatMap { it.usedInScripts }
             .map { storage.resolve(it) ?: error("Unresolvable script: ${it.path}") }
             .toList()

@@ -130,7 +130,7 @@ internal class NonExistingWorkspaceRootsRegistry(private val project: Project, p
     if (includingJarDirectory != null) {
       //todo handle JAR directories inside WorkspaceFileIndex instead
       storage.getVirtualFileUrlIndex().findEntitiesByUrl(includingJarDirectory).forEach {
-        entityChanges.addAffectedEntity(it.first.createPointer(), allRootsWereRemoved)
+        entityChanges.addAffectedEntity(it.createPointer(), allRootsWereRemoved)
       }
       return
     }

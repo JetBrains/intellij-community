@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlin.reflect.KClass
@@ -114,7 +115,8 @@ open class VirtualFileUrlWatcher(val project: Project) {
     internal fun calculateAffectedEntities(storage: EntityStorage, virtualFileUrl: VirtualFileUrl,
                                            aggregator: MutableList<EntityWithVirtualFileUrl>): Boolean {
       var hasEntities = false
-      storage.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl).forEach {
+      val virtualFileUrlIndex = storage.getVirtualFileUrlIndex() as VirtualFileIndex
+      virtualFileUrlIndex.findEntitiesToPropertyNameByUrl(virtualFileUrl).forEach {
         aggregator.add(EntityWithVirtualFileUrl(it.first, virtualFileUrl, it.second))
         hasEntities = true
       }
