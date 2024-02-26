@@ -12,13 +12,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ReportFeedbackService
 import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -347,7 +345,6 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
     @JvmStatic
     fun isViewAvailable(): Boolean {
-      if (AppMode.isRemoteDevHost()) return false
       return ApplicationInfo.getInstance().isEAP || Registry.`is`("lvcs.show.activity.view")
     }
   }
