@@ -7,6 +7,7 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.ui.LafManager
@@ -34,9 +35,6 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.copy
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -414,18 +412,46 @@ class JbSettingsImporter(private val configDirPath: Path,
       indicator = progressIndicator,
       updateablePluginsMap = updateableMap
     )
-    val downloadedPluginIds = mutableSetOf<PluginId>()
     for (pluginDownloader in internalPluginUpdates.pluginUpdates.all) {
       LOG.info("Downloading ${pluginDownloader.id}")
-      pluginDownloader.prepareToInstall(progressIndicator)
-      downloadedPluginIds.add(pluginDownloader.id)
+      if (pluginDownloader.prepareToInstall(progressIndicator)) {
+        PluginInstaller.unpackPlugin(pluginDownloader.getFilePath(), PathManager.getPluginsDir())
+        LOG.info("Downloaded and unpacked newer version of plugin '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}")
+      }
+      else {
+        val descriptor = pluginsMap[pluginDownloader.id] ?: continue
+        updateableMap[pluginDownloader.id] = descriptor
+        // failed to download - should copy instead
+        LOG.info("Failed to download a newer version of '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}. " +
+                 "Will try to copy old version (${descriptor.version}) instead")
+      }
     }
+    checkPluginsCompatibility(updateableMap, progressIndicator)
     progressIndicator.text2 = "Copying plugins..."
     ConfigImportHelper.migratePlugins(
       PathManager.getPluginsDir(),
       updateableMap.values.toList(),
       LOG
     )
+  }
+
+  private fun checkPluginsCompatibility(
+    updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>,
+    progressIndicator: ProgressIndicator
+  ) {
+    val myIdeData = IDEData.getSelf() ?: return
+    progressIndicator.text2 = "Checking plugins compatibility"
+    val updates = MarketplaceRequests.getNearestUpdate(updateablePluginsMap.keys)
+    for (update in updates) {
+      if (update.isCompatible)
+        continue
+
+      if (!update.products.contains(myIdeData.marketplaceCode)) {
+        val pluginId = PluginId.findId(update.pluginId) ?: continue
+        LOG.info("Plugins ${update.pluginId} is incompatible with ${myIdeData.fullName}. Will not migrate it")
+        updateablePluginsMap.remove(pluginId)
+      }
+    }
   }
 
   private fun configImportOptions(progressIndicator: ProgressIndicator,
