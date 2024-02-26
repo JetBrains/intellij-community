@@ -127,7 +127,6 @@ fun Editor.isActionAvailableByHint(offset: Int, actionId: String): Boolean? {
 
 @Internal
 fun Document.isActionAvailableByHint(project: Project?, offset: Int, actionId: String): Boolean? {
-  project ?: return null
   val markupModel = DocumentMarkupModel.forDocument(this, project, false)
   if (markupModel !is MarkupModelEx) {
     return null
