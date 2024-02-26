@@ -194,7 +194,7 @@ internal class OptionTagBinding(
     return adapter.getName(element) == tag && (nameAttribute == null || adapter.getAttributeValue(element, nameAttribute) == nameAttributeValue)
   }
 
-  override fun toString(): String = "OptionTagBinding(nameAttributeValue=$nameAttributeValue, tag=$tag, binding=$binding)"
+  override fun toString(): String = "TagBinding(nameAttributeValue=$nameAttributeValue, tag=$tag, binding=$binding)"
 }
 
 internal fun addContent(targetElement: Element, node: Any) {

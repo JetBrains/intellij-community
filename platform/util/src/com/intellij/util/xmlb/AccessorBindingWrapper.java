@@ -174,7 +174,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = OptionTagBindingKt.deserializeList(binding, currentValue, elements, JdomAdapter.INSTANCE);
+      Object deserializedValue = TagBindingKt.deserializeList(binding, currentValue, elements, JdomAdapter.INSTANCE);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }
@@ -188,7 +188,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
     }
     else {
-      Object deserializedValue = OptionTagBindingKt.deserializeList(binding, currentValue, elements, XmlDomAdapter.INSTANCE);
+      Object deserializedValue = TagBindingKt.deserializeList(binding, currentValue, elements, XmlDomAdapter.INSTANCE);
       if (currentValue != deserializedValue) {
         accessor.set(context, deserializedValue);
       }

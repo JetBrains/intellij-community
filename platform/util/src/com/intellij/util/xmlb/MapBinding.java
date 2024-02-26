@@ -427,7 +427,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
       }
       else {
         assert binding != null;
-        return OptionTagBindingKt.deserializeList(binding, null, children, JdomAdapter.INSTANCE);
+        return TagBindingKt.deserializeList(binding, null, children, JdomAdapter.INSTANCE);
       }
     }
     return null;
@@ -458,7 +458,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
       }
       else {
         assert binding != null;
-        return OptionTagBindingKt.deserializeList(binding, null, children, XmlDomAdapter.INSTANCE);
+        return TagBindingKt.deserializeList(binding, null, children, XmlDomAdapter.INSTANCE);
       }
     }
     return null;
