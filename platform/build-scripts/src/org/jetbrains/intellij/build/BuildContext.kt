@@ -65,7 +65,7 @@ interface BuildContext : CompilationContext {
   val ideMainClassName: String
 
   /**
-   * Specifies whether the new modular loader should be used in the IDE distributions, see [ProductProperties.supportModularLoading] and
+   * Specifies whether the new modular loader should be used in the IDE distributions, see [ProductProperties.rootModuleForModularLoader] and
    * [BuildOptions.useModularLoader].
    */
   val useModularLoader: Boolean

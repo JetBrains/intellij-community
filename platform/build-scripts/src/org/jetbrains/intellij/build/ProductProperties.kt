@@ -188,13 +188,6 @@ abstract class ProductProperties {
   var buildCrossPlatformDistribution: Boolean = false
 
   /**
-   * Set to `true` if the product can be started using [com.intellij.platform.runtime.loader.IntellijLoader]. 
-   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
-   */
-  @ApiStatus.Experimental
-  var supportModularLoading: Boolean = false
-
-  /**
    * Specifies the main module of JetBrains Client product which distribution should be embedded into the IDE's distribution to allow 
    * running JetBrains Client. 
    * If it's set to a non-null value and [BuildOptions.enableEmbeddedJetBrainsClient] is set to `true`, product-modules.xml from the 
@@ -210,9 +203,16 @@ abstract class ProductProperties {
   var embeddedJetBrainsClientProperties: (() -> ProductProperties)? = null
 
   /**
+   * Set to the root product module (the one containing product-modules.xml file) to enable using module-based loader for the product. 
+   * [BuildOptions.useModularLoader] will be used to determine whether the produced distribution will actually use this way.
+   */
+  @ApiStatus.Experimental
+  var rootModuleForModularLoader: String? = null
+
+  /**
    * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
    * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
-   * This property makes sense only if [supportModularLoading] is set to `true`.
+   * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
    */
   @ApiStatus.Experimental
   var productMode: ProductMode = ProductMode.LOCAL_IDE

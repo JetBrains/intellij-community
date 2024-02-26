@@ -379,8 +379,8 @@ data class BuildOptions(
   val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to
-   * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
+   * If this option is set to `true` and [ProductProperties.rootModuleForModularLoader] is non-null, a file containing module descriptors 
+   * will be added to the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
   var useModularLoader: Boolean = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", true)
