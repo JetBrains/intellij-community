@@ -1,495 +1,489 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.util.gotoByName
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.util.gotoByName;
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.ui.OptionsSearchTopHitProvider
-import com.intellij.ide.ui.OptionsTopHitProvider
-import com.intellij.ide.ui.search.BooleanOptionDescription
-import com.intellij.ide.ui.search.OptionDescription
-import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
-import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
-import com.intellij.java.navigation.ChooseByNameTest
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TestApplicationManager
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.CollectConsumer
-import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.NotNull
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
+import com.intellij.ide.ui.OptionsSearchTopHitProvider;
+import com.intellij.ide.ui.OptionsTopHitProvider;
+import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper;
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue;
+import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType;
+import com.intellij.java.navigation.ChooseByNameTest;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.ExtensionTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestApplicationManager;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*
-import java.util.List
-import java.util.concurrent.TimeUnit
-import java.util.function.BiPredicate
+import java.awt.*;
+import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiPredicate;
 
-@CompileStatic
-class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
-  private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey")
-  private static final Comparator<MatchedValue> MATCH_COMPARATOR =
-    { MatchedValue item1, MatchedValue item2 -> return item1.compareWeights(item2) } as Comparator<MatchedValue>
-  private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY =
-    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as BiPredicate<MatchedValue, MatchedValue>
+public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
+  private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey");
+  private static final Comparator<MatchedValue> MATCH_COMPARATOR = MatchedValue::compareWeights;
+  private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY = MatchedValue::equals;
 
   @Override
   protected boolean runInDispatchThread() {
-    false
+    return false;
   }
 
-  void "test shorter actions first despite ellipsis"() {
-    def pattern = 'Rebas'
-    def fork = 'Sync Fork'
-    def rebase = 'Rebase...'
-    def items = [matchedAction(fork, pattern),
-                 matchedAction(rebase, pattern)].toSorted(MATCH_COMPARATOR)
-    assert [rebase, fork] == items.collect { it.valueText }
+  public void testShorterActionsFirstDespiteEllipsis() {
+    String pattern = "Rebas";
+    String fork = "Sync Fork";
+    String rebase = "Rebase...";
+    List<MatchedValue> items = Arrays.asList(matchedAction(fork, pattern), matchedAction(rebase, pattern));
+    items.sort(MATCH_COMPARATOR);
+    assertEquals(List.of(rebase, fork), ContainerUtil.map(items, item -> item.getValueText()));
   }
 
-  void "test sort by match mode"() {
-    def pattern = 'by'
-    def byName = 'By Name'
-    def byDesc = 'By Desc'
-    def items = [matchedAction(byName, pattern),
-                 matchedAction(byDesc, pattern, MatchMode.DESCRIPTION)].toSorted(MATCH_COMPARATOR)
-    assert [byName, byDesc] == items.collect { it.valueText }
+  public void testSortByMatchMode() {
+    String pattern = "by";
+    String byName = "By Name";
+    String byDesc = "By Desc";
+    List<MatchedValue> items = Arrays.asList(matchedAction(byName, pattern), matchedAction(byDesc, pattern, MatchMode.DESCRIPTION, true));
+    items.sort(MATCH_COMPARATOR);
+    assertEquals(List.of(byName, byDesc), ContainerUtil.map(items, item -> item.getValueText()));
   }
 
-  void "test sort by degree"() {
-    def pattern = 'c'
-    def copy = 'Copy'
-    def aardvark = 'Aardvarck'
-    def boom = 'Boom'
-    def deaf = 'deaf'
-    def eclaire = 'eclaire'
-    def cut = 'Cut'
-    def c = 'c'
-    def items = [matchedAction(boom, pattern),
-                 matchedAction(aardvark, pattern),
-                 matchedAction(copy, pattern),
-                 matchedAction(eclaire, pattern),
-                 matchedAction(deaf, pattern),
-                 matchedAction(cut, pattern),
-                 matchedAction(c, pattern)].toSorted(MATCH_COMPARATOR)
-    assert [c, copy, cut, aardvark, eclaire, boom, deaf] == items.collect { it.valueText }
+  public void testSortByDegree() {
+    String pattern = "c";
+    String copy = "Copy";
+    String aardvark = "Aardvarck";
+    String boom = "Boom";
+    String deaf = "deaf";
+    String eclaire = "eclaire";
+    String cut = "Cut";
+    String c = "c";
+    List<MatchedValue> items = Arrays.asList(matchedAction(boom, pattern),
+                                             matchedAction(aardvark, pattern),
+                                             matchedAction(copy, pattern),
+                                             matchedAction(eclaire, pattern),
+                                             matchedAction(deaf, pattern),
+                                             matchedAction(cut, pattern),
+                                             matchedAction(c, pattern));
+    items.sort(MATCH_COMPARATOR);
+    assertEquals(List.of(c, copy, cut, aardvark, eclaire, boom, deaf), ContainerUtil.map(items, item -> item.getValueText()));
   }
 
-  void "test match action by parent and grandparent group name"() {
-    def extractMethod = ActionManager.instance.getAction("IntroduceVariable")
-    assert actionMatches('variable', extractMethod) == MatchMode.NAME
-    assert actionMatches('extract variable', extractMethod) == MatchMode.GROUP
-    assert actionMatches('refactor variable', extractMethod) == MatchMode.GROUP
+  public void testMatchActionByParentAndGrandparentGroupName() {
+    AnAction extractMethod = ActionManager.getInstance().getAction("IntroduceVariable");
+    assertEquals(MatchMode.NAME, actionMatches("variable", extractMethod));
+    assertEquals(MatchMode.GROUP, actionMatches("extract variable", extractMethod));
+    assertEquals(MatchMode.GROUP, actionMatches("refactor variable", extractMethod));
   }
 
-  void "test no lowercase camel-hump action description match"() {
-    def action = ActionManager.instance.getAction("InvalidateCaches")
-    assert actionMatches('invalid', action) == MatchMode.NAME
-    assert actionMatches('invalidate caches', action) == MatchMode.NAME
-    assert actionMatches('cache invalid', action) == MatchMode.NAME
-    assert actionMatches('rebuild of all caches', action) == MatchMode.DESCRIPTION
-    assert actionMatches('invcach', action) == MatchMode.NAME
+  public void testNoLowercaseCamelHumpActionDescriptionMatch() {
+    AnAction action = ActionManager.getInstance().getAction("InvalidateCaches");
+    assertEquals(MatchMode.NAME, actionMatches("invalid", action));
+    assertEquals(MatchMode.NAME, actionMatches("invalidate caches", action));
+    assertEquals(MatchMode.NAME, actionMatches("cache invalid", action));
+    assertEquals(MatchMode.DESCRIPTION, actionMatches("rebuild of all caches", action));
+    assertEquals(MatchMode.NAME, actionMatches("invcach", action));
   }
 
-  void "test fixing layout match"() {
-    def action = ActionManager.instance.getAction("InvalidateCaches")
-    assert actionMatches('штм', action) == MatchMode.NAME
-    assert actionMatches('штм сфср', action) == MatchMode.NAME
-    assert actionMatches('привет мир', new DumbAwareAction("привет, мир") {
+  public void testFixingLayoutMatch() {
+    AnAction action = ActionManager.getInstance().getAction("InvalidateCaches");
+    assertEquals(MatchMode.NAME, actionMatches("штм", action));
+    assertEquals(MatchMode.NAME, actionMatches("штм сфср", action));
+    assertEquals(MatchMode.NAME, actionMatches("привет мир", new DumbAwareAction("привет, мир") {
       @Override
-      void actionPerformed(@NotNull AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
       }
-    }) == MatchMode.NAME
+    }));
   }
 
-  void "test CamelCase text in action names"() {
-    def options = [
-      new OptionDescription("CamelCase option", null, null),
-      new OptionDescription("non camel case option", null, null),
-      new OptionDescription("just another option", null, null),
-      new TestBooleanOption("Boolean CamelCase option"),
-      new TestBooleanOption("Boolean non camel case option"),
-      new TestBooleanOption("Just another boolean option"),
-    ]
+  public void testCamelCaseTextInActionNames() {
+    List<OptionDescription> options =
+      List.of(new OptionDescription("CamelCase option", null, null),
+              new OptionDescription("non camel case option", null, null),
+              new OptionDescription("just another option", null, null),
+              new TestBooleanOption("Boolean CamelCase option"),
+              new TestBooleanOption("Boolean non camel case option"),
+              new TestBooleanOption("Just another boolean option"));
 
     OptionsSearchTopHitProvider.ApplicationLevelProvider provider = new OptionsSearchTopHitProvider.ApplicationLevelProvider() {
       @NotNull
       @Override
-      String getId() {
-        return "testprovider"
+      public String getId() {
+        return "testprovider";
       }
 
       @NotNull
       @Override
-      Collection<OptionDescription> getOptions() {
-        return options
+      public Collection<OptionDescription> getOptions() {
+        return options;
       }
-    }
+    };
 
-    def consumer = new CollectConsumer<Object>()
-    provider.consumeTopHits("/testprovider CamelCase", consumer, project)
-    assert consumer.getResult() == [options[0], options[3]]
+    List<Object> topHits = new ArrayList<>(2);
+    provider.consumeTopHits("/testprovider CamelCase", o -> topHits.add(o), getProject());
+    assertEquals(List.of(options.get(0), options.get(3)), topHits);
   }
 
-  void "test TopHit CamelCase actions found in lower case"() {
-    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), testRootDisposable)
-    def action1 = createAction("CamelCase Name", "none")
-    def action2 = createAction("Simple Name", "CamelCase description")
-    def action3 = createAction("Prefix-CamelCase Name", "none")
-    def action4 = createAction("Non Camel Case Name", "none")
-    def action5 = createAction("Dash Camel-Case Name", "none")
-    def pattern = "camelcase"
-    assert actionMatches(pattern, action1) == MatchMode.NAME
-    assert actionMatches(pattern, action2) == MatchMode.DESCRIPTION
-    assert actionMatches(pattern, action3) == MatchMode.NAME
-    assert actionMatches(pattern, action4) == MatchMode.NAME
-    assert actionMatches(pattern, action5) == MatchMode.NAME
+  public void testTopHitCamelCaseActionsFoundInLowerCase() {
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), getTestRootDisposable());
+    AnAction action1 = createAction("CamelCase Name", "none");
+    AnAction action2 = createAction("Simple Name", "CamelCase description");
+    AnAction action3 = createAction("Prefix-CamelCase Name", "none");
+    AnAction action4 = createAction("Non Camel Case Name", "none");
+    AnAction action5 = createAction("Dash Camel-Case Name", "none");
+    String pattern = "camelcase";
+    assertEquals(MatchMode.NAME, actionMatches(pattern, action1));
+    assertEquals(MatchMode.DESCRIPTION, actionMatches(pattern, action2));
+    assertEquals(MatchMode.NAME, actionMatches(pattern, action3));
+    assertEquals(MatchMode.NAME, actionMatches(pattern, action4));
+    assertEquals(MatchMode.NAME, actionMatches(pattern, action5));
   }
 
-  void "test TopHit CamelCase options found in lower case"() {
-    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), testRootDisposable)
-    def option1 = new OptionDescription("CamelCase Name", null, null)
-    def option2 = new OptionDescription("Simple Name", null, null)
-    def option3 = new OptionDescription("Prefix-CamelCase Name", null, null)
-    def option4 = new OptionDescription("Non Camel Case Name", null, null)
-    def option5 = new OptionDescription("Dash Camel-Case Name", null, null)
-    def pattern = "camelcase"
-    assert optionMatches(pattern, option1)
-    assert !optionMatches(pattern, option2)
-    assert optionMatches(pattern, option3)
-    assert !optionMatches(pattern, option4)
-    assert !optionMatches(pattern, option5)
+  public void testTopHitCamelCaseOptionsFoundInLowerCase() {
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), getTestRootDisposable());
+    OptionDescription option1 = new OptionDescription("CamelCase Name", null, null);
+    OptionDescription option2 = new OptionDescription("Simple Name", null, null);
+    OptionDescription option3 = new OptionDescription("Prefix-CamelCase Name", null, null);
+    OptionDescription option4 = new OptionDescription("Non Camel Case Name", null, null);
+    OptionDescription option5 = new OptionDescription("Dash Camel-Case Name", null, null);
+    String pattern = "camelcase";
+    assertTrue(optionMatches(pattern, option1));
+    assertFalse(optionMatches(pattern, option2));
+    assertTrue(optionMatches(pattern, option3));
+    assertFalse(optionMatches(pattern, option4));
+    assertFalse(optionMatches(pattern, option5));
   }
 
-  private static class TestBooleanOption extends BooleanOptionDescription {
+  public void testMatchedValueComparator() throws ExecutionException, InterruptedException, TimeoutException {
+    String pattern = "Text";
+    List<String> names = List.of("Text", "Text completion", "Completion Text", "Add text", "Retextovize mapping", "Value", "A", "Z");
 
-    TestBooleanOption(String option) {
-      super(option, null)
-    }
-
-    @Override
-    boolean isOptionEnabled() {
-      return true
-    }
-
-    @Override
-    void setOptionState(boolean enabled) {
-    }
-  }
-
-  void "test matched value comparator"() {
-    def pattern = 'Text'
-    def names = ['Text', 'Text completion', 'Completion Text', 'Add text', 'Retextovize mapping', 'Value', 'A', 'Z']
-
-    def items = new ArrayList<MatchedValue>()
-    names.forEach { String name ->
-      items += matchedAction(name, pattern, MatchMode.NAME, true)
-      items += matchedAction(name, pattern, MatchMode.NAME, false)
-      items += matchedAction(name, pattern, MatchMode.DESCRIPTION, true)
-      items += matchedAction(name, pattern, MatchMode.DESCRIPTION, false)
-      items += matchedOption(name, pattern)
-      items += matchedOption(name, pattern)
-      items += matchedBooleanOption(name, pattern)
-    }
-
-    PlatformTestUtil.assertComparisonContractNotViolated(items, MATCH_COMPARATOR, MATCH_EQUALITY)
+    ArrayList<MatchedValue> items = new ArrayList<>();
+    names.forEach(name -> {
+      items.add(matchedAction(name, pattern, MatchMode.NAME, true));
+      items.add(matchedAction(name, pattern, MatchMode.NAME, false));
+      items.add(matchedAction(name, pattern, MatchMode.DESCRIPTION, true));
+      items.add(matchedAction(name, pattern, MatchMode.DESCRIPTION, false));
+      items.add(matchedOption(name, pattern));
+      items.add(matchedOption(name, pattern));
+      items.add(matchedBooleanOption(name, pattern));
+    });
+    
+    PlatformTestUtil.assertComparisonContractNotViolated(items, MATCH_COMPARATOR, MATCH_EQUALITY);
 
     // order can be different on EDT and pooled threads
-    ApplicationManager.getApplication().executeOnPooledThread {
-      PlatformTestUtil.assertComparisonContractNotViolated(items, MATCH_COMPARATOR, MATCH_EQUALITY)
-    }.get(20000, TimeUnit.MILLISECONDS)
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> PlatformTestUtil.assertComparisonContractNotViolated(items, MATCH_COMPARATOR, MATCH_EQUALITY)).get(20000, TimeUnit.MILLISECONDS);
   }
 
-  void "test same action is not reported twice"() {
-    def patterns = ["Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class"]
+  public void testSameActionIsNotReportedTwice() {
+    List<String> patterns = List.of("Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class");
 
-    def contributor = createActionContributor(project, testRootDisposable)
-    patterns.forEach { String pattern ->
-      def result = ChooseByNameTest.calcContributorElements(contributor, pattern)
-      def actions = result.findResults {
-        if (it instanceof MatchedValue) {
-          def value = it.value
-          if (value instanceof ActionWrapper) {
-            return (value as ActionWrapper).action
-          }
-          if (value instanceof OptionDescription) {
-            return value
-          }
-        }
-        return null
-      }
-      assert actions.size() == actions.toSet().size()
-    }
-  }
+    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+    patterns.forEach(pattern -> {
+      List<?> result = ChooseByNameTest.calcContributorElements(contributor, pattern);
+      Collection<Object> actions =
+        ContainerUtil.mapNotNull(result, o -> {
+          if (o instanceof MatchedValue matchedValue) {
+            Object value = matchedValue.value;
+            if (value instanceof ActionWrapper actionWrapper) {
+              return actionWrapper.getAction();
+            }
 
-  void "test detected action groups"() {
-    assert getPresentableGroupName(project, "Zoom", "Images.Editor.ZoomIn", false) == "Images"
-    assert getPresentableGroupName(project, "Next Tab", "SearchEverywhere.NextTab", false) == "Search Everywhere"
-    assert getPresentableGroupName(project, "Next Tab", "NextTab", false) == "Window | Editor Tabs"
-    assert getPresentableGroupName(project, "Next Tab", "NextEditorTab", false) == "Tabs"
-  }
-
-  void "test same invisible groups are ignored"() {
-    def pattern = "GotoActionTest.TestAction"
-
-    def testAction = createAction(pattern)
-    def outerGroup = createActionGroup("Outer", false)
-    def visibleGroup = createActionGroup("VisibleGroup", false)
-    def hiddenGroup1 = createActionGroup("A HiddenGroup1", true)
-    def hiddenGroup2 = createActionGroup("Z HiddenGroup2", true)
-    outerGroup.add(hiddenGroup1)
-    outerGroup.add(visibleGroup)
-    outerGroup.add(hiddenGroup2)
-    visibleGroup.add(testAction)
-    hiddenGroup1.add(testAction)
-    hiddenGroup2.add(testAction)
-
-    runWithGlobalAction(pattern, testAction) {
-      runWithMainMenuGroup(outerGroup) {
-        assert getPresentableGroupName(project, pattern, testAction, false) == "Outer | VisibleGroup"
-        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | A HiddenGroup1"
-
-        outerGroup.remove(visibleGroup)
-
-        assert getPresentableGroupName(project, pattern, testAction, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | A HiddenGroup1"
-
-        outerGroup.remove(hiddenGroup1)
-
-        assert getPresentableGroupName(project, pattern, testAction, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, true) == "Outer | Z HiddenGroup2"
-
-        hiddenGroup2.remove(testAction)
-
-        assert getPresentableGroupName(project, pattern, testAction, false) == null
-        assert getPresentableGroupName(project, pattern, testAction, true) == null
-      }
-    }
-  }
-
-  void "test action order is stable with different presentation"() {
-    def pattern = "GotoActionTest.TestAction"
-
-    def testAction1 = createAction(pattern)
-    def testAction2 = createAction(pattern)
-    def outerGroup = createActionGroup("Outer", false)
-    def hiddenGroup = createActionGroup("A Hidden", false)
-    def visibleGroup1 = createActionGroup("K Visible", true)
-    def visibleGroup2 = createActionGroup("Z Visible", true)
-    outerGroup.add(hiddenGroup)
-    outerGroup.add(visibleGroup1)
-    outerGroup.add(visibleGroup2)
-    visibleGroup1.add(testAction1)
-    visibleGroup2.add(testAction2)
-    hiddenGroup.add(testAction2)
-
-    runWithGlobalAction(pattern + "1", testAction1) {
-      runWithGlobalAction(pattern + "2", testAction2) {
-        runWithMainMenuGroup(outerGroup) {
-          def order1 = computeWithCustomDataProvider(true) {
-            getSortedActionsFromPopup(project, pattern)
+            if (value instanceof OptionDescription) {
+              return value;
+            }
           }
 
-          def order2 = computeWithCustomDataProvider(false) {
-            getSortedActionsFromPopup(project, pattern)
-          }
+          return null;
+        });
 
-          assert order1 == order2
-        }
-      }
-    }
+      assertEquals(actions.size(), new HashSet<>(actions).size());
+    });
   }
 
-  void "test navigable settings options appear in results"() {
-    def contributor = createActionContributor(project, testRootDisposable)
-    def patterns = [
-      "support screen readers",
-      "show line numbers",
-      "tab placement"
-    ]
+  public void testDetectedActionGroups() {
+    assertEquals("Images", getPresentableGroupName(getProject(), "Zoom", "Images.Editor.ZoomIn"));
+    assertEquals("Search Everywhere", getPresentableGroupName(getProject(), "Next Tab", "SearchEverywhere.NextTab"));
+    assertEquals("Window | Editor Tabs", getPresentableGroupName(getProject(), "Next Tab", "NextTab"));
+    assertEquals("Tabs", getPresentableGroupName(getProject(), "Next Tab", "NextEditorTab"));
+  }
 
-    def errors = []
-    patterns.forEach { String pattern ->
-      def elements = ChooseByNameTest.calcContributorElements(contributor, pattern)
-      if (!elements.any { matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value) }) {
-        errors += "Failure for pattern '$pattern' - $elements"
+  public void testSameInvisibleGroupsAreIgnored() {
+    String pattern = "GotoActionTest.TestAction";
+
+    AnAction testAction = createAction(pattern);
+    DefaultActionGroup outerGroup = createActionGroup("Outer", false);
+    DefaultActionGroup visibleGroup = createActionGroup("VisibleGroup", false);
+    DefaultActionGroup hiddenGroup1 = createActionGroup("A HiddenGroup1", true);
+    DefaultActionGroup hiddenGroup2 = createActionGroup("Z HiddenGroup2", true);
+    outerGroup.add(hiddenGroup1);
+    outerGroup.add(visibleGroup);
+    outerGroup.add(hiddenGroup2);
+    visibleGroup.add(testAction);
+    hiddenGroup1.add(testAction);
+    hiddenGroup2.add(testAction);
+
+    runWithGlobalAction(pattern, testAction, () -> 
+      runWithMainMenuGroup(outerGroup, () -> {
+        assertEquals("Outer | VisibleGroup", getPresentableGroupName(getProject(), pattern, testAction, false));
+        assertEquals("Outer | A HiddenGroup1", getPresentableGroupName(getProject(), pattern, testAction, true));
+
+        outerGroup.remove(visibleGroup);
+
+        assertNull(getPresentableGroupName(getProject(), pattern, testAction, false));
+        assertEquals("Outer | A HiddenGroup1", getPresentableGroupName(getProject(), pattern, testAction, true));
+
+        outerGroup.remove(hiddenGroup1);
+
+        assertNull(getPresentableGroupName(getProject(), pattern, testAction, false));
+        assertEquals("Outer | Z HiddenGroup2", getPresentableGroupName(getProject(), pattern, testAction, true));
+
+        hiddenGroup2.remove(testAction);
+
+        assertNull(getPresentableGroupName(getProject(), pattern, testAction, false));
+        assertNull(getPresentableGroupName(getProject(), pattern, testAction, true));
+      })
+    );
+  }
+
+  public void testActionOrderIsStableWithDifferentPresentation() {
+    String pattern = "GotoActionTest.TestAction";
+
+    AnAction testAction1 = createAction(pattern);
+    AnAction testAction2 = createAction(pattern);
+    DefaultActionGroup outerGroup = createActionGroup("Outer", false);
+    DefaultActionGroup hiddenGroup = createActionGroup("A Hidden", false);
+    DefaultActionGroup visibleGroup1 = createActionGroup("K Visible", true);
+    DefaultActionGroup visibleGroup2 = createActionGroup("Z Visible", true);
+    outerGroup.add(hiddenGroup);
+    outerGroup.add(visibleGroup1);
+    outerGroup.add(visibleGroup2);
+    visibleGroup1.add(testAction1);
+    visibleGroup2.add(testAction2);
+    hiddenGroup.add(testAction2);
+
+    runWithGlobalAction(pattern + "1", testAction1, () -> {
+      runWithGlobalAction(pattern + "2", testAction2, () -> {
+        runWithMainMenuGroup(outerGroup, () -> {
+          List<ActionWrapper> order1 = computeWithCustomDataProvider(true, () -> getSortedActionsFromPopup(getProject(), pattern));
+          List<ActionWrapper> order2 = computeWithCustomDataProvider(false, () -> getSortedActionsFromPopup(getProject(), pattern));
+
+          assertEquals(order1, order2);
+        });
+      });
+    });
+  }
+
+  public void testNavigableSettingsOptionsAppearInResults() {
+    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+    List<String> patterns = List.of("support screen readers", "show line numbers", "tab placement");
+
+    List<Object> errors = new ArrayList<>();
+    patterns.forEach(pattern -> {
+      List<?> elements = ChooseByNameTest.calcContributorElements(contributor, pattern);
+      if (!ContainerUtil.exists(elements, matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value))) {
+        errors.add("Failure for pattern '" + pattern + "' - " + elements);
       }
-    }
-    assert errors.isEmpty()
+    });
+    assertTrue(errors.isEmpty());
   }
 
   private static boolean isNavigableOption(Object o) {
-    return o instanceof OptionDescription && !(o instanceof BooleanOptionDescription)
+    return o instanceof OptionDescription && !(o instanceof BooleanOptionDescription);
   }
-
 
   private List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
-    def wrappers = getActionsFromPopup(project, testRootDisposable, pattern)
-    wrappers.sort()
-    return wrappers
+    List<ActionWrapper> wrappers = new ArrayList<>(getActionsFromPopup(project, getTestRootDisposable(), pattern));
+    wrappers.sort(Comparator.comparing(ActionWrapper::getActionText));
+    return wrappers;
   }
 
-  private String getPresentableGroupName(Project project, String pattern, String testActionId, boolean passFlag) {
-    def action = ActionManager.instance.getAction(testActionId)
-    assert action != null
-    return getPresentableGroupName(project, pattern, action, passFlag)
+  private String getPresentableGroupName(Project project, String pattern, String testActionId) {
+    AnAction action = ActionManager.getInstance().getAction(testActionId);
+    assertNotNull(action);
+    return getPresentableGroupName(project, pattern, action, false);
   }
 
   private String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
-    return computeWithCustomDataProvider(passFlag) {
-      def result = getActionsFromPopup(project, testRootDisposable, pattern)
-      def matches = result.findAll { it.action == testAction }
+    return computeWithCustomDataProvider(passFlag, () -> {
+      List<ActionWrapper> result = getActionsFromPopup(project, getTestRootDisposable(), pattern);
+      List<ActionWrapper> matches =
+        ContainerUtil.findAll(result, wrapper -> wrapper.getAction().equals(testAction));
       if (matches.size() != 1) {
-        fail("Matches: " + matches + "\nPopup actions:  " + result.size() + " - " + result)
+        fail("Matches: " + matches + "\nPopup actions:  " + result.size() + " - " + result);
       }
-
-      ActionWrapper wrapper = matches[0]
-      return wrapper.groupName
-    }
+      
+      ActionWrapper wrapper = matches.get(0);
+      return wrapper.getGroupName();
+    });
   }
 
   private static void runWithGlobalAction(String id, AnAction action, Runnable task) {
-    ActionManager.instance.registerAction(id, action)
+    ActionManager.getInstance().registerAction(id, action);
     try {
-      task.run()
+      task.run();
     }
     finally {
-      ActionManager.instance.unregisterAction(id)
+      ActionManager.getInstance().unregisterAction(id);
     }
   }
 
   private static void runWithMainMenuGroup(ActionGroup group, Runnable task) {
-    def mainMenuGroup = (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU)
-    mainMenuGroup.add(group)
+    DefaultActionGroup mainMenuGroup = (DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU);
+    mainMenuGroup.add(group);
     try {
-      task.run()
+      task.run();
     }
     finally {
-      mainMenuGroup.remove(group)
+      mainMenuGroup.remove(group);
     }
   }
 
-  private static <T> T computeWithCustomDataProvider(passHiddenFlag, Computable<T> task) {
-    TestApplicationManager.getInstance().setDataProvider(new DataProvider() {
-      @Override
-      Object getData(@NotNull @NonNls String dataId) {
-        if (SHOW_HIDDEN_KEY.is(dataId) && passHiddenFlag) return Boolean.TRUE
-        return null
-      }
-    })
+  private static <T> T computeWithCustomDataProvider(boolean passHiddenFlag, Computable<T> task) {
+    TestApplicationManager.getInstance().setDataProvider(dataId -> {
+      return SHOW_HIDDEN_KEY.is(dataId) && passHiddenFlag ? Boolean.TRUE : null;
+    });
 
     try {
-      return task.compute()
+      return task.compute();
     }
     finally {
-      TestApplicationManager.getInstance().setDataProvider(null)
+      TestApplicationManager.getInstance().setDataProvider(null);
     }
   }
 
   private static List<ActionWrapper> getActionsFromPopup(Project project, Disposable parentDisposable, String pattern) {
-    def contributor = createActionContributor(project, parentDisposable)
-    return ChooseByNameTest.calcContributorElements(contributor, pattern).findResults {
-      if (it instanceof MatchedValue && it.value instanceof ActionWrapper) {
-        return it.value as ActionWrapper
-      }
-      return null
-    } as List<ActionWrapper>
+    SearchEverywhereContributor<?> contributor = createActionContributor(project, parentDisposable);
+    return ContainerUtil.mapNotNull(ChooseByNameTest.calcContributorElements(contributor, pattern), e -> {
+      return e instanceof MatchedValue matchedValue && matchedValue.value instanceof ActionWrapper actionWrapper ? actionWrapper : null;
+    });
   }
 
-  private def actionMatches(String pattern, AnAction action) {
-    def matcher = ActionSearchUtilKt.buildMatcher(pattern)
-    def model = new GotoActionModel(project, null, null)
-    model.buildGroupMappings()
-    return model.actionMatches(pattern, matcher, action)
+  private MatchMode actionMatches(String pattern, AnAction action) {
+    Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
+    GotoActionModel model = new GotoActionModel(getProject(), null, null);
+    model.buildGroupMappings();
+    return model.actionMatches(pattern, matcher, action);
   }
 
-  private MatchedValue matchedAction(String text, String pattern, MatchMode mode = MatchMode.NAME, boolean isAvailable = true) {
-    return createMatchedAction(project, createAction(text), pattern, mode, isAvailable)
+  private static MatchedValue matchedAction(String text, String pattern, MatchMode mode, boolean isAvailable) {
+    return createMatchedAction(createAction(text), pattern, mode, isAvailable);
   }
 
-  static MatchedValue createMatchedAction(Project project,
-                                          AnAction action,
-                                          String pattern,
-                                          MatchMode mode = MatchMode.NAME,
-                                          boolean isAvailable = true) {
-    def presentation = new Presentation()
-    presentation.setEnabledAndVisible(isAvailable)
-    def wrapper = new ActionWrapper(action, null, mode, presentation)
-    new MatchedValue(wrapper, pattern, GotoActionModel.MatchedValueType.ACTION)
+  private static MatchedValue matchedAction(String text, String pattern) {
+    return matchedAction(text, pattern, MatchMode.NAME, true);
   }
 
-  private static AnAction createAction(String text, String description = null) {
-    def action = new AnAction(text) {
+  public static MatchedValue createMatchedAction(AnAction action,
+                                                 String pattern,
+                                                 MatchMode mode,
+                                                 boolean isAvailable) {
+    Presentation presentation = new Presentation();
+    presentation.setEnabledAndVisible(isAvailable);
+    ActionWrapper wrapper = new ActionWrapper(action, null, mode, presentation);
+    return new MatchedValue(wrapper, pattern, MatchedValueType.ACTION);
+  }
+
+  public static MatchedValue createMatchedAction(AnAction action, String pattern) {
+    return createMatchedAction(action, pattern, MatchMode.NAME, true);
+  }
+
+  private static AnAction createAction(String text) {
+    return createAction(text, null);
+  }
+
+  private static AnAction createAction(String text, String description) {
+    AnAction action = new AnAction(text) {
       @Override
-      void actionPerformed(@NotNull AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
       }
-    }
+    };
     if (description != null) {
-      action.getTemplatePresentation().setDescription(description)
+      action.getTemplatePresentation().setDescription(description);
     }
-
-    return action
+    return action;
   }
 
   private static DefaultActionGroup createActionGroup(String text, boolean hideByDefault) {
-    new DefaultActionGroup(text, true) {
+    return new DefaultActionGroup(text, true) {
       @Override
-      ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
-      void update(@NotNull AnActionEvent e) {
-        e.presentation.setVisible(!hideByDefault || Boolean.valueOf(e.getData(SHOW_HIDDEN_KEY)))
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setVisible(!hideByDefault || e.getData(SHOW_HIDDEN_KEY) != null);
       }
-    }
+    };
   }
 
   private static boolean optionMatches(String pattern, OptionDescription optionDescription) {
-    def matcher = OptionsTopHitProvider.buildMatcher(pattern)
-    return matcher.matches(optionDescription.getOption())
+    return OptionsTopHitProvider.buildMatcher(pattern).matches(optionDescription.getOption());
   }
 
-
   private static MatchedValue matchedOption(String text, String pattern) {
-    return new MatchedValue(new OptionDescription(text), pattern, GotoActionModel.MatchedValueType.OPTION)
+    return new MatchedValue(new OptionDescription(text), pattern, MatchedValueType.OPTION);
   }
 
   private static MatchedValue matchedBooleanOption(String text, String pattern) {
-    def option = new BooleanOptionDescription(text, text) {
+    BooleanOptionDescription option = new BooleanOptionDescription(text, text) {
       @Override
-      boolean isOptionEnabled() {
-        return false
+      public boolean isOptionEnabled() {
+        return false;
       }
 
       @Override
-      void setOptionState(boolean enabled) {
+      public void setOptionState(boolean enabled) {
       }
-    }
-    return new MatchedValue(option, pattern, GotoActionModel.MatchedValueType.OPTION)
+    };
+    return new MatchedValue(option, pattern, MatchedValueType.OPTION);
   }
 
-  static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
-    TestActionContributor res = new TestActionContributor(project, null, null)
-    res.setShowDisabled(true)
-    Disposer.register(parentDisposable, res)
-    return res
+  public static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
+    TestActionContributor res = new TestActionContributor(project, null, null);
+    res.setShowDisabled(true);
+    Disposer.register(parentDisposable, res);
+    return res;
+  }
+  
+  private static class TestBooleanOption extends BooleanOptionDescription {
+    private TestBooleanOption(String option) {
+      super(option, null);
+    }
+
+    @Override
+    public boolean isOptionEnabled() {
+      return true;
+    }
+
+    @Override
+    public void setOptionState(boolean enabled) {
+    }
   }
 
   private static class TestActionContributor extends ActionSearchEverywhereContributor {
-    TestActionContributor(Project project, Component contextComponent, Editor editor) {
-      super(project, contextComponent, editor)
+    private TestActionContributor(Project project, Component contextComponent, Editor editor) {
+      super(project, contextComponent, editor);
     }
 
-    void setShowDisabled(boolean val) {
-      myDisabledActions = val
+    public void setShowDisabled(boolean val) {
+      setMyDisabledActions(val);
     }
   }
 }
