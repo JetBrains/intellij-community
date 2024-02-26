@@ -43,7 +43,7 @@ fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>
 
     var currentFile: VirtualFile? = this
     while (currentFile != null) {
-        val entities = index.findEntitiesByUrl(fileUrlManager.getOrCreateFromUri(currentFile.url))
+        val entities = index.findEntitiesByUrl(fileUrlManager.getOrCreateFromUrl(currentFile.url))
         if (entities.none()) {
             currentFile = currentFile.parent
             continue

@@ -20,7 +20,7 @@ object JpsGlobalEntitiesSerializers {
       serializers.add(createSdkSerializer(virtualFileUrlManager, sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>)
     }
 
-    val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUri(PathManager.getOptionsFile(GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
+    val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(PathManager.getOptionsFile(GLOBAL_LIBRARIES_FILE_NAME).absolutePath)
     val globalLibrariesEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
     serializers.add(JpsGlobalLibrariesFileSerializer(globalLibrariesEntitySource) as JpsFileEntityTypeSerializer<WorkspaceEntity>)
 
@@ -28,7 +28,7 @@ object JpsGlobalEntitiesSerializers {
   }
 
   fun createSdkSerializer(virtualFileUrlManager: VirtualFileUrlManager, sortedRootTypes: List<String>): JpsSdkEntitySerializer {
-    val globalSdkFile = virtualFileUrlManager.getOrCreateFromUri(PathManager.getOptionsFile(SDK_FILE_NAME).absolutePath)
+    val globalSdkFile = virtualFileUrlManager.getOrCreateFromUrl(PathManager.getOptionsFile(SDK_FILE_NAME).absolutePath)
     val globalSdkEntitySource = JpsGlobalFileEntitySource(globalSdkFile)
     return JpsSdkEntitySerializer(globalSdkEntitySource, sortedRootTypes)
   }

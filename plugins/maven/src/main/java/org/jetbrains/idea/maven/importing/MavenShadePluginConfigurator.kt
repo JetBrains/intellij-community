@@ -75,7 +75,7 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     val mavenId = dependencyMavenProject.mavenId
     val fileName = "${mavenId.artifactId}-${mavenId.version}.jar"
     val jarPath = Path.of(dependencyMavenProject.buildDirectory, fileName).pathString
-    val jarUrl = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUri("jar://$jarPath!/")
+    val jarUrl = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl("jar://$jarPath!/")
 
     addLibraryEntity(
       builder,

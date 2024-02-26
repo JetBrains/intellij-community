@@ -45,7 +45,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -206,7 +205,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     if (modelsProvider instanceof IdeModifiableModelsProviderImpl impl) {
       MutableEntityStorage diff = impl.getActualStorageBuilder();
 
-      VirtualFileUrl vfu = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUri(contentEntry.getUrl());
+      VirtualFileUrl vfu = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(contentEntry.getUrl());
       WorkspaceEntity workspaceEntity = ContainerUtil.find(diff.getVirtualFileUrlIndex().findEntitiesByUrl(vfu).iterator(), entity -> {
         return entity instanceof ContentRootEntity;
       });

@@ -442,10 +442,10 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
 
     // Entity source for global entities
     val virtualFileManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-    val globalLibrariesFile = virtualFileManager.getOrCreateFromUri("$testDir/options/applicationLibraries.xml")
+    val globalLibrariesFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/applicationLibraries.xml")
     val libraryEntitySource = JpsGlobalFileEntitySource(globalLibrariesFile)
 
-    val globalSdkFile = virtualFileManager.getOrCreateFromUri("$testDir/options/jdk.table.xml")
+    val globalSdkFile = virtualFileManager.getOrCreateFromUrl("$testDir/options/jdk.table.xml")
     val sdkEntitySource = JpsGlobalFileEntitySource(globalSdkFile)
     action(libraryEntitySource, sdkEntitySource)
 

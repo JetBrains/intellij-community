@@ -21,24 +21,24 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
   private val rootNode = FilePathNode(0, 0)
 
   @Synchronized
-  override fun getOrCreateFromUri(uri: String): VirtualFileUrl {
+  override fun getOrCreateFromUrl(uri: String): VirtualFileUrl {
     if (uri.isEmpty()) return getEmptyUrl()
     return add(uri)
   }
 
-  override fun findByUri(uri: String): VirtualFileUrl? {
+  override fun findByUrl(uri: String): VirtualFileUrl? {
     return findBySegments(splitNames(uri))
   }
 
   @Synchronized
-  internal fun fromUriSegments(uriSegments: List<String>): VirtualFileUrl {
+  internal fun fromUrlSegments(uriSegments: List<String>): VirtualFileUrl {
     if (uriSegments.isEmpty()) return getEmptyUrl()
     return addSegments(null, uriSegments)
   }
 
   override fun fromPath(path: String): VirtualFileUrl {
     val url = URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + FileUtil.toSystemIndependentName(path)
-    return getOrCreateFromUri(url)
+    return getOrCreateFromUrl(url)
   }
 
   @Synchronized

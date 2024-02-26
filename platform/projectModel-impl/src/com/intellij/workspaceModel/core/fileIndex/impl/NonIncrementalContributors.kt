@@ -103,7 +103,7 @@ internal class NonIncrementalContributors(private val project: Project,
           }
         }
         else {
-          excludedUrls.add(virtualFileUrlManager.getOrCreateFromUri(url))
+          excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(url))
         }
       }
       policy.excludeSdkRootsStrategy?.let { strategy ->
@@ -130,7 +130,7 @@ internal class NonIncrementalContributors(private val project: Project,
             }
           }
           else {
-            excludedUrls.add(virtualFileUrlManager.getOrCreateFromUri(pointer.url))
+            excludedUrls.add(virtualFileUrlManager.getOrCreateFromUrl(pointer.url))
           }
         }
       }

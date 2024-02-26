@@ -37,7 +37,7 @@ internal class CompilerModuleExtensionBridge(
   private fun getCompilerOutput(): VirtualFileUrl? = when {
     isCompilerOutputPathInherited -> {
       val url = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl
-      if (url != null) virtualFileManager.getOrCreateFromUri(url + "/" + PRODUCTION + "/" + getSanitizedModuleName()) else null
+      if (url != null) virtualFileManager.getOrCreateFromUrl(url + "/" + PRODUCTION + "/" + getSanitizedModuleName()) else null
     }
     else -> javaSettings?.compilerOutput
   }
@@ -45,7 +45,7 @@ internal class CompilerModuleExtensionBridge(
   private fun getCompilerOutputForTests(): VirtualFileUrl? = when {
     isCompilerOutputPathInherited -> {
       val url = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl
-      if (url != null) virtualFileManager.getOrCreateFromUri(url + "/" + TEST + "/" + getSanitizedModuleName()) else null
+      if (url != null) virtualFileManager.getOrCreateFromUrl(url + "/" + TEST + "/" + getSanitizedModuleName()) else null
     }
     else -> javaSettings?.compilerOutputForTests
   }
@@ -96,7 +96,7 @@ internal class CompilerModuleExtensionBridge(
 
   override fun setCompilerOutputPath(url: String?) {
     if (compilerOutputUrl == url) return
-    updateJavaSettings { compilerOutput = url?.let { virtualFileManager.getOrCreateFromUri(it) } }
+    updateJavaSettings { compilerOutput = url?.let { virtualFileManager.getOrCreateFromUrl(it) } }
   }
 
   override fun setCompilerOutputPathForTests(file: VirtualFile?) {
@@ -106,7 +106,7 @@ internal class CompilerModuleExtensionBridge(
 
   override fun setCompilerOutputPathForTests(url: String?) {
     if (compilerOutputUrlForTests == url) return
-    updateJavaSettings { compilerOutputForTests = url?.let { virtualFileManager.getOrCreateFromUri(it) } }
+    updateJavaSettings { compilerOutputForTests = url?.let { virtualFileManager.getOrCreateFromUrl(it) } }
   }
 
   override fun inheritCompilerOutputPath(inherit: Boolean) {

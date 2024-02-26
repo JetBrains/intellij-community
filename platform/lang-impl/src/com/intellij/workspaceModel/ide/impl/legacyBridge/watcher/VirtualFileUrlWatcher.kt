@@ -92,7 +92,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
       isInsideFilePointersUpdate = true
       val entityWithVirtualFileUrl = mutableListOf<EntityWithVirtualFileUrl>()
       WorkspaceModel.getInstance(project).updateProjectModel("On VFS change") { diff ->
-        val oldFileUrl = virtualFileManager.getOrCreateFromUri(oldUrl)
+        val oldFileUrl = virtualFileManager.getOrCreateFromUrl(oldUrl)
         calculateAffectedEntities(diff, oldFileUrl, entityWithVirtualFileUrl)
         oldFileUrl.subTreeFileUrls.map { fileUrl -> calculateAffectedEntities(diff, fileUrl, entityWithVirtualFileUrl) }
         val result = entityWithVirtualFileUrl.filter { shouldUpdateThisEntity(it.entity) }.toList()
@@ -152,7 +152,7 @@ private class EntitySourceFileWatcher<T : EntitySource>(
       val urlFromContainer = containerToUrl(entitySource as T)
       if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
 
-      val newVfsUrl = virtualFileManager.getOrCreateFromUri(newUrl + urlFromContainer.substring(oldUrl.length))
+      val newVfsUrl = virtualFileManager.getOrCreateFromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
       val newEntitySource = createNewSource(entitySource, newVfsUrl)
 
       entities.forEach { entity ->
@@ -186,7 +186,7 @@ private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : WorkspaceEnti
       val savedUrl = existingVirtualFileUrl.url
       val newTrackedUrl = newUrl + savedUrl.substring(oldUrl.length)
 
-      val newContainer = virtualFileManager.getOrCreateFromUri(newTrackedUrl)
+      val newContainer = virtualFileManager.getOrCreateFromUrl(newTrackedUrl)
       @Suppress("UNCHECKED_CAST")
       entityWithVFU.entity as E
       diff.modifyEntity(modifiableEntityClass.java, entityWithVFU.entity) {
@@ -210,7 +210,7 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
                            diff: MutableEntityStorage) {
     entitiesWithVFU.filter { LibraryEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val oldVFU = entityWithVFU.virtualFileUrl
-      val newVFU = virtualFileManager.getOrCreateFromUri(newUrl + oldVFU.url.substring(oldUrl.length))
+      val newVFU = virtualFileManager.getOrCreateFromUrl(newUrl + oldVFU.url.substring(oldUrl.length))
 
       entityWithVFU.entity as LibraryEntity
       val oldLibraryRoots = diff.resolve(entityWithVFU.entity.symbolicId)?.roots?.filter { it.url == oldVFU }
@@ -240,7 +240,7 @@ private class SdkRootFileWatcher : LegacyFileWatcher {
                            diff: MutableEntityStorage) {
     entitiesWithVFU.filter { SdkEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val oldVFU = entityWithVFU.virtualFileUrl
-      val newVFU = virtualFileManager.getOrCreateFromUri(newUrl + oldVFU.url.substring(oldUrl.length))
+      val newVFU = virtualFileManager.getOrCreateFromUrl(newUrl + oldVFU.url.substring(oldUrl.length))
 
       entityWithVFU.entity as SdkEntity
       val oldSdkRoots = diff.resolve(entityWithVFU.entity.symbolicId)?.roots?.filter { it.url == oldVFU }

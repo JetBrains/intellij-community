@@ -37,7 +37,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   override fun createSerializer(fileUrl: String,
                                 entitySource: JpsProjectFileEntitySource.FileInDirectory,
                                 virtualFileManager: VirtualFileUrlManager): JpsArtifactEntitiesSerializer {
-    return JpsArtifactEntitiesSerializer(virtualFileManager.getOrCreateFromUri(fileUrl), entitySource, false, virtualFileManager)
+    return JpsArtifactEntitiesSerializer(virtualFileManager.getOrCreateFromUrl(fileUrl), entitySource, false, virtualFileManager)
   }
 
   override fun getDefaultFileName(entity: ArtifactEntity): String {
@@ -170,7 +170,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           val state = XmlSerializer.deserialize(artifactElement, ArtifactState::class.java)
           val outputUrl = state.outputPath?.let { path ->
             if (path.isNotEmpty()) {
-              virtualFileManager.getOrCreateFromUri(path.toPathWithScheme())
+              virtualFileManager.getOrCreateFromUrl(path.toPathWithScheme())
             }
             else null
           }
@@ -232,7 +232,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
-    fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { virtualFileManager.getOrCreateFromUri(it.toPathWithScheme()) }
+    fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { virtualFileManager.getOrCreateFromUrl(it.toPathWithScheme()) }
     return when (val typeId = getAttribute("id")) {
       "root" -> ArtifactRootElementEntity(source) {
         this.children = loadElementChildren()

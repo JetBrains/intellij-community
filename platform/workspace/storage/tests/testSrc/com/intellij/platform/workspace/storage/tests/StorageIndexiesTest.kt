@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import com.intellij.util.io.URLUtil
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -48,10 +47,10 @@ class StorageIndexesTest {
   @Test
   fun `check virtual file index`() {
     val virtualFileUrlManager = VirtualFileUrlManagerImpl()
-    val sourceUrl = virtualFileUrlManager.getOrCreateFromUri("/source".toPathWithScheme())
-    val directory = virtualFileUrlManager.getOrCreateFromUri("/tmp/example".toPathWithScheme())
-    val firstRoot = virtualFileUrlManager.getOrCreateFromUri("/m2/root/one".toPathWithScheme())
-    val secondRoot = virtualFileUrlManager.getOrCreateFromUri("/m2/root/second".toPathWithScheme())
+    val sourceUrl = virtualFileUrlManager.getOrCreateFromUrl("/source".toPathWithScheme())
+    val directory = virtualFileUrlManager.getOrCreateFromUrl("/tmp/example".toPathWithScheme())
+    val firstRoot = virtualFileUrlManager.getOrCreateFromUrl("/m2/root/one".toPathWithScheme())
+    val secondRoot = virtualFileUrlManager.getOrCreateFromUrl("/m2/root/second".toPathWithScheme())
 
     val entity = VFUEntity2("VFUEntityData", directory, listOf(firstRoot, secondRoot), VFUEntitySource(sourceUrl))
 
