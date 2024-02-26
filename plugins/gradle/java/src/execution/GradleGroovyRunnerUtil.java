@@ -35,8 +35,8 @@ public final class GradleGroovyRunnerUtil {
       parent = parent.getParent();
     }
 
-    if (parent instanceof GrMethodCallExpression methodCall && isTaskDeclarationMethod(methodCall)) {
-      String taskName = getStringArgument(methodCall);
+    if (parent instanceof GrMethodCallExpression methodCall) {
+      String taskName = getTaskNameIfMethodDeclaresIt(methodCall);
       if (taskName != null) return Collections.singletonList(taskName);
     } else if (parent instanceof GrApplicationStatement) {
       PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
@@ -72,23 +72,36 @@ public final class GradleGroovyRunnerUtil {
     return Collections.emptyList();
   }
 
-  private static boolean isTaskDeclarationMethod(GrMethodCallExpression methodCall) {
-    PsiMethod resolved = methodCall.resolveMethod();
-    if (resolved == null) return false;
-    PsiClass containingClass = resolved.getContainingClass();
-    if (containingClass == null) return false;
+  @Nullable
+  private static String getTaskNameIfMethodDeclaresIt(GrMethodCallExpression methodCall) {
+    String taskNameCandidate = getStringValueFromFirstArg(methodCall);
+    if (taskNameCandidate == null) return null;
+    PsiMethod resolvedMethod = methodCall.resolveMethod();
+    if (resolvedMethod == null) return null;
+    PsiClass containingClass = resolvedMethod.getContainingClass();
+    if (containingClass == null) return null;
 
-    if (isInheritor(containingClass, GRADLE_API_TASK_CONTAINER)) {
-      return "create".equals(resolved.getName()) || "register".equals(resolved.getName());
-    } else if (isInheritor(containingClass, GRADLE_API_PROJECT)) {
-      return "task".equals(resolved.getName());
+    String methodName = resolvedMethod.getName();
+    if (declaresTaskFromTaskContainer(methodName, containingClass)
+      || declaresTaskFromProject(methodName, containingClass)
+    ) {
+      return taskNameCandidate;
     } else {
-      return false;
+      return null;
     }
   }
 
-  @Nullable
-  private static String getStringArgument(GrMethodCallExpression methodCall) {
+  private static boolean declaresTaskFromTaskContainer(String methodName, PsiClass containingClass) {
+    return isInheritor(containingClass, GRADLE_API_TASK_CONTAINER)
+           && ("create".equals(methodName) || "register".equals(methodName));
+  }
+
+  private static boolean declaresTaskFromProject(String methodName, PsiClass containingClass) {
+    return isInheritor(containingClass, GRADLE_API_PROJECT)
+           && "task".equals(methodName);
+  }
+
+  private static String getStringValueFromFirstArg(GrMethodCallExpression methodCall) {
     final GrExpression[] arguments = methodCall.getExpressionArguments();
     if (arguments.length > 0 && arguments[0] instanceof GrLiteral literalArg
         && literalArg.getValue() instanceof String stringArg
