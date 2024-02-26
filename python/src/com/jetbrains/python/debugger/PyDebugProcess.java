@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
@@ -287,7 +286,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     // which causes the process to finish with a non-zero exit code or the `KeyboardInterrupt` exception.
     // This issue happens frequently with multiprocess debugging.
     getProcessHandler().waitFor();
-    handleStop(); //in case of normal debug we stop the session
+    handleStop(); // In case of normal debug, we stop the session
   }
 
   protected void handleStop() {
@@ -839,11 +838,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public XValueChildrenList loadFrame(@Nullable final XStackFrame contextFrame) throws PyDebuggerException {
     final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame)contextFrame;
     synchronized (myFrameCacheObject) {
-      //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes
+      // Do not reload frame every time it is needed, because due to a bug in pdb, reloading frame clears all variable changes.
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
         XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), ProcessDebugger.GROUP_TYPE.DEFAULT);
         // Could be null when the current function is called for a thread that is already dead.
-        // In this case a new element shouldn't be added to myStackFrameCache
+        // In this case, a new element shouldn't be added to myStackFrameCache.
         if (values == null) {
           return null;
         }

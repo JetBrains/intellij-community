@@ -320,7 +320,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
     List<PyThreadInfo> threads = collectAllThreads();
 
-    if (myOtherDebuggers.size() > 0) {
+    if (!myOtherDebuggers.isEmpty()) {
       //here we add process id to thread name in case there are more then one process
       return Collections.unmodifiableCollection(Collections2.transform(threads, t -> {
         if (t == null) return null;
@@ -339,12 +339,11 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   private List<PyThreadInfo> collectAllThreads() {
-    List<PyThreadInfo> result = new ArrayList<>();
 
-    result.addAll(myMainDebugger.getThreads());
+    List<PyThreadInfo> result = new ArrayList<>(myMainDebugger.getThreads());
 
-    //collect threads and add them to registry to faster access
-    //we don't register mainDebugger as it is default if there is no mapping
+    // Collect threads and add them to registry to faster access
+    // we don't register mainDebugger as it is default if there is no mapping.
     for (RemoteDebugger d : myOtherDebuggers) {
       result.addAll(d.getThreads());
       for (PyThreadInfo t : d.getThreads()) {
@@ -634,10 +633,6 @@ public class MultiProcessDebugger implements ProcessDebugger {
       // we should notify the debugger in each process about suspending all threads
       d.suspendOtherThreads(thread);
     }
-  }
-
-  public void removeCloseListener(RemoteDebuggerCloseListener listener) {
-    myMainDebugger.removeCloseListener(listener);
   }
 
   public void addOtherDebuggerCloseListener(DebuggerProcessListener otherDebuggerCloseListener) {
