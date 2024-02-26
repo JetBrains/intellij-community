@@ -2,6 +2,8 @@
 // BIND_TO bar.fooBar
 package test
 
+import bar.fooBar
+
 fun Any.usage() {
     foo<caret>Bar() //shorten references bug https://youtrack.jetbrains.com/issue/KT-64493, should be bar.fooBar()
 }
