@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.diagnostic.Logger
@@ -65,7 +65,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
           }
         }
         catch (e: VcsException) {
-          span.recordVcsException(e)
+          span.recordError(e)
           val visiblePack = VisiblePack.ErrorVisiblePack(dataPack, VcsLogFilterObject.collection(hashFilter, hashFilter.toTextFilter()), e)
           return Pair(visiblePack, commitCount)
         }
@@ -121,7 +121,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
         return Pair(visiblePack, filterResult.commitCount)
       }
       catch (e: VcsException) {
-        span.recordVcsException(e)
+        span.recordError(e)
         return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
       }
     }
@@ -443,11 +443,6 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     }
   }
 
-  private fun Span.recordVcsException(e: VcsException) {
-    recordException(e)
-    setStatus(StatusCode.ERROR)
-  }
-
   private fun Span.configure(dataPack: DataPack,
                              filters: VcsLogFilterCollection,
                              sortType: PermanentGraph.SortType,
@@ -505,4 +500,9 @@ internal fun union(c1: IntSet?, c2: IntSet?): IntSet? {
   val result = IntOpenHashSet(c1)
   result.addAll(c2)
   return result
+}
+
+internal fun Span.recordError(e: Exception) {
+  recordException(e)
+  setStatus(StatusCode.ERROR)
 }
