@@ -124,7 +124,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     for (Object item : itemsSource.getValues()) {
       if (item instanceof ShortcutProvider itemShortcut) {
         var shortcut = itemShortcut.getShortcut();
-        if (shortcut != null) {
+        if (shortcut != null && shortcut.hasShortcuts()) {
           var action = new ActionShortcutDelegate(item, shortcut);
           action.registerCustomShortcutSet(component, this);
         }
