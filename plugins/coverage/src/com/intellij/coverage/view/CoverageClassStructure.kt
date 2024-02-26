@@ -91,7 +91,11 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
       val packageName = StringUtil.getPackageName(clazz.id)
       if (flattenPackages) {
         root.userObject.counter.append(clazz.counter)
-        val psiPackage = getPsiPackage(packageName)!!
+        val psiPackage = getPsiPackage(packageName)
+        if (psiPackage == null) {
+          logSkippedPackage(packageName)
+          continue
+        }
         val node = root.getOrCreateChild(CoverageNodeInfo(packageName, packageName, psiPackage))
         node.userObject.counter.append(clazz.counter)
         node.getOrCreateChild(clazz)
@@ -104,7 +108,7 @@ class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAn
             val newId = if (node.userObject.id == ROOT_ID) part else "${node.userObject.id}.$part"
             val psiPackage = getPsiPackage(newId)
             if (psiPackage == null) {
-              LOG.warn("Failed to locate package $newId, skip it in coverage results")
+              logSkippedPackage(newId)
               continue@loop
             }
             node = node.getOrCreateChild(CoverageNodeInfo(newId, part, psiPackage))
@@ -189,3 +193,7 @@ class TypedTreeNode<E>(userObject: E) : DefaultMutableTreeNode(userObject) {
 }
 
 typealias CoverageTreeNode = TypedTreeNode<CoverageNodeInfo>
+
+private fun logSkippedPackage(packageName: String) {
+  LOG.warn("Failed to locate package $packageName, skip it in coverage results")
+}
