@@ -60,8 +60,10 @@ sealed class BaseLayout {
   @TestOnly
   fun includedProjectLibraryNames(): Sequence<String> = includedProjectLibraries.asSequence().map { it.libraryName }
 
-  fun filteredIncludedModuleNames(excludedRelativeJarPath: String): Sequence<String> {
-    return _includedModules.asSequence().filter { it.relativeOutputFile != excludedRelativeJarPath }.map { it.moduleName }
+  fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
+    return _includedModules.asSequence().filter { 
+      it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 
+    }.map { it.moduleName }
   }
 
   fun withModules(items: Collection<ModuleItem>) {
