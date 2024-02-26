@@ -41,7 +41,7 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
     val attemptMinMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.min.ms", attempts.minOfOrNull { it.value }!!.toLong())
     val attemptRangeMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.range.ms", attempts.rangeValue())
     val attemptSumMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.sum.ms", attempts.sumOf { it.value })
-    val attemptCountMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.count", attempts.size.toLong())
+    val attemptCountMetric = PerformanceMetrics.newCounter("${metricsPrefix}attempt.count", attempts.size.toLong())
     val attemptStandardDeviationMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.standard.deviation",
                                                                         attempts.standardDeviationValue())
     // "... the MAD is a robust statistic, being more resilient to outliers in a data set than the standard deviation."
