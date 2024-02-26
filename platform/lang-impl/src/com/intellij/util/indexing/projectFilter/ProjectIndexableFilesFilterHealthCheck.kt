@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
 
+internal typealias FileId = Int
+private fun FileId.fileInfo(): String = "file id=$this path=${PersistentFS.getInstance().findFileById(this)?.path}"
+
 internal class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val filter: ProjectIndexableFilesFilter) {
   private val attemptsCount = AtomicInteger()
   private val successfulAttemptsCount = AtomicInteger()
@@ -91,8 +94,8 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
         if (errors.isEmpty()) continue
 
         val message = "${errorType.message}. Errors count: ${errors.size}. Examples:\n" +
-                      errors.take(5).joinToString("\n") { error ->
-                        ReadAction.nonBlocking(Callable { error.fileInfo }).executeSynchronously()
+                      errors.joinToString("\n", limit = 5) { error ->
+                        ReadAction.nonBlocking(Callable { error.fileInfo() }).executeSynchronously()
                       }
         errorType.logger(message)
       }
@@ -105,13 +108,11 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     }
   }
 
-  private fun doRunHealthCheckInReadAction(): Map<HealthCheckErrorType, List<InconsistentFile>> {
-    return ReadAction.nonBlocking(Callable {
-      doRunHealthCheck()
-    }).inSmartMode(project).executeSynchronously()
+  private fun doRunHealthCheckInReadAction(): Map<HealthCheckErrorType, List<FileId>> {
+    return ReadAction.nonBlocking(::doRunHealthCheck).inSmartMode(project).executeSynchronously()
   }
 
-  private fun doRunHealthCheck(): Map<HealthCheckErrorType, List<InconsistentFile>> {
+  private fun doRunHealthCheck(): Map<HealthCheckErrorType, List<FileId>> {
     return runIfScanningScanningIsCompleted(project) {
       filter.runAndCheckThatNoChangesHappened {
         // It is possible that scanning will start and finish while we are performing healthcheck,
@@ -133,9 +134,9 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
    */
   private fun doRunHealthCheck(project: Project,
                                checkAllExpectedIndexableFiles: Boolean,
-                               fileStatuses: Sequence<Pair<Int, Boolean>>): Map<HealthCheckErrorType, List<InconsistentFile>> {
-    val nonIndexableFilesInFilter = mutableListOf<InconsistentFile>()
-    val indexableFilesNotInFilter = mutableListOf<InconsistentFile>()
+                               fileStatuses: Sequence<Pair<FileId, Boolean>>): Map<HealthCheckErrorType, List<FileId>> {
+    val nonIndexableFilesInFilter = mutableListOf<FileId>()
+    val indexableFilesNotInFilter = mutableListOf<FileId>()
 
     val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
 
@@ -143,19 +144,19 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       ProgressManager.checkCanceled()
       if (shouldBeIndexable[fileId]) {
         if (!isInFilter) {
-          indexableFilesNotInFilter.add(InconsistentFile(fileId))
+          indexableFilesNotInFilter.add(fileId)
         }
         if (checkAllExpectedIndexableFiles) shouldBeIndexable[fileId] = false
       }
       else if (isInFilter && !shouldBeIndexable[fileId]) {
-        nonIndexableFilesInFilter.add(InconsistentFile(fileId))
+        nonIndexableFilesInFilter.add(fileId)
       }
     }
 
     if (checkAllExpectedIndexableFiles) {
       for (fileId in 0 until shouldBeIndexable.size()) {
         if (shouldBeIndexable[fileId]) {
-          indexableFilesNotInFilter.add(InconsistentFile(fileId))
+          indexableFilesNotInFilter.add(fileId)
         }
       }
     }
@@ -188,28 +189,24 @@ internal typealias HealthCheckLogger = (String) -> Unit
 internal val infoLogger: HealthCheckLogger = { LOG.info(it) }
 internal val warnLogger: HealthCheckLogger = { LOG.warn(it) }
 
-internal fun Map<HealthCheckErrorType, List<InconsistentFile>>.fix(filter: ProjectIndexableFilesFilter) {
+internal fun Map<HealthCheckErrorType, List<FileId>>.fix(filter: ProjectIndexableFilesFilter) {
   this.forEach { (type, files) ->
-    files.forEach { file -> type.fix(file.fileId, filter) }
+    files.forEach { file -> type.fix(file, filter) }
   }
 }
 
 internal enum class HealthCheckErrorType(val message: String, val logger: HealthCheckLogger) {
   NON_INDEXABLE_FILE_IN_FILTER("Following files are NOT indexable but they were found in filter", infoLogger) {
-    override fun fix(fileId: Int, filter: ProjectIndexableFilesFilter) {
+    override fun fix(fileId: FileId, filter: ProjectIndexableFilesFilter) {
       filter.removeFileId(fileId)
     }
   },
   INDEXABLE_FILE_NOT_IN_FILTER("Following files are indexable but they were NOT found in filter", warnLogger) {
-    override fun fix(fileId: Int, filter: ProjectIndexableFilesFilter) {
+    override fun fix(fileId: FileId, filter: ProjectIndexableFilesFilter) {
       filter.ensureFileIdPresent(fileId) { true }
     }
   };
 
-  abstract fun fix(fileId: Int, filter: ProjectIndexableFilesFilter)
+  abstract fun fix(fileId: FileId, filter: ProjectIndexableFilesFilter)
 }
 
-internal class InconsistentFile(val fileId: Int) {
-  val fileInfo: String
-    get() = "file id=$fileId path=${PersistentFS.getInstance().findFileById(fileId)?.path}"
-}
