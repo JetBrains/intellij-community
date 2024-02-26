@@ -41,7 +41,7 @@ public final class ProductModulesSerialization {
       RawProductModules rawProductModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);
       return loadProductModules(rawProductModules, filePath, currentMode, repository);
     }
-    catch (XMLStreamException e) {
+    catch (XMLStreamException | IOException e) {
       throw new MalformedRepositoryException("Failed to load module group from " + filePath, e);
     }
   }
@@ -49,10 +49,15 @@ public final class ProductModulesSerialization {
   private static @NotNull ProductModulesImpl loadProductModules(@NotNull RawProductModules rawProductModules, 
                                                                 @NotNull String debugName,
                                                                 @NotNull ProductMode currentMode,
-                                                                @NotNull RuntimeModuleRepository repository) {
-    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rawProductModules.getMainGroupModules(), currentMode, repository);
+                                                                @NotNull RuntimeModuleRepository repository)
+    throws IOException, XMLStreamException {
+    List<RawIncludedRuntimeModule> mainGroupModules = new ArrayList<>(rawProductModules.getMainGroupModules());
+    List<RuntimeModuleId> bundledPluginMainModules = new ArrayList<>(rawProductModules.getBundledPluginMainModules());
+    mergeIncludedFiles(rawProductModules, debugName, repository, mainGroupModules, bundledPluginMainModules);
+
+    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(mainGroupModules, currentMode, repository);
     List<PluginModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
-    for (RuntimeModuleId pluginMainModule : rawProductModules.getBundledPluginMainModules()) {
+    for (RuntimeModuleId pluginMainModule : bundledPluginMainModules) {
       RuntimeModuleDescriptor module = repository.resolveModule(pluginMainModule).getResolvedModule();
       /* todo: this check is temporarily added for JetBrains Client; 
          It includes intellij.performanceTesting.async plugin which dependencies aren't available in all IDEs, so we need to skip it.
@@ -62,5 +67,23 @@ public final class ProductModulesSerialization {
       }
     }
     return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
+  }
+
+  private static void mergeIncludedFiles(@NotNull RawProductModules rawProductModules,
+                                         @NotNull String debugName,
+                                         @NotNull RuntimeModuleRepository repository,
+                                         @NotNull List<RawIncludedRuntimeModule> mainGroupModules,
+                                         @NotNull List<RuntimeModuleId> bundledPluginMainModules) throws IOException, XMLStreamException {
+    for (RuntimeModuleId includedId : rawProductModules.getIncludedFrom()) {
+      InputStream inputStream = repository.getModule(includedId).readFile("META-INF/" + includedId.getStringId() + "/product-modules.xml");
+      if (inputStream == null) {
+        throw new MalformedRepositoryException("'" + includedId.getStringId() + "' included in " +
+                                               debugName + " doesn't contain product-modules.xml");
+      }
+      RawProductModules includedModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);
+      mergeIncludedFiles(includedModules, debugName, repository, mainGroupModules, bundledPluginMainModules);
+      mainGroupModules.addAll(includedModules.getMainGroupModules());
+      bundledPluginMainModules.addAll(includedModules.getBundledPluginMainModules());
+    }
   }
 }

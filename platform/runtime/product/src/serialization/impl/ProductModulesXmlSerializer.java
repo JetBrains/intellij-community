@@ -24,6 +24,7 @@ public final class ProductModulesXmlSerializer {
     String moduleName = null;
     List<RawIncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
     List<RuntimeModuleId> bundledPluginMainModules = new ArrayList<>();
+    List<RuntimeModuleId> includedFrom = new ArrayList<>();
     String parentTag = null;
     while (reader.hasNext()) {
       int event = reader.next();
@@ -57,12 +58,19 @@ public final class ProductModulesXmlSerializer {
           if (moduleName == null || moduleName.isEmpty()) {
             throw new XMLStreamException("Module name is not specified");
           }
+          RuntimeModuleId moduleId = RuntimeModuleId.raw(moduleName);
           if ("main-root-modules".equals(parentTag)) {
             assert importance != null;
-            rootMainGroupModules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), importance));
+            rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, importance));
+          }
+          else if ("bundled-plugins".equals(parentTag)) {
+            bundledPluginMainModules.add(moduleId);
+          }
+          else if ("include".equals(parentTag)) {
+            includedFrom.add(moduleId);
           }
           else {
-            bundledPluginMainModules.add(RuntimeModuleId.raw(moduleName));
+            throw new XMLStreamException("Unexpected second-level tag " + parentTag);
           }
           moduleName = null;
           importance = null;
@@ -73,6 +81,6 @@ public final class ProductModulesXmlSerializer {
       }
     }
     reader.close();
-    return new RawProductModules(rootMainGroupModules, bundledPluginMainModules);
+    return new RawProductModules(rootMainGroupModules, bundledPluginMainModules, includedFrom);
   }
 }
