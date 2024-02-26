@@ -49,6 +49,9 @@ public class WindowsDefenderChecker {
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 30_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
+  /**
+   * Use the extension to propose technology-specific paths (e.g., {@code $GRADLE_USER_HOME}) to be added to the Defender's exclusion list.
+   */
   public interface Extension {
     @NotNull Collection<Path> getPaths(@NotNull Project project);
   }
