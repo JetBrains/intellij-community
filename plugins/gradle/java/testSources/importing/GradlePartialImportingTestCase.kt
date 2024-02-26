@@ -11,6 +11,7 @@ import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import java.util.function.Predicate
@@ -67,26 +68,28 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
       return setOf(ProjectProperties::class.java)
     }
 
-    override fun projectsLoaded(models: ModelsHolder<BuildModel, ProjectModel>?) {
-      val buildFinishedModel = models?.getModel(BuildFinishedModel::class.java)
-      if (buildFinishedModel != null) {
-        throw ProcessCanceledException(RuntimeException("buildFinishedModel should not be available for projectsLoaded callback"))
-      }
-
-      val rootProjectLoadedModel = models?.getModel(ProjectLoadedModel::class.java)
-      if (rootProjectLoadedModel == null) {
-        throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for projectsLoaded callback"))
-      }
-
-      if (rootProjectLoadedModel.map.containsValue("error")) {
-        val project = resolverCtx.externalSystemTaskId.findProject()!!
-        val modelConsumer = project.getService(ModelConsumer::class.java)
-        val build = (models as AllModels).mainBuild
-        for (gradleProject in build.projects) {
-          val projectLoadedModel = models.getModel(gradleProject, ProjectLoadedModel::class.java)!!
-          modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)
+    override fun createBuildListener() = object : GradleBuildActionListener {
+      override fun onProjectLoaded(models: ModelsHolder<BuildModel, ProjectModel>) {
+        val buildFinishedModel = models.getModel(BuildFinishedModel::class.java)
+        if (buildFinishedModel != null) {
+          throw ProcessCanceledException(RuntimeException("buildFinishedModel should not be available for projectsLoaded callback"))
         }
-        throw ProcessCanceledException(RuntimeException(rootProjectLoadedModel.map.toString()))
+
+        val rootProjectLoadedModel = models.getModel(ProjectLoadedModel::class.java)
+        if (rootProjectLoadedModel == null) {
+          throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for projectsLoaded callback"))
+        }
+
+        if (rootProjectLoadedModel.map.containsValue("error")) {
+          val project = resolverCtx.externalSystemTaskId.findProject()!!
+          val modelConsumer = project.getService(ModelConsumer::class.java)
+          val build = (models as AllModels).mainBuild
+          for (gradleProject in build.projects) {
+            val projectLoadedModel = models.getModel(gradleProject, ProjectLoadedModel::class.java)!!
+            modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)
+          }
+          throw ProcessCanceledException(RuntimeException(rootProjectLoadedModel.map.toString()))
+        }
       }
     }
 
