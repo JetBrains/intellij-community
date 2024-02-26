@@ -26,6 +26,9 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   val component: Component
     get() = data.foundComponent ?: cachedComponent?.takeIf { it.isShowing() } ?: findThisComponent().apply { cachedComponent = this }
 
+  fun setFocus() {
+    robotService.robot.focus(this.component)
+  }
 
   private fun findThisComponent(): Component {
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,

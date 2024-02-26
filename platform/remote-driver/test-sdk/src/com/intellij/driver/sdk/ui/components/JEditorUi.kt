@@ -4,6 +4,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.Document
 import com.intellij.driver.sdk.Editor
+import com.intellij.driver.sdk.logicalPosition
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
@@ -29,6 +30,13 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   val getCaretPosition
     get() = editor.getCaretModel().getLogicalPosition()
+
+  fun setCaretPosition(line: Int, column: Int) {
+    setFocus()
+    driver.withContext(OnDispatcher.EDT) {
+      editor.getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
+    }
+  }
 
   fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
     if (it.size < line) "" else it[line - 1]
@@ -60,6 +68,9 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
   val iconAreaOffset
     get() = gutter.getIconAreaOffset()
+
+  fun getIcon(line: Int) =
+    icons.first { it.line == line - 1 }.mark.getIcon().toString().substringAfterLast("/")
 
   inner class GutterIcon(private val data: GutterIconWithLocation) {
     val line: Int
