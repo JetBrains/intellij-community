@@ -7,6 +7,8 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.*
@@ -14,12 +16,14 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
@@ -29,6 +33,10 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.copy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -382,19 +390,46 @@ class JbSettingsImporter(private val configDirPath: Path,
     return retval
   }
 
-  fun installPlugins(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
-    val importOptions = configImportOptions(progressIndicator, pluginIds)
+  suspend fun installPlugins(
+    coroutineScope: CoroutineScope,
+    progressIndicator: ProgressIndicator,
+    pluginsMap: Map<PluginId, IdeaPluginDescriptor?>,
+  ) {
+    if (!SettingsService.getInstance().pluginIdsPreloaded) {
+      LOG.warn("Couldn't preload plugin ids, which indicates problems with connection. Will use old import")
+      val importOptions = configImportOptions(progressIndicator, pluginsMap.keys)
+      ConfigImportHelper.migratePlugins(
+        pluginsPath,
+        configDirPath,
+        PathManager.getPluginsDir(),
+        PathManager.getConfigDir(),
+        importOptions
+      ) { false }
+      return
+    }
+    val updateableMap = HashMap(pluginsMap)
+    progressIndicator.text2 = "Checking for plugin updates..."
+    val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(
+      buildNumber = null,
+      indicator = progressIndicator,
+      updateablePluginsMap = updateableMap
+    )
+    val downloadedPluginIds = mutableSetOf<PluginId>()
+    for (pluginDownloader in internalPluginUpdates.pluginUpdates.all) {
+      LOG.info("Downloading ${pluginDownloader.id}")
+      pluginDownloader.prepareToInstall(progressIndicator)
+      downloadedPluginIds.add(pluginDownloader.id)
+    }
+    progressIndicator.text2 = "Copying plugins..."
     ConfigImportHelper.migratePlugins(
-      pluginsPath,
-      configDirPath,
       PathManager.getPluginsDir(),
-      PathManager.getConfigDir(),
-      importOptions
-    ) { false }
+      updateableMap.values.toList(),
+      LOG
+    )
   }
 
   private fun configImportOptions(progressIndicator: ProgressIndicator,
-                                  pluginIds: List<String>): ConfigImportHelper.ConfigImportOptions {
+                                  pluginIds: Collection<PluginId>): ConfigImportHelper.ConfigImportOptions {
     val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
     importOptions.isHeadless = true
     importOptions.headlessProgressIndicator = progressIndicator
@@ -404,8 +439,8 @@ class JbSettingsImporter(private val configDirPath: Path,
                                            oldConfigDir: Path,
                                            bundledPlugins: MutableList<IdeaPluginDescriptor>,
                                            nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
-        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
-        bundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
+        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
+        bundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
       }
 
       override fun shouldForceCopy(path: Path): Boolean {
@@ -498,8 +533,6 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
 
   }
-
-  companion object {
-    val LOG = logger<JbSettingsImporter>()
-  }
 }
+
+private val LOG = logger<JbSettingsImporter>()
