@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -31,6 +31,7 @@ import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.VCS_
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import io.opentelemetry.sdk.trace.data.SpanData
+import io.opentelemetry.sdk.trace.internal.data.ExceptionEventData
 
 private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
@@ -39,22 +40,21 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
 
   private object LogHistorySpanExporter : AsyncSpanExporter {
     override suspend fun export(spans: Collection<SpanData>) {
-      spans.vcsSpans().forEach { span ->
-        LogHistory.entries
-          .find { historySpan -> historySpan.getName() == span.name }
-          ?.let { historySpan ->
-            val vcsName = span.attributes[VCS_NAME].orEmpty()
-            when (historySpan) {
-              LogHistory.Computing -> {
-                val indexComputing = "index" == span.attributes[FILE_HISTORY_TYPE]
-                if (span.attributes[FILE_HISTORY_IS_INITIAL] == true) {
-                  FILE_HISTORY_COMPUTING.log(vcsName, indexComputing, span.valueInMillis)
-                }
-              }
-              LogHistory.CollectingRenames -> FILE_HISTORY_COLLECTING_RENAMES.log(vcsName, span.valueInMillis)
-              else -> {}
+      for (span in spans.vcsSpans()) {
+        if (span.hasErrors()) continue
+        val historySpan = LogHistory.entries.find { it.getName() == span.name } ?: continue
+
+        val vcsName = span.attributes[VCS_NAME].orEmpty()
+        when (historySpan) {
+          LogHistory.Computing -> {
+            val indexComputing = "index" == span.attributes[FILE_HISTORY_TYPE]
+            if (span.attributes[FILE_HISTORY_IS_INITIAL] == true) {
+              FILE_HISTORY_COMPUTING.log(vcsName, indexComputing, span.valueInMillis)
             }
           }
+          LogHistory.CollectingRenames -> FILE_HISTORY_COLLECTING_RENAMES.log(vcsName, span.valueInMillis)
+          else -> {}
+        }
       }
     }
   }
@@ -62,7 +62,7 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
   private object LogFilterSpanExporter : AsyncSpanExporter {
     override suspend fun export(spans: Collection<SpanData>) {
       for (span in spans.vcsSpans()) {
-        if (span.status.statusCode == StatusCode.ERROR || span.name != LogFilter.getName()) continue
+        if (span.hasErrors() || span.name != LogFilter.getName()) continue
 
         val filtersList = span.attributes[VCS_LOG_FILTERS_LIST]?.toStringList()
         if (filtersList.isNullOrEmpty()) continue
@@ -87,6 +87,10 @@ private fun Collection<SpanData>.vcsSpans() = asSequence().filter { span -> span
 
 private val SpanData.valueInMillis
   get() = (endEpochNanos - startEpochNanos).toMillis()
+
+private fun SpanData.hasErrors(): Boolean {
+  return status.statusCode == StatusCode.ERROR || events.any { it is ExceptionEventData }
+}
 
 private const val SEPARATOR = "\u0001"
 
