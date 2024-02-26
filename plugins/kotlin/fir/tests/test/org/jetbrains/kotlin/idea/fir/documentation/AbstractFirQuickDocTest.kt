@@ -4,10 +4,18 @@ package org.jetbrains.kotlin.idea.fir.documentation
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import kotlin.io.path.Path
 
 abstract class AbstractFirQuickDocTest : AbstractQuickDocProviderTest() {
+
+    override fun getDirectives(textData: String?): List<String?> {
+        val directives = InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData, false, true, "K2_INFO:")
+        if (directives.isNotEmpty()) return directives
+        return super.getDirectives(textData)
+    }
+
     override fun getDoc(): String? {
         val target =
             IdeDocumentationTargetProvider.getInstance(project).documentationTargets(editor, file, editor.caretModel.offset).firstOrNull()
