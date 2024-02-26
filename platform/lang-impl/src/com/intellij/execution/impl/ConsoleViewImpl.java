@@ -1169,7 +1169,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  void type(@NotNull Editor editor, @NotNull String text) {
+  protected void type(@NotNull Editor editor, @NotNull String text) {
     ThreadingAssertions.assertEventDispatchThread();
     flushDeferredText();
     SelectionModel selectionModel = editor.getSelectionModel();
