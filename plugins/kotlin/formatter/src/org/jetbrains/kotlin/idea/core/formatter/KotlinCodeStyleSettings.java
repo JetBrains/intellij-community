@@ -11,6 +11,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle;
 import org.jetbrains.kotlin.idea.util.FormatterUtilKt;
 import org.jetbrains.kotlin.idea.util.ReflectionUtil;
 
@@ -87,6 +88,11 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
         PACKAGES_IMPORT_LAYOUT.addEntry(new KotlinPackageEntry("javax", true));
         PACKAGES_IMPORT_LAYOUT.addEntry(new KotlinPackageEntry("kotlin", true));
         PACKAGES_IMPORT_LAYOUT.addEntry(KotlinPackageEntry.ALL_OTHER_ALIAS_IMPORTS_ENTRY);
+
+        // Android Studio (b/327014903): backport parts of commit 87814b0e5f to enable early migration in tests. Drop during IJ 241 merge.
+        if (!isTempForDeserialize && Boolean.getBoolean("studio.internal.enable.new.kotlin.code.style")) {
+            FormatterUtilKt.applyKotlinCodeStyle(KotlinStyleGuideCodeStyle.CODE_STYLE_ID, this, false);
+        }
     }
 
     @Override

@@ -34,6 +34,11 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     private KotlinCommonCodeStyleSettings(boolean isTempForDeserialize) {
         super(KotlinLanguage.INSTANCE);
         this.isTempForDeserialize = isTempForDeserialize;
+
+        // Android Studio (b/327014903): backport parts of commit 87814b0e5f to enable early migration in tests. Drop during IJ 241 merge.
+        if (!isTempForDeserialize && Boolean.getBoolean("studio.internal.enable.new.kotlin.code.style")) {
+            FormatterUtilKt.applyKotlinCodeStyle(KotlinStyleGuideCodeStyle.CODE_STYLE_ID, this, false);
+        }
     }
 
     private static KotlinCommonCodeStyleSettings createForTempDeserialize() {
