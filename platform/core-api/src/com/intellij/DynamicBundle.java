@@ -29,6 +29,8 @@ import java.lang.reflect.Method;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiFunction;
 
 public class DynamicBundle extends AbstractBundle {
@@ -36,7 +38,9 @@ public class DynamicBundle extends AbstractBundle {
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
 
-  public static final Map<String, ResourceBundle> bundles = new HashMap<>();
+  @ApiStatus.Internal
+  public static final ConcurrentMap<String, ResourceBundle> bundles = new ConcurrentHashMap<>();
+
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
    * to its {@link #getMessage} and {@link #getLazyMessage} methods are added.
