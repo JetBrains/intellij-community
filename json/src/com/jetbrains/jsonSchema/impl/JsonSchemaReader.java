@@ -103,10 +103,13 @@ public final class JsonSchemaReader {
     return schemaObject;
   }
 
+  public static @Nullable JsonSchemaObject getOrComputeSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile, @NotNull Project project) {
+    return JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(schemaFile);
+  }
+
   public @Nullable JsonSchemaObject read(@NotNull PsiFile file) {
     if (Registry.is("json.schema.object.v2")) {
-      return JsonSchemaObjectStorage.getInstance(file.getProject())
-        .getOrComputeSchemaRootObject(file.getOriginalFile().getVirtualFile());
+      return getOrComputeSchemaObjectForSchemaFile(file.getOriginalFile().getVirtualFile(), file.getProject());
     }
 
     JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(file, JsonSchemaObjectReadingUtils.NULL_OBJ);

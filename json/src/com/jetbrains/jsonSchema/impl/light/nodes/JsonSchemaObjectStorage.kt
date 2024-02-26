@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.openapi.vfs.impl.http.RemoteFileState
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import java.io.InputStream
@@ -67,7 +68,12 @@ internal class JsonSchemaObjectStorage {
   }
 
   private fun VirtualFile.asSchemaId(): SchemaId {
-    return SchemaId(this, this.modificationStamp)
+    return if (this is LightVirtualFile) {
+      SchemaId(this, -1)
+    }
+    else {
+      SchemaId(this, this.modificationStamp)
+    }
   }
 
   private fun createRootSchemaObject(schemaFile: VirtualFile): JsonSchemaObject {
