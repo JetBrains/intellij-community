@@ -167,14 +167,15 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
         return introduceValuesForParameters
     }
 
-    protected fun <TypeParameter> processTypeParameterUsages(callElement: KtCallElement?,
-                                                             typeParameters: List<TypeParameter>,
-                                                             namer: (TypeParameter) -> Name,
-                                                             typeRetriever: (TypeParameter) -> KotlinType?,
-                                                             renderType: (KotlinType) -> String,
-                                                             isArrayType: (KotlinType) -> Boolean,
-                                                             renderClassifier: (KotlinType) -> String?
-                                                             ) {
+    protected fun <TypeParameter> processTypeParameterUsages(
+        callElement: KtCallElement?,
+        typeParameters: List<TypeParameter>,
+        namer: (TypeParameter) -> Name,
+        typeRetriever: (TypeParameter) -> KotlinType?,
+        renderType: (KotlinType) -> String,
+        isArrayType: (KotlinType) -> Boolean,
+        renderClassifier: (KotlinType) -> String?
+    ) {
         val explicitTypeArgs = callElement?.typeArgumentList?.arguments
         if (explicitTypeArgs != null && explicitTypeArgs.size != typeParameters.size) return
 

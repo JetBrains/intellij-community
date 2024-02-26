@@ -44,7 +44,7 @@ fun addTypeArguments(element: KtCallElement, context: String, project: Project) 
 }
 
 context(KtAnalysisSession)
-fun KtType.containsErrorType(): Boolean = when (this) {
+private fun KtType.containsErrorType(): Boolean = when (this) {
     is KtClassErrorType -> true
     is KtTypeErrorType -> true
     is KtFunctionalType -> {

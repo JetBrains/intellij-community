@@ -49,8 +49,10 @@ abstract class AbstractKotlinInlineDialog<TDeclaration : KtNamedDeclaration>(
     abstract fun createProcessor(): BaseRefactoringProcessor
 
     // NB: can be -1 in case of too expensive search!
-    protected val occurrencesNumber = ActionUtil.underModalProgress(project,
-                                                                    KotlinBundle.message("progress.title.calculate.occurrences")) { initOccurrencesNumber(declaration) }
+    protected val occurrencesNumber =
+        ActionUtil.underModalProgress(project, KotlinBundle.message("progress.title.calculate.occurrences")) {
+            initOccurrencesNumber(declaration)
+        }
 
     private val occurrencesString
         get() = if (occurrencesNumber >= 0) {
