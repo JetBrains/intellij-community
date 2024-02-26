@@ -1,12 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization.impl;
 
-import com.intellij.platform.runtime.product.*;
-import com.intellij.platform.runtime.product.impl.MainRuntimeModuleGroup;
-import com.intellij.platform.runtime.product.impl.PluginModuleGroupImpl;
-import com.intellij.platform.runtime.product.impl.ProductModulesImpl;
-import com.intellij.platform.runtime.repository.*;
+import com.intellij.platform.runtime.product.ModuleImportance;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
+import com.intellij.platform.runtime.product.serialization.RawProductModules;
+import com.intellij.platform.runtime.repository.RuntimeModuleId;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.stream.XMLInputFactory;
@@ -18,16 +16,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public final class ProductModulesXmlLoader {
-  public static @NotNull ProductModules parseModuleXml(@NotNull InputStream inputStream, @NotNull String debugName,
-                                                       @NotNull ProductMode currentMode,
-                                                       @NotNull RuntimeModuleRepository repository) throws XMLStreamException {
+public final class ProductModulesXmlSerializer {
+  public static @NotNull RawProductModules parseModuleXml(@NotNull InputStream inputStream) throws XMLStreamException {
     XMLStreamReader reader = XMLInputFactory.newDefaultFactory().createXMLStreamReader(inputStream);
     int level = 0;
     ModuleImportance importance = null;
     String moduleName = null;
     List<RawIncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
-    List<PluginModuleGroup> bundledPluginModuleGroups = new ArrayList<>();
+    List<RuntimeModuleId> bundledPluginMainModules = new ArrayList<>();
     String parentTag = null;
     while (reader.hasNext()) {
       int event = reader.next();
@@ -66,13 +62,7 @@ public final class ProductModulesXmlLoader {
             rootMainGroupModules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), importance));
           }
           else {
-            RuntimeModuleDescriptor module = repository.resolveModule(RuntimeModuleId.raw(moduleName)).getResolvedModule();
-            /* todo: this check is temporarily added for JetBrains Client; 
-               It includes intellij.performanceTesting.async plugin which dependencies aren't available in all IDEs, so we need to skip it.
-               Plugins should define which modules from them should be included into JetBrains Client instead. */
-            if (module != null) {
-              bundledPluginModuleGroups.add(new PluginModuleGroupImpl(module, currentMode, repository));
-            }
+            bundledPluginMainModules.add(RuntimeModuleId.raw(moduleName));
           }
           moduleName = null;
           importance = null;
@@ -83,7 +73,6 @@ public final class ProductModulesXmlLoader {
       }
     }
     reader.close();
-    MainRuntimeModuleGroup mainGroup = new MainRuntimeModuleGroup(rootMainGroupModules, currentMode, repository);
-    return new ProductModulesImpl(debugName, mainGroup, bundledPluginModuleGroups);
+    return new RawProductModules(rootMainGroupModules, bundledPluginMainModules);
   }
 }
