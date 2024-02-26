@@ -8,6 +8,8 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 
 public interface PyConsoleOptionsProvider {
   ExtensionPointName<PyConsoleOptionsProvider> EP_NAME = ExtensionPointName.create("Pythonid.consoleOptionsProvider");
@@ -23,4 +25,6 @@ public interface PyConsoleOptionsProvider {
 
   @Nullable
   PyConsoleParameters getConsoleParameters(@NotNull Module module);
+
+  void customizeEnvVariables(@NotNull Module module, @NotNull Map<String, String> environmentVariablesToBeCustomized);
 }
