@@ -39,6 +39,8 @@ class InMemoryEmbeddingSearchIndex(root: Path, limit: Int? = null) : EmbeddingSe
     id in idToEmbedding
   }
 
+  override fun lookup(id: String): FloatTextEmbedding? = lock.read { idToEmbedding[id] }
+
   override fun clear() = lock.write {
     idToEmbedding.clear()
     uncheckedIds.clear()

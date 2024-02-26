@@ -184,7 +184,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
 
     val updateEvents = featureCache.getUpdateEventsAndCache(project, shouldLogFeatures, elements.take(REPORTED_ITEMS_LIMIT),
-                                                             contributorFeaturesProvider, elementIdProvider)
+                                                            contributorFeaturesProvider, elementIdProvider)
     val events = listOf(
       IS_PROJECT_DISPOSED_KEY.with(updateEvents == null)
     )
@@ -336,7 +336,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   val FEATURES_DATA_KEY = createFeaturesEventObject()
   val ML_WEIGHT_KEY = EventFields.Double("mlWeight")
   val ABSENT_FEATURES_KEY = EventFields.StringListValidatedByCustomRule("absentFeatures",
-                                                                                SearchEverywhereMlElementFeatureValidationRule::class.java)
+                                                                        SearchEverywhereMlElementFeatureValidationRule::class.java)
   val CONTRIBUTOR_DATA_KEY = ObjectEventField(
     "contributor", *SearchEverywhereContributorFeaturesProvider.getFeaturesDeclarations().toTypedArray()
   )
@@ -357,8 +357,9 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   private fun collectNameFeaturesToFields(): Map<String, EventField<*>> {
     val nameFeatureToField = hashMapOf<String, EventField<*>>(
-      SearchEverywhereElementFeaturesProvider.NAME_LENGTH.name to SearchEverywhereElementFeaturesProvider.NAME_LENGTH,
-      SearchEverywhereElementFeaturesProvider.ML_SCORE_KEY.name to SearchEverywhereElementFeaturesProvider.ML_SCORE_KEY
+      *SearchEverywhereElementFeaturesProvider.run {
+        listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY)
+      }.map { it.name to it }.toTypedArray()
     )
     nameFeatureToField.putAll(SearchEverywhereElementFeaturesProvider.nameFeatureToField.values.map { it.name to it })
     for (featureProvider in SearchEverywhereElementFeaturesProvider.getFeatureProviders()) {

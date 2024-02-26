@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core.features
 
+import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.searchEverywhereMl.ranking.core.searchEverywhereMlRankingService
 import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
 import org.jetbrains.annotations.ApiStatus
@@ -30,7 +32,8 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
 
     internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
     internal val ML_SCORE_KEY = EventFields.Double("mlScore")
-
+    internal val SIMILARITY_SCORE = EventFields.Double("similarityScore")
+    internal val IS_SEMANTIC_ONLY = EventFields.Boolean("isSemanticOnly")
 
     internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
@@ -90,6 +93,10 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       }
     }
     return result
+  }
+
+  protected fun getQueryEmbedding(queryText: String): FloatTextEmbedding? {
+    return searchEverywhereMlRankingService?.getCurrentSession()?.getSearchQueryEmbedding(queryText)
   }
 
   internal fun setMatchValueToField(matchValue: Any,

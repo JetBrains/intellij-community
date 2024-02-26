@@ -54,6 +54,8 @@ class DiskSynchronizedEmbeddingSearchIndex(val root: Path, limit: Int? = null) :
     id in idToEntry
   }
 
+  override fun lookup(id: String): FloatTextEmbedding? = lock.read { idToEntry[id]?.embedding }
+
   override fun clear() = lock.write {
     indexToId.clear()
     idToEntry.clear()
