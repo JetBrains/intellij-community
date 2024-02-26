@@ -145,6 +145,40 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     @RequiresReadLockAbsence
     @JvmStatic
     @JvmOverloads
+    fun getNearestUpdate(
+      ids: Set<PluginId>,
+      buildNumber: BuildNumber? = null,
+      throwExceptions: Boolean = false
+    ): List<IdeUpdate> {
+      try {
+        if (ids.isEmpty()) {
+          return emptyList()
+        }
+
+        val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
+        return HttpRequests.post(MarketplaceUrls.getSearchNearestUpdate(), HttpRequests.JSON_CONTENT_TYPE).run {
+          productNameAsUserAgent()
+          throwStatusCodeException(throwExceptions)
+          connect {
+            it.write(data)
+            val allBytes = String(it.inputStream.readAllBytes())
+            objectMapper.readValue(allBytes, object : TypeReference<List<IdeUpdate>>() {})
+          }
+        }
+      }
+      catch (e: Exception) {
+        LOG.infoOrDebug("Can not get compatible updates from Marketplace", e)
+        if (throwExceptions) {
+          throw e
+        }
+        return emptyList()
+      }
+    }
+
+    @RequiresBackgroundThread
+    @RequiresReadLockAbsence
+    @JvmStatic
+    @JvmOverloads
     @Throws(IOException::class)
     fun loadPluginDescriptor(
       xmlId: String,

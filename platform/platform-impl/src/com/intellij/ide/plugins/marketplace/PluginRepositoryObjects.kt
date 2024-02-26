@@ -29,6 +29,18 @@ data class IdeCompatibleUpdate(
   val version: String = ""
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class IdeUpdate(
+  @get:JsonProperty("id")
+  val externalUpdateId: String = "",
+  @get:JsonProperty("xmlId")
+  val pluginId: String = "",
+  val products: List<String> = emptyList(),
+  val updateCompatibility: Map<String, Long> = emptyMap(),
+  @get:JsonProperty("isCompatible")
+  val isCompatible: Boolean = false
+)
+
 /**
  * Plugin Repository object for storing information about plugin updates.
  */
