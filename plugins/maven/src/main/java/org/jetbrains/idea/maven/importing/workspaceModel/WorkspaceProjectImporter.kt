@@ -669,12 +669,6 @@ private class AfterImportConfiguratorsTask(private val contextData: UserDataHold
   override fun perform(project: Project,
                        embeddersManager: MavenEmbeddersManager,
                        indicator: ProgressIndicator) {
-    runImportActivitySync(project, MavenUtil.SYSTEM_ID, AfterImportConfiguratorsTask::class.java) {
-      doPerform(project, indicator)
-    }
-  }
-
-  private fun doPerform(project: Project, indicator: ProgressIndicator) {
     val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
       override val project = project
       override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
