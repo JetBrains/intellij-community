@@ -284,6 +284,15 @@ class NotebookOutputInlayController private constructor(
       currentControllers: Collection<NotebookCellInlayController>,
       intervalIterator: ListIterator<NotebookCellLines.Interval>,
     ): NotebookCellInlayController? {
+      return compute(editor, currentControllers, intervalIterator, overriddenPointer = null)
+    }
+
+    fun compute(
+      editor: EditorImpl,
+      currentControllers: Collection<NotebookCellInlayController>,
+      intervalIterator: ListIterator<NotebookCellLines.Interval>,
+      overriddenPointer: NotebookIntervalPointer?,
+    ): NotebookCellInlayController? {
       val interval = intervalIterator.next()
       if (interval.type != NotebookCellLines.CellType.CODE) return null
       // temporarily disable for diff until it can be done properly, see PY-20132
@@ -304,7 +313,7 @@ class NotebookOutputInlayController private constructor(
         .filter { it.inlay.offset == expectedOffset } // see DS-3445, may occur when external program changes file
         .maxByOrNull { it.rankCompatibility(outputDataKeys) }
 
-      val intervalPointer = NotebookIntervalPointerFactory.get(editor).create(interval)
+      val intervalPointer = overriddenPointer ?: NotebookIntervalPointerFactory.get(editor).create(interval)
       val controller = existsController ?: NotebookOutputInlayController(this, editor, intervalPointer)
       return controller.takeIf { it.updateData(outputDataKeys) }
     }
