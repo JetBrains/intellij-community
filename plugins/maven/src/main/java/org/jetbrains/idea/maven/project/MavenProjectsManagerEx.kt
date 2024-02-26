@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.importActivityStarted
+import org.jetbrains.idea.maven.importing.runMavenConfigurationTask
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
@@ -145,7 +146,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       for (task in importResult.postTasks) {
         withContext(tracer.span(task.toString())) {
           blockingContext {
-            task.perform(myProject, embeddersManager, indicator)
+            runMavenConfigurationTask(project, parentActivity, task.javaClass) {
+              task.perform(myProject, embeddersManager, indicator)
+            }
           }
         }
       }

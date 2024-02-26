@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector.EXTERNAL_SYSTEM_ID
 
 object ProjectImportCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("project.import", 10)
+  val GROUP = EventLogGroup("project.import", 11)
 
   @JvmField
   val TASK_CLASS = EventFields.Class("task_class")
@@ -73,7 +73,8 @@ object ProjectImportCollector : CounterUsagesCollector() {
                                                         parentActivity = IMPORT_ACTIVITY)
 
   @JvmField
-  val PROJECT_CONFIGURATION_STAGE = GROUP.registerIdeActivity("configure",
+  val PROJECT_CONFIGURATION_STAGE = GROUP.registerIdeActivity("configure_post_process",
+                                                              startEventAdditionalFields = arrayOf(TASK_CLASS),
                                                               parentActivity = IMPORT_ACTIVITY)
 
   @JvmField
