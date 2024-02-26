@@ -9,6 +9,7 @@ import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
@@ -406,7 +407,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       return
     }
     val updateableMap = HashMap(pluginsMap)
-    progressIndicator.text2 = "Checking for plugin updates..."
+    progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
     val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(
       buildNumber = null,
       indicator = progressIndicator,
@@ -415,7 +416,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     for (pluginDownloader in internalPluginUpdates.pluginUpdates.all) {
       LOG.info("Downloading ${pluginDownloader.id}")
       if (pluginDownloader.prepareToInstall(progressIndicator)) {
-        PluginInstaller.unpackPlugin(pluginDownloader.getFilePath(), PathManager.getPluginsDir())
+        PluginInstaller.unpackPlugin(pluginDownloader.filePath, PathManager.getPluginsDir())
         LOG.info("Downloaded and unpacked newer version of plugin '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}")
       }
       else {
@@ -427,7 +428,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       }
     }
     checkPluginsCompatibility(updateableMap, progressIndicator)
-    progressIndicator.text2 = "Copying plugins..."
+    progressIndicator.text2 = ImportSettingsBundle.message("progress.details.copying.plugins")
     ConfigImportHelper.migratePlugins(
       PathManager.getPluginsDir(),
       updateableMap.values.toList(),
@@ -440,7 +441,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     progressIndicator: ProgressIndicator
   ) {
     val myIdeData = IDEData.getSelf() ?: return
-    progressIndicator.text2 = "Checking plugins compatibility"
+    progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.plugins.compatibility")
     val updates = MarketplaceRequests.getNearestUpdate(updateablePluginsMap.keys)
     for (update in updates) {
       if (update.isCompatible)

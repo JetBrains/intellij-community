@@ -96,6 +96,7 @@ internal data class JbProductInfo(
         if (descr != null && isCompatible(descr)) {
           descriptorsMap[descr.pluginId] = descr
         }
+        descriptors2ProcessCnt.decrementAndGet()
       }
     }
   }
@@ -392,7 +393,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       progressIndicator.cancel()
       importStartedDeferred?.apply {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), ImportSettingsBundle.message("progress.title.cancelling")) {
-          LOG.info("Import cancelled. Waiting for the current task to be finished")
+          LOG.info("Cancelling import. Waiting for the current task to be finished")
           join()
         }
       }
@@ -407,39 +408,39 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
           //TODO support plugin list customization for raw import
           //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
           importer.importRaw()
-          LOG.info("Imported all completed in ${System.currentTimeMillis() - startTime} ms. ")
-          LOG.info("Calling restart...")
+          LOG.info("Imported finished in ${System.currentTimeMillis() - startTime} ms. ")
           return true
         }
         else {
           try {
-            progressIndicator.text2 = "Migrating options"
             LOG.info("Starting migration...")
             var restartRequired = false
-            if (!plugins2import.isNullOrEmpty()) {
-              LOG.info("Started importing plugins...")
-              restartRequired = true
-              importer.installPlugins(coroutineScope, progressIndicator, plugins2import)
-            }
-            if (progressIndicator.isCanceled()) {
-              LOG.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
-              return restartRequired
-            }
             try {
+              if (!plugins2import.isNullOrEmpty()) {
+                LOG.info("Started importing plugins...")
+                restartRequired = true
+                val pluginsStartTime = System.currentTimeMillis()
+                importer.installPlugins(coroutineScope, progressIndicator, plugins2import)
+                LOG.info("Plugins migrated in ${System.currentTimeMillis() - pluginsStartTime} ms.")
+              }
+              if (progressIndicator.isCanceled()) {
+                LOG.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
+                return restartRequired
+              }
+              progressIndicator.text = ImportSettingsBundle.message("progress.text.migrating.options")
+              val optionsStartTime = System.currentTimeMillis()
               if (importer.importOptions(progressIndicator, filteredCategories)) {
                 restartRequired = true
               }
+              LOG.info("Options migrated in ${System.currentTimeMillis() - optionsStartTime} ms.")
             }
             catch (pce: ProcessCanceledException) {
-              LOG.info("Import process cancelled. ${if (restartRequired) "Will now restart." else "Will proceed to the normal IDE startup."}")
+              LOG.info("Import cancelled")
               return restartRequired
             }
-            LOG.info("Options migrated in ${System.currentTimeMillis() - startTime} ms.")
             progressIndicator.fraction = 0.99
             storeImportConfig(productInfo.configDir, filteredCategories, plugins2import?.keys?.map { it.idString })
-            LOG.info("Plugins imported in ${System.currentTimeMillis() - startTime} ms. ")
-            LOG.info("Calling restart...")
-            // restart if we install plugins
+            LOG.info("Imported finished in ${System.currentTimeMillis() - startTime} ms. ")
             return restartRequired
           }
           catch (th: Throwable) {
@@ -450,12 +451,14 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       }
 
       fun restartIde() {
+        LOG.info("Calling restart...")
         ApplicationManager.getApplication().invokeLater({
                                                           ApplicationManagerEx.getApplicationEx().restart(true)
                                                         }, modalityState)
       }
 
       fun closeImportDialog() {
+        LOG.info("Proceeding to the normal IDE startup")
         SettingsService.getInstance().doClose.fire(Unit)
       }
 
