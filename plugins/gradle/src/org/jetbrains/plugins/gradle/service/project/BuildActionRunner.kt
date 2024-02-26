@@ -173,7 +173,8 @@ class BuildActionRunner(
   private inner class BuildActionResultHandler(
     val buildFinishedCallBack: Consumer<GradleConnectionException?>
   ): ResultHandler<Any> {
-    override fun onFailure(connectionException: GradleConnectionException?) {
+
+    override fun onFailure(connectionException: GradleConnectionException) {
       resultQueue.add(connectionException)
       buildFinishedCallBack.accept(connectionException)
     }
