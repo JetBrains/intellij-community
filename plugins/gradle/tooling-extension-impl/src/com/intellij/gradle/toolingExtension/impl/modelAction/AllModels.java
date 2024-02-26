@@ -7,7 +7,6 @@ import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
@@ -41,11 +40,6 @@ public final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
     setupIncludedBuildsHierarchy(includedBuilds, nestedGradleBuilds);
 
     setBuildEnvironment(InternalBuildEnvironment.convertBuildEnvironment(buildEnvironment));
-  }
-
-  public AllModels(@NotNull IdeaProject ideaProject) {
-    super(DefaultBuild.convertIdeaProject(ideaProject));
-    addModel(ideaProject, IdeaProject.class);
   }
 
   @NotNull

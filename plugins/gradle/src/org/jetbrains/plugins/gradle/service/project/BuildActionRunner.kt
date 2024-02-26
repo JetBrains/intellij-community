@@ -1,16 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.*
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
-import org.gradle.tooling.model.idea.IdeaProject
-import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
-import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -22,18 +21,15 @@ import java.util.function.Consumer
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
  * Gradle that is present.
  *
- * In order to do this we require the current [resolverCtx] and the [buildAction] that should be run
+ * To do this, we require the current [resolverCtx] and the [buildAction] that should be run.
  *
  * We also require the [helper] which will be used to set up each [BuildActionExecuter]. We may need to set up more than one
  * of these if the version of Gradle that we are connecting to doesn't support the certain features.
  *
- * We have three different cases which will be handled in [fetchModels] we will try the most recent first, falling back to the older
- * ones if a [GradleConnectionException] is thrown.
- * These three cases are as follows:
- *   (Gradle 4.8 and above) Using the PhasedBuildActionExecuter, this allows us to inject build actions into different parts of the
- *                          Gradle build. It also allows us to run schedule tasks to be run after fetching the models.
- *   (Gradle 1.8 and above) Using the [BuildActionExecuter]
- *   (Gradle 1.7 and below) Using [GradleExecutionHelper.getModelBuilder]
+ * We have two different cases which will be handled in [fetchModels] we will try the most recent first,
+ * falling back to the older ones if a [GradleConnectionException] is thrown. For Gradle 4.8 and above,
+ * we use [BuildActionExecuter] in phased mode. This allows us to inject build actions into different parts of the Gradle build.
+ * It also allows us to run schedule tasks to be run after fetching the models.
  */
 class BuildActionRunner(
   private val resolverCtx: ProjectResolverContext,
@@ -57,13 +53,10 @@ class BuildActionRunner(
   /**
    * Fetches the [AllModels] that have been populated as a result of running the [GradleModelFetchAction] against the Gradle tooling API.
    *
-   * This method returns as soon as the all models have been obtained.
+   * This method returns as soon as all models have been obtained.
    *
    * The [projectsLoadedCallBack] will be run as soon as the models available when Gradle loaded projects before the build has finished.
    * The [buildFinishedCallBack] will be run when the complete Gradle operation has finished (including any tasks that need to be run).
-   *
-   * For Gradle versions below 1.8 we fall back to the old [org.gradle.tooling.ModelBuilder] api, using the [helper] and
-   * [settings].
    */
   fun fetchModels(projectsLoadedCallBack: Consumer<ModelsHolder<BuildModel, ProjectModel>>,
                   buildFinishedCallBack: Consumer<GradleConnectionException?>): AllModels {
@@ -77,7 +70,7 @@ class BuildActionRunner(
     createPhasedExecuter(projectsLoadedCallBack).run(BuildActionResultHandler(buildFinishedCallBack))
 
     val phasedResult = takeQueueResultBlocking()
-    // If we have a non-unsupported version exception pass the failure up to be dealt with by the ExternalSystem
+    // If we have a non-unsupported version exception, pass the failure up to be dealt with by the ExternalSystem
     if (phasedResult is Throwable && phasedResult !is UnsupportedVersionException) throw phasedResult
     // If we have a result, return it
     if (phasedResult !is Throwable) return phasedResult as AllModels
@@ -89,27 +82,10 @@ class BuildActionRunner(
     createDefaultExecuter().run(BuildActionResultHandler(buildFinishedCallBack))
 
     val result = takeQueueResultBlocking()
-    // If we have a non-unsupported version exception pass the failure up to be dealt with by the ExternalSystem
-    if (result is Throwable && result !is UnsupportedVersionException) throw result
+    // If we have an exception, pass the failure up to be dealt with by the ExternalSystem
+    if (result is Throwable) throw result
     // If we have a result, return it
-    if (result !is Throwable) return result as AllModels
-
-    // BuildActions are unsupported in this version of Gradle, try the model builder API.
-    resolverCtx.checkCancelled()
-
-    // Old gradle distribution version used (before ver. 1.8)
-    // fallback to use ModelBuilder gradle tooling API
-    val modelBuilder = helper.getModelBuilder(
-      IdeaProject::class.java,
-      resolverCtx.connection,
-      resolverCtx.externalSystemTaskId,
-      settings,
-      resolverCtx.listener
-    )
-
-    buildFinishedCallBack.accept(null)
-
-    return AllModels(modelBuilder.get())
+    return result as AllModels
   }
 
   private fun notifyConnectionAboutChangedPaths() {
@@ -181,7 +157,7 @@ class BuildActionRunner(
 
     /**
      * The parameter [allModels] will be null if running from the Phased executer as to obtain the models via [modelsHandler].
-     * However if it is not null then we must be running from the normal build action excuter and thus the [allModels] must be
+     * However, if it is not null then we must be running from the normal build action excuter and thus the [allModels] must be
      * added to the queue to unblock the main thread.
      */
     override fun onComplete(allModels: Any?) {

@@ -82,18 +82,6 @@ public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
-  public <T> @NotNull ModelBuilder<T> getModelBuilder(
-    @NotNull Class<T> modelType,
-    @NotNull ProjectConnection connection,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskNotificationListener listener
-  ) {
-    ModelBuilder<T> operation = connection.model(modelType);
-    prepare(connection, operation, id, settings, listener);
-    return operation;
-  }
-
   public @NotNull BuildLauncher getBuildLauncher(
     @NotNull ProjectConnection connection,
     @NotNull ExternalSystemTaskId id,
