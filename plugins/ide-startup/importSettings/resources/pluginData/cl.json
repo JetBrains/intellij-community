@@ -325,6 +325,11 @@
     "ideaId": "com.jetbrains.rust"
   },
   {
+    "vsCodeId": "tamasfe.even-better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"

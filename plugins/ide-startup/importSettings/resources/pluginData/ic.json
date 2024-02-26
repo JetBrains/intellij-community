@@ -111,7 +111,7 @@
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
-    "ideaName": "Kotlin",
+    "ideaName": "Kotlin Language",
     "builtIn": true
   },
   {
@@ -156,7 +156,7 @@
   },
   {
     "vsCodeId": "redhat.java",
-    "ideaName": "Java",
+    "ideaName": "Language Support for Java(TM) by Red Hat",
     "builtIn": true
   },
   {
@@ -185,6 +185,11 @@
     "ideaId": "tanvd.grazi"
   },
   {
+    "vsCodeId": "tamasfe.even-better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
@@ -192,7 +197,7 @@
   {
     "vsCodeId": "vscjava.vscode-gradle",
     "ideaName": "Gradle",
-    "builtIn": true
+    "ideaId": "com.intellij.gradle"
   },
   {
     "vsCodeId": "vscjava.vscode-java-debug",
@@ -221,7 +226,7 @@
   },
   {
     "vsCodeId": "vscjava.vscode-maven",
-    "ideaName": "Maven",
+    "ideaName": "Maven for Java",
     "builtIn": true
   },
   {

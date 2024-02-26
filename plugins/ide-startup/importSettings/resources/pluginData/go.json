@@ -470,6 +470,11 @@
     "ideaId": "org.jetbrains.plugins.stylus"
   },
   {
+    "vsCodeId": "tamasfe.even-better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "techer.open-in-browser",
     "ideaName": "Open in browser",
     "builtIn": true
