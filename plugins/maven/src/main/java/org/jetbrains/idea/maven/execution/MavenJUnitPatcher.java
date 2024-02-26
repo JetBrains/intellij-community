@@ -149,7 +149,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    List<String> excludes = getExcludedArtifacts(config);
+    List<String> excludes = getExcludedCoordinates(config);
     String scopeExclude = MavenJDOMUtil.findChildValueByPath(config, "classpathDependencyScopeExclude");
 
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(module.getProject());
@@ -246,7 +246,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
   }
 
   @NotNull
-  private static List<String> getExcludedArtifacts(@NotNull Element config) {
+  private static List<String> getExcludedCoordinates(@NotNull Element config) {
     Element excludesElement = config.getChild("classpathDependencyExcludes");
     if (excludesElement == null) {
       return Collections.emptyList();
