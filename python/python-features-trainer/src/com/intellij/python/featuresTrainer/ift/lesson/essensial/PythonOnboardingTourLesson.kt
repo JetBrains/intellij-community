@@ -7,16 +7,12 @@ import com.intellij.execution.console.DuplexConsoleListener
 import com.intellij.execution.console.DuplexConsoleView
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -25,8 +21,6 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.ToolWindowManager
@@ -46,7 +40,6 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.sdk.pythonSdk
-import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.checkEditorModification
@@ -58,7 +51,6 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonProperties
-import training.learn.lesson.LessonManager
 import training.learn.lesson.general.run.clearBreakpoints
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
@@ -181,39 +173,7 @@ class PythonOnboardingTourLesson :
     uiSettings.showNewMainToolbar = showMainToolbarPreference
     uiSettings.fireUISettingsChanged()
 
-    if (!lessonEndInfo.lessonPassed) {
-      LessonUtil.showFeedbackNotification(this, project)
-      return
-    }
-    val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
-    invokeLater {
-      val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
-                                                    PythonLessonsBundle.message("python.onboarding.finish.text",
-                                                                                LessonUtil.returnToWelcomeScreenRemark()))
-        .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
-        .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
-        .icon(FeaturesTrainerIcons.PluginIcon)
-        .show(project)
-
-      when (result) {
-        Messages.YES -> invokeLater {
-          LessonManager.instance.stopLesson()
-          val closeAction = getActionById("CloseProject")
-          dataContextPromise.onSuccess { context ->
-            invokeLater {
-              val event = AnActionEvent.createFromAnAction(closeAction, null, ActionPlaces.LEARN_TOOLWINDOW, context)
-              ActionUtil.performActionDumbAwareWithCallbacks(closeAction, event)
-            }
-          }
-        }
-        Messages.NO -> invokeLater {
-          LearningUiManager.resetModulesView()
-        }
-      }
-      if (result != Messages.YES) {
-        LessonUtil.showFeedbackNotification(this, project)
-      }
-    }
+    showEndOfLessonDialogAndFeedbackForm(this, lessonEndInfo, project)
   }
 
   private fun LessonContext.debugTasks() {
