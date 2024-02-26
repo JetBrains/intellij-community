@@ -35,7 +35,7 @@ object GradleDependencySourceDownloader {
   private const val INIT_SCRIPT_FILE_PREFIX = "ijDownloadSources"
 
   @JvmStatic
-  fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, externalProjectPath: String)
+  fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, projectPath: String)
     : CompletableFuture<File> {
     var sourcesLocationFilePath: String
     var sourcesLocationFile: File
@@ -51,12 +51,12 @@ object GradleDependencySourceDownloader {
     val taskName = "ijDownloadSources" + UUID.randomUUID().toString().substring(0, 12)
     val settings = ExternalSystemTaskExecutionSettings().also {
       it.executionName = executionName
-      it.externalProjectPath = externalProjectPath
+      it.externalProjectPath = projectPath
       it.taskNames = listOf(taskName)
       it.vmOptions = GradleSettings.getInstance(project).getGradleVmOptions()
       it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     }
-    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFilePath)
+    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath)
     val resultWrapper = CompletableFuture<File>()
     val callback = object : TaskCallback {
       override fun onSuccess() {
@@ -94,14 +94,15 @@ object GradleDependencySourceDownloader {
     return resultWrapper
   }
 
-  private fun prepareUserData(sourceArtifactNotation: String, taskName: String, sourcesLocationFilePath: String): UserDataHolderBase {
+  private fun prepareUserData(sourceArtifactNotation: String, taskName: String, sourcesLocationFilePath: String, projectPath: String)
+    : UserDataHolderBase {
     val legacyInitScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath) },
+      scriptSupplier = { loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 > it }
     )
     val initScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath) },
+      scriptSupplier = { loadDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 <= it }
     )

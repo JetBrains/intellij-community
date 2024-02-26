@@ -7,32 +7,31 @@ interface Properties {
   public static final String targetPath = TARGET_PATH
 //noinspection GrUnresolvedAccess
   public static final String gradleTaskName = GRADLE_TASK_NAME
+  //noinspection GrUnresolvedAccess
+  public static final String projectPath = GRADLE_PROJECT_PATH
 }
 
-// Solution for Gradle 3.0...5.5
-Set<? extends ArtifactRepository> projectRepositories() {
-  def target = new HashSet()
-  allprojects {
-    target.addAll(it.repositories)
+allprojects {
+  afterEvaluate {
+    if (it.projectDir.path == Properties.projectPath) {
+      configureProject(it)
+    }
   }
-  return target
 }
 
-gradle.projectsEvaluated {
-  rootProject
-    .repositories
-    .addAll(projectRepositories())
-  rootProject.tasks
+private static void configureProject(Project project) {
+  project
+    .tasks
     .create(Properties.gradleTaskName) {
       doLast {
         def configuration
-        def repository = rootProject.repositories.toList().find {
+        def repository = project.repositories.toList().find {
           logger.lifecycle('Attempt to download sources from ' + it.name)
           project.repositories.clear()
           project.repositories.add(it)
-          configuration = rootProject.configurations.create('downloadSourcesFrom_' + UUID.randomUUID())
+          configuration = project.configurations.create('downloadSourcesFrom_' + UUID.randomUUID())
           configuration.transitive = false
-          rootProject.dependencies.add(configuration.name, Properties.dependencyNotation)
+          project.dependencies.add(configuration.name, Properties.dependencyNotation)
           def files = null
           try {
             files = configuration.resolvedConfiguration.lenientConfiguration.getFiles()
@@ -42,9 +41,9 @@ gradle.projectsEvaluated {
           return files && !files.isEmpty()
         }
         if (!repository) {
-          configuration = rootProject.configurations.create('downloadSources_' + UUID.randomUUID())
+          configuration = project.configurations.create('downloadSources_' + UUID.randomUUID())
           configuration.transitive = false
-          rootProject.dependencies.add(configuration.name, Properties.dependencyNotation)
+          project.dependencies.add(configuration.name, Properties.dependencyNotation)
           configuration.resolve()
         }
         def sourcesPath = configuration?.singleFile?.path
