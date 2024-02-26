@@ -81,8 +81,8 @@
   },
   {
     "vsCodeId": "msveden.teamcity-checker",
-    "ideaName": "JetBrains TeamCity Plugin",
-    "ideaId": "TeamCity"
+    "ideaName": "TeamCity",
+    "ideaId": "JetBrains TeamCity Plugin"
   },
   {
     "vsCodeId": "ritwickdey.LiveServer",
