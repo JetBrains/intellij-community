@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -68,8 +69,10 @@ public class JBFont extends Font {
     return labelFont().getSize();
   }
 
-  public static float labelFontSize2D() {
-    return labelFont().getSize2D();
+  public static @Nullable Float labelFontSize2D() {
+    Font font = labelFont();
+    if (font != null) return font.getSize2D();
+    else return null;
   }
 
   private static Font labelFont() {
