@@ -35,11 +35,6 @@ object MavenImportStats {
 
   data object ApplyingModelTask : MavenSyncSubstask(ProjectImportCollector.WORKSPACE_APPLY_STAGE)
 
-  data object ConfiguringProjectsTask : MavenSyncSubstask(ProjectImportCollector.PROJECT_CONFIGURATION_STAGE)
-
-  class MavenSyncProjectTask
-
-  class MavenReapplyModelOnlyProjectTask
 }
 
 
