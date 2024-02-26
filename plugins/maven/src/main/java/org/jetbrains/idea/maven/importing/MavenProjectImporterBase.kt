@@ -48,12 +48,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
                          indicator: ProgressIndicator) {
-      val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
-      cs.launch {
-        runImportActivitySync(project, MavenUtil.SYSTEM_ID, RefreshingFilesTask::class.java) {
-          doRefreshFiles(myFiles)
-        }
-      }
+      doRefreshFiles(myFiles)
     }
   }
 
