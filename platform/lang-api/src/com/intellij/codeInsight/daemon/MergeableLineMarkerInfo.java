@@ -232,6 +232,11 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         }
 
         @Override
+        public @NotNull ActionGroup getPopupMenuActions() {
+          return ActionGroup.EMPTY_GROUP; // stub for remote client
+        }
+
+        @Override
         public ActionGroup getPopupMenuActions(@NotNull MouseEvent mouseEvent) {
           return getCommonActionGroup(mouseEvent);
         }
