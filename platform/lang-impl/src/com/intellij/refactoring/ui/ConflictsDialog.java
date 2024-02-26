@@ -414,6 +414,16 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return myUpdatedDialog ? "conflicts.dialog" : null;
   }
 
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return new Dimension(800, 600);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return getInitialSize();
+  }
+
   private final class ShowConflictsInUsageViewAction extends AbstractAction {
 
     ShowConflictsInUsageViewAction() {
