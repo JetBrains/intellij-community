@@ -45,7 +45,7 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
   protected abstract String @NotNull [] optionsBanner();
 
   @Override
-  public void initApplication(InspectionApplication app) {
+  public void initApplication(InspectionApplicationBase app) {
     app.myHelpProvider = this;
     app.myProjectPath = determineProjectPath();
     app.myProfileName = getProfileNameOrPathProperty();
