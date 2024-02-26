@@ -22,8 +22,8 @@ val GITHUB_WORKFLOW_SCHEMA_NAMES: Set<String> = setOf("github-workflow")
 fun isGithubActionsFile(virtualFile: VirtualFile, project: Project?): Boolean {
   if (project == null) return false
   val isYamlFile = FileTypeRegistry.getInstance().isFileOfType(virtualFile, YAMLFileType.YML)
-  val psiFile by lazy { PsiManager.getInstance(project).findFile(virtualFile) }
-  return isYamlFile && psiFile?.let { isGithubActionsFile(it) } == true
+  if (!isYamlFile) return false
+  return PsiManager.getInstance(project).findFile(virtualFile)?.let { isGithubActionsFile(it) } == true
 }
 
 fun isGithubActionsFile(psiFile: PsiFile?): Boolean {
@@ -32,7 +32,7 @@ fun isGithubActionsFile(psiFile: PsiFile?): Boolean {
     CachedValueProvider.Result.create(
       matchesDefaultFilePath(psiFile, githubActionsFilePattern, githubWorkflowsFilePattern)
       || isGithubSchemaAssigned(psiFile, GITHUB_WORKFLOW_SCHEMA_NAMES + GITHUB_ACTION_SCHEMA_NAMES),
-      psiFile.manager.modificationTracker.forLanguage(YAMLLanguage.INSTANCE)
+      psiFile
     )
   }
 }
@@ -42,7 +42,8 @@ fun isGithubActionFile(psiFile: PsiFile?): Boolean {
   return CachedValuesManager.getCachedValue(psiFile) {
     CachedValueProvider.Result.create(
       matchesDefaultFilePath(psiFile, githubActionsFilePattern) || isGithubSchemaAssigned(psiFile, GITHUB_ACTION_SCHEMA_NAMES),
-      psiFile.manager.modificationTracker.forLanguage(YAMLLanguage.INSTANCE))
+      psiFile
+    )
   }
 }
 
@@ -51,7 +52,8 @@ fun isGithubWorkflowFile(psiFile: PsiFile?): Boolean {
   return CachedValuesManager.getCachedValue(psiFile) {
     CachedValueProvider.Result.create(
       matchesDefaultFilePath(psiFile, githubWorkflowsFilePattern) || isGithubSchemaAssigned(psiFile, GITHUB_WORKFLOW_SCHEMA_NAMES),
-      psiFile.manager.modificationTracker.forLanguage(YAMLLanguage.INSTANCE))
+      psiFile
+    )
   }
 }
 
