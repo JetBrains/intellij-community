@@ -659,9 +659,6 @@
     <extensionPoint qualifiedName="com.jetbrains.python.console.customizer"
                     interface="com.jetbrains.python.console.PyConsoleCustomizer"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.jetbrains.python.console.frameworkParametersCustomizer"
-                    interface="com.jetbrains.python.console.PyConsoleFrameworkParametersCustomizer"
-                    dynamic="true"/>
 
     <extensionPoint qualifiedName="com.jetbrains.python.debugger.pyDebugAsyncioCustomizer"
                     interface="com.jetbrains.python.debugger.PyDebugAsyncioCustomizer"
