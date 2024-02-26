@@ -37,9 +37,8 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
     return accessor;
   }
 
-  @Nullable
   @Override
-  public JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+  public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
     Object value = accessor.read(bean);
     if (value == null) {
       return null;
@@ -111,13 +110,13 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNu
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T> @NotNull Object deserializeList(@Nullable Object bean, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
-    assert bean != null;
+  public <T> @NotNull Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    assert currentValue != null;
     if (adapter == JdomAdapter.INSTANCE) {
-      return deserializeJdomList(bean, (List<Element>)elements);
+      return deserializeJdomList(currentValue, (List<Element>)elements);
     }
     else {
-      return deserializeList(bean, (List<XmlElement>)elements);
+      return deserializeList(currentValue, (List<XmlElement>)elements);
     }
   }
 

@@ -4,7 +4,6 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.serialization.ClassUtil;
-import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.dom.XmlElement;
@@ -27,7 +26,7 @@ import static com.intellij.util.xmlb.JsonHelperKt.fromJsonPrimitive;
 import static com.intellij.util.xmlb.JsonHelperKt.primitiveToJsonElement;
 
 @SuppressWarnings("LoggingSimilarMessage")
-final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
+final class MapBinding implements MultiNodeBinding, RootBinding {
   private static final Logger LOG = Logger.getInstance(MapBinding.class);
 
   @SuppressWarnings("rawtypes")
@@ -53,19 +52,10 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  private final MutableAccessor accessor;
-
-  MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map<?, ?>> mapClass) {
-    this.accessor = accessor;
-
-    oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
-    annotation = accessor == null ? null : accessor.getAnnotation(XMap.class);
+  MapBinding(@Nullable MapAnnotation oldAnnotation, @Nullable XMap newAnnotation, @NotNull Class<? extends Map<?, ?>> mapClass) {
+    this.oldAnnotation = oldAnnotation;
+    annotation = newAnnotation;
     this.mapClass = mapClass;
-  }
-
-  @Override
-  public @NotNull MutableAccessor getAccessor() {
-    return accessor;
   }
 
   @Override
@@ -135,8 +125,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
   @SuppressWarnings({"rawtypes", "DuplicatedCode"})
   @Override
   public @Nullable Object fromJson(@Nullable Object currentValue, @NotNull JsonElement element) {
-    // if accessor is null, it is sub-map, and we must not use context
-    Map map = accessor == null ? null : (Map<?, ?>)currentValue;
+    // if accessor is null, it is a sub-map, and we must not use context
+    Map map = (Map<?, ?>)currentValue;
 
     if (!(element instanceof JsonObject)) {
       // yes, `null` is also not expected
@@ -178,10 +168,6 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
       map.put(entry.getKey(), keyOrValueFromJson(entry.getValue(), valueBinding));
     }
     return map;
-  }
-
-  @Override
-  public void setFromJson(@NotNull Object bean, @NotNull JsonElement data) {
   }
 
   @Override
@@ -244,24 +230,18 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
   }
 
   @Override
-  public @Nullable <T> Object deserializeList(@Nullable Object bean, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
-    List<? extends T> childNodes;
+  public @Nullable <T> Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    List<T> childNodes;
     if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = adapter.getChildren(elements.get(0));
     }
     else {
-      childNodes = elements;
+      //noinspection unchecked
+      childNodes = (List<T>)elements;
     }
 
-    if (adapter == XmlDomAdapter.INSTANCE) {
-      //noinspection unchecked
-      return deserialize2(bean, (List<XmlElement>)childNodes);
-    }
-    else {
-      //noinspection unchecked
-      return deserialize(bean, (List<Element>)childNodes);
-    }
+    return deserializeMap(currentValue, childNodes, adapter);
   }
 
   @Override
@@ -271,17 +251,15 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
 
   public @Nullable Object deserialize(@Nullable Object context, @NotNull Element element) {
     if (isSurroundWithTag()) {
-      return deserialize(context, element.getChildren());
+      return deserializeMap(context, element.getChildren(), JdomAdapter.INSTANCE);
     }
     else {
-      return deserialize(context, Collections.singletonList(element));
+      return deserializeMap(context, Collections.singletonList(element), JdomAdapter.INSTANCE);
     }
   }
 
-  @SuppressWarnings({"rawtypes", "DuplicatedCode"})
-  private @Nullable Map<?, ?> deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
-    // if accessor is null, it is sub-map, and we must not use context
-    Map map = accessor == null ? null : (Map<?, ?>)context;
+  private <T> @Nullable Map<?, ?> deserializeMap(@Nullable Object currentValue, @NotNull List<T> childNodes, @NotNull DomAdapter<T> adapter) {
+    Map map = (Map<?, ?>)currentValue;
     if (map != null) {
       if (childNodes.isEmpty()) {
         return map;
@@ -294,8 +272,8 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
       }
     }
 
-    for (Element childNode : childNodes) {
-      if (!childNode.getName().equals(getEntryElementName())) {
+    for (T childNode : childNodes) {
+      if (!adapter.getName(childNode).equals(getEntryElementName())) {
         LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
         continue;
       }
@@ -315,50 +293,16 @@ final class MapBinding implements MultiNodeBinding, NestedBinding, RootBinding {
         }
       }
 
-      //noinspection unchecked
-      map.put(deserializeKeyOrValue(childNode, getKeyAttributeName(), context, keyBinding, keyClass),
-              deserializeKeyOrValue(childNode, getValueAttributeName(), context, valueBinding, valueClass));
-    }
-    return map;
-  }
-
-  @SuppressWarnings({"rawtypes", "DuplicatedCode"})
-  private @Nullable Map<?, ?> deserialize2(@Nullable Object context, @NotNull List<XmlElement> childNodes) {
-    // if accessor is null, it is sub-map, and we must not use context
-    Map map = accessor == null ? null : (Map<?, ?>)context;
-    if (map != null) {
-      if (ClassUtil.isMutableMap(map)) {
-        map.clear();
+      if (adapter == JdomAdapter.INSTANCE) {
+        //noinspection unchecked
+        map.put(deserializeKeyOrValue((Element)childNode, getKeyAttributeName(), currentValue, keyBinding, keyClass),
+                deserializeKeyOrValue((Element)childNode, getValueAttributeName(), currentValue, valueBinding, valueClass));
       }
       else {
-        map = null;
+        //noinspection unchecked
+        map.put(deserializeKeyOrValue((XmlElement)childNode, getKeyAttributeName(), currentValue, keyBinding, keyClass),
+                deserializeKeyOrValue((XmlElement)childNode, getValueAttributeName(), currentValue, valueBinding, valueClass));
       }
-    }
-
-    for (XmlElement childNode : childNodes) {
-      if (!childNode.name.equals(getEntryElementName())) {
-        LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
-        continue;
-      }
-
-      if (map == null) {
-        if (mapClass == Map.class) {
-          map = new HashMap();
-        }
-        else {
-          try {
-            map = ReflectionUtil.newInstance(mapClass);
-          }
-          catch (Exception e) {
-            LOG.warn(e);
-            map = new HashMap();
-          }
-        }
-      }
-
-      //noinspection unchecked
-      map.put(deserializeKeyOrValue(childNode, getKeyAttributeName(), context, keyBinding, keyClass),
-              deserializeKeyOrValue(childNode, getValueAttributeName(), context, valueBinding, valueClass));
     }
     return map;
   }

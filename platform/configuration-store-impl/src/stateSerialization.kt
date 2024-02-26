@@ -180,7 +180,7 @@ private fun <T : Any> getXmlSerializationState(
           //    effectiveL = l + oldL
           //  }
           //}
-          (binding as MultiNodeBinding).deserializeList(bean = result, elements = l, adapter = XmlDomAdapter)
+          (binding as MultiNodeBinding).deserializeList(currentValue = result, elements = l, adapter = XmlDomAdapter)
         }
       }
     }
@@ -192,7 +192,7 @@ private fun <T : Any> getXmlSerializationState(
       }
       val l = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = true)
       if (l != null) {
-        (binding as MultiNodeBinding).deserializeList(bean = result, elements = l, adapter = JdomAdapter)
+        (binding as MultiNodeBinding).deserializeList(currentValue = result, elements = l, adapter = JdomAdapter)
       }
     }
   }

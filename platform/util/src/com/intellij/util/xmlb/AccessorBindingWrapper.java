@@ -156,14 +156,14 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
 
   @SuppressWarnings("unchecked")
   @Override
-  public @Nullable <T> Object deserializeList(@Nullable Object bean, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+  public @Nullable <T> Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
     if (adapter == JdomAdapter.INSTANCE) {
-      assert bean != null;
+      assert currentValue != null;
       //noinspection unchecked
-      deserializeJdomList(bean, (List<? extends Element>)elements);
+      deserializeJdomList(currentValue, (List<? extends Element>)elements);
     }
     else {
-      deserializeList(bean, (List<XmlElement>)elements);
+      deserializeList(currentValue, (List<XmlElement>)elements);
     }
     return null;
   }

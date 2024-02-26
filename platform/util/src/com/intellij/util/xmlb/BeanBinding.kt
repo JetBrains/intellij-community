@@ -341,7 +341,7 @@ fun deserializeBeanInto(
   }
 }
 
-fun deserializeBeanInto(
+internal fun deserializeBeanInto(
   result: Any,
   element: Element,
   bindings: Array<NestedBinding>,
@@ -508,6 +508,9 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
     }
     else {
       binding.init(type, serializer)
+      if (binding is CompactCollectionBinding) {
+        return binding
+      }
     }
   }
 
@@ -531,10 +534,6 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
       valueAttribute = null,
       textIfTagValueEmpty = tagAnnotation.textIfEmpty,
     )
-  }
-
-  if (binding is CompactCollectionBinding) {
-    return binding
   }
 
   var surroundWithTag = true

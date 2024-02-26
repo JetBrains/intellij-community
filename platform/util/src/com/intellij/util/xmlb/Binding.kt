@@ -56,7 +56,7 @@ interface NestedBinding : Binding {
 interface MultiNodeBinding : Binding {
   val isMulti: Boolean
 
-  fun <T : Any> deserializeList(bean: Any?, elements: List<T>, adapter: DomAdapter<T>): Any?
+  fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>): Any?
 }
 
 interface NotNullDeserializeBinding : Binding {
