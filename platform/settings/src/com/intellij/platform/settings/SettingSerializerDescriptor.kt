@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.serializer
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
@@ -26,4 +28,9 @@ inline fun <reified K : Any, reified V : Any?> SettingDescriptorFactory.mapSeria
 object RawSettingSerializerDescriptor : SettingSerializerDescriptor<ByteArray>, SettingValueSerializer<ByteArray> {
   override val serializer: KSerializer<ByteArray>
     get() = throw UnsupportedOperationException()
+}
+
+@Internal
+object JsonElementSettingSerializerDescriptor : SettingSerializerDescriptor<JsonElement>, SettingValueSerializer<JsonElement> {
+  override val serializer: KSerializer<JsonElement> = serializer()
 }

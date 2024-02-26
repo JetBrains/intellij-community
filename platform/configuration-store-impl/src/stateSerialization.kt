@@ -47,7 +47,7 @@ internal fun <T : Any> deserializeStateWithController(
 
   val serializer = __platformSerializer()
   // KotlinxSerializationBinding here is possible, do not cast to BeanBinding
-  val rootBinding = serializer.getRootBinding(stateClass) as NotNullDeserializeBinding
+  val rootBinding = serializer.getRootBinding(stateClass)
   try {
     if (mergeInto == null) {
       if (rootBinding !is BeanBinding || controller == null) {
@@ -141,7 +141,7 @@ private fun <T : Any> getXmlSerializationState(
 
   val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
   for (binding in bindings) {
-    val key = createSettingDescriptor(key = "${componentName}.${binding.accessor.name}", pluginId = pluginId, tags = keyTags)
+    val key = createSettingDescriptor(key = "${componentName}.${binding.propertyName}", pluginId = pluginId, tags = keyTags)
     val value = try {
       controller.doGetItem(key)
     }

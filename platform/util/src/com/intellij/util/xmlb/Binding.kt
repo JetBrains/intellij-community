@@ -37,7 +37,7 @@ interface Binding {
   fun init(originalType: Type, serializer: Serializer) {
   }
 
-  fun <T : Any> deserializeUnsafe(context: Any?, element: T, adapter: DomAdapter<T>): Any?
+  fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any?
 
   fun toJson(bean: Any, filter: SerializationFilter?): JsonElement?
 }
@@ -57,10 +57,4 @@ interface MultiNodeBinding : Binding {
   val isMulti: Boolean
 
   fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>): Any?
-}
-
-interface NotNullDeserializeBinding : Binding {
-  fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any
-
-  override fun <T : Any> deserializeUnsafe(context: Any?, element: T, adapter: DomAdapter<T>): Any = deserialize(context = context, element = element, adapter)
 }

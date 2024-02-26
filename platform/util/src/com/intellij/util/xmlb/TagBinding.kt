@@ -11,7 +11,6 @@ import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
-import java.util.*
 
 internal class OptionTagBinding(
   @JvmField internal val binding: Binding?,
@@ -37,10 +36,6 @@ internal class OptionTagBinding(
 
   override val isPrimitive: Boolean
     get() = binding == null || converter != null
-
-  override fun <T : Any> deserializeUnsafe(context: Any?, element: T, adapter: DomAdapter<T>): Any {
-    return deserialize(host = context!!, element = element, adapter = adapter)
-  }
 
   override fun setValue(bean: Any, value: String?) {
     if (converter == null) {
@@ -139,56 +134,68 @@ internal class OptionTagBinding(
     parent.addContent(targetElement)
   }
 
-  private fun <T : Any> deserialize(host: Any, element: T, adapter: DomAdapter<T>): Any {
+  override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
+    context!!
     if (valueAttribute == null) {
       if (converter == null && binding != null) {
         if (binding is BeanBinding) {
           // yes, we must set `null` as well
           val value = (if (serializeBeanBindingWithoutWrapperTag) element else adapter.firstElement(element))?.let {
-            binding.deserialize(context = null, element = it, adapter)
+            binding.deserialize(context = null, element = it, adapter = adapter)
           }
-          accessor.set(host, value)
-        }
-        else if (adapter.hasElementContent(element)) {
-          val oldValue = accessor.read(host)
-          val newValue = deserializeList(binding = binding, currentValue = oldValue, nodes = adapter.getChildren(element), adapter = adapter)
-          if (oldValue !== newValue) {
-            accessor.set(host, newValue)
-          }
+          accessor.set(context, value)
         }
         else if (binding is CollectionBinding || binding is MapBinding) {
-          val oldValue = accessor.read(host)
-          // do nothing if the field is already null
-          if (oldValue != null) {
-            val newValue = (binding as MultiNodeBinding).deserializeList(currentValue = oldValue, elements = Collections.emptyList(), adapter = adapter)
-            if (oldValue !== newValue) {
-              accessor.set(host, newValue)
+          val nodes = adapter.getChildren(element)
+          // in-place mutation only for non-writable accessors (final) - getter can return a mutable list,
+          // and if we mutate it in-place, the deserialization result may be lost (XmlSerializerListTest.elementTypes test)
+          if (accessor.isWritable) {
+            // we must pass the current value in any case - collection binding use it to infer a new collection type
+            val oldValue = accessor.read(context)
+            if (nodes.isEmpty() && oldValue == null) {
+              // do nothing if the field is already null
+            }
+            else {
+              val newValue = (binding as MultiNodeBinding).deserializeList(currentValue = oldValue, elements = nodes, adapter = adapter)
+              accessor.set(context, newValue)
+            }
+          }
+          else {
+            val oldValue = accessor.read(context)
+            if (oldValue == null && nodes.isEmpty()) {
+              // do nothing if the field is already null
+            }
+            else {
+              val newValue = (binding as MultiNodeBinding).deserializeList(currentValue = oldValue, elements = nodes, adapter = adapter)
+              if (oldValue !== newValue) {
+                accessor.set(context, newValue)
+              }
             }
           }
         }
         else {
-          accessor.set(host, null)
+          throw UnsupportedOperationException("Binding $binding is not expected")
         }
       }
       else {
-        setValue(bean = host, value = adapter.getTextValue(element = element, defaultText = textIfTagValueEmpty))
+        setValue(bean = context, value = adapter.getTextValue(element = element, defaultText = textIfTagValueEmpty))
       }
     }
     else {
       val value = adapter.getAttributeValue(element, valueAttribute)
       if (converter == null) {
         if (binding == null) {
-          XmlSerializerImpl.doSet(host, value, accessor, ClassUtil.typeToClass(accessor.genericType))
+          XmlSerializerImpl.doSet(context, value, accessor, ClassUtil.typeToClass(accessor.genericType))
         }
         else {
-          accessor.set(host, binding.deserializeUnsafe(host, element, adapter))
+          accessor.set(context, binding.deserialize(context, element, adapter))
         }
       }
       else {
-        accessor.set(host, value?.let { converter.fromString(it) })
+        accessor.set(context, value?.let { converter.fromString(it) })
       }
     }
-    return host
+    return context
   }
 
   override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean {
@@ -211,8 +218,8 @@ internal fun addContent(targetElement: Element, node: Any) {
 
 internal fun <T : Any> deserializeList(binding: Binding, currentValue: Any?, nodes: List<T>, adapter: DomAdapter<T>): Any? {
   return when {
-    binding is MultiNodeBinding -> binding.deserializeList(currentValue = currentValue, elements = nodes, adapter)
-    nodes.size == 1 -> binding.deserializeUnsafe(currentValue, nodes.get(0), adapter)
+    binding is MultiNodeBinding -> binding.deserializeList(currentValue = currentValue, elements = nodes, adapter = adapter)
+    nodes.size == 1 -> binding.deserialize(context = currentValue, element = nodes.get(0), adapter = adapter)
     nodes.isEmpty() -> null
     else -> throw AssertionError("Duplicate data for $binding will be ignored")
   }

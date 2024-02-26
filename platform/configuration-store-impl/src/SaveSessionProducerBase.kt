@@ -9,13 +9,9 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
-import com.intellij.platform.settings.PersistenceStateComponentPropertyTag
-import com.intellij.platform.settings.SetResult
-import com.intellij.platform.settings.SettingsController
+import com.intellij.platform.settings.*
 import com.intellij.serialization.SerializationException
-import com.intellij.util.xmlb.BeanBinding
-import com.intellij.util.xmlb.RootBinding
-import com.intellij.util.xmlb.XmlSerializationException
+import com.intellij.util.xmlb.*
 import org.jdom.Element
 
 abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
@@ -75,14 +71,18 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
     else -> {
       try {
         val filter = jdomSerializer.getDefaultSerializationFilter()
-        val binding = __platformSerializer().getRootBinding(state.javaClass)
-        if (binding is BeanBinding) {
-          // top level expects not null (null indicates error, an empty element will be omitted)
-          return binding.serializeProperties(bean = state, preCreatedElement = null, filter = filter)
+        val rootBinding = __platformSerializer().getRootBinding(state.javaClass)
+        if (rootBinding is BeanBinding) {
+          if (controller == null) {
+            return rootBinding.serializeProperties(bean = state, preCreatedElement = null, filter = filter)
+          }
+          else {
+            return serializeWithController(rootBinding = rootBinding, bean = state, filter = filter, componentName = componentName, pluginId = pluginId, controller = controller)
+          }
         }
         else {
           // maybe ArrayBinding
-          return (binding as RootBinding).serialize(bean = state, filter = filter) as Element
+          return (rootBinding as RootBinding).serialize(bean = state, filter = filter) as Element
         }
       }
       catch (e: SerializationException) {
@@ -93,4 +93,38 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
       }
     }
   }
+}
+
+private fun serializeWithController(
+  rootBinding: BeanBinding,
+  bean: Any,
+  filter: SkipDefaultsSerializationFilter,
+  componentName: String,
+  pluginId: PluginId,
+  controller: SettingsController,
+): Element? {
+  val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
+  var element: Element? = null
+  for (binding in rootBinding.bindings!!) {
+    if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean = bean)) {
+      continue
+    }
+
+    if (isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = true)) {
+      continue
+    }
+
+    val key = SettingDescriptor(key = "$componentName.${binding.propertyName}", pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
+    val result = controller.doSetItem(key = key, value = binding.toJson(bean, filter))
+    if (result != SetResult.INAPPLICABLE) {
+      continue
+    }
+
+    if (element == null) {
+      element = Element(rootBinding.tagName)
+    }
+
+    binding.serialize(bean = bean, parent = element, filter = filter)
+  }
+  return element
 }

@@ -20,7 +20,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.SafeStAXStreamBuilderKt.buildNsUnawareJdom;
 
-final class JDOMElementBinding implements MultiNodeBinding, NestedBinding, NotNullDeserializeBinding {
+final class JDOMElementBinding implements MultiNodeBinding, NestedBinding {
   private final String tagName;
   private final MutableAccessor accessor;
 

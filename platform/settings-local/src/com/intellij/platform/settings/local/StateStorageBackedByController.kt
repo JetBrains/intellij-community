@@ -64,7 +64,7 @@ internal class StateStorageBackedByController(
       }
       else -> {
         try {
-          val beanBinding = bindingProducer.getRootBinding(stateClass) as NotNullDeserializeBinding
+          val beanBinding = bindingProducer.getRootBinding(stateClass)
           if (beanBinding is KotlinxSerializationBinding) {
             val data = controller.getItem(createSettingDescriptor(componentName, pluginId)) ?: return null
             return cborFormat.decodeFromByteArray(beanBinding.serializer, data) as T
@@ -111,7 +111,7 @@ internal class StateStorageBackedByController(
 
   private fun <T : Any> getXmlSerializationState(
     mergeInto: T?,
-    beanBinding: NotNullDeserializeBinding,
+    beanBinding: Binding,
     componentName: String,
     pluginId: PluginId,
   ): T? {

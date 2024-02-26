@@ -11,8 +11,6 @@ sealed interface DomAdapter<T : Any> {
 
   fun firstElement(element: T): T?
 
-  fun hasElementContent(element: T): Boolean
-
   fun getAttributeValue(element: T, name: String): String?
 
   fun getName(element: T): String
@@ -32,8 +30,6 @@ data object JdomAdapter : DomAdapter<Element> {
 
   override fun firstElement(element: Element): Element? = element.content.firstOrNull() as Element?
 
-  override fun hasElementContent(element: Element): Boolean = element.content.any { it is Element }
-
   override fun getAttributeValue(element: Element, name: String): String? = element.getAttributeValue(name)
 
   override fun getChildren(element: Element): List<Element> = element.children
@@ -48,8 +44,6 @@ data object XmlDomAdapter : DomAdapter<XmlElement> {
   override fun getTextValue(element: XmlElement, defaultText: String): String = element.content ?: defaultText
 
   override fun firstElement(element: XmlElement): XmlElement? = element.children.firstOrNull()
-
-  override fun hasElementContent(element: XmlElement): Boolean = element.children.isNotEmpty()
 
   override fun getAttributeValue(element: XmlElement, name: String): String? = element.getAttributeValue(name)
 

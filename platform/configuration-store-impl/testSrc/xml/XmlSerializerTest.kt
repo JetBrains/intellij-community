@@ -45,7 +45,7 @@ internal class XmlSerializerTest {
       expectedJson = """
         {
           "places_map": {
-            "foo": "foo"
+            "foo": "bar"
           }
         }
       """,

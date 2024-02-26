@@ -73,7 +73,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable <T> Object deserializeUnsafe(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+  public @Nullable <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     if (adapter == JdomAdapter.INSTANCE) {
       return deserializeUnsafe(context, (Element)element);
     }
@@ -109,7 +109,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
       }
     }
     else {
-      deserializedValue = binding.deserializeUnsafe(currentValue, element, JdomAdapter.INSTANCE);
+      deserializedValue = binding.deserialize(currentValue, element, JdomAdapter.INSTANCE);
     }
 
     if (currentValue != deserializedValue) {
@@ -144,7 +144,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
         }
       }
       else {
-        deserializedValue = binding.deserializeUnsafe(currentValue, element, XmlDomAdapter.INSTANCE);
+        deserializedValue = binding.deserialize(currentValue, element, XmlDomAdapter.INSTANCE);
       }
 
       if (currentValue != deserializedValue) {
