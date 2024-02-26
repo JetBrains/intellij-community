@@ -29,6 +29,6 @@ class ExternalEntityMappingImplTest {
     mutableMapping.addMapping(anotherEntity, 2)
 
     val anotherMapping = newBuilder.getExternalMapping(externalMappingKey)
-    assertTrue(anotherMapping.getEntities(2).isEmpty())
+    assertTrue(anotherMapping.getEntities(2).none())
   }
 }

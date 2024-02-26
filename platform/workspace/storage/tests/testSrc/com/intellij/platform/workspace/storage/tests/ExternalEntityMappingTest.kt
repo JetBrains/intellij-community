@@ -37,8 +37,8 @@ class ExternalEntityMappingTest {
     mapping.removeMapping(entity)
     assertTrue(builder.modificationCount > countBeforeRemove)
     assertNull(mapping.getDataByEntity(entity))
-    assertEmpty(mapping.getEntities(1))
-    assertEmpty(mapping.getEntities(2))
+    assertTrue(mapping.getEntities(1).none())
+    assertTrue(mapping.getEntities(2).none())
     val countBeforeAdd = builder.modificationCount
     mapping.addMapping(entity, 3)
     assertTrue(builder.modificationCount > countBeforeAdd)
@@ -154,18 +154,18 @@ class ExternalEntityMappingTest {
     }
 
     assertNull(diff.getExternalMapping(INDEX_ID).getDataByEntity(entity))
-    assertEmpty(diff.getExternalMapping(INDEX_ID).getEntities(1))
+    assertTrue(diff.getExternalMapping(INDEX_ID).getEntities(1).none())
     assertEquals(1, mapping.getDataByEntity(entity))
-    assertEquals(1, mapping.getEntities(1).size)
+    assertEquals(1, mapping.getEntities(1).count())
 
     builder.applyChangesFrom(diff)
     assertNull(mapping.getDataByEntity(entity))
-    assertEmpty(mapping.getEntities(1))
+    assertTrue(mapping.getEntities(1).none())
     assertNull(builder.getExternalMapping(INDEX_ID).getDataByEntity(entity))
 
     val storage = builder.toSnapshot()
     assertNull(storage.getExternalMapping(INDEX_ID).getDataByEntity(entity))
-    assertEmpty(storage.getExternalMapping(INDEX_ID).getEntities(1))
+    assertTrue(storage.getExternalMapping(INDEX_ID).getEntities(1).none())
   }
 
   @Test
@@ -221,9 +221,9 @@ class ExternalEntityMappingTest {
       Assertions.assertNull(mapping.getDataByEntity(entity1))
       Assertions.assertNull(mapping.getDataByEntity(entity2))
       Assertions.assertNull(mapping.getDataByEntity(entity3))
-      assertEmpty(mapping.getEntities(1))
-      assertEmpty(mapping.getEntities(2))
-      assertEmpty(mapping.getEntities(3))
+      assertTrue(mapping.getEntities(1).none())
+      assertTrue(mapping.getEntities(2).none())
+      assertTrue(mapping.getEntities(3).none())
     }
     checkStorage(builder)
     checkStorage(builder.toSnapshot())
