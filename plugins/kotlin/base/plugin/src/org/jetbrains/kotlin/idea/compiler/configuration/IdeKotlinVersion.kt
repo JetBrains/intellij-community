@@ -46,20 +46,6 @@ class IdeKotlinVersion private constructor(
         }
 
         @JvmStatic
-        fun fromKotlinVersion(version: KotlinVersion): IdeKotlinVersion {
-            val languageVersion = LanguageVersion.values().first { it.major == version.major && it.minor == version.minor }
-            return IdeKotlinVersion(
-                rawVersion = version.toString(),
-                kotlinVersion = version,
-                kind = Kind.Release,
-                requireBuildNumberForArtifact = false,
-                buildNumber = null,
-                languageVersion = languageVersion,
-                apiVersion = ApiVersion.createByLanguageVersion(languageVersion)
-            )
-        }
-
-        @JvmStatic
         fun fromLanguageVersion(languageVersion: LanguageVersion): IdeKotlinVersion {
             return IdeKotlinVersion(
                 rawVersion = "${languageVersion.major}.${languageVersion.minor}.0",
