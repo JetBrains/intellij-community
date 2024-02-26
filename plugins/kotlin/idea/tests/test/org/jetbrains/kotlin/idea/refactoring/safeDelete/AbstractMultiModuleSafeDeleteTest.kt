@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor.Companion.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -27,7 +26,9 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
             val elementClass = Class.forName(config.getString("elementClass")) as Class<PsiElement>
             val element = elementsAtCaret.single().getNonStrictParentOfType(elementClass)!!
             val project = mainFile.project
-            project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED = config.get("liftParameterToExpected")?.asBoolean ?: true
+            with (KotlinSafeDeleteSettings) {
+                project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED = config.get("liftParameterToExpected")?.asBoolean ?: true
+            }
             SafeDeleteHandler.invoke(project, arrayOf(element), null, true, null)
         }
     }
