@@ -469,7 +469,9 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
         int start = 0;
         int refStart = myConflictDescription.indexOf(CODE_START);
         while (refStart > 0) {
-          chunks.add(new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription.substring(start, refStart)));
+          // workaround for UsageViewTreeCellRenderer adding a space after the first chunk
+          String substring = myConflictDescription.substring(start, chunks.isEmpty() ? refStart : refStart + 1);
+          chunks.add(new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), substring));
           int refEnd = myConflictDescription.indexOf(CODE_END, refStart);
           if (refEnd < 0) {
             return new TextChunk[]{new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription)};
