@@ -39,13 +39,6 @@ abstract class Converter<T> {
   abstract fun toString(value: T): String?
 }
 
-interface PrimitiveValueBinding : NestedBinding {
-  fun setValue(bean: Any, value: String?)
-
-  val isPrimitive: Boolean
-    get() = true
-}
-
 private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
 private val EMPTY_BINDINGS = arrayOf<NestedBinding>()
 
@@ -351,7 +344,7 @@ internal fun deserializeBeanInto(
     if (attribute.namespaceURI.isNullOrEmpty()) {
       for (binding in bindings) {
         if (binding is AttributeBinding && binding.name == attribute.name) {
-          accessorNameTracker?.add((binding as PrimitiveValueBinding).accessor.name)
+          accessorNameTracker?.add(binding.accessor.name)
           binding.setValue(result, attribute.value)
           continue@nextAttribute
         }
@@ -436,30 +429,6 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
 
   if (binding is AccessorBindingWrapper && binding.isFlat) {
     binding.deserialize(result, element, JdomAdapter)
-  }
-
-  return data
-}
-
-fun deserializeBeanFromControllerInto(result: Any, element: XmlElement, binding: NestedBinding): List<XmlElement>? {
-  var data: MutableList<XmlElement>? = null
-  nextNode@ for (child in element.children) {
-    if (binding.isBoundTo(child, XmlDomAdapter)) {
-      if (binding is MultiNodeBinding && binding.isMulti) {
-        if (data == null) {
-          data = ArrayList()
-        }
-        data.add(child)
-      }
-      else {
-        binding.deserialize(result, child, XmlDomAdapter)
-        break
-      }
-    }
-  }
-
-  if (binding is AccessorBindingWrapper && binding.isFlat) {
-    binding.deserialize(result, element, XmlDomAdapter)
   }
 
   return data

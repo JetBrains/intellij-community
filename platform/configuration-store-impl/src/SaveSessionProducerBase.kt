@@ -6,7 +6,6 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.WriteExternalException
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.platform.settings.*
@@ -48,15 +47,9 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
     is Element -> {
       if (controller != null) {
         val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
-        val key = createSettingDescriptor(key = componentName, pluginId = pluginId, tags = keyTags)
+        val key = SettingDescriptor(key = componentName, pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
 
-        val xmlOutputter = JbXmlOutputter()
-        val byteOut = BufferExposingByteArrayOutputStream()
-        byteOut.writer().use {
-          xmlOutputter.output(state, it)
-        }
-
-        val result = controller.doSetItem(key = key, value = byteOut.toByteArray())
+        val result = controller.doSetItem(key = key, value = jdomToJson(state))
         if (result != SetResult.INAPPLICABLE) {
           return null
         }
