@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.fasterxml.aalto.`in`.ReaderConfig
@@ -9,6 +9,7 @@ import com.intellij.util.lang.UrlClassLoader
 import com.sun.jna.TypeMapper
 import com.sun.jna.platform.FileUtils
 import it.unimi.dsi.fastutil.objects.Object2IntMap
+import kotlinx.serialization.json.JsonElement
 import net.jpountz.lz4.LZ4Factory
 import org.apache.log4j.Appender
 import org.apache.oro.text.regex.PatternMatcher
@@ -47,7 +48,7 @@ object ClassPathUtil {
       UrlClassLoader::class.java,  // module 'intellij.platform.util.classLoader'
       classLoader.loadClass("com.intellij.util.lang.Xx3UnencodedString"),  // intellij.platform.util.rt.java8 (required for classLoader)
       Flow::class.java,  // jetbrains-annotations
-      Document::class.java,  // jDOM
+      Document::class.java,  // JDOM
       Appender::class.java,  // Log4J
       Object2IntMap::class.java,  // fastutil
       TypeMapper::class.java,  // JNA
@@ -56,6 +57,8 @@ object ClassPathUtil {
       LZ4Factory::class.java,  // LZ4-Java
       ReaderConfig::class.java,  // Aalto XML
       XMLStreamReader2::class.java,  // Aalto XML
-      Pair::class.java)
+      JsonElement::class.java,  // kotlinx-serialization
+      Pair::class.java // Kotlin stdlib
+    )
   }
 }
