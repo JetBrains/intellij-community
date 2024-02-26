@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -98,7 +98,7 @@ public final class RegExResponseHandler extends ResponseHandler {
     for (int i = 0; i < max && matcher.find(); i++) {
       String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
-      tasks.add(new GenericTask(id, summary, myRepository));
+      tasks.add(new GenericTask(id, summary, repository));
     }
     return tasks.toArray(Task.EMPTY_ARRAY);
   }

@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @see com.intellij.util.xmlb.annotations.CollectionBean
  */
-final class CompactCollectionBinding implements NotNullDeserializeBinding, NestedBinding {
+final class CompactCollectionBinding implements Binding, NestedBinding {
   private final String name;
   private final MutableAccessor accessor;
 

@@ -41,10 +41,10 @@ internal class XmlSerializerMapTest {
       """,
       expectedJson = """
         {
-        "values": {
-          "foo": "foo"
+          "values": {
+            "foo": "boo"
+          }
         }
-       }
       """,
       bean = data,
     )
@@ -95,7 +95,7 @@ internal class XmlSerializerMapTest {
         {
           "option": "xxx",
           "map": {
-            "a": "a"
+            "a": "b"
           }
         }
       """,

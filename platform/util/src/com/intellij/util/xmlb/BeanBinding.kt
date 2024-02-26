@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
-@file:ApiStatus.Internal
+@file:Internal
 
 package com.intellij.util.xmlb
 
@@ -23,7 +23,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.AccessibleObject
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.InvocationTargetException
@@ -53,9 +53,9 @@ fun getBeanAccessors(aClass: Class<*>): List<MutableAccessor> = PROPERTY_COLLECT
 
 internal const val JSON_CLASS_DISCRIMINATOR_KEY: String = "_class"
 
-open class BeanBinding(@JvmField val beanClass: Class<*>) : NotNullDeserializeBinding, RootBinding {
+open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding {
   @JvmField
-  internal val tagName: String
+  val tagName: String
 
   @JvmField
   var bindings: Array<NestedBinding>? = null
@@ -321,7 +321,7 @@ fun deserializeBeanInto(
         data.computeIfAbsent(binding) { ArrayList() }.add(child)
       }
       else {
-        binding.deserializeUnsafe(result, child, XmlDomAdapter)
+        binding.deserialize(result, child, XmlDomAdapter)
       }
       continue@nextNode
     }
@@ -330,7 +330,7 @@ fun deserializeBeanInto(
   for (i in start until end) {
     val binding = bindings[i]
     if (binding is AccessorBindingWrapper && binding.isFlat) {
-      binding.deserializeUnsafe(result, element, XmlDomAdapter)
+      binding.deserialize(result, element, XmlDomAdapter)
     }
   }
 
@@ -379,7 +379,7 @@ internal fun deserializeBeanInto(
         }
         else {
           accessorNameTracker?.add(binding.accessor.name)
-          binding.deserializeUnsafe(result, child, JdomAdapter)
+          binding.deserialize(result, child, JdomAdapter)
         }
         continue@nextNode
       }
@@ -388,7 +388,7 @@ internal fun deserializeBeanInto(
 
   for (binding in bindings) {
     if (binding is AccessorBindingWrapper && binding.isFlat) {
-      binding.deserializeUnsafe(result, element, JdomAdapter)
+      binding.deserialize(result, element, JdomAdapter)
     }
   }
 
@@ -428,14 +428,14 @@ fun deserializeBeanInto(result: Any, element: Element, binding: NestedBinding, c
         data.add(child)
       }
       else {
-        binding.deserializeUnsafe(result, child, JdomAdapter)
+        binding.deserialize(result, child, JdomAdapter)
         break
       }
     }
   }
 
   if (binding is AccessorBindingWrapper && binding.isFlat) {
-    binding.deserializeUnsafe(result, element, JdomAdapter)
+    binding.deserialize(result, element, JdomAdapter)
   }
 
   return data
@@ -452,14 +452,14 @@ fun deserializeBeanFromControllerInto(result: Any, element: XmlElement, binding:
         data.add(child)
       }
       else {
-        binding.deserializeUnsafe(result, child, XmlDomAdapter)
+        binding.deserialize(result, child, XmlDomAdapter)
         break
       }
     }
   }
 
   if (binding is AccessorBindingWrapper && binding.isFlat) {
-    binding.deserializeUnsafe(result, element, XmlDomAdapter)
+    binding.deserialize(result, element, XmlDomAdapter)
   }
 
   return data
@@ -686,7 +686,8 @@ private fun getTagName(aClass: Class<*>): String {
 
 private fun getTagNameFromAnnotation(aClass: Class<*>): String? = aClass.getAnnotation(Tag::class.java)?.value?.takeIf { it.isNotEmpty() }
 
-private fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, bean: Any, isFilterPropertyItself: Boolean): Boolean {
+@Internal
+fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, bean: Any, isFilterPropertyItself: Boolean): Boolean {
   val accessor = binding.accessor
   val property = accessor.getAnnotation(Property::class.java)
   if (property == null || !property.alwaysWrite) {

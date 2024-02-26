@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 
 public final class XmlSerializer {
   private XmlSerializer() {
@@ -35,8 +36,8 @@ public final class XmlSerializer {
   @SuppressWarnings("unchecked")
   public static @NotNull <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws SerializationException {
     try {
-      NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass);
-      return (T)binding.deserialize(null, element, JdomAdapter.INSTANCE);
+      Binding binding = XmlSerializerImpl.serializer.getRootBinding(aClass, aClass);
+      return (T)Objects.requireNonNull(binding.deserialize(null, element, JdomAdapter.INSTANCE));
     }
     catch (SerializationException e) {
       throw e;

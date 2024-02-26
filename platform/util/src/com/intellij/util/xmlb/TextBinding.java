@@ -48,7 +48,7 @@ final class TextBinding implements PrimitiveValueBinding {
 
   @Nullable
   @Override
-  public <T> Object deserializeUnsafe(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+  public <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     return context;
   }
 

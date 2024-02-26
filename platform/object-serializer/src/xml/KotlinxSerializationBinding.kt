@@ -4,8 +4,8 @@ package com.intellij.serialization.xml
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.serialization.LOG
 import com.intellij.util.xml.dom.XmlElement
+import com.intellij.util.xmlb.Binding
 import com.intellij.util.xmlb.DomAdapter
-import com.intellij.util.xmlb.NotNullDeserializeBinding
 import com.intellij.util.xmlb.RootBinding
 import com.intellij.util.xmlb.SerializationFilter
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -30,7 +30,7 @@ private val lookup = MethodHandles.lookup()
 private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
 
 @Internal
-class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding, RootBinding {
+class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
   @JvmField
   val serializer: KSerializer<Any>
 
@@ -45,7 +45,7 @@ class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding,
     return json.encodeToJsonElement(serializer, bean)
   }
 
-  override fun fromJson(bean: Any?, element: JsonElement) = json.decodeFromJsonElement(serializer, element)
+  override fun fromJson(currentValue: Any?, element: JsonElement) = json.decodeFromJsonElement(serializer, element)
 
   override fun serialize(bean: Any, parent: Element, filter: SerializationFilter?) {
     val json = encodeToJson(bean)

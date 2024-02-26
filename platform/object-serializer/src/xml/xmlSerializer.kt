@@ -91,7 +91,7 @@ private class JdomSerializerImpl : JdomSerializer {
 
     try {
       @Suppress("UNCHECKED_CAST")
-      return (serializer.getRootBinding(clazz, clazz) as NotNullDeserializeBinding).deserialize(null, element, adapter) as T
+      return serializer.getRootBinding(clazz, clazz).deserialize(context = null, element = element, adapter = adapter) as T
     }
     catch (e: SerializationException) {
       throw e

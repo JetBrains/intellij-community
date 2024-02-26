@@ -8,6 +8,7 @@ import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.MutableAccessor
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
+import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XCollection
 import kotlinx.serialization.json.*
 import org.jdom.Attribute
@@ -64,13 +65,13 @@ internal class CollectionBinding(
   @JvmField internal val elementTypes: Array<Class<*>>,
   private val serializer: Serializer,
   private val strategy: CollectionStrategy,
-) : MultiNodeBinding, NotNullDeserializeBinding, RootBinding {
+) : MultiNodeBinding, RootBinding {
   private var itemBindings: List<Binding>? = null
 
   override fun init(originalType: Type, serializer: Serializer) {
     assert(itemBindings == null)
 
-    val binding = getItemBinding(itemType)
+    val binding = getItemBinding(itemType, serializer)
     val elementTypes = elementTypes
     if (elementTypes.isEmpty()) {
       itemBindings = if (binding == null) emptyList() else listOf(binding)
@@ -86,7 +87,7 @@ internal class CollectionBinding(
       }
 
       for (aClass in elementTypes) {
-        val b = getItemBinding(aClass)
+        val b = getItemBinding(aClass, serializer)
         if (b != null && !itemBindings.contains(b)) {
           itemBindings.add(b)
         }
@@ -99,8 +100,9 @@ internal class CollectionBinding(
   override val isMulti: Boolean
     get() = true
 
-  private fun getItemBinding(aClass: Class<*>): Binding? {
-    return if (ClassUtil.isPrimitive(aClass)) null else serializer.getRootBinding(aClass, aClass)
+  private fun getItemBinding(aClass: Class<*>, serializer: Serializer): Binding? {
+    // element types maybe specified explicitly, in this case do not try to resolve binding for a class that marked as transient (to avoid warning "no accessors")
+    return if (ClassUtil.isPrimitive(aClass) || aClass.isAnnotationPresent(Transient::class.java)) null else serializer.getRootBinding(aClass, aClass)
   }
 
   override fun toJson(bean: Any, filter: SerializationFilter?): JsonArray {
@@ -116,7 +118,7 @@ internal class CollectionBinding(
         continue
       }
 
-      when (val binding = getItemBinding(value.javaClass)) {
+      when (val binding = getItemBinding(value.javaClass, serializer)) {
         null -> content.add(primitiveToJsonElement(value))
         is BeanBinding -> content.add(binding.toJson(bean = value, filter = filter, includeClassDiscriminator = itemBindings!!.size > 1))
         else -> content.add(binding.toJson(value, filter) ?: JsonNull)
@@ -239,7 +241,7 @@ internal class CollectionBinding(
       return
     }
 
-    val binding = getItemBinding(value.javaClass)
+    val binding = getItemBinding(value.javaClass, serializer)
     if (binding == null) {
       val elementName = elementName
       if (elementName.isEmpty()) {
@@ -272,7 +274,7 @@ internal class CollectionBinding(
       return XmlSerializerImpl.convert(value, itemType)
     }
     else {
-      return binding.deserializeUnsafe(bean, node, adapter)
+      return binding.deserialize(bean, node, adapter)
     }
   }
 

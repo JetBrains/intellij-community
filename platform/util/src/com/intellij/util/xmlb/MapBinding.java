@@ -115,7 +115,7 @@ final class MapBinding implements MultiNodeBinding, RootBinding {
     Map<String, JsonElement> content = new LinkedHashMap<>();
     for (Object k : keys) {
       JsonElement kJ = keyOrValueToJson(k, keyBinding, filter);
-      JsonElement vJ = keyOrValueToJson(k, valueBinding, filter);
+      JsonElement vJ = keyOrValueToJson(map.get(k), valueBinding, filter);
       // todo non-primitive keys
       content.put(kJ == null ? null : ((JsonPrimitive)kJ).getContent(), vJ);
     }
@@ -245,7 +245,7 @@ final class MapBinding implements MultiNodeBinding, RootBinding {
   }
 
   @Override
-  public @Nullable <T> Object deserializeUnsafe(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+  public @Nullable <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
     return null;
   }
 
@@ -359,7 +359,7 @@ final class MapBinding implements MultiNodeBinding, RootBinding {
       assert binding != null;
       for (Element element : entry.getChildren()) {
         if (binding.isBoundTo(element, JdomAdapter.INSTANCE)) {
-          return binding.deserializeUnsafe(context, element, JdomAdapter.INSTANCE);
+          return binding.deserialize(context, element, JdomAdapter.INSTANCE);
         }
       }
     }
@@ -390,7 +390,7 @@ final class MapBinding implements MultiNodeBinding, RootBinding {
       assert binding != null;
       for (XmlElement element : entry.children) {
         if (binding.isBoundTo(element, XmlDomAdapter.INSTANCE)) {
-          return binding.deserializeUnsafe(context, element, XmlDomAdapter.INSTANCE);
+          return binding.deserialize(context, element, XmlDomAdapter.INSTANCE);
         }
       }
     }
