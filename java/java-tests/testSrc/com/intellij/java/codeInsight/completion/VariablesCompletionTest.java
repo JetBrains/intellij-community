@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.NeedsIndex;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 
 import java.util.Set;
 
@@ -79,7 +78,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public void testLocalReserved2() {
     configureByFile(FILE_PREFIX + "locals/" + "LocalReserved2.java");
     checkResultByFile(FILE_PREFIX + "locals/" + "LocalReserved2.java");
-    assert !DefaultGroovyMethods.asBoolean(myFixture.getLookupElementStrings());
+    assertTrue(myFixture.getLookupElementStrings().isEmpty());
   }
 
   public void testUniqueNameInFor() {
@@ -150,21 +149,21 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     doTest("ArrayMethodName.java", "ArrayMethodName-result.java");
   }
 
-  public void test_suggest_fields_that_could_be_initialized_by_super_constructor() {
+  public void testSuggestFieldsThatCouldBeInitializedBySuperConstructor() {
     myFixture.configureByText(JavaFileType.INSTANCE,
                               "\nclass Foo extends java.util.ArrayList {\n  int field;\n  int field2;\n  Foo() {\n    super();\n    field2 = f<caret>; \n  } \n}");
     complete();
     myFixture.assertPreferredCompletionItems(0, "field", "float");
   }
 
-  public void test_suggest_fields_initialized_by_init() {
+  public void testSuggestFieldsInitializedByInit() {
     myFixture.configureByText(JavaFileType.INSTANCE,
                               "\nclass Foo {\n  final Integer field;\n  \n  { field = 42; }\n  \n  Foo() {\n    equals(f<caret>); \n  } \n}");
     complete();
     myFixture.assertPreferredCompletionItems(0, "field");
   }
 
-  public void test_suggest_fields_in_their_modification_inside_constructor() {
+  public void testSuggestFieldsInTheirModificationInsideConstructor() {
     myFixture.configureByText(JavaFileType.INSTANCE,
                               "\nclass Foo {\n  int total;\n\n  Foo() {\n    this.total = 0;\n    this.total += this.to<caret>tal\n  }\n}\n");
     complete();
@@ -230,7 +229,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("pColor", "pCoPString");
   }
 
-  public void test_finish_with__() {
+  public void testFinishWith_() {
     myFixture.configureByText("a.java", "\nclass FooFoo {\n  FooFoo f<caret>\n}\n");
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "fooFoo", "foo");
@@ -238,13 +237,13 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.checkResult("\nclass FooFoo {\n  FooFoo fooFoo = <caret>\n}\n");
   }
 
-  public void test_suggest_variable_names_by_non_getter_initializer_call() {
+  public void testSuggestVariableNamesByNonGetterInitializerCall() {
     myFixture.configureByText("a.java", "\nclass FooFoo {\n  { long <caret>x = System.nanoTime(); }\n}\n");
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "l", "nanoTime", "time");
   }
 
-  public void test_use_superclass_for_inner_class_variable_name_suggestion() {
+  public void testUseSuperclassForInnerClassVariableNameSuggestion() {
     myFixture.configureByText("a.java",
                               "\nclass FooFoo {\n  { Rectangle2D.Double <caret>x }\n}\nclass Rectangle2D {\n  static class Double extends Rectangle2D {}\n}\n");
     myFixture.completeBasic();
@@ -252,7 +251,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   @NeedsIndex.ForStandardLibrary
-  public void test_suggest_field_shadowing_parameter_name() {
+  public void testSuggestFieldShadowingParameterName() {
     myFixture.configureByText("a.java",
                               "\nclass FooFoo {\n  private final Collection<MaterialQuality> materialQualities;\n\n    public Inventory setMaterialQualities(Iterable<MaterialQuality> <caret>) {\n\n    }}\n");
     myFixture.completeBasic();
@@ -260,31 +259,31 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
                                              "qualityIterable", "iterable");
   }
 
-  public void test_suggest_parameter_name_from_javadoc() {
+  public void testSuggestParameterNameFromJavadoc() {
     myFixture.configureByText("a.java",
                               "\nclass FooFoo {\n    /**\n    * @param existing\n    * @param abc\n    * @param def\n    * @param <T>\n    */\n    void set(int existing, int <caret>) {}\n}\n");
     myFixture.completeBasic();
     assertEquals(Set.copyOf(myFixture.getLookupElementStrings()), Set.of("abc", "def", "i"));
   }
 
-  public void test_no_name_suggestions_when_the_type_is_unresolved_because_it_is_actually_a_mistyped_keyword() {
+  public void testNoNameSuggestionsWhenTheTypeIsUnresolvedBecauseItIsActuallyMistypedKeyword() {
     myFixture.configureByText("a.java", "\nclass C {\n    { \n      retur Fi<caret>x\n    }\n    }\n");
     assertEquals(0, myFixture.completeBasic().length);
   }
 
-  public void test_suggest_variable_name_when_the_type_is_unresolved_but_does_not_seem_a_mistyped_keyword() {
+  public void testSuggestVariableNameWhenTheTypeIsUnresolvedButDoesNotSeemMistypedKeyword() {
     myFixture.configureByText("a.java", "\nclass C {\n    { \n      UndefinedType <caret>\n    }\n    }\n");
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "undefinedType", "type");
   }
 
-  public void test_class_based_suggestions_for_exception_type() {
+  public void testClassBasedSuggestionsForExceptionType() {
     myFixture.configureByText("a.java", "\nclass C {\n    { \n      try { } catch (java.io.IOException <caret>)\n    }\n}\n");
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "e", "ioException", "exception");
   }
 
-  public void test_no_shadowed_static_field_suggestions() {
+  public void testNoShadowedStaticFieldSuggestions() {
     myFixture.configureByText("a.java",
                               "\nclass C extends Super {\n    static final String FOO = \"c\";\n    { \n      C.FO<caret>x\n    }\n}\n\nclass Super {\n  static final String FOO = \"super\";\n}\n");
     LookupElement[] items = myFixture.completeBasic();

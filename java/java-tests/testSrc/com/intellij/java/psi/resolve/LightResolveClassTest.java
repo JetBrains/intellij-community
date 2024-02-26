@@ -4,13 +4,10 @@ package com.intellij.java.psi.resolve;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 
 public class LightResolveClassTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNoLoadingForStarImportedClassWhenNamedImportMatches() {
-    PsiFileImpl unnamedFile =
-      DefaultGroovyMethods.asType(myFixture.addFileToProject("unnamed/Bar.java", "package unnamed; public class Bar {}"),
-                                  PsiFileImpl.class);
+    PsiFileImpl unnamedFile = (PsiFileImpl)myFixture.addFileToProject("unnamed/Bar.java", "package unnamed; public class Bar {}");
     PsiClass named = myFixture.addClass("package named; public class Bar {}");
     PsiClass foo = myFixture.addClass("""
                                         import unnamed.*;
