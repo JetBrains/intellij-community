@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListPersistentSea
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchHistoryModel
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 import javax.swing.ListModel
 
 @ApiStatus.Experimental
@@ -46,21 +47,17 @@ class GHPRListViewModel internal constructor(
       override fun onDataAdded(startIdx: Int) {
         val loadedData = listLoader.loadedData
         model.add(loadedData.subList(startIdx, loadedData.size))
-        hasUpdatesState.update { hasUpdates -> hasUpdates || loadedData.any { !interactionStateService.isSeen(it, currentUser) } }
       }
 
       override fun onDataUpdated(idx: Int) {
         model.setElementAt(listLoader.loadedData[idx], idx)
-        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it, currentUser) } }
       }
       override fun onDataRemoved(idx: Int) {
         model.remove(idx)
-        hasUpdatesState.update { model.items.any { !interactionStateService.isSeen(it, currentUser) } }
       }
 
       override fun onAllDataRemoved() {
         model.removeAll()
-        hasUpdatesState.update { false }
       }
     })
   }
@@ -79,6 +76,11 @@ class GHPRListViewModel internal constructor(
     val listenersDisposable = cs.nestedDisposable()
     listLoader.addLoadingStateChangeListener(listenersDisposable) {
       loadingState.value = listLoader.loading
+
+      // If transitioning from loading to not loading, check for no updates
+      if (!listLoader.loading) {
+        hasUpdatesState.value = listModel.items.any { !interactionStateService.isSeen(it, currentUser) }
+      }
     }
     listLoader.addErrorChangeListener(listenersDisposable) {
       errorState.value = listLoader.error
