@@ -14,13 +14,16 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 
 private val EP_NAME = ExtensionPointName<DynamicInspectionsProvider>("com.intellij.dynamicInspectionsProvider")
 
+@ApiStatus.Internal
 interface DynamicInspectionsProvider {
-  fun inspectionsFlow(project: Project): Flow<Set<DynamicInspectionDescriptor>>
+  fun inspections(project: Project): Flow<Set<DynamicInspectionDescriptor>>
 }
 
+@ApiStatus.Internal
 sealed class DynamicInspectionDescriptor {
   companion object {
     fun fromTool(tool: InspectionProfileEntry): DynamicInspectionDescriptor {
@@ -34,30 +37,27 @@ sealed class DynamicInspectionDescriptor {
 
   val toolWrapper: InspectionToolWrapper<*, *> by lazy {
     when(this) {
-      is Global -> object : GlobalInspectionToolWrapper(tool) {
-        override fun createCopy(): GlobalInspectionToolWrapper {
-          return GlobalInspectionToolWrapper(tool)
-        }
-      }
-      is Local -> object : LocalInspectionToolWrapper(tool) {
-        override fun createCopy(): LocalInspectionToolWrapper {
-          return LocalInspectionToolWrapper(tool)
-        }
-      }
+      is Local -> DynamicLocalInspectionToolWrapper(tool)
+      is Global -> DynamicGlobalInspectionToolWrapper(tool)
     }
   }
 
+  class Local(val tool: LocalInspectionTool) : DynamicInspectionDescriptor()
+
   class Global(val tool: GlobalInspectionTool) : DynamicInspectionDescriptor()
 
+  private class DynamicLocalInspectionToolWrapper(tool: LocalInspectionTool) : LocalInspectionToolWrapper(tool) {
+    override fun createCopy(): LocalInspectionToolWrapper = DynamicLocalInspectionToolWrapper(tool)
+  }
 
-  class Local(val tool: LocalInspectionTool) : DynamicInspectionDescriptor()
+  private class DynamicGlobalInspectionToolWrapper(tool: GlobalInspectionTool) : GlobalInspectionToolWrapper(tool) {
+    override fun createCopy(): GlobalInspectionToolWrapper = DynamicGlobalInspectionToolWrapper(tool)
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun dynamicInspectionsFlow(project: Project): Flow<Set<DynamicInspectionDescriptor>> {
   val epUpdatedFlow = callbackFlow {
-    trySendBlocking(Unit)
-
     val disposable = Disposer.newDisposable()
     val listener = object : ExtensionPointListener<DynamicInspectionsProvider> {
       override fun extensionAdded(extension: DynamicInspectionsProvider, pluginDescriptor: PluginDescriptor) {
@@ -73,14 +73,17 @@ internal fun dynamicInspectionsFlow(project: Project): Flow<Set<DynamicInspectio
   }.buffer(capacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
   return epUpdatedFlow
+    .onStart { emit(Unit) }
     .flatMapLatest {
-      val allDynamicCustomInspectionsFlows: List<Flow<Set<DynamicInspectionDescriptor>>> = EP_NAME.extensionList.map { provider ->
-        provider.inspectionsFlow(project)
-          .map { inspections -> inspections.toSet() }
-          .onStart { emit(emptySet()) }
+      val allDynamicInspectionsFlows: List<Flow<Set<DynamicInspectionDescriptor>>> = EP_NAME.extensionList.map { provider ->
+        // if returned flow is simply empty, do not block collection of others in combine
+        provider.inspections(project).onEmpty { emit(emptySet()) }
       }
-      combine(allDynamicCustomInspectionsFlows) {
+      combine(allDynamicInspectionsFlows) {
         it.toList().flatten().toSet()
+      }.onEmpty {
+        // if there are no EP impls, emit the empty set
+        emit(emptySet())
       }
     }.distinctUntilChanged()
 }

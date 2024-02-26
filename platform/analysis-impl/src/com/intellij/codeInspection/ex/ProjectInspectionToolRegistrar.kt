@@ -5,49 +5,66 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-class ProjectInspectionToolRegistrar(private val project: Project, scope: CoroutineScope) : InspectionToolsSupplier() {
+@ApiStatus.Internal
+class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : InspectionToolsSupplier() {
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): ProjectInspectionToolRegistrar = project.service()
   }
 
-  private val dynamicInspectionsFlow: StateFlow<Set<DynamicInspectionDescriptor>> = dynamicInspectionsFlow(project)
+  private val dynamicInspectionsFlow: StateFlow<Set<DynamicInspectionDescriptor>?> = dynamicInspectionsFlow(project)
     .flowOn(Dispatchers.Default)
-    .stateIn(scope, SharingStarted.Eagerly, initialValue = emptySet())
+    .stateIn(scope, SharingStarted.Lazily, initialValue = null)
+
+  private val dynamicInspectionsWereInitialized = Job()
+
+  private val updateInspectionProfilesSubscription = scope.launch(Dispatchers.Default, start = CoroutineStart.LAZY) {
+    var oldInspections = emptySet<DynamicInspectionDescriptor>()
+    dynamicInspectionsFlow
+      .filterNotNull()
+      .collect { currentInspections ->
+        try {
+          if (oldInspections == currentInspections) return@collect
+
+          val newInspections = currentInspections - oldInspections
+          val outdatedInspections = oldInspections - currentInspections
+
+          listeners.forEach { listener ->
+            outdatedInspections.forEach {
+              listener.toolRemoved(it.toolWrapper)
+            }
+          }
+          listeners.forEach { listener ->
+            newInspections.forEach {
+              listener.toolAdded(it.toolWrapper)
+            }
+          }
+          oldInspections = currentInspections
+          DaemonCodeAnalyzerEx.getInstance(project).restart()
+        }
+        finally {
+          dynamicInspectionsWereInitialized.complete()
+        }
+      }
+  }
 
   init {
     InspectionToolRegistrar.getInstance()
-
-    scope.launch(Dispatchers.Default) {
-      var oldInspections = emptySet<DynamicInspectionDescriptor>()
-      dynamicInspectionsFlow.collectLatest { currentInspections ->
-        if (oldInspections == currentInspections) return@collectLatest
-
-        val newInspections = currentInspections - oldInspections
-        val outdatedInspections = oldInspections - currentInspections
-
-        listeners.forEach { listener ->
-          outdatedInspections.forEach {
-            listener.toolRemoved(it.toolWrapper)
-          }
-        }
-        listeners.forEach { listener ->
-          newInspections.forEach {
-            listener.toolAdded(it.toolWrapper)
-          }
-        }
-        oldInspections = currentInspections
-        DaemonCodeAnalyzerEx.getInstance(project).restart()
-      }
-    }
   }
 
-  override fun createTools(): MutableList<InspectionToolWrapper<*, *>> {
-    return (InspectionToolRegistrar.getInstance().createTools() + dynamicInspectionsFlow.value.map { it.toolWrapper }).toMutableList()
+  suspend fun waitForDynamicInspectionsInitialization() {
+    updateInspectionProfilesSubscription.start()
+    dynamicInspectionsWereInitialized.join()
+  }
+
+  override fun createTools(): List<InspectionToolWrapper<*, *>> {
+    updateInspectionProfilesSubscription.start()
+    val dynamicTools = dynamicInspectionsFlow.value?.map { it.toolWrapper } ?: emptyList()
+    return InspectionToolRegistrar.getInstance().createTools() + dynamicTools
   }
 }

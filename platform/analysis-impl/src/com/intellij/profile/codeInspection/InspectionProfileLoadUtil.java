@@ -29,7 +29,7 @@ public final class InspectionProfileLoadUtil {
   }
 
   public static @NotNull InspectionProfileImpl load(@NotNull Path file,
-                                                    @NotNull InspectionToolRegistrar registrar,
+                                                    @NotNull InspectionToolsSupplier registrar,
                                                     @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException {
     Element element = JDOMUtil.load(file);
     String profileName = getProfileName(file, element);
