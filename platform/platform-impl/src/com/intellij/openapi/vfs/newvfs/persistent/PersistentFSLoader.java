@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
@@ -45,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
@@ -79,11 +79,18 @@ public final class PersistentFSLoader {
    * In both cases, we attach all other exceptions to .suppressed list of the main exception
    */
   private static final @NotNull Function<List<? extends Throwable>, IOException> ASYNC_EXCEPTIONS_REPORTER = exceptions -> {
-    IOException mainException = (IOException)ContainerUtil.find(exceptions, e -> e instanceof IOException);
-    if (mainException != null && !mainException.getMessage().isEmpty()) {
+    IOException mainIoException = (IOException)exceptions.stream()
+      .map(ex -> {
+        //unwrap CompletionException from async processing
+        return ex instanceof CompletionException ? ex.getCause() : ex;
+      })
+      .filter(e -> e instanceof IOException)
+      .findFirst().orElse(null);
+    
+    if (mainIoException != null && !mainIoException.getMessage().isEmpty()) {
       for (Throwable exception : exceptions) {
-        if (exception != mainException) {
-          mainException.addSuppressed(exception);
+        if (exception != mainIoException) {
+          mainIoException.addSuppressed(exception);
         }
       }
     }
@@ -92,12 +99,12 @@ public final class PersistentFSLoader {
         .map(e -> ExceptionUtil.getNonEmptyMessage(e, ""))
         .filter(message -> !message.isBlank())
         .findFirst().orElse("<Error message not found>");
-      mainException = new IOException(nonEmptyErrorMessage);
+      mainIoException = new IOException(nonEmptyErrorMessage);
       for (Throwable exception : exceptions) {
-        mainException.addSuppressed(exception);
+        mainIoException.addSuppressed(exception);
       }
     }
-    return mainException;
+    return mainIoException;
   };
 
 
