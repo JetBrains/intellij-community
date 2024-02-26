@@ -2511,6 +2511,12 @@
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
       <statistics.counterUsagesCollector
               implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
+
+    <psi.symbolReferenceProvider
+      hostElementClass="com.intellij.psi.PsiLiteralExpression"
+      hostLanguage="JAVA"
+      implementationClass="com.intellij.lang.logging.resolve.JvmLoggerFormatSymbolReferenceProvider"
+      targetClass="com.intellij.lang.logging.resolve.JvmLoggerArgumentSymbol"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
