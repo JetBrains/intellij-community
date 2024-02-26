@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.BootstrapBundle
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
@@ -13,6 +14,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.rd.createLifetime
@@ -44,6 +46,8 @@ interface SettingsService {
   fun getJbService(): JbService
   fun getExternalService(): ExternalService
 
+  suspend fun warmUp(scope: CoroutineScope)
+
   suspend fun shouldShowImport(): Boolean
 
   val importCancelled: Signal<Unit>
@@ -56,6 +60,8 @@ interface SettingsService {
 
   val doClose: ISignal<Unit>
 
+  val pluginIdsPreloaded: Boolean
+
   fun configChosen()
 
   fun isLoggedIn(): Boolean = jbAccount.value != null
@@ -64,6 +70,7 @@ interface SettingsService {
 class SettingsServiceImpl : SettingsService, Disposable.Default {
 
   private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
+  private var pluginsPreloadedDeferred: Deferred<Set<PluginId>>? = null
 
   override fun getSyncService() =
     if (shouldUseMockData) TestSyncService()
@@ -76,6 +83,12 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
   override fun getExternalService(): ExternalService =
     if (shouldUseMockData) TestExternalService()
     else SettingTransferService.getInstance()
+
+  override suspend fun warmUp(scope: CoroutineScope) {
+    pluginsPreloadedDeferred = scope.async { MarketplaceRequests.getInstance().getMarketplacePlugins(null) }
+    scope.async { getJbService().warmUp() }
+    scope.async { getExternalService().warmUp(scope) }
+  }
 
   override suspend fun shouldShowImport(): Boolean {
     val startTime = System.currentTimeMillis()
@@ -103,6 +116,8 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
 
   override val doClose = Signal<Unit>()
+  override val pluginIdsPreloaded: Boolean
+    get() = pluginsPreloadedDeferred?.isCompleted == true
 
   override fun configChosen() {
     if (shouldUseMockData) {
