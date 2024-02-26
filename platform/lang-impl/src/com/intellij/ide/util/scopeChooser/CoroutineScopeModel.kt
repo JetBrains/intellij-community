@@ -18,8 +18,10 @@ import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.psi.search.PredefinedSearchScopeProvider
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchScopeProvider
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Predicate
@@ -59,6 +61,13 @@ internal class CoroutineScopeModel internal constructor(
 
   override fun refreshScopes(dataContext: DataContext?) {
     val asyncDataContext = dataContext?.let { Utils.createAsyncDataContext(it) }
+    var asyncDataContextPromise: Promise<DataContext>? = null
+    if (asyncDataContext == null && EDT.isCurrentThreadEdt()) {
+      // We need to capture the data context from focus as early as possible,
+      // because focus might change very soon (important when invoking a dialog, e.g., Find in Files).
+      asyncDataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
+        .then { Utils.createAsyncDataContext(it) }
+    }
     coroutineScope.launch(
       start = CoroutineStart.UNDISPATCHED,
       context = ModalityState.any().asContextElement(),
@@ -67,7 +76,12 @@ internal class CoroutineScopeModel internal constructor(
         yield() // dispatch
         runCatching {
           val scopes = if (asyncDataContext == null) {
-            getScopeDescriptors(filter)
+            if (asyncDataContextPromise == null) {
+              getScopeDescriptors(filter)
+            }
+            else {
+              getScopeDescriptors(asyncDataContextPromise.await(), filter)
+            }
           }
           else {
             getScopeDescriptors(asyncDataContext, filter)
