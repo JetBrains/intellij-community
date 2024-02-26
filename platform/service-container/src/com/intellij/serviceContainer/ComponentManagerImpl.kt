@@ -5,6 +5,7 @@ package com.intellij.serviceContainer
 
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
@@ -17,7 +18,10 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import com.intellij.openapi.diagnostic.*
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -642,7 +646,9 @@ abstract class ComponentManagerImpl(
   internal fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     @Suppress("DEPRECATION")
     if ((serviceDescriptor == null || !isPreInitialized(component)) &&
-        (component is PersistentStateComponent<*> || component is com.intellij.openapi.util.JDOMExternalizable)) {
+        (component is PersistentStateComponent<*> ||
+         component is SettingsSavingComponent ||
+         component is com.intellij.openapi.util.JDOMExternalizable)) {
       if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
         if (!getApplication()!!.isUnitTestMode) {
           throw IllegalStateException("You cannot get $component before component store is initialized")
