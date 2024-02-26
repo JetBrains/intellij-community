@@ -7,6 +7,8 @@ interface Properties {
   public static final String targetPath = TARGET_PATH
 //noinspection GrUnresolvedAccess
   public static final String gradleTaskName = GRADLE_TASK_NAME
+  //noinspection GrUnresolvedAccess
+  public static final String projectPath = GRADLE_PROJECT_PATH
 }
 
 // Requires Gradle 5.6+
@@ -40,22 +42,8 @@ abstract class IjDownloadTask extends DefaultTask {
   }
 }
 
-Set<? extends ArtifactRepository> projectRepositories() {
-  def target = new HashSet()
-  allprojects {
-    target.addAll(it.repositories)
-  }
-  return target
-}
-
-gradle.projectsEvaluated {
-  rootProject
-    .repositories
-    .addAll(projectRepositories())
-}
-
 afterProject {
-  if (it.name == rootProject.name) {
+  if (it.projectDir.path == Properties.projectPath) {
     Configuration configuration = it.configurations.create('downloadSources_' + UUID.randomUUID())
     configuration.transitive = false
     it.dependencies.add(configuration.name, Properties.dependencyNotation)
