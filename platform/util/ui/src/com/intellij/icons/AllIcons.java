@@ -1037,7 +1037,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ClickHouse = load("providers/clickHouse.svg", -519696265, 0);
     /** 16x16 */ public static final @NotNull Icon CockroachDB = load("providers/cockroachDB.svg", -430761369, 0);
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", 125110449, 0);
-    /** 16x16 */ public static final @NotNull Icon Databriks = load("providers/databriks.svg", -1996940805, 2);
+    /** 16x16 */ public static final @NotNull Icon Databrics = load("providers/databrics.svg", -276617933, 2);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", -700958296, 2);
     /** 16x16 */ public static final @NotNull Icon DocumentDB = load("providers/documentDB.svg", -1286984491, 2);
     /** 16x16 */ public static final @NotNull Icon DuckDB = load("providers/duckDB.svg", -590062592, 2);
