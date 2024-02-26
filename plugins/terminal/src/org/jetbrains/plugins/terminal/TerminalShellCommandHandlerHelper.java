@@ -38,6 +38,7 @@ import com.jediterm.terminal.model.TerminalModelListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.Constants;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
@@ -72,7 +73,7 @@ public final class TerminalShellCommandHandlerHelper {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, widget);
 
     ApplicationManager.getApplication().getMessageBus().connect(myWidget).subscribe(
-      TerminalCommandHandlerCustomizer.Constants.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
+      Constants.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
 
     TerminalModelListener listener = () -> {
       if (System.currentTimeMillis() - myLastKeyPressedMillis.get() < TYPING_THRESHOLD_MS) {
@@ -181,7 +182,8 @@ public final class TerminalShellCommandHandlerHelper {
   }
 
   private boolean isEnabledForProject() {
-    return getPropertiesComponent().getBoolean(TerminalCommandHandlerCustomizer.Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION, true);
+    return getPropertiesComponent().getBoolean(Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION,
+                                               Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION_DEFAULT);
   }
 
   @NotNull
