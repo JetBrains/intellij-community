@@ -151,7 +151,7 @@ public final class BaselinePanel extends NonOpaquePanel {
       private int getMinButtonsBaseline() {
         return myButtonComponents.stream()
           .filter(component -> component.isVisible())
-          .mapToInt(component -> component.getBaseline(getWidth(), getHeight()))
+          .mapToInt(component -> component.getBaseline(Math.max(0, getWidth()), Math.max(0, getHeight())))
           .max().orElse(-1);
       }
 
