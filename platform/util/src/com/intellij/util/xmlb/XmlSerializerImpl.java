@@ -6,6 +6,8 @@ import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.xmlb.annotations.CollectionBean;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -21,6 +23,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.util.xmlb.CollectionBindingKt.createCollectionBinding;
 
 @ApiStatus.Internal
 public final class XmlSerializerImpl {
@@ -42,7 +46,7 @@ public final class XmlSerializerImpl {
           return new JDOMElementBinding(accessor);
         }
         else {
-          return new CollectionBinding(aClass, accessor, serializer, ArrayStrategy.INSTANCE);
+          return createCollectionBinding(serializer, aClass.getComponentType(), accessor, true);
         }
       }
       else if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
@@ -52,11 +56,18 @@ public final class XmlSerializerImpl {
             return new CompactCollectionBinding(accessor);
           }
         }
-        return new CollectionBinding(ClassUtil.typeToClass((((ParameterizedType)originalType).getActualTypeArguments()[0])), accessor, serializer, CollectionStrategyImpl.INSTANCE);
+
+        return createCollectionBinding(serializer, ClassUtil.typeToClass((((ParameterizedType)originalType).getActualTypeArguments()[0])), accessor, false);
       }
       else if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+        XMap newAnnotation = null;
+        MapAnnotation oldAnnotation = null;
+        if (accessor != null) {
+          newAnnotation = accessor.getAnnotation(XMap.class);
+          oldAnnotation = newAnnotation == null ? accessor.getAnnotation(MapAnnotation.class) : null;
+        }
         //noinspection unchecked
-        return new MapBinding(accessor, (Class<? extends Map<?, ?>>)aClass);
+        return new MapBinding(oldAnnotation, newAnnotation, (Class<? extends Map<?, ?>>)aClass);
       }
       else if (accessor != null) {
         if (Element.class.isAssignableFrom(aClass)) {

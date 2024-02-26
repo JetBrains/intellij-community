@@ -17,22 +17,55 @@ import org.jdom.Text
 import java.lang.reflect.Type
 import java.util.*
 
+internal fun createCollectionBinding(serializer: Serializer, itemType: Class<*>, accessor: MutableAccessor?, isArray: Boolean): RootBinding {
+  var isSurroundWithTag = true
+  var isSortOrderedSet = true
+  var elementTypes = ArrayUtilRt.EMPTY_CLASS_ARRAY
+  var elementName = Constants.OPTION
+  var valueAttributeName = Constants.VALUE
+  if (accessor != null) {
+    val xCollection = accessor.getAnnotation(XCollection::class.java)
+    if (xCollection != null) {
+      isSurroundWithTag = false
+      elementTypes = XmlSerializerUtil.getElementTypes(xCollection)
+      elementName = xCollection.elementName
+      valueAttributeName = xCollection.valueAttributeName
+    }
+    else {
+      @Suppress("DEPRECATION")
+      val oldAnnotation = accessor.getAnnotation(com.intellij.util.xmlb.annotations.AbstractCollection::class.java)
+      if (oldAnnotation != null) {
+        isSurroundWithTag = oldAnnotation.surroundWithTag
+        isSortOrderedSet = oldAnnotation.sortOrderedSet
+        elementTypes = XmlSerializerUtil.getElementTypes(oldAnnotation)
+        elementName = oldAnnotation.elementTag
+        valueAttributeName = oldAnnotation.elementValueAttribute
+      }
+    }
+  }
+  return CollectionBinding(
+    elementName = elementName,
+    valueAttributeName = valueAttributeName,
+    isSurroundWithTag = isSurroundWithTag,
+    isSortOrderedSet = isSortOrderedSet,
+    itemType = itemType,
+    elementTypes = elementTypes,
+    serializer = serializer,
+    strategy = if (isArray) ArrayStrategy else CollectionStrategyImpl,
+  )
+}
+
 internal class CollectionBinding(
+  private val elementName: String,
+  private val valueAttributeName: String,
+  @JvmField internal val isSurroundWithTag: Boolean,
+  @JvmField internal val isSortOrderedSet: Boolean,
   @JvmField internal val itemType: Class<*>,
-  private val _accessor: MutableAccessor?,
+  @JvmField internal val elementTypes: Array<Class<*>>,
   private val serializer: Serializer,
   private val strategy: CollectionStrategy,
-) : MultiNodeBinding, NestedBinding, NotNullDeserializeBinding, RootBinding {
-  override val accessor: MutableAccessor
-    get() = _accessor!!
-
+) : MultiNodeBinding, NotNullDeserializeBinding, RootBinding {
   private var itemBindings: List<Binding>? = null
-
-  private val newAnnotation: XCollection? = _accessor?.getAnnotation(XCollection::class.java)
-
-  @Suppress("DEPRECATION")
-  private val annotation: com.intellij.util.xmlb.annotations.AbstractCollection? =
-    if (newAnnotation == null) _accessor?.getAnnotation(com.intellij.util.xmlb.annotations.AbstractCollection::class.java) else null
 
   override fun init(originalType: Type, serializer: Serializer) {
     assert(itemBindings == null)
@@ -63,17 +96,8 @@ internal class CollectionBinding(
     }
   }
 
-  internal val isSortOrderedSet: Boolean
-    get() = annotation == null || annotation.sortOrderedSet
-
   override val isMulti: Boolean
     get() = true
-
-  private val isSurroundWithTag: Boolean
-    get() = newAnnotation == null && (annotation == null || annotation.surroundWithTag)
-
-  private val elementTypes: Array<Class<*>>
-    get() = newAnnotation?.let { XmlSerializerUtil.getElementTypes(it) } ?: (annotation?.let { XmlSerializerUtil.getElementTypes(it) } ?: ArrayUtilRt.EMPTY_CLASS_ARRAY)
 
   private fun getItemBinding(aClass: Class<*>): Binding? {
     return if (ClassUtil.isPrimitive(aClass)) null else serializer.getRootBinding(aClass, aClass)
@@ -99,10 +123,6 @@ internal class CollectionBinding(
       }
     }
     return JsonArray(content)
-  }
-
-  override fun setFromJson(bean: Any, element: JsonElement) {
-    TODO("Not yet implemented")
   }
 
   override fun fromJson(currentValue: Any?, element: JsonElement): Any? {
@@ -155,7 +175,7 @@ internal class CollectionBinding(
       }
     }
 
-    return collection
+    return strategy.transformJsonValue(collection, itemType)
   }
 
   override fun serialize(bean: Any, filter: SerializationFilter?): Element {
@@ -192,21 +212,21 @@ internal class CollectionBinding(
 
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
     return strategy.deserializeList(
-      bean = context,
+      currentValue = context,
       elements = if (isSurroundWithTag) adapter.getChildren(element) else listOf(element),
       adapter = adapter,
       binding = this,
     )
   }
 
-  override fun <T : Any> deserializeList(bean: Any?, elements: List<T>, adapter: DomAdapter<T>): Any {
+  override fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>): Any {
     if (!isSurroundWithTag) {
-      return strategy.deserializeList(bean, elements, adapter, this)
+      return strategy.deserializeList(currentValue = currentValue, elements = elements, adapter = adapter, binding = this)
     }
 
     val element = elements.single()
     return strategy.deserializeList(
-      bean = if (bean == null && adapter.getName(element) == Constants.SET) HashSet<Any>() else bean,
+      currentValue = if (currentValue == null && adapter.getName(element) == Constants.SET) HashSet<Any>() else currentValue,
       elements = adapter.getChildren(element),
       adapter = adapter,
       binding = this,
@@ -215,7 +235,7 @@ internal class CollectionBinding(
 
   private fun serializeItem(value: Any?, parent: Element, filter: SerializationFilter?) {
     if (value == null) {
-      LOG.warn("Collection $accessor contains 'null' object")
+      LOG.warn("Collection contains 'null' object")
       return
     }
 
@@ -256,12 +276,6 @@ internal class CollectionBinding(
     }
   }
 
-  private val elementName: String
-    get() = newAnnotation?.elementName ?: annotation?.elementTag ?: Constants.OPTION
-
-  private val valueAttributeName: String
-    get() = newAnnotation?.valueAttributeName ?: annotation?.elementValueAttribute ?: Constants.VALUE
-
   override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean {
     return when {
       isSurroundWithTag -> adapter.getName(element) == strategy.getCollectionTagName(null)
@@ -274,28 +288,28 @@ internal class CollectionBinding(
 internal sealed interface CollectionStrategy {
   fun getCollectionTagName(target: Any?): String
 
-  fun <T : Any> deserializeList(bean: Any?, elements: List<T>, adapter: DomAdapter<T>, binding: CollectionBinding): Any
+  fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>, binding: CollectionBinding): Any
 
   fun getCollection(bean: Any, binding: CollectionBinding): Collection<Any?>
 
   fun transformJsonValue(value: Collection<Any?>, itemType: Class<*>): Any = value
 }
 
-internal data object CollectionStrategyImpl : CollectionStrategy {
-  override fun <T : Any> deserializeList(bean: Any?, elements: List<T>, adapter: DomAdapter<T>, binding: CollectionBinding): Any {
+private data object CollectionStrategyImpl : CollectionStrategy {
+  override fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>, binding: CollectionBinding): Any {
     val result: MutableCollection<Any?>
-    val isContextMutable = bean != null && ClassUtil.isMutableCollection(bean)
+    val isContextMutable = currentValue != null && ClassUtil.isMutableCollection(currentValue)
     if (isContextMutable) {
       @Suppress("UNCHECKED_CAST")
-      result = bean as MutableCollection<Any?>
+      result = currentValue as MutableCollection<Any?>
       result.clear()
     }
     else {
-      result = if (bean is Set<*>) HashSet() else ArrayList()
+      result = if (currentValue is Set<*>) HashSet() else ArrayList()
     }
 
     for (node in elements) {
-      result.add(binding.deserializeItem(node, adapter, bean))
+      result.add(binding.deserializeItem(node, adapter, currentValue))
     }
 
     return result
@@ -326,16 +340,16 @@ internal data object CollectionStrategyImpl : CollectionStrategy {
   }
 }
 
-internal data object ArrayStrategy : CollectionStrategy {
+private data object ArrayStrategy : CollectionStrategy {
   override fun getCollectionTagName(target: Any?) = "array"
 
-  override fun <T : Any> deserializeList(bean: Any?, elements: List<T>, adapter: DomAdapter<T>, binding: CollectionBinding): Any {
+  override fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>, binding: CollectionBinding): Any {
     val size = elements.size
 
     @Suppress("UNCHECKED_CAST")
     val result = java.lang.reflect.Array.newInstance(binding.itemType, size) as Array<Any>
     for (i in 0 until size) {
-      result[i] = binding.deserializeItem(elements[i], adapter, bean)!!
+      result[i] = binding.deserializeItem(elements[i], adapter, currentValue)!!
     }
     return result
   }

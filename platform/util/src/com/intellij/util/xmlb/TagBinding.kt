@@ -11,6 +11,7 @@ import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
+import java.util.*
 
 internal class OptionTagBinding(
   @JvmField internal val binding: Binding?,
@@ -150,7 +151,7 @@ internal class OptionTagBinding(
         }
         else if (adapter.hasElementContent(element)) {
           val oldValue = accessor.read(host)
-          val newValue = adapter.deserializeList(binding = binding, oldValue = oldValue, element = element)
+          val newValue = deserializeList(binding = binding, currentValue = oldValue, nodes = adapter.getChildren(element), adapter = adapter)
           if (oldValue !== newValue) {
             accessor.set(host, newValue)
           }
@@ -159,7 +160,7 @@ internal class OptionTagBinding(
           val oldValue = accessor.read(host)
           // do nothing if the field is already null
           if (oldValue != null) {
-            val newValue = adapter.deserializeEmptyList(oldValue, element, binding as MultiNodeBinding)
+            val newValue = (binding as MultiNodeBinding).deserializeList(currentValue = oldValue, elements = Collections.emptyList(), adapter = adapter)
             if (oldValue !== newValue) {
               accessor.set(host, newValue)
             }
@@ -180,7 +181,7 @@ internal class OptionTagBinding(
           XmlSerializerImpl.doSet(host, value, accessor, ClassUtil.typeToClass(accessor.genericType))
         }
         else {
-          accessor.set(host, adapter.deserializeUnsafe(host, element, binding))
+          accessor.set(host, binding.deserializeUnsafe(host, element, adapter))
         }
       }
       else {
@@ -208,10 +209,10 @@ internal fun addContent(targetElement: Element, node: Any) {
   }
 }
 
-internal fun <T : Any> deserializeList(binding: Binding, context: Any?, nodes: List<T>, adapter: DomAdapter<T>): Any? {
+internal fun <T : Any> deserializeList(binding: Binding, currentValue: Any?, nodes: List<T>, adapter: DomAdapter<T>): Any? {
   return when {
-    binding is MultiNodeBinding -> binding.deserializeList(bean = context, elements = nodes, adapter)
-    nodes.size == 1 -> binding.deserializeUnsafe(context, nodes.get(0), adapter)
+    binding is MultiNodeBinding -> binding.deserializeList(currentValue = currentValue, elements = nodes, adapter)
+    nodes.size == 1 -> binding.deserializeUnsafe(currentValue, nodes.get(0), adapter)
     nodes.isEmpty() -> null
     else -> throw AssertionError("Duplicate data for $binding will be ignored")
   }
