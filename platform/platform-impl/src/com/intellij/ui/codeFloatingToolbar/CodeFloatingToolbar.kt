@@ -212,7 +212,6 @@ class CodeFloatingToolbar(
       override fun onClosed(event: LightweightWindowEvent) {
         activeMenuPopup = null
         Toggleable.setSelected(button, null)
-        button.isSelected = false
       }
     })
   }
