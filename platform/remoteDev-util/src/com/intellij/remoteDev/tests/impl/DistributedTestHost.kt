@@ -65,6 +65,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
      * Currently, only test code of the client part is put to a separate plugin.
      */    
     const val TEST_PLUGIN_ID: String = "com.intellij.tests.plugin"
+    const val TEST_PLUGIN_DIRECTORY_NAME: String = "tests-plugin"
   }
 
   open fun setUpLogging(sessionLifetime: Lifetime, session: RdTestSession) {
