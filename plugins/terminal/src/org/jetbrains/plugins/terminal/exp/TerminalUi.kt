@@ -33,16 +33,6 @@ object TerminalUi {
     get() = JBColor(0xF0F2F5, 0x2B2D30)
   val blockBackgroundEnd: Color
     get() = JBColor(0xFAFAFA, 0x212329)
-  val selectedBlockBackground: Color
-    get() = JBColor(0xEDF3FF, 0x25324D)
-  val selectedBlockStrokeColor: Color
-    get() = JBColor(0x4682FA, 0x3574F0)
-  val inactiveSelectedBlockBackground: Color
-    get() = JBColor(0xEBECF0, 0x393B40)
-  val inactiveSelectedBlockStrokeColor: Color
-    get() = JBColor(0xC9CCD6, 0x5A5D63)
-  val errorBlockStrokeColor: Color
-    get() = JBColor(0xED99A1, 0x9C4E4E)
 
   val outputForeground: Color
     get() = JBColor(0x080808, 0xBDC0C9)

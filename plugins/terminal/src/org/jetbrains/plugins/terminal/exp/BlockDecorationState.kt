@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
+import com.intellij.terminal.BlockTerminalColors
 import org.jetbrains.plugins.terminal.exp.ui.GradientTextureCache
 import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockBackgroundRenderer
 import org.jetbrains.plugins.terminal.exp.ui.TerminalBlockCornersRenderer
@@ -17,29 +18,29 @@ internal interface BlockDecorationState {
 internal class DefaultBlockDecorationState(gradientCache: GradientTextureCache) : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(gradientCache)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(gradientCache)
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(gradientCache.colorStart)
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(gradientCache.colorStartKey)
 }
 
 internal class SelectedBlockDecorationState : BlockDecorationState {
-  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.selectedBlockBackground)
-  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(background = TerminalUi.selectedBlockBackground,
-                                                                                         strokeBackground = TerminalUi.selectedBlockStrokeColor,
+  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(BlockTerminalColors.SELECTED_BLOCK_BACKGROUND)
+  override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(backgroundKey = BlockTerminalColors.SELECTED_BLOCK_BACKGROUND,
+                                                                                         strokeBackgroundKey = BlockTerminalColors.SELECTED_BLOCK_STROKE_COLOR,
                                                                                          strokeWidth = 2)
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(background = TerminalUi.selectedBlockBackground,
-                                                                                    strokeBackground = TerminalUi.selectedBlockStrokeColor,
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = BlockTerminalColors.SELECTED_BLOCK_BACKGROUND,
+                                                                                    strokeBackgroundKey = BlockTerminalColors.SELECTED_BLOCK_STROKE_COLOR,
                                                                                     strokeWidth = 2)
 }
 
 internal class InactiveSelectedBlockDecorationState : BlockDecorationState {
-  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(TerminalUi.inactiveSelectedBlockBackground)
+  override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(
-    background = TerminalUi.inactiveSelectedBlockBackground,
-    strokeBackground = TerminalUi.inactiveSelectedBlockStrokeColor,
+    backgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND,
+    strokeBackgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_STROKE_COLOR,
     strokeWidth = 2
   )
   override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(
-    background = TerminalUi.inactiveSelectedBlockBackground,
-    strokeBackground = TerminalUi.inactiveSelectedBlockStrokeColor,
+    backgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND,
+    strokeBackgroundKey = BlockTerminalColors.INACTIVE_SELECTED_BLOCK_STROKE_COLOR,
     strokeWidth = 2
   )
 }
@@ -47,9 +48,9 @@ internal class InactiveSelectedBlockDecorationState : BlockDecorationState {
 internal class ErrorBlockDecorationState(gradientCache: GradientTextureCache) : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(gradientCache)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(gradientCache = gradientCache,
-                                                                                         strokeBackground = TerminalUi.errorBlockStrokeColor,
+                                                                                         strokeBackgroundKey = BlockTerminalColors.ERROR_BLOCK_STROKE_COLOR,
                                                                                          strokeWidth = 1)
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(background = gradientCache.colorStart,
-                                                                                    strokeBackground = TerminalUi.errorBlockStrokeColor,
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = gradientCache.colorStartKey,
+                                                                                    strokeBackgroundKey = BlockTerminalColors.ERROR_BLOCK_STROKE_COLOR,
                                                                                     strokeWidth = 1)
 }

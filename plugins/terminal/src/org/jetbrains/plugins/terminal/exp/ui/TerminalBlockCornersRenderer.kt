@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.terminal.exp.ui
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalUi
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toFloatAndScale
-import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -23,24 +23,24 @@ import java.awt.geom.Rectangle2D
  * It is painted over the selection to override it, so the selection will be painted only in the text area.
  */
 class TerminalBlockCornersRenderer private constructor(
-  private val background: Color?,
+  private val backgroundKey: ColorKey?,
   private val gradientCache: GradientTextureCache?,
-  private val strokeBackground: Color? = null,
+  private val strokeBackgroundKey: ColorKey? = null,
   private val strokeWidth: Int = 0
 ) : CustomHighlighterRenderer {
-  /** Paints solid background, but also can paint the border if [strokeBackground] is specified and [strokeWidth] is greater than 0 */
-  constructor(background: Color, strokeBackground: Color? = null, strokeWidth: Int = 0) : this(
-    background = background,
+  /** Paints solid background, but also can paint the border if [strokeBackgroundKey] is specified and [strokeWidth] is greater than 0 */
+  constructor(backgroundKey: ColorKey, strokeBackgroundKey: ColorKey? = null, strokeWidth: Int = 0) : this(
+    backgroundKey = backgroundKey,
     gradientCache = null,
-    strokeBackground = strokeBackground,
+    strokeBackgroundKey = strokeBackgroundKey,
     strokeWidth = strokeWidth
   )
 
   /** Paints the linear gradient from left to right */
-  constructor(gradientCache: GradientTextureCache, strokeBackground: Color? = null, strokeWidth: Int = 0) : this(
-    background = null,
+  constructor(gradientCache: GradientTextureCache, strokeBackgroundKey: ColorKey? = null, strokeWidth: Int = 0) : this(
+    backgroundKey = null,
     gradientCache = gradientCache,
-    strokeBackground = strokeBackground,
+    strokeBackgroundKey = strokeBackgroundKey,
     strokeWidth = strokeWidth
   )
 
@@ -79,7 +79,10 @@ class TerminalBlockCornersRenderer private constructor(
       lineTo(0f, bottomY - bottomIns)
       closePath()
     }
-    val strokePath = if (strokeWidth > 0 && strokeBackground != null) {
+    val strokeBackground = strokeBackgroundKey.takeIf { strokeWidth > 0 }?.let {
+      editor.colorsScheme.getColor(it)
+    }
+    val strokePath = if (strokeBackground != null) {
       val stroke = toFloatAndScale(strokeWidth)
       val outerPath = Path2D.Float(Path2D.WIND_EVEN_ODD).apply {
         moveTo(0f, topY)
@@ -117,7 +120,7 @@ class TerminalBlockCornersRenderer private constructor(
       g2d.fill(topRect)
       g2d.fill(bottomRect)
 
-      g2d.paint = gradientCache?.getTexture(g2d, width.toInt()) ?: background
+      g2d.paint = gradientCache?.getTexture(g2d, width.toInt()) ?: editor.colorsScheme.getColor(backgroundKey!!)
       // paint the top and bottom parts of the block with the rounded corner on the right
       g2d.fill(topCornerPath)
       g2d.fill(bottomCornerPath)

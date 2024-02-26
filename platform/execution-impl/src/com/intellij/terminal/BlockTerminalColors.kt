@@ -13,6 +13,14 @@ object BlockTerminalColors {
   @JvmStatic val BLOCK_BACKGROUND_START: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_BLOCK_BACKGROUND_START")
   @JvmStatic val BLOCK_BACKGROUND_END: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_BLOCK_BACKGROUND_END")
 
+  @JvmStatic val SELECTED_BLOCK_BACKGROUND: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_SELECTED_BLOCK_BACKGROUND")
+  @JvmStatic val SELECTED_BLOCK_STROKE_COLOR: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_SELECTED_BLOCK_STROKE_COLOR")
+
+  @JvmStatic val INACTIVE_SELECTED_BLOCK_BACKGROUND: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND")
+  @JvmStatic val INACTIVE_SELECTED_BLOCK_STROKE_COLOR: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR")
+
+  @JvmStatic val ERROR_BLOCK_STROKE_COLOR: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR")
+
   @JvmStatic val BLACK: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_BLACK")
   @JvmStatic val RED: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_RED")
   @JvmStatic val GREEN: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_GREEN")
