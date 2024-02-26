@@ -83,6 +83,41 @@ fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFil
   )
 }
 
+/**
+ * Merges module repositories for different OS to a common one which can be used in the cross-platform distribution. 
+ * @return path to the generated repository or `null` if [distAllPath] already contains common module repository file which is used for all OSes
+ */
+internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPaths: List<Path>, context: BuildContext): Path? {
+  val commonRepositoryFile = distAllPath.resolve(MODULE_DESCRIPTORS_JAR_PATH)
+  if (commonRepositoryFile.exists()) {
+    return null
+  }
+  
+  val repositories = osSpecificDistPaths.map { osSpecificDistPath ->
+    val repositoryFile = osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH)
+    if (!repositoryFile.exists()) {
+      context.messages.error("Cannot generate runtime module repository for cross-platform distribution: $repositoryFile doesn't exist")
+    }
+    RuntimeModuleRepositorySerialization.loadFromJar(repositoryFile)
+  }
+  val commonIds = repositories.map { it.allIds }.reduce { a, b -> a.intersect(b) }
+  val commonDescriptors = ArrayList<RawRuntimeModuleDescriptor>()
+  for (moduleId in commonIds) {
+    val descriptors = repositories.map { it.findDescriptor(moduleId)!! }
+    val commonResourcePaths = descriptors.map { it.resourcePaths.toSet() }.reduce { a, b -> a.intersect(b) }
+    val commonDependencies = descriptors.first().dependencies
+    for (descriptor in descriptors) {
+      if (descriptor.dependencies != commonDependencies) {
+        context.messages.error("Cannot generate runtime module repository for cross-platform distribution: different dependencies for module '$moduleId', ${descriptor.dependencies} and $commonDependencies")
+      }
+    }
+    commonDescriptors.add(RawRuntimeModuleDescriptor(moduleId, commonResourcePaths.toList(), commonDependencies))
+  }
+  val targetFile = context.paths.tempDir.resolve("cross-platform-module-repository").resolve(JAR_REPOSITORY_FILE_NAME)
+  saveModuleRepository(commonDescriptors, targetFile, context)
+  return targetFile
+}
+
 private fun loadForCompiledModules(context: BuildContext): RawRuntimeModuleRepositoryData {
   // maybe it makes sense to produce the repository along with compiled classes and reuse it
   CompilationTasks.create(context).generateRuntimeModuleRepository()
@@ -167,9 +202,13 @@ private fun generateRepositoryForDistribution(
     context.messages.error("Runtime module repository has ${errors.size} ${StringUtil.pluralize("error", errors.size)}:\n" +
                            errors.joinToString("\n"))
   }
+  saveModuleRepository(distDescriptors, targetDirectory.resolve(MODULE_DESCRIPTORS_JAR_PATH), context)
+}
+
+private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescriptor>, targetFile: Path, context: BuildContext) {
   try {
-    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap",
-                                                   targetDirectory.resolve(MODULE_DESCRIPTORS_JAR_PATH), GENERATOR_VERSION)
+    RuntimeModuleRepositorySerialization.saveToJar(distDescriptors, "intellij.platform.bootstrap", 
+                                                   targetFile, GENERATOR_VERSION)
   }
   catch (e: IOException) {
     context.messages.error("Failed to save runtime module repository: ${e.message}", e)
