@@ -6,9 +6,13 @@ import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.LegacySettingsTransferWizard
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.io.FileUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 import java.net.URI
 import java.sql.Connection
@@ -17,16 +21,25 @@ import kotlin.collections.set
 
 private val logger = logger<StateDatabaseParser>()
 
-class StateDatabaseParser(private val settings: Settings) {
+class StateDatabaseParser(private val scope: CoroutineScope, private val settings: Settings) {
   private val recentsKey = "history.recentlyOpenedPathsList"
 
   fun process(file: File) {
     LegacySettingsTransferWizard.warnBackgroundThreadIfNotLegacy()
     try {
-      Class.forName("org.sqlite.JDBC")
+      val databaseFileToOpen = createTemporaryFileCopy(file)
+      try {
+        Class.forName("org.sqlite.JDBC")
 
-      val connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(file.path))
-      parseRecents(connection)
+        DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(databaseFileToOpen.path)).use { connection ->
+          parseRecents(connection)
+        }
+      }
+      finally {
+        scope.launch(Dispatchers.IO) {
+          cleanUpTempFile(databaseFileToOpen)
+        }
+      }
     }
     catch (t: Throwable) {
       settings.notes["vscode.databaseState"] = false
@@ -60,4 +73,13 @@ class StateDatabaseParser(private val settings: Settings) {
 
     return res.getString("value")
   }
+}
+
+private fun createTemporaryFileCopy(file: File): File {
+  val newFile = File(PathManager.getTempPath(), file.name)
+  return file.copyTo(newFile, overwrite = true)
+}
+
+private fun cleanUpTempFile(file: File) {
+  file.delete()
 }
