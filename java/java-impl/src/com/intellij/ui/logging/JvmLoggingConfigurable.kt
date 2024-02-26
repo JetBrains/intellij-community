@@ -4,6 +4,7 @@ package com.intellij.ui.logging
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
 import com.intellij.lang.logging.JvmLogger
+import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -31,11 +32,19 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
     panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
+          label(JavaBundle.message("label.configurable.logger.preferred.name"))
+          textField()
+            .columns(COLUMNS_SHORT)
+            .bindText(settings::loggerName.toNonNullableProperty(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER))
+            .align(AlignX.FILL)
+        }
+        row {
           label(JavaBundle.message("label.configurable.logger.type"))
           comboBox(loggers)
             .bindItem({ JvmLogger.getLoggerById(settings.loggerId) },
                       { settings.loggerId = it?.id })
             .onChanged { updateWarningRow(it.item) }
+            .align(AlignX.FILL)
         }
         warningRow = row {
           icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
@@ -50,7 +59,7 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
   private fun updateWarningRow(logger: JvmLogger?) {
     ReadAction.nonBlocking<Boolean> { logger?.isAvailable(project) == false && logger !is UnspecifiedLogger }
       .finishOnUiThread(ModalityState.any()) { isVisible -> warningRow.visible(isVisible) }
-        .submit(AppExecutorUtil.getAppExecutorService())
+      .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   override fun isModified(): Boolean = panel.isModified()
