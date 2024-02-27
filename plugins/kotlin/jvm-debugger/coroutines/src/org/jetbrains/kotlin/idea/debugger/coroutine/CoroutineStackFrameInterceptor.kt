@@ -101,7 +101,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             if (helperClass != null) {
                 val method = DebuggerUtils.findMethod(helperClass, "getCoroutinesRunningOnCurrentThread", null)
                 if (method != null) {
-                    val array = context.invokeMethod(helperClass, method, listOf(debugProbesImpl.getObject())) as ArrayReference
+                    val array = context.evaluationContext.computeAndKeep {
+                        context.invokeMethod(helperClass, method, listOf(debugProbesImpl.getObject())) as ArrayReference
+                    }
                     return array.values.asSequence().map { (it as LongValue).value() }.toHashSet()
                 }
             }
