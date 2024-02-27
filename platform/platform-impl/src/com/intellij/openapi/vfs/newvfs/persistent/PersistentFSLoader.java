@@ -830,10 +830,13 @@ public final class PersistentFSLoader {
       LOG.info("[" + storageFile.getFileName() + "]: " + storage + " is not CleanableStorage " +
                "-> trying to clean by explicitly removing all the files [" + storageFile.getFileName() + "*]");
     }
-    //In theory, we should try removing files explicitly only as a last resort, if the code above fails
-    // -- i.e. if .closeAndClean() fails, or storage is null, or not CleanableStorage...
-    //In practice, though, I trust no one, not even JVM, nor my own code. Especially not my own code.
-    // So let's do that always:
+    //If storage fails to open -- we can't use storage to closeAndClean() its on-disk data, because the storage=null.
+    // In a perfect world we should setup each storage to clean-if-not-successfully-open -- in a real world we
+    // can't be sure all of the storages follow that rule.
+    // And if some storage does not follow, it creates infinite cycle: trying to open VFS -> fail -> trying
+    // to clean -> fail to clean some storage(s) -> trying to open fresh -> fail again as some storage(s) wasn't
+    // cleaned -> repeat.
+    //So this branch is still useful to prevent such a cycle.
     boolean noSuchFilesRemains = IOUtil.deleteAllFilesStartingWith(storageFile);
     if (!noSuchFilesRemains) {
       LOG.info("Can't delete " + storageFile + "*");
