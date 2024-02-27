@@ -51,4 +51,8 @@ class PyTestUnpassedFixtureInspectionTest : PyInspectionTestCase() {
   fun testUnpassedFixtureFromImport() {
     doTest()
   }
+
+  fun testNoInspectCorrectCode() {
+    doTest()
+  }
 }
