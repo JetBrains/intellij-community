@@ -3,9 +3,9 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.IntCollectionDataExternalizer;
@@ -112,27 +112,27 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     myUserIndexer.flush();
   }
 
-  @Override
-  public void dispose() {
-    super.dispose();
-    try {
-      myUserIndexer.close();
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
-
   static @NotNull VcsLogUserIndex create(@NotNull StorageId.Directory storageId,
                                          @Nullable StorageLockContext storageLockContext,
                                          @NotNull VcsUserRegistry userRegistry,
                                          @NotNull VcsLogErrorHandler errorHandler,
                                          @NotNull Disposable disposableParent) throws IOException {
-    PersistentMapBasedForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storageId.getStorageFile(USERS + ".idx"),
-                                                                                     true, false, storageLockContext);
-    PersistentEnumerator<VcsUser> enumerator = createUserEnumerator(storageId, storageLockContext, userRegistry);
-    UserIndexer userIndexer = new UserIndexer(enumerator, e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
-    return new VcsLogUserIndex(storageId, userIndexer, forwardIndex, storageLockContext, errorHandler, disposableParent);
+    Disposable disposable = Disposer.newDisposable(disposableParent);
+    try {
+      PersistentMapBasedForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storageId.getStorageFile(USERS + ".idx"),
+                                                                                       true, false, storageLockContext);
+      Disposer.register(disposable, () -> catchAndWarn(LOG, forwardIndex::close));
+
+      PersistentEnumerator<VcsUser> userEnumerator = createUserEnumerator(storageId, storageLockContext, userRegistry);
+      Disposer.register(disposable, () -> catchAndWarn(LOG, userEnumerator::close));
+
+      UserIndexer userIndexer = new UserIndexer(userEnumerator, e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+      return new VcsLogUserIndex(storageId, userIndexer, forwardIndex, storageLockContext, errorHandler, disposable);
+    }
+    catch (Throwable t) {
+      Disposer.dispose(disposable);
+      throw t;
+    }
   }
 
   private static final class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {

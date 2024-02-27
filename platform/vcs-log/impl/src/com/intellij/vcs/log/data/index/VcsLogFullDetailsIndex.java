@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
@@ -126,6 +127,18 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
   private void checkDisposed() {
     if (myDisposed) throw new ProcessCanceledException();
+  }
+
+  protected static void catchAndWarn(@NotNull Logger logger, @NotNull ThrowableRunnable<IOException> runnable) {
+    try {
+      runnable.run();
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      logger.warn(e);
+    }
   }
 
   private static final class MyMapReduceIndex<T, D> extends MapReduceIndex<Integer, T, D> {
