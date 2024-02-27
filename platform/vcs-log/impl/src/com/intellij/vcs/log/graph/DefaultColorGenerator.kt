@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph
 
 import com.intellij.ui.JBColor
@@ -17,6 +17,9 @@ class DefaultColorGenerator : ColorGenerator {
   }
 
   companion object {
+    private const val SATURATION = 0.4f
+    private const val BRIGHTNESS = 0.65f
+    private val buffer = FloatArray(3)
     private val ourColorMap = Int2ObjectOpenHashMap<JBColor>().apply {
       put(GraphColorManagerImpl.DEFAULT_COLOR, JBColor.BLACK)
     }
@@ -26,7 +29,9 @@ class DefaultColorGenerator : ColorGenerator {
       val g = colorId * 130 + 50
       val b = colorId * 90 + 100
       return try {
-        val color = Color(rangeFix(r), rangeFix(g), rangeFix(b))
+        val hsb = Color.RGBtoHSB(rangeFix(r), rangeFix(g), rangeFix(b), buffer)
+        val rgb = Color.HSBtoRGB(hsb[0], SATURATION, BRIGHTNESS)
+        val color = Color(rgb)
         JBColor(color, color)
       }
       catch (a: IllegalArgumentException) {
