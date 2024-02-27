@@ -1169,14 +1169,20 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     finally {
       continuation.resume(Unit)
     }
-    fireAfterActionPerformed(action, event, result)
-    val failure = if (result.isPerformed) null else result.failureCause
-    when (failure) {
-      is IndexNotReadyException -> {
-        LOG.info(failure)
+    try {
+      fireAfterActionPerformed(action, event, result)
+    }
+    catch (ex: Throwable) {
+      if (result.isPerformed) throw ex
+      else result.failureCause.addSuppressed(ex)
+    }
+    when {
+      result.isPerformed -> Unit
+      result.failureCause is IndexNotReadyException -> {
+        LOG.info(result.failureCause)
         showDumbModeWarning(project, action, event)
       }
-      is RuntimeException, is Error -> throw failure
+      else -> throw result.failureCause
     }
   }
 
