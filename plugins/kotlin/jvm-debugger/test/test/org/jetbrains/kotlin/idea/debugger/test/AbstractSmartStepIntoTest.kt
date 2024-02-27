@@ -41,18 +41,15 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
         val expected = InTextDirectivesUtils.findListWithPrefixes(fixture.file?.text!!.replace("\\,", "+++"), "// EXISTS: ")
             .map { it.replace("+++", ",") }
 
-        for (actualTargetName in actual) {
-            assert(actualTargetName in expected) {
+        assert(expected == actual) {
+            actual.firstOrNull { it !in expected }?.let { actualTargetName ->
                 "Unexpected step into target was found: $actualTargetName\n${renderTableWithResults(expected, actual)}" +
                         "\n // EXISTS: ${actual.joinToString()}"
-            }
-        }
-
-        for (expectedTargetName in expected) {
-            assert(expectedTargetName in actual) {
+            } ?:
+            expected.firstOrNull { it !in actual }?.let { expectedTargetName ->
                 "Missed step into target: $expectedTargetName\n${renderTableWithResults(expected, actual)}" +
                         "\n // EXISTS: ${actual.joinToString()}"
-            }
+            } ?: "The order of smart step targets is different\n  // EXISTS: ${actual.joinToString()}"
         }
     }
 

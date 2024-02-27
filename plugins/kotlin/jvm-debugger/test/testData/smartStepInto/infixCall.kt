@@ -9,4 +9,4 @@ class A {
 
 fun f2(i: Int) {}
 
-// EXISTS: f1(Int), f2(Int)
+// EXISTS: f2(Int), f1(Int)
