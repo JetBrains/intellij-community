@@ -336,4 +336,9 @@
     <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
   </extensions>
 
+  <!-- legacy JS decompiler for .kjsm files, not supported in K2 -->
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
+  </extensions>
+
 </idea-plugin>
