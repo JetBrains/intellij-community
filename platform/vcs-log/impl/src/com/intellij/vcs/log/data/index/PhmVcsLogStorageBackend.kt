@@ -120,8 +120,8 @@ internal class PhmVcsLogStorageBackend(
                                   /* lockContext = */ storageLockContext)
       Disposer.register(this, Disposable { catchAndWarn(renames::close) })
 
-      paths = VcsLogPathsIndex(storageId, storage, roots, storageLockContext, errorHandler, renames, useDurableEnumerator, this)
-      users = VcsLogUserIndex(storageId, storageLockContext, userRegistry, errorHandler, this)
+      paths = VcsLogPathsIndex.create(storageId, storageLockContext, storage, roots, renames, useDurableEnumerator, errorHandler, this)
+      users = VcsLogUserIndex.create(storageId, storageLockContext, userRegistry, errorHandler, this)
       trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
 
       reportEmpty()

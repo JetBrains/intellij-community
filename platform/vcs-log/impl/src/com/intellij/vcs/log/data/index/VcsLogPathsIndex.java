@@ -50,24 +50,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   private final @NotNull VcsLogPathsIndex.PathIndexer myPathsIndexer;
 
-  public VcsLogPathsIndex(@NotNull StorageId.Directory storageId,
-                          @NotNull VcsLogStorage storage,
-                          @NotNull Set<VirtualFile> roots,
-                          @Nullable StorageLockContext storageLockContext,
-                          @NotNull VcsLogErrorHandler errorHandler,
-                          @NotNull PersistentHashMap<int[], int[]> renamesMap,
-                          boolean useDurableEnumerator,
-                          @NotNull Disposable disposableParent) throws IOException {
-    super(storageId,
-          PATHS,
-          new PathIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext, useDurableEnumerator), renamesMap),
-          new ChangeKindListKeyDescriptor(),
-          storageLockContext,
-          errorHandler,
-          disposableParent);
-
-    myPathsIndexer = (PathIndexer)myIndexer;
-    myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+  VcsLogPathsIndex(@NotNull StorageId.Directory storageId, @Nullable StorageLockContext storageLockContext,
+                   @NotNull PathIndexer pathIndexer, @NotNull VcsLogErrorHandler errorHandler,
+                   @NotNull Disposable disposableParent) throws IOException {
+    super(createMapReduceIndex(PATHS, storageId, pathIndexer, new ChangeKindListKeyDescriptor(), storageLockContext,
+                               null, null, errorHandler), disposableParent);
+    myPathsIndexer = pathIndexer;
   }
 
   private static @NotNull DurableDataEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
@@ -127,21 +115,31 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     return VcsUtil.getFilePath(lightFilePath.getRoot().getPath() + "/" + lightFilePath.getRelativePath(), isDirectory);
   }
 
+  static @NotNull VcsLogPathsIndex create(@NotNull StorageId.Directory storageId, @Nullable StorageLockContext storageLockContext,
+                                          @NotNull VcsLogStorage storage, @NotNull Set<VirtualFile> roots,
+                                          @NotNull PersistentHashMap<int[], int[]> renamesMap,
+                                          boolean useDurableEnumerator, @NotNull VcsLogErrorHandler errorHandler,
+                                          @NotNull Disposable disposableParent) throws IOException {
+    DurableDataEnumerator<LightFilePath> pathsEnumerator = createPathsEnumerator(roots, storageId, storageLockContext,
+                                                                                 useDurableEnumerator);
+    PathIndexer pathsIndex = new PathIndexer(storage, pathsEnumerator, renamesMap,
+                                             e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+    return new VcsLogPathsIndex(storageId, storageLockContext, pathsIndex, errorHandler, disposableParent);
+  }
+
   static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull DurableDataEnumerator<LightFilePath> myPathsEnumerator;
     private final @NotNull PersistentHashMap<int[], int[]> myRenamesMap;
-    private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
+    private final @NotNull Consumer<? super Exception> myFatalErrorConsumer;
 
     private PathIndexer(@NotNull VcsLogStorage storage,
                         @NotNull DurableDataEnumerator<LightFilePath> pathsEnumerator,
-                        @NotNull PersistentHashMap<int[], int[]> renamesMap) {
+                        @NotNull PersistentHashMap<int[], int[]> renamesMap,
+                        @NotNull Consumer<? super Exception> fatalErrorConsumer) {
       myStorage = storage;
       myPathsEnumerator = pathsEnumerator;
       myRenamesMap = renamesMap;
-    }
-
-    public void setFatalErrorConsumer(@NotNull Consumer<? super Exception> fatalErrorConsumer) {
       myFatalErrorConsumer = fatalErrorConsumer;
     }
 
