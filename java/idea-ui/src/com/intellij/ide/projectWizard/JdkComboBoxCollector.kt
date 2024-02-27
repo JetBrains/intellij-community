@@ -11,17 +11,17 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 internal object JdkComboBoxCollector: CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 2)
   private const val UNKNOWN_VENDOR = "unknown"
   private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
     .mapNotNull { it.displayName }
     .toList() + UNKNOWN_VENDOR
 
-  private val SETUP_EXISTING: EventId2<String, Int> = GROUP.registerEvent("setup.existing",
+  private val JDK_REGISTERED: EventId2<String, Int> = GROUP.registerEvent("jdk.registered",
                                                                           EventFields.String("vendor", KNOWN_VENDORS),
                                                                           EventFields.Int("version"))
-  private val SETUP_NO_JDK: EventId = GROUP.registerEvent("no.jdk")
-  private val DOWNLOAD_JDK: EventId2<String, Int> = GROUP.registerEvent("download.jdk",
+  private val NO_JDK_SELECTED: EventId = GROUP.registerEvent("no.jdk.selected")
+  private val JDK_DOWNLOADED: EventId2<String, Int> = GROUP.registerEvent("jdk.downloaded",
                                                                           EventFields.String("vendor", KNOWN_VENDORS),
                                                                           EventFields.Int("version"))
 
@@ -37,11 +37,11 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
 
     val version = findSdkVersion(sdkVersionString)
 
-    SETUP_EXISTING.log(variant, version)
+    JDK_REGISTERED.log(variant, version)
   }
 
-  fun noJdkRegistered() {
-    SETUP_NO_JDK.log()
+  fun noJdkSelected() {
+    NO_JDK_SELECTED.log()
   }
 
   private fun findSdkVersion(sdkVersionString: String?): Int = when (sdkVersionString) {
@@ -61,6 +61,6 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
       else -> UNKNOWN_VENDOR
     }
 
-    DOWNLOAD_JDK.log(vendor, findSdkVersion(item.presentableMajorVersionString))
+    JDK_DOWNLOADED.log(vendor, findSdkVersion(item.presentableMajorVersionString))
   }
 }

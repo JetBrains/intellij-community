@@ -104,7 +104,7 @@ fun Row.projectWizardJdkComboBox(
       context.projectJdk = sdkProperty.get()
 
       when (val selected = combo.selectedItem) {
-        is NoJdk -> JdkComboBoxCollector.noJdkRegistered()
+        is NoJdk -> JdkComboBoxCollector.noJdkSelected()
         is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((selected.task as JdkDownloadTask).jdkItem)
       }
     }
