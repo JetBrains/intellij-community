@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Predicate
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.useLines
 
 /**
@@ -122,17 +123,6 @@ internal suspend fun buildDistribution(
     buildPlatformJob.await().asSequence() + bundledPluginItems + buildNonBundledPlugins.await()
   }.toList()
 
-  // must be before reorderJars as these additional plugins maybe required for IDE start-up
-  val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
-  if (!additionalPluginPaths.isEmpty()) {
-    val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
-    withContext(Dispatchers.IO) {
-      for (sourceDir in additionalPluginPaths) {
-        copyDir(sourceDir = sourceDir, targetDir = pluginDir.resolve(sourceDir.fileName))
-      }
-    }
-  }
-
   coroutineScope {
     launch(Dispatchers.IO) {
       spanBuilder("generate content report").useWithScope {
@@ -168,29 +158,23 @@ private suspend fun buildBundledPluginsForAllPlatforms(
 ): List<DistributionFileEntry> {
   return coroutineScope {
     val commonDeferred = async {
-      doBuildBundledPlugins(
-        state = state,
-        plugins = pluginLayouts,
-        isUpdateFromSources = isUpdateFromSources,
-        buildPlatformJob = buildPlatformJob,
-        context = context,
-      )
+      doBuildBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context)
     }
 
-    val pluginDirs = getPluginDirs(context = context, isUpdateFromSources = isUpdateFromSources)
+    val additionalDeferred = async {
+      copyAdditionalPlugins(context)
+    }
+
+    val pluginDirs = getPluginDirs(context, isUpdateFromSources)
     val specificDeferred = async {
-      buildOsSpecificBundledPlugins(
-        pluginDirs = pluginDirs,
-        state = state,
-        plugins = pluginLayouts,
-        isUpdateFromSources = isUpdateFromSources,
-        buildPlatformJob = buildPlatformJob,
-        context = context,
-      )
+      buildOsSpecificBundledPlugins(state, pluginLayouts, isUpdateFromSources, buildPlatformJob, context, pluginDirs)
     }
 
     val common = commonDeferred.await()
     val commonClassPath = generatePluginClassPath(common, writeDescriptor = true)
+
+    val additional = additionalDeferred.await()
+    val additionalClassPath = additional?.let { generatePluginClassPathFromFiles(it, writeDescriptor = true) }
 
     val specific = specificDeferred.await()
     for ((supportedDist) in pluginDirs) {
@@ -199,11 +183,11 @@ private suspend fun buildBundledPluginsForAllPlatforms(
 
       val byteOut = ByteArrayOutputStream()
       val out = DataOutputStream(byteOut)
-      writePluginClassPathHeader(out = out, isJarOnly = true, pluginCount = common.size + (specificList?.size ?: 0))
+      val pluginCount = common.size + (additional?.size ?: 0) + (specificList?.size ?: 0)
+      writePluginClassPathHeader(out, isJarOnly = true, pluginCount)
       out.write(commonClassPath)
-      if (specificClasspath != null) {
-        out.write(specificClasspath)
-      }
+      additionalClassPath?.let { out.write(it) }
+      specificClasspath?.let { out.write(it) }
       out.close()
 
       context.addDistFile(DistFile(
@@ -256,13 +240,7 @@ suspend fun buildBundledPlugins(
   buildPlatformJob: Job?,
   context: BuildContext,
 ) {
-  doBuildBundledPlugins(
-    state = state,
-    plugins = plugins,
-    isUpdateFromSources = isUpdateFromSources,
-    buildPlatformJob = buildPlatformJob,
-    context = context,
-  )
+  doBuildBundledPlugins(state, plugins, isUpdateFromSources, buildPlatformJob, context)
 }
 
 private suspend fun doBuildBundledPlugins(
@@ -349,6 +327,30 @@ private suspend fun buildOsSpecificBundledPlugins(
     }
     .map { deferred -> deferred.getCompleted() }
     .associateBy(keySelector = { it.first }, valueTransform = { it.second })
+}
+
+suspend fun copyAdditionalPlugins(context: BuildContext): List<Pair<Path, List<Path>>>? {
+  val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
+  if (additionalPluginPaths.isEmpty()) {
+    return null
+  }
+
+  return spanBuilder("copy additional plugins").useWithScope(Dispatchers.IO) {
+    val allEntries = mutableListOf<Pair<Path, List<Path>>>()
+
+    val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
+    for (sourceDir in additionalPluginPaths) {
+      val targetDir = pluginDir.resolve(sourceDir.fileName)
+      copyDir(sourceDir, targetDir)
+      val entries = targetDir.resolve(LIB_DIRECTORY).listDirectoryEntries("*.jar")
+      check(entries.isNotEmpty()) {
+        "Suspicious additional plugin (no 'lib/*.jar' files): ${sourceDir}"
+      }
+      allEntries += targetDir to entries
+    }
+
+    allEntries
+  }
 }
 
 suspend fun buildNonBundledPlugins(
@@ -635,7 +637,7 @@ private suspend fun getModuleWithSearchableOptions(context: BuildContext): Set<S
       }
       result
     }
-    catch (e: IOException) {
+    catch (_: IOException) {
       emptySet()
     }
   }
@@ -665,6 +667,8 @@ private suspend fun buildPlatformSpecificPluginResources(
 }
 
 private const val PLUGINS_DIRECTORY = "plugins"
+private const val LIB_DIRECTORY = "lib"
+
 const val PLUGIN_CLASSPATH: String = "$PLUGINS_DIRECTORY/plugin-classpath.txt"
 
 private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = compareBy { it.mainModule }
@@ -1015,7 +1019,7 @@ suspend fun layoutDistribution(
   val entries = coroutineScope {
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     tasks.add(async {
-      val outputDir = targetDirectory.resolve("lib")
+      val outputDir = targetDirectory.resolve(LIB_DIRECTORY)
       spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).useWithScope {
         JarPackager.pack(includedModules = includedModules,
                          outputDir = outputDir,
@@ -1139,7 +1143,7 @@ private suspend fun layoutArtifacts(layout: BaseLayout,
     span.addEvent("include artifact", Attributes.of(AttributeKey.stringKey("artifactName"), artifactName))
     val artifact = jpsArtifactService.getArtifacts(context.project).find { it.name == artifactName }
                    ?: error("Cannot find artifact '$artifactName' in the project")
-    var artifactPath = targetDirectory.resolve("lib").resolve(relativePath)
+    var artifactPath = targetDirectory.resolve(LIB_DIRECTORY).resolve(relativePath)
     val sourcePath = artifact.outputFilePath?.let(Path::of) ?: error("Missing output path for '$artifactName' artifact")
     if (copyFiles) {
       require(withContext(Dispatchers.IO) { Files.exists(sourcePath) }) {
@@ -1329,7 +1333,7 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
   for (entry in plugins) {
     val relativePath = pluginDir.relativize(entry.path)
     // for plugins, our classloader load jars only from lib folder
-    if (relativePath.nameCount != 3 || relativePath.getName(1).toString() != "lib") {
+    if (relativePath.nameCount != 3 || relativePath.getName(1).toString() != LIB_DIRECTORY) {
       continue
     }
 
