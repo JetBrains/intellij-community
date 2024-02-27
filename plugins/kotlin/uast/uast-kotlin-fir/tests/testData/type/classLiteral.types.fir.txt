@@ -3,6 +3,7 @@ UFile (package = ) [public final class ClassLiteralKt {...]
         UField (name = stringClass) [@org.jetbrains.annotations.NotNull private static final var stringClass: kotlin.reflect.KClass<java.lang.String> = java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UClassLiteralExpression [java.lang.String] : PsiType:KClass<String>
+                USimpleNameReferenceExpression (identifier = String) [String] : PsiType:String
         UMethod (name = getStringClass) [public static final fun getStringClass() : kotlin.reflect.KClass<java.lang.String> = UastEmptyExpression]
         UMethod (name = box) [public static final fun box() : java.lang.String {...}]
             UBlockExpression [{...}] : PsiType:Void
@@ -13,6 +14,7 @@ UFile (package = ) [public final class ClassLiteralKt {...]
                 UDeclarationsExpression [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
                     ULocalVariable (name = xClass) [var xClass: kotlin.reflect.KClass<? extends java.lang.CharSequence> = java.lang.CharSequence]
                         UClassLiteralExpression [java.lang.CharSequence] : PsiType:KClass<? extends CharSequence>
+                            USimpleNameReferenceExpression (identifier = x) [x] : PsiType:CharSequence
                 UReturnExpression [return if (xClass == stringClass) "OK" else xClass] : PsiType:Void
                     UIfExpression [if (xClass == stringClass) "OK" else xClass] : PsiType:String
                         UBinaryExpression (operator = ==) [xClass == stringClass] : PsiType:boolean
@@ -38,7 +40,9 @@ UFile (package = ) [public final class ClassLiteralKt {...]
                 UIfExpression [if (java.lang.Object != Foo) return false] : PsiType:Unit
                     UBinaryExpression (operator = !=) [java.lang.Object != Foo] : PsiType:boolean
                         UClassLiteralExpression [java.lang.Object] : PsiType:KClass<? extends Object>
+                            USimpleNameReferenceExpression (identifier = other) [other] : PsiType:Object
                         UClassLiteralExpression [Foo] : PsiType:KClass<? extends Foo>
+                            UThisExpression (label = null) [this] : PsiType:Foo
                     UReturnExpression [return false] : PsiType:Void
                         ULiteralExpression (value = false) [false] : PsiType:boolean
                 UReturnExpression [return s == (other as Foo).s] : PsiType:Void

@@ -19,6 +19,7 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
                             UQualifiedReferenceExpression [<ErrorType>.java.genericSuperclass] = external genericSuperclass()
                                 UQualifiedReferenceExpression [<ErrorType>.java] = external java()
                                     UClassLiteralExpression [<ErrorType>] = <ErrorType>
+                                        USimpleNameReferenceExpression (identifier = base) [base] = Undetermined
                                     USimpleNameReferenceExpression (identifier = java) [java] = external java()
                                 USimpleNameReferenceExpression (identifier = genericSuperclass) [genericSuperclass] = external genericSuperclass()
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [getGenericSuperclass()] = external getGenericSuperclass()()
