@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -80,6 +80,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                                              * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
                                              */
                                             mainMenuActionGroup: ActionGroup? = null) : JRootPane(), UISettingsListener {
+  @Suppress("SSBasedInspection")
   @JvmField
   internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
 
@@ -473,12 +474,12 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   /**
-   * Invoked when enclosed frame is being disposed.
+   * Invoked on disposal of the enclosing frame.
    */
   override fun removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
-
+      statusBar = null
       jMenuBar = null
       if (helper is DecoratedHelper) {
         layeredPane.remove(helper.customFrameTitlePane.getComponent())
