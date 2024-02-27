@@ -45,6 +45,7 @@ context(KtAnalysisSession) // TODO: currently unused, will be used in the K2 imp
 fun PsiParameter.typeFqNamePossiblyMappedToKotlin(): FqName {
     // TODO: support (nested) array types: KTIJ-28739
     // TODO: use `asKtType` function in the K2 implementation (it doesn't work in K1 yet: KT-65545)
+    // TODO: revise vararg support (depends on KT-66058)
     //val ktType = type.asKtType(useSitePosition = this) as? KtNonErrorClassType ?: return null
     //return ktType.classId.asSingleFqName()
 
