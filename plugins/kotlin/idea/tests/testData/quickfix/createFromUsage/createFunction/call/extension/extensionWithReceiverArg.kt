@@ -1,11 +1,10 @@
-// "Create extension function '((Int) -> String).bar'" "true"
+// "Create extension function 'List<T>.foo'" "true"
+// WITH_STDLIB
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 
-fun foo(block: (Int) -> String) {
-    block.bar()
-}
-
-private fun <P1, R> ((P1) -> R).bar() {
-    TODO("Not yet implemented")
+class A<T>(val items: List<T>) {
+    fun test(): Int {
+        return items.<caret>foo<T, Int, String>(2, "2")
+    }
 }

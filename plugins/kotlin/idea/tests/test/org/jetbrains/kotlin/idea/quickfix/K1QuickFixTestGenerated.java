@@ -4848,6 +4848,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/brokenPsi.kt");
                     }
 
+                    @TestMetadata("extension.kt")
+                    public void testExtension() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extension.kt");
+                    }
+
                     @TestMetadata("extensionFunOnClassNoClassObject.kt")
                     public void testExtensionFunOnClassNoClassObject() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnClassNoClassObject.kt");
@@ -4863,9 +4868,24 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterface.kt");
                     }
 
+                    @TestMetadata("extensionPartialSubstitution.kt")
+                    public void testExtensionPartialSubstitution() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionPartialSubstitution.kt");
+                    }
+
                     @TestMetadata("extensionRefInImport.kt")
                     public void testExtensionRefInImport() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionRefInImport.kt");
+                    }
+
+                    @TestMetadata("extensionWithReceiverArg.kt")
+                    public void testExtensionWithReceiverArg() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionWithReceiverArg.kt");
+                    }
+
+                    @TestMetadata("extensionWithTypeParameterAsReceiver.kt")
+                    public void testExtensionWithTypeParameterAsReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionWithTypeParameterAsReceiver.kt");
                     }
 
                     @TestMetadata("funOnLibObject.kt")
@@ -5308,26 +5328,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("classMemberWithReceiverArg.kt")
                     public void testClassMemberWithReceiverArg() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/typeArguments/classMemberWithReceiverArg.kt");
-                    }
-
-                    @TestMetadata("extension.kt")
-                    public void testExtension() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/typeArguments/extension.kt");
-                    }
-
-                    @TestMetadata("extensionPartialSubstitution.kt")
-                    public void testExtensionPartialSubstitution() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/typeArguments/extensionPartialSubstitution.kt");
-                    }
-
-                    @TestMetadata("extensionWithReceiverArg.kt")
-                    public void testExtensionWithReceiverArg() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/typeArguments/extensionWithReceiverArg.kt");
-                    }
-
-                    @TestMetadata("extensionWithTypeParameterAsReceiver.kt")
-                    public void testExtensionWithTypeParameterAsReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createFunction/call/typeArguments/extensionWithTypeParameterAsReceiver.kt");
                     }
 
                     @TestMetadata("memberWithTypeParameterAsReceiver.kt")
