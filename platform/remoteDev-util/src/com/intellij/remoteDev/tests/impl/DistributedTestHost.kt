@@ -49,7 +49,6 @@ import java.time.LocalTime
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.minutes
 
 @TestOnly
 @ApiStatus.Internal
@@ -164,22 +163,12 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             val queue = map[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
             val timeout = action.timeout
-            val syncBeforeStart = action.syncBeforeStart
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
 
               LOG.info("'$actionTitle': received action execution request")
 
               return@setSuspendPreserveClientId withContext(action.coroutineContext) {
-                if (syncBeforeStart) {
-                  // Sync state across all IDE agents to maintain proper order in protocol events
-                  // we don't wat to sync state in case of bg task, as it may be launched with blocked UI thread
-                  runLogged("'$actionTitle': Sync protocol events before execution") {
-                    withTimeout(3.minutes) {
-                      DistributedTestBridge.getInstance().syncProtocolEvents()
-                    }
-                  }
-                }
                 if (!app.isHeadlessEnvironment && isNotRdHost && (action.requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(actionTitle)
                 }
