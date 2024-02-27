@@ -33,7 +33,7 @@ interface EntityWithUrls : WorkspaceEntity {
       listOfUrls: List<VirtualFileUrl>,
       dataClassWithUrl: DataClassWithUrl,
       entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null
+      init: (Builder.() -> Unit)? = null,
     ): EntityWithUrls {
       val builder = builder()
       builder.simpleUrl = simpleUrl
@@ -48,8 +48,12 @@ interface EntityWithUrls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EntityWithUrls, modification: EntityWithUrls.Builder.() -> Unit): EntityWithUrls =
-  modifyEntity(EntityWithUrls.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: EntityWithUrls,
+  modification: EntityWithUrls.Builder.() -> Unit,
+): EntityWithUrls {
+  return modifyEntity(EntityWithUrls.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class DataClassWithUrl(val url: VirtualFileUrl)

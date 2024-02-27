@@ -26,7 +26,7 @@ interface GrandParentEntity : WorkspaceEntity {
     operator fun invoke(
       data1: String,
       entitySource: EntitySource,
-      init: (Builder<GrandParentEntity>.() -> Unit)? = null
+      init: (Builder<GrandParentEntity>.() -> Unit)? = null,
     ): GrandParentEntity {
       val builder = builder()
       builder.data1 = data1
@@ -58,7 +58,7 @@ interface ParentEntity : GrandParentEntity {
       data1: String,
       data2: String,
       entitySource: EntitySource,
-      init: (Builder<ParentEntity>.() -> Unit)? = null
+      init: (Builder<ParentEntity>.() -> Unit)? = null,
     ): ParentEntity {
       val builder = builder()
       builder.data1 = data1
@@ -92,7 +92,7 @@ interface ChildEntity: ParentEntity {
       data2: String,
       data3: String,
       entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null
+      init: (Builder.() -> Unit)? = null,
     ): ChildEntity {
       val builder = builder()
       builder.data1 = data1
@@ -107,6 +107,10 @@ interface ChildEntity: ParentEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit): ChildEntity =
-  modifyEntity(ChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildEntity,
+  modification: ChildEntity.Builder.() -> Unit,
+): ChildEntity {
+  return modifyEntity(ChildEntity.Builder::class.java, entity, modification)
+}
 //endregion

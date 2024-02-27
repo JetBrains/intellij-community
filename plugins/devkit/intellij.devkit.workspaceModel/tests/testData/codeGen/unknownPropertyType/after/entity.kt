@@ -21,7 +21,11 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(date: Date, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): UnknownPropertyTypeEntity {
+    operator fun invoke(
+      date: Date,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): UnknownPropertyTypeEntity {
       val builder = builder()
       builder.date = date
       builder.entitySource = entitySource
@@ -35,6 +39,8 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(
   entity: UnknownPropertyTypeEntity,
-  modification: UnknownPropertyTypeEntity.Builder.() -> Unit
-): UnknownPropertyTypeEntity = modifyEntity(UnknownPropertyTypeEntity.Builder::class.java, entity, modification)
+  modification: UnknownPropertyTypeEntity.Builder.() -> Unit,
+): UnknownPropertyTypeEntity {
+  return modifyEntity(UnknownPropertyTypeEntity.Builder::class.java, entity, modification)
+}
 //endregion
