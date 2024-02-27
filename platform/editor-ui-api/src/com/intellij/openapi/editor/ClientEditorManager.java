@@ -7,6 +7,7 @@ import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +36,36 @@ public final class ClientEditorManager {
     return CLIENT_ID.get(editor);
   }
 
+  public static @NotNull Editor getClientEditor(@NotNull Editor editor, @Nullable ClientId clientId) {
+    var editors = COPIED_EDITORS.get(editor);
+    if (clientId == null || editors == null) {
+      return editor;
+    }
+    for (Editor copiedEditor : editors) {
+      if (clientId.equals(getClientId(copiedEditor))) {
+        return copiedEditor;
+      }
+    }
+    return editor;
+  }
+
   @ApiStatus.Internal
   public static void assignClientId(@NotNull Editor editor, @Nullable ClientId clientId) {
     CLIENT_ID.set(editor, clientId);
   }
 
+  @ApiStatus.Internal
+  public static void addCopiedEditor(@NotNull Editor from, @NotNull Editor to) {
+    var list = COPIED_EDITORS.get(from);
+    if (list == null) {
+      list = new WeakList<>();
+      COPIED_EDITORS.set(from, list);
+    }
+    list.add(to);
+  }
+
   private static final Key<ClientId> CLIENT_ID = Key.create("CLIENT_ID");
+  private static final Key<WeakList<Editor>> COPIED_EDITORS = Key.create("COPIED_EDITORS");
   private final ClientId myClientId = ClientId.getCurrent();
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
