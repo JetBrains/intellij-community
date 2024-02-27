@@ -18,7 +18,7 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
-import org.jetbrains.plugins.gitlab.api.request.getProject
+import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
@@ -80,7 +80,7 @@ class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNo
     projectMapping: GitLabProjectMapping
   ): String? {
     val defaultBranch = withContext(Dispatchers.IO) {
-      api.graphQL.getProject(projectMapping.repository).body().repository?.rootRef
+      api.graphQL.findProject(projectMapping.repository).body()?.repository?.rootRef
     }
     val targetBranch = GitBranchUtil.stripRefsPrefix(pushResult.targetBranch)
     if (defaultBranch != null && targetBranch.endsWith(defaultBranch)) return null
