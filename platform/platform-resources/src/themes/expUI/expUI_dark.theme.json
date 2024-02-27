@@ -413,6 +413,7 @@
       "borderColor": "Gray4",
       "foreground": "Gray13",
       "linkForeground": "Blue9",
+      "iconHoverBackground": "#FFFFFF1A",
       "Button": {
         "background": "Gray3",
         "borderColor": "Gray7",
