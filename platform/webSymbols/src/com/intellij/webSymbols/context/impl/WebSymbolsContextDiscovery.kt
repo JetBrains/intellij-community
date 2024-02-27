@@ -3,6 +3,7 @@
 
 package com.intellij.webSymbols.context.impl
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -33,6 +34,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
+import com.intellij.webSymbols.context.WebSymbolContextChangeListener
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContext.Companion.WEB_SYMBOLS_CONTEXT_EP
 import com.intellij.webSymbols.context.WebSymbolsContextKindRules
@@ -388,12 +390,17 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project) : Dis
   private val configCache = ContainerUtil.createConcurrentWeakMap<VirtualFile, CachedValue<ContextConfigInDir>>()
 
   init {
-    project.messageBus.connect(this).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+    val messageBus = project.messageBus.connect(this)
+    messageBus.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         previousContext.clear()
         proximityCache.clear()
         configCache.clear()
+        project.messageBus.syncPublisher(WebSymbolContextChangeListener.TOPIC).contextMayHaveChanged()
       }
+    })
+    messageBus.subscribe(WebSymbolContextChangeListener.TOPIC, WebSymbolContextChangeListener {
+      DaemonCodeAnalyzer.getInstance(project).restart()
     })
   }
 
