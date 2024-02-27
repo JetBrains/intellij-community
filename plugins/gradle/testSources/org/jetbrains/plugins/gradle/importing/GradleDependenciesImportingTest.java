@@ -32,7 +32,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
@@ -74,6 +74,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       }
       """;
     super.importProject(config);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    super.tearDown();
+    GradleSystemSettings.getInstance().setDownloadSources(false);
   }
 
   protected void assertCompileClasspathOrdering(String moduleName) {
@@ -1678,7 +1684,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifacts() throws Exception {
-    GradleSettings.getInstance(myProject).setDownloadSources(true);
+    GradleSystemSettings.getInstance().setDownloadSources(true);
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivy-1.0-SNAPSHOT.xml",
                          """
                            <?xml version="1.0" encoding="UTF-8"?>
@@ -1736,7 +1742,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifactsWithIvyLayout() throws Exception {
-    GradleSettings.getInstance(myProject).setDownloadSources(true);
+    GradleSystemSettings.getInstance().setDownloadSources(true);
     // IvyArtifactRepository.IVY_ARTIFACT_PATTERN = "[organisation]/[module]/[revision]/[type]s/[artifact](.[ext])"
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivys/ivy.xml",
                          """
@@ -1800,7 +1806,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifactsWithCustomIvyLayout() throws Exception {
-    GradleSettings.getInstance(myProject).setDownloadSources(true);
+    GradleSystemSettings.getInstance().setDownloadSources(true);
     final String customIvyPattern = "[organisation]/[module]/[revision]/[module]_[artifact]_[revision]_[type].[ext]";
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact_ivy_1.0-SNAPSHOT_ivy.xml",
                          """
