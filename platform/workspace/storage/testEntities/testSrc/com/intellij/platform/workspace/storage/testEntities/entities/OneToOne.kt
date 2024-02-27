@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -27,7 +32,11 @@ interface OoParentEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentEntity {
+    operator fun invoke(
+      parentProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoParentEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
       builder.entitySource = entitySource
@@ -40,9 +49,12 @@ interface OoParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentEntity,
-                                      modification: OoParentEntity.Builder.() -> Unit): OoParentEntity = modifyEntity(
-  OoParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoParentEntity,
+  modification: OoParentEntity.Builder.() -> Unit,
+): OoParentEntity {
+  return modifyEntity(OoParentEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addOoParentEntity(
@@ -74,7 +86,11 @@ interface OoChildEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildEntity {
+    operator fun invoke(
+      childProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoChildEntity {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -87,8 +103,12 @@ interface OoChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildEntity, modification: OoChildEntity.Builder.() -> Unit): OoChildEntity = modifyEntity(
-  OoChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoChildEntity,
+  modification: OoChildEntity.Builder.() -> Unit,
+): OoChildEntity {
+  return modifyEntity(OoChildEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 
@@ -119,7 +139,10 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithNullableParentEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoChildWithNullableParentEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -131,9 +154,12 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildWithNullableParentEntity,
-                                      modification: OoChildWithNullableParentEntity.Builder.() -> Unit): OoChildWithNullableParentEntity = modifyEntity(
-  OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoChildWithNullableParentEntity,
+  modification: OoChildWithNullableParentEntity.Builder.() -> Unit,
+): OoChildWithNullableParentEntity {
+  return modifyEntity(OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addOoChildWithNullableParentEntity(
@@ -177,7 +203,11 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithPidEntity {
+    operator fun invoke(
+      parentProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoParentWithPidEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
       builder.entitySource = entitySource
@@ -190,9 +220,12 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity,
-                                      modification: OoParentWithPidEntity.Builder.() -> Unit): OoParentWithPidEntity = modifyEntity(
-  OoParentWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoParentWithPidEntity,
+  modification: OoParentWithPidEntity.Builder.() -> Unit,
+): OoParentWithPidEntity {
+  return modifyEntity(OoParentWithPidEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addOoParentWithPidEntity(
@@ -223,9 +256,11 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childProperty: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): OoChildForParentWithPidEntity {
+    operator fun invoke(
+      childProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoChildForParentWithPidEntity {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -238,9 +273,12 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildForParentWithPidEntity,
-                                      modification: OoChildForParentWithPidEntity.Builder.() -> Unit): OoChildForParentWithPidEntity = modifyEntity(
-  OoChildForParentWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoChildForParentWithPidEntity,
+  modification: OoChildForParentWithPidEntity.Builder.() -> Unit,
+): OoChildForParentWithPidEntity {
+  return modifyEntity(OoChildForParentWithPidEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addOoChildForParentWithPidEntity(
@@ -275,7 +313,11 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildAlsoWithPidEntity {
+    operator fun invoke(
+      childProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoChildAlsoWithPidEntity {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -288,9 +330,12 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildAlsoWithPidEntity,
-                                      modification: OoChildAlsoWithPidEntity.Builder.() -> Unit): OoChildAlsoWithPidEntity = modifyEntity(
-  OoChildAlsoWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoChildAlsoWithPidEntity,
+  modification: OoChildAlsoWithPidEntity.Builder.() -> Unit,
+): OoChildAlsoWithPidEntity {
+  return modifyEntity(OoChildAlsoWithPidEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addOoChildAlsoWithPidEntity(
@@ -324,7 +369,11 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoParentWithoutPidEntity {
+    operator fun invoke(
+      parentProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoParentWithoutPidEntity {
       val builder = builder()
       builder.parentProperty = parentProperty
       builder.entitySource = entitySource
@@ -337,9 +386,12 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentWithoutPidEntity,
-                                      modification: OoParentWithoutPidEntity.Builder.() -> Unit): OoParentWithoutPidEntity = modifyEntity(
-  OoParentWithoutPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoParentWithoutPidEntity,
+  modification: OoParentWithoutPidEntity.Builder.() -> Unit,
+): OoParentWithoutPidEntity {
+  return modifyEntity(OoParentWithoutPidEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 
@@ -377,7 +429,11 @@ interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OoChildWithPidEntity {
+    operator fun invoke(
+      childProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OoChildWithPidEntity {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -390,9 +446,12 @@ interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildWithPidEntity,
-                                      modification: OoChildWithPidEntity.Builder.() -> Unit): OoChildWithPidEntity = modifyEntity(
-  OoChildWithPidEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OoChildWithPidEntity,
+  modification: OoChildWithPidEntity.Builder.() -> Unit,
+): OoChildWithPidEntity {
+  return modifyEntity(OoChildWithPidEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addOoChildWithPidEntity(

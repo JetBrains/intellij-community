@@ -23,9 +23,11 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someData: SubsetSealedClass,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SubsetSealedClassEntity {
+    operator fun invoke(
+      someData: SubsetSealedClass,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SubsetSealedClassEntity {
       val builder = builder()
       builder.someData = someData
       builder.entitySource = entitySource
@@ -37,9 +39,12 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SubsetSealedClassEntity,
-                                      modification: SubsetSealedClassEntity.Builder.() -> Unit): SubsetSealedClassEntity = modifyEntity(
-  SubsetSealedClassEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SubsetSealedClassEntity,
+  modification: SubsetSealedClassEntity.Builder.() -> Unit,
+): SubsetSealedClassEntity {
+  return modifyEntity(SubsetSealedClassEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Open

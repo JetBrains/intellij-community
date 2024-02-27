@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 // In this test we can deserialize cache
 interface SubsetEnumEntity: WorkspaceEntity {
@@ -18,7 +23,11 @@ interface SubsetEnumEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someEnum: SubsetEnumEnum, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SubsetEnumEntity {
+    operator fun invoke(
+      someEnum: SubsetEnumEnum,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SubsetEnumEntity {
       val builder = builder()
       builder.someEnum = someEnum
       builder.entitySource = entitySource
@@ -31,9 +40,12 @@ interface SubsetEnumEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SubsetEnumEntity,
-                                      modification: SubsetEnumEntity.Builder.() -> Unit): SubsetEnumEntity = modifyEntity(
-  SubsetEnumEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SubsetEnumEntity,
+  modification: SubsetEnumEntity.Builder.() -> Unit,
+): SubsetEnumEntity {
+  return modifyEntity(SubsetEnumEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 enum class SubsetEnumEnum(val type: String) {

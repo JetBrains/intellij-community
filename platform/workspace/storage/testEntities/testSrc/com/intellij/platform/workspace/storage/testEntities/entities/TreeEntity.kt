@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -24,7 +29,11 @@ interface TreeEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): TreeEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -37,6 +46,10 @@ interface TreeEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TreeEntity, modification: TreeEntity.Builder.() -> Unit): TreeEntity = modifyEntity(
-  TreeEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: TreeEntity,
+  modification: TreeEntity.Builder.() -> Unit,
+): TreeEntity {
+  return modifyEntity(TreeEntity.Builder::class.java, entity, modification)
+}
 //endregion

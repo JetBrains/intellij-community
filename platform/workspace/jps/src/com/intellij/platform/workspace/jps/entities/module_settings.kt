@@ -26,7 +26,12 @@ interface ModuleSettingsBase : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String, moduleId: ModuleId, entitySource: EntitySource, init: (Builder<ModuleSettingsBase>.() -> Unit)? = null): ModuleSettingsBase {
+    operator fun invoke(
+      name: String,
+      moduleId: ModuleId,
+      entitySource: EntitySource,
+      init: (Builder<ModuleSettingsBase>.() -> Unit)? = null,
+    ): ModuleSettingsBase {
       val builder = builder()
       builder.name = name
       builder.moduleId = moduleId

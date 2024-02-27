@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -19,7 +24,11 @@ interface MainEntityList : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntityList {
+    operator fun invoke(
+      x: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): MainEntityList {
       val builder = builder()
       builder.x = x
       builder.entitySource = entitySource
@@ -31,9 +40,12 @@ interface MainEntityList : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MainEntityList,
-                                      modification: MainEntityList.Builder.() -> Unit): MainEntityList = modifyEntity(
-  MainEntityList.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: MainEntityList,
+  modification: MainEntityList.Builder.() -> Unit,
+): MainEntityList {
+  return modifyEntity(MainEntityList.Builder::class.java, entity, modification)
+}
 
 var MainEntityList.Builder.child: @Child List<AttachedEntityList>
   by WorkspaceEntity.extension()
@@ -55,7 +67,11 @@ interface AttachedEntityList : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntityList {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): AttachedEntityList {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -68,9 +84,12 @@ interface AttachedEntityList : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AttachedEntityList,
-                                      modification: AttachedEntityList.Builder.() -> Unit): AttachedEntityList = modifyEntity(
-  AttachedEntityList.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: AttachedEntityList,
+  modification: AttachedEntityList.Builder.() -> Unit,
+): AttachedEntityList {
+  return modifyEntity(AttachedEntityList.Builder::class.java, entity, modification)
+}
 //endregion
 
 val MainEntityList.child: List<@Child AttachedEntityList>

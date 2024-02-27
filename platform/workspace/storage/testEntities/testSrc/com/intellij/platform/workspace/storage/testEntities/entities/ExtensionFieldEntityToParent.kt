@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -23,7 +28,11 @@ interface MainEntityToParent : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(x: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MainEntityToParent {
+    operator fun invoke(
+      x: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): MainEntityToParent {
       val builder = builder()
       builder.x = x
       builder.entitySource = entitySource
@@ -36,9 +45,12 @@ interface MainEntityToParent : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MainEntityToParent,
-                                      modification: MainEntityToParent.Builder.() -> Unit): MainEntityToParent = modifyEntity(
-  MainEntityToParent.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: MainEntityToParent,
+  modification: MainEntityToParent.Builder.() -> Unit,
+): MainEntityToParent {
+  return modifyEntity(MainEntityToParent.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface AttachedEntityToParent : WorkspaceEntity {
@@ -55,7 +67,11 @@ interface AttachedEntityToParent : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntityToParent {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): AttachedEntityToParent {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -68,9 +84,12 @@ interface AttachedEntityToParent : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AttachedEntityToParent,
-                                      modification: AttachedEntityToParent.Builder.() -> Unit): AttachedEntityToParent = modifyEntity(
-  AttachedEntityToParent.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: AttachedEntityToParent,
+  modification: AttachedEntityToParent.Builder.() -> Unit,
+): AttachedEntityToParent {
+  return modifyEntity(AttachedEntityToParent.Builder::class.java, entity, modification)
+}
 
 var AttachedEntityToParent.Builder.ref: MainEntityToParent
   by WorkspaceEntity.extension()
@@ -94,7 +113,11 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntityToNullableParent {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): AttachedEntityToNullableParent {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -106,9 +129,12 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AttachedEntityToNullableParent,
-                                      modification: AttachedEntityToNullableParent.Builder.() -> Unit): AttachedEntityToNullableParent = modifyEntity(
-  AttachedEntityToNullableParent.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: AttachedEntityToNullableParent,
+  modification: AttachedEntityToNullableParent.Builder.() -> Unit,
+): AttachedEntityToNullableParent {
+  return modifyEntity(AttachedEntityToNullableParent.Builder::class.java, entity, modification)
+}
 
 var AttachedEntityToNullableParent.Builder.nullableRef: MainEntityToParent?
   by WorkspaceEntity.extension()

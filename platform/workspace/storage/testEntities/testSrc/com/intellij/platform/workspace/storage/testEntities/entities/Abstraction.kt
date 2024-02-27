@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -25,7 +30,11 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): HeadAbstractionEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): HeadAbstractionEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -37,9 +46,12 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: HeadAbstractionEntity,
-                                      modification: HeadAbstractionEntity.Builder.() -> Unit): HeadAbstractionEntity = modifyEntity(
-  HeadAbstractionEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: HeadAbstractionEntity,
+  modification: HeadAbstractionEntity.Builder.() -> Unit,
+): HeadAbstractionEntity {
+  return modifyEntity(HeadAbstractionEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class HeadAbstractionSymbolicId(override val presentableName: String) : SymbolicEntityId<HeadAbstractionEntity>
@@ -60,7 +72,10 @@ interface BaseEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder<BaseEntity>.() -> Unit)? = null): BaseEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<BaseEntity>.() -> Unit)? = null,
+    ): BaseEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -90,7 +105,10 @@ interface CompositeBaseEntity : BaseEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder<CompositeBaseEntity>.() -> Unit)? = null): CompositeBaseEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<CompositeBaseEntity>.() -> Unit)? = null,
+    ): CompositeBaseEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -116,7 +134,11 @@ interface MiddleEntity : BaseEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(property: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): MiddleEntity {
+    operator fun invoke(
+      property: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): MiddleEntity {
       val builder = builder()
       builder.property = property
       builder.entitySource = entitySource
@@ -129,8 +151,12 @@ interface MiddleEntity : BaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MiddleEntity, modification: MiddleEntity.Builder.() -> Unit): MiddleEntity = modifyEntity(
-  MiddleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: MiddleEntity,
+  modification: MiddleEntity.Builder.() -> Unit,
+): MiddleEntity {
+  return modifyEntity(MiddleEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addMiddleEntity(property: String = "prop", source: EntitySource = MySource): MiddleEntity {
@@ -155,7 +181,10 @@ interface LeftEntity : CompositeBaseEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LeftEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): LeftEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -167,8 +196,12 @@ interface LeftEntity : CompositeBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LeftEntity, modification: LeftEntity.Builder.() -> Unit): LeftEntity = modifyEntity(
-  LeftEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: LeftEntity,
+  modification: LeftEntity.Builder.() -> Unit,
+): LeftEntity {
+  return modifyEntity(LeftEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addLeftEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): LeftEntity {
@@ -195,7 +228,10 @@ interface RightEntity : CompositeBaseEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): RightEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): RightEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -207,8 +243,12 @@ interface RightEntity : CompositeBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: RightEntity, modification: RightEntity.Builder.() -> Unit): RightEntity = modifyEntity(
-  RightEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: RightEntity,
+  modification: RightEntity.Builder.() -> Unit,
+): RightEntity {
+  return modifyEntity(RightEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addRightEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): RightEntity {

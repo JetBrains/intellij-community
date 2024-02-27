@@ -24,10 +24,12 @@ import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase(dataSource) {
+open class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val LIBRARY_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, LibraryPropertiesEntity::class.java,
+                                                                           ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       LIBRARY_CONNECTION_ID,
@@ -61,7 +63,8 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
   }
 
 
-  class Builder(result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(result), LibraryPropertiesEntity.Builder {
+  class Builder(result: LibraryPropertiesEntityData?) : ModifiableWorkspaceEntityBase<LibraryPropertiesEntity, LibraryPropertiesEntityData>(
+    result), LibraryPropertiesEntity.Builder {
     constructor() : this(LibraryPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -135,8 +138,8 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity
+          _diff.extractOneToOneParent(LIBRARY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                  LIBRARY_CONNECTION_ID)]!! as LibraryEntity
         }
         else {
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity
@@ -150,7 +153,7 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
             value.entityLinks[EntityLink(true, LIBRARY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(LIBRARY_CONNECTION_ID, this, value)
@@ -212,7 +215,8 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

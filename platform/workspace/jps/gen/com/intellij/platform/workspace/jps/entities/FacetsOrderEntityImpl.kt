@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,7 +22,6 @@ import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 
 @GeneratedCodeApiVersion(2)
@@ -31,7 +29,8 @@ import org.jetbrains.annotations.ApiStatus
 open class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) : FacetsOrderEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULEENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULEENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetsOrderEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULEENTITY_CONNECTION_ID,
@@ -59,7 +58,8 @@ open class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) 
   }
 
 
-  class Builder(result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity, FacetsOrderEntityData>(result), FacetsOrderEntity.Builder {
+  class Builder(result: FacetsOrderEntityData?) : ModifiableWorkspaceEntityBase<FacetsOrderEntity, FacetsOrderEntityData>(
+    result), FacetsOrderEntity.Builder {
     constructor() : this(FacetsOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -161,8 +161,8 @@ open class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) 
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)]!! as ModuleEntity
+          _diff.extractOneToOneParent(MODULEENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                       MODULEENTITY_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
           this.entityLinks[EntityLink(false, MODULEENTITY_CONNECTION_ID)]!! as ModuleEntity
@@ -176,7 +176,7 @@ open class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) 
             value.entityLinks[EntityLink(true, MODULEENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(MODULEENTITY_CONNECTION_ID, this, value)

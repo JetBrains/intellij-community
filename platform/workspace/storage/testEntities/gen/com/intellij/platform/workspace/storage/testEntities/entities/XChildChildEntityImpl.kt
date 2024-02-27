@@ -151,7 +151,7 @@ open class XChildChildEntityImpl(private val dataSource: XChildChildEntityData) 
             value.entityLinks[EntityLink(true, PARENT1_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENT1_CONNECTION_ID, this, value)
@@ -190,7 +190,7 @@ open class XChildChildEntityImpl(private val dataSource: XChildChildEntityData) 
             value.entityLinks[EntityLink(true, PARENT2_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENT2_CONNECTION_ID, this, value)

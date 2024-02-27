@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -20,7 +25,10 @@ interface ParentChainEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentChainEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentChainEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -32,9 +40,12 @@ interface ParentChainEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentChainEntity,
-                                      modification: ParentChainEntity.Builder.() -> Unit): ParentChainEntity = modifyEntity(
-  ParentChainEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentChainEntity,
+  modification: ParentChainEntity.Builder.() -> Unit,
+): ParentChainEntity {
+  return modifyEntity(ParentChainEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract
@@ -53,7 +64,10 @@ interface SimpleAbstractEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder<SimpleAbstractEntity>.() -> Unit)? = null): SimpleAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<SimpleAbstractEntity>.() -> Unit)? = null,
+    ): SimpleAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -83,7 +97,10 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder<CompositeAbstractEntity>.() -> Unit)? = null): CompositeAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder<CompositeAbstractEntity>.() -> Unit)? = null,
+    ): CompositeAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -108,7 +125,10 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CompositeChildAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): CompositeChildAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -120,9 +140,12 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: CompositeChildAbstractEntity,
-                                      modification: CompositeChildAbstractEntity.Builder.() -> Unit): CompositeChildAbstractEntity = modifyEntity(
-  CompositeChildAbstractEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: CompositeChildAbstractEntity,
+  modification: CompositeChildAbstractEntity.Builder.() -> Unit,
+): CompositeChildAbstractEntity {
+  return modifyEntity(CompositeChildAbstractEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface SimpleChildAbstractEntity : SimpleAbstractEntity {
@@ -137,7 +160,10 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleChildAbstractEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SimpleChildAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -149,7 +175,10 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleChildAbstractEntity,
-                                      modification: SimpleChildAbstractEntity.Builder.() -> Unit): SimpleChildAbstractEntity = modifyEntity(
-  SimpleChildAbstractEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleChildAbstractEntity,
+  modification: SimpleChildAbstractEntity.Builder.() -> Unit,
+): SimpleChildAbstractEntity {
+  return modifyEntity(SimpleChildAbstractEntity.Builder::class.java, entity, modification)
+}
 //endregion

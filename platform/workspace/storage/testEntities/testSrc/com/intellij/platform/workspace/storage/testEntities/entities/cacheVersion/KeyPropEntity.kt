@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 // In this test we can deserialize cache
@@ -24,11 +29,13 @@ interface KeyPropEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someInt: Int,
-                        text: String,
-                        url: VirtualFileUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): KeyPropEntity {
+    operator fun invoke(
+      someInt: Int,
+      text: String,
+      url: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): KeyPropEntity {
       val builder = builder()
       builder.someInt = someInt
       builder.text = text
@@ -42,6 +49,10 @@ interface KeyPropEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KeyPropEntity, modification: KeyPropEntity.Builder.() -> Unit): KeyPropEntity = modifyEntity(
-  KeyPropEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: KeyPropEntity,
+  modification: KeyPropEntity.Builder.() -> Unit,
+): KeyPropEntity {
+  return modifyEntity(KeyPropEntity.Builder::class.java, entity, modification)
+}
 //endregion

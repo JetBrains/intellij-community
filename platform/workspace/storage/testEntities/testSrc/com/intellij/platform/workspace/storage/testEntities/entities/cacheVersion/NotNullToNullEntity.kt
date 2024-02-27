@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 // In this test we can deserialize cache
@@ -23,10 +28,12 @@ interface NotNullToNullEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(notNullString: String,
-                        notNullList: List<Int>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): NotNullToNullEntity {
+    operator fun invoke(
+      notNullString: String,
+      notNullList: List<Int>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): NotNullToNullEntity {
       val builder = builder()
       builder.notNullString = notNullString
       builder.notNullList = notNullList.toMutableWorkspaceList()
@@ -39,7 +46,10 @@ interface NotNullToNullEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: NotNullToNullEntity,
-                                      modification: NotNullToNullEntity.Builder.() -> Unit): NotNullToNullEntity = modifyEntity(
-  NotNullToNullEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: NotNullToNullEntity,
+  modification: NotNullToNullEntity.Builder.() -> Unit,
+): NotNullToNullEntity {
+  return modifyEntity(NotNullToNullEntity.Builder::class.java, entity, modification)
+}
 //endregion

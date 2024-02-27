@@ -156,7 +156,7 @@ open class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityData) 
             value.entityLinks[EntityLink(false, ANOTHERENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(ANOTHERENTITY_CONNECTION_ID, this, value)

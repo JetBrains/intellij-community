@@ -124,7 +124,7 @@ open class ParentChainEntityImpl(private val dataSource: ParentChainEntityData) 
             value.entityLinks[EntityLink(false, ROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneChildOfParent(ROOT_CONNECTION_ID, this, value)

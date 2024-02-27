@@ -193,7 +193,7 @@ open class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEn
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
@@ -240,7 +240,7 @@ open class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEn
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(CHILDRENENTITIES_CONNECTION_ID, this, value)
@@ -277,7 +277,7 @@ open class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEn
             value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(CONTENTROOT_CONNECTION_ID, this, value)

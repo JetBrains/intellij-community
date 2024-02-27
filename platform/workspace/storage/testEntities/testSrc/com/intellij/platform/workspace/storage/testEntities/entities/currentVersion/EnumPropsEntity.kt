@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 // In this test we can deserialize cache
 interface EnumPropsEntity: WorkspaceEntity {
@@ -18,7 +23,11 @@ interface EnumPropsEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someEnum: EnumPropsEnum, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): EnumPropsEntity {
+    operator fun invoke(
+      someEnum: EnumPropsEnum,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): EnumPropsEntity {
       val builder = builder()
       builder.someEnum = someEnum
       builder.entitySource = entitySource
@@ -30,9 +39,12 @@ interface EnumPropsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EnumPropsEntity,
-                                      modification: EnumPropsEntity.Builder.() -> Unit): EnumPropsEntity = modifyEntity(
-  EnumPropsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: EnumPropsEntity,
+  modification: EnumPropsEntity.Builder.() -> Unit,
+): EnumPropsEntity {
+  return modifyEntity(EnumPropsEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 

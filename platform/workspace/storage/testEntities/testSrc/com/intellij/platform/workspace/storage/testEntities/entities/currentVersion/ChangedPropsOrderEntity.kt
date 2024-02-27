@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 
@@ -25,12 +30,14 @@ interface ChangedPropsOrderEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int,
-                        string: String,
-                        data: ChangedPropsOrderDataClass,
-                        list: List<Set<Int>>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ChangedPropsOrderEntity {
+    operator fun invoke(
+      version: Int,
+      string: String,
+      data: ChangedPropsOrderDataClass,
+      list: List<Set<Int>>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChangedPropsOrderEntity {
       val builder = builder()
       builder.version = version
       builder.string = string
@@ -45,9 +52,12 @@ interface ChangedPropsOrderEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChangedPropsOrderEntity,
-                                      modification: ChangedPropsOrderEntity.Builder.() -> Unit): ChangedPropsOrderEntity = modifyEntity(
-  ChangedPropsOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChangedPropsOrderEntity,
+  modification: ChangedPropsOrderEntity.Builder.() -> Unit,
+): ChangedPropsOrderEntity {
+  return modifyEntity(ChangedPropsOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class ChangedPropsOrderDataClass(val value: Int, val text: String)

@@ -177,7 +177,7 @@ open class OneToOneRefEntityImpl(private val dataSource: OneToOneRefEntityData) 
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(ANOTHERENTITY_CONNECTION_ID, this, value)

@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 
 // ------------------- Entity with consistency assertion --------------------------------
@@ -20,7 +25,11 @@ interface AssertConsistencyEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(passCheck: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AssertConsistencyEntity {
+    operator fun invoke(
+      passCheck: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): AssertConsistencyEntity {
       val builder = builder()
       builder.passCheck = passCheck
       builder.entitySource = entitySource
@@ -33,9 +42,12 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AssertConsistencyEntity,
-                                      modification: AssertConsistencyEntity.Builder.() -> Unit): AssertConsistencyEntity = modifyEntity(
-  AssertConsistencyEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: AssertConsistencyEntity,
+  modification: AssertConsistencyEntity.Builder.() -> Unit,
+): AssertConsistencyEntity {
+  return modifyEntity(AssertConsistencyEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addAssertConsistencyEntity(passCheck: Boolean, source: EntitySource = MySource): AssertConsistencyEntity {

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("RootsExtensions")
+
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntityInformation
@@ -26,10 +28,13 @@ import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSourceRootPropertiesEntityData) : CustomSourceRootPropertiesEntity, WorkspaceEntityBase(dataSource) {
+open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSourceRootPropertiesEntityData) : CustomSourceRootPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java, CustomSourceRootPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
+                                                                              CustomSourceRootPropertiesEntity::class.java,
+                                                                              ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       SOURCEROOT_CONNECTION_ID,
@@ -57,7 +62,8 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
   }
 
 
-  class Builder(result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity, CustomSourceRootPropertiesEntityData>(result), CustomSourceRootPropertiesEntity.Builder {
+  class Builder(result: CustomSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<CustomSourceRootPropertiesEntity, CustomSourceRootPropertiesEntityData>(
+    result), CustomSourceRootPropertiesEntity.Builder {
     constructor() : this(CustomSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -130,8 +136,8 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
+          _diff.extractOneToOneParent(SOURCEROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                     SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
         }
         else {
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)]!! as SourceRootEntity
@@ -145,7 +151,7 @@ open class CustomSourceRootPropertiesEntityImpl(private val dataSource: CustomSo
             value.entityLinks[EntityLink(true, SOURCEROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(SOURCEROOT_CONNECTION_ID, this, value)
@@ -198,7 +204,8 @@ class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRoo
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.platform.workspace.storage.*
@@ -25,9 +25,11 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(importedFilePaths: List<String>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): MavenProjectsTreeSettingsEntity {
+    operator fun invoke(
+      importedFilePaths: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): MavenProjectsTreeSettingsEntity {
       val builder = builder()
       builder.importedFilePaths = importedFilePaths.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -39,7 +41,10 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MavenProjectsTreeSettingsEntity,
-                                      modification: MavenProjectsTreeSettingsEntity.Builder.() -> Unit): MavenProjectsTreeSettingsEntity = modifyEntity(
-  MavenProjectsTreeSettingsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: MavenProjectsTreeSettingsEntity,
+  modification: MavenProjectsTreeSettingsEntity.Builder.() -> Unit,
+): MavenProjectsTreeSettingsEntity {
+  return modifyEntity(MavenProjectsTreeSettingsEntity.Builder::class.java, entity, modification)
+}
 //endregion

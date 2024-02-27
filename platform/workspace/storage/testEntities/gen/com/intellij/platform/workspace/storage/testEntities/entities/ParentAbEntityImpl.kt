@@ -142,7 +142,7 @@ open class ParentAbEntityImpl(private val dataSource: ParentAbEntityData) : Pare
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToAbstractManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value.asSequence())

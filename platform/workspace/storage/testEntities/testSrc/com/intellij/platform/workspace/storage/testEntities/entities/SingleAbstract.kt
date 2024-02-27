@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -20,7 +25,10 @@ interface ParentSingleAbEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentSingleAbEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentSingleAbEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -32,9 +40,12 @@ interface ParentSingleAbEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentSingleAbEntity,
-                                      modification: ParentSingleAbEntity.Builder.() -> Unit): ParentSingleAbEntity = modifyEntity(
-  ParentSingleAbEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentSingleAbEntity,
+  modification: ParentSingleAbEntity.Builder.() -> Unit,
+): ParentSingleAbEntity {
+  return modifyEntity(ParentSingleAbEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract
@@ -55,9 +66,11 @@ interface ChildSingleAbstractBaseEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(commonData: String,
-                        entitySource: EntitySource,
-                        init: (Builder<ChildSingleAbstractBaseEntity>.() -> Unit)? = null): ChildSingleAbstractBaseEntity {
+    operator fun invoke(
+      commonData: String,
+      entitySource: EntitySource,
+      init: (Builder<ChildSingleAbstractBaseEntity>.() -> Unit)? = null,
+    ): ChildSingleAbstractBaseEntity {
       val builder = builder()
       builder.commonData = commonData
       builder.entitySource = entitySource
@@ -85,10 +98,12 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(commonData: String,
-                        firstData: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ChildSingleFirstEntity {
+    operator fun invoke(
+      commonData: String,
+      firstData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChildSingleFirstEntity {
       val builder = builder()
       builder.commonData = commonData
       builder.firstData = firstData
@@ -102,9 +117,12 @@ interface ChildSingleFirstEntity : ChildSingleAbstractBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildSingleFirstEntity,
-                                      modification: ChildSingleFirstEntity.Builder.() -> Unit): ChildSingleFirstEntity = modifyEntity(
-  ChildSingleFirstEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildSingleFirstEntity,
+  modification: ChildSingleFirstEntity.Builder.() -> Unit,
+): ChildSingleFirstEntity {
+  return modifyEntity(ChildSingleFirstEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
@@ -123,10 +141,12 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(commonData: String,
-                        secondData: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ChildSingleSecondEntity {
+    operator fun invoke(
+      commonData: String,
+      secondData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChildSingleSecondEntity {
       val builder = builder()
       builder.commonData = commonData
       builder.secondData = secondData
@@ -140,7 +160,10 @@ interface ChildSingleSecondEntity : ChildSingleAbstractBaseEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildSingleSecondEntity,
-                                      modification: ChildSingleSecondEntity.Builder.() -> Unit): ChildSingleSecondEntity = modifyEntity(
-  ChildSingleSecondEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildSingleSecondEntity,
+  modification: ChildSingleSecondEntity.Builder.() -> Unit,
+): ChildSingleSecondEntity {
+  return modifyEntity(ChildSingleSecondEntity.Builder::class.java, entity, modification)
+}
 //endregion

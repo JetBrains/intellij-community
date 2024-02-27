@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("RootsExtensions")
+
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntityInformation
@@ -27,10 +29,13 @@ import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEntityData) : ExcludeUrlOrderEntity, WorkspaceEntityBase(dataSource) {
+open class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEntityData) : ExcludeUrlOrderEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, ExcludeUrlOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
+                                                                               ExcludeUrlOrderEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOT_CONNECTION_ID,
@@ -58,7 +63,8 @@ open class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEnti
   }
 
 
-  class Builder(result: ExcludeUrlOrderEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityData>(result), ExcludeUrlOrderEntity.Builder {
+  class Builder(result: ExcludeUrlOrderEntityData?) : ModifiableWorkspaceEntityBase<ExcludeUrlOrderEntity, ExcludeUrlOrderEntityData>(
+    result), ExcludeUrlOrderEntity.Builder {
     constructor() : this(ExcludeUrlOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -162,8 +168,8 @@ open class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEnti
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity
+          _diff.extractOneToOneParent(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                      CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity
         }
         else {
           this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)]!! as ContentRootEntity
@@ -177,7 +183,7 @@ open class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrderEnti
             value.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(CONTENTROOT_CONNECTION_ID, this, value)

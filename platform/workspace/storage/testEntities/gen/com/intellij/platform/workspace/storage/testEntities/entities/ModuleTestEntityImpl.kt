@@ -179,7 +179,7 @@ open class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : 
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(CONTENTROOTS_CONNECTION_ID, this, value)
@@ -225,7 +225,7 @@ open class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : 
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(FACETS_CONNECTION_ID, this, value)

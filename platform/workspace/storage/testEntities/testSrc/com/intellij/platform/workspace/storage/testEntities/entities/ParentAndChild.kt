@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -28,7 +23,11 @@ interface ParentEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentEntity {
+    operator fun invoke(
+      parentData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentEntity {
       val builder = builder()
       builder.parentData = parentData
       builder.entitySource = entitySource
@@ -41,8 +40,12 @@ interface ParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit): ParentEntity = modifyEntity(
-  ParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentEntity,
+  modification: ParentEntity.Builder.() -> Unit,
+): ParentEntity {
+  return modifyEntity(ParentEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ChildEntity : WorkspaceEntity {
@@ -63,7 +66,11 @@ interface ChildEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildEntity {
+    operator fun invoke(
+      childData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChildEntity {
       val builder = builder()
       builder.childData = childData
       builder.entitySource = entitySource
@@ -76,6 +83,10 @@ interface ChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit): ChildEntity = modifyEntity(
-  ChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildEntity,
+  modification: ChildEntity.Builder.() -> Unit,
+): ChildEntity {
+  return modifyEntity(ChildEntity.Builder::class.java, entity, modification)
+}
 //endregion

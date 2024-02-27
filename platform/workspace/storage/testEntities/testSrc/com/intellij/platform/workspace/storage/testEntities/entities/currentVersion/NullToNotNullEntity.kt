@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 interface NullToNotNullEntity: WorkspaceEntity {
   val nullString: String // Change is here, string is not null
@@ -21,11 +26,13 @@ interface NullToNotNullEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(nullString: String,
-                        notNullBoolean: Boolean,
-                        notNullInt: Int,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): NullToNotNullEntity {
+    operator fun invoke(
+      nullString: String,
+      notNullBoolean: Boolean,
+      notNullInt: Int,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): NullToNotNullEntity {
       val builder = builder()
       builder.nullString = nullString
       builder.notNullBoolean = notNullBoolean
@@ -39,7 +46,10 @@ interface NullToNotNullEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: NullToNotNullEntity,
-                                      modification: NullToNotNullEntity.Builder.() -> Unit): NullToNotNullEntity = modifyEntity(
-  NullToNotNullEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: NullToNotNullEntity,
+  modification: NullToNotNullEntity.Builder.() -> Unit,
+): NullToNotNullEntity {
+  return modifyEntity(NullToNotNullEntity.Builder::class.java, entity, modification)
+}
 //endregion

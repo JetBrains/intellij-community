@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
@@ -51,7 +56,11 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(myName: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedEntity {
+    operator fun invoke(
+      myName: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): NamedEntity {
       val builder = builder()
       builder.myName = myName
       builder.entitySource = entitySource
@@ -64,8 +73,12 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: NamedEntity, modification: NamedEntity.Builder.() -> Unit): NamedEntity = modifyEntity(
-  NamedEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: NamedEntity,
+  modification: NamedEntity.Builder.() -> Unit,
+): NamedEntity {
+  return modifyEntity(NamedEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 
@@ -106,7 +119,11 @@ interface NamedChildEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childProperty: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NamedChildEntity {
+    operator fun invoke(
+      childProperty: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): NamedChildEntity {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -119,9 +136,12 @@ interface NamedChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: NamedChildEntity,
-                                      modification: NamedChildEntity.Builder.() -> Unit): NamedChildEntity = modifyEntity(
-  NamedChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: NamedChildEntity,
+  modification: NamedChildEntity.Builder.() -> Unit,
+): NamedChildEntity {
+  return modifyEntity(NamedChildEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 
@@ -153,7 +173,11 @@ interface WithSoftLinkEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(link: NameId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): WithSoftLinkEntity {
+    operator fun invoke(
+      link: NameId,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): WithSoftLinkEntity {
       val builder = builder()
       builder.link = link
       builder.entitySource = entitySource
@@ -166,9 +190,12 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: WithSoftLinkEntity,
-                                      modification: WithSoftLinkEntity.Builder.() -> Unit): WithSoftLinkEntity = modifyEntity(
-  WithSoftLinkEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: WithSoftLinkEntity,
+  modification: WithSoftLinkEntity.Builder.() -> Unit,
+): WithSoftLinkEntity {
+  return modifyEntity(WithSoftLinkEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource): WithSoftLinkEntity {
@@ -191,7 +218,11 @@ interface ComposedLinkEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(link: ComposedId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ComposedLinkEntity {
+    operator fun invoke(
+      link: ComposedId,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ComposedLinkEntity {
       val builder = builder()
       builder.link = link
       builder.entitySource = entitySource
@@ -204,9 +235,12 @@ interface ComposedLinkEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ComposedLinkEntity,
-                                      modification: ComposedLinkEntity.Builder.() -> Unit): ComposedLinkEntity = modifyEntity(
-  ComposedLinkEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ComposedLinkEntity,
+  modification: ComposedLinkEntity.Builder.() -> Unit,
+): ComposedLinkEntity {
+  return modifyEntity(ComposedLinkEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addComposedLinkEntity(link: ComposedId, source: EntitySource = MySource): ComposedLinkEntity {
@@ -235,10 +269,12 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(myName: String,
-                        links: List<NameId>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): WithListSoftLinksEntity {
+    operator fun invoke(
+      myName: String,
+      links: List<NameId>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): WithListSoftLinksEntity {
       val builder = builder()
       builder.myName = myName
       builder.links = links.toMutableWorkspaceList()
@@ -252,9 +288,12 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: WithListSoftLinksEntity,
-                                      modification: WithListSoftLinksEntity.Builder.() -> Unit): WithListSoftLinksEntity = modifyEntity(
-  WithListSoftLinksEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: WithListSoftLinksEntity,
+  modification: WithListSoftLinksEntity.Builder.() -> Unit,
+): WithListSoftLinksEntity {
+  return modifyEntity(WithListSoftLinksEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 
@@ -288,10 +327,12 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(myName: String,
-                        link: NameId,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ComposedIdSoftRefEntity {
+    operator fun invoke(
+      myName: String,
+      link: NameId,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ComposedIdSoftRefEntity {
       val builder = builder()
       builder.myName = myName
       builder.link = link
@@ -305,9 +346,12 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ComposedIdSoftRefEntity,
-                                      modification: ComposedIdSoftRefEntity.Builder.() -> Unit): ComposedIdSoftRefEntity = modifyEntity(
-  ComposedIdSoftRefEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ComposedIdSoftRefEntity,
+  modification: ComposedIdSoftRefEntity.Builder.() -> Unit,
+): ComposedIdSoftRefEntity {
+  return modifyEntity(ComposedIdSoftRefEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addComposedIdSoftRefEntity(

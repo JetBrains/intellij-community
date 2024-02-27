@@ -41,7 +41,11 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(customModuleOptions: Map<String, String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
+    operator fun invoke(
+      customModuleOptions: Map<String, String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ModuleCustomImlDataEntity {
       val builder = builder()
       builder.customModuleOptions = customModuleOptions
       builder.entitySource = entitySource
@@ -54,7 +58,12 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleCustomImlDataEntity, modification: ModuleCustomImlDataEntity.Builder.() -> Unit): ModuleCustomImlDataEntity = modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ModuleCustomImlDataEntity,
+  modification: ModuleCustomImlDataEntity.Builder.() -> Unit,
+): ModuleCustomImlDataEntity {
+  return modifyEntity(ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:ApiStatus.Internal
@@ -83,7 +92,11 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
+    operator fun invoke(
+      path: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ModuleGroupPathEntity {
       val builder = builder()
       builder.path = path.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -96,7 +109,12 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleGroupPathEntity, modification: ModuleGroupPathEntity.Builder.() -> Unit): ModuleGroupPathEntity = modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ModuleGroupPathEntity,
+  modification: ModuleGroupPathEntity.Builder.() -> Unit,
+): ModuleGroupPathEntity {
+  return modifyEntity(ModuleGroupPathEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:ApiStatus.Internal
@@ -136,7 +154,10 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExternalSystemModuleOptionsEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ExternalSystemModuleOptionsEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -148,7 +169,12 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity, modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit): ExternalSystemModuleOptionsEntity = modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ExternalSystemModuleOptionsEntity,
+  modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit,
+): ExternalSystemModuleOptionsEntity {
+  return modifyEntity(ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:ApiStatus.Internal
@@ -175,7 +201,11 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(productionModuleId: ModuleId, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TestModulePropertiesEntity {
+    operator fun invoke(
+      productionModuleId: ModuleId,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): TestModulePropertiesEntity {
       val builder = builder()
       builder.productionModuleId = productionModuleId
       builder.entitySource = entitySource
@@ -187,7 +217,12 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TestModulePropertiesEntity, modification: TestModulePropertiesEntity.Builder.() -> Unit): TestModulePropertiesEntity = modifyEntity(TestModulePropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: TestModulePropertiesEntity,
+  modification: TestModulePropertiesEntity.Builder.() -> Unit,
+): TestModulePropertiesEntity {
+  return modifyEntity(TestModulePropertiesEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:ApiStatus.Internal

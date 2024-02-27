@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -24,10 +29,12 @@ interface VFUEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        fileProperty: VirtualFileUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): VFUEntity {
+    operator fun invoke(
+      data: String,
+      fileProperty: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): VFUEntity {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty
@@ -41,8 +48,12 @@ interface VFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: VFUEntity, modification: VFUEntity.Builder.() -> Unit): VFUEntity = modifyEntity(
-  VFUEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: VFUEntity,
+  modification: VFUEntity.Builder.() -> Unit,
+): VFUEntity {
+  return modifyEntity(VFUEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
@@ -63,11 +74,13 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        fileProperty: VirtualFileUrl,
-                        secondFileProperty: VirtualFileUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): VFUWithTwoPropertiesEntity {
+    operator fun invoke(
+      data: String,
+      fileProperty: VirtualFileUrl,
+      secondFileProperty: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): VFUWithTwoPropertiesEntity {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty
@@ -82,9 +95,12 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: VFUWithTwoPropertiesEntity,
-                                      modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit): VFUWithTwoPropertiesEntity = modifyEntity(
-  VFUWithTwoPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: VFUWithTwoPropertiesEntity,
+  modification: VFUWithTwoPropertiesEntity.Builder.() -> Unit,
+): VFUWithTwoPropertiesEntity {
+  return modifyEntity(VFUWithTwoPropertiesEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface NullableVFUEntity : WorkspaceEntity {
@@ -103,7 +119,11 @@ interface NullableVFUEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): NullableVFUEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): NullableVFUEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -116,9 +136,12 @@ interface NullableVFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: NullableVFUEntity,
-                                      modification: NullableVFUEntity.Builder.() -> Unit): NullableVFUEntity = modifyEntity(
-  NullableVFUEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: NullableVFUEntity,
+  modification: NullableVFUEntity.Builder.() -> Unit,
+): NullableVFUEntity {
+  return modifyEntity(NullableVFUEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ListVFUEntity : WorkspaceEntity {
@@ -137,10 +160,12 @@ interface ListVFUEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        fileProperty: List<VirtualFileUrl>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ListVFUEntity {
+    operator fun invoke(
+      data: String,
+      fileProperty: List<VirtualFileUrl>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ListVFUEntity {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty.toMutableWorkspaceList()
@@ -154,8 +179,12 @@ interface ListVFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit): ListVFUEntity = modifyEntity(
-  ListVFUEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ListVFUEntity,
+  modification: ListVFUEntity.Builder.() -> Unit,
+): ListVFUEntity {
+  return modifyEntity(ListVFUEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface SetVFUEntity : WorkspaceEntity {
@@ -174,10 +203,12 @@ interface SetVFUEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        fileProperty: Set<VirtualFileUrl>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SetVFUEntity {
+    operator fun invoke(
+      data: String,
+      fileProperty: Set<VirtualFileUrl>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SetVFUEntity {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty.toMutableWorkspaceSet()
@@ -190,8 +221,12 @@ interface SetVFUEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SetVFUEntity, modification: SetVFUEntity.Builder.() -> Unit): SetVFUEntity = modifyEntity(
-  SetVFUEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SetVFUEntity,
+  modification: SetVFUEntity.Builder.() -> Unit,
+): SetVFUEntity {
+  return modifyEntity(SetVFUEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 fun MutableEntityStorage.addVFUEntity(

@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 interface ComputablePropEntity: WorkspaceEntity {
@@ -22,10 +27,12 @@ interface ComputablePropEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(list: List<Map<List<Int?>, String>>,
-                        value: Int,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ComputablePropEntity {
+    operator fun invoke(
+      list: List<Map<List<Int?>, String>>,
+      value: Int,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ComputablePropEntity {
       val builder = builder()
       builder.list = list.toMutableWorkspaceList()
       builder.value = value
@@ -39,7 +46,10 @@ interface ComputablePropEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ComputablePropEntity,
-                                      modification: ComputablePropEntity.Builder.() -> Unit): ComputablePropEntity = modifyEntity(
-  ComputablePropEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ComputablePropEntity,
+  modification: ComputablePropEntity.Builder.() -> Unit,
+): ComputablePropEntity {
+  return modifyEntity(ComputablePropEntity.Builder::class.java, entity, modification)
+}
 //endregion

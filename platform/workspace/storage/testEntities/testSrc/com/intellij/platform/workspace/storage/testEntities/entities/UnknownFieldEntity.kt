@@ -2,7 +2,13 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import java.util.*
+import java.util.Date
 
 
 interface UnknownFieldEntity : WorkspaceEntity {
@@ -19,7 +25,11 @@ interface UnknownFieldEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: Date, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): UnknownFieldEntity {
+    operator fun invoke(
+      data: Date,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): UnknownFieldEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -32,7 +42,10 @@ interface UnknownFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: UnknownFieldEntity,
-                                      modification: UnknownFieldEntity.Builder.() -> Unit): UnknownFieldEntity = modifyEntity(
-  UnknownFieldEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: UnknownFieldEntity,
+  modification: UnknownFieldEntity.Builder.() -> Unit,
+): UnknownFieldEntity {
+  return modifyEntity(UnknownFieldEntity.Builder::class.java, entity, modification)
+}
 //endregion

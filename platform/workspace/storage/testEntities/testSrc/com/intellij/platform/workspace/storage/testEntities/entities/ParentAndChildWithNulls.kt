@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -23,7 +28,11 @@ interface ParentWithNulls : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentWithNulls {
+    operator fun invoke(
+      parentData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentWithNulls {
       val builder = builder()
       builder.parentData = parentData
       builder.entitySource = entitySource
@@ -36,9 +45,12 @@ interface ParentWithNulls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentWithNulls,
-                                      modification: ParentWithNulls.Builder.() -> Unit): ParentWithNulls = modifyEntity(
-  ParentWithNulls.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentWithNulls,
+  modification: ParentWithNulls.Builder.() -> Unit,
+): ParentWithNulls {
+  return modifyEntity(ParentWithNulls.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ChildWithNulls : WorkspaceEntity {
@@ -55,7 +67,11 @@ interface ChildWithNulls : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildWithNulls {
+    operator fun invoke(
+      childData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChildWithNulls {
       val builder = builder()
       builder.childData = childData
       builder.entitySource = entitySource
@@ -68,9 +84,12 @@ interface ChildWithNulls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildWithNulls,
-                                      modification: ChildWithNulls.Builder.() -> Unit): ChildWithNulls = modifyEntity(
-  ChildWithNulls.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildWithNulls,
+  modification: ChildWithNulls.Builder.() -> Unit,
+): ChildWithNulls {
+  return modifyEntity(ChildWithNulls.Builder::class.java, entity, modification)
+}
 
 var ChildWithNulls.Builder.parentEntity: ParentWithNulls?
   by WorkspaceEntity.extension()

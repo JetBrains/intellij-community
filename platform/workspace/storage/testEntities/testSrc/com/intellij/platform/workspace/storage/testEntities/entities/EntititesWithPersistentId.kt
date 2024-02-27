@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 
 interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
@@ -22,7 +27,11 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FirstEntityWithPId {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): FirstEntityWithPId {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -35,9 +44,12 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FirstEntityWithPId,
-                                      modification: FirstEntityWithPId.Builder.() -> Unit): FirstEntityWithPId = modifyEntity(
-  FirstEntityWithPId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: FirstEntityWithPId,
+  modification: FirstEntityWithPId.Builder.() -> Unit,
+): FirstEntityWithPId {
+  return modifyEntity(FirstEntityWithPId.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class FirstPId(override val presentableName: String) : SymbolicEntityId<FirstEntityWithPId>
@@ -58,7 +70,11 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondEntityWithPId {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SecondEntityWithPId {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -71,9 +87,12 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SecondEntityWithPId,
-                                      modification: SecondEntityWithPId.Builder.() -> Unit): SecondEntityWithPId = modifyEntity(
-  SecondEntityWithPId.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SecondEntityWithPId,
+  modification: SecondEntityWithPId.Builder.() -> Unit,
+): SecondEntityWithPId {
+  return modifyEntity(SecondEntityWithPId.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class SecondPId(override val presentableName: String) : SymbolicEntityId<SecondEntityWithPId>

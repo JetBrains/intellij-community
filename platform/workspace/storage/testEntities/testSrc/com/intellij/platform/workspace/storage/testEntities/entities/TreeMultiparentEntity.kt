@@ -29,7 +29,11 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeMultiparentRootEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): TreeMultiparentRootEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -41,9 +45,12 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TreeMultiparentRootEntity,
-                                      modification: TreeMultiparentRootEntity.Builder.() -> Unit): TreeMultiparentRootEntity = modifyEntity(
-  TreeMultiparentRootEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: TreeMultiparentRootEntity,
+  modification: TreeMultiparentRootEntity.Builder.() -> Unit,
+): TreeMultiparentRootEntity {
+  return modifyEntity(TreeMultiparentRootEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface TreeMultiparentLeafEntity : WorkspaceEntity {
@@ -67,7 +74,11 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): TreeMultiparentLeafEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): TreeMultiparentLeafEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -79,9 +90,12 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TreeMultiparentLeafEntity,
-                                      modification: TreeMultiparentLeafEntity.Builder.() -> Unit): TreeMultiparentLeafEntity = modifyEntity(
-  TreeMultiparentLeafEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: TreeMultiparentLeafEntity,
+  modification: TreeMultiparentLeafEntity.Builder.() -> Unit,
+): TreeMultiparentLeafEntity {
+  return modifyEntity(TreeMultiparentLeafEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class TreeMultiparentSymbolicId(val data: String) : SymbolicEntityId<TreeMultiparentRootEntity> {

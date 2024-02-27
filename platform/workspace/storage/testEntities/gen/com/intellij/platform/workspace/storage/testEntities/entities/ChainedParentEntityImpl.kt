@@ -143,7 +143,7 @@ open class ChainedParentEntityImpl(private val dataSource: ChainedParentEntityDa
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(CHILD_CONNECTION_ID, this, value)
