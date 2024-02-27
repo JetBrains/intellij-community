@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
+import org.jetbrains.kotlin.idea.k2.hints.AbstractKtCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtLambdasHintsProvider
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtParameterHintsProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.AbstractKtRangesHintsProviderTest
@@ -87,6 +88,9 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         }
         testClass<AbstractKtParameterHintsProviderTest> {
             model("../../../idea/tests/testData/codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)
+        }
+        testClass<AbstractKtCallChainHintsProviderTest> {
+            model("../../../idea/tests/testData/codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
     }
 }

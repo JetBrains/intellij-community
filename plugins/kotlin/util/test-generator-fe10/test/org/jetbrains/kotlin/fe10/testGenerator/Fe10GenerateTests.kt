@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAn
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
@@ -998,6 +999,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
         testClass<AbstractKotlinRangesHintsProviderTest> {
             model("codeInsight/hints/ranges")
+        }
+
+        testClass<AbstractKotlinCallChainHintsProviderTest> {
+            model("codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKotlinCodeVisionProviderTest> {

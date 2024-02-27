@@ -230,6 +230,16 @@
 <!--              nameKey="hints.settings.parameters.blacklisted"-->
 <!--              descriptionKey="inlay.kotlin.parameters.hints.blacklisted"/>-->
     </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KtCallChainHintsProvider"
+            isEnabledByDefault="false"
+            group="METHOD_CHAINS_GROUP"
+            providerId="kotlin.method.chains"
+            bundle="messages.JavaBundle"
+            nameKey="java.method.chains.inlay.provider.name"
+            descriptionKey="inlay.MethodChainsInlayProvider.description" />
   </extensions>
 
   <extensionPoints>
