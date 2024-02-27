@@ -19,6 +19,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
   <dependencies>
     <plugin id="com.intellij.modules.python-core-capable"/>
+    <plugin id="org.toml.lang"/><!-- intellij.python.community.imp doesn't work without it -->
   </dependencies>
 
   <!-- Python bundled modules for content -->
