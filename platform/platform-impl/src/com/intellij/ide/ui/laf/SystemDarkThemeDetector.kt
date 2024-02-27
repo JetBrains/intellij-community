@@ -15,12 +15,17 @@ import com.sun.jna.platform.win32.WinReg
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
+import java.util.function.BiConsumer
 import java.util.function.Consumer
 
 sealed class SystemDarkThemeDetector {
   companion object {
     @JvmStatic
-    fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector {
+    fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector =
+      createParametrizedDetector { isDark, _ -> syncFunction.accept(isDark) }
+
+    @JvmStatic
+    fun createParametrizedDetector(syncFunction: BiConsumer<Boolean, Boolean?>): SystemDarkThemeDetector {
       return when {
         SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
@@ -29,7 +34,8 @@ sealed class SystemDarkThemeDetector {
     }
   }
 
-  abstract fun check()
+  fun check() { check(null) }
+  abstract fun check(parameter: Boolean?)
 
   /**
    * The following method is executed on a polled thread. Maybe computationally intense.
@@ -40,24 +46,24 @@ sealed class SystemDarkThemeDetector {
 }
 
 private abstract class AsyncDetector : SystemDarkThemeDetector() {
-  abstract val syncFunction: Consumer<Boolean>
+  abstract val syncFunction: BiConsumer<Boolean, Boolean?>
 
-  override fun check() {
+  override fun check(parameter: Boolean?) {
     NonUrgentExecutor.getInstance().execute {
       val isDark = isDark()
-      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(isDark) }, ModalityState.any())
+      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(isDark, parameter) }, ModalityState.any())
     }
   }
 }
 
-private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
+private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
   override val detectionSupported: Boolean
     get() = SystemInfoRt.isMac && JnaLoader.isLoaded()
 
   val themeChangedCallback = object : Callback {
     @Suppress("unused")
     fun callback() { // self: ID, selector: Pointer, id: ID
-      check()
+      check(null)
     }
   }
 
@@ -119,7 +125,7 @@ private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : Asyn
   private fun useAppearanceApi() = SystemInfo.isMacOSCatalina && "system".equals(System.getProperty("apple.awt.application.appearance"), true)
 }
 
-private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
+private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
   override val detectionSupported: Boolean
     get() = SystemInfo.isWin10OrNewer && JnaLoader.isLoaded()
 
@@ -130,7 +136,7 @@ private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : As
 
   init {
     Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on") { e: PropertyChangeEvent ->
-      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(e.newValue != java.lang.Boolean.TRUE) }, ModalityState.any())
+      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(e.newValue != java.lang.Boolean.TRUE, null) }, ModalityState.any())
     }
   }
 
@@ -147,5 +153,5 @@ private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : As
 private class EmptyDetector : SystemDarkThemeDetector() {
   override val detectionSupported = false
   override fun isDark() = false
-  override fun check() {}
+  override fun check(parameter: Boolean?) {}
 }

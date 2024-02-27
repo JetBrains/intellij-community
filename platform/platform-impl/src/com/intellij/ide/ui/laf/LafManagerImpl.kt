@@ -10,7 +10,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
-import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createDetector
+import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createParametrizedDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.ide.util.PropertiesComponent
@@ -218,21 +218,21 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     })
   }
 
-  private fun detectAndSyncLaf() {
+  private fun detectAndSyncLaf(async: Boolean = true) {
     if (autodetect) {
       val lafDetector = getGetOrCreateLafDetector()
       if (lafDetector.detectionSupported) {
-        lafDetector.check()
+        lafDetector.check(async)
       }
     }
   }
 
-  private fun syncThemeAndEditorScheme(systemIsDark: Boolean) {
-    syncTheme(systemIsDark)
+  private fun syncThemeAndEditorScheme(systemIsDark: Boolean, async: Boolean?) {
+    syncTheme(systemIsDark, async ?: true)
     syncEditorScheme(systemIsDark)
   }
 
-  private fun syncTheme(systemIsDark: Boolean) {
+  private fun syncTheme(systemIsDark: Boolean, async: Boolean) {
     if (!autodetect) {
       return
     }
@@ -248,7 +248,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       preferredLightThemeId?.let { UiThemeProviderListManager.getInstance().findThemeById(it) } ?: defaultLightLaf
     }
     if (currentIsDark != systemIsDark || currentTheme !== expectedTheme) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this, /* laf = */ expectedTheme, /* async = */ true, false, true)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this, /* laf = */ expectedTheme, /* async = */ async, false, true)
     }
   }
 
@@ -783,7 +783,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun getGetOrCreateLafDetector(): SystemDarkThemeDetector {
     var result = themeDetector
     if (result == null) {
-      result = createDetector(::syncThemeAndEditorScheme)
+      result = createParametrizedDetector(::syncThemeAndEditorScheme)
       themeDetector = result
     }
 
@@ -981,12 +981,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       if (isDark) {
         if (preferredDarkThemeId != themeId) {
           preferredDarkThemeId = themeId.takeIf { it != defaultDarkLaf.id }
-          detectAndSyncLaf()
+          detectAndSyncLaf(false)
         }
       }
       else if (preferredLightThemeId != themeId) {
         preferredLightThemeId = themeId.takeIf { it != defaultLightLaf.id }
-        detectAndSyncLaf()
+        detectAndSyncLaf(false)
       }
     }
 
