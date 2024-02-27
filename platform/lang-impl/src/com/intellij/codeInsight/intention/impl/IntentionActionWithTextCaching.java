@@ -139,8 +139,12 @@ public final class IntentionActionWithTextCaching
 
   @Override
   public @Nullable ShortcutSet getShortcut() {
-    ShortcutSet shortcut = myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
-    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
+    return getShortcutSet(myAction);
+  }
+
+  public static @Nullable ShortcutSet getShortcutSet(@NotNull IntentionAction action) {
+    ShortcutSet shortcut = action instanceof ShortcutProvider ? ((ShortcutProvider)action).getShortcut() : null;
+    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(action);
   }
 
   @Override
