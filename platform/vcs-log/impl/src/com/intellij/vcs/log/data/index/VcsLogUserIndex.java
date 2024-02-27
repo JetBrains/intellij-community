@@ -3,11 +3,9 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.impl.forward.ForwardIndex;
-import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.IntCollectionDataExternalizer;
@@ -47,26 +45,17 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   private final @NotNull UserIndexer myUserIndexer;
 
   VcsLogUserIndex(@NotNull StorageId.Directory storageId,
+                  @NotNull UserIndexer userIndexer,
+                  @NotNull PersistentMapBasedForwardIndex forwardIndex,
                   @Nullable StorageLockContext storageLockContext,
-                  @NotNull VcsUserRegistry userRegistry,
                   @NotNull VcsLogErrorHandler errorHandler,
                   @NotNull Disposable disposableParent) throws IOException {
-    super(storageId,
-          USERS,
-          new UserIndexer(createUserEnumerator(storageId, storageLockContext, userRegistry)),
-          VoidDataExternalizer.INSTANCE,
-          storageLockContext,
-          errorHandler,
-          disposableParent);
-    myUserIndexer = (UserIndexer)myIndexer;
-    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
-  }
-
-  @Override
-  protected @NotNull Pair<ForwardIndex, ForwardIndexAccessor<Integer, Void>> createdForwardIndex(@Nullable StorageLockContext storageLockContext)
-    throws IOException {
-    return new Pair<>(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), true, false, storageLockContext),
-                      new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
+    super(createMapReduceIndex(USERS, storageId, userIndexer,
+                               VoidDataExternalizer.INSTANCE,
+                               storageLockContext,
+                               forwardIndex, new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()),
+                               errorHandler), disposableParent);
+    myUserIndexer = userIndexer;
   }
 
   private static @NotNull PersistentEnumerator<VcsUser> createUserEnumerator(@NotNull StorageId.Directory storageId,
@@ -134,12 +123,25 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     }
   }
 
+  static @NotNull VcsLogUserIndex create(@NotNull StorageId.Directory storageId,
+                                         @Nullable StorageLockContext storageLockContext,
+                                         @NotNull VcsUserRegistry userRegistry,
+                                         @NotNull VcsLogErrorHandler errorHandler,
+                                         @NotNull Disposable disposableParent) throws IOException {
+    PersistentMapBasedForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storageId.getStorageFile(USERS + ".idx"),
+                                                                                     true, false, storageLockContext);
+    PersistentEnumerator<VcsUser> enumerator = createUserEnumerator(storageId, storageLockContext, userRegistry);
+    UserIndexer userIndexer = new UserIndexer(enumerator, e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
+    return new VcsLogUserIndex(storageId, userIndexer, forwardIndex, storageLockContext, errorHandler, disposableParent);
+  }
+
   private static final class UserIndexer implements DataIndexer<Integer, Void, VcsShortCommitDetails> {
     private final @NotNull PersistentEnumerator<VcsUser> myUserEnumerator;
-    private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
+    private final @NotNull Consumer<? super Exception> myFatalErrorConsumer;
 
-    UserIndexer(@NotNull PersistentEnumerator<VcsUser> userEnumerator) {
+    UserIndexer(@NotNull PersistentEnumerator<VcsUser> userEnumerator, @NotNull Consumer<? super Exception> fatalErrorConsumer) {
       myUserEnumerator = userEnumerator;
+      myFatalErrorConsumer = fatalErrorConsumer;
     }
 
     @Override
@@ -160,10 +162,6 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
 
     public int getUserId(@NotNull VcsUser user) throws IOException {
       return myUserEnumerator.enumerate(user);
-    }
-
-    public void setFatalErrorConsumer(@NotNull Consumer<? super Exception> fatalErrorConsumer) {
-      myFatalErrorConsumer = fatalErrorConsumer;
     }
 
     public void flush() {

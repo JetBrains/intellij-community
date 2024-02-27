@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -31,49 +30,32 @@ import java.util.function.ObjIntConsumer;
 
 public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogFullDetailsIndex.class);
-  private final @NotNull MyMapReduceIndex myMapReduceIndex;
-  protected final @NotNull StorageId.Directory myStorageId;
-  protected final @NotNull String myName;
-  protected final @NotNull DataIndexer<Integer, T, D> myIndexer;
-  private final @NotNull VcsLogErrorHandler myErrorHandler;
+  private final @NotNull MapReduceIndex<Integer, T, D> myMapReduceIndex;
   private volatile boolean myDisposed = false;
 
-  public VcsLogFullDetailsIndex(@NotNull StorageId.Directory storageId,
-                                @NotNull String name,
-                                @NotNull DataIndexer<Integer, T, D> indexer,
-                                @NotNull DataExternalizer<T> externalizer,
-                                @Nullable StorageLockContext storageLockContext,
-                                @NotNull VcsLogErrorHandler errorHandler,
-                                @NotNull Disposable disposableParent)
-    throws IOException {
-    myName = name;
-    myStorageId = storageId;
-    myIndexer = indexer;
-    myErrorHandler = errorHandler;
-
-    myMapReduceIndex = createMapReduceIndex(externalizer, storageLockContext);
-
+  public VcsLogFullDetailsIndex(@NotNull MapReduceIndex<Integer, T, D> mapReduceIndex, @NotNull Disposable disposableParent) {
+    myMapReduceIndex = mapReduceIndex;
     Disposer.register(disposableParent, this);
   }
 
-  private @NotNull MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer,
-                                                         @Nullable StorageLockContext storageLockContext) throws IOException {
-    MyIndexExtension<T, D> extension = new MyIndexExtension<>(myName, myIndexer, dataExternalizer, myStorageId.getVersion());
-    Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> pair = createdForwardIndex(storageLockContext);
-    ForwardIndex forwardIndex = pair != null ? pair.getFirst() : null;
-    ForwardIndexAccessor<Integer, T> forwardIndexAccessor = pair != null ? pair.getSecond() : null;
+  protected static <T, D> @NotNull MapReduceIndex<Integer, T, D> createMapReduceIndex(@NotNull String name,
+                                                                                      @NotNull StorageId.Directory storageId,
+                                                                                      @NotNull DataIndexer<Integer, T, D> indexer,
+                                                                                      @NotNull DataExternalizer<T> externalizer,
+                                                                                      @Nullable StorageLockContext storageLockContext,
+                                                                                      @Nullable ForwardIndex forwardIndex,
+                                                                                      @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor,
+                                                                                      @NotNull VcsLogErrorHandler errorHandler)
+    throws IOException {
+    MyIndexExtension<T, D> extension = new MyIndexExtension<>(name, indexer, externalizer, storageId.getVersion());
     PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
     try {
-      return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex,
-                                  forwardIndexAccessor);
+      return new MyMapReduceIndex<>(extension, new MyMapIndexStorage<>(name, storageId, externalizer), forwardIndex,
+                                    forwardIndexAccessor, errorHandler);
     }
     finally {
       PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove();
     }
-  }
-
-  protected @Nullable Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> createdForwardIndex(@Nullable StorageLockContext storageLockContext) throws IOException {
-    return null;
   }
 
   public boolean isEmpty() throws IOException {
@@ -146,12 +128,16 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     if (myDisposed) throw new ProcessCanceledException();
   }
 
-  private final class MyMapReduceIndex extends MapReduceIndex<Integer, T, D> {
+  private static final class MyMapReduceIndex<T, D> extends MapReduceIndex<Integer, T, D> {
+    private final @NotNull VcsLogErrorHandler myErrorHandler;
+
     private MyMapReduceIndex(@NotNull MyIndexExtension<T, D> extension,
                              @NotNull IndexStorage<Integer, T> storage,
                              @Nullable ForwardIndex forwardIndex,
-                             @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor) throws IOException {
+                             @Nullable ForwardIndexAccessor<Integer, T> forwardIndexAccessor,
+                             @NotNull VcsLogErrorHandler errorHandler) throws IOException {
       super(extension, storage, forwardIndex, forwardIndexAccessor);
+      myErrorHandler = errorHandler;
     }
 
     @Override
