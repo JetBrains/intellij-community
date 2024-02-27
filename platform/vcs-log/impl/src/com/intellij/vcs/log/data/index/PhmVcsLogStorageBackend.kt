@@ -17,7 +17,6 @@ import com.intellij.util.io.storage.AbstractStorage
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.VcsLogStorageImpl
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.LightFilePath
 import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer

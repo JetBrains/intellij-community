@@ -19,7 +19,6 @@ import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
-import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -227,42 +226,6 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKi
       }
 
       return value;
-    }
-  }
-
-  static final class LightFilePath {
-    private final @NotNull VirtualFile myRoot;
-    private final @NotNull String myRelativePath;
-
-    LightFilePath(@NotNull VirtualFile root, @NotNull String relativePath) {
-      myRoot = root;
-      myRelativePath = relativePath;
-    }
-
-    LightFilePath(@NotNull VirtualFile root, @NotNull FilePath filePath) {
-      this(root, VcsFileUtil.relativePath(root, filePath));
-    }
-
-    public @NotNull VirtualFile getRoot() {
-      return myRoot;
-    }
-
-    public @NotNull String getRelativePath() {
-      return myRelativePath;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      LightFilePath path = (LightFilePath)o;
-      return myRoot.getPath().equals(path.myRoot.getPath()) &&
-             myRelativePath.equals(path.myRelativePath);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myRoot.getPath(), myRelativePath);
     }
   }
 
