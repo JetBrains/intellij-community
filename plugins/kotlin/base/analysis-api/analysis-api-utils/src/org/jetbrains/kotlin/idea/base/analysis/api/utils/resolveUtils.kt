@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
@@ -46,7 +45,7 @@ fun collectCallCandidates(callElement: KtElement): List<KtCallCandidateInfo> {
     }
 
     if (candidates.isEmpty()) return emptyList()
-    val fileSymbol = callElement.containingKtFile.getFileSymbol()
+    val fileSymbol = callElement.containingKtFile.let { it.getOriginalKtFile() ?: it }.getFileSymbol()
 
     return candidates.filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
 }

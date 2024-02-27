@@ -1558,6 +1558,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
             }
 
+            @TestMetadata("PrivateFunction.kt")
+            public void testPrivateFunction() throws Exception {
+                runTest("../testData/basic/common/namedArguments/PrivateFunction.kt");
+            }
+
             @TestMetadata("TypeAliasParameter.kt")
             public void testTypeAliasParameter() throws Exception {
                 runTest("../testData/basic/common/namedArguments/TypeAliasParameter.kt");
