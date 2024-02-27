@@ -324,10 +324,12 @@ class ProjectWizardJdkComboBox(
     }
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      detected.forEach {
-        detectedJDKs.add(it)
-        addItem(it)
-      }
+      detected
+        .filter { d -> registered.none { r -> d.home == r.jdk.homePath } }
+        .forEach {
+          detectedJDKs.add(it)
+          addItem(it)
+        }
       if ((selectedItem is NoJdk || selectedItem is DownloadJdk) && detected.any()) {
         val regex = "(\\d+)".toRegex()
         detected
@@ -382,6 +384,10 @@ private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
   runReadAction {
     SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())?.let {
       JdkComboBoxCollector.jdkRegistered(it)
+      combo.detectedJDKs.find { detected -> detected.home == path }?.let { item ->
+        combo.removeItem(item)
+        combo.detectedJDKs.remove(item)
+      }
       val comboItem = ExistingJdk(it)
       val index = combo.lastRegisteredJdkIndex
       combo.registered.add(comboItem)
