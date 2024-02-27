@@ -20,19 +20,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotifications
 import com.intellij.ui.GotItTooltip
-import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
@@ -42,16 +35,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
 import training.ui.LearningUiUtil
-import java.util.function.Function
-import javax.swing.JComponent
 
 private var onboardingGenerationNumber: Int
   get() = PropertiesComponent.getInstance().getInt("onboarding.generation.number", 0)
   set(value) { PropertiesComponent.getInstance().setValue("onboarding.generation.number", value, 0) }
-
-private var onboardingGenerationShowDisableMessage: Boolean
-  get() = PropertiesComponent.getInstance().getBoolean("onboarding.generation.show.disable.message", true)
-  set(value) { PropertiesComponent.getInstance().setValue("onboarding.generation.show.disable.message", value, true) }
 
 var Project.filePathWithOnboardingTips: String?
   @ApiStatus.Internal
@@ -63,8 +50,6 @@ var Project.filePathWithOnboardingTips: String?
 val renderedOnboardingTipsEnabled: Boolean
   @ApiStatus.Internal
   get() = Registry.`is`("doc.onboarding.tips.render")
-
-private val RESET_TOOLTIP_SAMPLE_TEXT = Key.create<String>("reset.tooltip.sample.text")
 
 internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
                                       IdeActions.ACTION_SHOW_INTENTION_ACTIONS,
@@ -105,11 +90,7 @@ private fun installTipsInFirstEditor(editor: Editor, project: Project, info: Onb
   installDebugListener(project, pathToRunningFile)
   installActionListener(project, pathToRunningFile)
 
-  val number = onboardingGenerationNumber
-  if (number != 0 && onboardingGenerationShowDisableMessage) {
-    RESET_TOOLTIP_SAMPLE_TEXT.set(file, info.simpleSampleText)
-  }
-  onboardingGenerationNumber = number + 1
+  onboardingGenerationNumber++
 }
 
 private class InstallOnboardingTooltip : ProjectActivity {
@@ -197,37 +178,4 @@ private fun installDebugListener(project: Project, pathToRunningFile: @NonNls St
       })
     }
   })
-}
-
-private class DoNotGenerateTipsNotification : EditorNotificationProvider {
-  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    val simpleSampleText = RESET_TOOLTIP_SAMPLE_TEXT.get(file) ?: return null
-    return Function { editor ->
-      EditorNotificationPanel(EditorNotificationPanel.Status.Info).apply {
-        text = LearnBundle.message("onboarding.propose.to.disable.tips")
-        createActionLabel(LearnBundle.message("onboarding.disable.tips.action")) {
-          OnboardingTipsStatistics.logDisableOnboardingTips(project, onboardingGenerationNumber)
-          disableNotification(file, project)
-
-          PropertiesComponent.getInstance().setValue(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME, false)
-
-          project.filePathWithOnboardingTips = null
-          val document = (editor as? TextEditor)?.editor?.document ?: return@createActionLabel
-          DocumentUtil.writeInRunUndoTransparentAction {
-            document.setText(simpleSampleText)
-          }
-        }
-        setCloseAction {
-          OnboardingTipsStatistics.logHideOnboardingTipsDisableProposal(project, onboardingGenerationNumber)
-          disableNotification(file, project)
-          onboardingGenerationShowDisableMessage = false
-        }
-      }
-    }
-  }
-
-  private fun disableNotification(file: VirtualFile, project: Project) {
-    RESET_TOOLTIP_SAMPLE_TEXT.set(file, null)
-    EditorNotifications.getInstance(project).updateNotifications(this)
-  }
 }
