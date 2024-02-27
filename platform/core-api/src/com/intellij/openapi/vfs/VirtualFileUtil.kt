@@ -3,9 +3,12 @@
 
 package com.intellij.openapi.vfs
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.psi.PsiFile
@@ -15,6 +18,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.pathString
@@ -195,4 +199,73 @@ object VirtualFilePrefixTreeFactory : AbstractPrefixTreeFactory<VirtualFile, Str
  */
 fun VirtualFile.resolveFromRootOrRelative(absoluteOrRelativeFilePath: String): VirtualFile? {
   return fileSystem.findFileByPath(absoluteOrRelativeFilePath) ?: findFileByRelativePath(absoluteOrRelativeFilePath)
+}
+
+/**
+ * An alternative to `CachedValuesManager` for [VirtualFile].
+ * It should be used when the cached value is dependent only on current file contents.
+ *
+ * @param key            Key, under which the cached value is going to be stored
+ * @param provider       Cached value provider. The result should depend only on the contents of the file
+ * @param useSoftCache   Whether to use [SoftReference] for storing the cached value
+ * @param canCache       Whether the value can be cached in particular circumstance
+ */
+fun <T : Any> VirtualFile.getCachedValue(key: Key<VirtualFileCachedValue<T>>,
+                                         provider: (VirtualFile, CharSequence?) -> T,
+                                         useSoftCache: Boolean = false,
+                                         canCache: ((VirtualFile) -> Boolean)? = null): T {
+  if (!isValid()) {
+    thisLogger().error(InvalidVirtualFileAccessException(this))
+    return provider(this, null)
+  }
+  ProgressManager.checkCanceled()
+  val document = FileDocumentManager.getInstance().getCachedDocument(this)
+  var cached = key.get(this)
+  val documentModificationStamp = document?.modificationStamp ?: -1
+  var data = cached?.data
+  if (cached == null
+      || data == null
+      || cached.documentModificationStamp != documentModificationStamp
+      || cached.fileModificationStamp != modificationStamp) {
+    val text = loadText(this, document)
+    data = provider(this, text)
+    cached = VirtualFileCachedValue(data, useSoftCache, modificationStamp, documentModificationStamp)
+    if (canCache?.invoke(this) != false) {
+      key.set(this, cached)
+    }
+  }
+  return data
+}
+
+private fun loadText(packageJsonFile: VirtualFile, packageJsonDocument: Document?): CharSequence? {
+  if (packageJsonDocument != null) {
+    return packageJsonDocument.immutableCharSequence
+  }
+  return try {
+    VfsUtilCore.loadText(packageJsonFile)
+  }
+  catch (e: IOException) {
+    null
+  }
+}
+
+class VirtualFileCachedValue<T> private constructor(
+  private val strongData: T?,
+  private val weakData: SoftReference<T?>?,
+  internal val fileModificationStamp: Long,
+  internal val documentModificationStamp: Long,
+  ) {
+
+  internal constructor(data: T, useWeakCache: Boolean, fileModificationStamp: Long, documentModificationStamp: Long, ):
+    this(if (useWeakCache) null else data,
+         if (useWeakCache) SoftReference(data) else null,
+         fileModificationStamp, documentModificationStamp)
+
+  internal val data: T? get() = strongData ?: weakData?.get()
+
+  override fun toString(): String {
+    return "data=" + data +
+           ", fileModificationStamp=" + fileModificationStamp +
+           ", documentModificationStamp=" + documentModificationStamp
+  }
 }
