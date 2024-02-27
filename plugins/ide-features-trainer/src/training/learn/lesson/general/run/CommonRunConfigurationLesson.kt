@@ -160,22 +160,9 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
       highlightButtonById("RedesignedRunConfigurationSelector", usePulsation = false)
 
-      task("editRunConfigurations") {
-        text(LessonsBundle.message("run.configuration.edit.configuration",
-                                   LessonUtil.rawShift(),
-                                   strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic())))
-        triggerAndBorderHighlight().component { ui: JBCheckBox ->
-          ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
-        }
-        test {
-          actions(it)
-        }
-      }
+      openEditRunConfiguration()
 
-      task {
-        text(LessonsBundle.message("run.configuration.settings.description"))
-        gotItStep(Balloon.Position.below, 300, LessonsBundle.message("run.configuration.tip.about.save.configuration.into.file"))
-      }
+      storeAsCheckbox()
 
       task {
         before {
@@ -234,4 +221,29 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
     Pair(LessonsBundle.message("run.configuration.help.link"),
          LessonUtil.getHelpLink("run-debug-configuration.html")),
   )
+
+  companion object {
+    fun LessonContext.openEditRunConfiguration() {
+      task("editRunConfigurations") {
+        text(LessonsBundle.message("run.configuration.edit.configuration",
+                                   LessonUtil.rawShift(),
+                                   strong(ActionsBundle.message("action.editRunConfigurations.text").dropMnemonic())))
+        test {
+          actions(it)
+        }
+      }
+    }
+
+    fun LessonContext.storeAsCheckbox() {
+      task {
+        triggerAndBorderHighlight().component { ui: JBCheckBox ->
+          ui.text?.contains(ExecutionBundle.message("run.configuration.store.as.project.file").dropMnemonic()) == true
+        }
+      }
+      task {
+        text(LessonsBundle.message("run.configuration.settings.description"))
+        gotItStep(Balloon.Position.below, 300, LessonsBundle.message("run.configuration.tip.about.save.configuration.into.file"))
+      }
+    }
+  }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
+import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
@@ -279,6 +280,24 @@ object LessonUtil {
         val range = xRange(ui.width)
         return@l Rectangle(range.first, y, range.last - range.first + 1, editor.lineHeight)
       }
+    }
+  }
+
+  fun TaskContext.highlightRunGutter(highlightInside: Boolean = false, usePulsation: Boolean = false, singleLineGutter: Boolean = false) {
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart l@{ ui: EditorGutterComponentEx ->
+      if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+      val runGutterLines = (0 until editor.document.lineCount).mapNotNull { lineInd ->
+        if (ui.getGutterRenderers(lineInd).any { (it as? LineMarkerInfo.LineMarkerGutterIconRenderer<*>)?.featureId == "run" })
+          lineInd
+        else null
+      }
+      val startLineY = editor.visualLineToY(runGutterLines.first())
+      val endLineY = editor.visualLineToY(runGutterLines.last())
+      val startX = if (singleLineGutter) 30 else 25
+      Rectangle(startX, startLineY, ui.width - 40, endLineY - startLineY + editor.lineHeight)
     }
   }
 
@@ -637,7 +656,7 @@ fun LessonContext.highlightButtonById(actionId: String,
           }
         }
         catch (e: Throwable) {
-          // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
+          // Just go to the next step if we cannot find the needed button (when this method is used as pass trigger)
           taskInvokeLater { feature.complete(false) }
           throw IllegalStateException("Cannot find button for $actionId", e)
         }
