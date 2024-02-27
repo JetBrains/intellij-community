@@ -88,7 +88,7 @@ internal class XmlSerializerTest {
           "int_v": 1,
           "string_v": "hello"
         }
-      """.trimIndent(),
+      """,
       bean = bean)
 
     bean.INT_V = 2
@@ -106,7 +106,7 @@ internal class XmlSerializerTest {
           "int_v": 2,
           "string_v": "bye"
         }
-      """.trimIndent(),
+      """,
       bean = bean,
     )
   }
@@ -291,8 +291,8 @@ internal class XmlSerializerTest {
         </Complex>
       """,
       expectedJson = """
-        {}
-      """.trimIndent(),
+        {"foo":  null}
+      """,
       bean = Complex(),
     )
   }
@@ -681,6 +681,12 @@ internal class XmlSerializerTest {
           bye
         </BeanWithTextAnnotation>
       """,
+      expectedJson = """
+        {
+          "int_v": 2,
+          "string_v": "bye"
+        }
+      """,
       bean = bean,
     )
   }
@@ -833,7 +839,7 @@ internal class XmlSerializerTest {
           <description>hello</description>
         </todo-panel>
       </bean>
-    """.trimIndent(), Bean(sub = SubBean(description = "hello")))
+    """, Bean(sub = SubBean(description = "hello")))
   }
 
   @Test

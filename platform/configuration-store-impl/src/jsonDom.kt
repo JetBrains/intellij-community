@@ -38,7 +38,9 @@ fun jsonDomToXml(jsonObject: JsonObject): Element {
   return element
 }
 
-internal fun jdomToJson(element: Element): JsonElement {
+// used by TBE
+@Internal
+fun jdomToJson(element: Element): JsonElement {
   // todo optimize
   val xmlOutputter = JbXmlOutputter()
   val byteOut = BufferExposingByteArrayOutputStream()

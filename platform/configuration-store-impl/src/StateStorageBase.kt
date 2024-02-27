@@ -3,6 +3,7 @@
 
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
@@ -110,6 +111,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
 abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
   abstract val controller: SettingsController?
+  abstract val roamingType: RoamingType?
 
   final override fun setState(component: Any?, componentName: String, pluginId: PluginId, state: Any?) {
     if (state == null) {
@@ -119,7 +121,7 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
 
     val element: Element?
     try {
-      element = serializeState(state = state, componentName = componentName, pluginId = pluginId, controller = controller)
+      element = serializeState(state = state, componentName = componentName, pluginId = pluginId, controller = controller, roamingType = roamingType)
     }
     catch (e: WriteExternalException) {
       LOG.debug(e)
@@ -136,13 +138,17 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
   abstract fun setSerializedState(componentName: String, element: Element?)
 }
 
-internal fun serializeState(state: Any, componentName: String, pluginId: PluginId, controller: SettingsController?): Element? {
+internal fun serializeState(state: Any, componentName: String, pluginId: PluginId, controller: SettingsController?, roamingType: RoamingType?): Element? {
   @Suppress("DEPRECATION")
   when (state) {
     is Element -> {
       if (controller != null) {
-        val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
-        val key = SettingDescriptor(key = componentName, pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
+        val key = SettingDescriptor(
+          key = createSettingKey(componentName = componentName, binding = null),
+          pluginId = pluginId,
+          tags = createTags(componentName, roamingType),
+          serializer = JsonElementSettingSerializerDescriptor,
+        )
 
         val result = controller.doSetItem(key = key, value = jdomToJson(state))
         if (result != SetResult.INAPPLICABLE) {
@@ -165,7 +171,15 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
             return rootBinding.serializeProperties(bean = state, preCreatedElement = null, filter = filter)
           }
           else {
-            return serializeWithController(rootBinding = rootBinding, bean = state, filter = filter, componentName = componentName, pluginId = pluginId, controller = controller)
+            return serializeWithController(
+              rootBinding = rootBinding,
+              bean = state,
+              filter = filter,
+              componentName = componentName,
+              pluginId = pluginId,
+              controller = controller,
+              roamingType = roamingType,
+            )
           }
         }
         else {
@@ -183,6 +197,11 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
   }
 }
 
+private fun createTags(componentName: String, roamingType: RoamingType?): List<SettingTag> {
+  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
+  return if (roamingType == RoamingType.DISABLED) java.util.List.of(NonShareableTag, componentPropertyTag) else java.util.List.of(componentPropertyTag)
+}
+
 private fun serializeWithController(
   rootBinding: BeanBinding,
   bean: Any,
@@ -190,21 +209,19 @@ private fun serializeWithController(
   componentName: String,
   pluginId: PluginId,
   controller: SettingsController,
+  roamingType: RoamingType?
 ): Element? {
-  val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
+  val keyTags = createTags(componentName, roamingType)
   var element: Element? = null
   for (binding in rootBinding.bindings!!) {
-    if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean = bean)) {
-      continue
-    }
-
-    if (isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = true)) {
-      continue
-    }
-
+    val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = true)
     val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
-    val result = controller.doSetItem(key = key, value = binding.toJson(bean, filter))
+    val result = controller.doSetItem(key = key, value = if (isPropertySkipped) null else binding.toJson(bean, filter))
     if (result != SetResult.INAPPLICABLE) {
+      continue
+    }
+
+    if (isPropertySkipped) {
       continue
     }
 
@@ -260,7 +277,7 @@ internal fun <T : Any> deserializeStateWithController(
         return rootBinding.deserialize(context = null, element = stateElement, JdomAdapter) as T
       }
 
-      return getXmlSerializationState<T>(
+      return getXmlSerializedState<T>(
         oldData = stateElement,
         mergeInto = null,
         rootBinding = rootBinding,
@@ -277,7 +294,7 @@ internal fun <T : Any> deserializeStateWithController(
         (rootBinding as BeanBinding).deserializeInto(bean = mergeInto, element = stateElement)
       }
       else {
-        return getXmlSerializationState(
+        return getXmlSerializedState(
           oldData = stateElement,
           mergeInto = mergeInto,
           rootBinding = rootBinding as BeanBinding,
@@ -297,6 +314,8 @@ internal fun <T : Any> deserializeStateWithController(
   }
 }
 
+// todo OldLocalValueSupplierTag for bean /
+
 private fun deserializeAsJdomElement(
   controller: SettingsController?,
   componentName: String,
@@ -309,7 +328,12 @@ private fun deserializeAsJdomElement(
         jdomToJson(it)
       }
     }))
-    val key = SettingDescriptor(key = componentName, pluginId = pluginId, tags = tags, serializer = JsonElementSettingSerializerDescriptor)
+    val key = SettingDescriptor(
+      key = createSettingKey(componentName = componentName, binding = null),
+      pluginId = pluginId,
+      tags = tags,
+      serializer = JsonElementSettingSerializerDescriptor,
+    )
     val item = controller?.doGetItem(key) ?: GetResult.inapplicable()
     if (item.isResolved) {
       val jsonObject = item.get() ?: return null
@@ -322,7 +346,7 @@ private fun deserializeAsJdomElement(
   return stateElement
 }
 
-private fun <T : Any> getXmlSerializationState(
+private fun <T : Any> getXmlSerializedState(
   oldData: Element?,
   mergeInto: T?,
   rootBinding: BeanBinding,
@@ -335,7 +359,12 @@ private fun <T : Any> getXmlSerializationState(
 
   val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
   for (binding in bindings) {
-    val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
+    val key = SettingDescriptor(
+      key = createSettingKey(componentName = componentName, binding = binding),
+      pluginId = pluginId,
+      tags = keyTags,
+      serializer = JsonElementSettingSerializerDescriptor,
+    )
     val value = try {
       controller.doGetItem(key)
     }
@@ -371,4 +400,12 @@ private fun <T : Any> getXmlSerializationState(
   return result
 }
 
-private fun createSettingKey(componentName: String, binding: NestedBinding) = "${componentName}.${binding.propertyName}"
+private fun createSettingKey(componentName: String, binding: NestedBinding?): String {
+  val normalizedComponentName = componentName.replace('.', '-')
+  if (binding == null) {
+    return normalizedComponentName
+  }
+  else {
+    return "$normalizedComponentName.${binding.propertyName}"
+  }
+}

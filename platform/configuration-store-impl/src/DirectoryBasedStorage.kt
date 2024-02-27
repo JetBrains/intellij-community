@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosCollector
 import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.components.PathMacroSubstitutor
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
@@ -27,7 +30,7 @@ open class DirectoryBasedStorage(
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null
 ) : StateStorageBase<StateMap>() {
   private var componentName: String? = null
-  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = emptyMap()
+  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = java.util.Map.of()
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   override val controller: SettingsController?
@@ -158,8 +161,9 @@ open class DirectoryBasedStorage(
     cachedVirtualFile = dir
   }
 
-  override fun createSaveSessionProducer(): SaveSessionProducer? =
-    if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, getStorageData())
+  override fun createSaveSessionProducer(): SaveSessionProducer? {
+    return if (checkIsSavingDisabled()) null else DirectorySaveSessionProducer(storage = this, originalStates = getStorageData())
+  }
 
   private class DirectorySaveSessionProducer(
     private val storage: DirectoryBasedStorage,
@@ -168,6 +172,9 @@ open class DirectoryBasedStorage(
     private var copiedStorageData: MutableMap<String, Any>? = null
 
     override val controller: SettingsController?
+      get() = null
+
+    override val roamingType: RoamingType?
       get() = null
 
     private val dirtyFileNames = HashSet<String>()
@@ -233,7 +240,7 @@ open class DirectoryBasedStorage(
 
     override fun createSaveSession(): SaveSession? = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
-    override suspend fun save(events: MutableList<VFileEvent>?) = blockingContext { doSave(useVfs = false, events) }
+    override suspend fun save(events: MutableList<VFileEvent>?) = blockingContext { doSave(useVfs = false, events = events) }
 
     override fun saveBlocking() = doSave(useVfs = true, events = null)
 
@@ -335,10 +342,10 @@ open class DirectoryBasedStorage(
       val dir = storage.getVirtualFile()
 
       if (useVfs) {
-        val dir = storage.getVirtualFile()
         if (dir == null || !dir.exists()) {
           return
         }
+
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
@@ -355,7 +362,7 @@ open class DirectoryBasedStorage(
           if (fileName.endsWith(ComponentStorageUtil.DEFAULT_EXT) && !copiedStorageData.containsKey(fileName)) {
             Files.deleteIfExists(file)
             if (events != null) {
-              dir?.findChild(fileName)?.let { events += VFileDeleteEvent(/*requestor =*/ this, it) }
+              dir?.findChild(fileName)?.let { events.add(VFileDeleteEvent(/*requestor =*/ this, it)) }
             }
           }
         }
@@ -367,7 +374,7 @@ open class DirectoryBasedStorage(
     storageDataRef.set(newStates)
   }
 
-  override fun toString(): String = "${javaClass.simpleName}(dir=${dir}, componentName=${componentName})"
+  override fun toString(): String = "${javaClass.simpleName}(dir=$dir, componentName=$componentName)"
 }
 
 internal interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {

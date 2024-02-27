@@ -4,16 +4,17 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
+import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
 import kotlinx.serialization.Serializable
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.lang.ref.SoftReference
 import java.lang.reflect.Type
@@ -139,78 +140,63 @@ fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyN
   return binding.serializeBaseStateInto(state, null, doGetDefaultSerializationFilter(), excludedPropertyNames)
 }
 
-private val serializer = MyXmlSerializer()
-
-@Suppress("FunctionName")
-@Internal
-fun __platformSerializer(): Serializer = serializer
-
-private abstract class OldBindingProducer<ROOT_BINDING> {
-  private val cache: MutableMap<Type, ROOT_BINDING> = HashMap()
+private val serializer = object : Serializer {
+  private val cache = HashMap<Type, Binding>()
   private val cacheLock = ReentrantReadWriteLock()
 
-  @get:TestOnly
-  val bindingCount: Int
-    get() = cacheLock.read { cache.size }
-
-  fun getRootBinding(aClass: Class<*>, originalType: Type = aClass): ROOT_BINDING {
-    val cacheKey = createCacheKey(aClass, originalType)
-    return cacheLock.read {
-      // create cache only under write lock
-      cache.get(cacheKey)
-    } ?: cacheLock.write {
-      cache.get(cacheKey)?.let {
-        return it
-      }
-
-      createRootBinding(aClass = aClass, type = originalType, cacheKey = cacheKey, map = cache)
-    }
+  override fun getBinding(aClass: Class<*>, type: Type): Binding? {
+    return if (ClassUtil.isPrimitive(aClass)) null else getRootBinding(aClass, type)
   }
 
-  protected open fun createCacheKey(aClass: Class<*>, originalType: Type) = originalType
-
-  protected abstract fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, ROOT_BINDING>): ROOT_BINDING
+  private fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>, serializer: Serializer): Binding {
+    var binding = createClassBinding(/* aClass = */ aClass, /* accessor = */ null, /* originalType = */ type, serializer)
+    if (binding == null) {
+      if (aClass.isAnnotationPresent(Serializable::class.java)) {
+        binding = KotlinxSerializationBinding(aClass)
+      }
+      else {
+        binding = KotlinAwareBeanBinding(aClass)
+      }
+    }
+    map.put(cacheKey, binding)
+    try {
+      binding.init(type, serializer)
+    }
+    catch (e: Throwable) {
+      map.remove(type)
+      throw e
+    }
+    return binding
+  }
 
   fun clearBindingCache() {
     cacheLock.write {
       cache.clear()
     }
   }
-}
-
-private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
-  @JvmField
-  val bindingProducer = object : OldBindingProducer<Binding>() {
-    override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
-      var binding = createClassBinding(/* aClass = */ aClass, /* accessor = */ null, /* originalType = */ type, this@MyXmlSerializer)
-      if (binding == null) {
-        if (aClass.isAnnotationPresent(Serializable::class.java)) {
-          binding = KotlinxSerializationBinding(aClass)
-        }
-        else {
-          binding = KotlinAwareBeanBinding(aClass)
-        }
-      }
-      map.put(cacheKey, binding)
-      try {
-        binding.init(type, this@MyXmlSerializer)
-      }
-      catch (e: Throwable) {
-        map.remove(type)
-        throw e
-      }
-      return binding
-    }
-  }
 
   override fun getRootBinding(aClass: Class<*>, originalType: Type): Binding {
-    return bindingProducer.getRootBinding(aClass, originalType)
+    // create cache only under write lock
+    return cacheLock.read {
+      cache.get(originalType)
+    } ?: cacheLock.write {
+      cache.get(originalType)?.let {
+        return it
+      }
+
+      createRootBinding(aClass = aClass, type = originalType, cacheKey = originalType, map = cache, serializer = this)
+    }
   }
 }
+
+
+@Suppress("FunctionName")
+@Internal
+fun __platformSerializer(): Serializer = serializer
 
 /**
  * Used by MPS. Do not use if not approved.
  */
 fun clearBindingCache() {
-  serializer.bindingProducer.clearBindingCache()
+  serializer.clearBindingCache()
 }

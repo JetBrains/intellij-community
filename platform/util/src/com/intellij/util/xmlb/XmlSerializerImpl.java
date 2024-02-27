@@ -33,53 +33,53 @@ public final class XmlSerializerImpl {
     public final @Nullable Binding getBinding(@NotNull Class<?> aClass, @NotNull Type type) {
       return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type);
     }
+  }
 
-    protected static @Nullable Binding createClassBinding(
-      @NotNull Class<?> aClass,
-      @Nullable MutableAccessor accessor,
-      @NotNull Type originalType,
-      @NotNull Serializer serializer
-      ) {
-      if (aClass.isArray()) {
-        if (Element.class.isAssignableFrom(aClass.getComponentType())) {
-          assert accessor != null;
-          return new JDOMElementBinding(accessor);
-        }
-        else {
-          return createCollectionBinding(serializer, aClass.getComponentType(), accessor, true);
-        }
+  public static @Nullable Binding createClassBinding(
+    @NotNull Class<?> aClass,
+    @Nullable MutableAccessor accessor,
+    @NotNull Type originalType,
+    @NotNull Serializer serializer
+  ) {
+    if (aClass.isArray()) {
+      if (Element.class.isAssignableFrom(aClass.getComponentType())) {
+        assert accessor != null;
+        return new JDOMElementBinding(accessor);
       }
-      else if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-        if (accessor != null) {
-          CollectionBean listBean = accessor.getAnnotation(CollectionBean.class);
-          if (listBean != null) {
-            return new CompactCollectionBinding(accessor);
-          }
-        }
-
-        return createCollectionBinding(serializer, ClassUtil.typeToClass((((ParameterizedType)originalType).getActualTypeArguments()[0])), accessor, false);
+      else {
+        return createCollectionBinding(serializer, aClass.getComponentType(), accessor, true);
       }
-      else if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-        XMap newAnnotation = null;
-        MapAnnotation oldAnnotation = null;
-        if (accessor != null) {
-          newAnnotation = accessor.getAnnotation(XMap.class);
-          oldAnnotation = newAnnotation == null ? accessor.getAnnotation(MapAnnotation.class) : null;
-        }
-        //noinspection unchecked
-        return new MapBinding(oldAnnotation, newAnnotation, (Class<? extends Map<?, ?>>)aClass);
-      }
-      else if (accessor != null) {
-        if (Element.class.isAssignableFrom(aClass)) {
-          return new JDOMElementBinding(accessor);
-        }
-        //noinspection deprecation
-        if (aClass == JDOMExternalizableStringList.class) {
+    }
+    else if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+      if (accessor != null) {
+        CollectionBean listBean = accessor.getAnnotation(CollectionBean.class);
+        if (listBean != null) {
           return new CompactCollectionBinding(accessor);
         }
       }
-      return null;
+
+      return createCollectionBinding(serializer, ClassUtil.typeToClass((((ParameterizedType)originalType).getActualTypeArguments()[0])), accessor, false);
     }
+    else if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+      XMap newAnnotation = null;
+      MapAnnotation oldAnnotation = null;
+      if (accessor != null) {
+        newAnnotation = accessor.getAnnotation(XMap.class);
+        oldAnnotation = newAnnotation == null ? accessor.getAnnotation(MapAnnotation.class) : null;
+      }
+      //noinspection unchecked
+      return new MapBinding(oldAnnotation, newAnnotation, (Class<? extends Map<?, ?>>)aClass);
+    }
+    else if (accessor != null) {
+      if (Element.class.isAssignableFrom(aClass)) {
+        return new JDOMElementBinding(accessor);
+      }
+      //noinspection deprecation
+      if (aClass == JDOMExternalizableStringList.class) {
+        return new CompactCollectionBinding(accessor);
+      }
+    }
+    return null;
   }
 
   static final class XmlSerializer extends XmlSerializerBase {

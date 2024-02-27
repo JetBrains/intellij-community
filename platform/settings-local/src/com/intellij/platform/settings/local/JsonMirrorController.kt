@@ -27,9 +27,9 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-private class JsonMirrorController : DelegatedSettingsController {
+private class JsonMirrorController @JvmOverloads constructor(private val isProjectLevel: Boolean = false) : DelegatedSettingsController {
   init {
-    if (System.getProperty("idea.settings.json.mirror") == null) {
+    if (!System.getProperty("idea.settings.json.mirror", "false").toBoolean()) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -39,11 +39,13 @@ private class JsonMirrorController : DelegatedSettingsController {
   }
 
   override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
-    for (tag in key.tags) {
-      if (tag is OldLocalValueSupplierTag) {
-        // Element - save it to storage
-        tag.value?.jsonObject?.let {
-          service.setItem(key, it)
+    if (!isProjectLevel) {
+      for (tag in key.tags) {
+        if (tag is OldLocalValueSupplierTag) {
+          // Element - save it to storage
+          tag.value?.jsonObject?.let {
+            service.setItem(key, it)
+          }
         }
       }
     }
@@ -52,7 +54,7 @@ private class JsonMirrorController : DelegatedSettingsController {
   }
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult {
-    if (value is JsonElement) {
+    if (!isProjectLevel && value is JsonElement) {
       service.setItem(key, value)
       //println(value.toString())
     }
@@ -60,7 +62,7 @@ private class JsonMirrorController : DelegatedSettingsController {
   }
 
   override fun createChild(container: ComponentManager): DelegatedSettingsController {
-    return JsonMirrorController()
+    return JsonMirrorController(isProjectLevel = true)
   }
 }
 
@@ -108,7 +110,7 @@ private class JsonMirrorStorage : SettingsSavingComponent {
 private fun transformToTree(map: Map<String, JsonElement>): JsonObject {
   val rootNode = LinkedHashMap<String, Any>()
   for ((compoundKey, value) in map) {
-    val keyParts = compoundKey.split('.')
+    val keyParts = compoundKey.split('.', limit = 2)
     var currentNode = rootNode
     for ((index, key) in keyParts.withIndex()) {
       if (index == keyParts.size - 1) {
