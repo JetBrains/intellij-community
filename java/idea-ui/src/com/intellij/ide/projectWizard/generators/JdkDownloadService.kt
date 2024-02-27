@@ -106,7 +106,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
     coroutineScope.launch(Dispatchers.EDT) {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
-        val (selectedFile) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.plannedHomeDir)
+        val (selectedFile) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
         if (selectedFile != null) {
           jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile) { downloadTask ->
             scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, setSdk)
