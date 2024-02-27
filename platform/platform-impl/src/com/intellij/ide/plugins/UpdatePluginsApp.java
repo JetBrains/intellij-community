@@ -46,22 +46,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
 
     var oldConfig = System.getProperty(OLD_CONFIG_DIR_PROPERTY);
     if (oldConfig != null) {
-      log("Reading plugin repositories from " + oldConfig);
-      try {
-        var text = ComponentStorageUtil.loadTextContent(Path.of(oldConfig).resolve("options/updates.xml"));
-        var components = ComponentStorageUtil.loadComponents(JDOMUtil.load(text), null);
-        var element = components.get("UpdatesConfigurable");
-        if (element != null) {
-          var hosts = XmlSerializer.deserialize(element, UpdateOptions.class).getPluginHosts();
-          if (!hosts.isEmpty()) {
-            RepositoryHelper.amendPluginHostsProperty(hosts);
-            log("Plugin hosts: " + System.getProperty("idea.plugin.hosts"));
-          }
-        }
-      }
-      catch (InvalidPathException | IOException | JDOMException e) {
-        log("... failed: " + e.getMessage());
-      }
+      RepositoryHelper.updatePluginHostsFromConfigDir(Path.of(oldConfig), s -> log(s));
     }
   }
 
