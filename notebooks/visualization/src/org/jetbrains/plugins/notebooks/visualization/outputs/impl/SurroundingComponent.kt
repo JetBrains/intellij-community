@@ -10,7 +10,6 @@ import org.jetbrains.plugins.notebooks.visualization.ui.registerEditorSizeWatche
 import org.jetbrains.plugins.notebooks.visualization.ui.textEditingAreaWidth
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Insets
 import javax.swing.JPanel
 
 internal class SurroundingComponent private constructor(private val innerComponent: InnerComponent) : JPanel(
@@ -18,6 +17,7 @@ internal class SurroundingComponent private constructor(private val innerCompone
   private var presetWidth = 0
 
   init {
+    isOpaque = true
     border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(10))
     add(innerComponent, BorderLayout.CENTER)
   }
@@ -28,7 +28,6 @@ internal class SurroundingComponent private constructor(private val innerCompone
 
   override fun updateUI() {
     super.updateUI()
-    isOpaque = true
     background = getEditorBackground()
   }
 
@@ -42,10 +41,7 @@ internal class SurroundingComponent private constructor(private val innerCompone
 
   companion object {
     @JvmStatic
-    fun create(
-      editor: EditorImpl,
-      innerComponent: InnerComponent,
-    ) = SurroundingComponent(innerComponent).also {
+    fun create(editor: EditorImpl, innerComponent: InnerComponent) = SurroundingComponent(innerComponent).also {
       registerEditorSizeWatcher(it) {
         it.presetWidth = editor.textEditingAreaWidth
         if (it.presetWidth == 0 && GraphicsUtil.isRemoteEnvironment()) {

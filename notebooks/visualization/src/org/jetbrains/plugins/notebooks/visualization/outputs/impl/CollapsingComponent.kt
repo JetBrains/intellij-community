@@ -40,11 +40,21 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
     }
   }
 
+  val mainComponent = child
+
+  private val stubComponent = lazy {
+    val result = StubComponent(editor)
+    add(result)
+    result
+  }
+
   var isSeen: Boolean
     get() = mainComponent.isVisible
     set(value) {
       mainComponent.isVisible = value
-      stubComponent.isVisible = !value
+      if (stubComponent.isInitialized()) {
+        stubComponent.value.isVisible = !value
+      }
 
       if (resizable) {
         if (value) {
@@ -58,13 +68,16 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
       }
 
       if (!value) {
-        (stubComponent as StubComponent).text = collapsedTextSupplier()
+        stubComponent.value.text = collapsedTextSupplier()
       }
     }
 
+  val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
+
+  val hasBeenManuallyResized: Boolean get() = customHeight != -1
+
   init {
     add(child)
-    add(StubComponent(editor))
     border = if (resizable) ResizeHandlebarUpdater.invisibleResizeBorder else null
     isSeen = true
   }
@@ -79,13 +92,6 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
     super.remove(index)
   }
 
-  val mainComponent: JComponent get() = getComponent(0) as JComponent
-  private val stubComponent: JComponent get() = getComponent(1) as JComponent
-
-  val isWorthCollapsing: Boolean get() = !isSeen || mainComponent.height >= MIN_HEIGHT_TO_COLLAPSE
-
-  val hasBeenManuallyResized: Boolean get() = customHeight != -1
-
   fun resetCustomHeight() {
     customHeight = -1
     if (mainComponent.isValid) {
@@ -95,7 +101,7 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
 
   override fun getPreferredSize(): Dimension {
     val result = when {
-      !isSeen -> stubComponent.preferredSize
+      !isSeen -> stubComponent.value.preferredSize
       customHeight >= 0 -> mainComponent.preferredSize.apply { height = customHeight }
       else -> mainComponent.preferredSize
     }
@@ -107,7 +113,7 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
     val (borderWidth, borderHeight) = insets.run { left + right to top + bottom }
     when {
       !isSeen ->
-        stubComponent.setBounds(0, 0, width - borderWidth, height - borderHeight)
+        stubComponent.value.setBounds(0, 0, width - borderWidth, height - borderHeight)
 
       customHeight >= 0 ->
         mainComponent.setBounds(0, 0, width - borderWidth, customHeight - borderHeight)
@@ -153,7 +159,7 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
 
   fun updateStubIfCollapsed() {
     if (!isSeen) {
-      (stubComponent as StubComponent).text = collapsedTextSupplier()
+      stubComponent.value.text = collapsedTextSupplier()
     }
   }
 
