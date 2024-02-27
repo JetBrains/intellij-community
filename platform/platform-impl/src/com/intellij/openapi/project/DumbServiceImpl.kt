@@ -606,8 +606,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
       catch (ignored: ProcessCanceledException) {
       }
-      catch (e: Exception) {
-        LOG.error(e)
+      catch (t: Throwable) {
+        LOG.error(t)
       }
     }
 
