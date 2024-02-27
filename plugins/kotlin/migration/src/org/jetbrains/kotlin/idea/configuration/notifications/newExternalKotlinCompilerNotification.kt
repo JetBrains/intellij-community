@@ -37,9 +37,7 @@ fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
     val bundledCompilerVersion = KotlinPluginLayout.standaloneCompilerVersion
     if (!bundledCompilerVersion.isRelease) return
 
-    // TODO (IJPL-578): workaround for ever-smart DumbServiceSyncTaskQueue
-    // we need indexing to complete for project.containsNonScriptKotlinFile() to return something meaningful
-    // This is the problem in DumbServiceSyncTaskQueue - it is ever-smart, and ReadAction.inSmartMode does nothing useful
+    // TODO (IDEA-347617): workaround for the fact that ReadAction.nonBlocking doesn't wait for scanning
     if (application.isUnitTestMode) {
         Class.forName("com.intellij.testFramework.IndexingTestUtil")
             .getMethod("waitUntilIndexesAreReady", Project::class.java)
