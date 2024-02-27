@@ -283,6 +283,25 @@ object LessonUtil {
     }
   }
 
+  fun LessonContext.highlightInEditor(charsToHighlight: String) {
+    task {
+      lateinit var rectangle: Rectangle
+      before {
+        val charsSequence = editor.document.charsSequence
+
+        val startPoint = editor.offsetToXY(charsSequence.indexOf(charsToHighlight))
+        val endPoint = editor.offsetToXY(charsToHighlight.let { charsSequence.indexOf(it) + it.length })
+
+        rectangle = Rectangle(startPoint.x - 3, startPoint.y, endPoint.x - startPoint.x + 6,
+                              endPoint.y - startPoint.y + editor.lineHeight)
+      }
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorComponentImpl ->
+        if (ui.editor != editor) return@l null
+        rectangle
+      }
+    }
+  }
+
   fun TaskContext.highlightRunGutter(highlightInside: Boolean = false, usePulsation: Boolean = false, singleLineGutter: Boolean = false) {
     triggerAndBorderHighlight {
       this.highlightInside = highlightInside
