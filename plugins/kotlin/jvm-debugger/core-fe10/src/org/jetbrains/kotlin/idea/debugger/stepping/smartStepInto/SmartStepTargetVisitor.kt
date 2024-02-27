@@ -50,23 +50,22 @@ class SmartStepTargetVisitor(
     }
 
     override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
-        if (checkLineRangeFits(expression.getLineRange())) {
-            recordCallableReference(expression)
+        if (checkLineRangeFits(expression.getLineRange()) && !recordCallableReference(expression)) {
+            super.visitCallableReferenceExpression(expression)
         }
-        super.visitCallableReferenceExpression(expression)
     }
 
-    private fun recordCallableReference(expression: KtCallableReferenceExpression) {
+    private fun recordCallableReference(expression: KtCallableReferenceExpression): Boolean {
         analyze(expression) {
-            val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return
+            val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return false
             if (symbol is KtPropertySymbol) {
-                recordProperty(expression, symbol)
-                return
+                return recordProperty(expression, symbol)
             }
             if (symbol is KtFunctionSymbol) {
-                val declaration = symbol.psi ?: return
+                val declaration = symbol.psi ?: return false
                 if (symbol.origin == KtSymbolOrigin.JAVA && declaration is PsiMethod) {
                     append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+                    return true
                 } else if (declaration is KtNamedFunction) {
                     val label = KotlinMethodSmartStepTarget.calcLabel(symbol)
                     append(
@@ -78,48 +77,58 @@ class SmartStepTargetVisitor(
                             CallableMemberInfo(symbol)
                         )
                     )
+                    return true
                 }
             }
+            return false
         }
     }
 
     context(KtAnalysisSession)
-    private fun recordProperty(expression: KtExpression, symbol: KtPropertySymbol) {
+    private fun recordProperty(expression: KtExpression, symbol: KtPropertySymbol): Boolean {
         val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
         if (symbol is KtSyntheticJavaPropertySymbol) {
             val propertyAccessSymbol = when (targetType) {
                 KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> symbol.javaGetterSymbol
                 KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.javaSetterSymbol
-            } ?: return
+            } ?: return false
             val declaration = propertyAccessSymbol.psi
             if (declaration is PsiMethod) {
                 append(MethodSmartStepTarget(declaration, null, expression, true, lines))
+                return true
             }
-            return
+            return false
         }
 
         val propertyAccessSymbol = when (targetType) {
             KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> symbol.getter
             KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.setter
-        } ?: return
-        if (propertyAccessSymbol.isDefault) return
+        } ?: return false
+        if (propertyAccessSymbol.isDefault) return false
         if (symbol.isDelegatedProperty) {
-            val property = symbol.psi as? KtProperty ?: return
-            val delegate = property.delegate ?: return
-            val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return
-            val delegatedSymbol = delegatedMethod.getSymbol() as? KtFunctionLikeSymbol ?: return
+            val property = symbol.psi as? KtProperty ?: return false
+            val delegate = property.delegate ?: return false
+            val delegatedMethod = findDelegatedMethod(delegate, targetType) ?: return false
+            val delegatedSymbol = delegatedMethod.getSymbol() as? KtFunctionLikeSymbol ?: return false
             val methodInfo = CallableMemberInfo(delegatedSymbol)
             val label = propertyAccessLabel(symbol, delegatedSymbol)
             appendPropertyFilter(methodInfo, delegatedMethod, label, expression, lines)
-            return
+            return true
         }
-        val property = propertyAccessSymbol.psi as? KtDeclaration ?: return
+        val property = propertyAccessSymbol.psi as? KtDeclaration ?: return false
         if (property is KtPropertyAccessor && property.hasBody()) {
-            val methodName = if (targetType == KtNameReferenceExpressionUsage.PROPERTY_SETTER) symbol.javaSetterName ?: return else symbol.javaGetterName
+            val methodName = if (targetType == KtNameReferenceExpressionUsage.PROPERTY_SETTER) {
+                symbol.javaSetterName ?: return false
+            }
+            else {
+                symbol.javaGetterName
+            }
             val methodInfo = CallableMemberInfo(propertyAccessSymbol, name = methodName.asString())
             val label = propertyAccessLabel(symbol, propertyAccessSymbol)
             appendPropertyFilter(methodInfo, property, label, expression, lines)
+            return true
         }
+        return false
     }
 
     /**

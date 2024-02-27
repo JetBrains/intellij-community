@@ -8,4 +8,4 @@ fun accessGetter(f: (Thread) -> Any) {
     f(Thread())
 }
 
-// EXISTS: accessGetter((Thread) -> Any), getName(), getName()
+// EXISTS: accessGetter((Thread) -> Any), getName()
