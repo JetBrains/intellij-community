@@ -94,7 +94,7 @@ private class JsonMirrorStorage : SettingsSavingComponent {
     val jsonMap = LinkedHashMap<String, JsonElement>()
     for (key in keys) {
       val value = storage.get(key) ?: continue
-      jsonMap.put(key.idString, JsonObject(LinkedHashMap(value)))
+      jsonMap.put(key.idString, transformToTree(value))
     }
     val data = jsonFormat.encodeToString(jsonMap)
     withContext(Dispatchers.IO) {
@@ -103,4 +103,38 @@ private class JsonMirrorStorage : SettingsSavingComponent {
 
     lastSaved = now
   }
+}
+
+private fun transformToTree(map: Map<String, JsonElement>): JsonObject {
+  val rootNode = LinkedHashMap<String, Any>()
+  for ((compoundKey, value) in map) {
+    val keyParts = compoundKey.split('.')
+    var currentNode = rootNode
+    for ((index, key) in keyParts.withIndex()) {
+      if (index == keyParts.size - 1) {
+        currentNode.put(key, value)
+      }
+      else {
+        @Suppress("UNCHECKED_CAST")
+        currentNode = currentNode.computeIfAbsent(key) { LinkedHashMap<String, Any>() } as LinkedHashMap<String, Any>
+      }
+    }
+  }
+
+  fun toJsonObject(map: MutableMap<String, Any>): JsonObject {
+    map.replaceAll { _, v ->
+      if (v is MutableMap<*, *>) {
+        @Suppress("UNCHECKED_CAST")
+        toJsonObject(v as MutableMap<String, Any>)
+      }
+      else {
+        v
+      }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    return JsonObject(map as Map<String, JsonElement>)
+  }
+
+  return toJsonObject(rootNode)
 }

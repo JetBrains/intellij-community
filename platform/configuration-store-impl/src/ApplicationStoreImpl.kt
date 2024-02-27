@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -32,7 +34,7 @@ const val APP_CONFIG: String = "\$APP_CONFIG\$"
 @Suppress("NonDefaultConstructor")
 open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
   override val storageManager: StateStorageManagerImpl =
-    ApplicationStateStorageManager(PathMacroManager.getInstance(app), app.getService(SettingsController::class.java))
+    ApplicationStateStorageManager(pathMacroManager = PathMacroManager.getInstance(app), controller = app.getService(SettingsController::class.java))
 
   override val serviceContainer: ComponentManagerImpl
     get() = app as ComponentManagerImpl
@@ -83,12 +85,12 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 @ApiStatus.Internal
 @VisibleForTesting
 class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
-  : StateStorageManagerImpl(rootTagName = "application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller)
+  : StateStorageManagerImpl(rootTagName = "application", macroSubstitutor = pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller = controller)
 {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
     @Suppress("DEPRECATION")
-    if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}"
-    else StoragePathMacros.NON_ROAMABLE_FILE
+    return if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}" else StoragePathMacros.NON_ROAMABLE_FILE
+  }
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -107,12 +109,20 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
     }
   }
 
-  override fun normalizeFileSpec(fileSpec: String): String =
-    removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(path = super.normalizeFileSpec(fileSpec), macro = APP_CONFIG)
 
-  override fun expandMacro(collapsedPath: String): Path =
-    if (collapsedPath[0] == '$') super.expandMacro(collapsedPath)
-    else macros[0].value.resolve(collapsedPath) // APP_CONFIG is the first macro
+  override fun expandMacro(collapsedPath: String): Path {
+    if (collapsedPath[0] == '$') {
+      return super.expandMacro(collapsedPath)
+    }
+    else {
+      // APP_CONFIG is the first macro
+      return macros.get(0).value.resolve(collapsedPath)
+    }
+  }
 }
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
+
+@ApiStatus.Internal
+fun removeMacroIfStartsWith(path: String, macro: String): String = path.removePrefix("$macro/")

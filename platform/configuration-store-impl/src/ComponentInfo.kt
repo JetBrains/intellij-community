@@ -7,6 +7,10 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.ThreeState
 import java.util.concurrent.TimeUnit
 
+@Suppress("DEPRECATION", "removal")
+internal val Storage.path: String
+  get() = value.ifEmpty { file }
+
 internal fun createComponentInfo(
   component: Any,
   stateSpec: State?,
@@ -116,4 +120,20 @@ private class ComponentWithModificationTrackerInfo(
     get() = component.modificationCount
 
   override var lastModificationCount = currentModificationCount
+}
+
+internal fun getEffectiveRoamingType(roamingType: RoamingType, collapsedPath: String): RoamingType {
+  if (roamingType != RoamingType.DISABLED &&
+      (collapsedPath == StoragePathMacros.WORKSPACE_FILE ||
+       collapsedPath == StoragePathMacros.NON_ROAMABLE_FILE ||
+       isSpecialStorage(collapsedPath))) {
+    return RoamingType.DISABLED
+  }
+  else {
+    return roamingType
+  }
+}
+
+internal fun isSpecialStorage(collapsedPath: String): Boolean {
+  return collapsedPath == StoragePathMacros.CACHE_FILE || collapsedPath == StoragePathMacros.PRODUCT_WORKSPACE_FILE
 }

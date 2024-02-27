@@ -399,3 +399,5 @@ open class StateStorageManagerImpl(
     controller?.release()
   }
 }
+
+internal data class Macro(@JvmField val key: String, @JvmField var value: Path)
