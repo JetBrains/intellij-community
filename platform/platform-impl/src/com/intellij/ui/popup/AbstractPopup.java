@@ -2591,7 +2591,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       comp.dispatchEvent(event);
     }
 
-    if (!event.isConsumed() && mySpeedSearchPatternField != null) {
+    boolean isText = comp instanceof EditorTextField || comp instanceof JTextField || comp instanceof JTextArea;
+    if (!event.isConsumed() && !isText && mySpeedSearchPatternField != null) {
       mySpeedSearchPatternField.getTextEditor().dispatchEvent(event);
       mySpeedSearch.updatePattern(mySpeedSearchPatternField.getText());
       mySpeedSearch.update();
