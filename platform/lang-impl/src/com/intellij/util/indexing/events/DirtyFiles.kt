@@ -77,7 +77,7 @@ class DirtyFiles {
 
   fun getProjectDirtyFiles(project: Project?): ProjectDirtyFiles? {
     if (project == null) return myDirtyFilesWithoutProject
-    return myDirtyFiles.first { it.first == project }.second
+    return myDirtyFiles.firstOrNull { it.first == project }?.second
   }
 }
 
