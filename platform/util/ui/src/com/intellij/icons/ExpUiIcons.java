@@ -141,8 +141,8 @@ public final class ExpUiIcons {
   public static final class CodeWithMe {
     /** 16x16 */ public static final @NotNull Icon CwmAccess = load("expui/codeWithMe/cwmAccess.svg", -1521879530, 2);
     /** 20x20 */ public static final @NotNull Icon CwmAccess_20x20 = load("expui/codeWithMe/cwmAccess@20x20.svg", 907861688, 2);
-    /** 11x11 */ public static final @NotNull Icon CwmCamAvatarOff = load("expui/codeWithMe/cwmCamAvatarOff.svg", -1502366590, 2);
-    /** 11x11 */ public static final @NotNull Icon CwmCamAvatarOn = load("expui/codeWithMe/cwmCamAvatarOn.svg", 204596505, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmCamAvatarOff = load("expui/codeWithMe/cwmCamAvatarOff.svg", -758721341, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmCamAvatarOn = load("expui/codeWithMe/cwmCamAvatarOn.svg", 1159622037, 2);
     /** 16x16 */ public static final @NotNull Icon CwmCamOff = load("expui/codeWithMe/cwmCamOff.svg", 414342721, 2);
     /** 16x16 */ public static final @NotNull Icon CwmCamOn = load("expui/codeWithMe/cwmCamOn.svg", 1922687100, 2);
     /** 16x16 */ public static final @NotNull Icon CwmDisableCall = load("expui/codeWithMe/cwmDisableCall.svg", -1412356211, 2);
@@ -152,8 +152,8 @@ public final class ExpUiIcons {
     /** 22x22 */ public static final @NotNull Icon CwmIconModificator_20x20 = load("expui/codeWithMe/cwmIconModificator@20x20.svg", 561818425, 2);
     /** 16x16 */ public static final @NotNull Icon CwmIconModificatorMenu = load("expui/codeWithMe/cwmIconModificatorMenu.svg", 91482355, 2);
     /** 16x16 */ public static final @NotNull Icon CwmInvite = load("expui/codeWithMe/cwmInvite.svg", 1273298697, 2);
-    /** 11x11 */ public static final @NotNull Icon CwmMicAvatarOff = load("expui/codeWithMe/cwmMicAvatarOff.svg", -957010857, 2);
-    /** 11x11 */ public static final @NotNull Icon CwmMicAvatarOn = load("expui/codeWithMe/cwmMicAvatarOn.svg", -1568190492, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmMicAvatarOff = load("expui/codeWithMe/cwmMicAvatarOff.svg", 315044670, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmMicAvatarOn = load("expui/codeWithMe/cwmMicAvatarOn.svg", 1688701741, 2);
     /** 16x16 */ public static final @NotNull Icon CwmMicOff = load("expui/codeWithMe/cwmMicOff.svg", 1109794268, 2);
     /** 16x16 */ public static final @NotNull Icon CwmMicOn = load("expui/codeWithMe/cwmMicOn.svg", -1957203887, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionEdit = load("expui/codeWithMe/cwmPermissionEdit.svg", 607632437, 2);
@@ -166,6 +166,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon CwmScreenInBrowserOn = load("expui/codeWithMe/cwmScreenInBrowserOn.svg", 522769420, 2);
     /** 16x16 */ public static final @NotNull Icon CwmScreenOff = load("expui/codeWithMe/cwmScreenOff.svg", 1209105362, 2);
     /** 16x16 */ public static final @NotNull Icon CwmScreenOn = load("expui/codeWithMe/cwmScreenOn.svg", 2032381401, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmSharingAvatarOn = load("expui/codeWithMe/cwmSharingAvatarOn.svg", 104822006, 2);
     /** 16x16 */ public static final @NotNull Icon CwmUsers = load("expui/codeWithMe/cwmUsers.svg", 374429727, 2);
     /** 20x20 */ public static final @NotNull Icon CwmUsers_20x20 = load("expui/codeWithMe/cwmUsers@20x20.svg", 1716201367, 2);
     /** 14x14 */ public static final @NotNull Icon CwmVerified = load("expui/codeWithMe/cwmVerified.svg", -1152626587, 2);
