@@ -146,7 +146,7 @@ final class ShowByteCodeAction extends AnAction {
             .createPopup();
           Disposer.register(popup, component);
 
-          if (editor != null) {
+          if (editor != null && editor.getComponent().isShowing()) {
             popup.showInBestPositionFor(editor);
           } else {
             popup.show(bestPopupLocation);
