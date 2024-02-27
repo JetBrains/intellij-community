@@ -10,32 +10,36 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.psi.PsiNameHelper
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
-import javax.swing.JComponent
 
 
-class JvmLoggingConfigurable(private val project: Project) : SearchableConfigurable, NoScroll {
+class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase(), SearchableConfigurable, NoScroll {
   private lateinit var warningRow: Row
-  private lateinit var panel: DialogPanel
   private val settings = project.service<JvmLoggingSettingsStorage>().state
 
   override fun getDisplayName(): String = JavaBundle.message("jvm.logging.configurable.display.name")
 
   override fun getId(): String = JavaBundle.message("jvm.logging.configurable.id")
 
-  override fun createComponent(): JComponent {
+  override fun createPanel(): DialogPanel {
     val loggers = JvmLogger.getAllLoggers(settings.loggerId == UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
-    panel = panel {
+    val panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
-          label(JavaBundle.message("label.configurable.logger.preferred.name"))
+          label(JavaBundle.message("label.configurable.logger.generation.name"))
           textField()
-            .columns(COLUMNS_SHORT)
             .bindText(settings::loggerName.toNonNullableProperty(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER))
+            .cellValidation {
+              addInputRule(JavaBundle.message("jvm.logging.configurable.invalid.identifier.error")) {
+                !PsiNameHelper.getInstance(project).isIdentifier(it.text)
+              }
+            }
             .align(AlignX.FILL)
         }
         row {
@@ -61,10 +65,4 @@ class JvmLoggingConfigurable(private val project: Project) : SearchableConfigura
       .finishOnUiThread(ModalityState.any()) { isVisible -> warningRow.visible(isVisible) }
       .submit(AppExecutorUtil.getAppExecutorService())
   }
-
-  override fun isModified(): Boolean = panel.isModified()
-
-  override fun reset() = panel.reset()
-
-  override fun apply() = panel.apply()
 }
