@@ -2443,7 +2443,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public boolean mayHaveChildren(int id) {
-    return vfsPeer.mayHaveChildren(id);
+    try {
+      return vfsPeer.mayHaveChildren(id);
+    }
+    catch (IllegalArgumentException e) {
+      //here we +/- sure the id _should_ exist => give VFS a kick to rebuild
+      vfsPeer.handleError(e);
+      throw e;
+    }
   }
 
   @Override
