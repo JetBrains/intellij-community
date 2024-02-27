@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
-import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +44,7 @@ public final class TerminalUtil {
   private static boolean hasRunningCommands(@NotNull Process process) throws IllegalStateException {
     if (process instanceof RemoteSshProcess) return true;
     if (SystemInfo.isUnix && process instanceof UnixPtyProcess) {
-      int shellPid = OSProcessUtil.getProcessID(process);
+      int shellPid = (int)process.pid();
       MultiMap<Integer, Integer> pidToChildPidsMap = MultiMap.create();
       UnixProcessManager.processPSOutput(UnixProcessManager.getPSCmd(false, false), s -> {
         StringTokenizer st = new StringTokenizer(s, " ");
