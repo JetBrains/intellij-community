@@ -209,7 +209,6 @@
     <newProject.onboarding.tips implementation="training.onboarding.NewProjectOnboardingTipsImpl"/>
     <postStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
     <editorFactoryListener implementation="training.onboarding.InstallOnboardingTipsEditorListener"/>
-    <editorNotificationProvider implementation="training.onboarding.DoNotGenerateTipsNotification"/>
     <statistics.counterUsagesCollector
       implementationClass="training.onboarding.OnboardingTipsStatistics"/>
   </extensions>
