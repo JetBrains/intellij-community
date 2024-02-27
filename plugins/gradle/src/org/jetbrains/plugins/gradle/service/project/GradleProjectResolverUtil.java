@@ -346,7 +346,7 @@ public final class GradleProjectResolverUtil {
 
   @NotNull
   private static DependencyScope getMergedDependencyScope(@Nullable String scope1, @Nullable String scope2) {
-    return getDependencyScope(scope1).including(getDependencyScope(scope2));
+    return DependencyScope.coveringUseCasesOf(getDependencyScope(scope1), getDependencyScope(scope2));
   }
 
   public static void attachGradleSdkSources(@NotNull final IdeaModule gradleModule,
