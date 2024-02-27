@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.util.launchOnUi
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
@@ -293,15 +292,15 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         override fun startNotified(event: ProcessEvent) {
           UIUtil.invokeLaterIfNeeded {
             content.icon = getLiveIndicator(descriptor.icon)
+            var toolWindowIcon = toolWindowIdToBaseIcon[toolWindowId]
+            if (ExperimentalUI.isNewUI() && toolWindowIcon is ScalableIcon) {
+              toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
+            }
+            toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
           }
           descriptor.iconProperty.afterChange(descriptor) {
             UIUtil.invokeLaterIfNeeded {
               content.icon = getLiveIndicator(it)
-              var icon = toolWindowIdToBaseIcon[toolWindowId]
-              if (ExperimentalUI.isNewUI() && icon is ScalableIcon) {
-                icon = loadIconCustomVersionOrScale(icon = icon, size = 20)
-              }
-              toolWindow!!.setIcon(getLiveIndicator(icon))
             }
           }
         }
