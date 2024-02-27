@@ -2,11 +2,13 @@
 package com.intellij.platform.feedback.eap
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.util.ui.JBUI
+import javax.swing.JComponent
 
-class EAPFeedbackToolbarAction : AnAction() {
+class EAPFeedbackToolbarAction : AnAction(), CustomComponentAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     setEAPFeedbackShown()
@@ -27,4 +29,10 @@ class EAPFeedbackToolbarAction : AnAction() {
   }
 
   override fun displayTextInToolbar(): Boolean = true
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).apply {
+      foreground = JBUI.CurrentTheme.RunWidget.FOREGROUND
+    }
+  }
 }
