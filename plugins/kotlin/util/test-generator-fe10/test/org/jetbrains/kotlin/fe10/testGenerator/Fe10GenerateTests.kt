@@ -156,6 +156,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -982,12 +983,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("repl/completion")
         }
 
+        val inlayHintsFileRegexp = forRegex("^([^_]\\w+)\\.kt$")
+
         testClass<AbstractKotlinArgumentsHintsProviderTest> {
-            model("codeInsight/hints/arguments")
+            model("codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKotlinReferenceTypeHintsProviderTest> {
-            model("codeInsight/hints/types")
+            model("codeInsight/hints/types", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKotlinLambdasHintsProvider> {

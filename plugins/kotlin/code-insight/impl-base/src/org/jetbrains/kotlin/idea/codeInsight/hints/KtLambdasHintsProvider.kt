@@ -2,18 +2,13 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
-import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.util.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
@@ -29,23 +24,13 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
-class KtLambdasHintsProvider : InlayHintsProvider {
-    override fun createCollector(
-        file: PsiFile,
-        editor: Editor
-    ): InlayHintsCollector? {
-        val project = editor.project ?: file.project
-        if (project.isDefault) return null
-
-        return object : SharedBypassCollector {
-            override fun collectFromElement(
-                element: PsiElement,
-                sink: InlayTreeSink
-            ) {
-                collectFromLambdaReturnExpression(element, sink)
-                collectFromLambdaImplicitParameterReceiver(element, sink)
-            }
-        }
+class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
+    override fun collectFromElement(
+        element: PsiElement,
+        sink: InlayTreeSink
+    ) {
+        collectFromLambdaReturnExpression(element, sink)
+        collectFromLambdaImplicitParameterReceiver(element, sink)
     }
 
     private fun isLambdaReturnExpression(e: PsiElement): Boolean =

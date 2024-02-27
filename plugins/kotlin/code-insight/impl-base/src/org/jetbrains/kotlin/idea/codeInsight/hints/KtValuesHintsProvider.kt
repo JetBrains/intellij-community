@@ -1,14 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
-import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
-import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -34,38 +29,28 @@ import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class KtValuesHintsProvider : InlayHintsProvider {
-    override fun createCollector(
-        file: PsiFile,
-        editor: Editor
-    ): InlayHintsCollector? {
-        val project = editor.project ?: file.project
-        if (project.isDefault) return null
+class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
+    override fun collectFromElement(
+        element: PsiElement,
+        sink: InlayTreeSink
+    ) {
+        val binaryExpression = element as? KtBinaryExpression ?: return
+        val leftExp = binaryExpression.left ?: return
+        val rightExp = binaryExpression.right ?: return
 
-        return object : SharedBypassCollector {
-            override fun collectFromElement(
-                element: PsiElement,
-                sink: InlayTreeSink
-            ) {
-                val binaryExpression = element as? KtBinaryExpression ?: return
-                val leftExp = binaryExpression.left ?: return
-                val rightExp = binaryExpression.right ?: return
+        val (leftText: String, rightText: String?) = binaryExpression.getRangeLeftAndRightSigns() ?: return
 
-                val (leftText: String, rightText: String?) = binaryExpression.getRangeLeftAndRightSigns() ?: return
+        val applicable = analyze(binaryExpression) {
+            isApplicable(binaryExpression, leftExp, rightExp)
+        }
+        if (!applicable) return
 
-                val applicable = analyze(binaryExpression) {
-                    isApplicable(binaryExpression, leftExp, rightExp)
-                }
-                if (!applicable) return
-
-                sink.addPresentation(InlineInlayPosition(leftExp.endOffset, true), hasBackground = true) {
-                    text(leftText)
-                }
-                rightText?.let {
-                    sink.addPresentation(InlineInlayPosition(rightExp.startOffset, true), hasBackground = true) {
-                        text(it)
-                    }
-                }
+        sink.addPresentation(InlineInlayPosition(leftExp.endOffset, true), hasBackground = true) {
+            text(leftText)
+        }
+        rightText?.let {
+            sink.addPresentation(InlineInlayPosition(rightExp.startOffset, true), hasBackground = true) {
+                text(it)
             }
         }
     }
