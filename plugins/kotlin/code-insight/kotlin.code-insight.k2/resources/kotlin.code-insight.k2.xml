@@ -122,4 +122,7 @@
 
     <registryKey key="kotlin.k2.allow.constant.computation.on.EDT" defaultValue="true" description="When enabled, error about analysis on EDT is disabled"/>
   </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
+  </extensions>
 </idea-plugin>

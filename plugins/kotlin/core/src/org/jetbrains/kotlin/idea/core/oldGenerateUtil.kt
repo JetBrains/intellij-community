@@ -23,7 +23,10 @@ fun <T : KtDeclaration> insertMembersAfterAndReformat(
 
         fun insertedMembersElements() = insertedMembersElementPointers.mapNotNull { it.element }
 
-        ShortenReferences.DEFAULT.process(insertedMembersElements())
+        // TODO make shorten references work in both K1 and K2
+        if (!org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode()) {
+            ShortenReferences.DEFAULT.process(insertedMembersElements())
+        }
         if (editor != null) {
             firstElement.element?.let { moveCaretIntoGeneratedElement(editor, it) }
         }

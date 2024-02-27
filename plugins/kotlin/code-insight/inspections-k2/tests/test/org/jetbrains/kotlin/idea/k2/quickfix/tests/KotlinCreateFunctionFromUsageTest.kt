@@ -108,5 +108,6 @@ abstract class KotlinCreateFunctionFromUsageTest : LightIntentionActionTestCase(
     class FromKotlinToJava : KotlinCreateFunctionFromUsageTest()
     class Call {
         class Abstract : KotlinCreateFunctionFromUsageTest()
+        class Simple : KotlinCreateFunctionFromUsageTest()
     }
 }

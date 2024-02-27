@@ -3,17 +3,21 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.lang.java.request.CreateExecutableFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -41,6 +45,16 @@ internal class CreateKotlinCallableAction(
     private val candidatesOfRenderedReturnType: List<String> = renderCandidatesOfReturnType()
 
     private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
+    private val call: PsiElement? = when (request) {
+        is CreateMethodFromKotlinUsageRequest -> request.call
+        is CreateExecutableFromJavaUsageRequest<*> -> request.call
+        else -> null
+    }
+    private val isAbstract: Boolean? = when (request) {
+        is CreateMethodFromKotlinUsageRequest -> request.isAbstractClassOrInterface
+        is CreateExecutableFromJavaUsageRequest<*> -> false
+        else -> null
+    }
 
     // Note that this property must be initialized after initializing above properties, because it has dependency on them.
     private val callableDefinitionAsString: String? = buildCallableAsString()
@@ -73,13 +87,17 @@ internal class CreateKotlinCallableAction(
                 candidatesOfRenderedReturnType,
                 containerClassFqName,
             )
+
             CreateKotlinCallablePsiEditor(
                 project, pointerToContainer, callableInfo,
-            ).execute()
+            ).execute(call!!)
         }
     }
 
-    private fun getContainer(): KtElement? = pointerToContainer.element as? KtElement
+    private fun getContainer(): KtElement? {
+        val element = pointerToContainer.element as? KtElement
+        return element
+    }
 
     private fun renderCandidatesOfParameterTypes(): List<List<String>> {
         val container = getContainer() ?: return List(request.expectedParameters.size) { listOf("Any") }
@@ -106,13 +124,31 @@ internal class CreateKotlinCallableAction(
         return parameterType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
     }
 
+    companion object {
+        val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
+            JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
+            JvmModifier.PACKAGE_LOCAL to KtTokens.INTERNAL_KEYWORD,
+            JvmModifier.PROTECTED to KtTokens.PROTECTED_KEYWORD,
+            JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD
+        )
+    }
+
     private fun buildCallableAsString(): String? {
+        if (call == null) return null
         val container = getContainer() ?: return null
-        val modifierListAsString = container.getModifierListAsString()
+        val modifierListAsString = if (request.modifiers.isEmpty())
+            CreateFromUsageUtil.computeDefaultVisibility(container, isAbstract == true, false, false, call)
+        else
+            request.modifiers.joinToString(
+                separator = " ",
+                transform = { modifier -> modifierToKotlinToken[modifier]?.let { if (it == KtTokens.PUBLIC_KEYWORD) "" else it.value } ?: "" })
         return analyze(container) {
             buildString {
                 append(modifierListAsString)
-                if (abstract) append("abstract")
+                if (abstract) {
+                    if (isNotEmpty()) append(" ")
+                    append("abstract")
+                }
                 if (isNotEmpty()) append(" ")
                 append(KtTokens.FUN_KEYWORD)
                 append(" ")

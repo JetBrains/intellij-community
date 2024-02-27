@@ -1,4 +1,6 @@
 // "Create function 'checkProperty'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 internal object model {
     val layer = ""
 }
@@ -6,4 +8,3 @@ internal object model {
 fun main(args: Array<String>) {
     <caret>checkProperty(model.layer::class)
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
