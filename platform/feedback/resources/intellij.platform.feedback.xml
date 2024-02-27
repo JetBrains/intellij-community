@@ -39,6 +39,8 @@
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
     <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.startup.IdeStartupFeedbackSurvey"/>
   </extensions>
 
   <applicationListeners>
@@ -66,6 +68,8 @@
               class="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
       <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
               class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.startup.IdeStartupFeedbackShowAction"
+              class="com.intellij.platform.feedback.startup.IdeStartupFeedbackShowAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
 

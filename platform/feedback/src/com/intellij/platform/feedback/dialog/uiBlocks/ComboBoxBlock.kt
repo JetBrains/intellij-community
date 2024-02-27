@@ -16,14 +16,26 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
   private var myProperty: String? = ""
   private var myComment: @NlsContexts.DetailedDescription String? = null
   private var myColumnSize: Int = COMBOBOX_COLUMN_SIZE
+  private var myRandomizeOptionOrder: Boolean = false
+  private var myUseAlignFill: Boolean = false
 
   override fun addToPanel(panel: Panel) {
+    val items = if (myRandomizeOptionOrder) myItems.shuffled() else myItems
+
     panel.apply {
       row {
-        comboBox(myItems)
+        comboBox(items)
           .label(createBoldJBLabel(myLabel), LabelPosition.TOP)
           .bindItem(::myProperty.toMutableProperty())
-          .columns(myColumnSize).applyToComponent {
+          .apply {
+            if (myUseAlignFill) {
+              align(Align.FILL)
+            }
+            else {
+              columns(myColumnSize)
+            }
+          }
+          .applyToComponent {
             selectedItem = null
           }.errorOnApply(CommonFeedbackBundle.message("dialog.feedback.combobox.required")) {
             it.selectedItem == null
@@ -56,6 +68,16 @@ class ComboBoxBlock(@NlsContexts.Label private val myLabel: String,
 
   fun setColumnSize(columnSize: Int): ComboBoxBlock {
     myColumnSize = columnSize
+    return this
+  }
+
+  fun useFillAlign(): ComboBoxBlock {
+    myUseAlignFill = true
+    return this
+  }
+
+  fun randomizeOptionOrder(): ComboBoxBlock {
+    myRandomizeOptionOrder = true
     return this
   }
 }
