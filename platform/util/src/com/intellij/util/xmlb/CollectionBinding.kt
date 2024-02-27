@@ -129,9 +129,11 @@ internal class CollectionBinding(
 
   override fun fromJson(currentValue: Any?, element: JsonElement): Any? {
     var collection = currentValue?.let { strategy.getCollection(it, this) }
+    if (element == JsonNull) {
+      return null
+    }
 
     if (element !is JsonArray) {
-      // yes, `null` is also not expected
       LOG.warn("Expected JsonArray but got $element")
       return collection
     }

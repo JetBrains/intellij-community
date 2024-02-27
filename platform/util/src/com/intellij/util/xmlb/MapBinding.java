@@ -10,6 +10,7 @@ import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.XMap;
 import kotlinx.serialization.json.JsonElement;
+import kotlinx.serialization.json.JsonNull;
 import kotlinx.serialization.json.JsonObject;
 import kotlinx.serialization.json.JsonPrimitive;
 import org.jdom.Attribute;
@@ -125,11 +126,14 @@ final class MapBinding implements MultiNodeBinding, RootBinding {
   @SuppressWarnings({"rawtypes", "DuplicatedCode"})
   @Override
   public @Nullable Object fromJson(@Nullable Object currentValue, @NotNull JsonElement element) {
+    if (element == JsonNull.INSTANCE) {
+      return null;
+    }
+
     // if accessor is null, it is a sub-map, and we must not use context
     Map map = (Map<?, ?>)currentValue;
 
     if (!(element instanceof JsonObject)) {
-      // yes, `null` is also not expected
       LOG.warn("Expected JsonObject but got " + element);
       return map;
     }
@@ -259,7 +263,7 @@ final class MapBinding implements MultiNodeBinding, RootBinding {
   }
 
   private <T> @Nullable Map<?, ?> deserializeMap(@Nullable Object currentValue, @NotNull List<T> childNodes, @NotNull DomAdapter<T> adapter) {
-    Map map = (Map<?, ?>)currentValue;
+    @SuppressWarnings("rawtypes") Map map = (Map<?, ?>)currentValue;
     if (map != null) {
       if (childNodes.isEmpty()) {
         return map;

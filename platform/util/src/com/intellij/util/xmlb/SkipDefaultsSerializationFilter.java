@@ -45,8 +45,8 @@ public class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializat
       return false;
     }
 
-    if (binding instanceof OptionTagBinding) {
-      Binding referencedBinding = ((OptionTagBinding)binding).binding;
+    if (binding instanceof TagBinding) {
+      Binding referencedBinding = ((TagBinding)binding).binding;
       if (referencedBinding instanceof BeanBinding) {
         BeanBinding classBinding = (BeanBinding)referencedBinding;
         ThreeState compareByFields = classBinding.compareByFields;

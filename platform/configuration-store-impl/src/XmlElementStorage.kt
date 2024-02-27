@@ -169,6 +169,9 @@ abstract class XmlElementStorage protected constructor(
     override val controller: SettingsController?
       get() = storage.controller
 
+    override val roamingType: RoamingType?
+      get() = storage.effectiveRoamingType
+
     protected open fun isSaveAllowed(): Boolean = !storage.checkIsSavingDisabled()
 
     final override fun createSaveSession(): SaveSession? {
@@ -186,17 +189,11 @@ abstract class XmlElementStorage protected constructor(
       else {
         val rootAttributes = LinkedHashMap<String, String>()
         storage.beforeElementSaved(elements, rootAttributes)
-        val macroManager = if (storage.pathMacroSubstitutor == null) {
-          null
-        }
-        else {
-          (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
-        }
         XmlDataWriter(
           rootElementName = storage.rootElementName,
           elements = elements,
           rootAttributes = rootAttributes,
-          macroManager = macroManager,
+          macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager,
           storageFilePathForDebugPurposes = storage.toString(),
         )
       }
@@ -459,7 +456,7 @@ private class StateGetterImpl<S : Any>(
       serializedState
     }
     else {
-      serializeState(state = stateAfterLoad, componentName = componentName, pluginId = pluginId, controller = null)?.let {
+      serializeState(state = stateAfterLoad, componentName = componentName, pluginId = pluginId, controller = null, roamingType = null)?.let {
         normalizeRootName(it)
       }?.takeIf { !it.isEmpty }
     }

@@ -55,7 +55,7 @@ class ControllerBackedStoreTest {
         assertThat(key.tags.first { it is PersistenceStateComponentPropertyTag && it.componentName == "TestState" })
 
         if (key.key == "TestState.list") {
-          return@createStore GetResult.partial(data!!)
+          return@createStore GetResult.resolved(data!!)
         }
 
         return@createStore GetResult.resolved(data)
@@ -168,6 +168,25 @@ class ControllerBackedStoreTest {
     assertThat(component.state.getAttributeValue("foo")).isEqualTo("42")
   }
 
+  @Test
+  fun `NonShareableTag is set if RoamingType DISABLED`() = runBlocking<Unit>(Dispatchers.Default) {
+    var checked = false
+    val store = createStore {
+      assertThat(it.key == "TestState")
+      assertThat(it.tags.any { it == NonShareableTag })
+      checked = true
+      GetResult.inapplicable()
+    }
+
+    @State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+    class TestComponentWithElementState : SerializablePersistentStateComponent<Element>(Element("test"))
+
+    val component = TestComponentWithElementState()
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    assertThat(checked).isTrue()
+  }
+
   // null is not set - it means "don't use any value and instead use the initial value of the field"
   @Test
   fun `set primitive to null`() = runBlocking(Dispatchers.Default) {
@@ -201,7 +220,7 @@ class ControllerBackedStoreTest {
         <component name="TestState" foo="old"/>
       </application>
       """.trimMargin()
-    writeConfig(StoragePathMacros.NON_ROAMABLE_FILE, oldContent)
+    writeConfig(TEST_COMPONENT_FILE_NAME, oldContent)
 
     val component = TestComponent()
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
@@ -264,7 +283,9 @@ private class ControllerBackedTestComponentStore(
   }
 }
 
-@State(name = "TestState", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
+private const val TEST_COMPONENT_FILE_NAME = "controllerBackedTest.xml"
+
+@State(name = "TestState", storages = [Storage(value = TEST_COMPONENT_FILE_NAME)], allowLoadInTests = true)
 private class TestComponent : SerializablePersistentStateComponent<ControllerTestState>(ControllerTestState()) {
   override fun noStateLoaded() {
     loadState(ControllerTestState())

@@ -18,25 +18,17 @@ import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingTag
 import com.intellij.serialization.SerializationException
-import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.xmlb.*
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.Serializable
 import org.jdom.Element
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.lang.reflect.Type
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 internal class StateStorageBackedByController(
   @JvmField val controller: SettingsControllerMediator,
   private val tags: List<SettingTag>,
 ) : StateStorage {
-  private val bindingProducer = BindingProducer()
-
   @OptIn(ExperimentalSerializationApi::class)
   override fun <T : Any> getState(
     component: Any?,
@@ -64,7 +56,7 @@ internal class StateStorageBackedByController(
       }
       else -> {
         try {
-          val beanBinding = bindingProducer.getRootBinding(stateClass)
+          val beanBinding = __platformSerializer().getRootBinding(stateClass)
           if (beanBinding is KotlinxSerializationBinding) {
             val data = controller.getItem(createSettingDescriptor(componentName, pluginId)) ?: return null
             return cborFormat.decodeFromByteArray(beanBinding.serializer, data) as T
@@ -155,7 +147,7 @@ internal class StateStorageBackedByController(
   }
 
   override fun createSaveSessionProducer(): SaveSessionProducer {
-    return ControllerBackedSaveSessionProducer(bindingProducer = bindingProducer, storageController = this)
+    return ControllerBackedSaveSessionProducer(storageController = this)
   }
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
@@ -173,7 +165,6 @@ internal class StateStorageBackedByController(
 }
 
 private class ControllerBackedSaveSessionProducer(
-  private val bindingProducer: BindingProducer,
   private val storageController: StateStorageBackedByController,
 ) : SaveSessionProducer {
   private fun put(key: SettingDescriptor<ByteArray>, value: ByteArray?) {
@@ -197,7 +188,7 @@ private class ControllerBackedSaveSessionProducer(
       }
       else -> {
         val aClass = state.javaClass
-        val beanBinding = bindingProducer.getRootBinding(aClass)
+        val beanBinding = __platformSerializer().getRootBinding(aClass)
         if (beanBinding is KotlinxSerializationBinding) {
           // `Serializable` is not intercepted - it is not used for regular settings that we want to support on a property level
           put(settingDescriptor, cborFormat.encodeToByteArray(beanBinding.serializer, state))
@@ -205,10 +196,6 @@ private class ControllerBackedSaveSessionProducer(
         else {
           val filter = jdomSerializer.getDefaultSerializationFilter()
           for (binding in (beanBinding as BeanBinding).bindings!!) {
-            if (state is SerializationFilter && !state.accepts(binding.accessor, state)) {
-              continue
-            }
-
             val element = beanBinding.serializeProperty(
               binding = binding,
               bean = state,
@@ -238,51 +225,4 @@ private class ControllerBackedSaveSessionProducer(
   }
 
   override fun createSaveSession(): SaveSession? = null
-}
-
-private class BindingProducer : XmlSerializerImpl.XmlSerializerBase() {
-  private val cache = HashMap<Class<*>, Binding>()
-  private val cacheLock = ReentrantReadWriteLock()
-
-  override fun getRootBinding(aClass: Class<*>): Binding {
-    return cacheLock.read {
-      // create cache only under write lock
-      cache.get(aClass)
-    } ?: cacheLock.write {
-      cache.get(aClass)?.let {
-        return it
-      }
-
-      createRootBinding(aClass = aClass)
-    }
-  }
-
-  override fun getRootBinding(aClass: Class<*>, originalType: Type): Binding {
-    require(aClass === originalType) {
-      "Expect that class $aClass is same as originalType $originalType"
-    }
-    return getRootBinding(aClass)
-  }
-
-  private fun createRootBinding(aClass: Class<*>): Binding {
-    @Suppress("DuplicatedCode")
-    var binding = createClassBinding(aClass, null, aClass, this)
-    if (binding == null) {
-      if (aClass.isAnnotationPresent(Serializable::class.java)) {
-        binding = KotlinxSerializationBinding(aClass)
-      }
-      else {
-        binding = KotlinAwareBeanBinding(aClass)
-      }
-    }
-    cache.put(aClass, binding)
-    try {
-      binding.init(aClass, __platformSerializer())
-    }
-    catch (e: Throwable) {
-      cache.remove(aClass)
-      throw e
-    }
-    return binding
-  }
 }

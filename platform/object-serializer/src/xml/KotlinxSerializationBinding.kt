@@ -12,6 +12,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Text
@@ -45,7 +46,9 @@ class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
     return json.encodeToJsonElement(serializer, bean)
   }
 
-  override fun fromJson(currentValue: Any?, element: JsonElement) = json.decodeFromJsonElement(serializer, element)
+  override fun fromJson(currentValue: Any?, element: JsonElement): Any? {
+    return if (element == JsonNull) null else json.decodeFromJsonElement(serializer, element)
+  }
 
   override fun serialize(bean: Any, parent: Element, filter: SerializationFilter?) {
     val json = encodeToJson(bean)

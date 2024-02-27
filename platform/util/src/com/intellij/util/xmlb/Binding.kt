@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
+@file:Internal
 
 package com.intellij.util.xmlb
 
@@ -21,7 +22,6 @@ fun interface SerializationFilter {
   fun accepts(accessor: Accessor, bean: Any): Boolean
 }
 
-@Internal
 interface RootBinding : Binding {
   fun serialize(bean: Any, filter: SerializationFilter?): Element?
 
@@ -52,7 +52,6 @@ interface NestedBinding : Binding {
     get() = accessor.name
 }
 
-@Internal
 interface MultiNodeBinding : Binding {
   val isMulti: Boolean
 
