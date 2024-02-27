@@ -73,7 +73,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val defaultExecutionContext = DefaultExecutionContext(evaluationContext)
 
         val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
-        if (debugProbesImpl != null) {
+        if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
             // first try the helper, it is the fastest way
             var currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
 
