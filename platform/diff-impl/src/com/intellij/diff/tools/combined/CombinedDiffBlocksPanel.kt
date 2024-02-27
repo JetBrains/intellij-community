@@ -37,7 +37,7 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
 
     val newHolder = RealComponent(component)
     val oldHolder = holders.set(blockIndex, newHolder)
-    
+
     if (oldHolder is RealComponent) {
       remove(oldHolder.component)
     }
@@ -176,5 +176,5 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
 private fun defaultPlaceholderBlockHeight() = CombinedDiffLoadingBlock.DEFAULT_LOADING_BLOCK_HEIGHT.get()
 private fun gap(): Int = JBUIScale.scale(CombinedDiffUI.GAP_BETWEEN_BLOCKS)
 private fun left(): Int = JBUIScale.scale(CombinedDiffUI.LEFT_RIGHT_INSET)
-private fun right(): Int =JBUIScale.scale(CombinedDiffUI.LEFT_RIGHT_INSET)
+private fun right(): Int = JBUIScale.scale(CombinedDiffUI.LEFT_RIGHT_INSET)
 
