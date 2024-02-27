@@ -8,6 +8,7 @@ import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.SettingsService
@@ -43,6 +44,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
+import java.util.function.Consumer
 import kotlin.io.path.*
 
 class JbSettingsImporter(private val configDirPath: Path,
@@ -406,6 +408,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       ) { false }
       return
     }
+    RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath) { LOG.info(it) }
     val updateableMap = HashMap(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
     val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(

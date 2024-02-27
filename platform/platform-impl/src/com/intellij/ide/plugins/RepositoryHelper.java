@@ -1,30 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateOptions;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
@@ -219,6 +226,30 @@ public final class RepositoryHelper {
     var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
     var customPlugins = loadPluginsFromCustomRepositories(null).stream().filter(p -> pluginIds.contains(p.getPluginId())).toList();
     return mergePluginsFromRepositories(mpPlugins, customPlugins, true);
+  }
+
+
+  @ApiStatus.Internal
+  public static void updatePluginHostsFromConfigDir(@NotNull Path oldConfigDir, @Nullable Consumer<String> logger) {
+    if (logger == null) {
+      logger = s -> LOG.info(s);
+    }
+    logger.accept("Reading plugin repositories from " + oldConfigDir);
+    try {
+      var text = ComponentStorageUtil.loadTextContent(oldConfigDir.resolve("options/updates.xml"));
+      var components = ComponentStorageUtil.loadComponents(JDOMUtil.load(text), null);
+      var element = components.get("UpdatesConfigurable");
+      if (element != null) {
+        var hosts = XmlSerializer.deserialize(element, UpdateOptions.class).getPluginHosts();
+        if (!hosts.isEmpty()) {
+          amendPluginHostsProperty(hosts);
+          logger.accept("Plugin hosts: " + System.getProperty("idea.plugin.hosts"));
+        }
+      }
+    }
+    catch (InvalidPathException | IOException | JDOMException e) {
+      logger.accept("... failed: " + e.getMessage());
+    }
   }
 
   @ApiStatus.Internal
