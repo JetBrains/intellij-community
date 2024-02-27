@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.db
 
 import com.intellij.ide.IdeBundle
@@ -7,36 +7,41 @@ import com.intellij.ide.startup.importSettings.models.BundledKeymap
 import com.intellij.ide.startup.importSettings.models.PluginKeymap
 import com.intellij.ide.startup.importSettings.models.SimpleActionDescriptor
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.ui.IdeUICustomization
 import javax.swing.KeyStroke
 
 // TODO get demo shortcuts from keymap manager
 object KnownKeymaps {
+
+  private val buildProjectMessage: String
+    get() = IdeUICustomization.getInstance().projectMessage("message.build.project")
+
   private val VSCodeDemo = listOf(
     SimpleActionDescriptor("SearchEverywhere", IdeBundle.message("transfersettings.label.search.everywhere"), KeyboardShortcut.fromString("shift ctrl A")),
     SimpleActionDescriptor("Debug", IdeBundle.message("transfersettings.label.debug"), KeyboardShortcut(KeyStroke.getKeyStroke("F5"), null)),
     SimpleActionDescriptor("Run", IdeBundle.message("transfersettings.label.run"), KeyboardShortcut.fromString("control F5")),
-    SimpleActionDescriptor("BuildSolutionAction", IdeBundle.message("transfersettings.label.build.solution"), KeyboardShortcut.fromString("control shift B"))
+    SimpleActionDescriptor("BuildSolutionAction", buildProjectMessage, KeyboardShortcut.fromString("control shift B"))
   )
 
   private val VSCodeMacDemo = listOf(
     SimpleActionDescriptor("SearchEverywhere", IdeBundle.message("transfersettings.label.search.everywhere"), KeyboardShortcut.fromString("shift meta A")),
     SimpleActionDescriptor("Debug", IdeBundle.message("transfersettings.label.debug"), KeyboardShortcut(KeyStroke.getKeyStroke("F5"), null)),
     SimpleActionDescriptor("Run", IdeBundle.message("transfersettings.label.run"), KeyboardShortcut.fromString("meta F5")),
-    SimpleActionDescriptor("BuildSolutionAction", IdeBundle.message("transfersettings.label.build.solution"), KeyboardShortcut.fromString("meta shift B"))
+    SimpleActionDescriptor("BuildSolutionAction", buildProjectMessage, KeyboardShortcut.fromString("meta shift B"))
   )
 
   private val VSMacDemo = listOf(
     SimpleActionDescriptor("SearchEverywhere", IdeBundle.message("transfersettings.label.search.everywhere"), KeyboardShortcut.fromString("meta PERIOD")),
     SimpleActionDescriptor("GotoDeclaration", IdeBundle.message("transfersettings.label.go.to.declaration"), KeyboardShortcut(KeyStroke.getKeyStroke("meta D"), null)),
     SimpleActionDescriptor("Run", IdeBundle.message("transfersettings.label.run"), KeyboardShortcut.fromString("alt meta ENTER")),
-    SimpleActionDescriptor("BuildSolutionAction", IdeBundle.message("transfersettings.label.build.solution"), KeyboardShortcut.fromString("meta B"))
+    SimpleActionDescriptor("BuildSolutionAction", buildProjectMessage, KeyboardShortcut.fromString("meta B"))
   )
 
   private val VisualStudio2022Demo = listOf(
     SimpleActionDescriptor("SearchEverywhere", IdeBundle.message("transfersettings.label.search.everywhere"), KeyboardShortcut.fromString("control T")),
     SimpleActionDescriptor("FindUsages", IdeBundle.message("transfersettings.label.find.usages"), KeyboardShortcut.fromString("shift F12")),
     SimpleActionDescriptor("Run", IdeBundle.message("transfersettings.label.run"), KeyboardShortcut.fromString("control F5")),
-    SimpleActionDescriptor("BuildSolutionAction", IdeBundle.message("transfersettings.label.build.solution"), KeyboardShortcut.fromString("control shift B"))
+    SimpleActionDescriptor("BuildSolutionAction", buildProjectMessage, KeyboardShortcut.fromString("control shift B"))
   )
 
   val VSCode: PluginKeymap = PluginKeymap(
