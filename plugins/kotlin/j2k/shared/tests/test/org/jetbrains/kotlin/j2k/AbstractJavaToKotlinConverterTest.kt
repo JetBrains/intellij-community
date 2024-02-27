@@ -49,7 +49,7 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         addFile(File(KotlinRoot.DIR, "j2k/shared/tests/testData/$fileName"), dirName)
     }
 
-    protected fun addFile(file: File, dirName: String?): VirtualFile {
+    protected fun addFile(file: File, dirName: String? = null): VirtualFile {
         return addFile(FileUtil.loadFile(file, true), file.name, dirName)
     }
 
