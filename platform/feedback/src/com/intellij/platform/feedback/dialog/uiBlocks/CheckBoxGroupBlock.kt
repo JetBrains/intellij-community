@@ -12,8 +12,8 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
@@ -35,17 +35,29 @@ class CheckBoxGroupBlock(
     panel.apply {
       buttonsGroup(indent = false) {
         row {
-          label(myGroupLabel).bold().errorOnApply(CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty")) {
-            val isAllCheckboxEmpty = allCheckBoxes.all {
-              !it.isSelected
-            }
-            if (myIncludeOtherTextField) {
-              return@errorOnApply isAllCheckboxEmpty &&
-                                  (otherCheckBox?.isSelected == false ||
-                                   (otherCheckBox?.isSelected == true && otherTextField?.text?.isBlank() == true))
-            }
-            else {
-              return@errorOnApply isAllCheckboxEmpty
+          label(myGroupLabel).apply {
+            bold()
+            if (requireAnswer) {
+              val errorMessage = if (myIncludeOtherTextField) {
+                CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty.with.other")
+              }
+              else {
+                CommonFeedbackBundle.message("dialog.feedback.checkboxGroup.require.not.empty")
+              }
+
+              errorOnApply(errorMessage) {
+                val isAllCheckboxEmpty = allCheckBoxes.all {
+                  !it.isSelected
+                }
+                if (myIncludeOtherTextField) {
+                  return@errorOnApply isAllCheckboxEmpty &&
+                                      (otherCheckBox?.isSelected == false ||
+                                       (otherCheckBox?.isSelected == true && otherTextField?.text?.isBlank() == true))
+                }
+                else {
+                  return@errorOnApply isAllCheckboxEmpty
+                }
+              }
             }
           }
         }.bottomGap(BottomGap.NONE)
@@ -93,22 +105,10 @@ class CheckBoxGroupBlock(
                     }
                   }
                 })
-                addMouseListener(object : MouseListener {
+                addMouseListener(object : MouseAdapter() {
                   override fun mouseClicked(e: MouseEvent?) {
                     otherCheckBox?.setSelected(true)
                     requestFocusInWindow()
-                  }
-
-                  override fun mousePressed(e: MouseEvent?) {
-                  }
-
-                  override fun mouseReleased(e: MouseEvent?) {
-                  }
-
-                  override fun mouseEntered(e: MouseEvent?) {
-                  }
-
-                  override fun mouseExited(e: MouseEvent?) {
                   }
                 })
               }

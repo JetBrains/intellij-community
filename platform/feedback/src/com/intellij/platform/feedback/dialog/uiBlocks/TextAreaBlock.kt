@@ -3,7 +3,6 @@ package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.feedback.dialog.TEXT_AREA_COLUMN_SIZE
 import com.intellij.platform.feedback.dialog.TEXT_AREA_ROW_SIZE
 import com.intellij.platform.feedback.dialog.adjustBehaviourForFeedbackForm
 import com.intellij.platform.feedback.dialog.createBoldJBLabel
@@ -15,10 +14,10 @@ class TextAreaBlock(@NlsContexts.Label private val myLabel: String,
                     private val myJsonElementName: String) : FeedbackBlock, TextDescriptionProvider, JsonDataProvider {
   private var myProperty: String = ""
   private var myTextAreaRowSize: Int = TEXT_AREA_ROW_SIZE
-  private var myTextAreaColumnSize: Int = TEXT_AREA_COLUMN_SIZE
 
   @NlsSafe
   private var myRequireNotEmptyMessage: String? = null
+  private var myPlaceholder: String? = null
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
@@ -36,6 +35,9 @@ class TextAreaBlock(@NlsContexts.Label private val myLabel: String,
               errorOnApply(myRequireNotEmptyMessage!!) {
                 it.text.isBlank()
               }
+            }
+            if (myPlaceholder != null) {
+              this.component.emptyText.text = myPlaceholder!!
             }
           }
       }.bottomGap(BottomGap.MEDIUM)
@@ -61,13 +63,13 @@ class TextAreaBlock(@NlsContexts.Label private val myLabel: String,
     return this
   }
 
-  fun setColumnSize(columnSize: Int): TextAreaBlock {
-    myTextAreaColumnSize = columnSize
+  fun requireNotEmpty(@NlsContexts.Label requireNotEmptyMessage: String): TextAreaBlock {
+    myRequireNotEmptyMessage = requireNotEmptyMessage
     return this
   }
 
-  fun requireNotEmpty(@NlsContexts.Label requireNotEmptyMessage: String): TextAreaBlock {
-    myRequireNotEmptyMessage = requireNotEmptyMessage
+  fun setPlaceholder(placeholder: String): TextAreaBlock {
+    myPlaceholder = placeholder
     return this
   }
 }

@@ -50,7 +50,7 @@ class DemoFeedbackDialogWithEmail(
                          CheckBoxItemData(DemoFeedbackBundle.message("dialog.checkbox.item.${it}.label"),
                                           "checkbox_${it}")
                        }, "checkbox_group")
-      .addOtherTextField(),
+      .addOtherTextField().requireAnswer(),
     TextAreaBlock(DemoFeedbackBundle.message("dialog.textarea.label"), "textarea")
   )
 
