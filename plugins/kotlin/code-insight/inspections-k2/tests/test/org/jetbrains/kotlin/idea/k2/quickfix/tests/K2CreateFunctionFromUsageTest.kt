@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import java.io.File
 
-abstract class KotlinCreateFunctionFromUsageTest : LightIntentionActionTestCase() {
+abstract class K2CreateFunctionFromUsageTest : LightIntentionActionTestCase() {
     override fun getTestDataPath(): String {
         return TestMetadataUtil.getTestDataPath(javaClass) + "/idea/tests/testData/quickfix/createFromUsage/createFunction"
     }
@@ -104,10 +104,10 @@ abstract class KotlinCreateFunctionFromUsageTest : LightIntentionActionTestCase(
     /**
      * Class names correspond to the testData directories inside /idea/tests/testData/quickfix/createFromUsage/
      */
-    class FromJava : KotlinCreateFunctionFromUsageTest()
-    class FromKotlinToJava : KotlinCreateFunctionFromUsageTest()
+    class FromJava : K2CreateFunctionFromUsageTest()
+    class FromKotlinToJava : K2CreateFunctionFromUsageTest()
     class Call {
-        class Abstract : KotlinCreateFunctionFromUsageTest()
-        class Simple : KotlinCreateFunctionFromUsageTest()
+        class Abstract : K2CreateFunctionFromUsageTest()
+        class Simple : K2CreateFunctionFromUsageTest()
     }
 }
