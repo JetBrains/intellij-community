@@ -13,6 +13,12 @@ import com.intellij.ui.EditorNotifications
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
+/**
+ * Provides a suggestion to install a plugin in the editor based on the file properties and content, usually required in cases when standard
+ * file type and dependency support mappings cannot be applied.
+ *
+ * Implemented only by bundled IDE plugins, must not be used outside of distribution.
+ */
 @ApiStatus.Internal
 interface PluginSuggestionProvider {
   fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>?
