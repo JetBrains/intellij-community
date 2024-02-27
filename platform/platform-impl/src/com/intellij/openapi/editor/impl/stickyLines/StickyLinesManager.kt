@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import java.awt.Point
 import java.awt.Rectangle
@@ -46,8 +47,8 @@ internal class StickyLinesManager(
         // special case when the document starts with a sticky line
         // small visual jump is better than stickied line for good
         activeVisualLine = -1
-        stickyPanel.repaintLines(activeEditorY, activeEditorH, emptyList())
-      } else if (event.oldRectangle == null || isLineChanged(event)) {
+        stickyPanel.repaintLines(activeEditorY, activeEditorH, newStickyLines = emptyList())
+      } else if (event.oldRectangle == null || isLineChanged(activeEditorY)) {
         // recalculate sticky lines and repaint
         stickyPanel.repaintLines(activeEditorY, activeEditorH, getStickyLines(activeEditorY))
       } else if (isYChanged(event) || isSizeChanged(event)) {
@@ -79,9 +80,8 @@ internal class StickyLinesManager(
            oldRectangle.width != event.newRectangle.width
   }
 
-  private fun isLineChanged(event: VisibleAreaEvent): Boolean {
-    val editorY: Int = event.newRectangle.y
-    val newVisualLine: Int = editor.yToVisualLine(activeY(editorY))
+  private fun isLineChanged(editorY: Int): Boolean {
+    val newVisualLine: Int = editor.yToVisualLine(editorY)
     if (activeVisualLine != newVisualLine) {
       activeVisualLine = newVisualLine
       return true
@@ -98,33 +98,47 @@ internal class StickyLinesManager(
            event.oldRectangle.height != event.newRectangle.height
   }
 
-  private fun activeY(editorY: Int): Int {
-    return editorY + stickyPanel.height + /*border*/ 1
-  }
-
   private fun getStickyLines(editorY: Int): List<StickyLine> {
-    val activeY: Int = activeY(editorY)
-    val activeLogicalLine: Int = editor.xyToLogicalPosition(Point(0, activeY)).line
-    if (DocumentUtil.isValidLine(activeLogicalLine, editor.document)) {
-      val activeOffset: Int = editor.document.getLineEndOffset(activeLogicalLine)
-      return collectStickyLines(activeOffset, activeLogicalLine)
-    } else {
+    val stickyLines: List<StickyLine>? = collectStickyLines(editorY)
+    if (stickyLines == null) {
+      // IDEA-344327 editorY may become invalid while Git update
       activeVisualLine = -1
       return emptyList()
     }
+    return stickyLines
   }
 
-  private fun collectStickyLines(activeOffset: Int, activeLogicalLine: Int): List<StickyLine> {
+  private fun collectStickyLines(editorY: Int): List<StickyLine>? {
+    val maxStickyPanelHeight: Int = editor.lineHeight * editor.settings.stickyLinesLimit + /*border*/ 1
+    val stickyPanelRange: TextRange = yRangeToOffsetRange(
+      yStart = editorY,
+      yEnd = editorY + maxStickyPanelHeight
+    ) ?: return null
+    return collectStickyLines(stickyPanelRange)
+  }
+
+  private fun yRangeToOffsetRange(yStart: Int, yEnd: Int): TextRange? {
+    val startLine: Int = editor.xyToLogicalPosition(Point(0, yStart)).line
+    val endLine: Int = editor.xyToLogicalPosition(Point(0, yEnd)).line
+    if (DocumentUtil.isValidLine(endLine, editor.document)) {
+      val startOffset: Int = editor.document.getLineStartOffset(startLine)
+      val endOffset: Int = editor.document.getLineEndOffset(endLine)
+      return TextRange(startOffset, endOffset)
+    }
+    return null
+  }
+
+  private fun collectStickyLines(stickyPanelRange: TextRange): List<StickyLine> {
     val visualLinesLimit: Int = editor.settings.stickyLinesLimit
     // The panel removes visual duplicates so extra logical lines should be collected.
     // We could collect lines limitless here if it were efficient.
     // The consequence of this optimization is that in the worst case (when all logical lines are the same visual one),
     // the sticky panel will consist of only one line instead of a line limit number.
     // This optimization should be removed if the worst case is not rare.
-    val logicalLinesLimit: Int = visualLinesLimit + 5
+    val logicalLinesLimit: Int = (1.7 * visualLinesLimit).toInt()
     val stickyLines: MutableList<StickyLine> = ArrayList(logicalLinesLimit)
-    stickyModel.processStickyLines(activeOffset) { stickyLine ->
-      if (activeLogicalLine <= stickyLine.scopeLine()) {
+    stickyModel.processStickyLines(stickyPanelRange.endOffset) { stickyLine ->
+      if (stickyLine.textRange().intersects(stickyPanelRange)) {
         stickyLines.add(stickyLine)
       }
       return@processStickyLines stickyLines.size < logicalLinesLimit
