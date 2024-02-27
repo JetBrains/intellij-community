@@ -483,8 +483,8 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       RegionAllocationAtomicityLock.Region region = regionAllocationAtomicityLock.region(offsetInFile, pageSize);
 
       if (region.isUnfinished()) {
-        LOG.warn("mmapped file region [" + offsetInFile + ".. +" + pageSize + "] allocation & zeroing has been started, " +
-                 "but hasn't been properly finished -- IDE was crashed/killed? -- try finishing the job");
+        LOG.warn("mmapped file region " + region + " allocation & zeroing has been started, " +
+                 "but hasn't been properly finished -- IDE was crashed/killed? -> try finishing the job");
         IOUtil.fillFileRegionWithZeros(channel, offsetInFile, offsetInFile + pageSize);
       }
       else {
@@ -664,14 +664,20 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       public Region region(long regionStartOffset,
                            int pageSize) throws IOException {
         Path mappingLockFile = mainStoragePath.resolveSibling("." + mainStoragePath.getFileName() + "." + regionStartOffset + ".lock");
-        return new RegionImpl(mappingLockFile);
+        return new RegionImpl(mappingLockFile, regionStartOffset, pageSize);
       }
 
       private static final class RegionImpl implements Region {
         private final Path mappingLockFile;
+        private final long regionStartOffset;
+        private final int pageSize;
 
-        private RegionImpl(@NotNull Path mappingLockFile) {
+        private RegionImpl(@NotNull Path mappingLockFile,
+                           long regionStartOffset,
+                           int pageSize) {
           this.mappingLockFile = mappingLockFile;
+          this.regionStartOffset = regionStartOffset;
+          this.pageSize = pageSize;
         }
 
         @Override
@@ -703,6 +709,11 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
         public void finish() throws IOException {
           Files.delete(mappingLockFile);
           //MAYBE RC: use FileUtil.delete(mappingLockFile) is safer, but more costly
+        }
+
+        @Override
+        public String toString() {
+          return "FileBasedRegionAllocationLock[" + mappingLockFile + "][" + regionStartOffset + ".. +" + pageSize + "]";
         }
       }
     }
