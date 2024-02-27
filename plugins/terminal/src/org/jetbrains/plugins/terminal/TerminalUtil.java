@@ -15,11 +15,12 @@ import com.intellij.util.containers.MultiMap;
 import com.jediterm.core.input.KeyEvent;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalStarter;
+import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalModelListener;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.pty4j.unix.UnixPtyProcess;
-import com.pty4j.windows.WinPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
+import com.pty4j.windows.winpty.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,14 @@ public final class TerminalUtil {
 
   private TerminalUtil() {}
 
-  public static boolean hasRunningCommands(@NotNull ProcessTtyConnector connector) throws IllegalStateException {
-    Process process = connector.getProcess();
-    if (!process.isAlive()) return false;
+  public static boolean hasRunningCommands(@NotNull TtyConnector connector) throws IllegalStateException {
+    if (!connector.isConnected()) return false;
+    ProcessTtyConnector processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(connector);
+    if (processTtyConnector == null) return true;
+    return hasRunningCommands(processTtyConnector.getProcess());
+  }
+
+  private static boolean hasRunningCommands(@NotNull Process process) throws IllegalStateException {
     if (process instanceof RemoteSshProcess) return true;
     if (SystemInfo.isUnix && process instanceof UnixPtyProcess) {
       int shellPid = OSProcessUtil.getProcessID(process);
