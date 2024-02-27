@@ -201,7 +201,7 @@ internal class DocumentationPopupUI(
     EDT.assertIsEdt()
     myPopup.addResizeListener(PopupResizeListener(), this)
     val storedSize = DimensionService.getInstance().getSize(NEW_JAVADOC_LOCATION_AND_SIZE, project)
-    if (storedSize != null) {
+    if (storedSize != null && storedSize.width > 50 && storedSize.height > 50) {
       manuallyResized = true
       myPopup.size = storedSize
     }
