@@ -2614,9 +2614,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragOnGutterSelectionStartLine = -1;
     }
 
-    EditorGutter gutter = getGutter();
-    boolean isDraggingGutterIcon = gutter instanceof EditorGutterComponentImpl &&
-                                   ((EditorGutterComponentImpl)gutter).getGutterRenderer(e.getPoint()) != null;
+    boolean isDraggingGutterIcon = myGutterComponent.getGutterRenderer(e.getPoint()) != null;
     if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA &&
         NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
         getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED &&
@@ -2667,6 +2665,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (dx == 0 && dy == 0) {
       myScrollingTimer.stop();
+
+      if (isDraggingGutterIcon) {
+        return;
+      }
 
       SelectionModel selectionModel = getSelectionModel();
       Caret leadCaret = getLeadCaret();
@@ -2744,7 +2746,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
           else {
             if (caretShift != 0) {
-              if (myMousePressedEvent != null && myGutterComponent.getGutterRenderer(e.getPoint()) == null) {
+              if (myMousePressedEvent != null) {
                 if (mySettings.isDndEnabled()) {
                   if (!myDragStarted) {
                     if (ApplicationManager.getApplication().isUnitTestMode()) {
