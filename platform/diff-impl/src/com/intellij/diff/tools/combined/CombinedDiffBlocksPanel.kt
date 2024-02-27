@@ -3,6 +3,7 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.ui.scale.JBUIScale
 import java.awt.*
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -23,36 +24,41 @@ private class RealComponent(val component: Component) : Holder() {
 internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
                                        private val lastBlockHeightLogic: (Int) -> Int) : JPanel(null) {
   private val blocksLayout = CombinedDiffBlocksLayout()
-  private val holders: MutableMap<CombinedBlockId, Holder> = mutableMapOf()
+  private val holders: MutableList<Holder?> = mutableListOf()
 
   init {
     layout = blocksLayout
 
-    blockOrder.iterateBlocks().forEach { it ->
-      setPlaceholder(it)
-    }
+    holders.addAll(Collections.nCopies(blockOrder.blocksCount, null))
   }
 
   fun setContent(blockId: CombinedBlockId, component: JComponent) {
-    val oldHolder = holders[blockId]
+    val blockIndex = blockOrder.indexOf(blockId)
+
+    val newHolder = RealComponent(component)
+    val oldHolder = holders.set(blockIndex, newHolder)
+    
     if (oldHolder is RealComponent) {
       remove(oldHolder.component)
     }
-    holders[blockId] = RealComponent(component)
     add(component)
   }
 
   fun setPlaceholder(blockId: CombinedBlockId, height: Int? = null) {
-    val oldHolder = holders[blockId]
-    if (oldHolder is RealComponent) {
-      remove(oldHolder.component)
-    }
+    val blockIndex = blockOrder.indexOf(blockId)
+    setPlaceholder(blockIndex, height)
+  }
 
-    if (height != null) {
-      holders[blockId] = Placeholder(height)
+  private fun setPlaceholder(blockIndex: Int, height: Int? = null) {
+    val oldHolder = if (height != null) {
+      holders.set(blockIndex, Placeholder(height))
     }
     else {
-      holders.remove(blockId)
+      holders.set(blockIndex, null)
+    }
+
+    if (oldHolder is RealComponent) {
+      remove(oldHolder.component)
     }
   }
 
@@ -60,8 +66,7 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
     val defaultPlaceholderHeight = defaultPlaceholderBlockHeight()
 
     val blockIndex = blockOrder.indexOf(blockId)
-
-    val holder = holders[blockId]
+    val holder = holders[blockIndex]
     return calcHeight(blockIndex, holder, defaultPlaceholderHeight)
   }
 
@@ -74,8 +79,8 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
     var minY = 0
     var maxY = 0
 
-    for ((index, id) in blockOrder.iterateBlocks().withIndex()) {
-      val holder = holders[id]
+    for ((index, _) in blockOrder.iterateBlocks().withIndex()) {
+      val holder = holders[index]
       minY = maxY
       maxY = minY + calcHeight(index, holder, defaultPlaceholderHeight)
 
@@ -94,7 +99,7 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
     var maxY = 0
     val bounds = mutableListOf<BlockBounds>()
     for ((index, id) in blockOrder.iterateBlocks().withIndex()) {
-      val holder = holders[id]
+      val holder = holders[index]
       minY = maxY
       maxY = minY + calcHeight(index, holder, defaultPlaceholderHeight)
 
@@ -125,8 +130,8 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
       val w = parent.width
 
       var sumH = 0
-      for ((index, id) in blockOrder.iterateBlocks().withIndex()) {
-        val holder = holders[id]
+      for ((index, _) in blockOrder.iterateBlocks().withIndex()) {
+        val holder = holders[index]
         sumH += calcHeight(index, holder, defaultPlaceholderHeight) + gap
       }
 
@@ -143,8 +148,8 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
       var y = 0
       val w = parent.width - left() - right()
 
-      for ((index, id) in blockOrder.iterateBlocks().withIndex()) {
-        val holder = holders[id]
+      for ((index, _) in blockOrder.iterateBlocks().withIndex()) {
+        val holder = holders[index]
         val height = calcHeight(index, holder, defaultPlaceholderHeight)
         if (holder is RealComponent) {
           holder.component.bounds = Rectangle(x, y, w, height)
