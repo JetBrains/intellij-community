@@ -80,16 +80,13 @@ internal fun resizePopup(popup: AbstractPopup) {
     resizePopupFallback(popup)
     return
   }
-
-  val bounds = Rectangle(location, popup.component.preferredSize)
+  // Ensure that the popup can fit the screen if placed in the top left corner.
+  val bounds = Rectangle(ScreenUtil.getScreenRectangle(location).location, popup.component.preferredSize)
   ScreenUtil.cropRectangleToFitTheScreen(bounds)
-  if (location != bounds.location) {
-    // Location was outside visible bounds -- not sure what to do, fallback
-    resizePopupFallback(popup)
-    return
+  // Don't resize to an empty popup
+  if (bounds.size.width > 50 && bounds.size.height > 20) {
+    popup.size = bounds.size
   }
-
-  popup.size = bounds.size
 }
 
 private fun resizePopupFallback(popup: AbstractPopup) {
