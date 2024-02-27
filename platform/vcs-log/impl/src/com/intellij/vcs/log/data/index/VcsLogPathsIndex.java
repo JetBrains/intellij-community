@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsLogIndexer.CompressedDetails> {
+public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
 
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   public static final String PATHS = "paths";
@@ -227,34 +227,6 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       }
 
       return value;
-    }
-  }
-
-  public enum ChangeKind {
-    MODIFIED((byte)0),
-    NOT_CHANGED((byte)1), // we do not want to have nulls in lists
-    ADDED((byte)2),
-    REMOVED((byte)3);
-
-    public final byte id;
-
-    ChangeKind(byte id) {
-      this.id = id;
-    }
-
-    private static final ChangeKind[] KINDS;
-
-    static {
-      KINDS = new ChangeKind[4];
-      for (ChangeKind kind : values()) {
-        KINDS[kind.id] = kind;
-      }
-    }
-
-    public static @NotNull ChangeKind getChangeKindById(byte id) throws IOException {
-      ChangeKind kind = id >= 0 && id < KINDS.length ? KINDS[id] : null;
-      if (kind == null) throw new IOException("Change kind by id " + id + " not found.");
-      return kind;
     }
   }
 
