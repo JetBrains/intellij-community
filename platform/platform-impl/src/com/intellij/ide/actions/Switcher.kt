@@ -398,7 +398,8 @@ object Switcher : BaseSwitcherAction(null) {
       val otherTW: MutableList<SwitcherToolWindow> = ArrayList()
       for (window in windows) {
         val index = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(window.window.id)
-        if (index < '0'.code || index > '9'.code || !addShortcut(keymap, window, getIndexShortcut(index - '0'.code))) {
+        val indexShortcut = getIndexShortcut(index - '0'.code) // can never be null here in the current implementation
+        if (index < '0'.code || index > '9'.code || indexShortcut == null || !addShortcut(keymap, window, indexShortcut)) {
           otherTW.add(window)
         }
       }
@@ -408,10 +409,19 @@ object Switcher : BaseSwitcherAction(null) {
         if (addSmartShortcut(window, keymap)) {
           continue
         }
-        while (!addShortcut(keymap, window, getIndexShortcut(i))) {
-          i++
+        while (true) {
+          val indexShortcut = getIndexShortcut(i)
+          if (indexShortcut == null) {
+            break // ran out of shortcuts
+          }
+          else if (addShortcut(keymap, window, indexShortcut)) {
+            ++i // added successfully, should use the next shortcut for the next window
+            break
+          }
+          else {
+            ++i // shortcut not suitable, let's try the next one
+          }
         }
-        i++
       }
     }
 
@@ -812,7 +822,8 @@ object Switcher : BaseSwitcherAction(null) {
         return false
       }
 
-      private fun getIndexShortcut(index: Int): String {
+      private fun getIndexShortcut(index: Int): String? {
+        if (index !in 0..35) return null
         return Strings.toUpperCase(index.toString(radix = (index + 1).coerceIn(2..36)))
       }
 
