@@ -149,7 +149,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       ids: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false
-    ): List<IdeUpdate> {
+    ): List<NearestUpdate> {
       try {
         if (ids.isEmpty()) {
           return emptyList()
@@ -162,7 +162,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
           connect {
             it.write(data)
             val allBytes = String(it.inputStream.readAllBytes())
-            objectMapper.readValue(allBytes, object : TypeReference<List<IdeUpdate>>() {})
+            objectMapper.readValue(allBytes, object : TypeReference<List<NearestUpdate>>() {})
           }
         }
       }
