@@ -24,7 +24,7 @@ internal class IdeStartupWizardImpl : IdeStartupWizard {
     coroutineScope {
       // Fire-and-forget call to warm up the external settings transfer
       val settingsService = SettingsService.getInstance()
-      async { settingsService.warmUp(this) }
+      settingsService.warmUp()
 
       if (!settingsService.shouldShowImport()) {
         logger.info("No import options available: skipping the import wizard.")
