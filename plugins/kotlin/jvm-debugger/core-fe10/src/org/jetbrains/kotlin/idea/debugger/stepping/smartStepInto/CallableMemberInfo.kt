@@ -2,13 +2,13 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.debugger.core.getByteCodeMethodName
+import org.jetbrains.kotlin.idea.debugger.core.getContainingClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 
 data class CallableMemberInfo(
@@ -49,13 +49,3 @@ private fun KtFunctionLikeSymbol.methodName() = when (this) {
 
 context(KtAnalysisSession)
 internal fun KtFunctionLikeSymbol.isInsideInlineClass(): Boolean = getContainingClassOrObjectSymbol()?.isInlineClass() == true
-
-context(KtAnalysisSession)
-internal fun KtFunctionLikeSymbol.getContainingClassOrObjectSymbol(): KtClassOrObjectSymbol? {
-    var symbol = getContainingSymbol()
-    while (symbol != null) {
-        if (symbol is KtClassOrObjectSymbol) return symbol
-        symbol = symbol.getContainingSymbol()
-    }
-    return null
-}

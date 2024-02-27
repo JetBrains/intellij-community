@@ -6,4 +6,4 @@ fun producer() = 42
 
 fun <T> List<T>.count(): Int = size
 
-// EXISTS: arrayListOf(T), producer(), count()
+// EXISTS: producer(), count(), arrayListOf(T)

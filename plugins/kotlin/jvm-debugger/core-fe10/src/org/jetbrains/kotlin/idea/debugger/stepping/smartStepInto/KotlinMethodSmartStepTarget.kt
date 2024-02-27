@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.debugger.core.getClassName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -76,6 +77,7 @@ class KotlinMethodSmartStepTarget(
     }
 
     override fun getIcon(): Icon = if (methodInfo.isExtension) KotlinIcons.EXTENSION_FUNCTION else KotlinIcons.FUNCTION
+    override fun getClassName(): String? = runReadAction { declarationPtr?.element?.getClassName() }
 
     fun getDeclaration(): KtDeclaration? =
         declarationPtr.getElementInReadAction()

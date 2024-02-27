@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.engine.MethodFilter
+import com.intellij.openapi.application.runReadAction
 import com.intellij.util.Range
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.debugger.core.getClassName
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -24,4 +26,5 @@ class KotlinMethodReferenceSmartStepTarget(
     }
 
     override fun getIcon(): Icon? = KotlinIcons.FUNCTION
+    override fun getClassName(): String? = runReadAction { declarationPtr.element?.getClassName() }
 }

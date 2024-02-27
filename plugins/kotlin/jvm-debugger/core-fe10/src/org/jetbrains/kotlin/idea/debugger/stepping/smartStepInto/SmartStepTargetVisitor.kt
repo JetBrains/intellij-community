@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.actions.MethodSmartStepTarget
 import com.intellij.debugger.actions.SmartStepTarget
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
@@ -306,11 +307,7 @@ class SmartStepTargetVisitor(
                 return
             }
 
-            val declaration = symbol.psi
-                // null is returned for implemented by delegation methods in K1
-                ?: if (symbol is KtFunctionSymbol) symbol.getAllOverriddenSymbols()
-                    .firstNotNullOfOrNull { it.psi } else null
-
+            val declaration = getFunctionDeclaration(symbol)
             if (symbol.origin == KtSymbolOrigin.JAVA) {
                 if (declaration is PsiMethod) {
                     append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
@@ -355,6 +352,15 @@ class SmartStepTargetVisitor(
                 )
             )
         }
+    }
+
+    context(KtAnalysisSession)
+    private fun getFunctionDeclaration(symbol: KtFunctionLikeSymbol): PsiElement? {
+        if (symbol is KtFunctionSymbol && symbol.isBuiltinFunctionInvoke) return null
+        symbol.psi?.let { return it }
+        // null is returned for implemented by delegation methods in K1
+        if (symbol !is KtFunctionSymbol) return null
+        return symbol.getAllOverriddenSymbols().firstNotNullOfOrNull { it.psi }
     }
 
     private fun checkLineRangeFits(lineRange: IntRange?): Boolean =
