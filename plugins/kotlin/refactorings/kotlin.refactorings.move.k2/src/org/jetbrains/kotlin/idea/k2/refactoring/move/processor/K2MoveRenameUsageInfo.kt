@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
-import org.jetbrains.kotlin.idea.k2.refactoring.computeWithoutAddingRedundantImports
+import org.jetbrains.kotlin.idea.k2.refactoring.modifyPsiWithOptimizedImports
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -183,7 +183,7 @@ sealed class K2MoveRenameUsageInfo(
                 else -> null
             } ?: return null
             val containingFile = (element as? KtElement)?.containingKtFile ?: return null
-            computeWithoutAddingRedundantImports(containingFile) {
+            modifyPsiWithOptimizedImports(containingFile) {
                 containingFile.addImport(FqName(fqn))
             }
             return element

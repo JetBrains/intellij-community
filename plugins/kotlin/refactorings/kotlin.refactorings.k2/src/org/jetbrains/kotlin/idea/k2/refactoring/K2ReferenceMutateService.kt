@@ -58,7 +58,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val docElement = docReference.element
         val targetFqn = targetElement.kotlinFqName ?: return docElement
         if (targetFqn.isRoot) return docElement
-        val replacedDocReference = computeWithoutAddingRedundantImports(docElement.containingKtFile) {
+        val replacedDocReference = modifyPsiWithOptimizedImports(docElement.containingKtFile) {
             val newDocReference = KDocElementFactory(targetElement.project).createNameFromText(targetFqn.asString())
             docReference.expression.replaced(newDocReference)
         }
@@ -87,7 +87,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             fqName
         }
         val elementToReplace = expression.getQualifiedElementOrCallableRef()
-        val result = computeWithoutAddingRedundantImports(expression.containingKtFile) {
+        val result = modifyPsiWithOptimizedImports(expression.containingKtFile) {
             when (elementToReplace) {
                 is KtUserType -> elementToReplace.replaceWith(writableFqn)
                 is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
@@ -95,7 +95,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 is KtCallableReferenceExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                 is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn)
                 else -> null
-            } ?: return@computeWithoutAddingRedundantImports null
+            } ?: return@modifyPsiWithOptimizedImports null
         } ?: return expression
         val shouldShorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING && result.canBeShortened
         return if (shouldShorten) {

@@ -39,7 +39,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
  * Computes [block] and removes any possible redundant imports that would be added during this operation, not touching any existing
  * redundant imports.
  */
-fun <T> computeWithoutAddingRedundantImports(file: KtFile, block: () -> T): T {
+fun <T> modifyPsiWithOptimizedImports(file: KtFile, block: () -> T): T {
     fun unusedImports(): Set<KtImportDirective> =
         KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)?.unusedImports?.toSet().orEmpty()
 
