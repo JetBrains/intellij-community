@@ -91,7 +91,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             when (elementToReplace) {
                 is KtUserType -> elementToReplace.replaceWith(writableFqn)
                 is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
-                is KtCallExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtCallExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                 is KtCallableReferenceExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                 is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn)
                 else -> null
@@ -152,8 +152,12 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return replaced(newQualifiedExpression)
     }
 
-    private fun KtCallExpression.replaceWith(fqName: FqName): ReplaceResult {
+    private fun KtCallExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val newCall = replaceShortName(fqName)
+        if (targetElement?.isCallableAsExtensionFunction() == true) {
+            containingKtFile.addImport(fqName)
+            return ReplaceResult(newCall, false)
+        }
         return ReplaceResult(newCall.replaceWithQualified(fqName, newCall), true)
     }
 
