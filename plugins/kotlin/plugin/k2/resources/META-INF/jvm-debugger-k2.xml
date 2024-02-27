@@ -8,6 +8,7 @@
             serviceInterface="org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.K2CodeFragmentContextTunerImpl"/>
 
+    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
     <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK2CodeFragmentFactory"/>
   </extensions>
 </idea-plugin>
