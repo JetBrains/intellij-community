@@ -80,7 +80,7 @@ object StyleSheetRulesProviderForCodeHighlighting {
       else
         blockCodeStyling
       result.add("div.styled-code { ${blockCodeStyling.getCssStyle(editorPaneBackgroundColor, colorScheme)} }")
-      result.add("div.styled-code { margin: $codeBlockMargin; padding: ${scale(10)}px ${scale(14)}px ${scale(10)}px ${scale(14)}px; }")
+      result.add("div.styled-code { margin: $codeBlockMargin; padding: ${scale(10)}px ${scale(13)}px ${scale(10)}px ${scale(13)}px; }")
       result.add("div.styled-code pre { padding: 0px; margin: 0px; line-height: 120%; }")
     }
     return result
