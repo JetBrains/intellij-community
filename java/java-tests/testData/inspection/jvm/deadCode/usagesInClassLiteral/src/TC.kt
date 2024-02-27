@@ -4,7 +4,7 @@ fun main() {
 
 fun bar(
   i: Int,
-  s: String // todo wrongly marked as unused
+  s: String
 ) {
   println("Foo $i")
   println(s::class.java)
