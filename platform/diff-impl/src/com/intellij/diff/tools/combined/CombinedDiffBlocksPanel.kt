@@ -52,6 +52,8 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
   }
 
   fun getBoundsForBlock(blockId: CombinedBlockId): BlockBounds {
+    val gap = gap()
+
     var minY = 0
     var maxY = 0
     holders[blockId] ?: throw IllegalStateException()
@@ -62,13 +64,15 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
       maxY = minY + calcHeight(index, holder)
 
       if (id == blockId) break
-      maxY+= gap()
+      maxY += gap
     }
 
     return BlockBounds(blockId, minY, maxY)
   }
 
   fun getBlockBounds(): List<BlockBounds> {
+    val gap = gap()
+
     var minY: Int
     var maxY = 0
     val bounds = mutableListOf<BlockBounds>()
@@ -78,8 +82,9 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
       maxY = minY + calcHeight(index, holder)
 
       bounds.add(BlockBounds(id, minY, maxY))
-      maxY+= gap()
+      maxY += gap
     }
+
     return bounds
   }
 
@@ -97,14 +102,17 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
     override fun preferredLayoutSize(parent: Container?): Dimension {
       parent ?: return Dimension(0, 0)
 
+      val gap = gap()
       val w = parent.width
-      val h = holders.values.mapIndexed { index, holder -> calcHeight(index, holder) + gap() }.sum()
+      val h = holders.values.mapIndexed { index, holder -> calcHeight(index, holder) + gap }.sum()
 
       return Dimension(w, h)
     }
 
     override fun layoutContainer(parent: Container?) {
       parent ?: return
+
+      val gap = gap()
       val x = left()
       var y = 0
       val w = parent.width - left() - right()
@@ -116,7 +124,7 @@ internal class CombinedDiffBlocksPanel(private val blockOrder: BlockOrder,
           holder.component.bounds = Rectangle(x, y, w, height)
         }
 
-        y += height + gap()
+        y += height + gap
       }
     }
 
