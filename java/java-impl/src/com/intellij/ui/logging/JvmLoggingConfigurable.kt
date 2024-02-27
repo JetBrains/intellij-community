@@ -15,12 +15,14 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.psi.PsiNameHelper
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 
 
 class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase(), SearchableConfigurable, NoScroll {
   private lateinit var warningRow: Row
+  private lateinit var loggerName: Cell<JBTextField>
   private val settings = project.service<JvmLoggingSettingsStorage>().state
 
   override fun getDisplayName(): String = JavaBundle.message("jvm.logging.configurable.display.name")
@@ -33,7 +35,7 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
         row {
           label(JavaBundle.message("label.configurable.logger.generation.name"))
-          textField()
+          loggerName = textField()
             .bindText(settings::loggerName.toNonNullableProperty(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER))
             .cellValidation {
               addInputRule(JavaBundle.message("jvm.logging.configurable.invalid.identifier.error")) {
@@ -58,6 +60,10 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
     }
     updateWarningRow(JvmLogger.getLoggerById(settings.loggerId))
     return panel
+  }
+
+  override fun isModified(): Boolean {
+    return PsiNameHelper.getInstance(project).isIdentifier(loggerName.component.text) && super<DslConfigurableBase>.isModified();
   }
 
   private fun updateWarningRow(logger: JvmLogger?) {
