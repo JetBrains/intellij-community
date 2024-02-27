@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
@@ -88,13 +89,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   public void clearCaches() {
     try {
-      myLock.readLock().lock();
-      try {
+      ConcurrencyUtil.withLock(myLock.readLock(), () -> {
         myStorage.clearCaches();
-      }
-      finally {
-        myLock.readLock().unlock();
-      }
+      });
 
       flush();
     }
@@ -138,17 +135,15 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @Override
   public void clear() {
-    myLock.writeLock().lock();
-    try {
-      incrementModificationStamp();
-      doClear();
-    }
-    catch (StorageException | IOException e) {
-      LOG.info(e);
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
+    ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
+      try {
+        incrementModificationStamp();
+        doClear();
+      }
+      catch (StorageException | IOException e) {
+        LOG.info(e);
+      }
+    });
   }
 
   protected void doClear() throws StorageException, IOException {
@@ -158,25 +153,23 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @Override
   public void flush() throws StorageException{
-    myLock.readLock().lock();
-    try {
-      doFlush();
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof StorageException || cause instanceof IOException) {
-        throw new StorageException(cause);
+    ConcurrencyUtil.withLock(myLock.readLock(), () -> {
+      try {
+        doFlush();
       }
-      else {
-        throw e;
+      catch (IOException e) {
+        throw new StorageException(e);
       }
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
+      catch (RuntimeException e) {
+        final Throwable cause = e.getCause();
+        if (cause instanceof StorageException || cause instanceof IOException) {
+          throw new StorageException(cause);
+        }
+        else {
+          throw e;
+        }
+      }
+    });
   }
 
   public boolean isDirty() {
@@ -194,17 +187,15 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @Override
   public void dispose() {
     myLowMemoryFlusher.stop();
-    myLock.writeLock().lock();
-    try {
-      myDisposed = true;
-      doDispose();
-    }
-    catch (StorageException e) {
-      LOG.error(e);
-    }
-    finally {
-      myLock.writeLock().unlock();
-    }
+    ConcurrencyUtil.withLock(myLock.writeLock(), () -> {
+      try {
+        myDisposed = true;
+        doDispose();
+      }
+      catch (StorageException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   @Override
@@ -232,18 +223,18 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @Override
   public @NotNull ValueContainer<Value> getData(final @NotNull Key key) throws StorageException {
-    myLock.readLock().lock();
-    try {
-      if (isDisposed()) {
-        return ValueContainerImpl.createNewValueContainer();
+    return ConcurrencyUtil.withLock(myLock.readLock(), () -> {
+      try {
+        if (isDisposed()) {
+          return ValueContainerImpl.createNewValueContainer();
+        }
+        IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
+        return myStorage.read(key);
       }
-      IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
-      return myStorage.read(key);
-    }
-    finally {
-      IndexDebugProperties.DEBUG_INDEX_ID.set(null);
-      myLock.readLock().unlock();
-    }
+      finally {
+        IndexDebugProperties.DEBUG_INDEX_ID.set(null);
+      }
+    });
   }
 
   @Override
@@ -356,8 +347,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
     Lock lock = USE_READ_LOCK_ON_UPDATE ? myLock.readLock() : myLock.writeLock();
-    lock.lock();
-    try {
+    ConcurrencyUtil.withLock(lock, () -> {
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
         IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
@@ -374,10 +364,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       finally {
         IndexDebugProperties.DEBUG_INDEX_ID.set(oldIndexId);
       }
-    }
-    finally {
-      lock.unlock();
-    }
+    });
   }
 
   @ApiStatus.Internal
