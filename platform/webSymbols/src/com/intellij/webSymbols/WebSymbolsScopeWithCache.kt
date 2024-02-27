@@ -15,6 +15,7 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.*
 import com.intellij.webSymbols.query.impl.SearchMap
 import com.intellij.webSymbols.utils.psiModificationCount
+import com.intellij.webSymbols.utils.qualifiedKind
 import com.intellij.webSymbols.utils.qualifiedName
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -56,10 +57,10 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
   protected abstract fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>)
 
   /**
-   * Override to optimize queries and avoid scope initialization.
+   * Allows optimizing queries and to avoid scope initialization.
    * Return `false` if particular symbol kind cannot be provided by the scope.
    */
-  protected open fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean = true
+  protected abstract fun provides(qualifiedKind: WebSymbolQualifiedKind): Boolean
 
   abstract override fun createPointer(): Pointer<out WebSymbolsScopeWithCache<T, K>>
 
@@ -99,7 +100,12 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(
     CachedValuesManager.getManager(project).createCachedValue {
       val dependencies = mutableSetOf<Any>()
       val map = WebSymbolsSearchMap(namesProvider, framework)
-      initialize(map::add, dependencies)
+      initialize(
+        {
+          if (!provides(it.qualifiedKind))
+            throw IllegalArgumentException("Web Symbol with unsupported kind: ${it.qualifiedKind} added. $it")
+          map.add(it)
+        }, dependencies)
       if (dependencies.isEmpty()) {
         throw IllegalArgumentException(
           "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")

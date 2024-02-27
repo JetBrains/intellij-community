@@ -53,5 +53,3 @@ package forTests;
 public interface I {
     int f();
 }
-
-// IGNORE_K2

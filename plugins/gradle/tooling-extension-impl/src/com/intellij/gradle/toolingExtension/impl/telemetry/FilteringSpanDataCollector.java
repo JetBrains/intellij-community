@@ -45,8 +45,11 @@ public class FilteringSpanDataCollector implements SpanExporter {
         addParent(processedSpans, collectedSpans, parentSpanId);
       }
     }
-    collectedSpans.clear();
     return processedSpans.values();
+  }
+
+  public void clear() {
+    collectedSpans.clear();
   }
 
   private static void addParent(@NotNull Map<String, SpanData> target, @NotNull Map<String, SpanData> source, @NotNull String spanId) {

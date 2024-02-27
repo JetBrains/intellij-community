@@ -74,7 +74,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -947,7 +946,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void renameElementAtCaretUsingHandler(@NotNull String newName) {
-    DataContext editorContext = ((EditorEx)editor).getDataContext();
+    DataContext editorContext = EditorUtil.getEditorDataContext(editor);
     DataContext context = CustomizedDataContext.create(editorContext, dataId ->
       PsiElementRenameHandler.DEFAULT_NAME.is(dataId) ? newName : null);
     RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
@@ -2235,6 +2234,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
    * @return whether the action has made the file writable itself
    */
   public static boolean withReadOnlyFile(VirtualFile vFile, Project project, Runnable action) {
+    if (PlatformUtils.isFleetBackend() && vFile.getFileSystem().isReadOnly()) {
+      action.run();
+      return false;
+    }
     boolean writable;
     ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(project);
     setReadOnly(vFile, true);

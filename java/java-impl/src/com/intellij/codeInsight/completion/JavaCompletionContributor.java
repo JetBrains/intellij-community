@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -88,7 +88,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
       // like `call(Cls::methodRef.<caret>`
       psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
-        psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))));
+        psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))),
+      // dot after primitive type `int.<caret>` or dot after dot `Object..<caret>`
+      psiElement().afterLeaf(psiElement(JavaTokenType.DOT).withParent(
+        psiElement(PsiErrorElement.class).afterSibling(psiElement(PsiErrorElement.class)))));
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =

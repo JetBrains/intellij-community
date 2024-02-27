@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-public class GroovyUnusedCatchParameterInspection extends BaseInspection {
+public final class GroovyUnusedCatchParameterInspection extends BaseInspection {
 
   @NotNull
   @Override

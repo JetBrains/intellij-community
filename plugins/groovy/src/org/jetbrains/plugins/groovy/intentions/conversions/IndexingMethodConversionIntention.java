@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
-public class IndexingMethodConversionIntention extends GrPsiUpdateIntention {
+public final class IndexingMethodConversionIntention extends GrPsiUpdateIntention {
 
   @Override
   @NotNull

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 
-public class GroovyEmptyFinallyBlockInspection extends BaseInspection {
+public final class GroovyEmptyFinallyBlockInspection extends BaseInspection {
 
   @Override
   @Nullable

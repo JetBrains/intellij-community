@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.lang.Language;
@@ -28,7 +28,7 @@ public abstract class XDebuggerEditorsProvider {
                                  @NotNull String text,
                                  @Nullable XSourcePosition sourcePosition,
                                  @NotNull EvaluationMode mode) {
-    throw new AbstractMethodError();
+    throw new AbstractMethodError("createDocument must be implemented in " + getClass());
   }
 
   @NotNull

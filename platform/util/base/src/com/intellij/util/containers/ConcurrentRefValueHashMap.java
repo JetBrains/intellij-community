@@ -20,10 +20,10 @@ import java.util.function.Consumer;
 abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
-  private final Consumer<K> myEvictionListener;
+  private final Consumer<? super K> myEvictionListener;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
-  ConcurrentRefValueHashMap(@Nullable Consumer<K> evictionListener) {
+  ConcurrentRefValueHashMap(@Nullable Consumer<? super K> evictionListener) {
     myEvictionListener = evictionListener;
   }
 

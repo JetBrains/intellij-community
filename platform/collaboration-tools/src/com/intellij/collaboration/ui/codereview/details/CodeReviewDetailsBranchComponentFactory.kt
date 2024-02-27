@@ -5,9 +5,9 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
-import com.intellij.collaboration.ui.util.popup.ShowDirection
 import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
 import com.intellij.collaboration.ui.util.popup.showAndAwait
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBUI
 import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import java.awt.Dimension
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -46,6 +47,7 @@ object CodeReviewDetailsBranchComponentFactory {
       addActionListener { branchesVm.showBranches() }
       setDropDownLinkIcon()
       bindTextIn(scope, branchesVm.sourceBranch)
+      minimumSize = Dimension(0,0)
     }
 
     val panelWithIcon = HorizontalListPanel(BRANCH_ICON_LINK_GAP).apply {

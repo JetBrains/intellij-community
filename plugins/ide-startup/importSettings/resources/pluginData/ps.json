@@ -21,7 +21,7 @@
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -50,6 +50,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
     "vsCodeId": "esbenp.prettier-vscode",
     "ideaName": "Prettier",
     "ideaId": "intellij.prettierJS"
@@ -71,7 +76,7 @@
   },
   {
     "vsCodeId": "formulahendry.vscode-mysql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -101,7 +106,7 @@
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -113,6 +118,11 @@
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
   },
   {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
@@ -145,19 +155,9 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
     "vsCodeId": "onecentlin.laravel-blade",
     "ideaName": "Laravel Blade Snippets",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "onecentlin.laravel5-snippets",
-    "ideaName": "Laravel Idea",
-    "ideaId": "com.laravel_idea.plugin"
   },
   {
     "vsCodeId": "pranaygp.vscode-css-peek",
@@ -180,14 +180,14 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
     "vsCodeId": "svelte.svelte-vscode",
     "ideaName": "Svelte",
     "ideaId": "dev.blachut.svelte.lang"
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "xdebug.php-debug",
@@ -198,6 +198,11 @@
     "vsCodeId": "xdebug.php-pack",
     "ideaName": "PHP",
     "ideaId": "com.jetbrains.php"
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

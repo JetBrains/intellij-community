@@ -29,6 +29,7 @@ import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.async.AsyncPopupWaiter;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -44,7 +45,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.*;
-import java.awt.im.InputMethodRequests;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
@@ -499,7 +499,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         nextStep = listStep.onChosen(selectedValue, handleFinalChoices);
       }
     }
-    return handleNextStep(nextStep, selectedValues.length == 1 ? selectedValue : null, e);
+
+    Object parentValue = selectedValues.length == 1 ? selectedValue : null;
+
+    if (nextStep == PopupStep.FINAL_CHOICE &&
+        parentValue instanceof PopupFactoryImpl.ActionItem actionItem &&
+        actionItem.isKeepPopupOpen()) {
+      ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
+      if (actionPopupStep != null && actionPopupStep.isSelectable(actionItem)) {
+        actionPopupStep.updateStepItems(getList());
+        return false;
+      }
+    }
+
+    return handleNextStep(nextStep, parentValue, e);
   }
 
   protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {

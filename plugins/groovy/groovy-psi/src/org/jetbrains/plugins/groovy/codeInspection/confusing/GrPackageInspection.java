@@ -31,7 +31,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 /**
  * @author Max Medvedev
  */
-public class GrPackageInspection extends BaseInspection {
+public final class GrPackageInspection extends BaseInspection {
   public boolean myCheckScripts = true;
 
   @Override

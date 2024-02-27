@@ -16,20 +16,21 @@ import com.sun.jdi.request.EventRequest
 import java.util.function.Function
 
 object CoroutineBreakpointFacility {
-    fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, location: Location, method: Method): Boolean {
+    fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, method: Method): Boolean {
         val debugProcess = context.debugProcess
         val project = debugProcess.project
+        val suspendAll = context.suspendPolicy == EventRequest.SUSPEND_ALL
 
         val useCoroutineIdFiltering = Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")
 
-        val breakpoint = object : StepIntoMethodBreakpoint(location.declaringType().name(), method.name(), method.signature(), project) {
+        val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project) {
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
                 val result = super.processLocatableEvent(action, event)
                 if (result) {
                     debugProcess.requestsManager.deleteRequest(this) // breakpoint is hit - disable the request already
                 }
 
-                if (useCoroutineIdFiltering) {
+                if (useCoroutineIdFiltering && suspendAll) {
                     // schedule stepping over switcher after suspend-all replacement happened
                     return result
                 }
@@ -41,8 +42,11 @@ object CoroutineBreakpointFacility {
                 return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl)
             }
 
-            override fun callbackAfterReplacementForAllThreadSuspendContext() = Function<SuspendContextImpl, Boolean> {
-                scheduleStepOverCommandForSuspendSwitch(it)
+            override fun callbackAfterReplacementForAllThreadSuspendContext(): Function<SuspendContextImpl, Boolean>? {
+                if (suspendAll) {
+                    return Function<SuspendContextImpl, Boolean> { scheduleStepOverCommandForSuspendSwitch(it) }
+                }
+                return null
             }
 
             private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl): Boolean {

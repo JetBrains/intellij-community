@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +30,7 @@ public final class SpecializedFileAttributes {
   //TODO RC: using FileAttribute.id as file name of a storage is risky -- there is no guarantee that attribute id
   //         is a valid file name! Need to apply some character-escaping (risk different attributes names collide
   //         after escaping) or use enumerated attributeId for a file name instead of attribute.id (safe, but
-  //         files in 'extended-storages' become unrecognizable by human being)
+  //         files in 'extended-attributes' become unrecognizable by human being)
 
   public static ByteFileAttributeAccessor specializeAsByte(@NotNull FileAttribute attribute) {
     return specializeAsByte(FSRecords.getInstance(), attribute);

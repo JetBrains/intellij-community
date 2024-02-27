@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class ConvertSimpleGetterToPropertyIntention extends GrPsiUpdateIntention {
+public final class ConvertSimpleGetterToPropertyIntention extends GrPsiUpdateIntention {
 
   private static final String[] MODIFIERS_TO_CHECK = {
     PsiModifier.STATIC, PsiModifier.PRIVATE, PsiModifier.PROTECTED

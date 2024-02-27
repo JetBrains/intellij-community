@@ -223,22 +223,26 @@ final class PsiUpdateImpl {
   }
 
   private static @NotNull PsiFile copyFile(Project project, PsiFile origFile) {
+    PsiFile file;
     var manager = InjectedLanguageManager.getInstance(project);
     boolean injectedFragment = manager.isInjectedFragment(origFile);
     if (!injectedFragment) {
       PsiElement navigationElement = origFile.getNavigationElement();
       if (navigationElement != origFile && navigationElement instanceof PsiFile) {
-        return (PsiFile)navigationElement.copy();
+        file = (PsiFile)navigationElement.copy();
       }
-      return (PsiFile)origFile.copy();
+      else {
+        file = (PsiFile)origFile.copy();
+      }
     }
     else {
-      PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
+      file = PsiFileFactory.getInstance(project).createFileFromText(
         origFile.getName(), origFile.getLanguage(), manager.getUnescapedText(origFile),
         false, true, true, origFile.getVirtualFile());
       file.putUserData(ORIGINAL_FILE_FOR_INJECTION, origFile);
-      return file;
     }
+    file.putUserData(PsiFileFactory.ORIGINAL_FILE, origFile);
+    return file;
   }
 
   private static class ModPsiUpdaterImpl implements ModPsiUpdater, DocumentListener, Disposable {

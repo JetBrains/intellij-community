@@ -28,21 +28,26 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.K2J2K
 import org.jetbrains.kotlin.idea.configuration.ExperimentalFeatures.NewJ2k
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.j2k.OldJ2kPostProcessor
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
@@ -53,6 +58,7 @@ class JavaToKotlinAction : AnAction() {
     object Handler {
         val title: String = KotlinBundle.message("action.j2k.name")
 
+        @OptIn(KtAllowAnalysisOnEdt::class)
         fun convertFiles(
             files: List<PsiJavaFile>,
             project: Project,
@@ -66,12 +72,9 @@ class JavaToKotlinAction : AnAction() {
             var converterResult: FilesResult? = null
 
             fun convertWithStatistics() {
-                val converter =
-                    if (forceUsingOldJ2k) OldJavaToKotlinConverter(project, settings)
-                    else J2kConverterExtension.extension(NewJ2k.isEnabled).createJavaToKotlinConverter(project, module, settings)
-                val postProcessor =
-                    if (forceUsingOldJ2k) OldJ2kPostProcessor()
-                    else J2kConverterExtension.extension(NewJ2k.isEnabled).createPostProcessor()
+                val j2kKind = getJ2kKind(forceUsingOldJ2k)
+                val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
+                val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
                 val progressIndicator = ProgressManager.getInstance().progressIndicator!!
 
                 val conversionTime = measureTimeMillis {
@@ -80,7 +83,9 @@ class JavaToKotlinAction : AnAction() {
                 val linesCount = runReadAction {
                     javaFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
                 }
-                J2KFusCollector.log(ConversionType.FILES, NewJ2k.isEnabled, conversionTime, linesCount, javaFiles.size)
+
+                // TODO: Support K2 J2K in FUS
+                J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
@@ -90,23 +95,33 @@ class JavaToKotlinAction : AnAction() {
             val externalCodeUpdate =
                 prepareExternalCodeUpdate(project, externalCodeProcessing, enableExternalCodeProcessing, askExternalCodeProcessing)
 
-            return project.executeWriteCommand(KotlinBundle.message("action.j2k.task.name"), null) {
-                CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
-
-                val newFiles = saveResults(javaFiles, result.results)
-                    .map { it.toPsiFile(project) as KtFile }
-                    .onEach { it.commitAndUnblockDocument() }
-
-                externalCodeUpdate?.invoke(newFiles)
-
-                PsiDocumentManager.getInstance(project).commitAllDocuments()
-
-                newFiles.singleOrNull()?.let {
-                    FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
+            lateinit var newFiles: List<KtFile>
+            CommandProcessor.getInstance().runUndoTransparentAction {
+                newFiles = project.executeWriteCommand {
+                    CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
+                    saveResults(javaFiles, result.results)
+                        .map { it.toPsiFile(project) as KtFile }
+                        .onEach { it.commitAndUnblockDocument() }
                 }
 
-                newFiles
+                val contextElement = newFiles.firstOrNull() ?: return@runUndoTransparentAction
+                allowAnalysisOnEdt {
+                    analyze(contextElement) {
+                        externalCodeProcessing?.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
+                    }
+                }
+
+                project.executeWriteCommand {
+                    CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
+                    externalCodeUpdate?.invoke()
+                    PsiDocumentManager.getInstance(project).commitAllDocuments()
+                    newFiles.singleOrNull()?.let {
+                        FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
+                    }
+                }
             }
+
+            return newFiles
         }
 
         private fun prepareExternalCodeUpdate(
@@ -114,10 +129,10 @@ class JavaToKotlinAction : AnAction() {
             processing: ExternalCodeProcessing?,
             isEnabled: Boolean,
             shouldAsk: Boolean
-        ): ((List<KtFile>) -> Unit)? {
+        ): (() -> Unit)? {
             if (!isEnabled || processing == null) return null
 
-            var result: ((List<KtFile>) -> Unit)? = null
+            var result: (() -> Unit)? = null
             val question = KotlinBundle.message("action.j2k.correction.required")
 
             if (!shouldAsk || Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES) {
@@ -133,6 +148,9 @@ class JavaToKotlinAction : AnAction() {
 
         private fun runSynchronousProcess(project: Project, process: () -> Unit): Boolean =
             ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, /* canBeCanceled = */ true, project)
+
+        private fun <T> Project.executeWriteCommand(command: () -> T): T =
+            executeWriteCommand(KotlinBundle.message("action.j2k.task.name"), groupId = null, command)
 
         private fun saveResults(javaFiles: List<PsiJavaFile>, convertedTexts: List<String>): List<VirtualFile> {
             fun uniqueKotlinFileName(javaFile: VirtualFile): String {
@@ -202,7 +220,8 @@ class JavaToKotlinAction : AnAction() {
             showNothingToConvertErrorMessage(project)
             return
         }
-        if (!J2kConverterExtension.extension(NewJ2k.isEnabled).doCheckBeforeConversion(project, module)) return
+        val j2kKind = getJ2kKind()
+        if (!J2kConverterExtension.extension(j2kKind).doCheckBeforeConversion(project, module)) return
         if (shouldSkipConversionOfErroneousCode(javaFiles, project)) return
         Handler.convertFiles(javaFiles, project, module)
     }
@@ -254,6 +273,8 @@ class JavaToKotlinAction : AnAction() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
+        if (KotlinPluginModeProvider.isK2Mode() && !K2J2K.isEnabled) return false
+
         if (KotlinPlatformUtils.isCidr) return false
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
         val project = e.project ?: return false
@@ -280,4 +301,10 @@ class JavaToKotlinAction : AnAction() {
 
         return files.any(::isWritableJavaFile)
     }
+}
+
+private fun getJ2kKind(forceUsingOldJ2k: Boolean = false): J2kConverterExtension.Kind = when {
+    KotlinPluginModeProvider.isK2Mode() -> K2
+    forceUsingOldJ2k || !NewJ2k.isEnabled -> K1_OLD
+    else -> K1_NEW
 }

@@ -161,6 +161,8 @@
     <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
 
     <json.jsonStandardComplianceProvider implementation="com.intellij.json.jsonc.JsoncComplianceProvider"/>
+
+    <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">

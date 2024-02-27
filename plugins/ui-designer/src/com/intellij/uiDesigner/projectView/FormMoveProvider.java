@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 
-public class FormMoveProvider extends MoveHandlerDelegate {
+public final class FormMoveProvider extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(FormMoveProvider.class);
 
   @Override

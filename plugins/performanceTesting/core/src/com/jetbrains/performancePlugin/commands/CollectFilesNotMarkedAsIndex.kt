@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -85,7 +84,7 @@ class CollectFilesNotMarkedAsIndex(text: String, line: Int) : PerformanceCommand
           }
 
           checkIndexed(fileOrDir, false, "has no indexing timestamp") {
-            val indexedFlagSetOrDisabled = VfsData.isIndexedFlagDisabled() || IndexingFlag.isFileIndexed(it, indexingRequest.getFileIndexingStamp(fileOrDir))
+            val indexedFlagSetOrDisabled = IndexingFlag.isIndexedFlagDisabled() || IndexingFlag.isFileIndexed(it, indexingRequest.getFileIndexingStamp(fileOrDir))
             val hasIndexingStamp = IndexingStamp.hasIndexingTimeStamp(it.id)
 
             // TODO-ank: should be (indexedFlagSetOrDisabled && hasIndexingStamp) || ProjectCoreUtil.isProjectOrWorkspaceFile(it, it.fileType)

@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 
-public class KotlinBuildErrorNotification extends BuildErrorNotification {
+public final class KotlinBuildErrorNotification extends BuildErrorNotification {
   public KotlinBuildErrorNotification() {
     super("kotlin", "kt", RunnerBundle.message("build.event.title.kotlin.compiler"));
   }

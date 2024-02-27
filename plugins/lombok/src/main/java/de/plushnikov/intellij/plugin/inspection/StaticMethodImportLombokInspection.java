@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Plushnikov Michail
  */
-public class StaticMethodImportLombokInspection extends LombokJavaInspectionBase {
+public final class StaticMethodImportLombokInspection extends LombokJavaInspectionBase {
 
   @NotNull
   @Override

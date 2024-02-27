@@ -8,7 +8,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
+public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
 
   @NotNull
   @Override

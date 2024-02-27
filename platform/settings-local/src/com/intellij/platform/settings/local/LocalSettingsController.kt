@@ -55,7 +55,7 @@ private class LocalSettingsController : DelegatedSettingsController {
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult {
     operate(key, internalOperation = { map, _ ->
       map.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
-      return SetResult.STOP
+      return SetResult.DONE
     })
     return SetResult.INAPPLICABLE
   }
@@ -77,7 +77,7 @@ private class LocalSettingsController : DelegatedSettingsController {
         is NonShareableInternalTag -> {
           return internalOperation(storageManager.value.internalMap, componentName)
         }
-        is PersistenceStateComponentProperty -> {
+        is PersistenceStateComponentPropertyTag -> {
           // this tag is expected to be first
           componentName = tag.componentName
         }

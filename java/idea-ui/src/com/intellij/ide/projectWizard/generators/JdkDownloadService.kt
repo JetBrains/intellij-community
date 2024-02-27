@@ -2,11 +2,11 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -32,6 +33,31 @@ import java.util.concurrent.atomic.AtomicReference
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class JdkDownloadService(private val project: Project, private val coroutineScope: CoroutineScope) {
+  @RequiresEdt
+  fun setupInstallableSdk(downloadTask: SdkDownloadTask): Sdk {
+    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
+    val sdk = AtomicReference<Sdk>()
+
+    model.createIncompleteSdk(JavaSdkImpl.getInstance(), downloadTask) {
+      sdk.set(it)
+      ApplicationManager.getApplication().runWriteAction {
+        ProjectJdkTable.getInstance().addJdk(it)
+      }
+    }
+
+    return sdk.get()
+  }
+
+  fun downloadSdk(sdk: Sdk) {
+    val model = ProjectStructureConfigurable.getInstance(project).projectJdksModel
+
+    coroutineScope.launch(Dispatchers.EDT) {
+      withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
+        model.downloadSdk(sdk)
+      }
+    }
+  }
+
   private fun scheduleSetupInstallableSdk(project: Project,
                                           downloadTask: SdkDownloadTask,
                                           sdkDownloadedFuture: CompletableFuture<Boolean>,
@@ -49,7 +75,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
       val tracker = SdkDownloadTracker.getInstance()
       val sdk = sdkReference.get()
       if (null != sdk) {
-        val registered = tracker.tryRegisterDownloadingListener(sdk, project, EmptyProgressIndicator()) {
+        val registered = tracker.tryRegisterDownloadingListener(sdk, project, null) {
           sdkDownloadedFuture.complete(it)
         }
         if (!registered) {
@@ -80,7 +106,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
     coroutineScope.launch(Dispatchers.EDT) {
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdkDownloadTask.suggestedSdkName)) {
-        val (selectedFile) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.plannedHomeDir)
+        val (selectedFile) = JdkInstaller.getInstance().validateInstallDir(sdkDownloadTask.request.installDir.toString())
         if (selectedFile != null) {
           jdkDownloader.prepareDownloadTask(project, sdkDownloadTask.jdkItem, selectedFile) { downloadTask ->
             scheduleSetupInstallableSdk(project, downloadTask, sdkDownloadedFuture, setSdk)

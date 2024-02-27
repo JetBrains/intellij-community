@@ -550,11 +550,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
   public static @Nullable PsiJavaFileStub buildFileStub(@NotNull VirtualFile file, byte @NotNull [] bytes) throws ClsFormatException {
     try {
-      if (ClassFileViewProvider.isInnerClass(file, bytes)) {
-        return null;
-      }
-
       ClassReader reader = new ClassReader(bytes);
+      if (ClassFileViewProvider.isInnerClass(file, reader)) return null;
+
       String className = file.getNameWithoutExtension();
       String internalName = reader.getClassName();
       boolean module = internalName.equals("module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);

@@ -53,7 +53,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
   override fun setHomePath(path: String?) {
     modifiedSdkEntity.homePath = if (path != null) {
       val globalInstance = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-      globalInstance.getOrCreateFromUri(path)
+      globalInstance.getOrCreateFromUrl(path)
     } else {
       null
     }
@@ -84,7 +84,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
   override fun addRoot(root: VirtualFile, rootType: OrderRootType) {
     val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
     modifiedSdkEntity.roots.add(
-      SdkRoot(virtualFileUrlManager.getOrCreateFromUri(root.url), rootTypes[rootType.customName]!!)
+      SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(root.url), rootTypes[rootType.customName]!!)
     )
   }
 

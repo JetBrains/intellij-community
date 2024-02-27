@@ -146,10 +146,14 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 }
 
-@State(name = "PropertyService", reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE,
+@State(name = AppPropertyService.COMPONENT_NAME, reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE,
                                                                               usePathMacroManager = false)])
 @Internal
-class AppPropertyService : BasePropertyService()
+class AppPropertyService : BasePropertyService() {
+  companion object {
+    const val COMPONENT_NAME = "PropertyService"
+  }
+}
 
 @State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE,
                                                                                   usePathMacroManager = false)])

@@ -635,7 +635,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         parent.revalidate()
         currentFocusComponent?.requestFocusInWindow()
       }
-      else -> throw IllegalStateException("Unknown container: $parent")
+      else -> LOG.error("Unknown container: $parent")
     }
     dispose()
   }

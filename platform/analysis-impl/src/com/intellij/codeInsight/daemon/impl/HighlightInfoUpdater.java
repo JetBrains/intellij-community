@@ -50,7 +50,8 @@ final class HighlightInfoUpdater implements Disposable {
   private static final Key<Map<PsiFile, Map<Object, ToolHighlights>>> VISITED_PSI_ELEMENTS = Key.create("VISITED_PSI_ELEMENTS");
 
   static class ToolHighlights {
-    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap(); //new ConcurrentHashMap<>();
+    final Map<PsiElement, List<? extends HighlightInfo>> elementHighlights = CollectionFactory.createConcurrentSoftMap(evicted -> removeEvicted(evicted));
+
     @NotNull ToolLatencies latencies = new ToolLatencies(0,0,0);
   }
   record ToolLatencies(
@@ -73,13 +74,22 @@ final class HighlightInfoUpdater implements Disposable {
 
   HighlightInfoUpdater(Project project) {
     FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
-    Disposer.register(this, () -> {
-      fileManager.forEachCachedDocument(document -> document.putUserData(VISITED_PSI_ELEMENTS, null));
-    });
+    Disposer.register(this, () ->
+      fileManager.forEachCachedDocument(document -> document.putUserData(VISITED_PSI_ELEMENTS, null)));
   }
 
   @Override
   public void dispose() {
+  }
+
+  private static void removeEvicted(@NotNull List<? extends HighlightInfo> evicted) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Disposing evicted  " + evicted);
+    }
+    for (HighlightInfo info : evicted) {
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter != null) highlighter.dispose();
+    }
   }
 
   @NotNull
@@ -107,7 +117,7 @@ final class HighlightInfoUpdater implements Disposable {
   }
 
   @NotNull
-  HighlightersRecycler removeOrRecycleInvalidPsiElements(@NotNull PsiFile psiFile) {
+  HighlightersRecycler removeOrRecycleInvalidPsiElements(@NotNull PsiFile psiFile, @NotNull Object origin, boolean removeInspectionHighlights, boolean removeAnnotatorHighlights) {
     PsiFile hostFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
     Document hostDocument = hostFile.getFileDocument();
     Map<PsiFile, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(hostDocument);
@@ -130,7 +140,7 @@ final class HighlightInfoUpdater implements Disposable {
         }
       }
       if (LOG.isDebugEnabled()) {
-        LOG.debug("removeOrRecycleInvalidPsiElements: removed invalid file: "+psi+" ("+removed+" highlighters removed)");
+        LOG.debug("removeOrRecycleInvalidPsiElements: removed invalid file: "+psi+" ("+removed+" highlighters removed); from "+origin);
       }
       return true;
     });
@@ -140,22 +150,24 @@ final class HighlightInfoUpdater implements Disposable {
       return toReuse;
     }
     for (Map.Entry<Object, ToolHighlights> toolEntry: map.entrySet()) {
+      Object toolId = toolEntry.getKey();
       ToolHighlights toolHighlights = toolEntry.getValue();
-      toolHighlights.elementHighlights.entrySet().removeIf(entry -> {
-        PsiElement psiElement = entry.getKey();
+      toolHighlights.elementHighlights.replaceAll((psiElement, infos) -> {
         if (psiElement == FAKE_ELEMENT || psiElement.isValid()) {
-          return false;
+          return infos;
         }
-        for (HighlightInfo info : entry.getValue()) {
+        return List.copyOf(ContainerUtil.filter(infos, info -> {
           RangeHighlighterEx highlighter = info.getHighlighter();
-          if (highlighter != null) {
+          if (highlighter != null && (info.isFromAnnotator() && removeAnnotatorHighlights ||
+                                      isInspectionToolId(toolId) && removeInspectionHighlights)) {
             if (LOG.isDebugEnabled()) {
-              LOG.debug("removeOrRecycleInvalidPsiElements: recycle " + info + " for " + psiElement);
+              LOG.debug("removeOrRecycleInvalidPsiElements: recycle " + info + " for invalid " + psiElement + " from " + origin);
             }
             toReuse.recycleHighlighter(highlighter);
+            return false;
           }
-        }
-        return true;
+          return true;
+        }));
       });
     }
     return toReuse;

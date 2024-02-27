@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -36,7 +36,7 @@ public final class InspectionTestUtil {
     for (Element problem1 : reportedProblems) {
       for (Element problem2 : reportedProblems) {
         if (problem1 != problem2 && compareProblemWithExpected(problem1, problem2, checkRange)) {
-          Assert.fail("Duplicated problems reported: " + JDOMUtil.writeDocument(new Document(problem1), "\n"));
+          Assert.fail("Duplicated problems reported: " + JDOMUtil.writeDocument(new Document(problem1)));
         }
       }
     }
@@ -57,12 +57,12 @@ public final class InspectionTestUtil {
       }
 
       Document missing = new Document(expectedProblem.clone());
-      problems.add("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing, "\n"));
+      problems.add("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing));
     }
 
     for (Element reportedProblem : reportedProblems) {
       Document extra = new Document(reportedProblem.clone());
-      problems.add("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra, "\n"));
+      problems.add("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra));
     }
 
     if (!problems.isEmpty()) {

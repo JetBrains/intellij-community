@@ -180,10 +180,10 @@ class VirtualFileUrlManagerTest {
 
   @Test
   fun `check from path`() {
-    assertEquals("file://", virtualFileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl("")).url)
+    assertEquals("file://", virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("")).url)
 
     fun assertUrlFromPath(path: String) {
-      assertEquals(VfsUtil.pathToUrl(path), virtualFileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(path)).url)
+      assertEquals(VfsUtil.pathToUrl(path), virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(path)).url)
     }
 
     assertUrlFromPath("/main/a.jar")
@@ -194,14 +194,14 @@ class VirtualFileUrlManagerTest {
 
   @Test
   fun `check normalize slashes`() {
-    assertEquals("jar://C:/Users/X/a.txt", virtualFileManager.getOrCreateFromUri("jar://C:/Users\\X\\a.txt").url)
+    assertEquals("jar://C:/Users/X/a.txt", virtualFileManager.getOrCreateFromUrl("jar://C:/Users\\X\\a.txt").url)
   }
 
   private fun assertFilePath(expectedResult: String?, url: String) {
-    assertEquals(expectedResult, virtualFileManager.getOrCreateFromUri(url).presentableUrl)
+    assertEquals(expectedResult, virtualFileManager.getOrCreateFromUrl(url).presentableUrl)
   }
 
   private fun roundTrip(url: String) {
-    assertEquals(url, virtualFileManager.getOrCreateFromUri(url).url)
+    assertEquals(url, virtualFileManager.getOrCreateFromUrl(url).url)
   }
 }

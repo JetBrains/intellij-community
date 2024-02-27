@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.logging
 
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiElement
  * "unspecified" state, e.g. where there is no preferred logger selected.
  */
 class UnspecifiedLogger : JvmLogger {
+  override val id: String = UNSPECIFIED_LOGGER_ID
   override val loggerTypeName: String = "Unspecified"
   override val priority: Int = 1000
 
@@ -27,9 +29,9 @@ class UnspecifiedLogger : JvmLogger {
 
   override fun createLogger(project: Project, clazz: PsiClass): PsiElement = throw UnsupportedOperationException()
 
-  override fun toString(): String = UNSPECIFIED_LOGGER_NAME
+  override fun toString(): String = JavaBundle.message("java.configurable.logger.unspecified")
 
   companion object {
-    const val UNSPECIFIED_LOGGER_NAME: String = "Unspecified"
+    const val UNSPECIFIED_LOGGER_ID: String = "Unspecified"
   }
 }

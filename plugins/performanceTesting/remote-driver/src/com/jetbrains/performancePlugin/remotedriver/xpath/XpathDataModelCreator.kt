@@ -319,7 +319,7 @@ internal class XpathDataModelCreator(private val textToKeyCache: TextToKeyCache,
 fun Element.addIcon(iconName: String, size: Int, onClickFunction: String) {
   val doc = this.ownerDocument
   val icon = doc.createElement("img")
-  icon.setAttribute("src", "img/$iconName.png")
+  icon.setAttribute("src", "static/img/$iconName.png")
   icon.setAttribute("width", size.toString())
   icon.setAttribute("height", size.toString())
 

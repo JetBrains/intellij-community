@@ -82,7 +82,14 @@ public open class VirtualFileIndex internal constructor(
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
+  override fun findEntitiesByUrl(fileUrl: VirtualFileUrl): Sequence<WorkspaceEntity> =
+    vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
+      val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
+      entityData.createEntity(entityStorage)
+    } ?: emptySequence()
+
+  @OptIn(EntityStorageInstrumentationApi::class)
+  public fun findEntitiesToPropertyNameByUrl(fileUrl: VirtualFileUrl): Sequence<Pair<WorkspaceEntity, String>> =
     vfu2EntityId[fileUrl]?.asSequence()?.mapNotNull {
       val entityData = entityStorage.entityDataById(it.value) ?: return@mapNotNull null
       entityData.createEntity(entityStorage) to it.key.propertyName

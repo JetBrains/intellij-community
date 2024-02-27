@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * "Rename"-Handler Vetoer to disable renaming not supported lombok generated  methods
  */
-public class LombokElementRenameVetoHandler implements RenameHandler {
+public final class LombokElementRenameVetoHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);

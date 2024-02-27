@@ -27,6 +27,11 @@ interface StateStorageManager {
 
   fun expandMacro(collapsedPath: String): Path
 
+  fun collapseMacro(path: String): String
+
+  @get:Internal
+  val streamProvider: StreamProvider
+
   @ApiStatus.ScheduledForRemoval
   @Deprecated(level = DeprecationLevel.ERROR, message = "Use expandMacro(collapsedPath)", replaceWith = ReplaceWith("expandMacro(collapsedPath)"))
   fun expandMacros(collapsedPath: String): String = expandMacro(collapsedPath).invariantSeparatorsPathString

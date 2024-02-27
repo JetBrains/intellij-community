@@ -21,10 +21,17 @@ interface Document {
 @Remote("com.intellij.openapi.editor.CaretModel")
 interface CaretModel {
   fun moveToLogicalPosition(position: LogicalPosition)
+
+  fun getLogicalPosition(): LogicalPosition
 }
 
 @Remote("com.intellij.openapi.editor.LogicalPosition")
-interface LogicalPosition
+interface LogicalPosition {
+
+  fun getLine(): Int
+
+  fun getColumn(): Int
+}
 
 fun Driver.logicalPosition(line: Int, column: Int): LogicalPosition {
   return new(LogicalPosition::class, line, column)

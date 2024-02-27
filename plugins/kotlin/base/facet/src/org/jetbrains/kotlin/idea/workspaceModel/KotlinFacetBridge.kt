@@ -30,20 +30,22 @@ class KotlinFacetBridge(
             moduleId = kotlinSettingsEntity.moduleId
             module = mutableStorage.resolve(kotlinSettingsEntity.moduleId)!!
             useProjectSettings = kotlinSettingsEntity.useProjectSettings
-            compilerArguments = kotlinSettingsEntity.compilerArguments
-            compilerSettings = kotlinSettingsEntity.compilerSettings
             implementedModuleNames = kotlinSettingsEntity.implementedModuleNames.toMutableList()
             dependsOnModuleNames = kotlinSettingsEntity.dependsOnModuleNames.toMutableList()
             additionalVisibleModuleNames = kotlinSettingsEntity.additionalVisibleModuleNames.toMutableSet()
             productionOutputPath = kotlinSettingsEntity.productionOutputPath
             testOutputPath = kotlinSettingsEntity.testOutputPath
-            kind = kotlinSettingsEntity.kind
             sourceSetNames = kotlinSettingsEntity.sourceSetNames.toMutableList()
             isTestModule = kotlinSettingsEntity.isTestModule
             externalProjectId = kotlinSettingsEntity.externalProjectId
             isHmppEnabled = kotlinSettingsEntity.isHmppEnabled
             pureKotlinSourceFolders = kotlinSettingsEntity.pureKotlinSourceFolders.toMutableList()
+            kind = kotlinSettingsEntity.kind
+            compilerArguments = kotlinSettingsEntity.compilerArguments
+            compilerSettings = kotlinSettingsEntity.compilerSettings
             targetPlatform = kotlinSettingsEntity.targetPlatform
+            externalSystemRunTasks = kotlinSettingsEntity.externalSystemRunTasks.toMutableList()
+            version = kotlinSettingsEntity.version
         }
     }
 

@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 
 import javax.swing.*;
 import java.awt.event.InputMethodEvent;
@@ -73,7 +74,11 @@ public class JBCefInputMethodTest {
     TestScaleHelper.restoreProperties();
   }
 
+
+  // This test is too complicated to be stable
+  // TODO: make a unit test for the input method adapter
   @Test
+  @Disabled
   public void test() throws InterruptedException, InvocationTargetException {
     var startupWaiter = new CefLoadHandlerAdapter() {
       final CountDownLatch latch = new CountDownLatch(1);

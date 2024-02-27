@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleDocumentationProvider implements DocumentationProvider {
+public final class GradleDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   @Override

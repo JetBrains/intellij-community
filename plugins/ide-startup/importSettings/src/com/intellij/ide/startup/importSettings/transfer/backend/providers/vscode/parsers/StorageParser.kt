@@ -33,13 +33,13 @@ class StorageParser(private val settings: Settings) {
       }
 
       val path = when (uri.scheme) {
-        "file" -> Path.of(uri)
-        "vscode-remote" -> fromWslPath(uri.schemeSpecificPart)
-        else -> {
-          logger.warn("Unknown scheme: ${uri.scheme}")
-          null
-        }
-      } ?: return null
+                   "file" -> Path.of(uri)
+                   "vscode-remote" -> fromWslPath(uri.schemeSpecificPart)
+                   else -> {
+                     logger.warn("Unknown scheme: ${uri.scheme}")
+                     null
+                   }
+                 } ?: return null
 
       val modifiedTime = path.toFile().listFiles()?.maxByOrNull { it.lastModified() }?.lastModified()
 
@@ -106,17 +106,11 @@ class StorageParser(private val settings: Settings) {
       }
 
       val workspaces = if (!workspacesNew.isNullOrEmpty()) workspacesNew else workspacesOld ?: return
-
-      workspaces.forEach { uri ->
-        try {
-          val res = parsePath(URI(uri))
-          if (res != null) {
-            settings.recentProjects.add(res)
-          }
-        }
-        catch (t: Throwable) {
-          logger.warn(t)
-        }
+      for (uri in workspaces) {
+        val shouldBreak = logger.runAndLogException {
+          !settings.addRecentProjectIfNeeded { parsePath(URI(uri)) }
+        } ?: false
+        if (shouldBreak) break
       }
     }
     catch (t: Throwable) {

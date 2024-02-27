@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -270,13 +270,16 @@ final class PersistentFSConnector {
         }
         throw mainEx;
       }
+
+      //VersionUpdatedException extends CorruptedException, so we must look for VersionUpdated first:
+      if (!findCauseAndSuppressed(e, VersionUpdatedException.class).isEmpty()) {
+        throw new VFSInitException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
+      }
+
       if (!findCauseAndSuppressed(e, CorruptedException.class).isEmpty()) {
         //'not closed properly' is the most likely explanation of corrupted enumerator -- but not the only one,
         // it could also be a code bug
         throw new VFSInitException(NOT_CLOSED_PROPERLY, "Some of storages were corrupted", e);
-      }
-      if (!findCauseAndSuppressed(e, VersionUpdatedException.class).isEmpty()) {
-        throw new VFSInitException(IMPL_VERSION_MISMATCH, "Some of storages versions were changed", e);
       }
 
       throw new VFSInitException(UNRECOGNIZED, "VFS init failure of unrecognized category: " + errorMessage, e);

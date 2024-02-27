@@ -203,21 +203,44 @@ class PyAddCondaPanelModel(val targetConfiguration: TargetEnvironmentConfigurati
    * @return either null (if no error) or localized error string
    */
   fun getValidationError(): @Nls String? {
+    val envIdentities = getEnvIdentities().getOrElse { return it.message ?: PyBundle.message("python.sdk.conda.problem.running") }
 
-    val envIdentities = condaEnvs.getOrElse {
-      return it.message ?: PyBundle.message("python.sdk.conda.problem.running")
-    }.envs.map { it.envIdentity }.filterIsInstance<PyCondaEnvIdentity.NamedEnv>().map { it.envName }
+    return if (showCreateNewEnvPanelRoProp.get()) {
+      validateEnvIdentitiesName(envIdentities)
+    }
+    else {
+      null
+    }
+  }
 
+  /**
+   * This method ignores the error if condaEnvs are not loaded yet
+   * @return either null (if no error in name validation) or localized error string
+   */
+  fun getEnvIdentitiesNameValidationError(): @Nls String? {
+    val envIdentities = getEnvIdentities().getOrElse { return null }
+    return validateEnvIdentitiesName(envIdentities)
+  }
 
-    if (showCreateNewEnvPanelRoProp.get()) {
-      // Create new env
-      val newEnvName = newEnvNameRwProperty.get()
-      if (!newEnvName.matches(notEmptyRegex)) {
-        return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
-      }
-      else if (newEnvName in envIdentities) {
-        return PyBundle.message("python.sdk.conda.problem.env.name.used")
-      }
+  /**
+   * This method returns envIdentities from loaded envs
+   */
+  private fun getEnvIdentities(): Result<List<PyCondaEnvIdentity.NamedEnv>> =
+    condaEnvs.map { loadedEnvs ->
+      loadedEnvs.envs.map { it.envIdentity }.filterIsInstance<PyCondaEnvIdentity.NamedEnv>()
+    }
+
+  /**
+   * @return either null (if no error in name validation) or localized error string
+   */
+  private fun validateEnvIdentitiesName(envIdentities: List<PyCondaEnvIdentity.NamedEnv>): @Nls String? {
+    // Create new env
+    val newEnvName = newEnvNameRwProperty.get()
+    if (!newEnvName.matches(notEmptyRegex)) {
+      return PyBundle.message("python.sdk.conda.problem.env.empty.invalid")
+    }
+    else if (newEnvName in envIdentities.map { it.envName }) {
+      return PyBundle.message("python.sdk.conda.problem.env.name.used")
     }
     return null
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
-import com.google.common.html.HtmlEscapers
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.lang.documentation.DocumentationSettings
@@ -19,22 +18,17 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtParameterDefaultValueRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KtRendererBodyMemberScopeProvider
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendHighlighted
+import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.createHighlightingManager
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.generateJavadoc
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -69,16 +63,6 @@ internal class KotlinDocumentationTarget(val element: PsiElement, private val or
         @Suppress("HardCodedStringLiteral") val html =
             computeLocalDocumentation(element, originalElement, false) ?: return null
         return DocumentationResult.documentation(html)
-    }
-
-    companion object {
-        internal val RENDERING_OPTIONS = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-            returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
-            propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
-            bodyMemberScopeProvider = KtRendererBodyMemberScopeProvider.NONE
-            singleTypeParameterRenderer = KtSingleTypeParameterSymbolRenderer.WITH_COMMA_SEPARATED_BOUNDS
-            parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
-        }
     }
 }
 
@@ -177,7 +161,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
 
         DocumentationManagerUtil.createHyperlink(link, it, highlighted, false, false)
         HtmlChunk.fragment(
-            HtmlChunk.icon("class", KotlinIcons.CLASS),
+            HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
             HtmlChunk.nbsp(),
             HtmlChunk.raw(link.toString()),
             HtmlChunk.br()
@@ -189,7 +173,7 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
         ?.takeIf { containingSymbol == null }
         ?.let {
             HtmlChunk.fragment(
-                HtmlChunk.icon("file", KotlinIcons.FILE),
+                HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
                 HtmlChunk.nbsp(),
                 HtmlChunk.text(it),
                 HtmlChunk.br()
@@ -211,9 +195,9 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
         // element is not an KtReferenceExpression, but KtClass of enum
         // so reference extracted from originalElement
         analyze(referenceExpression) {
-            val symbol = referenceExpression.mainReference.resolveToSymbol() as? KtNamedSymbol
+            val symbol = referenceExpression.resolveCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KtNamedSymbol
             val name = symbol?.name?.asString()
-            if (name != null) {
+            if (name != null && symbol is KtDeclarationSymbol) {
                 val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedClassSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
@@ -227,7 +211,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
                     }
                 }
 
-                renderKotlinDeclaration(element, false) {
+                renderKotlinSymbol(symbol, element, false, false) {
                     if (!quickNavigation && kdoc != null) {
                         description {
                             renderKDoc(kdoc.getDefaultSection())
@@ -263,11 +247,11 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
         // it's not possible to create symbol for function type parameter, so we need to process this case separately
         // see KTIJ-22404 and KTIJ-25653
         if (declaration is KtParameter && declaration.isFunctionTypeParameter) {
-            val definition = renderFunctionTypeParameter(declaration) ?: return
+            val definition = KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project)).renderFunctionTypeParameter(declaration) ?: return
 
             insert(KDocTemplate()) {
                 definition {
-                    append(definition.escape())
+                    append(definition)
                 }
             }
             return
@@ -276,31 +260,7 @@ private fun @receiver:Nls StringBuilder.renderKotlinDeclaration(
         val symbol = symbolFinder(declaration.getSymbol())
         if (symbol !is KtDeclarationSymbol) return
 
-        insert(KDocTemplate()) {
-            definition {
-                append(symbol.render(KotlinDocumentationTarget.RENDERING_OPTIONS).escape())
-            }
-
-            if (!onlyDefinition) {
-                description {
-                    renderKDoc(symbol, this)
-                }
-            }
-            getContainerInfo(declaration).toString().takeIf { it.isNotBlank() }?.let { info ->
-                containerInfo {
-                    append(info)
-                }
-            }
-            preBuild()
-        }
-    }
-}
-
-context(KtAnalysisSession)
-private fun renderFunctionTypeParameter(parameter: KtParameter): String? = with(KotlinDocumentationTarget.RENDERING_OPTIONS) {
-    prettyPrint {
-        parameter.nameAsName?.let { name -> withSuffix(": ") { nameRenderer.renderName(name, symbol = null, printer = this) } }
-        parameter.typeReference?.getKtType()?.let { type -> typeRenderer.renderType(type, printer = this) }
+        renderKotlinSymbol(symbol, declaration, onlyDefinition, true, preBuild)
     }
 }
 
@@ -347,4 +307,30 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
     return null
 }
 
-private fun String.escape(): String = HtmlEscapers.htmlEscaper().escape(this)
+context(KtAnalysisSession)
+private fun @receiver:Nls StringBuilder.renderKotlinSymbol(symbol: KtDeclarationSymbol,
+                                                           declaration: KtDeclaration,
+                                                           onlyDefinition: Boolean,
+                                                           passContainerInfo: Boolean = true,
+                                                           preBuild: KDocTemplate.() -> Unit = {}) {
+    insert(KDocTemplate()) {
+        definition {
+            append(symbol.render(KotlinIdeDeclarationRenderer(createHighlightingManager(declaration.project), symbol).renderer))
+        }
+
+        if (!onlyDefinition) {
+            description {
+                renderKDoc(symbol, this)
+            }
+        }
+
+        if (passContainerInfo) {
+            getContainerInfo(declaration).toString().takeIf { it.isNotBlank() }?.let { info ->
+                containerInfo {
+                    append(info)
+                }
+            }
+        }
+        preBuild()
+    }
+}

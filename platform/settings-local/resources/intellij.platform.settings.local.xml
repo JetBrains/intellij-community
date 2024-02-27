@@ -5,6 +5,7 @@
       serviceImplementation="com.intellij.platform.settings.local.SettingsControllerMediator"
     />
     <settingsController id="local" implementation="com.intellij.platform.settings.local.LocalSettingsController" order="last"/>
+    <settingsController id="jsonMirror" implementation="com.intellij.platform.settings.local.JsonMirrorController"/>
 
     <cachesInvalidator implementation="com.intellij.platform.settings.local.CacheStateStorageInvalidator"/>
   </extensions>

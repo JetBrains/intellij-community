@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 /**
  * @author Max Medvedev
  */
-public class GrCreateSubclassAction extends CreateSubclassAction {
+public final class GrCreateSubclassAction extends CreateSubclassAction {
   private static final Logger LOG = Logger.getInstance(GrCreateSubclassAction.class);
 
   @Override

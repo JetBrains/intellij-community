@@ -29,7 +29,7 @@ public class GradleOperationDescriptorPropagationTest extends GradleImportingTes
       .registerExtension(taskIdRevealingModelContributor, getTestRootDisposable());
 
     createSettingsFile("");
-    importProjectUsingSingeModulePerGradleProject();
+    importProject();
 
     ProjectDataManager manager = ProjectDataManager.getInstance();
     final Collection<ExternalProjectInfo> data = manager.getExternalProjectsData(myProject, GradleConstants.SYSTEM_ID);

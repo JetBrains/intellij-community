@@ -182,7 +182,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     fun createEmptySdkEntity(name: String, type: String, homePath: String = "", version: String? = null): SdkEntity.Builder {
       val sdkEntitySource = createEntitySourceForSdk()
       val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-      val homePathVfu = virtualFileUrlManager.getOrCreateFromUri(homePath)
+      val homePathVfu = virtualFileUrlManager.getOrCreateFromUrl(homePath)
       return SdkEntity(name, type, emptyList(), "", sdkEntitySource) {
         this.homePath = homePathVfu
         this.version = version
@@ -191,7 +191,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
     fun createEntitySourceForSdk(): EntitySource {
       val virtualFileUrlManager = GlobalWorkspaceModel.getInstance().getVirtualFileUrlManager()
-      val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUri(
+      val globalLibrariesFile = virtualFileUrlManager.getOrCreateFromUrl(
         PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.SDK_FILE_NAME).absolutePath)
       return JpsGlobalFileEntitySource(globalLibrariesFile)
     }

@@ -177,8 +177,11 @@ public final class RunContentBuilder extends RunTab {
           }
         };
       }
-      if (myUi instanceof RunnerLayoutUiImpl) {
-        ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(isVerticalToolbar);
+      if (myUi instanceof RunnerLayoutUiImpl uiImpl) {
+        uiImpl.setLeftToolbarVisible(isVerticalToolbar);
+        if (Registry.is("debugger.toolbar.before.tabs", true)) {
+          uiImpl.setTopLeftActionsBefore(true);
+        }
       }
       if (isVerticalToolbar) {
         myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);

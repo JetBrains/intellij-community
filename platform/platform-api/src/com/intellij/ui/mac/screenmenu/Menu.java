@@ -13,6 +13,8 @@ import com.intellij.openapi.util.SimpleTimer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -99,11 +101,14 @@ public class Menu extends MenuItem {
     // And then %@ is replaced with $CFBundleName. Since strings are constant we will find menu item just by it's title.
 
     List<String> replace = new ArrayList<>(7);
-    ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
-    String ide = names.getProductName();
+    String bundleName = getBundleName();
+    if (bundleName == null || bundleName.isEmpty()) {
+      ApplicationNamesInfo names = ApplicationNamesInfo.getInstance();
+      bundleName = names.getProductName();
+    }
 
     replace.add("About.*");
-    replace.add(removeMnemonic(ActionsBundle.message("action.About.text")) + " " + ide);
+    replace.add(removeMnemonic(ActionsBundle.message("action.About.text")) + " " + bundleName);
 
     // NOTE: Check For Updates is installed via Foundation from MacAppProvider
     replace.add("Check for Updates...");
@@ -121,8 +126,8 @@ public class Menu extends MenuItem {
     replace.add("Services");
     replace.add(removeMnemonic(CommonBundle.message("action.appmenu.services")));
 
-    replace.add("Hide " + ide);
-    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.hide_ide") + " " + ide));
+    replace.add("Hide " + bundleName);
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.hide_ide") + " " + bundleName));
 
     replace.add("Hide Others");
     replace.add(removeMnemonic(CommonBundle.message("action.appmenu.hide_others")));
@@ -131,7 +136,7 @@ public class Menu extends MenuItem {
     replace.add(removeMnemonic(CommonBundle.message("action.appmenu.show_all")));
 
     replace.add("Quit.*");
-    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.quit") + " " + ide));
+    replace.add(removeMnemonic(CommonBundle.message("action.appmenu.quit") + " " + bundleName));
 
     nativeRenameAppMenuItems(ArrayUtilRt.toStringArray(replace));
   }
@@ -484,4 +489,20 @@ public class Menu extends MenuItem {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(Menu.class);
   }
+
+  private static String getBundleName() {
+    String bundleName;
+    final ID nativePool = Foundation.invoke("NSAutoreleasePool", "new");
+    try {
+      final ID bundle = Foundation.invoke("NSBundle", "mainBundle");
+      final ID dict = Foundation.invoke(bundle, "infoDictionary");
+      final ID nsBundleName = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleName"));
+      bundleName = Foundation.toStringViaUTF8(nsBundleName);
+    }
+    finally {
+      Foundation.invoke(nativePool, "release");
+    }
+    return bundleName;
+  }
 }
+

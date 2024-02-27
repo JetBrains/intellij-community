@@ -31,4 +31,3 @@ fun main(args: Array<String>) {
     //Breakpoint!
     del.foo(1)
 }
-// IGNORE_K2

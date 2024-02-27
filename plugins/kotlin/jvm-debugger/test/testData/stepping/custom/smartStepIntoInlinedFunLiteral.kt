@@ -85,4 +85,3 @@ class MyClass {
 }
 
 fun test() {}
-// IGNORE_K2

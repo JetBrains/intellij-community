@@ -20,7 +20,7 @@ import java.util.Arrays;
 
 import static org.jetbrains.plugins.groovy.util.LibrariesUtil.SOME_GROOVY_CLASS;
 
-public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
+public final class GroovyLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
   public static final LibraryKind GROOVY_KIND = LibraryKind.create("groovy");
 
   public GroovyLibraryPresentationProvider() {

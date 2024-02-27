@@ -20,10 +20,9 @@ interface VirtualFileCustomDataConsumer<TData : Any> : VirtualFileCustomDataSync
   /**
    * Called from the frontend side
    */
-  // TODO [A.Bukhonov] maybe make it suspend?
-  fun consumeValue(project: Project, virtualFile: VirtualFile, value: TData)
+  suspend fun consumeValue(project: Project, virtualFile: VirtualFile, value: TData)
 
-  fun consumeValueAny(project: Project, virtualFile: VirtualFile, value: Any) {
+  suspend fun consumeValueAny(project: Project, virtualFile: VirtualFile, value: Any) {
     @Suppress("UNCHECKED_CAST")
     consumeValue(project, virtualFile, value as TData)
   }

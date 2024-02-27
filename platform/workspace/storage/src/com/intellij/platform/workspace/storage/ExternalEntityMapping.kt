@@ -10,7 +10,7 @@ public interface ExternalEntityMapping<T> {
   /**
    * Returns all entities associated with the given [data].
    */
-  public fun getEntities(data: T): List<WorkspaceEntity>
+  public fun getEntities(data: T): Sequence<WorkspaceEntity>
 
   /**
    * Returns the first entity associated with the given [data] or `null` if there are no such entities.

@@ -148,7 +148,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @NotNull
   private final InputFilter myInputMessageFilter;
-  private volatile List<Filter> myPredefinedFilters = Collections.emptyList();
+  protected volatile List<Filter> myPredefinedFilters = Collections.emptyList();
 
   public ConsoleViewImpl(@NotNull Project project, boolean viewer) {
     this(project, GlobalSearchScope.allScope(project), viewer, true);
@@ -1169,7 +1169,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  void type(@NotNull Editor editor, @NotNull String text) {
+  protected void type(@NotNull Editor editor, @NotNull String text) {
     ThreadingAssertions.assertEventDispatchThread();
     flushDeferredText();
     SelectionModel selectionModel = editor.getSelectionModel();

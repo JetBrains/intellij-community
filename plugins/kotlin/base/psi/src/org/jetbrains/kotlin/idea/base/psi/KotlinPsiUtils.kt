@@ -219,6 +219,19 @@ fun KtModifierListOwner.hasInlineModifier(): Boolean =
 fun KtPrimaryConstructor.mustHaveValOrVar(): Boolean =
     containingClass()?.mustHaveOnlyPropertiesInPrimaryConstructor() ?: false
 
+fun KtPrimaryConstructor.isRedundant(): Boolean {
+    val containingClass = containingClass() ?: return false
+    return when {
+        valueParameters.isNotEmpty() -> false
+        annotations.isNotEmpty() -> false
+        modifierList?.text?.isBlank() == false -> false
+        isExpectDeclaration() -> false
+        containingClass.mustHaveNonEmptyPrimaryConstructor() -> false
+        containingClass.secondaryConstructors.isNotEmpty() -> false
+        else -> true
+    }
+}
+
 fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
     sequence {
         suspend fun SequenceScope<PsiElement>.visit(element: PsiElement) {
@@ -259,3 +272,6 @@ fun getCallElement(argument: KtValueArgument): KtCallElement? {
         argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
     }
 }
+
+val PsiElement.isInsideKtTypeReference: Boolean
+    get() = getNonStrictParentOfType<KtTypeReference>() != null

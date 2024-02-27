@@ -2,7 +2,6 @@
 package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.lang.documentation.DocumentationMarkup
-import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CONTENT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -13,8 +12,10 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasic
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 
-private val DOWNLOADS_ICON = HtmlChunk.tag("icon").attr("src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Download")
-private val LIKES_ICON = HtmlChunk.tag("icon").attr(".src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Like")
+private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
+  .attr("src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Download")
+private val LIKES_ICON = HtmlChunk.tag("icon")
+  .attr(".src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Like")
 
 
 class HuggingFaceHtmlBuilder(
@@ -27,16 +28,19 @@ class HuggingFaceHtmlBuilder(
   suspend fun build(): String {
     val headChunk = HtmlChunk.tag("head").child(HuggingFaceQuickDocStyles.styleChunk())
     val cardHeaderChunk = generateCardHeader(modelDataApiContent)
-    val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter(project).convert(modelCardContent) }
+    @NlsSafe val convertedHtml = readAction { HuggingFaceMarkdownToHtmlConverter(project).convert(modelCardContent) }
 
     val wrappedBodyContent = HtmlChunk.div()
       .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)
       .child(HtmlChunk.raw(convertedHtml))
 
+    val invisibleSpan = createInvisibleSpan(convertedHtml)
+
     val bodyChunk = HtmlChunk.tag("body")
       .children(
         cardHeaderChunk,
         wrappedBodyContent,
+        invisibleSpan
       )
 
     val htmlContent = HtmlChunk.tag("html").children(headChunk, bodyChunk)
@@ -46,6 +50,7 @@ class HuggingFaceHtmlBuilder(
 
   private fun generateCardHeader(modelInfo: HuggingFaceEntityBasicApiData): HtmlChunk {
     val modelNameWithIconRow = HtmlChunk.tag("h1")
+      .attr("style", "white-space: nowrap; word-break: keep-all;")
       .children(
         HtmlChunk.raw(modelInfo.itemId.replace("-", HuggingFaceQuickDocStyles.NBHP)),
         HtmlChunk.nbsp(),
@@ -55,7 +60,7 @@ class HuggingFaceHtmlBuilder(
     // modelPurpose chunk is not applicable for datasets
     val conditionalChunks = if (entityKind == HuggingFaceEntityKind.MODEL) {
       @NlsSafe val modelPurpose = modelInfo.pipelineTag
-      listOf(HtmlChunk.text(modelPurpose), HtmlChunk.nbsp(), HtmlChunk.nbsp())
+      listOf(HtmlChunk.text(modelPurpose), HtmlChunk.nbsp(2))
     } else {
       emptyList()
     }
@@ -65,16 +70,20 @@ class HuggingFaceHtmlBuilder(
       .children(
         *conditionalChunks.toTypedArray(),
         HtmlChunk.text(PyHuggingFaceBundle.message("updated.0", modelInfo.humanReadableLastUpdated())),
-        HtmlChunk.nbsp(), HtmlChunk.nbsp(),
-        DOWNLOADS_ICON, HtmlChunk.nbsp(),
+        HtmlChunk.nbsp(2),
+
+        DOWNLOADS_ICON,
+        HtmlChunk.raw(HuggingFaceQuickDocStyles.HAIR_SPACE),
         HtmlChunk.text(modelInfo.humanReadableDownloads()),
-        HtmlChunk.nbsp(), HtmlChunk.nbsp(),
-        LIKES_ICON, HtmlChunk.nbsp(),
-        HtmlChunk.text(modelInfo.humanReadableLikes()),
+        HtmlChunk.nbsp(2),
+
+        LIKES_ICON,
+        HtmlChunk.raw(HuggingFaceQuickDocStyles.HAIR_SPACE),
+        HtmlChunk.raw(modelInfo.humanReadableLikes()),
+        HtmlChunk.nbsp(),
       )
 
     val linkRow = HtmlChunk.tag("a")
-      .setClass(HuggingFaceQuickDocStyles.LINK_ROW_STYLE)
       .attr("href", HuggingFaceURLProvider.getEntityCardLink(modelInfo.itemId, entityKind).toString())
       .children(
         HtmlChunk.text(PyHuggingFaceBundle.getMessage("open.on.hugging.face")),
@@ -85,12 +94,31 @@ class HuggingFaceHtmlBuilder(
 
 
     val headerContainer = HtmlChunk.div()
-      .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)
+      .setClass(DocumentationMarkup.CLASS_DEFINITION)
+      .style("min-width: 1000px; ")
       .children(
         modelNameWithIconRow,
         modelInfoRow,
         linkRow,
       )
     return headerContainer
+  }
+
+  private fun createInvisibleSpan(convertedHtml: String): HtmlChunk {
+    // artificially increase content length, if it's too little
+    // is needed to get an adequate popup width
+    val htmlTagRegex = "<[^>]*>".toRegex()
+    val contentWithoutHtmlTags = convertedHtml.replace(htmlTagRegex, "")
+    val contentLength = contentWithoutHtmlTags.count()
+
+    val invisibleSpanLength = (800 - contentLength) / 8
+
+    return when {
+      invisibleSpanLength < 0 -> HtmlChunk.empty()
+      else -> {
+        @NlsSafe val invisibleSpan = HtmlChunk.nbsp(invisibleSpanLength)
+        return invisibleSpan
+      }
+    }
   }
 }

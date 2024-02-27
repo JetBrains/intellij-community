@@ -40,27 +40,31 @@ class TestJbService private constructor(): JbService {
     val dd2 = LocalDate.now().minusDays(2)
 
 
-    val main = TestProduct("Main", "версия", dM1, "main")
+    val main3 = TestProduct("Main", "версия", dM1, "main")
     val main2 = TestProduct("IdeaMain1", "версия", LocalDate.now())
+    val main4 = TestProduct("PyCharm Professional 2023.3.3-233.666", "верс 2023.3.3-233.666", LocalDate.now())
+    val main = TestProduct("PyCharm Professional", "верс 2023.3.3-233.666", LocalDate.now())
 
     val fresh = listOf(
       main,
-      TestProduct("Idea222", "версия", dM1),
-      TestProduct("Idea333", "версия", dM6),
-      TestProduct("Idea444", "версия", dD6),
-      TestProduct("Idea555", "версия", dD1),
-      TestProduct("Idea666", "версия", dY1),
-      TestProduct("Idea666", "версия", dY3),
-      TestProduct("Idea666", "версия", dd20),
-      TestProduct("Idea666", "версия", dd5),
-      TestProduct("Idea666", "версия", dd2),
+      main3,
+      TestProduct("Idea222", "верс 2023.1-233.111", dM1),
+      TestProduct("Idea333", "верс 2023.2.2-233.222", dM6),
+      TestProduct("Idea444", "верс 2023.3.3-233.333", dD6),
+      TestProduct("Idea555", "верс 2023.4.3-233.444", dD1),
+      TestProduct("Idea666", "верс 2023.5.3-233.555", dY1),
+      TestProduct("Idea666", "верс 2023.6.3-233.666", dY3),
+      TestProduct("Idea666", "верс 2023.7.3-233.777", dd20),
+      TestProduct("Idea666", "верс 2023.8.3-233.888", dd5),
+      TestProduct("Idea666", "верс 2023.9.3-233.999", dd2),
     )
     val old = listOf(
-      TestProduct("Idea222", "версия", LocalDate.now()),
-      TestProduct("Idea333", "версия", LocalDate.now()),
-      TestProduct("Idea444", "версия", LocalDate.now()),
-      TestProduct("Idea555", "версия", LocalDate.now()),
-      TestProduct("Idea666", "версия", LocalDate.now()))
+      main4,
+      TestProduct("Idea222", "верс 2023.1-233.111", LocalDate.now()),
+      TestProduct("Idea333", "верс 2023.2.2-233.222", LocalDate.now()),
+      TestProduct("Idea444", "верс 2023.3.2-233.333", LocalDate.now()),
+      TestProduct("Idea555", "верс 2023.4.2-233.444", LocalDate.now()),
+      TestProduct("Idea666", "верс 2023.5.2-233.555", LocalDate.now()))
 
 
     val children = listOf(
@@ -77,6 +81,8 @@ class TestJbService private constructor(): JbService {
              TestChildrenSettings("Build Solution", null, "⇧F12"),
              TestChildrenSettings("Go", "built-in", "⇧F12")),
     )
+
+    val oneChildren = listOf( listOf( TestChildrenSettings ("Go to EverythingEve rything")))
 
     val children1 = listOf(
       listOf(TestChildrenSettings("Go to EverythingEve rything"),
@@ -111,7 +117,7 @@ class TestJbService private constructor(): JbService {
     val settings1 = listOf(
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
-      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugin_", list = oneChildren),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
 
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
@@ -125,8 +131,8 @@ class TestJbService private constructor(): JbService {
 
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children2),
-      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
-                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugin_",
+                              "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", oneChildren),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                               "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),

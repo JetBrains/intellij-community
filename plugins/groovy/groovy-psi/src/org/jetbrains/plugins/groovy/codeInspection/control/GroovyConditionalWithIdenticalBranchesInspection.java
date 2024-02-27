@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspection {
+public final class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {

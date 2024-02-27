@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyNegatedConditionalInspection extends BaseInspection {
+public final class GroovyNegatedConditionalInspection extends BaseInspection {
 
   @Override
   @Nullable

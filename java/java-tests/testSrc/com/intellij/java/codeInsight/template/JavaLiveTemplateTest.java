@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -423,7 +422,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                     }
                                 }""");
     myFixture.type("\t");
-    assertTrue(DefaultGroovyMethods.equals(myFixture.getLookupElementStrings(), new ArrayList<>(Arrays.asList("value", "value1"))));
+    assertEquals(myFixture.getLookupElementStrings(), List.of("value", "value1"));
   }
 
   public void testEscapeStringCharactersInSoutv() {
@@ -632,7 +631,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
                                 s.toString();
                               }
                             }""");
-    assertTrue(!DefaultGroovyMethods.asBoolean(myFixture.getLookup()));
+    assertNull(myFixture.getLookup());
   }
 
   public void testSaveAsLiveTemplateForAnnotationValues() {
@@ -724,7 +723,7 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
       """);
     TemplateActionContext templateActionContext = TemplateActionContext.surrounding(getFile(), getEditor());
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);
-    assertTrue(DefaultGroovyMethods.equals(templates, new ArrayList<>()));
+    assertEquals(templates, List.of());
   }
 
   public void testWholeLineSelected() {

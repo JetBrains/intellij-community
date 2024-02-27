@@ -20,12 +20,12 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
-public class AntArtifactPostprocessingPropertiesProvider extends ArtifactPropertiesProvider {
+public final class AntArtifactPostprocessingPropertiesProvider extends ArtifactPropertiesProvider {
   public static AntArtifactPostprocessingPropertiesProvider getInstance() {
     return EP_NAME.findExtension(AntArtifactPostprocessingPropertiesProvider.class);
   }
 
-  protected AntArtifactPostprocessingPropertiesProvider() {
+  private AntArtifactPostprocessingPropertiesProvider() {
     super("ant-postprocessing");
   }
 

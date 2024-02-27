@@ -11,7 +11,7 @@
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -30,8 +30,13 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
     "vsCodeId": "formulahendry.vscode-mysql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -41,13 +46,18 @@
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
@@ -73,5 +83,15 @@
     "vsCodeId": "ritwickdey.LiveServer",
     "ideaName": "Live Server",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   }
 ]

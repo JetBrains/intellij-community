@@ -20,11 +20,12 @@ internal class CommandSearchAction : TerminalPromotedEditorAction(Handler()), Ac
 
   private class Handler : EditorActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
+      LookupManager.getActiveLookup(editor)?.hideLookup(true)
       dataContext.promptController?.showCommandSearch()
     }
 
     override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-      return editor.isPromptEditor && LookupManager.getActiveLookup(editor) == null
+      return editor.isPromptEditor
     }
   }
 }

@@ -3,21 +3,12 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.util.Objects;
 
 public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
   private static final Logger LOG = Logger.getInstance(ExternalAnnotatorInspectionVisitor.class);
@@ -70,73 +61,13 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
     }
   }
 
-  public static class LocalQuickFixBackedByIntentionAction implements LocalQuickFix, Iconable {
-    private final IntentionAction myAction;
-
+  /**
+   * @deprecated use {@link com.intellij.codeInspection.LocalQuickFixBackedByIntentionAction} instead. 
+   */
+  @Deprecated
+  public static class LocalQuickFixBackedByIntentionAction extends com.intellij.codeInspection.LocalQuickFixBackedByIntentionAction {
     public LocalQuickFixBackedByIntentionAction(@NotNull IntentionAction action) {
-      myAction = action;
-    }
-
-    @Override
-    public @NotNull String getName() {
-      return myAction.getText();
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return myAction.getFamilyName();
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myAction.invoke(project, null, getPsiFile(descriptor));
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      return myAction.generatePreview(project,
-                                      Objects.requireNonNull(IntentionPreviewUtils.getPreviewEditor()),
-                                      Objects.requireNonNull(getPsiFile(previewDescriptor)));
-    }
-
-    @Override
-    public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-      return myAction.getElementToMakeWritable(file);
-    }
-
-    private static @Nullable PsiFile getPsiFile(@NotNull ProblemDescriptor descriptor) {
-      PsiElement startElement = descriptor.getStartElement();
-      if (startElement != null) {
-        return startElement.getContainingFile();
-      }
-      PsiElement endElement = descriptor.getEndElement();
-      if (endElement != null) {
-        return endElement.getContainingFile();
-      }
-      return null;
-    }
-
-    @Override
-    public Icon getIcon(@IconFlags int flags) {
-      if (myAction instanceof Iconable) {
-        return ((Iconable) myAction).getIcon(flags);
-      }
-      return null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      LocalQuickFixBackedByIntentionAction action = (LocalQuickFixBackedByIntentionAction)o;
-
-      return myAction.equals(action.myAction);
-    }
-
-    @Override
-    public int hashCode() {
-      return myAction.hashCode();
+      super(action);
     }
   }
 }

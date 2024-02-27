@@ -98,25 +98,9 @@ private fun CoroutineScope.setupReview(settings: GithubPullRequestsProjectUISett
                                        fileVm: GHPRReviewFileEditorViewModel,
                                        editor: EditorEx) {
   val model = GHPRReviewFileEditorModel(this, settings, fileVm, editor.document)
-  showGutterMarkers(model, editor)
+  CodeReviewEditorGutterChangesRenderer.setupIn(this, model, editor)
   CodeReviewEditorGutterControlsRenderer.setupIn(this, model, editor)
   editor.controlInlaysIn(this, model.inlays, { it.key }) { createRenderer(it) }
-}
-
-private fun CoroutineScope.showGutterMarkers(model: GHPRReviewFileEditorModel, editor: Editor) {
-  val disposable = Disposer.newDisposable()
-  val renderer = CodeReviewEditorGutterChangesRenderer(model, editor, disposable)
-
-  launchNow {
-    try {
-      model.reviewRanges.collect {
-        renderer.scheduleUpdate()
-      }
-    }
-    finally {
-      Disposer.dispose(disposable)
-    }
-  }
 }
 
 private fun CoroutineScope.createRenderer(model: GHPREditorMappedComponentModel): CodeReviewComponentInlayRenderer =

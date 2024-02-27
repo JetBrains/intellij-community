@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class SpockMemberContributor extends NonCodeMembersContributor {
+public final class SpockMemberContributor extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,

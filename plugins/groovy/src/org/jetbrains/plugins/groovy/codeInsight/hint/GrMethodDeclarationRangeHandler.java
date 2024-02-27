@@ -20,7 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GrMethodDeclarationRangeHandler implements DeclarationRangeHandler<GrMethod> {
+public final class GrMethodDeclarationRangeHandler implements DeclarationRangeHandler<GrMethod> {
   @NotNull
   @Override
   public TextRange getDeclarationRange(@NotNull GrMethod method) {

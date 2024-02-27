@@ -16,6 +16,8 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.lang.ExpressionTypeProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
@@ -34,8 +36,7 @@ public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<P
   @NotNull
   @Override
   public String getInformationHint(@NotNull PyExpression element) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-    return PythonDocumentationProvider.getTypeName(context.getType(element), context);
+    return getFormattedTypeInContext(element, TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()));
   }
 
   @NotNull
@@ -52,5 +53,23 @@ public final class PythonExpressionTypeProvider extends ExpressionTypeProvider<P
       .takeWhile(e -> !(e instanceof PsiFile))
       .filter(PyExpression.class)
       .toList();
+  }
+
+  @Override
+  public boolean hasAdvancedInformation() {
+    return ApplicationManager.getApplication().isInternal();
+  }
+
+  @Override
+  public @NotNull @NlsSafe String getAdvancedInformationHint(@NotNull PyExpression element) {
+    return """
+      TypeEvalContext.userInitiated: %s
+      TypeEvalContext.codeAnalysis: %s
+      """.formatted(getFormattedTypeInContext(element, TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile())),
+                    getFormattedTypeInContext(element, TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile())));
+  }
+
+  private static @NotNull @NlsSafe String getFormattedTypeInContext(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    return PythonDocumentationProvider.getTypeName(context.getType(expression), context);
   }
 }

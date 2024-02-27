@@ -3,10 +3,13 @@
 package org.jetbrains.kotlin.idea.debugger.test
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.base.psi.getStartLineOffset
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockSourcePosition
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
@@ -14,7 +17,7 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
     private val fixture: JavaCodeInsightTestFixture
         get() = myFixture
 
-    protected open fun doTest(path: String) {
+    protected open fun doTest(path: String) = runBlocking {
         fixture.configureByFile(fileName())
 
         val offset = fixture.caretOffset
@@ -31,7 +34,9 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
             myElementAt = elementAtOffset
         )
 
-        val actual = KotlinSmartStepIntoHandler().findSmartStepTargets(position).map { it.presentation }
+        val actual = withContext(Dispatchers.Default) {
+            KotlinSmartStepIntoHandler().findSmartStepTargets(position).map { it.presentation }
+        }
 
         val expected = InTextDirectivesUtils.findListWithPrefixes(fixture.file?.text!!.replace("\\,", "+++"), "// EXISTS: ")
             .map { it.replace("+++", ",") }

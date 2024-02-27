@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 
 import java.util.List;
 
-public class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspectionBase {
+public final class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspectionBase {
 
   @NotNull
   @Override

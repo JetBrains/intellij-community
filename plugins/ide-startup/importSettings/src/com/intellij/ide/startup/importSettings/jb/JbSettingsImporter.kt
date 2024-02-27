@@ -7,6 +7,10 @@ import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.fileTemplates.FileTemplatesScheme
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.data.SettingsService
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.*
@@ -14,12 +18,14 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
@@ -29,6 +35,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.io.copy
+import kotlinx.coroutines.CoroutineScope
 import java.io.FileInputStream
 import java.io.InputStream
 import java.nio.file.FileVisitResult
@@ -61,7 +68,7 @@ class JbSettingsImporter(private val configDirPath: Path,
   // Same applies to the Keymap manager.
   // So far, it doesn't look like there's a viable way to detect those, so we just hardcode them.
   suspend fun importOptionsAfterRestart(categories: Set<SettingsCategory>, pluginIds: Set<String>) {
-    val storageManager = componentStore.storageManager as StateStorageManagerImpl
+    val storageManager = componentStore.storageManager
     val (components, files) = findComponentsAndFiles()
     withExternalStreamProvider(arrayOf(storageManager)) {
       val componentManagerImpl = ApplicationManager.getApplication() as ComponentManagerImpl
@@ -213,6 +220,7 @@ class JbSettingsImporter(private val configDirPath: Path,
                                       forceReloadNonReloadable = true)
       defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
     }
+    JbImportSpecialHandler.postProcess(configDirPath)
     RegistryManager.getInstanceAsync().resetValueChangeListener()
 
     // there's currently only one reason to restart after reading configs
@@ -381,19 +389,74 @@ class JbSettingsImporter(private val configDirPath: Path,
     return retval
   }
 
-  fun installPlugins(progressIndicator: ProgressIndicator, pluginIds: List<String>) {
-    val importOptions = configImportOptions(progressIndicator, pluginIds)
+  suspend fun installPlugins(
+    coroutineScope: CoroutineScope,
+    progressIndicator: ProgressIndicator,
+    pluginsMap: Map<PluginId, IdeaPluginDescriptor?>,
+  ) {
+    if (!SettingsService.getInstance().pluginIdsPreloaded) {
+      LOG.warn("Couldn't preload plugin ids, which indicates problems with connection. Will use old import")
+      val importOptions = configImportOptions(progressIndicator, pluginsMap.keys)
+      ConfigImportHelper.migratePlugins(
+        pluginsPath,
+        configDirPath,
+        PathManager.getPluginsDir(),
+        PathManager.getConfigDir(),
+        importOptions
+      ) { false }
+      return
+    }
+    val updateableMap = HashMap(pluginsMap)
+    progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
+    val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(
+      buildNumber = null,
+      indicator = progressIndicator,
+      updateablePluginsMap = updateableMap
+    )
+    for (pluginDownloader in internalPluginUpdates.pluginUpdates.all) {
+      LOG.info("Downloading ${pluginDownloader.id}")
+      if (pluginDownloader.prepareToInstall(progressIndicator)) {
+        PluginInstaller.unpackPlugin(pluginDownloader.filePath, PathManager.getPluginsDir())
+        LOG.info("Downloaded and unpacked newer version of plugin '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}")
+      }
+      else {
+        val descriptor = pluginsMap[pluginDownloader.id] ?: continue
+        updateableMap[pluginDownloader.id] = descriptor
+        // failed to download - should copy instead
+        LOG.info("Failed to download a newer version of '${pluginDownloader.id}' : ${pluginDownloader.pluginVersion}. " +
+                 "Will try to copy old version (${descriptor.version}) instead")
+      }
+    }
+    checkPluginsCompatibility(updateableMap, progressIndicator)
+    progressIndicator.text2 = ImportSettingsBundle.message("progress.details.copying.plugins")
     ConfigImportHelper.migratePlugins(
-      pluginsPath,
-      configDirPath,
       PathManager.getPluginsDir(),
-      PathManager.getConfigDir(),
-      importOptions
-    ) { false }
+      updateableMap.values.toList(),
+      LOG
+    )
+  }
+
+  private fun checkPluginsCompatibility(
+    updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>,
+    progressIndicator: ProgressIndicator
+  ) {
+    val myIdeData = IDEData.getSelf() ?: return
+    progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.plugins.compatibility")
+    val updates = MarketplaceRequests.getNearestUpdate(updateablePluginsMap.keys)
+    for (update in updates) {
+      if (update.isCompatible)
+        continue
+
+      if (!update.products.contains(myIdeData.marketplaceCode)) {
+        val pluginId = PluginId.findId(update.pluginId) ?: continue
+        LOG.info("Plugins ${update.pluginId} is incompatible with ${myIdeData.fullName}. Will not migrate it")
+        updateablePluginsMap.remove(pluginId)
+      }
+    }
   }
 
   private fun configImportOptions(progressIndicator: ProgressIndicator,
-                                  pluginIds: List<String>): ConfigImportHelper.ConfigImportOptions {
+                                  pluginIds: Collection<PluginId>): ConfigImportHelper.ConfigImportOptions {
     val importOptions = ConfigImportHelper.ConfigImportOptions(LOG)
     importOptions.isHeadless = true
     importOptions.headlessProgressIndicator = progressIndicator
@@ -403,8 +466,8 @@ class JbSettingsImporter(private val configDirPath: Path,
                                            oldConfigDir: Path,
                                            bundledPlugins: MutableList<IdeaPluginDescriptor>,
                                            nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
-        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
-        bundledPlugins.removeIf { !pluginIds.contains(it.pluginId.idString) }
+        nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
+        bundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
       }
 
       override fun shouldForceCopy(path: Path): Boolean {
@@ -427,24 +490,6 @@ class JbSettingsImporter(private val configDirPath: Path,
       ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
     }
     CustomConfigMigrationOption.MigrateFromCustomPlace(configDirPath).writeConfigMarkerFile(PathManager.getConfigDir())
-  }
-
-  internal class DummyStreamProvider : StreamProvider {
-    override val isExclusive = true
-
-    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {}
-
-    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-      return false
-    }
-
-    override fun processChildren(path: String,
-                                 roamingType: RoamingType,
-                                 filter: (name: String) -> Boolean,
-                                 processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) = true
-
-    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = true
-
   }
 
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {
@@ -515,8 +560,6 @@ class JbSettingsImporter(private val configDirPath: Path,
     }
 
   }
-
-  companion object {
-    val LOG = logger<JbSettingsImporter>()
-  }
 }
+
+private val LOG = logger<JbSettingsImporter>()

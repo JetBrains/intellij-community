@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -43,4 +44,20 @@ tailrec fun KtDeclaration.isExplicitTypeReferenceNeededForTypeInference(typeRefe
 fun KtDeclaration.getInitializerOrGetterInitializer(): KtExpression? {
     if (this is KtDeclarationWithInitializer && initializer != null) return initializer
     return (this as? KtProperty)?.getter?.initializer
+}
+
+fun findRelevantLoopForExpression(expression: KtExpression): KtLoopExpression? {
+    val expressionLabelName = when (expression) {
+        is KtExpressionWithLabel -> expression.getLabelName()
+        is KtLoopExpression -> (expression.parent as? KtLabeledExpression)?.getLabelName()
+        else -> null
+    }
+
+    for (loopExpression in expression.parentsOfType<KtLoopExpression>(withSelf = true)) {
+        if (expressionLabelName == null || (loopExpression.parent as? KtLabeledExpression)?.getLabelName() == expressionLabelName) {
+            return loopExpression
+        }
+    }
+
+    return null
 }

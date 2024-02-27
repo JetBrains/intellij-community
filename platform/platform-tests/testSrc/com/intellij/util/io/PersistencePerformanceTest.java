@@ -17,6 +17,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
+import com.intellij.util.indexing.events.FileIndexingRequest;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -96,13 +97,13 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
       }
     });
 
-    List<VirtualFile> files = new ArrayList<>();
+    List<FileIndexingRequest> files = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       File file = FileUtil.createTempFile("", ".txt");
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       assertNotNull(virtualFile);
       HeavyPlatformTestCase.setFileText(virtualFile, "foo bar");
-      files.add(virtualFile);
+      files.add(FileIndexingRequest.updateRequest(virtualFile));
     }
 
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();

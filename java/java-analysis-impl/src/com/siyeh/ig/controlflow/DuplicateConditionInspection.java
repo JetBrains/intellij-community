@@ -73,7 +73,7 @@ public final class DuplicateConditionInspection extends BaseInspection {
     if (ArrayUtil.getFirstElement(infos) instanceof PsiExpression duplicate) {
       return new NavigateToDuplicateExpressionFix(duplicate);
     }
-    return super.buildFix(infos);
+    return null;
   }
 
   private class DuplicateConditionVisitor extends BaseInspectionVisitor {

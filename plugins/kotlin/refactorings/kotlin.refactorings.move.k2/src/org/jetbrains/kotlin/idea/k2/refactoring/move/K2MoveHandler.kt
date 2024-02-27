@@ -48,7 +48,7 @@ class K2MoveHandler : MoveHandlerDelegate() {
         reference: PsiReference?,
         editor: Editor
     ): Boolean {
-        fun PsiElement.findElementToMove(): PsiElement? {
+        fun PsiElement.findElementToMove(): KtElement? {
             val candidate = parentOfTypes(KtNamedDeclaration::class, KtFile::class, withSelf = true)
             if (candidate is KtConstructor<*>) return candidate.parent.findElementToMove()
             return candidate
@@ -63,12 +63,12 @@ class K2MoveHandler : MoveHandlerDelegate() {
     }
 
     override fun doMove(project: Project, elements: Array<out PsiElement>, targetContainer: PsiElement?, callback: MoveCallback?) {
-        doMoveWithCheck(project, elements, targetContainer, null)
+        doMoveWithCheck(project, elements.filterIsInstance<KtElement>().toTypedArray(), targetContainer, null)
     }
 
     private fun doMoveWithCheck(
         project: Project,
-        elements: Array<out PsiElement>,
+        elements: Array<out KtElement>,
         targetContainer: PsiElement?,
         editor: Editor?
     ) {

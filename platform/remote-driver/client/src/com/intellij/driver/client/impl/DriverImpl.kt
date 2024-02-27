@@ -303,7 +303,7 @@ internal class DriverImpl(host: JmxHost?) : Driver {
       this.code()
     }
     catch (t: Throwable) {
-      invoker.takeScreenshot("beforeKill")
+      invoker.takeScreenshot("driverError")
       throw t
     }
     finally {

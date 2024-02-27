@@ -1,18 +1,8 @@
 [
   {
-    "vsCodeId": "2gua.rainbow-brackets",
-    "ideaName": "Rainbow Brackets",
-    "ideaId": "izhangzhihao.rainbow.brackets"
-  },
-  {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
     "ideaId": "org.intellij.plugins.hcl"
-  },
-  {
-    "vsCodeId": "aaron-bond.better-comments",
-    "ideaName": "Better Comments",
-    "ideaId": "org.igu.plugins.bettercomments"
   },
   {
     "vsCodeId": "abusaidm.html-snippets",
@@ -30,11 +20,6 @@
     "ideaId": "com.jetbrains.plugins.jslint"
   },
   {
-    "vsCodeId": "akamud.vscode-theme-onedark",
-    "ideaName": "Atom OneDark Theme",
-    "ideaId": "github.cweijan.test-theme"
-  },
-  {
     "vsCodeId": "alexcvzz.vscode-sqlite",
     "ideaName": "SQLite",
     "builtIn": true
@@ -45,18 +30,13 @@
     "ideaId": "gherkin"
   },
   {
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit"
-  },
-  {
     "vsCodeId": "andrejunges.Handlebars",
     "ideaName": "Handlebars/Mustache",
     "ideaId": "com.dmarcotte.handlebars"
   },
   {
     "vsCodeId": "Angular.ng-template",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -70,19 +50,9 @@
     "ideaId": "IdeaVIM"
   },
   {
-    "vsCodeId": "azemoh.one-monokai",
-    "ideaName": "One Monokai Color Scheme",
-    "ideaId": "color.scheme.One Monokai"
-  },
-  {
     "vsCodeId": "bajdzis.vscode-database",
     "ideaName": "vscode-database",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "BazelBuild.vscode-bazel",
-    "ideaName": "Bazel for IntelliJ",
-    "ideaId": "com.google.idea.bazel.ijwb"
   },
   {
     "vsCodeId": "bierner.markdown-mermaid",
@@ -110,13 +80,18 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "codezombiech.gitignore",
+    "ideaName": "gitignore",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "csstools.postcss",
     "ideaName": "PostCSS",
     "ideaId": "org.intellij.plugins.postcss"
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -165,11 +140,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea"
-  },
-  {
     "vsCodeId": "dtsvet.vscode-wasm",
     "ideaName": "WebAssembly",
     "ideaId": "com.jetbrains.webstorm.web-assembly-plugin"
@@ -195,14 +165,9 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "Equinusocio.vsc-material-theme",
-    "ideaName": "Material Theme UI",
-    "ideaId": "com.chrisrm.idea.MaterialThemeUI"
-  },
-  {
-    "vsCodeId": "Equinusocio.vsc-material-theme-icons",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
   },
   {
     "vsCodeId": "esbenp.prettier-vscode",
@@ -226,23 +191,13 @@
   },
   {
     "vsCodeId": "formulahendry.vscode-mysql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
     "vsCodeId": "foxundermoon.next-js",
     "ideaName": "Next.js",
     "ideaId": "intellij.nextjs"
-  },
-  {
-    "vsCodeId": "GitHub.codespaces",
-    "ideaName": "GitHub Codespaces",
-    "ideaId": "com.github.codespaces.jetbrains.gateway"
-  },
-  {
-    "vsCodeId": "GitHub.github-vscode-theme",
-    "ideaName": "GitHub Theme",
-    "ideaId": "club.nutsoft.Github3Theme"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -258,11 +213,6 @@
     "vsCodeId": "golang.Go",
     "ideaName": "Go",
     "ideaId": "org.jetbrains.plugins.go"
-  },
-  {
-    "vsCodeId": "GoogleCloudTools.cloudcode",
-    "ideaName": "Google Cloud Code",
-    "ideaId": "com.google.gct.core"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
@@ -290,11 +240,6 @@
     "ideaId": "com.intellij.kubernetes"
   },
   {
-    "vsCodeId": "James-Yu.latex-workshop",
-    "ideaName": "TeXiFy IDEA",
-    "ideaId": "nl.rubensten.texifyidea"
-  },
-  {
     "vsCodeId": "jcbuisson.vue",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue"
@@ -306,13 +251,8 @@
   },
   {
     "vsCodeId": "johnpapa.Angular2",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
-  },
-  {
-    "vsCodeId": "johnpapa.winteriscoming",
-    "ideaName": "Dark-Themes",
-    "ideaId": "com.github.shubham076.darkthemes"
   },
   {
     "vsCodeId": "kumar-harsh.graphql-for-vscode",
@@ -325,34 +265,24 @@
     "ideaId": "com.jetbrains.plugins.webDeployment"
   },
   {
-    "vsCodeId": "mechatroner.rainbow-csv",
-    "ideaName": "Rainbow CSV",
-    "ideaId": "com.andrey4623.rainbowcsv"
-  },
-  {
     "vsCodeId": "mhutchie.git-graph",
     "ideaName": "Git Graph",
     "builtIn": true
   },
   {
-    "vsCodeId": "mikestead.dotenv",
-    "ideaName": ".env files support",
-    "ideaId": "ru.adelf.idea.dotenv"
-  },
-  {
     "vsCodeId": "mongodb.mongodb-vscode",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
-  },
-  {
-    "vsCodeId": "monokai.theme-monokai-pro-vscode",
-    "ideaName": "Monokai Pro Theme",
-    "ideaId": "monokai-pro"
   },
   {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
@@ -376,13 +306,8 @@
   },
   {
     "vsCodeId": "ms-mssql.mssql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
-  },
-  {
-    "vsCodeId": "ms-mssql.sql-database-projects-vscode",
-    "ideaName": "SQL Database Projects",
-    "builtIn": true
   },
   {
     "vsCodeId": "ms-ossdata.vscode-postgresql",
@@ -390,9 +315,14 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
+  },
+  {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python",
-    "ideaId": "Pythonid"
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -420,16 +350,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "ms-vscode.hexeditor",
-    "ideaName": "BinEd - Binary/Hex Editor",
-    "ideaId": "org.exbin.deltahex.intellij"
-  },
-  {
-    "vsCodeId": "ms-vscode.PowerShell",
-    "ideaName": "PowerShell",
-    "ideaId": "com.intellij.plugin.adernov.powershell"
-  },
-  {
     "vsCodeId": "ms-vscode.sublime-keybindings",
     "ideaName": "Sublime Text Keymap",
     "ideaId": "com.intellij.plugins.sublimetextkeymap"
@@ -448,11 +368,6 @@
     "vsCodeId": "msjsdiag.vscode-react-native",
     "ideaName": "JavaScript Debugger",
     "ideaId": "JavaScriptDebugger"
-  },
-  {
-    "vsCodeId": "mskelton.one-dark-theme",
-    "ideaName": "One Dark Theme",
-    "ideaId": "com.markskelton.one-dark-theme"
   },
   {
     "vsCodeId": "mtxr.sqltools",
@@ -480,19 +395,9 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
     "vsCodeId": "Oracle.oracledevtools",
     "ideaName": "Oracle Developer Tools for VS Code (SQL and PLSQL)",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "PKief.material-icon-theme",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
   },
   {
     "vsCodeId": "Postman.postman-for-vscode",
@@ -515,11 +420,6 @@
     "ideaId": "Karma"
   },
   {
-    "vsCodeId": "redhat.ansible",
-    "ideaName": "Ansible",
-    "ideaId": "ir.msdehghan.plugins.ansible"
-  },
-  {
     "vsCodeId": "redhat.vscode-xml",
     "ideaName": "XML",
     "builtIn": true
@@ -540,11 +440,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "sdras.night-owl",
-    "ideaName": "Night Owl Theme",
-    "ideaId": "me.xdrop.night-owl"
-  },
-  {
     "vsCodeId": "sdras.vue-vscode-snippets",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue"
@@ -555,9 +450,9 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "SonarSource.sonarlint-vscode",
-    "ideaName": "SonarLint",
-    "ideaId": "org.sonarlint.idea"
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
   },
   {
     "vsCodeId": "svelte.svelte-vscode",
@@ -575,34 +470,19 @@
     "ideaId": "org.jetbrains.plugins.stylus"
   },
   {
-    "vsCodeId": "TabNine.tabnine-vscode",
-    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "ideaId": "com.tabnine.TabNine"
-  },
-  {
-    "vsCodeId": "tal7aouy.rainbow-bracket",
-    "ideaName": "Rainbow Brackets",
-    "ideaId": "izhangzhihao.rainbow.brackets"
+    "vsCodeId": "tamasfe.even-better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "techer.open-in-browser",
-    "ideaName": "open in browser",
+    "ideaName": "Open in browser",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "thekalinga.bootstrap4-vscode",
-    "ideaName": "Bootstrap 4, Font awesome 4, Font Awesome 5 Free & Pro live templates/snippets",
-    "ideaId": "in.thekalinga.snippet.intellij"
   },
   {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscodevim.vim",
@@ -625,24 +505,9 @@
     "ideaId": "com.jetbrains.plugins.meteor"
   },
   {
-    "vsCodeId": "WallabyJs.quokka-vscode",
-    "ideaName": "Quokka",
-    "ideaId": "quokka.js"
-  },
-  {
-    "vsCodeId": "wix.vscode-import-cost",
-    "ideaName": "Import Cost",
-    "ideaId": "ImportCost"
-  },
-  {
     "vsCodeId": "yzhang.markdown-all-in-one",
-    "ideaName": "Markdown All in One",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "zhuangtongfa.Material-theme",
-    "ideaName": "One Dark Pro Color Scheme",
-    "ideaId": "color.scheme.One Dark Pro"
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

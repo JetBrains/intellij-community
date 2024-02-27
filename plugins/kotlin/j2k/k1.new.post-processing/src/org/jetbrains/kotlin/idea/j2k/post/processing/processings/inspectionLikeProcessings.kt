@@ -3,15 +3,11 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
@@ -27,13 +23,11 @@ import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.DestructureIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
-import org.jetbrains.kotlin.idea.j2k.post.processing.InspectionLikeProcessingForElement
+import org.jetbrains.kotlin.j2k.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.idea.j2k.post.processing.isInspectionEnabledInCurrentProfile
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
-import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
@@ -41,47 +35,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-internal class RemoveExplicitPropertyTypeProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
-        if (element.isMember && !element.isPrivate()) return false
-
-        val typeReference = element.typeReference
-        if (typeReference == null || typeReference.annotationEntries.isNotEmpty()) return false
-
-        val needLocalVariablesTypes = settings?.specifyLocalVariableTypeByDefault == true
-        if (needLocalVariablesTypes && element.isLocal) return false
-
-        val initializer = element.initializer ?: return false
-        val initializerType =
-            initializer.analyzeInContext(initializer.getResolutionScope()).getType(initializer) ?: return false
-
-        // https://kotlinlang.org/docs/coding-conventions.html#platform-types
-        // Any property initialized with an expression of a platform type must declare its Kotlin type explicitly
-        if (element.isMember && initializerType.isFlexible()) {
-            return false
-        }
-
-        val propertyType = element.resolveToDescriptorIfAny().safeAs<CallableDescriptor>()?.returnType ?: return false
-        return KotlinTypeChecker.DEFAULT.equalTypes(initializerType, propertyType)
-    }
-
-    override fun apply(element: KtProperty) {
-        val typeReference = element.typeReference ?: return
-        element.colon?.let { colon ->
-            val followingWhiteSpace = colon.nextSibling?.takeIf { following ->
-                following is PsiWhiteSpace && following.isInSingleLine()
-            }
-            followingWhiteSpace?.delete()
-            colon.delete()
-        }
-        typeReference.delete()
-    }
-}
 
 internal class RemoveRedundantNullabilityProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
@@ -237,45 +192,6 @@ internal class UnresolvedVariableReferenceFromInitializerToThisReferenceProcessi
     }
 }
 
-internal class PrivateVarToValProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    companion object {
-        private val JPA_COLUMN_ANNOTATIONS: Set<FqName> = setOf(
-            FqName("javax.persistence.Column"),
-            FqName("jakarta.persistence.Column"),
-        )
-    }
-
-    private fun KtProperty.hasWriteUsages(): Boolean =
-        ReferencesSearch.search(this, useScope).any { usage ->
-            (usage as? KtSimpleNameReference)?.element?.let { nameReference ->
-                val receiver = nameReference.parent?.safeAs<KtDotQualifiedExpression>()?.receiverExpression
-                if (nameReference.getStrictParentOfType<KtAnonymousInitializer>() != null
-                    && (receiver == null || receiver is KtThisExpression)
-                ) return@let false
-                nameReference.readWriteAccess(useResolveForReadWrite = true).isWrite
-            } == true
-        }
-
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings?): Boolean {
-        if (!element.isVar) return false
-        if (!element.isPrivate()) return false
-        val descriptor = element.resolveToDescriptorIfAny() as? PropertyDescriptor ?: return false
-        if (descriptor.overriddenDescriptors.any { it.safeAs<VariableDescriptor>()?.isVar == true }) return false
-
-        descriptor.backingField?.annotations?.let { annotations ->
-            JPA_COLUMN_ANNOTATIONS.forEach {
-                if (annotations.hasAnnotation(it)) return false
-            }
-        }
-        return !element.hasWriteUsages()
-    }
-
-    override fun apply(element: KtProperty) {
-        val psiFactory = KtPsiFactory(element.project)
-        element.valOrVarKeyword.replace(psiFactory.createValKeyword())
-    }
-}
-
 internal class RemoveForExpressionLoopParameterTypeProcessing :
     InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
     override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {
@@ -299,9 +215,15 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
 
     override fun apply(element: KtDeclaration) {
         element.visibilityModifierType()?.let { element.removeModifier(it) }
+        if (element is KtPrimaryConstructor && element.isRedundant()) {
+            element.delete()
+        }
     }
 }
 
+/**
+ * Handles a local 'var' without an initializer. For other cases, see [org.jetbrains.kotlin.j2k.postProcessings.VarToValProcessing]
+ */
 internal class LocalVarToValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
     private val inspection = CanBeValInspection()
 

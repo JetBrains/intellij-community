@@ -23,9 +23,8 @@ object FilesHelper {
   private fun getFiles(evaluationRoots: List<VirtualFile>, ignoreFileNames: Set<String>): Map<String, Set<VirtualFile>> {
     val language2files = mutableMapOf<String, MutableSet<VirtualFile>>()
     for (file in evaluationRoots) {
-      VfsUtilCore.iterateChildrenRecursively(file, null, object : ContentIterator {
+      VfsUtilCore.iterateChildrenRecursively(file, { f -> !ignoreFileNames.contains(f.name) }, object : ContentIterator {
         override fun processFile(fileOrDir: VirtualFile): Boolean {
-          if (fileOrDir.name in ignoreFileNames) return false
           val extension = fileOrDir.extension
           if (fileOrDir.isDirectory || extension == null) return true
 

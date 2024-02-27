@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -14,7 +14,6 @@ public final class FsRoot extends VirtualDirectoryImpl {
   private final String myPathWithOneSlash;
 
   public FsRoot(int id,
-                int nameId,
                 @NotNull VfsData vfsData,
                 @NotNull NewVirtualFileSystem fs,
                 @NotNull String pathBeforeSlash,
@@ -28,7 +27,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
     }
     myPathWithOneSlash = pathBeforeSlash + '/';
     VfsData.Segment segment = getSegment();
-    VfsData.initFile(id, segment, nameId, myData);
+    segment.initFileData(id, myData);
     // assume root has FS-default case-sensitivity
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);

@@ -5,7 +5,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 
-public class MavenPluginModelDocumentationProvider implements DocumentationProvider {
+public final class MavenPluginModelDocumentationProvider implements DocumentationProvider {
   @Override
   public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return getDocForMavenPluginParameter(element, false);

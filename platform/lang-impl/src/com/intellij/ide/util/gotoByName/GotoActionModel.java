@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -304,8 +303,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     private static int getTypeWeight(@NotNull Object value) {
       if (value instanceof ActionWrapper actionWrapper) {
-        if ((ApplicationManager.getApplication().isDispatchThread() || actionWrapper.hasPresentation()) &&
-            actionWrapper.isAvailable()) {
+        if (actionWrapper.isAvailable()) {
           return 0;
         }
         return 2;
@@ -661,38 +659,16 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     @NotNull private final AnAction myAction;
     @NotNull private final MatchMode myMode;
     @Nullable private final GroupMapping myGroupMapping;
-    private final GotoActionModel myModel;
     private final Presentation myPresentation;
     private final String myActionText;
 
-    @Deprecated(forRemoval = true)
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
                          @NotNull MatchMode mode,
-                         @NotNull GotoActionModel model) {
-      myAction = action;
-      myMode = mode;
-      myGroupMapping = groupMapping;
-      myModel = model;
-      myPresentation = ReadAction.nonBlocking(() -> {
-          if (myGroupMapping != null) {
-            myGroupMapping.updateBeforeShow(myModel.getUpdateSession());
-          }
-          return myModel.getUpdateSession().presentation(myAction);
-        })
-        .executeSynchronously();
-      myActionText = ActionSearchUtilKt.getActionText(action);
-    }
-
-    public ActionWrapper(@NotNull AnAction action,
-                         @Nullable GroupMapping groupMapping,
-                         @NotNull MatchMode mode,
-                         @NotNull GotoActionModel model,
                          @NotNull Presentation presentation) {
       myAction = action;
       myMode = mode;
       myGroupMapping = groupMapping;
-      myModel = model;
       myPresentation = presentation;
       myActionText = ActionSearchUtilKt.getActionText(action);
     }
@@ -740,16 +716,12 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     }
 
     public boolean isAvailable() {
-      return getPresentation().isEnabledAndVisible();
+      return myPresentation.isEnabledAndVisible();
     }
 
     @NotNull
     public Presentation getPresentation() {
       return myPresentation;
-    }
-
-    public boolean hasPresentation() {
-      return myPresentation != null;
     }
 
     @ActionText

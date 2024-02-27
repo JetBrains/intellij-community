@@ -23,7 +23,6 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
@@ -147,7 +146,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
     @Override
     public @NotNull Map<Integer, List<ChangeKind>> map(@NotNull VcsLogIndexer.CompressedDetails inputData) {
-      Int2ObjectMap<List<ChangeKind>> result = new Int2ObjectOpenHashMap<>();
+      HashMap<Integer, List<ChangeKind>> result = new HashMap<>();
 
       // it's not exactly parents count since it is very convenient to assume that initial commit has one parent
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
@@ -181,7 +180,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       return result;
     }
 
-    static @NotNull List<ChangeKind> getOrCreateChangeKindList(@NotNull Int2ObjectMap<List<ChangeKind>> pathIdToChangeDataListsMap,
+    static @NotNull List<ChangeKind> getOrCreateChangeKindList(@NotNull Map<Integer, List<ChangeKind>> pathIdToChangeDataListsMap,
                                                                int pathId,
                                                                int parentsCount) {
       List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
@@ -373,7 +372,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       int rootIndex = myRootsReversed.getInt(root);
       return new KnownSizeRecordWriter() {
         @Override
-        public ByteBuffer write(@NotNull ByteBuffer data) throws IOException {
+        public ByteBuffer write(@NotNull ByteBuffer data) {
           return data.putInt(rootIndex)
             .put(relativePathBytes);
         }

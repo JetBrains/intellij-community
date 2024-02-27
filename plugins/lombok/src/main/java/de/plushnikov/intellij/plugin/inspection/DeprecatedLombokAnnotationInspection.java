@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Plushnikov Michail
  */
-public class DeprecatedLombokAnnotationInspection extends LombokJavaInspectionBase {
+public final class DeprecatedLombokAnnotationInspection extends LombokJavaInspectionBase {
 
   @NotNull
   @Override

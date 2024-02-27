@@ -1,9 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.history.ActivityId;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -14,6 +17,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitActivity;
 import git4idea.GitStashUsageCollector;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -44,6 +48,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private final @NotNull GitRepositoryManager myRepositoryManager;
   private final @NotNull Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
 
+  private boolean myReportLocalHistoryActivity = true;
+
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
                               @NotNull ProgressIndicator progressIndicator,
@@ -56,34 +62,37 @@ public class GitStashChangesSaver extends GitChangesSaver {
   protected void save(@NotNull Collection<? extends VirtualFile> rootsToSave) throws VcsException {
     LOG.info("saving " + rootsToSave);
 
-    for (VirtualFile root : rootsToSave) {
-      String message = GitBundle.message("stash.progress.indicator.title", root.getName());
-      LOG.info(message);
-      final String oldProgressTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(message);
-      GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-      if (repository == null) {
-        LOG.error("Repository is null for root " + root);
-      }
-      else {
-        StructuredIdeActivity activity = GitStashUsageCollector.logStashPush(myProject);
-        GitCommandResult result = myGit.stashSave(repository, myStashMessage);
-        activity.finished();
-
-        if (result.success() && somethingWasStashed(result)) {
-          myStashedRoots.put(root, myGit.resolveReference(repository, "stash@{0}"));
+    ActivityId activityId = myReportLocalHistoryActivity ? GitActivity.Stash : null;
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.stash"), activityId)) {
+      for (VirtualFile root : rootsToSave) {
+        String message = GitBundle.message("stash.progress.indicator.title", root.getName());
+        LOG.info(message);
+        final String oldProgressTitle = myProgressIndicator.getText();
+        myProgressIndicator.setText(message);
+        GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+        if (repository == null) {
+          LOG.error("Repository is null for root " + root);
         }
         else {
-          if (!result.success()) {
-            throw new VcsException(GitBundle.message("exception.message.could.not.stash.root.error",
-                                                     repository.getRoot(), result.getErrorOutputAsJoinedString()));
+          StructuredIdeActivity activity = GitStashUsageCollector.logStashPush(myProject);
+          GitCommandResult result = myGit.stashSave(repository, myStashMessage);
+          activity.finished();
+
+          if (result.success() && somethingWasStashed(result)) {
+            myStashedRoots.put(root, myGit.resolveReference(repository, "stash@{0}"));
           }
           else {
-            LOG.warn("There was nothing to stash in " + repository.getRoot());
+            if (!result.success()) {
+              throw new VcsException(GitBundle.message("exception.message.could.not.stash.root.error",
+                                                       repository.getRoot(), result.getErrorOutputAsJoinedString()));
+            }
+            else {
+              LOG.warn("There was nothing to stash in " + repository.getRoot());
+            }
           }
         }
+        myProgressIndicator.setText(oldProgressTitle);
       }
-      myProgressIndicator.setText(oldProgressTitle);
     }
   }
 
@@ -104,7 +113,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
         handler.addParameters("--index");
       }
       return handler;
-    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams));
+    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams), myReportLocalHistoryActivity);
     myProgressIndicator.setText(oldProgressTitle);
   }
 
@@ -120,6 +129,10 @@ public class GitStashChangesSaver extends GitChangesSaver {
     } else {
       GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots.keySet()), myStashedRoots.keySet().iterator().next());
     }
+  }
+
+  void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myReportLocalHistoryActivity = reportLocalHistoryActivity;
   }
 
   @Override

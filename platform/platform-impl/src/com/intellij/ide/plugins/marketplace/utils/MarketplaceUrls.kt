@@ -54,6 +54,8 @@ internal object MarketplaceUrls {
 
   fun getSearchCompatibleUpdatesUrl() = Urls.newFromEncoded("$pluginManagerUrl/api/search/compatibleUpdates").toExternalForm()
 
+  fun getSearchNearestUpdate() = Urls.newFromEncoded("$pluginManagerUrl/api/search/updates/nearest").toExternalForm()
+
   fun getSearchPluginsUrl(query: String, count: Int, includeIncompatible: Boolean): Url {
     val params = mapOf(
       "build" to IDE_BUILD_FOR_REQUEST,

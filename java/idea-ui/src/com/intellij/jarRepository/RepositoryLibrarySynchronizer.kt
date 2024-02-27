@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.legacyBridge.CustomLibraryTableBridge
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
@@ -42,15 +43,27 @@ private class RepositoryLibrarySynchronizer : ProjectActivity {
     }
 
     val disposable = project.serviceAsync<RemoteRepositoriesConfiguration>()
-    val synchronizationQueue = project.serviceAsync<LibrarySynchronizationQueue>()
-    val synchronizer = ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue)
-    val globalLibSynchronizer = GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable)
-    for (libraryTable in getGlobalAndCustomLibraryTables()) {
-      libraryTable.addListener(globalLibSynchronizer, disposable)
+    if (CustomLibraryTableBridge.isEnabled()) {
+      val synchronizationQueue = project.serviceAsync<LibraryIdSynchronizationQueue>()
+      val synchronizer = ChangedRepositoryLibraryIdSynchronizer(synchronizationQueue)
+      val globalLibSynchronizer = GlobalChangedRepositoryLibraryIdSynchronizer(synchronizationQueue, disposable)
+      for (libraryTable in getGlobalAndCustomLibraryTables()) {
+        libraryTable.addListener(globalLibSynchronizer, disposable)
+      }
+      installOnExistingLibraries(globalLibSynchronizer, disposable)
+      project.messageBus.connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer)
+      synchronizationQueue.requestAllLibrariesSynchronization()
+    } else {
+      val synchronizationQueue = project.serviceAsync<LibrarySynchronizationQueue>()
+      val synchronizer = ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue)
+      val globalLibSynchronizer = GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable)
+      for (libraryTable in getGlobalAndCustomLibraryTables()) {
+        libraryTable.addListener(globalLibSynchronizer, disposable)
+      }
+      installOnExistingLibraries(globalLibSynchronizer, disposable)
+      project.messageBus.connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer)
+      synchronizationQueue.requestAllLibrariesSynchronization()
     }
-    globalLibSynchronizer.installOnExistingLibraries()
-    project.messageBus.connect(disposable).subscribe(WorkspaceModelTopics.CHANGED, synchronizer)
-    synchronizationQueue.requestAllLibrariesSynchronization()
   }
 }
 

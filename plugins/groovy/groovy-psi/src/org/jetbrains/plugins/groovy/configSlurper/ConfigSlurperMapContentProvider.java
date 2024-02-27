@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
 import java.util.*;
 
-public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
+public final class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
   @Nullable
   private static Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> getInfo(@NotNull GrExpression qualifier,

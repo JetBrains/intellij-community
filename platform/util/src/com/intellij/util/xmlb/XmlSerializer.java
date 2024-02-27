@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -12,15 +12,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 
 public final class XmlSerializer {
-  private static final SerializationFilter TRUE_FILTER = new SerializationFilter() {
-    @Override
-    public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-      return true;
-    }
-  };
-
   private XmlSerializer() {
   }
 
@@ -28,17 +22,11 @@ public final class XmlSerializer {
    * Consider to use {@link SkipDefaultValuesSerializationFilters}
    */
   public static Element serialize(@NotNull Object object) throws SerializationException {
-    return serialize(object, TRUE_FILTER);
+    return serialize(object, null);
   }
 
   public static @NotNull Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
-    return XmlSerializerImpl.serialize(object, filter == null ? TRUE_FILTER : filter);
-  }
-
-  public static @Nullable Element serializeIfNotDefault(@NotNull Object object, @Nullable SerializationFilter filter) {
-    SerializationFilter filter1 = filter == null ? TRUE_FILTER : filter;
-    Class<?> aClass = object.getClass();
-    return (Element)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass).serialize(object, null, filter1);
+    return XmlSerializerImpl.serialize(object, filter);
   }
 
   public static @NotNull <T> T deserialize(Document document, Class<T> aClass) throws SerializationException {
@@ -48,8 +36,8 @@ public final class XmlSerializer {
   @SuppressWarnings("unchecked")
   public static @NotNull <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws SerializationException {
     try {
-      NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass);
-      return (T)binding.deserialize(null, element);
+      Binding binding = XmlSerializerImpl.serializer.getRootBinding(aClass, aClass);
+      return (T)Objects.requireNonNull(binding.deserialize(null, element, JdomAdapter.INSTANCE));
     }
     catch (SerializationException e) {
       throw e;
@@ -70,7 +58,8 @@ public final class XmlSerializer {
 
   public static void deserializeInto(@NotNull Object bean, @NotNull Element element) {
     try {
-      getBeanBinding(bean.getClass()).deserializeInto(bean, element);
+      Class<?> aClass = bean.getClass();
+      ((BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass)).deserializeInto(bean, element);
     }
     catch (SerializationException e) {
       throw e;
@@ -80,10 +69,8 @@ public final class XmlSerializer {
     }
   }
 
-  /**
-   * Use only if it is a hot spot, otherwise use {@link #deserializeInto(Object, Element)} or {@link #serializeInto(Object, Element)}.
-   */
   @ApiStatus.Internal
+  @ApiStatus.Obsolete
   public static @NotNull BeanBinding getBeanBinding(@NotNull Class<?> aClass) {
     return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass);
   }
@@ -93,11 +80,9 @@ public final class XmlSerializer {
   }
 
   public static void serializeInto(@NotNull Object bean, @NotNull Element element, @Nullable SerializationFilter filter) {
-    if (filter == null) {
-      filter = TRUE_FILTER;
-    }
     try {
-      getBeanBinding(bean.getClass()).serializeInto(bean, element, filter);
+      Class<?> aClass = bean.getClass();
+      ((BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass, aClass)).serializeProperties(bean, element, filter);
     }
     catch (SerializationException e) {
       throw e;

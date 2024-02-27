@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
-public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
+public final class MavenProblemFileHighlighter implements Condition<VirtualFile> {
 
   @Override
   public boolean value(final VirtualFile file) {

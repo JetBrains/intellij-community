@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
@@ -21,7 +21,6 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
@@ -44,12 +43,8 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
@@ -82,8 +77,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
-    private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
-
     private val sourceSearchScopes: List<GlobalSearchScope> = listOf(
         debugProcess.searchScope,
         KotlinAllFilesScopeProvider.getInstance(debugProcess.project).getAllKotlinFilesScope()
@@ -107,7 +100,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val frameProxy = descriptor.frameProxy
         // Don't provide inline stack trace for coroutine frames yet
-        val coroutineFrame = stackFrameInterceptor?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
+        val coroutineFrame = StackFrameInterceptor.instance?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
         if (coroutineFrame != null) {
             return listOf(coroutineFrame)
         }
@@ -397,16 +390,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     context(KtAnalysisSession)
     private fun KtCallExpression.getBytecodeMethodName(): String? {
         val resolvedCall = resolveCall()?.successfulFunctionCallOrNull() ?: return null
-        val symbol = resolvedCall.partiallyAppliedSymbol.symbol.asSafely<KtFunctionSymbol>() ?: return null
-        val jvmName = symbol.annotations
-          .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
-          .firstNotNullOfOrNull {
-              it.arguments.singleOrNull { a -> a.name.asString() == "name" }
-                ?.expression?.asSafely<KtConstantAnnotationValue>()
-                ?.constantValue?.asSafely<KtConstantValue.KtStringConstantValue>()?.value
-          }
-        if (jvmName != null) return jvmName
-        return symbol.name.identifier
+        val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+        return symbol.getByteCodeMethodName()
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {

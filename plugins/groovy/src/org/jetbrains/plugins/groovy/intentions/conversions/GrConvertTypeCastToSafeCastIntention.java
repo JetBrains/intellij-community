@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author Max Medvedev
  */
-public class GrConvertTypeCastToSafeCastIntention extends GrPsiUpdateIntention {
+public final class GrConvertTypeCastToSafeCastIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrTypeCastExpression)) return;

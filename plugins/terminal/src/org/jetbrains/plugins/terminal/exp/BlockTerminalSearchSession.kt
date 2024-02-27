@@ -76,13 +76,9 @@ class BlockTerminalSearchSession(
     })
     selectionModel.addListener(object : TerminalSelectionListener {
       override fun selectionChanged(oldSelection: List<CommandBlock>, newSelection: List<CommandBlock>) {
-        if (newSelection.isEmpty()) {
-          model.isSearchInBlock = false
-        }
-        if (model.isSearchInBlock) {
-          searchResults.clear()
-          updateResults()
-        }
+        model.isSearchInBlock = newSelection.isNotEmpty()
+        searchResults.clear()
+        updateResults()
       }
     }, disposable)
 
@@ -127,6 +123,9 @@ class BlockTerminalSearchSession(
         outputModel.getByOffset(offset)?.let { block ->
           selectionModel.selectedBlocks = listOf(block)
         }
+      }
+      else if (!isSearchInBlock) {
+        selectionModel.selectedBlocks = emptyList()
       }
     }
     updateUiWithFindModel()

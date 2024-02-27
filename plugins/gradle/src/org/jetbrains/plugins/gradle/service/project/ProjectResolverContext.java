@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -13,7 +14,6 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 /**
@@ -41,8 +41,6 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull
   ExternalSystemTaskNotificationListener getListener();
 
-  boolean isPreviewMode();
-
   boolean isResolveModulePerSourceSet();
 
   boolean isUseQualifiedModuleNames();
@@ -50,9 +48,9 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   default boolean isDelegatedBuild() { return true; }
 
   @NotNull
-  ProjectImportAction.AllModels getModels();
+  AllModels getModels();
 
-  void setModels(@NotNull ProjectImportAction.AllModels models) ;
+  void setModels(@NotNull AllModels models) ;
 
   @Nullable
   <T> T getExtraProject(Class<T> modelClazz);

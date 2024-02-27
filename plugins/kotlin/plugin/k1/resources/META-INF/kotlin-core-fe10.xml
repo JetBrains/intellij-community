@@ -2,10 +2,6 @@
 
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
-            interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
-            dynamic="true"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinIndicesHelperExtension"
             interface="org.jetbrains.kotlin.idea.core.extension.KotlinIndicesHelperExtension"
             area="IDEA_PROJECT"
@@ -166,7 +162,7 @@
 <!--    <codeInsight.inlayProvider language="kotlin"-->
 <!--                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>-->
 
-    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinFqnDeclarativeInlayActionHandler"
+    <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
 
     <codeInsight.declarativeInlayProvider

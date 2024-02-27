@@ -15,6 +15,10 @@ import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.html.UtilsKt;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +65,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
   private StyleSheet myCurrentDefaultStyleSheet = null;
   private Dimension myCachedPreferredSize = null;
+  private final MutableStateFlow<Color> editorBackgroundFlow;
 
   protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
@@ -80,10 +85,14 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       UIUtil.doNotScrollToCaret(this);
     }
     setBackground(BACKGROUND_COLOR);
+    editorBackgroundFlow = StateFlowKt.MutableStateFlow(getBackground());
     HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
       .replaceViewFactoryExtensions(getIconsExtension(iconResolver),
                                     Extensions.BASE64_IMAGES,
                                     Extensions.INLINE_VIEW_EX,
+                                    Extensions.PARAGRAPH_VIEW_EX,
+                                    Extensions.LINE_VIEW_EX,
+                                    Extensions.BLOCK_VIEW_EX,
                                     Extensions.FIT_TO_WIDTH_IMAGES,
                                     Extensions.WBR_SUPPORT)
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
@@ -93,6 +102,7 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
       var propertyName = evt.getPropertyName();
       if ("background".equals(propertyName) || "UI".equals(propertyName)) {
         updateDocumentationPaneDefaultCssRules(editorKit);
+        editorBackgroundFlow.setValue(getBackground());
       }
     });
 
@@ -115,6 +125,10 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     myText = t;
     myCachedPreferredSize = null;
     super.setText(t);
+  }
+
+  public StateFlow<Color> getEditorBackgroundFlow() {
+    return editorBackgroundFlow;
   }
 
   private void updateDocumentationPaneDefaultCssRules(@NotNull HTMLEditorKit editorKit) {
@@ -198,10 +212,10 @@ public abstract class DocumentationEditorPane extends JEditorPane implements Dis
     View definition = findSection(getUI().getRootView(this), sectionClassName);
     var result = definition == null ? -1 : (int)definition.getPreferredSpan(View.X_AXIS);
     if (result > 0) {
-      result += getCssMargin(definition).width();
+      result += UtilsKt.getWidth(getCssMargin(definition));
       var parent = definition.getParent();
       while (parent != null) {
-        result += getCssMargin(parent).width() + getCssPadding(parent).width();
+        result += UtilsKt.getWidth(getCssMargin(parent)) + UtilsKt.getWidth(getCssPadding(parent));
         parent = parent.getParent();
       }
     }

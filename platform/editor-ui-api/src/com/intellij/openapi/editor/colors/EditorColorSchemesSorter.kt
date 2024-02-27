@@ -14,6 +14,12 @@ interface EditorColorSchemesSorter {
   }
 
   fun getOrderedSchemes(schemesMap: Map<String, EditorColorsScheme>): Groups<EditorColorsScheme>
+
+  fun getOrderedSchemesFromSequence(schemes: Sequence<EditorColorsScheme>): Groups<EditorColorsScheme> {
+    val map = mutableMapOf<String, EditorColorsScheme>()
+    schemes.forEach { map[it.name] = it }
+    return getOrderedSchemes(map)
+  }
 }
 
 @Internal

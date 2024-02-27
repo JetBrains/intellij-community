@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun a() {
     if (true) {
         <selection>1</selection>

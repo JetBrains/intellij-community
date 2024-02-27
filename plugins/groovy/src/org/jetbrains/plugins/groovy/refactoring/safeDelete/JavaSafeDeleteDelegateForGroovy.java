@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
+public final class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
   @Override
   public void createUsageInfoForParameter(@NotNull PsiReference reference,
                                           @NotNull List<? super UsageInfo> usages,

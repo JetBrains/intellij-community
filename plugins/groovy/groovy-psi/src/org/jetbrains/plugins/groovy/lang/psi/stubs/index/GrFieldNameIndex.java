@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
-public class GrFieldNameIndex extends StringStubIndexExtension<GrField> {
+public final class GrFieldNameIndex extends StringStubIndexExtension<GrField> {
   public static final StubIndexKey<String, GrField> KEY = StubIndexKey.createIndexKey("gr.field.name");
 
   @Override

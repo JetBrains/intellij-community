@@ -69,7 +69,7 @@ import java.util.*;
 /**
  * The action-handler that does the code generation.
  */
-public class GenerateToStringActionHandlerImpl implements GenerateToStringActionHandler, CodeInsightActionHandler {
+public final class GenerateToStringActionHandlerImpl implements GenerateToStringActionHandler, CodeInsightActionHandler {
     private static final Logger LOG = Logger.getInstance(GenerateToStringActionHandlerImpl.class);
 
     @Override

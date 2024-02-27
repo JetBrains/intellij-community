@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
@@ -107,10 +107,10 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
             updateLayout()
           }
 
-          isCompactHeader = rootPane.isCompactHeader { computeMainActionGroups() }
+          val compactHeader = rootPane.isCompactHeader { computeMainActionGroups() }
 
           when (mode) {
-            ShowMode.TOOLBAR -> doUpdateToolbar(isCompactHeader)
+            ShowMode.TOOLBAR -> doUpdateToolbar(compactHeader)
             ShowMode.MENU -> {
               withContext(Dispatchers.EDT) {
                 toolbar?.removeComponentListener(contentResizeListener)
@@ -119,6 +119,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
               }
             }
           }
+          isCompactHeader = compactHeader
 
           withContext(Dispatchers.EDT) {
             buttonPanes?.isCompactMode = isCompactHeader
@@ -158,6 +159,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
   }
 
   override fun removeNotify() {
+    super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
     }
@@ -211,26 +213,36 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     }
   }
 
-  private suspend fun doUpdateToolbar(isCompactHeader: Boolean) {
-    val toolbar = withContext(Dispatchers.EDT) {
+  private suspend fun doUpdateToolbar(compactHeader: Boolean) {
+    val resetToolbar = compactHeader != isCompactHeader || toolbar == null
+
+    if (!resetToolbar) {
+      withContext(Dispatchers.EDT) {
+        toolbarPlaceholder.revalidate()
+        toolbarPlaceholder.repaint()
+      }
+      return
+    }
+
+    val newToolbar = withContext(Dispatchers.EDT) {
       toolbar?.removeComponentListener(contentResizeListener)
       toolbarPlaceholder.removeAll()
       MainToolbar(coroutineScope = coroutineScope.childScope(), frame = frame)
     }
-    toolbar.init(customTitleBar)
+    newToolbar.init(customTitleBar)
     withContext(Dispatchers.EDT) {
-      toolbar.addComponentListener(contentResizeListener)
-      this@ToolbarFrameHeader.toolbar = toolbar
+      newToolbar.addComponentListener(contentResizeListener)
+      this@ToolbarFrameHeader.toolbar = newToolbar
       toolbarHeaderTitle.updateBorders(0)
-
-      if (isCompactHeader) {
+      if (compactHeader) {
         toolbarPlaceholder.add(toolbarHeaderTitle, BorderLayout.CENTER)
       }
       else {
-        toolbarPlaceholder.add(toolbar, BorderLayout.CENTER)
+        toolbarPlaceholder.add(newToolbar, BorderLayout.CENTER)
       }
 
       toolbarPlaceholder.revalidate()
+      toolbarPlaceholder.repaint()
     }
   }
 

@@ -265,6 +265,9 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int, ignoreFilters: Boolean) {
         val filters = createSmartStepIntoFilters()
         if (chooseFromList == 0) {
+            if (filters.isEmpty()) {
+                throw AssertionError("Couldn't find any smart step into targets at: \n${getElementText()}")
+            }
             filters.forEach {
                 doStepInto(ignoreFilters, it)
             }
@@ -272,13 +275,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             try {
                 doStepInto(ignoreFilters, filters[chooseFromList - 1])
             } catch (e: IndexOutOfBoundsException) {
-                val elementText = runReadAction {
-                    val elementAt = debuggerContext.sourcePosition.elementAt ?: return@runReadAction "<no-element>"
-                    elementAt.getElementTextWithContext()
-                }
-                throw AssertionError("Couldn't find smart step into command at: \n$elementText", e)
+                throw AssertionError("Couldn't find smart step into command at: \n${getElementText()}", e)
             }
         }
+    }
+
+    private fun getElementText() = runReadAction {
+        val elementAt = debuggerContext.sourcePosition.elementAt ?: return@runReadAction "<no-element>"
+        elementAt.getElementTextWithContext()
     }
 
     private fun createSmartStepIntoFilters(): List<MethodFilter> {

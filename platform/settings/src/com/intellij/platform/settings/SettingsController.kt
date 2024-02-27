@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.*
@@ -26,11 +27,19 @@ interface SettingsController {
 
   @Internal
   @IntellijInternalApi
+  fun createChild(container: ComponentManager): SettingsController?
+
+  @Internal
+  @IntellijInternalApi
   fun release()
 
   @Internal
   @IntellijInternalApi
   fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?>
+
+  @Internal
+  @IntellijInternalApi
+  fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult
 
   @Internal
   @IntellijInternalApi
@@ -42,27 +51,50 @@ interface SettingsController {
 value class GetResult<out T : Any?> @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
   companion object {
     @Suppress("INAPPLICABLE_JVM_NAME")
-    @JvmName("success")
     fun <T> resolved(value: T?): GetResult<T> = GetResult(value)
 
-    @JvmName("failure")
-    fun <T : Any> inapplicable(): GetResult<T> = GetResult(Inapplicable)
+    // partial is supported only for PersistentStateComponent adapter
+    fun <T : Any> partial(value: T): GetResult<T> = GetResult(Partial(value))
+
+    fun <T> inapplicable(): GetResult<T> = GetResult(Inapplicable)
   }
 
   val isResolved: Boolean
     get() = value !is Inapplicable
 
+  val isPartial: Boolean
+    get() = value is Partial
+
   @Suppress("UNCHECKED_CAST")
-  fun get(): T? = if (value is Inapplicable) null else value as T
+  fun get(): T? {
+    return when (value) {
+      is Inapplicable -> null
+      is Partial -> value.value as T
+      else -> value as T
+    }
+  }
 
   override fun toString(): String = if (value is Inapplicable) "Inapplicable" else "Applicable($value)"
 
   private object Inapplicable
+  private class Partial(@JvmField val value: Any)
 }
 
 @Internal
 enum class SetResult {
-  INAPPLICABLE, STOP, FORBID
+  /**
+   * Indicates that the controller can't be used to set this particular setting.
+   */
+  INAPPLICABLE,
+
+  /**
+   * Indicates that the setting was set successfully.
+   */
+  DONE,
+  /**
+   * Indicates that the attempted setting is read-only, therefore it can't be set.
+   */
+  FORBID
 }
 
 /**
@@ -73,6 +105,8 @@ interface DelegatedSettingsController {
   fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?>
 
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult
+
+  fun createChild(container: ComponentManager): DelegatedSettingsController? = null
 
   fun close() {
   }

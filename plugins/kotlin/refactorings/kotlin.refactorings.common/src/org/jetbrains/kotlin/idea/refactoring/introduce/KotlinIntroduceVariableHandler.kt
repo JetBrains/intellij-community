@@ -62,6 +62,8 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         onNonInteractiveFinish: ((KtDeclaration) -> Unit)? = null,
     )
 
+    abstract fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression>
+
     /**
      * @param contained expression, which is:
      * * parent of extracted expression before refactoring

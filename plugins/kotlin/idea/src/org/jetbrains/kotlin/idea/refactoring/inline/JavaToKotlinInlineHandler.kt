@@ -27,7 +27,8 @@ import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.fin
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.JKMultipleFilesPostProcessingTarget
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter.Companion.addImports
@@ -95,7 +96,7 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     referenced: PsiMember,
     context: PsiElement,
 ): KtNamedDeclaration {
-    val converterExtension = J2kConverterExtension.extension(useNewJ2k = true)
+    val converterExtension = J2kConverterExtension.extension(kind = K1_NEW)
     val postProcessor = converterExtension.createPostProcessor()
     val processor = converterExtension.createWithProgressProcessor(
         progress = ProgressManager.getInstance().progressIndicator,
@@ -121,7 +122,7 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     }
 
     postProcessor.doAdditionalProcessing(
-        target = JKMultipleFilesPostProcessingTarget(files = listOf(file)),
+        target = MultipleFilesPostProcessingTarget(files = listOf(file)),
         converterContext = j2kContext,
         onPhaseChanged = { i, s -> processor.updateState(null, phasesCount + i, s) },
     )

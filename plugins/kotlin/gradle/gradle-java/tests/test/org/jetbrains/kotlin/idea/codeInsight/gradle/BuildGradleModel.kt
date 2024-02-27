@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.tooling.core.Extras
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.settings.DistributionType
@@ -65,26 +66,28 @@ fun <T : Any> buildGradleModel(
     )
 
     connector.connect().use { gradleConnection ->
-        val projectImportAction = ProjectImportAction(false)
-        projectImportAction.addProjectImportModelProviders(
-            GradleClassProjectModelProvider.createAll(
-          clazz.java,
-          /* Representative of the `kotlin.project-module` module */
-          KotlinCompilation::class.java,
+        val buildAction = GradleModelFetchAction()
+            .addProjectImportModelProviders(
+                GradleClassProjectModelProvider.createAll(
+                    clazz.java,
+                    /* Representative of the `kotlin.project-module` module */
+                    KotlinCompilation::class.java,
 
-          /* Representative of the `kotlin-tooling-core` library */
-          Extras::class.java,
+                    /* Representative of the `kotlin-tooling-core` library */
+                    Extras::class.java,
 
-          /* Representative of the `kotlin-gradle-plugin-idea` library */
-          IdeaKotlinDependency::class.java,
+                    /* Representative of the `kotlin-gradle-plugin-idea` library */
+                    IdeaKotlinDependency::class.java,
 
-          /* Representative of the kotlin stdlib */
-          Unit::class.java
-        ))
-        projectImportAction.addProjectImportModelProviders(
-            GradleClassBuildModelProvider.createAll(
-          IdeaProject::class.java
-        ))
+                    /* Representative of the kotlin stdlib */
+                    Unit::class.java
+                )
+            )
+            .addProjectImportModelProviders(
+                GradleClassBuildModelProvider.createAll(
+                    IdeaProject::class.java
+                )
+            )
 
         val executionSettings = GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
         GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings)
@@ -108,7 +111,7 @@ fun <T : Any> buildGradleModel(
         val initScript = createMainInitScript(false, toolingExtensionClasses + kotlinToolingExtensionClasses)
         executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString())
 
-        val buildActionExecutor = gradleConnection.action(projectImportAction)
+        val buildActionExecutor = gradleConnection.action(buildAction)
         buildActionExecutor.withArguments(executionSettings.arguments)
 
         buildActionExecutor.setJavaHome(File(javaHomePath))
@@ -119,8 +122,8 @@ fun <T : Any> buildGradleModel(
 
         val allModels = runBlocking {
             suspendCoroutine { continuation ->
-                val buildActionResultHandler = object : ResultHandler<ProjectImportAction.AllModels> {
-                    override fun onComplete(result: ProjectImportAction.AllModels) {
+                val buildActionResultHandler = object : ResultHandler<AllModels> {
+                    override fun onComplete(result: AllModels) {
                         continuation.resume(result)
                     }
 

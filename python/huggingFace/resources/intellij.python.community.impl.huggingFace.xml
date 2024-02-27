@@ -11,5 +11,6 @@
     <platform.backend.documentation.psiTargetProvider id="HuggingFaceDocumentationProvider"
                                                       implementation="com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationTargetProvider"/>
     <lang.inspectionSuppressor language="Python" implementationClass="com.intellij.python.community.impl.huggingFace.service.HuggingFaceTypoInspectionSuppressor"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector"/>
   </extensions>
 </idea-plugin>

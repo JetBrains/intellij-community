@@ -5,6 +5,8 @@ import com.amazon.ion.IonType;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -22,8 +24,6 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -140,7 +140,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   private @NotNull AllModels fetchAllModels(@NotNull List<? extends ProjectImportModelProvider> modelProviders) {
-    ProjectImportAction projectImportAction = new ProjectImportAction(false)
+    GradleModelFetchAction buildAction = new GradleModelFetchAction()
       .addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject.class))
       .addProjectImportModelProviders(modelProviders);
 
@@ -157,7 +157,7 @@ public abstract class AbstractModelBuilderTest {
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(getDaemonMaxIdleTimeSeconds(), TimeUnit.SECONDS);
 
     try (ProjectConnection connection = connector.connect()) {
-      AllModels allModels = connection.action(projectImportAction)
+      AllModels allModels = connection.action(buildAction)
         .setStandardError(System.err)
         .setStandardOutput(System.out)
         .setJavaHome(new File(gradleJvmHomePath))

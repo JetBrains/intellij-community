@@ -8,10 +8,11 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -24,7 +25,7 @@ object CastExpressionFixFactories {
 
     private val applicator: KotlinModCommandApplicator<PsiElement, Input> = modCommandApplicator {
         familyName(KotlinBundle.lazyMessage("fix.cast.expression.family"))
-        actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", psi.text, input.typePresentation) }
+        actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", getExpressionShortText(psi), input.typePresentation) }
         applyTo { psi, input, context, updater ->
             val expressionToInsert = KtPsiFactory(context.project).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
             val newExpression = psi.replaced(expressionToInsert)

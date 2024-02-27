@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.PropertyUsageReplacementStrategy
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractKotlinInlinePropertyProcessor
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
@@ -32,7 +33,7 @@ class KotlinInlinePropertyProcessor(
     project
 ) {
     override fun unwrapSpecialUsage(usage: KtReferenceExpression): KtSimpleNameExpression? {
-        return null
+        return fullyExpandCall(usage)
     }
 
     override fun createReplacementStrategy(): UsageReplacementStrategy? {

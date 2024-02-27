@@ -16,6 +16,7 @@ import com.intellij.codeInsight.inline.completion.logs.TEST_CHECK_STATE_AFTER_ML
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionBuilder
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
@@ -643,7 +644,7 @@ internal class FusInlineCompletionTest : InlineCompletionTestCase() {
   ) {
     assertEquals(suggestionLength, data[InsertedStateEvents.SUGGESTION_LENGTH])
     assertEquals(resultLength, data[InsertedStateEvents.RESULT_LENGTH])
-    assertEquals(TEST_CHECK_STATE_AFTER_MLS, data[InsertedStateEvents.DURATION])
+    assertEquals(TEST_CHECK_STATE_AFTER_MLS, data[EventFields.DurationMs])
     assertEquals(editDistance, data[InsertedStateEvents.EDIT_DISTANCE])
     assertEquals(editDistanceNoAdd, data[InsertedStateEvents.EDIT_DISTANCE_NO_ADD])
     assertEquals(commonPrefixLength, data[InsertedStateEvents.COMMON_PREFIX_LENGTH])

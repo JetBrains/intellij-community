@@ -16,7 +16,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.isClassType;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 
-public class GrStringConverter extends GrTypeConverter {
+public final class GrStringConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {

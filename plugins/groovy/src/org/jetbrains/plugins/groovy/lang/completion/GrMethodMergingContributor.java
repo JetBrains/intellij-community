@@ -29,7 +29,7 @@ import java.util.ArrayList;
 /**
  * @author Maxim.Medvedev
  */
-public class GrMethodMergingContributor extends CompletionContributor {
+public final class GrMethodMergingContributor extends CompletionContributor {
   @Override
   public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     final CompletionParameters parameters = context.getParameters();

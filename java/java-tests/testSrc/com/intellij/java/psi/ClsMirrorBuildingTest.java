@@ -196,9 +196,9 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertSameLinesWithFile(txtPath, ClsFileImpl.decompile(file).toString());
   }
 
-  private static boolean isInner(String name) throws IOException {
+  private static boolean isInner(String name) {
     VirtualFile file = StandardFileSystems.local().findFileByPath(getTestDataDir() + name + ".class");
     assertNotNull(file);
-    return ClassFileViewProvider.isInnerClass(file, file.contentsToByteArray(false));
+    return ClassFileViewProvider.isInnerClass(file);
   }
 }

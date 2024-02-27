@@ -12,10 +12,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile
 import com.intellij.openapi.vfs.impl.http.RemoteFileState
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import java.io.InputStream
@@ -31,12 +33,12 @@ internal class JsonSchemaObjectStorage {
 
   private data class SchemaId(val schemaFile: VirtualFile, val modificationStamp: Long)
 
-  private val parsedSchemaById = ConcurrentFactoryMap.createWeakMap<SchemaId, JsonSchemaObject> { id ->
+  private val parsedSchemaById = ConcurrentFactoryMap.createMap<SchemaId, JsonSchemaObject> { id ->
     createRootSchemaObject(id.schemaFile)
   }
 
   fun getOrComputeSchemaRootObject(schemaFile: VirtualFile): JsonSchemaObject? {
-    if (isNotLoadedHttpFile(schemaFile)) return null
+    if (!isSupportedSchemaFile(schemaFile)) return null
 
     return parsedSchemaById[schemaFile.asSchemaId()]
       .takeIf { it !is MissingJsonSchemaObject }
@@ -49,12 +51,29 @@ internal class JsonSchemaObjectStorage {
       .takeIf { it !is MissingJsonSchemaObject }
   }
 
+
+  private fun isSupportedSchemaFile(maybeSchemaFile: VirtualFile): Boolean {
+    return isSupportedSchemaFileType(maybeSchemaFile.fileType)
+           && !isNotLoadedHttpFile(maybeSchemaFile)
+  }
+
+  private fun isSupportedSchemaFileType(fileType: FileType): Boolean {
+    return fileType.name in supportedFileTypeNames
+  }
+
+  private val supportedFileTypeNames = setOf("JSON", "JSON5", "YAML")
+
   private fun isNotLoadedHttpFile(maybeHttpFile: VirtualFile): Boolean {
     return maybeHttpFile is HttpVirtualFile && maybeHttpFile.fileInfo?.state != RemoteFileState.DOWNLOADED
   }
 
   private fun VirtualFile.asSchemaId(): SchemaId {
-    return SchemaId(this, this.modificationStamp)
+    return if (this is LightVirtualFile) {
+      SchemaId(this, -1)
+    }
+    else {
+      SchemaId(this, this.modificationStamp)
+    }
   }
 
   private fun createRootSchemaObject(schemaFile: VirtualFile): JsonSchemaObject {
@@ -67,8 +86,7 @@ internal class JsonSchemaObjectStorage {
 
   private fun parseSchemaFileSafe(schemaFile: VirtualFile): JsonNode? {
     val suitableReader = when (val providedFileTypeId = schemaFile.fileType.name) {
-      "JSON" -> jsonObjectMapper
-      "JSON5" -> json5ObjectMapper
+      "JSON", "JSON5" -> json5ObjectMapper
       "YAML" -> yamlObjectMapper
       else -> {
         Logger.getInstance("JsonSchemaReader").warn("Unsupported json schema file type: $providedFileTypeId")
@@ -85,9 +103,6 @@ internal class JsonSchemaObjectStorage {
   }
 }
 
-internal val jsonObjectMapper = JsonMapper()
-  .enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION)
-
 internal val json5ObjectMapper = JsonMapper(
   JsonFactory.builder()
     .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
@@ -99,7 +114,8 @@ internal val json5ObjectMapper = JsonMapper(
     .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
     .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
     .build()
-)
+).enable(JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION)
+
 
 internal val yamlObjectMapper = ObjectMapper(
   YAMLFactory.builder()

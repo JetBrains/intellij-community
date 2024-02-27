@@ -15,7 +15,7 @@ import java.util.Collection;
 /**
  * @author Plushnikov Michail
  */
-public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJavaInspectionBase {
+public final class SpringQualifierCopyableLombokAnnotationInspection extends LombokJavaInspectionBase {
 
   private static final String SPRING_QUALIFIER_FQN = "org.springframework.beans.factory.annotation.Qualifier";
 

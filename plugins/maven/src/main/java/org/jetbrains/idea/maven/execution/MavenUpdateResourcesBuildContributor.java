@@ -9,7 +9,7 @@ import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 import java.util.Arrays;
 import java.util.List;
 
-public class MavenUpdateResourcesBuildContributor implements UpdateResourcesBuildContributor {
+public final class MavenUpdateResourcesBuildContributor implements UpdateResourcesBuildContributor {
   @Override
   @NotNull
   public List<? extends ModuleBasedBuildTargetType<?>> getResourceTargetTypes() {

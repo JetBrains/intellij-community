@@ -9,12 +9,15 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLo
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.VFSContentStorage;
+import io.opentelemetry.api.metrics.BatchCallback;
+import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
@@ -25,8 +28,11 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 
 /**
  * {@link VFSContentStorage} implemented with memory-mapped files: uses {@link AppendOnlyLogOverMMappedFile} for
@@ -40,8 +46,8 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extend
  * <p/>
  * Max record size (compressed) is limited by the pageSize.
  * <p>
- * Storage is mostly thread-safe -- except for unmap, that should be called from a single thread
- * after all other usages are stopped.
+ * Storage is mostly thread-safe -- except for {@link #closeAndUnsafelyUnmap()}, that should be called
+ * from a single thread after all other usages are stopped.
  * <p>
  * Storage is mostly app-crash-tolerant: as long, as OS doesn't crash, and hence ensures current mmapped
  * files content is flushed -- all the records written (written = {@link #storeRecord(ByteArraySequence)}
@@ -83,6 +89,40 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   private final CompressingAlgo compressingAlgo;
 
+  //==== monitoring/statistics fields: =======================================================================================
+  //Numbers below are all about _current session_ -- i.e. persistent storage content existed before app start is _not_ counted.
+
+  /** Total number of records stored (compressed + uncompressed) */
+  private final AtomicInteger recordsStored = new AtomicInteger();
+  /** Total number of records stored in a compressed form */
+  private final AtomicInteger recordsStoredCompressed = new AtomicInteger();
+  /** Number of record store attempts which has returned already existing record (=new record 'deduplicated' with already existing one) */
+  private final AtomicInteger recordsDeduplicated = new AtomicInteger();
+
+  /**
+   * Total size (bytes) of all the records stored, before the compression, if applied.
+   * Not includes storage overhead -- headers, hashes, etc -- just raw records size
+   */
+  private final AtomicLong recordsUncompressedSize = new AtomicLong();
+  /**
+   * Total size (bytes) of all the records stored -- after the compression, if applied.
+   * I.e. for compressed records compressed size counts, for non-compressed records -- uncompressed size counts.
+   * Not including storage overhead -- just raw records size
+   */
+  private final AtomicLong recordsStoredSize = new AtomicLong();
+
+  /** Total {@link #readStream(int)} invocations */
+  private final AtomicLong recordsRead = new AtomicLong();
+  /** Total {@link #readStream(int)} invocations with decompression involved */
+  private final AtomicLong recordsReadDecompressed = new AtomicLong();
+
+  //MAYBE RC: count also _size_ of read/read-and-decompressed ?
+
+  //TODO RC: I don't like monitoring callback to be embedded -- better to have a wrapper that adds monitoring on top of
+  //         storage implementation.
+  private final BatchCallback otelCallback;
+
+
   public VFSContentStorageOverMMappedFile(@NotNull Path storagePath,
                                           int pageSize,
                                           @NotNull CompressingAlgo compressingAlgo) throws IOException {
@@ -112,8 +152,9 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       LOG.warn("Content map[" + mapPath + "] is empty while content storage is not: re-building map from the storage");
       rebuildMap(contentStorage, hashToContentRecordIdMap);
     }
-  }
 
+    otelCallback = setupOTelMonitoring(this, TelemetryManager.getInstance().getMeter(VFS));
+  }
 
   @Override
   public int getVersion() throws IOException {
@@ -139,20 +180,32 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
             ByteBuffer cryptoHashSlice = buffer.slice(0, CONTENT_HASH_LENGTH);
             return cryptoHashSlice.equals(cryptoHashWrapped);
           });
+
+          if (recordHasSameCryptoHash) {
+            recordsDeduplicated.incrementAndGet();
+          }
+
           return recordHasSameCryptoHash;
         },
         _hash -> {
           ByteArraySequence bytesToStore;
           int uncompressedSize;
           if (compressingAlgo.shouldCompress(bytes)) {
-            //returned ByteArraySequence may wrap _reusable_ buffer => must NOT be used outside of this method
-            bytesToStore = compressingAlgo.compress(bytes, /*mayReturnReusableBuffer: */ true);
+            //Since returned ByteArraySequence may wrap _reusable_ buffer => bytesToStore must NOT be used outside of this method
+            bytesToStore = compressingAlgo.compress(bytes, /* mayReturnReusableBuffer: */ true);
             uncompressedSize = -bytes.length();//sign bit indicates 'compressed data'
+
+            recordsStoredCompressed.incrementAndGet();
           }
           else {
             bytesToStore = bytes;
             uncompressedSize = bytes.length();
           }
+
+          recordsStored.incrementAndGet();
+          recordsUncompressedSize.addAndGet(bytes.length());
+          recordsStoredSize.addAndGet(bytesToStore.length());
+
 
           //record: cryptoHash[CONTENT_HASH_LENGTH], uncompressedSize(int32), contentBytes[...]
           //  uncompressedSize >= 0 => not compressed data, size=uncompressedSize
@@ -254,9 +307,15 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         int actualUncompressedSize = -uncompressedSize;
         byte[] bufferForDecompression = new byte[actualUncompressedSize];
         compressingAlgo.decompress(buffer, bufferForDecompression);
+
+        recordsReadDecompressed.incrementAndGet();
+
         return bufferForDecompression;
       }
     });
+
+    recordsRead.incrementAndGet();
+
 
     //MAYBE RC: introduce 'VIGILANT' option there we always check crypto-hash of read/decompressed data
     //          against crypto-hash stored?
@@ -320,7 +379,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       IOException.class,
       () -> new IOException("Close [" + storagePath + "] fails"),
       hashToContentRecordIdMap::close,
-      contentStorage::close
+      contentStorage::close,
+      otelCallback::close
     );
   }
 
@@ -330,7 +390,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       IOException.class,
       () -> new IOException("Can't .closeAndUnsafelyUnmap() " + contentStorage + "/" + hashToContentRecordIdMap),
       contentStorage::closeAndUnsafelyUnmap,
-      hashToContentRecordIdMap::closeAndUnsafelyUnmap
+      hashToContentRecordIdMap::closeAndUnsafelyUnmap,
+      otelCallback::close
     );
   }
 
@@ -340,7 +401,8 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       IOException.class,
       () -> new IOException("closeAndClean [" + storagePath + "] fails"),
       hashToContentRecordIdMap::closeAndClean,
-      contentStorage::closeAndClean
+      contentStorage::closeAndClean,
+      otelCallback::close
     );
   }
 
@@ -392,5 +454,35 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       hashToRecordIdMap.put(hash, contentId);
       return true;
     });
+  }
+
+  public static BatchCallback setupOTelMonitoring(@NotNull VFSContentStorageOverMMappedFile storage,
+                                                  @NotNull Meter meter) {
+    var recordsStoredCounter = meter.counterBuilder("VFS.contentStorage.recordsStored").buildObserver();
+    var recordsStoredCompressedCounter = meter.counterBuilder("VFS.contentStorage.recordsStoredCompressed").buildObserver();
+    var recordsDeduplicatedCounter = meter.counterBuilder("VFS.contentStorage.recordsDeduplicated").buildObserver();
+
+    var recordsUncompressedSizeCounter = meter.counterBuilder("VFS.contentStorage.recordsUncompressedSize").buildObserver();
+    var recordsStoredSizeCounter = meter.counterBuilder("VFS.contentStorage.recordsStoredSize").buildObserver();
+
+    var recordsReadCounter = meter.counterBuilder("VFS.contentStorage.recordsRead").buildObserver();
+    var recordsReadDecompressedCounter = meter.counterBuilder("VFS.contentStorage.recordsReadDecompressed").buildObserver();
+
+    return meter.batchCallback(
+      () -> {
+        recordsStoredCounter.record(storage.recordsStored.get());
+        recordsStoredCompressedCounter.record(storage.recordsStoredCompressed.get());
+        recordsDeduplicatedCounter.record(storage.recordsDeduplicated.get());
+
+        recordsUncompressedSizeCounter.record(storage.recordsUncompressedSize.get());
+        recordsStoredCounter.record(storage.recordsStoredSize.get());
+
+        recordsReadCounter.record(storage.recordsRead.get());
+        recordsReadDecompressedCounter.record(storage.recordsReadDecompressed.get());
+      },
+      recordsStoredCounter, recordsStoredCompressedCounter, recordsDeduplicatedCounter,
+      recordsUncompressedSizeCounter, recordsStoredSizeCounter,
+      recordsReadCounter, recordsReadDecompressedCounter
+    );
   }
 }

@@ -10,9 +10,11 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -34,6 +36,20 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import java.util.Collections
 import kotlin.math.min
+
+fun PsiElement.getContainer(): PsiElement {
+    return when (this) {
+        is KtElement -> PsiTreeUtil.getParentOfType(
+            this,
+            KtPropertyAccessor::class.java,
+            KtProperty::class.java,
+            KtNamedFunction::class.java,
+            KtConstructor::class.java,
+            KtClassOrObject::class.java
+        ) ?: containingFile
+        else -> ConflictsUtil.getContainer(this)
+    }
+}
 
 fun KtFile.createTempCopy(text: String? = null): KtFile {
     val tmpFile = KtPsiFactory.contextual(this).createFile(name, text ?: this.text ?: "")

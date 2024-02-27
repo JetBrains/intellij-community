@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("j2k/k1.new/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/copyPaste")
+@TestMetadata("../../shared/tests/testData/copyPaste")
 public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNewJavaToKotlinCopyPasteConversionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,251 +25,251 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
 
     @TestMetadata("AddImports.java")
     public void testAddImports() throws Exception {
-        runTest("testData/copyPaste/AddImports.java");
+        runTest("../../shared/tests/testData/copyPaste/AddImports.java");
     }
 
     @TestMetadata("AddImportsButNoConversion.java")
     public void testAddImportsButNoConversion() throws Exception {
-        runTest("testData/copyPaste/AddImportsButNoConversion.java");
+        runTest("../../shared/tests/testData/copyPaste/AddImportsButNoConversion.java");
     }
 
     @TestMetadata("AddImportsClassInSamePackage.java")
     public void testAddImportsClassInSamePackage() throws Exception {
-        runTest("testData/copyPaste/AddImportsClassInSamePackage.java");
+        runTest("../../shared/tests/testData/copyPaste/AddImportsClassInSamePackage.java");
     }
 
     @TestMetadata("AddImportsDummyConflict.java")
     public void testAddImportsDummyConflict() throws Exception {
-        runTest("testData/copyPaste/AddImportsDummyConflict.java");
+        runTest("../../shared/tests/testData/copyPaste/AddImportsDummyConflict.java");
     }
 
     @TestMetadata("AddImportsWithExplicitImports.java")
     public void testAddImportsWithExplicitImports() throws Exception {
-        runTest("testData/copyPaste/AddImportsWithExplicitImports.java");
+        runTest("../../shared/tests/testData/copyPaste/AddImportsWithExplicitImports.java");
     }
 
     @TestMetadata("AddKClassImport.java")
     public void testAddKClassImport() throws Exception {
-        runTest("testData/copyPaste/AddKClassImport.java");
+        runTest("../../shared/tests/testData/copyPaste/AddKClassImport.java");
     }
 
     @TestMetadata("Arithmetic.java")
     public void testArithmetic() throws Exception {
-        runTest("testData/copyPaste/Arithmetic.java");
+        runTest("../../shared/tests/testData/copyPaste/Arithmetic.java");
     }
 
     @TestMetadata("ClassWithNoDocComment.java")
     public void testClassWithNoDocComment() throws Exception {
-        runTest("testData/copyPaste/ClassWithNoDocComment.java");
+        runTest("../../shared/tests/testData/copyPaste/ClassWithNoDocComment.java");
     }
 
     @TestMetadata("ClassWithOverrides.java")
     public void testClassWithOverrides() throws Exception {
-        runTest("testData/copyPaste/ClassWithOverrides.java");
+        runTest("../../shared/tests/testData/copyPaste/ClassWithOverrides.java");
     }
 
     @TestMetadata("Comments.java")
     public void testComments() throws Exception {
-        runTest("testData/copyPaste/Comments.java");
+        runTest("../../shared/tests/testData/copyPaste/Comments.java");
     }
 
     @TestMetadata("Constructor.java")
     public void testConstructor() throws Exception {
-        runTest("testData/copyPaste/Constructor.java");
+        runTest("../../shared/tests/testData/copyPaste/Constructor.java");
     }
 
     @TestMetadata("ConversionInCorrectContext.java")
     public void testConversionInCorrectContext() throws Exception {
-        runTest("testData/copyPaste/ConversionInCorrectContext.java");
+        runTest("../../shared/tests/testData/copyPaste/ConversionInCorrectContext.java");
     }
 
     @TestMetadata("ConvertedMethodReference.java")
     public void testConvertedMethodReference() throws Exception {
-        runTest("testData/copyPaste/ConvertedMethodReference.java");
+        runTest("../../shared/tests/testData/copyPaste/ConvertedMethodReference.java");
     }
 
     @TestMetadata("CopyAnnotation.java")
     public void testCopyAnnotation() throws Exception {
-        runTest("testData/copyPaste/CopyAnnotation.java");
+        runTest("../../shared/tests/testData/copyPaste/CopyAnnotation.java");
     }
 
     @TestMetadata("ExplicitApi.java")
     public void testExplicitApi() throws Exception {
-        runTest("testData/copyPaste/ExplicitApi.java");
+        runTest("../../shared/tests/testData/copyPaste/ExplicitApi.java");
     }
 
     @TestMetadata("ExtendsTypeRef.java")
     public void testExtendsTypeRef() throws Exception {
-        runTest("testData/copyPaste/ExtendsTypeRef.java");
+        runTest("../../shared/tests/testData/copyPaste/ExtendsTypeRef.java");
     }
 
     @TestMetadata("FacadeClassName.java")
     public void testFacadeClassName() throws Exception {
-        runTest("testData/copyPaste/FacadeClassName.java");
+        runTest("../../shared/tests/testData/copyPaste/FacadeClassName.java");
     }
 
     @TestMetadata("FieldWithNoEndComment.java")
     public void testFieldWithNoEndComment() throws Exception {
-        runTest("testData/copyPaste/FieldWithNoEndComment.java");
+        runTest("../../shared/tests/testData/copyPaste/FieldWithNoEndComment.java");
     }
 
     @TestMetadata("FieldWithNoModifierAndNoSemicolon.java")
     public void testFieldWithNoModifierAndNoSemicolon() throws Exception {
-        runTest("testData/copyPaste/FieldWithNoModifierAndNoSemicolon.java");
+        runTest("../../shared/tests/testData/copyPaste/FieldWithNoModifierAndNoSemicolon.java");
     }
 
     @TestMetadata("FileWithNoPackageStatement.java")
     public void testFileWithNoPackageStatement() throws Exception {
-        runTest("testData/copyPaste/FileWithNoPackageStatement.java");
+        runTest("../../shared/tests/testData/copyPaste/FileWithNoPackageStatement.java");
     }
 
     @TestMetadata("ForRangeToRangeUntil.java")
     public void testForRangeToRangeUntil() throws Exception {
-        runTest("testData/copyPaste/ForRangeToRangeUntil.java");
+        runTest("../../shared/tests/testData/copyPaste/ForRangeToRangeUntil.java");
     }
 
     @TestMetadata("GetterWithError.java")
     public void testGetterWithError() throws Exception {
-        runTest("testData/copyPaste/GetterWithError.java");
+        runTest("../../shared/tests/testData/copyPaste/GetterWithError.java");
     }
 
     @TestMetadata("HalfTheWhiteSpace.java")
     public void testHalfTheWhiteSpace() throws Exception {
-        runTest("testData/copyPaste/HalfTheWhiteSpace.java");
+        runTest("../../shared/tests/testData/copyPaste/HalfTheWhiteSpace.java");
     }
 
     @TestMetadata("ImplementsTypeRef.java")
     public void testImplementsTypeRef() throws Exception {
-        runTest("testData/copyPaste/ImplementsTypeRef.java");
+        runTest("../../shared/tests/testData/copyPaste/ImplementsTypeRef.java");
     }
 
     @TestMetadata("Imports1.java")
     public void testImports1() throws Exception {
-        runTest("testData/copyPaste/Imports1.java");
+        runTest("../../shared/tests/testData/copyPaste/Imports1.java");
     }
 
     @TestMetadata("Imports2.java")
     public void testImports2() throws Exception {
-        runTest("testData/copyPaste/Imports2.java");
+        runTest("../../shared/tests/testData/copyPaste/Imports2.java");
     }
 
     @TestMetadata("Imports3.java")
     public void testImports3() throws Exception {
-        runTest("testData/copyPaste/Imports3.java");
+        runTest("../../shared/tests/testData/copyPaste/Imports3.java");
     }
 
     @TestMetadata("Indentation.java")
     public void testIndentation() throws Exception {
-        runTest("testData/copyPaste/Indentation.java");
+        runTest("../../shared/tests/testData/copyPaste/Indentation.java");
     }
 
     @TestMetadata("InsertIntoComment.java")
     public void testInsertIntoComment() throws Exception {
-        runTest("testData/copyPaste/InsertIntoComment.java");
+        runTest("../../shared/tests/testData/copyPaste/InsertIntoComment.java");
     }
 
     @TestMetadata("InsertIntoString.java")
     public void testInsertIntoString() throws Exception {
-        runTest("testData/copyPaste/InsertIntoString.java");
+        runTest("../../shared/tests/testData/copyPaste/InsertIntoString.java");
     }
 
     @TestMetadata("MethodDeclarationWithNoBody.java")
     public void testMethodDeclarationWithNoBody() throws Exception {
-        runTest("testData/copyPaste/MethodDeclarationWithNoBody.java");
+        runTest("../../shared/tests/testData/copyPaste/MethodDeclarationWithNoBody.java");
     }
 
     @TestMetadata("MethodReferenceWithoutQualifier.java")
     public void testMethodReferenceWithoutQualifier() throws Exception {
-        runTest("testData/copyPaste/MethodReferenceWithoutQualifier.java");
+        runTest("../../shared/tests/testData/copyPaste/MethodReferenceWithoutQualifier.java");
     }
 
     @TestMetadata("MethodWithNoAnnotation.java")
     public void testMethodWithNoAnnotation() throws Exception {
-        runTest("testData/copyPaste/MethodWithNoAnnotation.java");
+        runTest("../../shared/tests/testData/copyPaste/MethodWithNoAnnotation.java");
     }
 
     @TestMetadata("MethodWithOnlyOneAnnotation.java")
     public void testMethodWithOnlyOneAnnotation() throws Exception {
-        runTest("testData/copyPaste/MethodWithOnlyOneAnnotation.java");
+        runTest("../../shared/tests/testData/copyPaste/MethodWithOnlyOneAnnotation.java");
     }
 
     @TestMetadata("NoJvmStaticForTopLevelFunction.java")
     public void testNoJvmStaticForTopLevelFunction() throws Exception {
-        runTest("testData/copyPaste/NoJvmStaticForTopLevelFunction.java");
+        runTest("../../shared/tests/testData/copyPaste/NoJvmStaticForTopLevelFunction.java");
     }
 
     @TestMetadata("OnlyClosingBrace.java")
     public void testOnlyClosingBrace() throws Exception {
-        runTest("testData/copyPaste/OnlyClosingBrace.java");
+        runTest("../../shared/tests/testData/copyPaste/OnlyClosingBrace.java");
     }
 
     @TestMetadata("OnlyOneBraceFromBlock.java")
     public void testOnlyOneBraceFromBlock() throws Exception {
-        runTest("testData/copyPaste/OnlyOneBraceFromBlock.java");
+        runTest("../../shared/tests/testData/copyPaste/OnlyOneBraceFromBlock.java");
     }
 
     @TestMetadata("OnlyQualifier.java")
     public void testOnlyQualifier() throws Exception {
-        runTest("testData/copyPaste/OnlyQualifier.java");
+        runTest("../../shared/tests/testData/copyPaste/OnlyQualifier.java");
     }
 
     @TestMetadata("OpenPublicFunctionToTopLevel.java")
     public void testOpenPublicFunctionToTopLevel() throws Exception {
-        runTest("testData/copyPaste/OpenPublicFunctionToTopLevel.java");
+        runTest("../../shared/tests/testData/copyPaste/OpenPublicFunctionToTopLevel.java");
     }
 
     @TestMetadata("PrivateFunctionToOpenClass.java")
     public void testPrivateFunctionToOpenClass() throws Exception {
-        runTest("testData/copyPaste/PrivateFunctionToOpenClass.java");
+        runTest("../../shared/tests/testData/copyPaste/PrivateFunctionToOpenClass.java");
     }
 
     @TestMetadata("PrivateFunctionToTopLevel.java")
     public void testPrivateFunctionToTopLevel() throws Exception {
-        runTest("testData/copyPaste/PrivateFunctionToTopLevel.java");
+        runTest("../../shared/tests/testData/copyPaste/PrivateFunctionToTopLevel.java");
     }
 
     @TestMetadata("RawTypeRef.java")
     public void testRawTypeRef() throws Exception {
-        runTest("testData/copyPaste/RawTypeRef.java");
+        runTest("../../shared/tests/testData/copyPaste/RawTypeRef.java");
     }
 
     @TestMetadata("RedundantTypeCast.java")
     public void testRedundantTypeCast() throws Exception {
-        runTest("testData/copyPaste/RedundantTypeCast.java");
+        runTest("../../shared/tests/testData/copyPaste/RedundantTypeCast.java");
     }
 
     @TestMetadata("RedundantTypeCast2.java")
     public void testRedundantTypeCast2() throws Exception {
-        runTest("testData/copyPaste/RedundantTypeCast2.java");
+        runTest("../../shared/tests/testData/copyPaste/RedundantTypeCast2.java");
     }
 
     @TestMetadata("SampleBlock.java")
     public void testSampleBlock() throws Exception {
-        runTest("testData/copyPaste/SampleBlock.java");
+        runTest("../../shared/tests/testData/copyPaste/SampleBlock.java");
     }
 
     @TestMetadata("SeveralMethodsSample.java")
     public void testSeveralMethodsSample() throws Exception {
-        runTest("testData/copyPaste/SeveralMethodsSample.java");
+        runTest("../../shared/tests/testData/copyPaste/SeveralMethodsSample.java");
     }
 
     @TestMetadata("SingleWordFromIdentifier.java")
     public void testSingleWordFromIdentifier() throws Exception {
-        runTest("testData/copyPaste/SingleWordFromIdentifier.java");
+        runTest("../../shared/tests/testData/copyPaste/SingleWordFromIdentifier.java");
     }
 
     @TestMetadata("TopLevelMainWithUsedArgs.java")
     public void testTopLevelMainWithUsedArgs() throws Exception {
-        runTest("testData/copyPaste/TopLevelMainWithUsedArgs.java");
+        runTest("../../shared/tests/testData/copyPaste/TopLevelMainWithUsedArgs.java");
     }
 
     @TestMetadata("UnconvertedMethodReference.java")
     public void testUnconvertedMethodReference() throws Exception {
-        runTest("testData/copyPaste/UnconvertedMethodReference.java");
+        runTest("../../shared/tests/testData/copyPaste/UnconvertedMethodReference.java");
     }
 
     @TestMetadata("Until.java")
     public void testUntil() throws Exception {
-        runTest("testData/copyPaste/Until.java");
+        runTest("../../shared/tests/testData/copyPaste/Until.java");
     }
 }

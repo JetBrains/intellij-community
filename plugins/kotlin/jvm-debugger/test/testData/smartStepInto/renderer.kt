@@ -18,7 +18,7 @@ val propFoo: Int
         return 1
     }
 
-// EXISTS: getter for propFoo: Int,
+// EXISTS: propFoo.get()
 // EXISTS: foo()
 // EXISTS: fooWithParam(Int\, () -> Int)
 // EXISTS: extFoo()
@@ -27,4 +27,3 @@ val propFoo: Int
 // EXISTS: constructor FooClass()
 // EXISTS: constructor FooClass(Int)
 // EXISTS: constructor FooClass(Int\, Int)
-// IGNORE_K2

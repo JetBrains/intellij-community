@@ -1,11 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -56,14 +55,14 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
   ) {
     val projectSessionManager = projectSessionManager as ProjectWithModulesSaveSessionProducerManager
 
-    val writer = JpsStorageContentWriter(projectSessionManager, this, project)
+    val writer = JpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
     JpsProjectModelSynchronizer.getInstance(project).saveChangedProjectEntities(writer)
 
     for (module in ModuleManager.getInstance(project).modules) {
       val moduleStore = module.getService(IComponentStore::class.java) as? ComponentStoreImpl ?: continue
       val moduleSessionManager = moduleStore.createSaveSessionProducerManager()
-      moduleStore.commitComponents(forceSavingAllSettings, moduleSessionManager, saveResult)
-      projectSessionManager.commitComponents(moduleStore, moduleSessionManager)
+      moduleStore.commitComponents(isForce = forceSavingAllSettings, sessionManager = moduleSessionManager, saveResult = saveResult)
+      projectSessionManager.commitComponents(moduleStore = moduleStore, moduleSaveSessionManager = moduleSessionManager)
       moduleSessionManager.collectSaveSessions(saveSessions)
     }
   }
@@ -75,26 +74,35 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
 }
 
-private class JpsStorageContentWriter(private val session: ProjectWithModulesSaveSessionProducerManager,
-                                      private val store: IProjectStore,
-                                      private val project: Project) : JpsFileContentWriter {
+private class JpsStorageContentWriter(
+  private val session: ProjectWithModulesSaveSessionProducerManager,
+  private val store: IProjectStore,
+  private val project: Project,
+) : JpsFileContentWriter {
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (FileUtilRt.extensionEquals(filePath, "iml")) {
-      session.setModuleComponentState(filePath, componentName, componentTag)
+      session.setModuleComponentState(imlFilePath = filePath, componentName = componentName, componentTag = componentTag)
     }
     else if (isExternalModuleFile(filePath)) {
-      session.setExternalModuleComponentState(FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(filePath)), componentName,
-                                              componentTag)
+      session.setExternalModuleComponentState(
+        moduleFileName = FileUtilRt.getNameWithoutExtension(PathUtilRt.getFileName(filePath)),
+        componentName = componentName,
+        componentTag = componentTag,
+      )
     }
     else {
-      val stateStorage = getProjectStateStorage(filePath, store, project)
+      val stateStorage = getProjectStateStorage(filePath = filePath, store = store, project = project)
       val producer = session.getProducer(stateStorage)
       if (producer is DirectoryBasedSaveSessionProducer) {
-        producer.setFileState(PathUtilRt.getFileName(filePath), componentName, componentTag?.children?.first())
+        producer.setFileState(
+          fileName = PathUtilRt.getFileName(filePath),
+          componentName = componentName,
+          element = componentTag?.children?.first(),
+        )
       }
       else {
-        producer?.setState(null, componentName, componentTag)
+        producer?.setState(component = null, componentName = componentName, pluginId = PluginManagerCore.CORE_ID, state = componentTag)
       }
     }
   }
@@ -117,18 +125,22 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
   : ProjectSaveSessionProducerManager(project, isUseVfsForWrite)
 {
   private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> =
-    if (!SystemInfoRt.isFileSystemCaseSensitive) ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive())
-    else ConcurrentCollectionFactory.createConcurrentMap()
+    if (SystemInfoRt.isFileSystemCaseSensitive) {
+      ConcurrentCollectionFactory.createConcurrentMap()
+    }
+    else {
+      ConcurrentCollectionFactory.createConcurrentMap(HashingStrategy.caseInsensitive())
+    }
   private val externalModuleComponents = ConcurrentHashMap<String, ConcurrentHashMap<String, Element>>()
 
   fun setModuleComponentState(imlFilePath: String, componentName: String, componentTag: Element?) {
     val componentToElement = internalModuleComponents.computeIfAbsent(imlFilePath) { ConcurrentHashMap() }
-    componentToElement[componentName] = componentTag ?: NULL_ELEMENT
+    componentToElement.put(componentName, componentTag ?: NULL_ELEMENT)
   }
 
   fun setExternalModuleComponentState(moduleFileName: String, componentName: String, componentTag: Element?) {
     val componentToElement = externalModuleComponents.computeIfAbsent(moduleFileName) { ConcurrentHashMap() }
-    componentToElement[componentName] = componentTag ?: NULL_ELEMENT
+    componentToElement.put(componentName, componentTag ?: NULL_ELEMENT)
   }
 
   fun commitComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager) {
@@ -137,15 +149,18 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project, isU
       val producer = moduleSaveSessionManager.getProducer(storage)
       if (producer != null) {
         for ((componentName, componentTag) in componentToElement) {
-          producer.setState(component = null,
-                            componentName = componentName,
-                            state = if (componentTag === NULL_ELEMENT) null else componentTag)
+          producer.setState(
+            component = null,
+            componentName = componentName,
+            pluginId = PluginManagerCore.CORE_ID,
+            state = if (componentTag === NULL_ELEMENT) null else componentTag,
+          )
         }
       }
     }
 
     val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
-    val internalComponents = internalModuleComponents.get(moduleFilePath.invariantSeparatorsPathString)
+    val internalComponents = internalModuleComponents[moduleFilePath.invariantSeparatorsPathString]
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
@@ -238,7 +253,6 @@ internal class StorageJpsConfigurationReader(private val project: Project,
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadComponentTimeCounter = meter.counterBuilder("jps.storage.jps.conf.reader.load.component.ms").buildObserver()
-
       meter.batchCallback({ loadComponentTimeCounter.record(loadComponentTimeMs.asMilliseconds()) }, loadComponentTimeCounter)
     }
 
@@ -300,10 +314,8 @@ private fun getStorageSpec(filePath: String, project: Project): Storage {
 }
 
 /**
- * This fake implementation is used to force creating directory based storage in StateStorageManagerImpl.createStateStorage
+ * This fake implementation is used to force creating directory-based storage in `StateStorageManagerImpl.createStateStorage`.
  */
 private class FakeDirectoryBasedStateSplitter : StateSplitterEx() {
-  override fun splitState(state: Element): MutableList<Pair<Element, String>> {
-    throw AssertionError()
-  }
+  override fun splitState(state: Element): MutableList<Pair<Element, String>> = throw AssertionError()
 }

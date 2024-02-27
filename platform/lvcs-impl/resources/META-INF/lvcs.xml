@@ -10,6 +10,9 @@
         <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.class.text"/>
         <override-text place="GoToAction"/>
       </action>
+      <action id="LocalHistory.ShowProjectHistory" class="com.intellij.history.integration.ui.actions.ShowProjectHistoryAction">
+        <override-text place="GoToAction"/>
+      </action>
       <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
 
       <add-to-group group-id="VersionControlsGroup" anchor="first"/>

@@ -7,8 +7,9 @@ class Log4jLogger : JvmLogger by JvmLoggerFieldDelegate(
   JavaLoggingUtils.LOG4J_FACTORY,
   "getLogger",
   "%s.class",
+  "Log4j",
   JavaLoggingUtils.LOG4J,
   0,
 ) {
-  override fun toString(): String = "Log4j"
+  override fun toString(): String = id
 }

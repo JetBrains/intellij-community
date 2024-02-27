@@ -12,7 +12,7 @@ import javax.swing.*;
 import static de.plushnikov.intellij.plugin.settings.ProjectSettings.isEnabled;
 import static de.plushnikov.intellij.plugin.settings.ProjectSettings.setEnabled;
 
-public class ProjectSettingsPage implements SearchableConfigurable, Configurable.NoScroll {
+public final class ProjectSettingsPage implements SearchableConfigurable, Configurable.NoScroll {
 
   private JPanel myGeneralPanel;
 

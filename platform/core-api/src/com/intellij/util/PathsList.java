@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
+/**
+ * A list of unique paths consisting of three parts: First, Middle, Tail.
+ */
 public final class PathsList  {
   private final List<String> myPath = new ArrayList<>();
   private final List<String> myPathTail = new ArrayList<>();
@@ -34,26 +37,49 @@ public final class PathsList  {
     return file;
   };
 
+  /**
+   * @return whether there are paths inside this path list.
+   */
   public boolean isEmpty() {
     return myPathSet.isEmpty();
   }
 
+  /**
+   * Adds the passed path to the middle part of the path list.
+   */
   public void add(@Nullable String path) {
     addAllLast(chooseFirstTimeItems(path), myPath);
   }
 
+  /**
+   * Removes the path to this virtual file from the path list.
+   */
+  public void remove(@NotNull VirtualFile file) {
+    String path = LOCAL_PATH.fun(file);
+    remove(path);
+  }
+
+  /**
+   * Removes the passed path from this path list.
+   */
   public void remove(@NotNull String path) {
     myPath.remove(path);
     myPathTail.remove(path);
     myPathSet.remove(path);
   }
 
+  /**
+   * Clears all parts of this path list.
+   */
   public void clear() {
     myPath.clear();
     myPathTail.clear();
     myPathSet.clear();
   }
 
+  /**
+   * Adds the path to the passed virtual file to the middle part of the path list.
+   */
   public void add(VirtualFile file) {
     String path = LOCAL_PATH.fun(file);
     String trimmed = path != null ? path.trim() : "";
@@ -62,6 +88,10 @@ public final class PathsList  {
     }
   }
 
+  /**
+   * Adds the passed path to the first part of the path list.
+   * It is possible to pass multiple paths at once by separating them with {@link File#pathSeparator}.
+   */
   public void addFirst(String path) {
     int index = 0;
     for (String element : chooseFirstTimeItems(path)) {
@@ -71,6 +101,10 @@ public final class PathsList  {
     }
   }
 
+  /**
+   * Adds the passed path to the tail part of the path list.
+   * It is possible to pass multiple paths at once by separating them with {@link File#pathSeparator}.
+   */
   public void addTail(String path) {
     addAllLast(chooseFirstTimeItems(path), myPathTail);
   }
@@ -94,10 +128,16 @@ public final class PathsList  {
     }
   }
 
+  /**
+   * @return ll paths ordered by first, middle, tail concatenated by {@link File#pathSeparator} as a single String.
+   */
   public @NotNull String getPathsString() {
     return StringUtil.join(getPathList(), File.pathSeparator);
   }
 
+  /**
+   * @return All paths ordered by first, middle, tail as a list of Strings.
+   */
   public @NotNull List<String> getPathList() {
     List<String> result = new ArrayList<>();
     result.addAll(myPath);
@@ -119,36 +159,57 @@ public final class PathsList  {
     return JBIterable.from(getPathList()).filterMap(PATH_TO_DIR).toList();
   }
 
+  /**
+   * Adds the path to the passed paths to the middle part of the path list.
+   */
   public void addAll(List<String> allClasspath) {
     for (String path : allClasspath) {
       add(path);
     }
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addAllFiles(File[] files) {
     addAllFiles(Arrays.asList(files));
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addAllFiles(List<? extends File> files) {
     for (File file : files) {
       add(file);
     }
   }
 
+  /**
+   * Adds the path to the passed file to the middle part of the path list.
+   */
   public void add(File file) {
     add(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
+  /**
+   * Adds the path to the passed file to the first part of the path list.
+   */
   public void addFirst(File file) {
     addFirst(FileUtil.toCanonicalPath(file.getAbsolutePath()).replace('/', File.separatorChar));
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addVirtualFiles(Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       add(file);
     }
   }
 
+  /**
+   * Adds the path to the passed files to the middle part of the path list.
+   */
   public void addVirtualFiles(VirtualFile[] files) {
     addVirtualFiles(Arrays.asList(files));
   }

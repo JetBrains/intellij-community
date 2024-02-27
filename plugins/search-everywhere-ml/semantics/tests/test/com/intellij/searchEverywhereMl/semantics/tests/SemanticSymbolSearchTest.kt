@@ -4,6 +4,7 @@ import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
 import com.intellij.platform.ml.embeddings.search.services.IndexableClass
 import com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage
@@ -53,8 +54,12 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     timeout = 45.seconds // increased timeout because of a bug in symbol index
   ) {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    val searchEverywhereUI = SearchEverywhereUI(project, listOf(SemanticSymbolSearchEverywhereContributor(createEvent())),
-                                                { _ -> null }, null)
+
+    val contributor = SemanticSymbolSearchEverywhereContributor(createEvent())
+    Disposer.register(project, contributor)
+    val searchEverywhereUI = SearchEverywhereUI(project, listOf(contributor), { _ -> null }, null)
+    Disposer.register(project, searchEverywhereUI)
+
     val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern("begin indexing"))
     assertEquals(2, elements.size)
 

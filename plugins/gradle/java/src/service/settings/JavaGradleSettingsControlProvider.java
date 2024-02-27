@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 /**
  * @author Vladislav.Soroka
  */
-public class JavaGradleSettingsControlProvider extends GradleSettingsControlProvider {
+public final class JavaGradleSettingsControlProvider extends GradleSettingsControlProvider {
   @Override
   public String getPlatformPrefix() {
     return PlatformUtils.isIntelliJ() ? PlatformUtils.getPlatformPrefix() : PlatformUtils.IDEA_CE_PREFIX;

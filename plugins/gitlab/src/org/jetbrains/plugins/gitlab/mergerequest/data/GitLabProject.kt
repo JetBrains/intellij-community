@@ -84,7 +84,7 @@ class GitLabLazyProject(
     .modelFlow(parentCs, LOG)
 
   private val initialData: Deferred<GitLabProjectDTO> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    api.graphQL.getProject(projectCoordinates).body()
+    api.graphQL.findProject(projectCoordinates).body() ?: error("Project not found $projectCoordinates")
   }
 
   override val defaultBranch: Deferred<String?> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {

@@ -41,7 +41,7 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       state.actionsTabManuallySet = true
       state.manualEnabledInActionsTab = newValue
       ProjectManager.getInstance().openProjects.firstOrNull()?.let {
-        ActionEmbeddingsStorage.getInstance().run { if (newValue) prepareForSearch(it) else tryStopGeneratingEmbeddings() }
+        ActionEmbeddingStorageManager.getInstance().run { if (newValue) prepareForSearch(it) }
       }
     }
 

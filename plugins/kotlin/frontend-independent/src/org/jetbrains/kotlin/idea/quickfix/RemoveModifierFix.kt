@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.coMap
@@ -53,6 +54,10 @@ open class RemoveModifierFixBase(
 
     operator fun invoke() {
         element?.removeModifier(modifier)
+        val element = element
+        if (element is KtPrimaryConstructor && element.isRedundant()) {
+            element.delete()
+        }
     }
 
     companion object {

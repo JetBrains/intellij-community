@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import java.util.Collections;
 import java.util.List;
 
-public class Maven2VersionDependencyCollector implements DependencyCollector {
+public final class Maven2VersionDependencyCollector implements DependencyCollector {
   @NotNull
   @Override
   public List<String> collectDependencies(@NotNull Project project) {

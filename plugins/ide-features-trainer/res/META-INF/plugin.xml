@@ -52,13 +52,9 @@
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
-      implementation="training.statistic.IdeFeaturesTrainerModuleRuleValidator"/>
-    <statistics.validation.customValidationRule
       implementation="training.statistic.SupportedLanguageRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.ActionIdRuleValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="training.statistic.TaskIdRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.KeymapSchemeRuleValidator"/>
     <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>

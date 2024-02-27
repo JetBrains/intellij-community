@@ -32,7 +32,7 @@ class GitLabReactionsViewModelImpl(
   override val reactionsWithInfo: StateFlow<Map<GitLabReaction, ReactionInfo>> = note.awardEmoji.mapState(cs) { data ->
     val reactionToUsers = data.groupBy({ dto -> GitLabReactionImpl(dto) }, GitLabAwardEmojiDTO::user)
     reactionToUsers.mapValues { (_, users) ->
-      ReactionInfo(users.size, users.map(GitLabUserDTO::id).contains(currentUser.id))
+      ReactionInfo(users, users.map(GitLabUserDTO::id).contains(currentUser.id))
     }
   }
 
@@ -44,6 +44,6 @@ class GitLabReactionsViewModelImpl(
 }
 
 data class ReactionInfo(
-  val count: Int,
+  val users: List<GitLabUserDTO>,
   val isReactedByCurrentUser: Boolean
 )

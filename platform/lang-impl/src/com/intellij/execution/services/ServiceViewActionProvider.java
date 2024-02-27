@@ -165,6 +165,9 @@ final class ServiceViewActionProvider {
   @Nullable
   private static ServiceView getSelectedView(@Nullable Component contextComponent) {
     while (contextComponent != null && !(contextComponent instanceof ServiceView)) {
+      if (contextComponent instanceof ServiceViewNavBarPanel navBarPanel) {
+        return navBarPanel.getView();
+      }
       contextComponent = contextComponent.getParent();
     }
     return (ServiceView)contextComponent;

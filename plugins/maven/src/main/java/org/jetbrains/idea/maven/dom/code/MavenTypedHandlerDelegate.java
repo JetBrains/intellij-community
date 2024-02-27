@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
-public class MavenTypedHandlerDelegate extends TypedHandlerDelegate {
+public final class MavenTypedHandlerDelegate extends TypedHandlerDelegate {
   @NotNull
   @Override
   public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

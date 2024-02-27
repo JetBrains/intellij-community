@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.jps.dependency.GraphDataInput;
@@ -22,7 +22,7 @@ public final class AnnotationUsage extends JvmElementUsage {
 
   public AnnotationUsage(GraphDataInput in) throws IOException {
     super(in);
-    myClassType = new TypeRepr.ClassType(in.readUTF());
+    myClassType = new TypeRepr.ClassType(getElementOwner().getNodeName());
     myUsedArgNames = RW.readCollection(in, () -> in.readUTF());
     myTargets = RW.readCollection(in, ()-> ElemType.fromOrdinal(in.readInt()));
   }
@@ -30,7 +30,6 @@ public final class AnnotationUsage extends JvmElementUsage {
   @Override
   public void write(GraphDataOutput out) throws IOException {
     super.write(out);
-    out.writeUTF(myClassType.getJvmName());
     RW.writeCollection(out, myUsedArgNames, s -> out.writeUTF(s));
     RW.writeCollection(out, myTargets, t -> out.writeInt(t.ordinal()));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ide.ui.AntiFlickeringPanel;
@@ -136,7 +136,11 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   @Override
   public void nodeLoaded(@NotNull final RestorableStateNode node, @NotNull final String name) {
     XDebuggerTreeState.NodeInfo parentInfo = myNode2ParentState.remove(node);
-    doRestoreNode(node, parentInfo != null ? parentInfo.getChild(node) : myPendingNode2State.remove(node));
+    XDebuggerTreeState.NodeInfo nodeInfo = parentInfo != null ? parentInfo.getChild(node) : myPendingNode2State.remove(node);
+    // always restore if parentInfo is available
+    if (parentInfo != null || nodeInfo != null) {
+      doRestoreNode(node, nodeInfo);
+    }
     checkFinished();
   }
 

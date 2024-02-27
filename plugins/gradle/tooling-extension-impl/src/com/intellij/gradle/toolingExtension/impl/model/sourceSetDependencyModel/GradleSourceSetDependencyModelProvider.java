@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactBuildRequest;
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
@@ -10,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleSourceSetDependencyModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+
+import java.util.Collection;
 
 @ApiStatus.Internal
 public class GradleSourceSetDependencyModelProvider implements ProjectImportModelProvider {
@@ -20,12 +23,13 @@ public class GradleSourceSetDependencyModelProvider implements ProjectImportMode
   }
 
   @Override
-  public void populateBuildModels(
+  public void populateModels(
     @NotNull BuildController controller,
-    @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModelsRecursively(controller, buildModel, GradleDependencyDownloadPolicy.class, BuildModelConsumer.NOOP);
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleSourceSetDependencyModel.class, BuildModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModelsRecursively(controller, buildModels, GradleDependencyDownloadPolicy.class, GradleModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetArtifactBuildRequest.class, GradleModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetDependencyModel.class, GradleModelConsumer.NOOP);
   }
 }

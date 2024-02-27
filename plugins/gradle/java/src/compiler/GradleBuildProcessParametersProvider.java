@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author Vladislav.Soroka
  */
-public class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
+public final class GradleBuildProcessParametersProvider extends BuildProcessParametersProvider {
 
   public static final Logger LOG = Logger.getInstance(GradleBuildProcessParametersProvider.class);
   @NotNull private final Project myProject;

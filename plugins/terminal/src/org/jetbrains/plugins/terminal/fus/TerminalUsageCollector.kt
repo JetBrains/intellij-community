@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.fus
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -16,10 +18,11 @@ import java.util.*
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 16)
+  private val GROUP = EventLogGroup(GROUP_ID, 18)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
+  private val BLOCK_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
 
   private val sshExecEvent = GROUP.registerEvent("ssh.exec")
   private val terminalSmartCommandExecutedEvent = GROUP.registerVarargEvent("terminal.smart.command.executed",
@@ -30,18 +33,27 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                                RUN_ANYTHING_PROVIDER_FIELD)
   private val localExecEvent = GROUP.registerEvent("local.exec",
                                                    EventFields.StringValidatedByRegexpReference("os-version", "version"),
-                                                   EventFields.String("shell", KNOWN_SHELLS.toList()))
+                                                   EventFields.String("shell", KNOWN_SHELLS.toList()),
+                                                   BLOCK_TERMINAL_FIELD)
 
   private val commandExecutedEvent = GROUP.registerEvent("terminal.command.executed",
                                                          TerminalCommandUsageStatistics.commandExecutableField,
-                                                         TerminalCommandUsageStatistics.subCommandField)
+                                                         TerminalCommandUsageStatistics.subCommandField,
+                                                         BLOCK_TERMINAL_FIELD)
+
+  private val promotionShownEvent = GROUP.registerEvent("promotion.shown")
+  private val promotionGotItClickedEvent = GROUP.registerEvent("promotion.got.it.clicked")
+
+  private val blockTerminalSwitchedEvent = GROUP.registerEvent("new.terminal.switched",
+                                                               EventFields.Boolean("enabled"),
+                                                               EventFields.Enum<BlockTerminalSwitchPlace>("switch_place"))
 
   @JvmStatic
   fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
 
   @JvmStatic
-  fun triggerCommandExecuted(project: Project, userCommandLine: String) {
-    TerminalCommandUsageStatistics.triggerCommandExecuted(commandExecutedEvent, project, userCommandLine)
+  fun triggerCommandExecuted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
+    TerminalCommandUsageStatistics.triggerCommandExecuted(commandExecutedEvent, project, userCommandLine, isBlockTerminal)
   }
 
   @JvmStatic
@@ -66,10 +78,31 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 
   @JvmStatic
-  fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>) =
+  fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>, isBlockTerminal: Boolean) {
     localExecEvent.log(project,
                        Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
-                       getShellNameForStat(shellCommand.firstOrNull()))
+                       getShellNameForStat(shellCommand.firstOrNull()),
+                       isBlockTerminal)
+    if (isBlockTerminal) {
+      val propertiesComponent = PropertiesComponent.getInstance()
+      val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
+      propertiesComponent.setValue(BLOCK_TERMINAL_LAST_USED_VERSION, version)
+      propertiesComponent.setValue(BLOCK_TERMINAL_LAST_USED_DATE, (System.currentTimeMillis() / 1000).toInt(), 0)
+    }
+  }
+
+  internal fun triggerPromotionShown(project: Project) {
+    promotionShownEvent.log(project)
+  }
+
+  internal fun triggerPromotionGotItClicked(project: Project) {
+    promotionGotItClickedEvent.log(project)
+  }
+
+  @JvmStatic
+  internal fun triggerBlockTerminalSwitched(project: Project, enabled: Boolean, place: BlockTerminalSwitchPlace) {
+    blockTerminalSwitchedEvent.log(project, enabled, place)
+  }
 
   @JvmStatic
   private fun getShellNameForStat(shellName: String?): String {
@@ -91,8 +124,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   }
 }
 
-internal enum class TerminalPromotionEvent {
-  SHOWN, BUTTON_CLICKED, MENU_OPENED
+internal enum class BlockTerminalSwitchPlace {
+  SETTINGS, TOOLWINDOW_OPTIONS
 }
 
 private const val GROUP_ID = "terminalShell"
@@ -138,3 +171,7 @@ private val KNOWN_SHELLS = setOf("unspecified",
                                  "xonsh",
                                  "zsh")
 private val KNOWN_EXTENSIONS = setOf("exe", "bat", "cmd")
+
+private const val BLOCK_TERMINAL_LAST_USED_VERSION = "BLOCK_TERMINAL_LAST_USED_VERSION"
+/** Timestamp in seconds */
+private const val BLOCK_TERMINAL_LAST_USED_DATE = "BLOCK_TERMINAL_LAST_USED_DATE"

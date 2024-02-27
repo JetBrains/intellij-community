@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Max Medvedev
  */
-public class RemoveUnnecessaryEscapeCharactersIntention extends GrPsiUpdateIntention {
+public final class RemoveUnnecessaryEscapeCharactersIntention extends GrPsiUpdateIntention {
   public static final String HINT = "Remove unnecessary escape characters";
 
   @Override

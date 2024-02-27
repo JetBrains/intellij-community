@@ -35,6 +35,7 @@ import org.jetbrains.plugins.notebooks.visualization.r.VisualizationBundle
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.ClipboardUtils
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayDimensions
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.MouseWheelUtils
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.InlayProgressStatus
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.dataframe.DataFrameCSVAdapter
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.runAsyncInlay
 import org.jetbrains.plugins.notebooks.visualization.r.ui.ToolbarUtil

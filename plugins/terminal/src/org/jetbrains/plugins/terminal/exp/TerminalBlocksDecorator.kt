@@ -72,6 +72,12 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
           editor.markupModel.removeHighlighter(it.cornersHighlighter)
         }
         decorations.remove(block)
+
+        // update the top inlay of the top block to add the gap between block and terminal top if it became the first block
+        if (outputModel.getBlocksSize() > 0) {
+          val firstBlock = outputModel.getByIndex(0)
+          decorations[firstBlock]?.topInlay?.update()
+        }
       }
 
       // Highlight the blocks with non-zero exit code as an error
@@ -110,14 +116,16 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
   }
 
   @RequiresEdt
-  fun installDecoration(block: CommandBlock, isFirstBlock: Boolean = false) {
+  fun installDecoration(block: CommandBlock) {
     if (decorations[block] != null) {
       return
     }
 
     // add additional empty space on top of the block, if it is the first block
-    val topInset = TerminalUi.blockTopInset + if (isFirstBlock) TerminalUi.blocksGap else 0
-    val topRenderer = EmptyWidthInlayRenderer(topInset)
+    val topRenderer = EmptyWidthInlayRenderer {
+      val additionalInset = if (outputModel.getByIndex(0) === block) TerminalUi.blocksGap else 0
+      TerminalUi.blockTopInset + additionalInset
+    }
     val topInlay = editor.inlayModel.addBlockElement(block.startOffset, false, true, 1, topRenderer)!!
     val bottomRenderer = EmptyWidthInlayRenderer(TerminalUi.blockBottomInset + TerminalUi.blocksGap)
     val bottomInlay = editor.inlayModel.addBlockElement(block.endOffset, true, false, 0, bottomRenderer)!!
@@ -222,10 +230,12 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
   }
 
   /** Inlay to just create the space between lines */
-  private class EmptyWidthInlayRenderer(val height: Int) : EditorCustomElementRenderer {
+  private class EmptyWidthInlayRenderer(private val heightSupplier: () -> Int) : EditorCustomElementRenderer {
+    constructor(height: Int) : this({ height })
+
     override fun calcWidthInPixels(inlay: Inlay<*>): Int = 0
 
-    override fun calcHeightInPixels(inlay: Inlay<*>): Int = JBUI.scale(height)
+    override fun calcHeightInPixels(inlay: Inlay<*>): Int = JBUI.scale(heightSupplier())
   }
 
   /**

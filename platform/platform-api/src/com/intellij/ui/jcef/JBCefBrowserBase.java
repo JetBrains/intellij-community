@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -50,6 +52,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.intellij.ui.jcef.JBCefEventUtils.convertCefKeyEvent;
+import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 import static org.cef.callback.CefMenuModel.MenuId.MENU_ID_USER_LAST;
@@ -87,7 +91,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private static final @NotNull Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
 
   @SuppressWarnings("SpellCheckingInspection")
-  protected static final @NotNull String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
+  public static final @NotNull String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
   private final @NotNull DisposeHelper myDisposeHelper = new DisposeHelper();
   private volatile @Nullable LoadDeferrer myLoadDeferrer;
   private @NotNull String myLastRequestedUrl = "";
@@ -150,9 +154,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable String myCssBgColor;
   private @Nullable JDialog myDevtoolsFrame = null;
 
+  private final @NotNull CefKeyboardHandler myKeyboardHandler;
+
   /**
    * The browser instance is disposed automatically with {@link JBCefClient}
-   * as the parent {@link com.intellij.openapi.Disposable} (see {@link #getJBCefClient()}).
+   * as the parent {@link Disposable} (see {@link #getJBCefClient()}).
    * Nevertheless, it can be disposed manually as well when necessary.
    */
   protected JBCefBrowserBase(@NotNull JBCefBrowserBuilder builder) {
@@ -289,6 +295,25 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     };
 
     CertificateManager.getInstance().getCustomTrustManager().addListener(myCertificateListener);
+
+    myCefClient.addKeyboardHandler(myKeyboardHandler = new CefKeyboardHandlerAdapter() {
+      @Override
+      public boolean onKeyEvent(CefBrowser browser, CefKeyEvent cefKeyEvent) {
+        //if (isOffScreenRendering()) return false;
+
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        boolean consume = focusOwner != browser.getUIComponent();
+        if (consume && SystemInfo.isMac && isUpDownKeyEvent(cefKeyEvent)) return true; // consume
+
+        Window focusedWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+        if (focusedWindow == null) {
+          return true; // consume
+        }
+        KeyEvent javaKeyEvent = convertCefKeyEvent(cefKeyEvent, focusedWindow);
+        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
+        return consume;
+      }
+    }, myCefBrowser);
   }
 
   private @NotNull CefBrowserOsrWithHandler createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
@@ -396,19 +421,21 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   /**
-   * @param zoomLevel 1.0 is 100%.
-   * @see #ZOOM_COMMON_RATIO
-   */
-  public final void setZoomLevel(double zoomLevel) {
-    myCefBrowser.setZoomLevel(Math.log(zoomLevel) / LOG_ZOOM);
-  }
-
-  /**
    * @return 1.0 is 100%
    * @see #ZOOM_COMMON_RATIO
    */
+  @SuppressWarnings("unused")
   public final double getZoomLevel() {
     return Math.pow(ZOOM_COMMON_RATIO, myCefBrowser.getZoomLevel());
+  }
+
+  /**
+   * @param zoomLevel 1.0 is 100%.
+   * @see #ZOOM_COMMON_RATIO
+   */
+  @SuppressWarnings("unused")
+  public final void setZoomLevel(double zoomLevel) {
+    myCefBrowser.setZoomLevel(Math.log(zoomLevel) / LOG_ZOOM);
   }
 
   public final @NotNull JBCefClient getJBCefClient() {
@@ -543,6 +570,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myCefBrowser.close(true);
 
       if (myCefClient.isDefault()) Disposer.dispose(myCefClient);
+
+      myCefClient.removeKeyboardHandler(myKeyboardHandler, myCefBrowser);
     });
   }
 

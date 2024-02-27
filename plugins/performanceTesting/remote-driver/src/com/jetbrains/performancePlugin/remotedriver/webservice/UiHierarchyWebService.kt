@@ -46,7 +46,7 @@ internal class UiHierarchyWebService : RestService() {
       val component = UiHierarchyWebServiceExtension.EP_NAME.extensionList.firstNotNullOf { it.getComponentById(id) }
       partialHierarchy(component)
     }
-    static()
+    static("/static")
   }
 
   private fun partialHierarchy(component: Component): String {

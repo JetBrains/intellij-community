@@ -25,9 +25,13 @@ import kotlin.time.Duration.Companion.milliseconds
 private val LOG: Logger
   get() = logger<IdeStartupWizard>()
 
+val isIdeStartupDialogEnabled: Boolean
+  get() = !ApplicationManagerEx.isInIntegrationTest() &&
+          System.getProperty("intellij.startup.dialog", "true").toBoolean()
+
 val isIdeStartupWizardEnabled: Boolean
   get() = !ApplicationManagerEx.isInIntegrationTest() &&
-          System.getProperty ("intellij.startup.wizard", "true").toBoolean() &&
+          System.getProperty("intellij.startup.wizard", "true").toBoolean() &&
           IdeStartupExperiment.isExperimentEnabled()
 
 @ExperimentalCoroutinesApi
@@ -68,7 +72,7 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
         }
       }
 
-      LOG.info("Passing execution control to $wizard.")
+      LOG.info("Executing the onboarding flow for adapter $wizard.")
       span("${adapter.assignableToClassName}.run", Dispatchers.EDT) block@{
         val startupStatus = com.intellij.platform.ide.bootstrap.isInitialStart
         try {
@@ -83,8 +87,12 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
           startupStatus?.cancel()
         }
 
-        LOG.info("Passing execution control to $wizard.")
-        wizard.run()
+        if (isIdeStartupWizardEnabled) {
+          LOG.info("Passing execution control to $wizard.")
+          wizard.run()
+        } else {
+          LOG.info("Skipping the actual wizard call.")
+        }
       }
 
       // first wizard wins
@@ -210,6 +218,8 @@ private object IdeStartupExperiment {
   }
 
   fun isExperimentEnabled(): Boolean {
+    @Suppress("DEPRECATION")
+    if (PlatformUtils.isCLion()) return false
     return when (experimentGroupKind) {
       GroupKind.Experimental -> true
       GroupKind.Control -> false

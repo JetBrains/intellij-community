@@ -714,7 +714,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   private void updatePreviewVisibility(@NotNull SETab tab) {
-    boolean noProviders = ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
+    boolean noProviders = !hasPreviewProvider(tab);
     if (myUsagePreviewPanel != null) {
       myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders && !myResultsList.isEmpty());
     }
@@ -1231,8 +1231,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void onMouseClicked(@NotNull MouseEvent e) {
     boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
-    boolean previewMode = isPreviewActive();
-    if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode && (!previewMode || e.getClickCount() == 2)) {
+    boolean isPreviewDoubleClick = !isPreviewActive() || !hasPreviewProvider(myHeader.getSelectedTab()) || e.getClickCount() == 2;
+    if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode && isPreviewDoubleClick) {
       e.consume();
       final int i = myResultsList.locationToIndex(e.getPoint());
       if (i > -1) {
@@ -1240,6 +1240,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         elementsSelected(new int[]{i}, e.getModifiers());
       }
     }
+  }
+
+  private static boolean hasPreviewProvider(@NotNull SETab tab) {
+    return !ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
   }
 
   private boolean isHintComponent(Component component) {

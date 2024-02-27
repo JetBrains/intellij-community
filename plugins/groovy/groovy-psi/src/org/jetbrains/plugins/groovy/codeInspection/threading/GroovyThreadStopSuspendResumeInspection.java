@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import java.util.HashSet;
 import java.util.Set;
 
-public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
+public final class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
 
   private static final Set<@NlsSafe String> METHOD_NAMES = new HashSet<>();
 

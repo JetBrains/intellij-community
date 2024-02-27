@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -134,7 +134,12 @@ public final class FSRecords {
     return _impl;
   }
 
-  /** @throws AlreadyDisposedException if VFS is disposed (or not yet initialized) */
+  /**
+   * @throws ServiceNotReadyException if VFS is not yet initialized (connected)
+   * @throws AlreadyDisposedException if VFS is disposed
+   * @throws com.intellij.openapi.progress.ProcessCanceledException (wrapping AlreadyDisposedException) if VFS is disposed, and
+   * we're now running under an progress indicator or Job
+   */
   public static @NotNull FSRecordsImpl getInstance() throws AlreadyDisposedException {
     return implOrFail();
   }
@@ -315,7 +320,10 @@ public final class FSRecords {
     implOrFail().scheduleRebuild(diagnosticMessage, null);
   }
 
-  /** @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches */
+  /**
+   * @deprecated please use {@link #invalidateCaches(String)} instead -> provide explicit reason for invalidate caches
+   * TODO RC: currently only third-party plugins keep using it
+   */
   @ApiStatus.Obsolete
   @Deprecated
   public static void invalidateCaches() {
@@ -342,14 +350,6 @@ public final class FSRecords {
   }
 
   //========== diagnostic, sanity checks: ==================================
-
-  /**
-   * @return human-readable description of file fileId -- as much information as VFS now contains
-   */
-  public static @NotNull String describeAlreadyCreatedFile(int fileId,
-                                                           int nameId) {
-    return implOrFail().describeAlreadyCreatedFile(fileId, nameId);
-  }
 
   @TestOnly
   public static void checkFilenameIndexConsistency() {

@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.controllers
 
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.ide.startup.importSettings.models.IdeVersion
-import com.intellij.ide.startup.importSettings.providers.DefaultImportPerformer
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformImportTask
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.DefaultImportPerformer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project

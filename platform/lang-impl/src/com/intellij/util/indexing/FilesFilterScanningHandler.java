@@ -3,13 +3,14 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.NotNull;
 
 public interface FilesFilterScanningHandler {
   void addFileId(@NotNull Project project, int fileId);
 
-  default void scanningCompleted() {
+  default void scanningCompleted(@NotNull Project project) {
 
   }
 
@@ -48,7 +49,11 @@ public interface FilesFilterScanningHandler {
     }
 
     @Override
-    public void scanningCompleted() {
+    public void scanningCompleted(@NotNull Project project) {
+      ProjectIndexableFilesFilterHealthCheck healthCheck = myFilterHolder.getHealthCheck(project);
+      if (healthCheck != null) {
+        healthCheck.triggerHealthCheck();
+      }
     }
 
     @Override

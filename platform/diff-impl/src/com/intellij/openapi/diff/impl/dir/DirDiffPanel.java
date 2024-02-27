@@ -11,6 +11,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -70,6 +71,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
   public static final DataKey<DirDiffTableModel> DIR_DIFF_MODEL = DataKey.create("DIR_DIFF_MODEL");
   public static final DataKey<JTable> DIR_DIFF_TABLE = DataKey.create("DIR_DIFF_TABLE");
+  public static final DataKey<FilterComponent> DIR_DIFF_FILTER = DataKey.create("DIR_DIFF_FILTER");
   private static final String SPLITTER_PROPORTION_KEY = "dir.diff.panel.splitter.proportion";
 
   private final Project myProject;
@@ -115,6 +117,14 @@ public class DirDiffPanel implements Disposable, DataProvider {
         int firstIndex = e.getFirstIndex();
         DirDiffElementImpl last = myModel.getElementAt(lastIndex);
         DirDiffElementImpl first = myModel.getElementAt(firstIndex);
+
+        // Since we can't select the separator, we need to save it somehow. See com.intellij.openapi.diff.impl.dir.actions.popup.ExcludeAction
+        if (last != null && last.isSeparator()) {
+          myModel.setSelectedSeparator(last);
+        }
+        else {
+          myModel.setSelectedSeparator(null);
+        }
         if (last == null || first == null) {
           update(false);
           return;
@@ -258,7 +268,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
         UIUtil.setEnabled(myFilter, true, true);
       }
     });
-    myFilter.getTextEditor().setColumns(10);
+    myFilter.getTextEditor().setColumns(35);
     myFilter.setFilter(myModel.getSettings().getFilter());
 
     JBLabel filterLabel = new JBLabel();
@@ -268,6 +278,11 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
     myFilterPanel.add(myFilter, BorderLayout.CENTER);
     myFilterPanel.add(filterLabel, BorderLayout.WEST);
+    HelpTooltip tooltip = new HelpTooltip().setTitle(DiffBundle.message("dirdiff.filter.help.title"))
+      .setDescription(DiffBundle.message("dirdiff.filter.help.description"))
+      .setNeverHideOnTimeout(true);
+    myFilterPanel.add(ContextHelpLabel.createFromTooltip(tooltip), BorderLayout.EAST);
+    myFilterPanel.setBorder(JBUI.Borders.emptyRight(16));
 
     setDirFieldChooser(myModel.getSourceDir().getElementChooser(myProject), false);
     setDirFieldChooser(myModel.getTargetDir().getElementChooser(myProject), true);
@@ -447,6 +462,9 @@ public class DirDiffPanel implements Disposable, DataProvider {
     }
     else if (DIR_DIFF_TABLE.is(dataId)) {
       return myTable;
+    }
+    else if (DIR_DIFF_FILTER.is(dataId)) {
+      return myFilter;
     }
     else if (DiffDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatableArray();

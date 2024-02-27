@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.model.dependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicy;
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndex;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
@@ -44,7 +45,7 @@ public final class GradleDependencyResolver {
   private final @NotNull Project myProject;
   private final @NotNull GradleDependencyDownloadPolicy myDownloadPolicy;
 
-  private final @NotNull GradleSourceSetCachedFinder mySourceSetFinder;
+  private final @NotNull GradleSourceSetArtifactIndex mySourceSetArtifactIndex;
 
   public GradleDependencyResolver(
     @NotNull ModelBuilderContext context,
@@ -54,7 +55,7 @@ public final class GradleDependencyResolver {
     myProject = project;
     myDownloadPolicy = downloadPolicy;
 
-    mySourceSetFinder = GradleSourceSetCachedFinder.getInstance(context);
+    mySourceSetArtifactIndex = GradleSourceSetArtifactIndex.getInstance(context);
   }
 
   public GradleDependencyResolver(@NotNull ModelBuilderContext context, @NotNull Project project) {
@@ -182,7 +183,7 @@ public final class GradleDependencyResolver {
       return null;
     }
     resolvedFiles.add(artifactFile.getPath());
-    String artifactPath = mySourceSetFinder.findArtifactBySourceSetOutputDir(artifactFile.getPath());
+    String artifactPath = mySourceSetArtifactIndex.findArtifactBySourceSetOutputDir(artifactFile.getPath());
     if (artifactPath != null) {
       artifactFile = new File(artifactPath);
       if (resolvedFiles.contains(artifactFile.getPath())) {
@@ -226,7 +227,7 @@ public final class GradleDependencyResolver {
       projectDependencyArtifacts.add(artifactFile);
       cachedProjectDependency.setProjectDependencyArtifacts(projectDependencyArtifacts);
       Set<File> artifactSources = new LinkedHashSet<>(cachedProjectDependency.getProjectDependencyArtifactsSources());
-      artifactSources.addAll(mySourceSetFinder.findArtifactSources(artifactFile));
+      artifactSources.addAll(mySourceSetArtifactIndex.findArtifactSources(artifactFile));
       cachedProjectDependency.setProjectDependencyArtifactsSources(artifactSources);
       return null;
     }
@@ -240,7 +241,7 @@ public final class GradleDependencyResolver {
     projectDependency.setProjectPath(projectComponentIdentifier.getProjectPath());
     projectDependency.setConfigurationName(resolvedDependency.getConfiguration());
     projectDependency.setProjectDependencyArtifacts(Collections.singleton(artifactFile));
-    projectDependency.setProjectDependencyArtifactsSources(mySourceSetFinder.findArtifactSources(artifactFile));
+    projectDependency.setProjectDependencyArtifactsSources(mySourceSetArtifactIndex.findArtifactSources(artifactFile));
 
     return projectDependency;
   }
@@ -311,7 +312,7 @@ public final class GradleDependencyResolver {
     if (configuration == null) return null;
     Set<File> projectArtifacts = configuration.getArtifacts().getFiles().getFiles();
     projectDependency.setProjectDependencyArtifacts(projectArtifacts);
-    projectDependency.setProjectDependencyArtifactsSources(mySourceSetFinder.findArtifactSources(projectArtifacts));
+    projectDependency.setProjectDependencyArtifactsSources(mySourceSetArtifactIndex.findArtifactSources(projectArtifacts));
 
     return projectDependency;
   }
@@ -454,7 +455,7 @@ public final class GradleDependencyResolver {
    * @return best match, null otherwise
    */
   @VisibleForTesting
-  public static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
+  static @Nullable File chooseAuxiliaryArtifactFile(@NotNull File main, @NotNull Set<File> auxiliaries) {
     Iterator<File> auxiliariesIterator = auxiliaries.iterator();
     if (!auxiliariesIterator.hasNext()) {
       return null;

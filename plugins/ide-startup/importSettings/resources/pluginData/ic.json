@@ -10,11 +10,6 @@
     "ideaId": "gherkin"
   },
   {
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit"
-  },
-  {
     "vsCodeId": "bungcip.better-toml",
     "ideaName": "Toml",
     "ideaId": "org.toml.lang"
@@ -28,11 +23,6 @@
     "vsCodeId": "Dart-Code.dart-code",
     "ideaName": "Dart",
     "ideaId": "Dart"
-  },
-  {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
   },
   {
     "vsCodeId": "dbaeumer.vscode-eslint",
@@ -65,6 +55,11 @@
     "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
+  },
+  {
     "vsCodeId": "formulahendry.auto-rename-tag",
     "ideaName": "Auto Rename Tag",
     "builtIn": true
@@ -95,11 +90,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "GoogleCloudTools.cloudcode",
-    "ideaName": "Google Cloud Code",
-    "ideaId": "com.google.gct.core"
-  },
-  {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql"
@@ -121,7 +111,7 @@
   },
   {
     "vsCodeId": "mathiasfrohlich.Kotlin",
-    "ideaName": "Kotlin",
+    "ideaName": "Kotlin Language",
     "builtIn": true
   },
   {
@@ -130,9 +120,19 @@
     "ideaId": "Docker"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
+  },
+  {
+    "vsCodeId": "ms-python.black-formatter",
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
+  },
+  {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python",
-    "ideaId": "Pythonid"
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -155,13 +155,8 @@
     "ideaId": "com.jetbrains.codeWithMe"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
     "vsCodeId": "redhat.java",
-    "ideaName": "Java",
+    "ideaName": "Language Support for Java(TM) by Red Hat",
     "builtIn": true
   },
   {
@@ -185,19 +180,19 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "SonarSource.sonarlint-vscode",
-    "ideaName": "SonarLint",
-    "ideaId": "org.sonarlint.idea"
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
+    "vsCodeId": "tamasfe.even-better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "tht13.python",
     "ideaName": "Python Community Edition",
     "ideaId": "PythonCore"
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscjava.vscode-gradle",
@@ -216,7 +211,7 @@
   },
   {
     "vsCodeId": "vscjava.vscode-java-pack",
-    "ideaName": "Java",
+    "ideaName": "Extension Pack for Java",
     "builtIn": true
   },
   {
@@ -231,13 +226,18 @@
   },
   {
     "vsCodeId": "vscjava.vscode-maven",
-    "ideaName": "Maven",
+    "ideaName": "Maven for Java",
     "builtIn": true
   },
   {
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
     "ideaId": "IdeaVIM"
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   },
   {
     "vsCodeId": "zxh404.vscode-proto3",

@@ -563,7 +563,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (preferredSelection != null) {
       tree.makeVisible(preferredSelection)
       tree.selectionPath = preferredSelection
-      TreeUtil.scrollToVisible(tree, preferredSelection, true)
+      TreeUtil.scrollToVisible(tree, preferredSelection, false)
     }
     else TreeUtil.promiseSelectFirstLeaf(tree)
   }

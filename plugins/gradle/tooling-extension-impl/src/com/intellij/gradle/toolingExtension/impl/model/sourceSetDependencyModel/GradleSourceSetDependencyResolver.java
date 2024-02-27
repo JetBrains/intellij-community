@@ -2,7 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel;
 
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver;
-import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleSourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetArtifactIndex.GradleSourceSetArtifactIndex;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -43,12 +43,16 @@ public final class GradleSourceSetDependencyResolver {
   private final @NotNull ModelBuilderContext myContext;
   private final @NotNull Project myProject;
 
+  private final @NotNull GradleSourceSetArtifactIndex mySourceSetArtifactIndex;
+
   public GradleSourceSetDependencyResolver(
     @NotNull ModelBuilderContext context,
     @NotNull Project project
   ) {
     myContext = context;
     myProject = project;
+
+    mySourceSetArtifactIndex = GradleSourceSetArtifactIndex.getInstance(context);
   }
 
   public @NotNull Collection<ExternalDependency> resolveDependencies(@NotNull SourceSet sourceSet) {
@@ -159,13 +163,12 @@ public final class GradleSourceSetDependencyResolver {
   private @NotNull Collection<FileCollectionDependency> resolveSourceSetOutputDirsRuntimeFileDependencies(
     @NotNull Collection<ExternalDependency> dependencies
   ) {
-    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     Collection<FileCollectionDependency> result = new LinkedHashSet<>();
     for (ExternalDependency dependency : dependencies) {
       if (dependency instanceof ExternalProjectDependency) {
         ExternalProjectDependency projectDependency = (ExternalProjectDependency)dependency;
         for (File artifactFile : projectDependency.getProjectDependencyArtifacts()) {
-          SourceSet sourceSet = sourceSetFinder.findByArtifact(artifactFile.getPath());
+          SourceSet sourceSet = mySourceSetArtifactIndex.findByArtifact(artifactFile.getPath());
           if (sourceSet != null) {
             FileCollectionDependency runtimeDependency = resolveSourceSetOutputDirsRuntimeFileDependency(sourceSet.getOutput());
             if (runtimeDependency != null) {

@@ -23,7 +23,7 @@ import java.util.Map;
  * A file system capable of lazily loading the contents of remote host (see {@link EnvironmentAwareHost#getFileContent(String)})
  * to step into, pause, set breakpoints, etc etc. during debugging.
  */
-public class LazyAttachVirtualFS extends VirtualFileSystem {
+public final class LazyAttachVirtualFS extends VirtualFileSystem {
   private static final Logger LOG = Logger.getInstance(LazyAttachVirtualFS.class);
 
   @NonNls private static final String PROTOCOL = "lazyAttachVfs";

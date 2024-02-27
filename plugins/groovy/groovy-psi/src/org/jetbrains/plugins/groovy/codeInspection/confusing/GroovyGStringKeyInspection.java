@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 
-public class GroovyGStringKeyInspection extends BaseInspection {
+public final class GroovyGStringKeyInspection extends BaseInspection {
   @NlsSafe private static final String PUT_METHOD = "put";
 
   @Override

@@ -98,12 +98,12 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     }
 
     String fullMsg = "Local history is broken" +
-                      "(version:" + VERSION +
-                      ", current timestamp: " + DateFormat.getDateTimeInstance().format(timestamp) +
-                      ", storage timestamp: " + DateFormat.getDateTimeInstance().format(storageTimestamp) +
-                      ", vfs timestamp: " + DateFormat.getDateTimeInstance().format(vfsTimestamp) +
-                      ", path: " + myStorageDir +
-                      ")\n" + message;
+                     "(version:" + VERSION +
+                     ", current timestamp: " + DateFormat.getDateTimeInstance().format(timestamp) +
+                     ", storage timestamp: " + DateFormat.getDateTimeInstance().format(storageTimestamp) +
+                     ", vfs timestamp: " + DateFormat.getDateTimeInstance().format(vfsTimestamp) +
+                     ", path: " + myStorageDir +
+                     ")\n" + message;
     if (myUnitTestMode) {
       LocalHistoryLog.LOG.warn(fullMsg, e);
     }
@@ -136,7 +136,8 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   public synchronized void force() {
     try {
       myStorage.force();
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       handleError(e, null);
     }
   }

@@ -139,7 +139,7 @@ class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit, val disp
     val scrollPane = JBScrollPane(component)
     scrollPane.horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
     panel.add(scrollPane, BorderLayout.CENTER)
-    scrollPane.border = JBUI.Borders.empty(3, 2)
+    scrollPane.border = JBUI.Borders.empty(3, 2, 6, 2)
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component)
     val popup = chooserBuilder.setRequestFocus(true).createPopup()
     popup.showUnderneathOf(actionLink)

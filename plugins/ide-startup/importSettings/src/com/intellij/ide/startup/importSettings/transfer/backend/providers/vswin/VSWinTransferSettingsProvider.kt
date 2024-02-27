@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.TransferableIdeId
-import com.intellij.ide.startup.importSettings.db.KnownPlugins
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion

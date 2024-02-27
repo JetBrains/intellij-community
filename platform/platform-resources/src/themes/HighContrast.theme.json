@@ -84,6 +84,26 @@
       }
     },
 
+    "Code": {
+      "Inline": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 60,
+        "borderColor": "#777",
+        "borderWidth": 1
+      },
+      "Block": {
+        "backgroundColor": "#000000",
+        "backgroundOpacity": 100,
+        "borderColor": "#777",
+        "borderWidth": 1,
+        "EditorPane": {
+          "borderColor": "#777",
+          "backgroundColor": "#000000",
+          "backgroundOpacity": 100
+        }
+      }
+    },
+
     "ComboPopup.border": "1,1,1,1,E6E6E6",
 
     "CompletionPopup":  {

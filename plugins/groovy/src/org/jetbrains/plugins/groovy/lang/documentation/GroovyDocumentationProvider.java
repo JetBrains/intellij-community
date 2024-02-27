@@ -64,7 +64,7 @@ import java.util.function.Consumer;
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledSignatureFragment;
 
 
-public class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
+public final class GroovyDocumentationProvider implements CodeDocumentationProvider, ExternalDocumentationProvider {
   private static final String LINE_SEPARATOR = "\n";
 
   @NonNls private static final String RETURN_TAG = "@return";
@@ -420,7 +420,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       DocumentationSettings.getHighlightingSaturation(isGenerationForRenderedDoc));
   }
 
-  protected static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {
+  private static @Nls @Nullable String generateExternalJavaDoc(@NotNull PsiElement element) {
     JavaDocInfoGenerator generator = getDocInfoGenerator(element, false);
     return JavaDocumentationProvider.generateExternalJavadoc(element, generator);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
@@ -29,6 +29,7 @@ interface JpsFileContentReader {
 
 interface JpsFileContentWriter {
   fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?)
+
   fun getReplacePathMacroMap(fileUrl: String): PathMacroMap
 }
 
@@ -48,7 +49,7 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
    * This method reads configuration files and creates entities that are not added to any builder.
    *
    * These entities can be just added to builder, but it's suggested to do it using [checkAndAddToBuilder] because this method
-   *   implements additional actions on adding (e.g. reports error when trying to add a library that already exists).
+   *   implements additional actions on adding (e.g., reports error when trying to add a library that already exists).
    */
   fun loadEntities(reader: JpsFileContentReader,
                    errorReporter: ErrorReporter,
@@ -65,7 +66,7 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
 }
 
 /**
- * Represents a serializer which is responsible for serializing all entities of the given type (e.g. libraries in *.ipr file).
+ * Represents a serializer which is responsible for serializing all entities of the given type (e.g., libraries in *.ipr file).
  */
 interface JpsFileEntityTypeSerializer<E : WorkspaceEntity> : JpsFileEntitiesSerializer<E> {
   val isExternalStorage: Boolean
@@ -75,7 +76,7 @@ interface JpsFileEntityTypeSerializer<E : WorkspaceEntity> : JpsFileEntitiesSeri
 }
 
 /**
- * Represents a directory containing configuration files (e.g. .idea/libraries).
+ * Represents a directory containing configuration files (e.g. `.idea/libraries`).
  */
 interface JpsDirectoryEntitiesSerializerFactory<E : WorkspaceEntity> {
   val directoryUrl: String
@@ -103,14 +104,18 @@ interface JpsModuleListSerializer {
     get() = { true }
 
   fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>>
+
   fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity>
-  fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter)
+
+  fun saveEntityList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter)
+
   fun getFileName(entity: ModuleEntity): String
+
   fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter)
 }
 
 /**
- * Represents set of serializers for some project.
+ * Represents a set of serializers for some project.
  */
 interface JpsProjectSerializers {
   companion object {

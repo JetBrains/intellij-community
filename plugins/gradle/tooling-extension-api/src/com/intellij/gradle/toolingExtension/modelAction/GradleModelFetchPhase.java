@@ -18,12 +18,12 @@ public enum GradleModelFetchPhase {
    * {@link com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache}.
    * This cache is available by {@link org.jetbrains.plugins.gradle.tooling.ModelBuilderContext}.
    * <p>
-   * [TASK_WARM_UP_PHASE] should be first, because this phase evaluates all lazy Task configurations.
+   * This phase should be first, because this phase evaluates all lazy Task configurations.
    * These configurations may modify a Gradle project model which is necessary for the following phases.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
    */
-  TASK_WARM_UP_PHASE("Task warm-up phase"),
+  WARM_UP_PHASE("Configuration warm-up phase"),
 
   /**
    * Model providers, in this phase, fetch a Gradle project source set models and resolve dependencies.

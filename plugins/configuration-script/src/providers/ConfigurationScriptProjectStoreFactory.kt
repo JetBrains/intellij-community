@@ -48,15 +48,17 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     reloadData: Boolean,
     storage: StateStorage,
     info: ComponentInfo,
-    name: String,
+    componentName: String,
     stateClass: Class<Any>,
+    useLoadedStateAsExisting: Boolean,
   ): StateGetter<Any> {
     val stateGetter = super.doCreateStateGetter(
       reloadData = reloadData,
       storage = storage,
       info = info,
-      name = name,
+      componentName = componentName,
       stateClass = stateClass,
+      useLoadedStateAsExisting = false,
     )
     val configurationSchemaKey = info.configurationSchemaKey ?: return stateGetter
     val configurationFileManager = ConfigurationFileManager.getInstance(project)
@@ -65,7 +67,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
       override fun getState(mergeInto: Any?): Any {
         val state = stateGetter.getState(mergeInto) ?: ReflectionUtil.newInstance(stateClass, false)
         val affectedProperties = mutableListOf<String>()
-        readIntoObject(state as BaseState, node) { affectedProperties.add(it.name!!) }
+        readIntoObject(instance = state as BaseState, nodes = node) { affectedProperties.add(it.name!!) }
         info.affectedPropertyNames = affectedProperties
         return state
       }
@@ -88,7 +90,10 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
     sessionProducer: SaveSessionProducer,
   ) {
     val configurationSchemaKey = info.configurationSchemaKey
-    if (state == null || configurationSchemaKey == null || info.affectedPropertyNames.isEmpty() || sessionProducer !is SaveSessionProducerBase) {
+    if (state == null ||
+        configurationSchemaKey == null ||
+        info.affectedPropertyNames.isEmpty() ||
+        sessionProducer !is SaveSessionProducerBase) {
       super.setStateToSaveSessionProducer(
         state = state,
         info = info,

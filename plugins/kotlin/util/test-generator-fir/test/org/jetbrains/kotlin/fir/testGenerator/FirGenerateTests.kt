@@ -554,12 +554,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("fir/tests") {
+        testClass<AbstractFirQuickDocTest> {
+            model("../../../idea/tests/testData/editor/quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
+        }
+    }
+
+    testGroup("fir/tests") {
         testClass<AbstractHLImplementationSearcherTest> {
             model("search/implementations", pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractFirQuickDocTest> {
-            model("quickDoc", pattern = Patterns.forRegex("""^([^_]+)\.(kt|java)$"""))
         }
 
         testClass<AbstractK2MultiModuleHighlightingTest> {

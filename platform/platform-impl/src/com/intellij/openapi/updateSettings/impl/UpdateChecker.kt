@@ -253,6 +253,7 @@ object UpdateChecker {
   fun getInternalPluginUpdates(
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
+    updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>? = null,
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
     if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
@@ -262,7 +263,13 @@ object UpdateChecker {
       }
     }
 
-    val updateable = collectUpdateablePlugins()
+    val updateable: MutableMap<PluginId, IdeaPluginDescriptor?>
+    if (updateablePluginsMap == null) {
+      updateable = collectUpdateablePlugins()
+    }
+    else {
+      updateable = updateablePluginsMap
+    }
     if (updateable.isEmpty()) {
       return InternalPluginResults(PluginUpdates())
     }

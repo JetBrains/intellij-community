@@ -19,12 +19,15 @@ import com.intellij.execution.CantRunException
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenProjectSettings
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
+import kotlin.io.path.name
 
 class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
   override fun runInDispatchThread() = true
@@ -34,6 +37,84 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassArgLine = true
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassEnvironmentVariables = true
     MavenProjectSettings.getInstance(project).testRunningSettings.isPassSystemProperties = true
+  }
+
+  @Test
+  @Throws(CantRunException::class)
+  fun ExcludeProjectDependencyInClassPathElement() {
+    val m = createModulePom("m", """
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+          <version>4.0</version>
+        </dependency>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>dep</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.16</version>
+            <configuration>
+              <classpathDependencyExcludes>
+                <classpathDependencyExclude>test:dep</classpathDependencyExclude>
+              </classpathDependencyExcludes>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+      """.trimIndent())
+
+    val dep = createModulePom("dep", """
+      <groupId>test</groupId>
+      <artifactId>dep</artifactId>
+      <version>1</version>
+      <dependencies>
+      </dependencies>
+      
+      """.trimIndent())
+
+    createProjectSubDirs("m/src/main/java",
+                         "m/target/classes",
+                         "dep/src/main/java",
+                         "dep/target/classes")
+
+    importProjects(m, dep)
+    assertModules("m", "dep")
+    assertModuleModuleDeps("m", "dep")
+
+    val module = getModule("m")
+
+    val mavenJUnitPatcher = MavenJUnitPatcher()
+    val javaParameters = JavaParameters()
+
+    val pathTransformer = { path: String ->
+      val nioPath = Paths.get(path)
+
+      if (nioPath.name.endsWith(".jar")) {
+        nioPath.name
+      }
+      else {
+        nioPath.subpath(nioPath.nameCount - 3, nioPath.nameCount).toString()
+      }
+    }
+
+    javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
+    assertEquals(listOf("dep/target/classes", "junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
+                 javaParameters.classPath.getPathList().map(pathTransformer).sorted())
+
+    mavenJUnitPatcher.patchJavaParameters(module, javaParameters)
+    assertEquals(listOf("junit-4.0.jar", "m/target/classes").map(PathUtil::getLocalPath),
+                 javaParameters.classPath.getPathList().map(pathTransformer).sorted())
   }
 
   @Test

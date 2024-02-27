@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.core.CoreBundle;
@@ -168,7 +168,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     if (!childVFile.isValid()) {
-      LOG.error("Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid());
+      LOG.error(
+        "Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid(),
+        new InvalidVirtualFileAccessException(childVFile)
+      );
       return null;
     }
     return myManager.findFile(childVFile);

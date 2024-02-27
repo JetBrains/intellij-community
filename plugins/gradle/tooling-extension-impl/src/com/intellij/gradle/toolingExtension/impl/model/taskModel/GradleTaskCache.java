@@ -49,7 +49,7 @@ public final class GradleTaskCache {
         .withTitle("Task model aren't found")
         .withText(
           "Tasks for " + project.getDisplayName() + " wasn't collected. " +
-          "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
+          "All tasks should be collected during " + GradleModelFetchPhase.WARM_UP_PHASE + "."
         )
         .withInternal().withStackTrace()
         .withKind(Message.Kind.ERROR)

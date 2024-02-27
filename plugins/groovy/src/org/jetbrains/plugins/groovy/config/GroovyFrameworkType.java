@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 
-public class GroovyFrameworkType extends FrameworkTypeEx {
+public final class GroovyFrameworkType extends FrameworkTypeEx {
   public GroovyFrameworkType() {
     super("Groovy");
   }

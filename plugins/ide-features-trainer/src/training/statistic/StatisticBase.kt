@@ -17,14 +17,12 @@ import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.ApiStatus
 import training.lang.LangManager
 import training.learn.CourseManager
-import training.learn.course.IftModule
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.statistic.FeatureUsageStatisticConsts.ACTION_ID
 import training.statistic.FeatureUsageStatisticConsts.COMPLETED_COUNT
 import training.statistic.FeatureUsageStatisticConsts.COURSE_SIZE
 import training.statistic.FeatureUsageStatisticConsts.DURATION
-import training.statistic.FeatureUsageStatisticConsts.EXPAND_WELCOME_PANEL
 import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_ENTRY_PLACE
 import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_EXPERIENCED_USER
 import training.statistic.FeatureUsageStatisticConsts.FEEDBACK_HAS_BEEN_SENT
@@ -40,7 +38,6 @@ import training.statistic.FeatureUsageStatisticConsts.LEARN_PROJECT_OPENING_WAY
 import training.statistic.FeatureUsageStatisticConsts.LESSON_ID
 import training.statistic.FeatureUsageStatisticConsts.LESSON_LINK_CLICKED_FROM_TIP
 import training.statistic.FeatureUsageStatisticConsts.LESSON_STARTING_WAY
-import training.statistic.FeatureUsageStatisticConsts.MODULE_NAME
 import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTIFICATIONS
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_NOTIFICATION_SHOWN
@@ -58,7 +55,6 @@ import training.statistic.FeatureUsageStatisticConsts.SHORTCUT_CLICKED
 import training.statistic.FeatureUsageStatisticConsts.SHOULD_SHOW_NEW_LESSONS
 import training.statistic.FeatureUsageStatisticConsts.SHOW_NEW_LESSONS
 import training.statistic.FeatureUsageStatisticConsts.START
-import training.statistic.FeatureUsageStatisticConsts.START_MODULE_ACTION
 import training.statistic.FeatureUsageStatisticConsts.STOPPED
 import training.statistic.FeatureUsageStatisticConsts.TASK_ID
 import training.statistic.FeatureUsageStatisticConsts.TIP_ID
@@ -99,7 +95,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val LOG = logger<StatisticBase>()
   private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 20)
+  private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 21)
 
   var isLearnProjectCloseLogged = false
 
@@ -108,8 +104,7 @@ object StatisticBase : CounterUsagesCollector() {
   private val languageField = EventFields.StringValidatedByCustomRule(LANGUAGE, SupportedLanguageRuleValidator::class.java)
   private val completedCountField = EventFields.Int(COMPLETED_COUNT)
   private val courseSizeField = EventFields.Int(COURSE_SIZE)
-  private val moduleNameField = EventFields.StringValidatedByCustomRule(MODULE_NAME, IdeFeaturesTrainerModuleRuleValidator::class.java)
-  private val taskIdField = EventFields.StringValidatedByCustomRule(TASK_ID, TaskIdRuleValidator::class.java)
+  private val taskIdField = EventFields.Int(TASK_ID)
   private val actionIdField = EventFields.StringValidatedByCustomRule(ACTION_ID, ActionIdRuleValidator::class.java)
   private val keymapSchemeField = EventFields.StringValidatedByCustomRule(KEYMAP_SCHEME, KeymapSchemeRuleValidator::class.java)
   private val versionField = EventFields.Version
@@ -147,8 +142,6 @@ object StatisticBase : CounterUsagesCollector() {
   private val lessonStoppedEvent = GROUP.registerVarargEvent(STOPPED, lessonIdField, taskIdField, languageField, reasonField)
   private val progressUpdatedEvent = GROUP.registerVarargEvent(PROGRESS, lessonIdField, completedCountField, courseSizeField,
                                                                languageField)
-  private val moduleStartedEvent: EventId2<String?, String?> = GROUP.registerEvent(START_MODULE_ACTION, moduleNameField, languageField)
-  private val welcomeScreenPanelExpandedEvent: EventId1<String?> = GROUP.registerEvent(EXPAND_WELCOME_PANEL, languageField)
   private val shortcutClickedEvent = GROUP.registerVarargEvent(SHORTCUT_CLICKED, inputEventField, keymapSchemeField,
                                                                lessonIdField, taskIdField, actionIdField, versionField)
   private val restorePerformedEvent = GROUP.registerVarargEvent(RESTORE, lessonIdField, taskIdField, versionField)
@@ -211,7 +204,7 @@ object StatisticBase : CounterUsagesCollector() {
       val lessonId = lessonManager.currentLesson!!.id
       val taskId = lessonManager.currentLessonExecutor!!.currentTaskIndex
       lessonStoppedEvent.log(lessonIdField with lessonId,
-                             taskIdField with taskId.toString(),
+                             taskIdField with taskId,
                              languageField with courseLanguage(),
                              reasonField with reason
       )
@@ -219,14 +212,6 @@ object StatisticBase : CounterUsagesCollector() {
         isLearnProjectCloseLogged = true
       }
     }
-  }
-
-  fun logModuleStarted(module: IftModule) {
-    moduleStartedEvent.log(module.id, courseLanguage())
-  }
-
-  fun logWelcomeScreenPanelExpanded() {
-    welcomeScreenPanelExpandedEvent.log(courseLanguage())
   }
 
   fun logShortcutClicked(actionId: String) {
@@ -237,7 +222,7 @@ object StatisticBase : CounterUsagesCollector() {
       shortcutClickedEvent.log(inputEventField with createInputEvent(actionId),
                                keymapSchemeField with keymap.name,
                                lessonIdField with lesson.id,
-                               taskIdField with lessonManager.currentLessonExecutor?.currentTaskIndex.toString(),
+                               taskIdField with lessonManager.currentLessonExecutor?.currentTaskIndex!!,
                                actionIdField with actionId,
                                versionField with getPluginVersion(lesson))
     }
@@ -248,7 +233,7 @@ object StatisticBase : CounterUsagesCollector() {
     if (curLessonProgress != prevRestoreLessonProgress) {
       prevRestoreLessonProgress = curLessonProgress
       restorePerformedEvent.log(lessonIdField with lesson.id,
-                                taskIdField with taskId.toString(),
+                                taskIdField with taskId,
                                 versionField with getPluginVersion(lesson))
     }
   }
@@ -316,7 +301,7 @@ object StatisticBase : CounterUsagesCollector() {
     onboardingBannerSwitcherExpanded.log(lessonId)
   }
 
-  private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
+  private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.lowercase() ?: ""
 
   private fun completedCount(): Int = CourseManager.instance.lessonsForModules.count { it.passed }
 

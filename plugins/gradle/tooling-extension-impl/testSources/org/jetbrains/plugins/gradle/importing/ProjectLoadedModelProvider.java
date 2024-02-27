@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.BuildController;
-import org.gradle.tooling.model.Model;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder;
@@ -20,9 +20,11 @@ public class ProjectLoadedModelProvider implements ProjectImportModelProvider {
   }
 
   @Override
-  public void populateProjectModels(@NotNull BuildController controller,
-                                    @NotNull Model projectModel,
-                                    @NotNull ProjectImportModelProvider.ProjectModelConsumer modelConsumer) {
+  public void populateProjectModels(
+    @NotNull BuildController controller,
+    @NotNull BasicGradleProject projectModel,
+    @NotNull GradleModelConsumer modelConsumer
+  ) {
     ProjectPropertiesTestModelBuilder.ProjectProperties model =
       controller.getModel(projectModel, ProjectPropertiesTestModelBuilder.ProjectProperties.class);
     Map<String, String> propertiesMap = new HashMap<>(model.getPropertiesMap());
@@ -31,6 +33,6 @@ public class ProjectLoadedModelProvider implements ProjectImportModelProvider {
         propertiesMap.remove(key);
       }
     }
-    modelConsumer.consume(new ProjectLoadedModel(propertiesMap), ProjectLoadedModel.class);
+    modelConsumer.consumeProjectModel(projectModel, new ProjectLoadedModel(propertiesMap), ProjectLoadedModel.class);
   }
 }

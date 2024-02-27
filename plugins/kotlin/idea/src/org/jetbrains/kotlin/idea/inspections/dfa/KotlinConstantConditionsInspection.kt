@@ -20,7 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
-import com.intellij.java.JavaBundle
+import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
@@ -103,7 +103,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
 
     override fun getOptionsPane(): OptPane {
         return pane(
-            checkbox("warnOnConstantRefs", JavaBundle.message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"))
+            checkbox("warnOnConstantRefs", JavaAnalysisBundle.message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"))
         )
     }
 

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.nj2k.asExplicitLabel
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -26,9 +25,6 @@ internal fun KtExpression.unpackedReferenceToProperty(): KtProperty? {
         ?.resolve() as? KtProperty
 }
 
-internal inline fun <reified T : PsiElement> List<PsiElement>.descendantsOfType(): List<T> =
-    flatMap { it.collectDescendantsOfType() }
-
 internal fun KtReferenceExpression.resolve(): PsiElement? =
     mainReference.resolve()
 
@@ -42,18 +38,4 @@ internal fun PsiElement.getExplicitLabelComment(): PsiComment? {
         return parent.getExplicitLabelComment()
     }
     return null
-}
-
-internal fun PsiElement.isInSingleLine(): Boolean {
-    if (this is PsiWhiteSpace) {
-        val text = text!!
-        return text.indexOf('\n') < 0 && text.indexOf('\r') < 0
-    }
-
-    var child = firstChild
-    while (child != null) {
-        if (!child.isInSingleLine()) return false
-        child = child.nextSibling
-    }
-    return true
 }

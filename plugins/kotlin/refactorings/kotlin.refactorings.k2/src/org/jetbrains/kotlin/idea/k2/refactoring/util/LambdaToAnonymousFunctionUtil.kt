@@ -5,6 +5,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -63,7 +64,7 @@ object LambdaToAnonymousFunctionUtil {
                 param(if (parameterName.isSpecial) "_" else parameterName.asString().quoteIfNeeded(), renderType)
             }
 
-            functionSymbol.returnType.takeIf { !it.isUnit }?.let {
+            functionSymbol.returnType.takeIf { !it.isUnit && it !is KtErrorType }?.let {
                 val lastStatement = bodyExpressionCopy.statements.lastOrNull()
                 if (lastStatement != null && lastStatement !is KtReturnExpression) {
                     val foldableReturns = BranchedFoldingUtils.getFoldableReturns(lastStatement)

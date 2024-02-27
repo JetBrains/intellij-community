@@ -59,12 +59,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
 
     Map<Class<? extends Usage>, List<Usage>> usageGroups = new HashMap<>();
     for (Usage usage : myUsages) {
-      Class<? extends Usage> uClass = usage.getClass();
-      List<Usage> acc = usageGroups.get(uClass);
-      if (acc == null) {
-        usageGroups.put(uClass, acc = new SmartList<>());
-      }
-      acc.add(usage);
+      usageGroups.computeIfAbsent(usage.getClass(), k -> new SmartList<>()).add(usage);
     }
     
     out.writeInt(usageGroups.size());

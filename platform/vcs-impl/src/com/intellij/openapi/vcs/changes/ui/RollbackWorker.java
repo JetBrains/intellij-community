@@ -81,16 +81,16 @@ public class RollbackWorker {
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
                          @NotNull @NlsContexts.Label String localHistoryActionName,
-                         @NotNull ActivityId activityId,
+                         @Nullable ActivityId activityId,
                          boolean honorExcludedFromCommit) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
       Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
-      LocalHistoryAction action = LocalHistory.getInstance().startAction(localHistoryActionName, activityId);
+      LocalHistoryAction action = activityId != null ? LocalHistory.getInstance().startAction(localHistoryActionName, activityId) : null;
 
       final Runnable afterRefresh = () -> {
-        action.finish();
+        if (action != null) action.finish();
         LocalHistory.getInstance().putSystemLabel(myProject, localHistoryActionName, -1);
 
         InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?

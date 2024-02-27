@@ -7,8 +7,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.end
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.codeInsight.handlers.KotlinSmartEnterHandler
@@ -19,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 
 class KtClassBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnterHandler>() {
-    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun apply(editor: Editor, processor: KotlinSmartEnterHandler, psiElement: PsiElement) {
         if (psiElement !is KtClassOrObject) return
 
@@ -34,12 +31,10 @@ class KtClassBodyFixer : SmartEnterProcessorWithFixers.Fixer<KotlinSmartEnterHan
             }
         }
 
-        val notInitializedSuperType = allowAnalysisOnEdt {
-            psiElement.superTypeListEntries.firstOrNull {
-                if (it is KtSuperTypeCallEntry) return@firstOrNull false
-                val resolved = it.typeAsUserType?.referenceExpression?.mainReference?.resolve()
-                (resolved as? KtClass)?.isInterface() == false || (resolved as? PsiClass)?.isInterface == false
-            }
+        val notInitializedSuperType = psiElement.superTypeListEntries.firstOrNull {
+            if (it is KtSuperTypeCallEntry) return@firstOrNull false
+            val resolved = it.typeAsUserType?.referenceExpression?.mainReference?.resolve()
+            (resolved as? KtClass)?.isInterface() == false || (resolved as? PsiClass)?.isInterface == false
         }
         if (notInitializedSuperType != null) {
             editor.document.insertString(notInitializedSuperType.endOffset, "()")

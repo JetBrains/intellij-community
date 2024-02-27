@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyConstantConditionalInspection extends BaseInspection {
+public final class GroovyConstantConditionalInspection extends BaseInspection {
 
     @NotNull
     @Override

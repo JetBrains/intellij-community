@@ -12,7 +12,10 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 import java.util.List;
@@ -24,15 +27,18 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.isFromGroo
 /**
  * @author Vladislav.Soroka
  */
-public class GradleGroovyRunLineMarkerProvider extends RunLineMarkerContributor {
+public final class GradleGroovyRunLineMarkerProvider extends RunLineMarkerContributor {
   @Nullable
   @Override
   public Info getInfo(@NotNull final PsiElement element) {
     if (!isFromGroovyGradleScript(element)) return null;
-    if (element instanceof LeafElement && !(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)
-        && element.getParent() instanceof GrReferenceExpression && element.getParent().getParent() instanceof GrMethodCallExpression) {
+    if (element instanceof LeafElement leaf
+        && !(element instanceof PsiWhiteSpace) && !(element instanceof PsiComment)
+        && (parentIsReferenceInMethodCall(element) || isLiteralArgumentOfMethodCall(element))
+    ) {
       List<String> tasks = GradleGroovyRunnerUtil.getTasksTarget(element);
-      if (!tasks.isEmpty() && tasks.contains(element.getText().trim())) {
+      String taskName = getTaskName(leaf);
+      if (!tasks.isEmpty() && tasks.contains(taskName)) {
         AnAction[] actions = ExecutorAction.getActions();
         AnActionEvent event = createActionEvent(element);
         return new Info(AllIcons.RunConfigurations.TestState.Run, actions,
@@ -40,5 +46,28 @@ public class GradleGroovyRunLineMarkerProvider extends RunLineMarkerContributor 
       }
     }
     return null;
+  }
+
+  @NotNull
+  private static String getTaskName(LeafElement leaf) {
+    String text = leaf.getText();
+    if (leaf.getElementType() == GroovyElementTypes.STRING_SQ
+        || leaf.getElementType() == GroovyElementTypes.STRING_DQ
+    ) {
+      return text.substring(1, text.length() - 1);
+    } else {
+      return text.trim();
+    }
+  }
+
+  private static boolean parentIsReferenceInMethodCall(@NotNull PsiElement element) {
+    return element.getParent() instanceof GrReferenceExpression
+           && element.getParent().getParent() instanceof GrMethodCallExpression;
+  }
+
+  private static boolean isLiteralArgumentOfMethodCall(@NotNull PsiElement element) {
+    return element.getParent() instanceof GrLiteral literal
+           && literal.getParent() instanceof GrArgumentList argumentList
+           && argumentList.getParent() instanceof GrMethodCallExpression;
   }
 }

@@ -327,12 +327,12 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
     }
 
     @Override
-    public <T> T getCopyableUserData(Key<T> key) {
+    public <T> T getCopyableUserData(@NotNull Key<T> key) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> void putCopyableUserData(Key<T> key, T value) {
+    public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
       throw new UnsupportedOperationException();
     }
 

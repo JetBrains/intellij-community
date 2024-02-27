@@ -14,18 +14,23 @@ import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.openapi.project.Project
+import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.UIUtil
+import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsPickerComponentFactory
+import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import java.awt.event.ActionListener
 import java.net.URL
 import javax.swing.JComponent
 
@@ -105,21 +110,31 @@ internal object GitLabNoteComponentFactory {
                     project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
     val panel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       cs.launchNow {
-        note.map { it.actionsVm }.collectScoped {
-          if (it != null) try {
+        note.collectScoped {
+          try {
             val buttonsCs = this
-            CodeReviewCommentUIUtil.createEditButton { _ -> it.startEditing() }.apply {
-              isEnabled = false
-              if (it.canEdit()) {
-                bindDisabledIn(buttonsCs, it.busy)
-              }
-            }.also(::add)
-            CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ ->
-              it.delete()
-              GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE, place)
-            }.apply {
-              bindDisabledIn(buttonsCs, it.busy)
-            }.also(::add)
+
+            val actionVm = it.actionsVm
+            if (actionVm != null) {
+              CodeReviewCommentUIUtil.createEditButton { _ -> actionVm.startEditing() }.apply {
+                isEnabled = false
+                if (actionVm.canEdit()) {
+                  bindDisabledIn(buttonsCs, actionVm.busy)
+                }
+              }.also(::add)
+              CodeReviewCommentUIUtil.createDeleteCommentIconButton { _ ->
+                actionVm.delete()
+                GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE, place)
+              }.apply {
+                bindDisabledIn(buttonsCs, actionVm.busy)
+              }.also(::add)
+            }
+
+            val reactionsVm = it.reactionsVm
+            if (reactionsVm != null) {
+              createAddReactionButton(buttonsCs, reactionsVm).also(::add)
+            }
+
             revalidate()
             repaint()
             awaitCancellation()
@@ -131,6 +146,21 @@ internal object GitLabNoteComponentFactory {
       }
     }
     return panel
+  }
+
+  private fun createAddReactionButton(cs: CoroutineScope, reactionsVm: GitLabReactionsViewModel): InlineIconButton {
+    val button = InlineIconButton(
+      CollaborationToolsIcons.AddEmoji,
+      CollaborationToolsIcons.AddEmojiHovered,
+      tooltip = CollaborationToolsBundle.message("review.comments.reaction.add.tooltip")
+    )
+    button.actionListener = ActionListener {
+      cs.launch {
+        GitLabReactionsPickerComponentFactory.showPopup(reactionsVm, button)
+      }
+    }
+
+    return button
   }
 
   fun createTextPanel(cs: CoroutineScope, textFlow: Flow<@Nls String>, baseUrl: URL): JComponent =

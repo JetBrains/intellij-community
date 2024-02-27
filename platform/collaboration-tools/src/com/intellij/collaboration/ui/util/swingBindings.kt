@@ -153,6 +153,14 @@ fun JComponent.bindBackgroundIn(scope: CoroutineScope, backgroundFlow: Flow<Colo
   }
 }
 
+fun JComponent.bindTooltipTextIn(scope: CoroutineScope, tooltipTextFlow: Flow<@Nls String>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    tooltipTextFlow.collect {
+      toolTipText = it
+    }
+  }
+}
+
 fun JTextComponent.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {

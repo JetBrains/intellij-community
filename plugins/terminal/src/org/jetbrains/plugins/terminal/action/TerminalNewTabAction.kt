@@ -6,14 +6,19 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
+import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-open class TerminalNewTabAction : DumbAwareAction(
-  TerminalBundle.messagePointer("action.Terminal.NewTab.text"),
-  TerminalBundle.messagePointer("action.Terminal.NewTab.description"),
-  { AllIcons.General.Add }), ActionRemoteBehaviorSpecification.Frontend {
+open class TerminalNewTabAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+
+  init {
+    templatePresentation.also {
+      it.setText(TerminalBundle.messagePointer("action.Terminal.NewTab.text"))
+      it.setDescription(TerminalBundle.messagePointer("action.Terminal.NewTab.description"))
+      it.setIconSupplier { AllIcons.General.Add }
+    }
+  }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

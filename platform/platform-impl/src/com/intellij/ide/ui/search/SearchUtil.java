@@ -9,9 +9,11 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.IntPair;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -516,6 +518,42 @@ public final class SearchUtil {
     }
     result.append(textToMarkup.substring(beg));
     return result.toString();
+  }
+
+  public static void appendRangedFragments(String filter,
+                                             @NlsSafe String text,
+                                             IntPair[] matchingRanges,
+                                             @SimpleTextAttributes.StyleAttributeConstant int style,
+                                             final Color foreground,
+                                             final Color background,
+                                             final SimpleColoredComponent textRenderer){
+    if (matchingRanges.length == 0){
+      appendFragments(filter, text, style, foreground, background, textRenderer);
+    }
+
+    if (StringUtil.isEmpty(filter)){
+      textRenderer.setDynamicSearchMatchHighlighting(false);
+      textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
+      return;
+    }
+
+    textRenderer.setDynamicSearchMatchHighlighting(true);
+    int index = 0;
+    for (IntPair range : matchingRanges){
+      @NlsSafe final String before = text.substring(index, range.first);
+      if (before.length() > 0) {
+        textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
+      }
+      index = range.second;
+      textRenderer.append(text.substring(range.first, range.second), new SimpleTextAttributes(background,
+                                                                                             foreground, null,
+                                                                                             style |
+                                                                                             SimpleTextAttributes.STYLE_SEARCH_MATCH));
+    }
+    @NlsSafe final String after = text.substring(index);
+    if (after.length() > 0) {
+      textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
+    }
   }
 
   public static void appendFragments(String filter,

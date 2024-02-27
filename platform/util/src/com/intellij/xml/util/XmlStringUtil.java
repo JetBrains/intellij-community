@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -76,9 +76,8 @@ public final class XmlStringUtil {
       buffer = appendEscapedSymbol(str, buffer, i, entity, ch);
     }
 
-    // If there were any entities, return the escaped characters
-    // that we put in the StringBuffer. Otherwise, just return
-    // the unmodified input string.
+    // If there were any entities, return the escaped characters that we put in the StringBuffer.
+    // Otherwise, return the unmodified input string.
     return buffer == null ? str : buffer.toString();
   }
 
@@ -109,7 +108,7 @@ public final class XmlStringUtil {
   }
 
   /**
-   * @param lines Text to be used for example in multi-line labels
+   * @param lines Text to be used, for example, in multi-line labels
    * @return HTML where specified lines separated by &lt;br&gt; and each line wrapped in &lt;nobr&gt; to prevent breaking text inside
    */
   public static @NotNull String wrapInHtmlLines(CharSequence @NotNull ... lines) {
@@ -177,7 +176,7 @@ public final class XmlStringUtil {
         i++;
       }
       if (c == '#' || !Verifier.isXMLCharacter(c)) {
-        if (b == null) b = new StringBuilder(text.length() + 5); // assuming there's one 'large' char (e.g. 0xFFFF) to escape numerically
+        if (b == null) b = new StringBuilder(text.length() + 5); // assuming there's one 'large' char (e.g., 0xFFFF) to escape numerically
         b.append(text, lastPos, i).append('#');
         if (c != '#') b.append(Integer.toHexString(c));
         b.append('#');

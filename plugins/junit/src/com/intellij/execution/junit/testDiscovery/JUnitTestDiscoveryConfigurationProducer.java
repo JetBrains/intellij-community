@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
+public final class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

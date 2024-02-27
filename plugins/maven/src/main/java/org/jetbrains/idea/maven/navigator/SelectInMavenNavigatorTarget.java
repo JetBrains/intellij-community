@@ -13,7 +13,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class SelectInMavenNavigatorTarget implements SelectInTarget, DumbAware {
+public final class SelectInMavenNavigatorTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(SelectInContext context) {
     return getMavenProject(context) != null;

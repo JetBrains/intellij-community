@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
-public class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
+public final class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
 
   private static final String CLASS_SOURCE = """
     class PomElements {

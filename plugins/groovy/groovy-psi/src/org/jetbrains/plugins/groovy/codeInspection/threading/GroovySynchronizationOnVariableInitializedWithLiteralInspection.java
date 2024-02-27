@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-public class GroovySynchronizationOnVariableInitializedWithLiteralInspection extends BaseInspection {
+public final class GroovySynchronizationOnVariableInitializedWithLiteralInspection extends BaseInspection {
 
   @Override
   @Nullable

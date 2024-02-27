@@ -81,7 +81,7 @@ public final class JsonFileResolver {
     if (StringUtil.isEmpty(schemaUrl)) {
       return null;
     }
-    else if (!schemaUrl.startsWith("http")) {
+    else if (!schemaUrl.startsWith("http") || !Registry.is("json.schema.object.v2")) {
       return urlToFile(schemaUrl);
     }
     else {

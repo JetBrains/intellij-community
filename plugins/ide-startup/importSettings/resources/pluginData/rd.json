@@ -1,18 +1,8 @@
 [
   {
-    "vsCodeId": "2gua.rainbow-brackets",
-    "ideaName": "Rainbow Brackets",
-    "ideaId": "izhangzhihao.rainbow.brackets"
-  },
-  {
     "vsCodeId": "4ops.terraform",
     "ideaName": "Terraform and HCL",
     "ideaId": "org.intellij.plugins.hcl"
-  },
-  {
-    "vsCodeId": "aaron-bond.better-comments",
-    "ideaName": "Better Comments",
-    "ideaId": "org.igu.plugins.bettercomments"
   },
   {
     "vsCodeId": "adpyke.vscode-sql-formatter",
@@ -35,18 +25,8 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "akamud.vscode-theme-onedark",
-    "ideaName": "Atom OneDark Theme",
-    "ideaId": "github.cweijan.test-theme"
-  },
-  {
-    "vsCodeId": "AmazonWebServices.aws-toolkit-vscode",
-    "ideaName": "AWS Toolkit - Amazon Q, CodeWhisperer, and more",
-    "ideaId": "aws.toolkit"
-  },
-  {
     "vsCodeId": "Angular.ng-template",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -76,7 +56,7 @@
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -115,11 +95,6 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea"
-  },
-  {
     "vsCodeId": "eamodio.gitlens",
     "ideaName": "GitLens — Git supercharged",
     "builtIn": true
@@ -138,6 +113,11 @@
     "vsCodeId": "eg2.vscode-npm-script",
     "ideaName": "npm",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
   },
   {
     "vsCodeId": "esbenp.prettier-vscode",
@@ -166,7 +146,7 @@
   },
   {
     "vsCodeId": "formulahendry.dotnet",
-    "ideaName": "Run Configurations",
+    "ideaName": ".NET Core Tools",
     "builtIn": true
   },
   {
@@ -176,18 +156,13 @@
   },
   {
     "vsCodeId": "formulahendry.vscode-mysql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
-    "vsCodeId": "fudge.auto-using",
-    "ideaName": "C#",
+    "vsCodeId": "Fudge.auto-using",
+    "ideaName": "Auto-Using for C#",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "GitHub.github-vscode-theme",
-    "ideaName": "GitHub Theme",
-    "ideaId": "club.nutsoft.Github3Theme"
   },
   {
     "vsCodeId": "GitHub.vscode-pull-request-github",
@@ -211,7 +186,7 @@
   },
   {
     "vsCodeId": "icsharpcode.ilspy-vscode",
-    "ideaName": ".NET Decompiler",
+    "ideaName": "ilspy-vscode",
     "builtIn": true
   },
   {
@@ -221,7 +196,7 @@
   },
   {
     "vsCodeId": "jchannon.csharpextensions",
-    "ideaName": "C#",
+    "ideaName": "C# Extensions",
     "builtIn": true
   },
   {
@@ -236,22 +211,22 @@
   },
   {
     "vsCodeId": "johnpapa.Angular2",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
     "vsCodeId": "jorgeserrano.vscode-csharp-snippets",
-    "ideaName": "Live Templates",
+    "ideaName": "C# Snippets",
     "builtIn": true
   },
   {
     "vsCodeId": "k--kato.docomment",
-    "ideaName": "C#",
+    "ideaName": "C# XML Documentation Comments",
     "builtIn": true
   },
   {
     "vsCodeId": "kleber-swf.unity-code-snippets",
-    "ideaName": "Unity",
+    "ideaName": "Unity Code Snippets",
     "builtIn": true
   },
   {
@@ -265,13 +240,8 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "mikestead.dotenv",
-    "ideaName": ".env files support",
-    "ideaId": "ru.adelf.idea.dotenv"
-  },
-  {
     "vsCodeId": "mongodb.mongodb-vscode",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
@@ -280,9 +250,34 @@
     "ideaId": "org.jetbrains.plugins.sass"
   },
   {
+    "vsCodeId": "ms-azuretools.vscode-azureappservice",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-azurefunctions",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-azureresourcegroups",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
+    "vsCodeId": "ms-azuretools.vscode-cosmosdb",
+    "ideaName": "Azure Toolkit for Rider",
+    "ideaId": "com.intellij.resharper.azure"
+  },
+  {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
@@ -305,6 +300,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-dotnettools.dotnet-maui",
+    "ideaName": "Rider Android Support",
+    "ideaId": "com.jetbrains.rider.android"
+  },
+  {
     "vsCodeId": "ms-dotnettools.vscode-dotnet-pack",
     "ideaName": ".NET Extension Pack",
     "builtIn": true
@@ -321,13 +321,18 @@
   },
   {
     "vsCodeId": "ms-mssql.mssql",
-    "ideaName": "Database Tools and SQL for WebStorm",
+    "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
   },
   {
+    "vsCodeId": "ms-mssql.sql-database-projects-vscode",
+    "ideaName": "SQL Database Projects",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python",
-    "ideaId": "Pythonid"
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "ms-vscode-remote.remote-containers",
@@ -363,11 +368,6 @@
     "vsCodeId": "ms-vscode.cpptools-extension-pack",
     "ideaName": "C/C++ Extension Pack",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "ms-vscode.PowerShell",
-    "ideaName": "PowerShell",
-    "ideaId": "com.intellij.plugin.adernov.powershell"
   },
   {
     "vsCodeId": "ms-vscode.remote-explorer",
@@ -415,16 +415,6 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
-    "vsCodeId": "PKief.material-icon-theme",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
-  },
-  {
     "vsCodeId": "redhat.vscode-xml",
     "ideaName": "XML",
     "builtIn": true
@@ -461,13 +451,8 @@
   },
   {
     "vsCodeId": "streetsidesoftware.code-spell-checker",
-    "ideaName": "Code Spell Checker",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "TabNine.tabnine-vscode",
-    "ideaName": "Tabnine: AI Code Completion & Chat in Java JS/TS Python & More",
-    "ideaId": "com.tabnine.TabNine"
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
   },
   {
     "vsCodeId": "tintoy.msbuild-project-tools",
@@ -483,11 +468,6 @@
     "vsCodeId": "twxs.cmake",
     "ideaName": "CMake",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "Unity.unity-debug",
@@ -511,13 +491,8 @@
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",
-    "ideaName": "Markdown All in One",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "zhuangtongfa.Material-theme",
-    "ideaName": "One Dark Pro Color Scheme",
-    "ideaId": "color.scheme.One Dark Pro"
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

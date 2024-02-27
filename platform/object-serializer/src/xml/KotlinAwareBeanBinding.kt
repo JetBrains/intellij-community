@@ -2,6 +2,7 @@
 package com.intellij.serialization.xml
 
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.serialization.BaseBeanBinding
 import com.intellij.serialization.PropertyAccessor
@@ -36,30 +37,31 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
     return -1
   }
 
-  override fun serializeInto(o: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
-    return when (o) {
-      is BaseState -> serializeBaseStateInto(o = o, _element = preCreatedElement, filter = filter)
-      else -> super.serializeInto(o = o, preCreatedElement = preCreatedElement, filter = filter)
+  override fun serializeProperties(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
+    return when (bean) {
+      is BaseState -> serializeBaseStateInto(o = bean, _element = preCreatedElement, filter = filter)
+      else -> super.serializeProperties(bean = bean, preCreatedElement = preCreatedElement, filter = filter)
     }
   }
 
-  fun serializeBaseStateInto(o: BaseState,
-                             @Suppress("LocalVariableName") _element: Element?,
-                             filter: SerializationFilter?,
-                             excludedPropertyNames: Collection<String>? = null): Element? {
+  fun serializeBaseStateInto(
+    o: BaseState,
+    @Suppress("LocalVariableName") _element: Element?,
+    filter: SerializationFilter?,
+    excludedPropertyNames: Collection<String>? = null,
+  ): Element? {
     var element = _element
     // order of bindings must be used, not order of properties
     var bindingIndices: IntList? = null
     for (property in o.__getProperties()) {
       val propertyName = property.name!!
-
       if (property.isEqualToDefault() || (excludedPropertyNames != null && excludedPropertyNames.contains(propertyName))) {
         continue
       }
 
       val propertyBindingIndex = findBindingIndex(propertyName)
       if (propertyBindingIndex < 0) {
-        logger<BaseState>().debug("cannot find binding for property ${propertyName}")
+        logger<BaseState>().debug { "cannot find binding for property $propertyName" }
         continue
       }
 
@@ -73,13 +75,17 @@ class KotlinAwareBeanBinding(beanClass: Class<*>) : BeanBinding(beanClass) {
       val bindings = bindings!!
       bindingIndices.sort()
       for (i in 0 until bindingIndices.size) {
-        element = serializePropertyInto(bindings[bindingIndices.getInt(i)], o, element, filter, false)
+        element = serializeProperty(
+          binding = bindings[bindingIndices.getInt(i)],
+          bean = o,
+          parentElement = element,
+          filter = filter,
+          isFilterPropertyItself = false,
+        )
       }
     }
     return element
   }
 
-  override fun newInstance(): Any {
-    return beanBinding.newInstance()
-  }
+  override fun newInstance(): Any = beanBinding.newInstance()
 }

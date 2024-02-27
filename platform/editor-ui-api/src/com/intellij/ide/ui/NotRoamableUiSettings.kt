@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.application.ApplicationManager
@@ -9,15 +9,16 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
-@State(name = "NotRoamableUiSettings",
+@State(name = NotRoamableUiSettings.COMPONENT_NAME,
        category = SettingsCategory.UI,
        exportable = true,
        storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED))])
 class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
   private var initialConfigurationLoaded = false
-  
+
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
+    const val COMPONENT_NAME: String = "NotRoamableUiSettings"
   }
 
   var ideScale: Float
@@ -126,16 +127,6 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
         updateState { it.copy(fontFace = fontNames[0]) }
       }
     }
-  }
-
-  internal fun migratePresentationModeIdeScale(presentationModeFontSize: Int) {
-    if (presentationModeIdeScale != 0f) {
-      return
-    }
-    presentationModeIdeScale = if (presentationModeFontSize == 24 || fontSize == 0f)
-      UISettingsUtils.defaultScale(isPresentation = true)
-    else
-      presentationModeFontSize.toFloat() / fontSize
   }
 }
 

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.psi.BuilderByPattern
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -62,18 +63,19 @@ class MutableCodeToInline(
     fun replaceExpression(oldExpression: KtExpression, newExpression: KtExpression): KtExpression {
         assert(oldExpression in this)
 
-        if (oldExpression == mainExpression) {
+        val expression = (oldExpression.parent as? KtThisExpression) ?: oldExpression
+        if (expression == mainExpression) {
             mainExpression = newExpression
             return newExpression
         }
 
-        val index = statementsBefore.indexOf(oldExpression)
+        val index = statementsBefore.indexOf(expression)
         if (index >= 0) {
             statementsBefore[index] = newExpression
             return newExpression
         }
 
-        return oldExpression.replace(newExpression) as KtExpression
+        return expression.replace(newExpression) as KtExpression
     }
 
     val expressions: Collection<KtExpression>

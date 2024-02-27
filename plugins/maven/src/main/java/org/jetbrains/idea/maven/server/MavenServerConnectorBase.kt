@@ -19,14 +19,14 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class MavenServerConnectorBase(project: Project?,
-                                                 jdk: Sdk,
-                                                 vmOptions: String,
-                                                 mavenDistribution: MavenDistribution,
-                                                 multimoduleDirectory: String,
-                                                 @JvmField protected val myDebugPort: Int?) : AbstractMavenServerConnector(project, jdk,
-                                                                                                                           vmOptions,
-                                                                                                                           mavenDistribution,
-                                                                                                                           multimoduleDirectory) {
+                                        jdk: Sdk,
+                                        vmOptions: String,
+                                        mavenDistribution: MavenDistribution,
+                                        multimoduleDirectory: String,
+                                        @JvmField protected val myDebugPort: Int?) : AbstractMavenServerConnector(project, jdk,
+                                                                                                                  vmOptions,
+                                                                                                                  mavenDistribution,
+                                                                                                                  multimoduleDirectory) {
   @JvmField
   protected var mySupport: MavenRemoteProcessSupport? = null
 
@@ -71,7 +71,7 @@ abstract class MavenServerConnectorBase(project: Project?,
     }
     return myServerPromise.get()
   }
-  
+
   private suspend fun waitForServer(): MavenServer? {
     while (!myServerPromise.isDone) {
       delay(100)
@@ -104,7 +104,7 @@ abstract class MavenServerConnectorBase(project: Project?,
       throw if (e is CannotStartServerException) e else CannotStartServerException(e)
     }
   }
-  
+
   override suspend fun getServer(): MavenServer {
     try {
       val server = waitForServer()
@@ -122,6 +122,7 @@ abstract class MavenServerConnectorBase(project: Project?,
       }
       catch (ignored: Throwable) {
       }
+      checkCancelled()
       throw if (e is CannotStartServerException) e else CannotStartServerException(e)
     }
   }
@@ -178,7 +179,7 @@ abstract class MavenServerConnectorBase(project: Project?,
       return false
     }
   }
-  
+
   override suspend fun ping(): Boolean {
     try {
       val pinged = getServer().ping(MavenRemoteObjectWrapper.ourToken)

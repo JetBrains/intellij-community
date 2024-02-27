@@ -38,7 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 /**
  * @author Max Medvedev
  */
-public class ConvertMultilineStringToSingleLineIntention extends GrPsiUpdateIntention {
+public final class ConvertMultilineStringToSingleLineIntention extends GrPsiUpdateIntention {
   private static final Logger LOG = Logger.getInstance(ConvertMultilineStringToSingleLineIntention.class);
 
   @Override

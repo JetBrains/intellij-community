@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.find.ngrams.TrigramIndex;
@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -589,7 +588,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   private void assertIsIndexed(VirtualFile vFile) {
     ScanningRequestToken indexingRequest = getProject().getService(ProjectIndexingDependenciesService.class).getReadOnlyTokenForTest();
     assertTrue(
-      IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || VfsData.isIndexedFlagDisabled());
+      IndexingFlag.isFileIndexed(vFile, indexingRequest.getFileIndexingStamp(vFile)) || IndexingFlag.isIndexedFlagDisabled());
   }
 
   public void test_no_index_stamp_update_when_no_change_2() throws IOException {

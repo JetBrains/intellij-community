@@ -11,11 +11,13 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.psi.*
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.MoveHandler
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination
 import com.intellij.refactoring.move.moveInner.MoveInnerProcessor
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
@@ -77,51 +79,69 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
 
     private fun doJavaMove(mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject): Boolean {
         val type = config.getString("type")
-        when (type) {
-          "MOVE_MEMBERS" -> {
-              val members = elementsAtCaret.map { it.getNonStrictParentOfType<PsiMember>()!! }
-              val targetClassName = config.getString("targetClass")
-              val visibility = config.getNullableString("visibility")
+        return when (type) {
+            "MOVE_MEMBERS" -> {
+                val members = elementsAtCaret.map { it.getNonStrictParentOfType<PsiMember>()!! }
+                val targetClassName = config.getString("targetClass")
+                val visibility = config.getNullableString("visibility")
 
-              val options = MockMoveMembersOptions(targetClassName, members.toTypedArray())
-              if (visibility != null) {
-                  options.memberVisibility = visibility
-              }
-              MoveMembersProcessor(mainFile.project, options).run()
-              return true
-          }
-          "MOVE_INNER_CLASS" -> {
-              val project = mainFile.project
+                val options = MockMoveMembersOptions(targetClassName, members.toTypedArray())
+                if (visibility != null) {
+                    options.memberVisibility = visibility
+                }
+                MoveMembersProcessor(mainFile.project, options).run()
+                true
+            }
 
-              val classToMove = elementsAtCaret.single().getNonStrictParentOfType<PsiClass>()!!
-              val newClassName = config.getNullableString("newClassName") ?: classToMove.name!!
-              val outerInstanceParameterName = config.getNullableString("outerInstanceParameterName")
-              val targetPackage = config.getString("targetPackage")
+            "MOVE_INNER_CLASS" -> {
+                val project = mainFile.project
 
-              MoveInnerProcessor(
-                  project,
-                  classToMove,
-                  newClassName,
-                  outerInstanceParameterName != null,
-                  outerInstanceParameterName,
-                  JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories[0]
-              ).run()
-              return true
-          }
-          "MOVE_TOP_LEVEL_CLASSES" -> {
-              val classesToMove = elementsAtCaret.map { it.getNonStrictParentOfType<PsiClass>()!! }
-              val targetPackage = config.getString("targetPackage")
-              MoveClassesOrPackagesProcessor(
-                  mainFile.project,
-                  classesToMove.toTypedArray(),
-                  MultipleRootsMoveDestination(PackageWrapper(mainFile.manager, targetPackage)),
-                  /* searchInComments = */ false,
-                  /* searchInNonJavaFiles = */ true,
-                  /* moveCallback = */ null
-              ).run()
-              return true
-          }
-          else -> return false
+                val classToMove = elementsAtCaret.single().getNonStrictParentOfType<PsiClass>()!!
+                val newClassName = config.getNullableString("newClassName") ?: classToMove.name!!
+                val outerInstanceParameterName = config.getNullableString("outerInstanceParameterName")
+                val targetPackage = config.getString("targetPackage")
+
+                MoveInnerProcessor(
+                    project,
+                    classToMove,
+                    newClassName,
+                    outerInstanceParameterName != null,
+                    outerInstanceParameterName,
+                    JavaPsiFacade.getInstance(project).findPackage(targetPackage)!!.directories[0]
+                ).run()
+                true
+            }
+
+            "MOVE_TOP_LEVEL_CLASSES" -> {
+                val classesToMove = elementsAtCaret.map { it.getNonStrictParentOfType<PsiClass>()!! }
+                val targetPackage = config.getString("targetPackage")
+                MoveClassesOrPackagesProcessor(
+                    mainFile.project,
+                    classesToMove.toTypedArray(),
+                    MultipleRootsMoveDestination(PackageWrapper(mainFile.manager, targetPackage)),
+                    /* searchInComments = */ false,
+                    /* searchInNonJavaFiles = */ true,
+                    /* moveCallback = */ null
+                ).run()
+                true
+            }
+            "MOVE_TOP_LEVEL_CLASSES_TO_INNER" -> {
+                val project = mainFile.project
+
+                val classesToMove = elementsAtCaret.map { it.getNonStrictParentOfType<PsiClass>()!! }
+                val targetClass = config.getString("targetClass")
+
+                MoveClassToInnerProcessor(
+                    project,
+                    classesToMove.toTypedArray(),
+                    JavaPsiFacade.getInstance(project).findClass(targetClass, project.allScope())!!,
+                    /* searchInComments = */ false,
+                    /* searchInNonJavaFiles = */ true,
+                    /* moveCallback = */ null
+                ).run()
+                true
+            }
+            else -> return false
         }
     }
 

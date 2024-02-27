@@ -6,6 +6,8 @@ import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.xmlb.annotations.CollectionBean;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -19,11 +21,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.util.xmlb.CollectionBindingKt.createCollectionBinding;
 
 @ApiStatus.Internal
 public final class XmlSerializerImpl {
@@ -33,36 +34,19 @@ public final class XmlSerializerImpl {
       return ClassUtil.isPrimitive(aClass) ? null : getRootBinding(aClass, type);
     }
 
-    @Override
-    public final @Nullable Binding getBinding(@NotNull MutableAccessor accessor) {
-      Type type = accessor.getGenericType();
-      Class<?> aClass = ClassUtil.typeToClass(type);
-      if (ClassUtil.isPrimitive(aClass)) {
-        return null;
-      }
-
-      // do not cache because a client will cache it in any case
-      Binding binding = createClassBinding(aClass, accessor, type);
-      if (binding == null) {
-        // BeanBinding doesn't depend on accessor, get from cache or compute
-        binding = getRootBinding(aClass, type);
-      }
-      else {
-        binding.init(type, this);
-      }
-      return binding;
-    }
-
-    protected static @Nullable Binding createClassBinding(@NotNull Class<?> aClass,
-                                                          @Nullable MutableAccessor accessor,
-                                                          @NotNull Type originalType) {
+    protected static @Nullable Binding createClassBinding(
+      @NotNull Class<?> aClass,
+      @Nullable MutableAccessor accessor,
+      @NotNull Type originalType,
+      @NotNull Serializer serializer
+      ) {
       if (aClass.isArray()) {
         if (Element.class.isAssignableFrom(aClass.getComponentType())) {
           assert accessor != null;
           return new JDOMElementBinding(accessor);
         }
         else {
-          return new ArrayBinding(aClass, accessor);
+          return createCollectionBinding(serializer, aClass.getComponentType(), accessor, true);
         }
       }
       else if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
@@ -72,18 +56,25 @@ public final class XmlSerializerImpl {
             return new CompactCollectionBinding(accessor);
           }
         }
-        return new CollectionBinding((ParameterizedType)originalType, accessor);
+
+        return createCollectionBinding(serializer, ClassUtil.typeToClass((((ParameterizedType)originalType).getActualTypeArguments()[0])), accessor, false);
       }
       else if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+        XMap newAnnotation = null;
+        MapAnnotation oldAnnotation = null;
+        if (accessor != null) {
+          newAnnotation = accessor.getAnnotation(XMap.class);
+          oldAnnotation = newAnnotation == null ? accessor.getAnnotation(MapAnnotation.class) : null;
+        }
         //noinspection unchecked
-        return new MapBinding(accessor, (Class<? extends Map<?, ?>>)aClass);
+        return new MapBinding(oldAnnotation, newAnnotation, (Class<? extends Map<?, ?>>)aClass);
       }
       else if (accessor != null) {
         if (Element.class.isAssignableFrom(aClass)) {
           return new JDOMElementBinding(accessor);
         }
         //noinspection deprecation
-        if (JDOMExternalizableStringList.class == aClass) {
+        if (aClass == JDOMExternalizableStringList.class) {
           return new CompactCollectionBinding(accessor);
         }
       }
@@ -108,7 +99,7 @@ public final class XmlSerializerImpl {
       Map<Type, Binding> map = getBindingCacheMap();
       Binding binding = map.get(originalType);
       if (binding == null) {
-        binding = createClassBinding(aClass, null, originalType);
+        binding = createClassBinding(aClass, null, originalType, this);
         if (binding == null) {
           binding = new BeanBinding(aClass);
         }
@@ -134,11 +125,11 @@ public final class XmlSerializerImpl {
       Binding binding = serializer.getRootBinding(aClass, aClass);
       if (binding instanceof BeanBinding) {
         // top level expects not null (null indicates error, an empty element will be omitted)
-        return ((BeanBinding)binding).serialize(object, true, filter);
+        return Objects.requireNonNull(((BeanBinding)binding).serialize(object, true, filter));
       }
       else {
         //noinspection ConstantConditions
-        return (Element)binding.serialize(object, null, filter);
+        return ((RootBinding)binding).serialize(object, filter);
       }
     }
     catch (SerializationException e) {

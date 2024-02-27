@@ -1072,13 +1072,19 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor())) {
           // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
           // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
-          AsyncEditorLoader.Companion.performWhenLoaded(((TextEditor)fileEditor).getEditor(), updateRunnable);
+          if (PassExecutorService.LOG.isDebugEnabled()) {
+            PassExecutorService.log(null, null, "runUpdate for ", fileEditor, " rescheduled because the editor was not loaded yet");
+          }
+          AsyncEditorLoader.Companion.performWhenLoaded(textEditor.getEditor(), () ->
+            dca.stopProcess(true, "restart after editor is loaded"));
         }
-        VirtualFile virtualFile = getVirtualFile(fileEditor);
-        PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
-        submitted |= psiFile != null && dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
-        if (PassExecutorService.LOG.isDebugEnabled()) {
-          PassExecutorService.log(null, null, "submitting psiFile:", psiFile+" ("+virtualFile+"); submitted=", submitted);
+        else {
+          VirtualFile virtualFile = getVirtualFile(fileEditor);
+          PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
+          submitted |= psiFile != null && dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
+          if (PassExecutorService.LOG.isDebugEnabled()) {
+            PassExecutorService.log(null, null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
+          }
         }
       }
       if (!submitted) {

@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
@@ -19,34 +17,28 @@ import com.intellij.openapi.project.impl.ProjectMacrosUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.createDirectories
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-@NonNls const val NOTIFICATION_GROUP_ID: String = "Load Error"
+const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
 @TestOnly
-@NonNls
 var DEBUG_LOG: String? = null
 
 @ApiStatus.Internal
-fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
-  val joinedMacros = HtmlChunk.text(macros.joinToString(", ")).italic().toString()
-  val mainMessage =
-    if (macros.size == 1) {
-      IdeBundle.message("notification.content.unknown.macros.error.one.macros.undefined", joinedMacros)
-    }
-    else {
-      IdeBundle.message("notification.content.unknown.macros.error.many.macroses.undefined", joinedMacros)
-    }
+fun doNotify(macros: MutableSet<@NlsSafe String>, project: Project, substitutorToStore: Map<TrackingPathMacroSubstitutor, IComponentStore>) {
+  @Suppress("HardCodedStringLiteral") val joinedMacros = HtmlChunk.text(macros.joinToString(", ")).italic().toString()
+  val mainMessage = if (macros.size == 1) IdeBundle.message("notification.content.unknown.macro.error", joinedMacros)
+    else IdeBundle.message("notification.content.unknown.macros.error", joinedMacros)
 
   val description = IdeBundle.message("notification.content.unknown.macros.error.description",
                                       ApplicationNamesInfo.getInstance().productName)
@@ -151,22 +143,19 @@ fun getOrCreateVirtualFile(file: Path, requestor: StorageManagerFileWriteRequest
   }
   // internal .xml files written with BOM can cause problems, see IDEA-219913
   // (e.g., unable to backport them to 191/unwanted changed files when someone checks File Encodings|create new files with BOM)
-  // so we forcibly remove BOM from storage .xmls
+  // so we forcibly remove BOM from storage XMLs
   if (virtualFile.bom != null) {
     virtualFile.bom = null
   }
   return virtualFile
 }
 
-// runWriteAction itself cannot do such a check because in general case any write action must be tracked regardless of current action
 @ApiStatus.Internal
-fun <T> runAsWriteActionIfNeeded(runnable: () -> T): T {
-  val app = ApplicationManager.getApplication()
-  return when {
-    app.isWriteAccessAllowed -> runnable()
-    else -> app.runWriteAction(Computable(runnable))
+fun <T> runAsWriteActionIfNeeded(runnable: () -> T): T =
+  ApplicationManager.getApplication().let { app ->
+    if (app.isWriteAccessAllowed) runnable()
+    else app.runWriteAction(Computable(runnable))
   }
-}
 
 class UnknownMacroNotification(
   groupId: String,
@@ -183,3 +172,8 @@ class UnknownMacroNotification(
     }
   }
 }
+
+/** Used in constructed configuration store events to trigger VFS content reloading for files updated via NIO. */
+@ApiStatus.Internal
+@JvmField
+val RELOADING_STORAGE_WRITE_REQUESTOR = object : StorageManagerFileWriteRequestor { }

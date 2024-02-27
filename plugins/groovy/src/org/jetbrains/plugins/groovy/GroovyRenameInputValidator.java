@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
-public class GroovyRenameInputValidator implements RenameInputValidator {
+public final class GroovyRenameInputValidator implements RenameInputValidator {
 
   @NotNull
   @Override

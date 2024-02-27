@@ -50,24 +50,21 @@ class TakeScreenshotCommand(text: String, line: Int) : PlaybackCommandCoroutineA
   }
 }
 
-fun takeScreenshotWithAwtRobot(fullPathToFile: String) {
+fun takeScreenshotWithAwtRobot(fullPathToFile: String, formatName: String = "jpg") {
   val rectangle = Rectangle(Toolkit.getDefaultToolkit().screenSize)
-  var robot: Robot? = null
   try {
-    robot = Robot()
+    val robot = Robot()
+    val img = robot.createScreenCapture(rectangle)
+    val screenshotFile = File(fullPathToFile)
+
+    ImageIO.write(img, formatName, screenshotFile)
+    if (screenshotFile.exists()) {
+      LOG.info("Screenshot saved: $fullPathToFile")
+    }
   }
   catch (e: AWTException) {
     LOG.info("Exceptions occurs at attempt to create Robot for taking screenshot")
     LOG.info(e)
-  }
-  assert(robot != null)
-  val img = robot!!.createScreenCapture(rectangle)
-  try {
-    val screenshotFile = File(fullPathToFile)
-    ImageIO.write(img, "jpg", screenshotFile)
-    if (screenshotFile.exists()) {
-      LOG.info("Screenshot saved:$fullPathToFile")
-    }
   }
   catch (e: IOException) {
     LOG.info("Exceptions occurs at attempt to write screenshot to file")
@@ -112,6 +109,12 @@ fun getNextFolder(base: File): File {
 @Suppress("SSBasedInspection")
 internal fun takeScreenshotOfAllWindowsBlocking(childFolder: String? = null) {
   runBlocking { takeScreenshotOfAllWindows(childFolder) }
+}
+
+internal fun takeFullScreenshot(childFolder: String? = null) {
+  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
+  screenshotPath = getNextFolder(screenshotPath)
+  takeScreenshotWithAwtRobot(screenshotPath.resolve("full_screen.png").absolutePath, "png")
 }
 
 internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {

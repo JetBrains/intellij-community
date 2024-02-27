@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 /**
  * @author Maxim.Medvedev
  */
-public class InheritConstructorContributor implements AstTransformationSupport {
+public final class InheritConstructorContributor implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

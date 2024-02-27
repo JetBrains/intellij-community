@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class PsiMethodCategory implements PsiEnhancerCategory {
+public final class PsiMethodCategory implements PsiEnhancerCategory {
   @Nullable
   public static PsiClass getClassType(PsiField field) {
     final PsiType type = field.getType();

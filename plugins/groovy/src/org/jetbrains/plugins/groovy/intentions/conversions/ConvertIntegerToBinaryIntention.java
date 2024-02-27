@@ -30,7 +30,7 @@ import java.math.BigInteger;
 /**
  * @author Max Medvedev
  */
-public class ConvertIntegerToBinaryIntention extends GrPsiUpdateIntention {
+public final class ConvertIntegerToBinaryIntention extends GrPsiUpdateIntention {
   @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {

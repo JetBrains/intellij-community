@@ -12,6 +12,7 @@ import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.FontUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.DateFormatUtil
@@ -39,8 +40,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     minimumSize = JBDimension(30, 0)
   }
   private val info = JLabel().apply {
-    val titleFontSize = title.font.size
-    font = font.deriveFont(titleFontSize / 13.0f * 12.0f)
+    font = JBFont.create(font, false).let(FontUtil::minusOne)
   }
   private val tags = JLabel()
   private val stateTextModel = SingleValueModel<@Nls String?>(null)

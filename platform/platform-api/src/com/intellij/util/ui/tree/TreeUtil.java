@@ -62,6 +62,8 @@ import static java.util.stream.Collectors.toList;
 
 public final class TreeUtil {
   public static final TreePath[] EMPTY_TREE_PATH = new TreePath[0];
+  @ApiStatus.Internal
+  public static final Key<Boolean> TREE_IS_BUSY = Key.create("Tree is busy doing an async operation");
   private static final Logger LOG = Logger.getInstance(TreeUtil.class);
   private static final String TREE_UTIL_SCROLL_TIME_STAMP = "TreeUtil.scrollTimeStamp";
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
@@ -705,6 +707,7 @@ public final class TreeUtil {
     Object property = tree.getClientProperty(TREE_UTIL_SCROLL_TIME_STAMP);
     long stamp = property instanceof Long ? (Long)property + 1L : Long.MIN_VALUE;
     tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, stamp);
+    ClientProperty.put(tree, TREE_IS_BUSY, true);
     // store relative offset because the row can be moved during the tree updating
     int offset = rowBounds.y - bounds.y;
 
@@ -730,6 +733,7 @@ public final class TreeUtil {
           }
         }
       }
+      ClientProperty.remove(tree, TREE_IS_BUSY);
       done.run();
     };
     SwingUtilities.invokeLater(scroll);
@@ -1807,9 +1811,11 @@ public final class TreeUtil {
     // try to scroll later when the tree is ready
     long stamp = 1L + getScrollTimeStamp(tree);
     tree.putClientProperty(TREE_UTIL_SCROLL_TIME_STAMP, stamp);
+    ClientProperty.put(tree, TREE_IS_BUSY, true);
     EdtScheduledExecutorService.getInstance().schedule(() -> {
       Rectangle boundsLater = stamp != getScrollTimeStamp(tree) ? null : tree.getPathBounds(path);
       if (boundsLater != null) internalScroll(tree, boundsLater, centered);
+      ClientProperty.remove(tree, TREE_IS_BUSY);
     }, 5, MILLISECONDS);
     return true;
   }

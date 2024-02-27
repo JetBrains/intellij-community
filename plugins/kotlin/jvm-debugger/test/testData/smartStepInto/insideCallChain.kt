@@ -16,4 +16,4 @@ class B : A {
 }
 
 // EXISTS: f2(), f3(), f1()
-// IGNORE_K2
+

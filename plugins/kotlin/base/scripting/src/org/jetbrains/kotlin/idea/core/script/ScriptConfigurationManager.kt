@@ -3,13 +3,16 @@
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.ide.scratch.ScratchUtil
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
@@ -129,10 +132,28 @@ interface ScriptConfigurationManager {
 
         fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> = roots.mapNotNull { classpathEntryToVfs(it.toPath()) }
 
+        @Suppress("TestOnlyProblems")
         @TestOnly
         fun updateScriptDependenciesSynchronously(file: PsiFile) {
             // TODO: review the usages of this method
-            defaultScriptingSupport(file.project).updateScriptDependenciesSynchronously(file)
+            val defaultScriptingSupport = defaultScriptingSupport(file.project)
+            when(file) {
+                is KtFile -> {
+                    defaultScriptingSupport.updateScriptDependenciesSynchronously(file)
+                }
+                else -> {
+                    val project = file.project
+                    val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
+                    object : PsiRecursiveElementVisitor() {
+                        override fun visitElement(element: PsiElement) {
+                            injectedLanguageManager.enumerate(element) { psi, _ ->
+                                defaultScriptingSupport.updateScriptDependenciesSynchronously(psi)
+                            }
+                          super.visitElement(element)
+                        }
+                    }.visitFile(file)
+                }
+            }
         }
 
         private fun defaultScriptingSupport(project: Project) =

@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
-import com.intellij.application.options.PathMacrosCollector
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -11,30 +8,31 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
-import com.intellij.openapi.components.impl.stores.getComponentNameIfValid
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.util.SafeStAXStreamBuilder
+import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.ArrayUtil
 import com.intellij.util.LineSeparator
-import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
-import java.io.StringReader
-import java.nio.charset.StandardCharsets
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.name
 
 abstract class FileBasedStorage(
   file: Path,
@@ -43,13 +41,7 @@ abstract class FileBasedStorage(
   pathMacroManager: PathMacroSubstitutor? = null,
   roamingType: RoamingType,
   provider: StreamProvider? = null,
-) : XmlElementStorage(
-  fileSpec = fileSpec,
-  rootElementName = rootElementName,
-  pathMacroSubstitutor = pathMacroManager,
-  storageRoamingType = roamingType,
-  provider = provider,
-) {
+) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
@@ -71,7 +63,7 @@ abstract class FileBasedStorage(
     // only ApplicationStore doesn't use xml prolog
     get() = !isUseXmlProlog
 
-  // we never set io file to null
+  // we never set I/O file to null
   fun setFile(virtualFile: VirtualFile?, ioFileIfChanged: Path?) {
     cachedVirtualFile = virtualFile
     if (ioFileIfChanged != null) {
@@ -79,62 +71,57 @@ abstract class FileBasedStorage(
     }
   }
 
-  override fun createSaveSession(states: StateMap): FileSaveSessionProducer = FileSaveSessionProducer(storageData = states, storage = this)
+  override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(storageData = states, storage = this)
 
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage = storage) {
+    XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage) {
 
-    final override fun isSaveAllowed(): Boolean {
-      return when {
-        !super.isSaveAllowed() -> false
-        storage.blockSaving != null -> {
-          LOG.warn("Save blocked for $storage")
-          false
-        }
-        else -> true
+    final override fun isSaveAllowed(): Boolean = when {
+      !super.isSaveAllowed() -> false
+      storage.blockSaving != null -> {
+        LOG.warn("Save blocked for $storage")
+        false
       }
+      else -> true
     }
 
-    override fun saveLocally(dataWriter: DataWriter?) {
+    override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
       var lineSeparator = storage.lineSeparator
       if (lineSeparator == null) {
         lineSeparator = if (storage.isUseUnixLineSeparator) LineSeparator.LF else LineSeparator.getSystemLineSeparator()
         storage.lineSeparator = lineSeparator
       }
 
-      val isUseVfs = storage.isUseVfsForWrite
-      val virtualFile = if (isUseVfs) storage.getVirtualFile() else null
+      val virtualFile = if (useVfs || events != null) storage.getVirtualFile() else null
       when {
         dataWriter == null -> {
-          if (isUseVfs && virtualFile == null) {
-            LOG.warn("Cannot find virtual file")
-          }
-          deleteFile(file = storage.file, requestor = this, virtualFile = virtualFile)
+          if (useVfs && virtualFile == null) LOG.warn("Cannot find virtual file")
+          deleteFile(storage.file, virtualFile = if (useVfs) virtualFile else null, requestor = this)
           storage.cachedVirtualFile = null
+          if (events != null && virtualFile != null && virtualFile.isValid) {
+            events += VFileDeleteEvent(/*requestor =*/ this, virtualFile)
+          }
         }
-        isUseVfs -> {
-          storage.cachedVirtualFile = writeFile(
-            cachedFile = storage.file,
-            requestor = this,
-            virtualFile = virtualFile,
-            dataWriter = dataWriter,
-            lineSeparator = lineSeparator,
-            prependXmlProlog = storage.isUseXmlProlog,
-          )
+        useVfs -> {
+          storage.cachedVirtualFile = writeFile(storage.file, requestor = this, virtualFile, dataWriter, lineSeparator, storage.isUseXmlProlog)
         }
         else -> {
-          writeFile(
-            file = storage.file,
-            requestor = this,
-            dataWriter = dataWriter,
-            lineSeparator = lineSeparator,
-            prependXmlProlog = storage.isUseXmlProlog,
-          )
+          writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
+          if (events != null) {
+            if (virtualFile != null) {
+              events += updatingEvent(storage.file, virtualFile)
+            }
+            else {
+              LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storage.file.parent)?.let { dir ->
+                events += creationEvent(storage.file, dir)
+              }
+            }
+          }
         }
       }
     }
 
-    private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, virtualFile: VirtualFile?) {
+    private fun deleteFile(file: Path, virtualFile: VirtualFile?, requestor: StorageManagerFileWriteRequestor) {
       if (virtualFile == null) {
         file.deleteIfExists()
       }
@@ -144,6 +131,8 @@ abstract class FileBasedStorage(
         }
         else {
           throw ReadOnlyModificationException(virtualFile, object : SaveSession {
+            override suspend fun save(events: MutableList<VFileEvent>?) = throw IllegalStateException()
+
             override fun saveBlocking() {
               // the caller must wrap into undo-transparent write action
               virtualFile.delete(requestor)
@@ -201,13 +190,7 @@ abstract class FileBasedStorage(
       if (isUseUnixLineSeparator) {
         // do not load the whole data into memory if there is no need to detect line separators
         lineSeparator = LineSeparator.LF
-        val xmlStreamReader = createXmlStreamReader(Files.newInputStream(file))
-        try {
-          return SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
-        }
-        finally {
-          xmlStreamReader.close()
-        }
+        return buildNsUnawareJdom(file)
       }
       else {
         val (element, separator) = loadDataAndDetectLineSeparator(file)
@@ -215,15 +198,9 @@ abstract class FileBasedStorage(
         return element
       }
     }
-    catch (e: JDOMException) {
-      processReadException(e)
-    }
-    catch (e: XMLStreamException) {
-      processReadException(e)
-    }
-    catch (e: IOException) {
-      processReadException(e)
-    }
+    catch (e: JDOMException) { processReadException(e) }
+    catch (e: XMLStreamException) { processReadException(e) }
+    catch (e: IOException) { processReadException(e) }
     return null
   }
 
@@ -316,6 +293,8 @@ internal fun writeFile(
         else -> dataWriterOrByteArray as BufferExposingByteArrayOutputStream
       }
       throw ReadOnlyModificationException(file, object : SaveSession {
+        override suspend fun save(events: MutableList<VFileEvent>?) = throw IllegalStateException()
+
         override fun saveBlocking() {
           doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog)
         }
@@ -338,13 +317,7 @@ internal fun writeFile(
     }
   }
 
-  doWrite(
-    requestor = requestor,
-    file = file,
-    dataWriterOrByteArray = dataWriter,
-    lineSeparator = lineSeparator,
-    prependXmlProlog = prependXmlProlog,
-  )
+  doWrite(requestor, file, dataWriter, lineSeparator, prependXmlProlog)
 
   return file
 }
@@ -368,104 +341,19 @@ internal fun writeFile(
   }
 }
 
+internal fun creationEvent(file: Path, dir: VirtualFile): VFileCreateEvent {
+  val attributes = FileAttributes.fromNio(file, NioFiles.readAttributes(file))
+  return VFileCreateEvent(RELOADING_STORAGE_WRITE_REQUESTOR, dir, file.name, attributes.isDirectory, attributes, /*symlinkTarget =*/ null, /*children =*/ null)
+}
+
+internal fun updatingEvent(file: Path, vFile: VirtualFile): VFileContentChangeEvent {
+  val attributes = FileAttributes.fromNio(file, NioFiles.readAttributes(file))
+  return VFileContentChangeEvent(
+    RELOADING_STORAGE_WRITE_REQUESTOR, vFile, vFile.modificationStamp, /*newModificationStamp =*/ -1,
+    vFile.timeStamp, attributes.lastModified, vFile.length, attributes.length)
+}
+
 internal class ReadOnlyModificationException(
   @JvmField val file: VirtualFile,
   @JvmField val session: SaveSession?,
 ) : RuntimeException("File is read-only: $file")
-
-private fun loadDataAndDetectLineSeparator(file: Path): Pair<Element, LineSeparator?> {
-  val data = Files.readAllBytes(file)
-  val offset = CharsetToolkit.getBOMLength(data, StandardCharsets.UTF_8)
-  val text = String(data, offset, data.size - offset, StandardCharsets.UTF_8)
-  val xmlStreamReader = createXmlStreamReader(StringReader(text))
-  val element = try {
-    SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
-  }
-  finally {
-    xmlStreamReader.close()
-  }
-
-  return Pair(element, detectLineSeparator(text))
-}
-
-private fun detectLineSeparator(chars: CharSequence): LineSeparator? {
-  for (element in chars) {
-    if (element == '\r') {
-      return LineSeparator.CRLF
-    }
-    // if we are here, there was no '\r' before
-    if (element == '\n') {
-      return LineSeparator.LF
-    }
-  }
-  return null
-}
-
-@Internal
-fun loadComponentsAndDetectLineSeparator(
-  dir: Path,
-  pathMacroSubstitutor: PathMacroSubstitutor?
-): Pair<Map<String, Element>, Map<String, LineSeparator?>> {
-  try {
-    Files.newDirectoryStream(dir).use { files ->
-      val fileToState = HashMap<String, Element>()
-      val fileToSeparator = HashMap<String, LineSeparator?>()
-
-      for (file in files) {
-        // ignore system files like .DS_Store on Mac
-        if (!file.toString().endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
-          continue
-        }
-
-        try {
-          val elementLineSeparatorPair = loadDataAndDetectLineSeparator(file)
-          val element = elementLineSeparatorPair.first
-          val componentName = getComponentNameIfValid(element) ?: continue
-          if (element.name != ComponentStorageUtil.COMPONENT) {
-            LOG.error("Incorrect root tag name (${element.name}) in $file")
-            continue
-          }
-
-          val elementChildren = element.children
-          if (elementChildren.isEmpty()) {
-            continue
-          }
-
-          val state = elementChildren.get(0).detach()
-          if (state.isEmpty) {
-            continue
-          }
-
-          if (pathMacroSubstitutor != null) {
-            pathMacroSubstitutor.expandPaths(state)
-            if (pathMacroSubstitutor is TrackingPathMacroSubstitutor) {
-              pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state))
-            }
-          }
-
-          val name = file.fileName.toString()
-          fileToState.put(name, state)
-          fileToSeparator.put(name, elementLineSeparatorPair.second)
-        }
-        catch (e: Throwable) {
-          if (e.message!!.startsWith("Unexpected End-of-input in prolog")) {
-            LOG.warn("Ignore empty file $file")
-          }
-          else {
-            LOG.warn("Unable to load state from $file", e)
-          }
-        }
-      }
-      return Pair(fileToState, fileToSeparator)
-    }
-  }
-  catch (e: DirectoryIteratorException) {
-    throw e.cause!!
-  }
-  catch (ignore: NoSuchFileException) {
-    return Pair(java.util.Map.of(), java.util.Map.of())
-  }
-  catch (ignore: NotDirectoryException) {
-    return Pair(java.util.Map.of(), java.util.Map.of())
-  }
-}

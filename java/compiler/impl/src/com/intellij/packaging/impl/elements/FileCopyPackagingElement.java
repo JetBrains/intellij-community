@@ -14,7 +14,6 @@ import com.intellij.packaging.elements.RenameablePackagingElement;
 import com.intellij.packaging.impl.ui.FileCopyPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.platform.backend.workspace.VirtualFileUrls;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
@@ -149,7 +148,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
     Objects.requireNonNull(filePath, "filePath is not specified");
     FileCopyPackagingElementEntity addedEntity;
     VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
-    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(filePath));
+    VirtualFileUrl fileUrl = fileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(filePath));
     if (renamedOutputFileName != null) {
       addedEntity = diff.addEntity(FileCopyPackagingElementEntity.create(fileUrl, source, entityBuilder -> {
         entityBuilder.setRenamedOutputFileName(renamedOutputFileName);

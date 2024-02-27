@@ -9,6 +9,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FloatingToolbar
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
@@ -203,14 +204,14 @@ class CodeFloatingToolbar(
 
       override fun beforeShown(event: LightweightWindowEvent) {
         activeMenuPopup = popup
-        button.isSelected = true
+        Toggleable.setSelected(button, true)
         alignButtonPopup(popup)
         HelpTooltip.setMasterPopupOpenCondition(button) { true }
       }
 
       override fun onClosed(event: LightweightWindowEvent) {
         activeMenuPopup = null
-        button.isSelected = false
+        Toggleable.setSelected(button, null)
       }
     })
   }

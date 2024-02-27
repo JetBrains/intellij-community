@@ -11,4 +11,3 @@ fun f1(f: () -> Unit) { f() }
 fun f2() {}
 
 // SMART_STEP_INTO_BY_INDEX: 2
-// IGNORE_K2

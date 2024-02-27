@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.GradleBuildScriptClasspathModelProvider;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -9,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.junit.Test;
 
 import java.io.File;
@@ -66,7 +66,7 @@ public class GradleBuildScriptClasspathModelBuilderTest extends AbstractModelBui
                       "  }\n" +
                       "}");
 
-    ProjectImportAction.AllModels allModels = fetchAllModels(new GradleBuildScriptClasspathModelProvider());
+    AllModels allModels = fetchAllModels(new GradleBuildScriptClasspathModelProvider());
 
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
     assertEquals(5, ideaModules.size());

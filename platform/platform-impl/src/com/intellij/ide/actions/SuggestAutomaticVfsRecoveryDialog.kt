@@ -4,12 +4,9 @@ package com.intellij.ide.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.components.Link
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
 import javax.swing.Action
 import javax.swing.JPanel
 
@@ -55,14 +52,14 @@ class SuggestAutomaticVfsRecoveryDialog(private val isRestartCapable: Boolean, p
     }
   }
 
-  override fun createSouthAdditionalPanel(): JPanel {
-    val link = Link(IdeBundle.message("link.recover.vfs.choose.recovery.point")) {
-      close(CHOOSE_RECOVERY_POINT_CODE)
-    }
-    val panel = NonOpaquePanel(BorderLayout())
-    panel.border = JBUI.Borders.empty(0, 5)
-    panel.add(link)
-    return panel
+  override fun createSouthAdditionalPanel(): JPanel = panel {
+    row {
+      link(IdeBundle.message("link.recover.vfs.choose.recovery.point")) {
+        close(CHOOSE_RECOVERY_POINT_CODE)
+      }
+    }.resizableRow()
+  }.apply {
+    border = JBUI.Borders.emptyLeft(5)
   }
 
   companion object {

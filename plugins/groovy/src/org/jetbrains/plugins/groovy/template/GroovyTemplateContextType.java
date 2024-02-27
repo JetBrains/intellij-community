@@ -43,7 +43,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
-  public static class Generic extends GroovyTemplateContextType {
+  public static final class Generic extends GroovyTemplateContextType {
     public Generic() {
       super(GroovyBundle.message("language.groovy"));
     }
@@ -54,7 +54,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     }
   }
 
-  public static class Statement extends GroovyTemplateContextType {
+  public static final class Statement extends GroovyTemplateContextType {
     public Statement() {
       super(GroovyBundle.message("live.template.context.statement"));
     }
@@ -68,7 +68,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   }
 
-  public static class Expression extends GroovyTemplateContextType {
+  public static final class Expression extends GroovyTemplateContextType {
 
     public Expression() {
       super(GroovyBundle.message("live.template.context.expression"));
@@ -106,7 +106,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     return false;
   }
 
-  public static class Declaration extends GroovyTemplateContextType {
+  public static final class Declaration extends GroovyTemplateContextType {
     public Declaration() {
       super(GroovyBundle.message("live.template.context.declaration"));
     }

@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
@@ -13,23 +12,21 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.GotItTooltip
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.awt.Component
 import java.awt.Point
 import javax.swing.SwingUtilities
 
 internal object BlockTerminalPromotionService {
+  @RequiresEdt
   fun showPromotionOnce(project: Project, widget: TerminalWidget) {
-    if (widget.component.isShowing) {
-      runInEdt { doShowPromotionOnce(project, widget) }
-    }
-    else {
-      UiNotifyConnector.doWhenFirstShown(widget.component) { doShowPromotionOnce(project, widget) }
-    }
+    UiNotifyConnector.doWhenFirstShown(widget.component, { doShowPromotionOnce(project, widget) }, widget)
   }
 
   private fun doShowPromotionOnce(project: Project, widget: TerminalWidget) {
@@ -59,6 +56,8 @@ internal object BlockTerminalPromotionService {
     }, tooltip)
 
     tooltip.withHeader(TerminalBundle.message("new.terminal.promotion.text.header"))
+      .withGotItButtonAction { TerminalUsageTriggerCollector.triggerPromotionGotItClicked(project) }
+
     tooltip.show(optionsButton) { button, balloon ->
       val window = SwingUtilities.getWindowAncestor(button)
       val buttonBounds = SwingUtilities.convertRectangle(button, button.bounds, window)
@@ -69,6 +68,7 @@ internal object BlockTerminalPromotionService {
       }
       else Point(0, button.height / 2)
     }
+    TerminalUsageTriggerCollector.triggerPromotionShown(project)
   }
 
   private inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {

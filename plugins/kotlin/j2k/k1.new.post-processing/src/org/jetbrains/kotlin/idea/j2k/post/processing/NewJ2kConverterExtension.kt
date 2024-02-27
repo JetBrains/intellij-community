@@ -12,19 +12,21 @@ import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
 import org.jetbrains.kotlin.idea.configuration.hasKotlinPluginEnabled
 import org.jetbrains.kotlin.idea.configuration.isModuleConfigured
 import org.jetbrains.kotlin.j2k.*
-import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
-import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.psi.KtFile
 
 class NewJ2kConverterExtension : J2kConverterExtension() {
-    override val isNewJ2k = true
+    override val kind: Kind = K1_NEW
 
     override fun createJavaToKotlinConverter(
         project: Project,
         targetModule: Module?,
-        settings: ConverterSettings
+        settings: ConverterSettings,
+        targetFile: KtFile?
     ): JavaToKotlinConverter =
-        NewJavaToKotlinConverter(project, targetModule, settings)
+        NewJavaToKotlinConverter(project, targetModule, settings, targetFile)
 
     override fun createPostProcessor(formatCode: Boolean): PostProcessor =
         NewJ2kPostProcessor()
@@ -38,6 +40,9 @@ class NewJ2kConverterExtension : J2kConverterExtension() {
         phasesCount: Int
     ): WithProgressProcessor =
         NewJ2kWithProgressProcessor(progress, files, phasesCount)
+
+    override fun getConversions(context: NewJ2kConverterContext): List<Conversion> =
+        getNewJ2KConversions(context)
 
     private fun checkKotlinIsConfigured(project: Project, module: Module): Boolean {
         val kotlinIsConfigured =

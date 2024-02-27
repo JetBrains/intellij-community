@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -62,7 +62,7 @@ public abstract class Decompressor {
     @Override
     protected Entry nextEntry() throws IOException {
       TarArchiveEntry te;
-      while ((te = myStream.getNextTarEntry()) != null &&
+      while ((te = myStream.getNextEntry()) != null &&
              !((te.isFile() && !te.isLink()) // ignore hardlink
                || te.isDirectory()
                || te.isSymbolicLink())) /* skipping unsupported */;

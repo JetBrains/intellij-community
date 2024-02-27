@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     PsiElement parent = e.getParent();

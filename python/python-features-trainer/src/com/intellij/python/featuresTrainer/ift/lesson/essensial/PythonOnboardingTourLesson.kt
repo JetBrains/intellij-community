@@ -31,6 +31,8 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
+import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
+import com.intellij.python.featuresTrainer.ift.PythonLessonsUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -44,8 +46,6 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.sdk.pythonSdk
-import com.intellij.python.featuresTrainer.ift.PythonLessonsBundle
-import com.intellij.python.featuresTrainer.ift.PythonLessonsUtil
 import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
@@ -91,7 +91,7 @@ class PythonOnboardingTourLesson :
 
   private var backupPopupLocation: Point? = null
   private var hideToolStripesPreference = false
-  private var showNavigationBarPreference = true
+  private var showMainToolbarPreference = true
 
   private var usedInterpreterAtStart: String = "undefined"
 
@@ -178,7 +178,7 @@ class PythonOnboardingTourLesson :
     backupPopupLocation = null
 
     uiSettings.hideToolStripes = hideToolStripesPreference
-    uiSettings.showNavigationBar = showNavigationBarPreference
+    uiSettings.showNewMainToolbar = showMainToolbarPreference
     uiSettings.fireUISettingsChanged()
 
     if (!lessonEndInfo.lessonPassed) {
@@ -253,8 +253,8 @@ class PythonOnboardingTourLesson :
 
     task {
       rehighlightPreviousUi = true
-      gotItStep(Balloon.Position.above, width = 0,
-                PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
+      gotItStep(Balloon.Position.above, width = 0, cornerToPointerDistance = 140,
+                text = PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                             strong(UIBundle.message("tool.window.name.debug")),
                                             strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       restoreByUi(debuggerGotItTaskId)
@@ -264,7 +264,7 @@ class PythonOnboardingTourLesson :
     task {
       val position = if (UIExperiment.isNewDebuggerUIEnabled()) Balloon.Position.above else Balloon.Position.atRight
       showBalloonOnHighlightingComponent(PythonLessonsBundle.message("python.onboarding.balloon.stop.debugging"),
-                                         position) { list -> list.maxByOrNull { it.locationOnScreen.y } }
+                                         position, cornerToPointerDistance = 35) { list -> list.maxByOrNull { it.locationOnScreen.y } }
       text(PythonLessonsBundle.message("python.onboarding.stop.debugging",
                                        icon(AllIcons.Actions.Suspend)))
       restoreIfModified(sample)
@@ -365,12 +365,9 @@ class PythonOnboardingTourLesson :
 
 
   private fun LessonContext.checkUiSettings() {
-    hideToolStripesPreference = uiSettings.hideToolStripes
-    showNavigationBarPreference = uiSettings.showNavigationBar
-
     showInvalidDebugLayoutWarning()
 
-    if (!hideToolStripesPreference && (showNavigationBarPreference || uiSettings.showMainToolbar)) {
+    if (!uiSettings.hideToolStripes && uiSettings.showNewMainToolbar) {
       // a small hack to have same tasks count. It is needed to track statistics result.
       task { }
       task { }
@@ -383,8 +380,10 @@ class PythonOnboardingTourLesson :
     }
 
     prepareRuntimeTask {
+      hideToolStripesPreference = uiSettings.hideToolStripes
+      showMainToolbarPreference = uiSettings.showNewMainToolbar
       uiSettings.hideToolStripes = false
-      uiSettings.showNavigationBar = true
+      uiSettings.showNewMainToolbar = true
       uiSettings.fireUISettingsChanged()
     }
   }

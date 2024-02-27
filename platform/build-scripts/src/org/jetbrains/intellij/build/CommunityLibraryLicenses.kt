@@ -290,18 +290,18 @@ object CommunityLibraryLicenses {
                    url = "https://coverage.readthedocs.io/")
       .apache("https://github.com/nedbat/coveragepy/blob/master/LICENSE.txt"),
     LibraryLicense(name = "Cucumber-Core", libraryName = "cucumber-core-1.2",
-                   url = "https://github.com/cucumber/cucumber-jvm/tree/main/cucumber-core")
-      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENCE")
+                   url = "https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
+      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .suppliedByOrganizations("SmartBear Software"),
     LibraryLicense(name = "Cucumber-Expressions", libraryName = "cucumber-expressions",
                    url = "https://github.com/cucumber/cucumber/")
-      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENCE")
+      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .suppliedByOrganizations("SmartBear Software"),
     LibraryLicense(name = "Cucumber-Groovy", libraryName = "cucumber-groovy", url = "https://github.com/cucumber/cucumber-jvm/")
-      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENCE")
+      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .suppliedByOrganizations("SmartBear Software"),
     LibraryLicense(name = "Cucumber-Java", libraryName = "cucumber-java", url = "https://github.com/cucumber/cucumber-jvm/")
-      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENCE")
+      .mit("https://github.com/cucumber/cucumber-jvm/blob/main/LICENSE")
       .suppliedByOrganizations("SmartBear Software"),
     LibraryLicense(name = "Dart Analysis Server", attachedTo = "intellij.dart",
                    url = "https://github.com/dart-lang/eclipse3", version = LibraryLicense.CUSTOM_REVISION).eplV1(),

@@ -5,10 +5,7 @@ import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.filters.HyperlinkWithPopupMenuInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -39,14 +36,18 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.ui.AwtTransformers
+import org.intellij.lang.annotations.MagicConstant
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JScrollPane
+import javax.swing.KeyStroke
 import kotlin.math.max
 
 object TerminalUiUtils {
@@ -104,6 +105,12 @@ object TerminalUiUtils {
     return DefaultActionGroup(actionsPerGroup.flatMapIndexed { index, actions ->
       if (index > 0) listOf(Separator.create()) + actions else actions
     })
+  }
+
+  fun createSingleShortcutSet(@MagicConstant(flagsFromClass = KeyEvent::class) keyCode: Int,
+                              @MagicConstant(flagsFromClass = InputEvent::class) modifiers: Int): ShortcutSet {
+    val keyStroke = KeyStroke.getKeyStroke(keyCode, modifiers)
+    return CustomShortcutSet(keyStroke)
   }
 
   fun calculateTerminalSize(componentSize: Dimension, charSize: Dimension): TermSize {
@@ -210,7 +217,14 @@ object TerminalUiUtils {
     return AwtTransformers.toAwtColor(color?.let { palette.getBackground(it) } ?: palette.defaultBackground)!!
   }
 
+  fun plainAttributesProvider(foregroundColorIndex: Int, palette: TerminalColorPalette): TextAttributesProvider {
+    return TextStyleAdapter(TextStyle(TerminalColor(foregroundColorIndex), null), palette)
+  }
+
   private val LOG = logger<TerminalUiUtils>()
   private const val TIMEOUT = 2000
   private const val TERMINAL_OUTPUT_CONTEXT_MENU = "Terminal.OutputContextMenu"
+
+  const val GREEN_COLOR_INDEX: Int = 2
+  const val YELLOW_COLOR_INDEX: Int = 3
 }

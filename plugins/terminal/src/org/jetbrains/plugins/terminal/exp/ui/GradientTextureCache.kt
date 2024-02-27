@@ -16,8 +16,8 @@ import kotlin.math.floor
 
 class GradientTextureCache(
   private val scheme: EditorColorsScheme,
-  private val colorStartKey: ColorKey,
-  private val colorEndKey: ColorKey,
+  val colorStartKey: ColorKey,
+  val colorEndKey: ColorKey,
   private val defaultColorStart: Color,
   private val defaultColorEnd: Color
 ) : Disposable {

@@ -19,7 +19,7 @@
     <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
-    <appStarter id="update" implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
+    <appStarter id="update" implementation="com.intellij.ide.plugins.UpdatePluginsApp"/>
     <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump"/>
@@ -194,7 +194,7 @@
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
-    <vfs.asyncListener implementation="com.intellij.configurationStore.MyAsyncVfsListener"/>
+    <vfs.asyncListener implementation="com.intellij.configurationStore.StorageVfsListener"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.PathMacroManager"
                         serviceImplementation="com.intellij.configurationStore.ApplicationPathMacroManager"/>
@@ -960,6 +960,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeErrorDialogUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.util.projectWizard.LightweightNewProjectWizardCollector" />
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectWizard.NewProjectWizardCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.ui.experimental.ExperimentalUiCollector"/>
     <statistics.validation.customValidationRule
@@ -1382,6 +1383,7 @@
     <environmentKeyProvider implementation="com.intellij.ide.plugins.PluginEnvironmentKeyProvider"/>
 
 
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.IdeMainMenuActionCustomizer"/>
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.GlobalMenuLinux$MyActionTuner"/>
 
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductTitleInfoProvider"/>
@@ -1582,6 +1584,8 @@
     <advancedSetting id="documentation.components.enable.highlighting.of.links" default="false"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="documentation.components.enable.code.background" default="true"
+                     groupKey="group.advanced.settings.documentation.components"/>
+    <advancedSetting id="documentation.auto.show.in.modal.dialogs" default="false"
                      groupKey="group.advanced.settings.documentation.components"/>
     <advancedSetting id="search.everywhere.wait.for.contributors" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.contributors.wait.timeout" default="2000" groupKey="group.advanced.settings.se"/>

@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.workspaceModel.*
 import org.junit.*
 
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 class KotlinFacetEventListenerTest {
     companion object {
         @JvmField
@@ -40,8 +39,6 @@ class KotlinFacetEventListenerTest {
 
     @Before
     fun setUp() {
-        //TODO: remove after enabling by default
-        Registry.get("workspace.model.kotlin.facet.bridge").setValue(true)
         Assume.assumeTrue("Execute only if kotlin facet bridge enabled", KotlinFacetBridgeFactory.kotlinFacetBridgeEnabled)
         TestCase.assertTrue("KotlinFacetContributor is not registered",
                             !WorkspaceFacetContributor.EP_NAME.extensions.none { (it as Any) is KotlinFacetContributor })
@@ -110,33 +107,7 @@ class KotlinFacetEventListenerTest {
                     val workspaceModel = WorkspaceModel.getInstance(project)
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add kotlin setting entity") {
-                        it.addEntity(
-                            KotlinSettingsEntity(KotlinFacetType.INSTANCE.presentableName,
-                                                 ModuleId(""),
-                                                 emptyList(),
-                                                 emptyList(),
-                                                 true,
-                                                 emptyList(),
-                                                 emptyList(),
-                                                 emptySet(),
-                                                 "",
-                                                 "",
-                                                 emptyList(),
-                                                 false,
-                                                 "",
-                                                 false,
-                                                 emptyList(),
-                                                 KotlinModuleKind.DEFAULT,
-                                                 "",
-                                                 CompilerSettingsData("", "", "", true, "lib", false),
-                                                 "",
-                                                 emptyList(),
-                                                 KotlinFacetSettings.CURRENT_VERSION,
-                                                 false,
-                                                 object : EntitySource {}) {
-                                module = moduleEntity
-                            }
-                        )
+                        it.addEntity(createEmptyEntity(moduleEntity))
                     }
 
                     val module = moduleManager.modules[0]
@@ -184,33 +155,7 @@ class KotlinFacetEventListenerTest {
                     val workspaceModel = WorkspaceModel.getInstance(project)
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add Kotlin setting entity") {
-                        it.addEntity(
-                            KotlinSettingsEntity(KotlinFacetType.INSTANCE.presentableName,
-                                                 ModuleId(""),
-                                                 emptyList(),
-                                                 emptyList(),
-                                                 true,
-                                                 emptyList(),
-                                                 emptyList(),
-                                                 emptySet(),
-                                                 "",
-                                                 "",
-                                                 emptyList(),
-                                                 false,
-                                                 "",
-                                                 false,
-                                                 emptyList(),
-                                                 KotlinModuleKind.DEFAULT,
-                                                 "",
-                                                 CompilerSettingsData("", "", "", true, "lib", false),
-                                                 "",
-                                                 emptyList(),
-                                                 KotlinFacetSettings.CURRENT_VERSION,
-                                                 false,
-                                                 object : EntitySource {}) {
-                                module = moduleEntity
-                            }
-                        )
+                        it.addEntity(createEmptyEntity(moduleEntity))
                     }
 
                     val module = moduleManager.modules[0]
@@ -288,6 +233,33 @@ class KotlinFacetEventListenerTest {
         }
         return@runBlocking listener.events
     }
+
+    private fun createEmptyEntity(moduleEntity: ModuleEntity) =
+        KotlinSettingsEntity(name = KotlinFacetType.INSTANCE.presentableName,
+                             moduleId = ModuleId(""),
+                             sourceRoots = emptyList(),
+                             configFileItems = emptyList(),
+                             useProjectSettings = true,
+                             implementedModuleNames = emptyList(),
+                             dependsOnModuleNames = emptyList(),
+                             additionalVisibleModuleNames = emptySet(),
+                             productionOutputPath = "",
+                             testOutputPath = "",
+                             sourceSetNames = emptyList(),
+                             isTestModule = false,
+                             externalProjectId = "",
+                             isHmppEnabled = false,
+                             pureKotlinSourceFolders = emptyList(),
+                             kind = KotlinModuleKind.DEFAULT,
+                             compilerArguments = "",
+                             compilerSettings = CompilerSettingsData("", "", "", true, "lib", false),
+                             targetPlatform = "",
+                             externalSystemRunTasks = emptyList(),
+                             version = KotlinFacetSettings.CURRENT_VERSION,
+                             flushNeeded = false,
+                             entitySource = object : EntitySource {}) {
+            module = moduleEntity
+        }
 
     private class MyFacetManagerListener : FacetManagerListener {
         private val myEvents = StringBuilder()

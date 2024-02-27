@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyEntity
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -61,12 +60,12 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
     val sdkEntitySource = SdkBridgeImpl.createEntitySourceForSdk()
     val virtualFileUrlManager = globalWorkspaceModel.getVirtualFileUrlManager()
-    val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.getOrCreateFromUri(it) }
+    val homePathVfu = delegateSdk.homePath?.let { virtualFileUrlManager.getOrCreateFromUrl(it) }
 
     val roots = mutableListOf<SdkRoot>()
     for (type in OrderRootType.getAllPersistentTypes()) {
       sdk.rootProvider.getUrls(type).forEach { url ->
-        roots.add(SdkRoot(virtualFileUrlManager.getOrCreateFromUri(url), rootTypes[type.customName]!!))
+        roots.add(SdkRoot(virtualFileUrlManager.getOrCreateFromUrl(url), rootTypes[type.customName]!!))
       }
     }
 

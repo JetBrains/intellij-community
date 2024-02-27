@@ -27,7 +27,7 @@ import java.util.HashSet;
 /**
  * @author Plushnikov Michail
  */
-public class LombokInspection extends LombokJavaInspectionBase {
+public final class LombokInspection extends LombokJavaInspectionBase {
 
   public LombokInspection() {
   }

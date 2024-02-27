@@ -517,7 +517,7 @@ private object SampleEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return storage addEntity SampleEntity(false, someProperty, ArrayList(), HashMap(),
-                                              VirtualFileUrlManagerImpl().getOrCreateFromUri("file:///tmp"),
+                                              VirtualFileUrlManagerImpl().getOrCreateFromUrl("file:///tmp"),
                                               source) to "property: $someProperty"
       }
     }
@@ -541,7 +541,7 @@ private object SampleEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val virtualFileManager = VirtualFileUrlManagerImpl()
-        return SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.getOrCreateFromUri("file:///tmp"), source) {
+        return SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.getOrCreateFromUrl("file:///tmp"), source) {
           this.children = emptyList()
         } to "property: $someProperty"
       }

@@ -16,19 +16,19 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.refactoring.suggested.range
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
+import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 
-@ApiStatus.Internal
 class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcessor {
     override val phasesCount: Int = 1
 
@@ -48,13 +48,13 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
     }
 
     override fun doAdditionalProcessing(
-        target: JKPostProcessingTarget,
+        target: PostProcessingTarget,
         converterContext: ConverterContext?,
         onPhaseChanged: ((Int, String) -> Unit)?
     ) {
         val (file, rangeMarker) = when (target) {
-            is JKPieceOfCodePostProcessingTarget -> target.file to target.rangeMarker
-            is JKMultipleFilesPostProcessingTarget -> target.files.single() to null
+            is PieceOfCodePostProcessingTarget -> target.file to target.rangeMarker
+            is MultipleFilesPostProcessingTarget -> target.files.single() to null
         }
 
         val disposable = KotlinPluginDisposable.getInstance(file.project)
@@ -131,7 +131,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
                     super.visitElement(element)
 
                     if (rangeResult == RangeFilterResult.PROCESS) {
-                        val postProcessingRegistrar = J2KPostProcessingRegistrar.instance
+                        val postProcessingRegistrar = OldJ2KPostProcessingRegistrar.instance
                         postProcessingRegistrar.processings.forEach { processing ->
                             val action = processing.createAction(element, diagnostics)
                             if (action != null) {
@@ -165,6 +165,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
             Diagnostics.EMPTY
     }
 
+    @Suppress("DuplicatedCode")
     private fun rangeFilter(element: PsiElement, rangeMarker: RangeMarker?): RangeFilterResult {
         if (rangeMarker == null) return RangeFilterResult.PROCESS
         if (!rangeMarker.isValid) return RangeFilterResult.SKIP

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
@@ -31,7 +32,9 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
   protected void setUpProject() throws Exception {
     String projectPath = PathManagerEx.getTestDataPath() + "/model/model.ipr";
     myProject = PlatformTestUtil.loadAndOpenProject(Path.of(projectPath), getTestRootDisposable());
-    ServiceContainerUtil.registerServiceInstance(myProject, FileEditorManager.class, new FileEditorManagerImpl(myProject, ((ComponentManagerEx)myProject).getCoroutineScope()));
+    FileEditorManagerImpl editorManager = new FileEditorManagerImpl(myProject, ((ComponentManagerEx)myProject).getCoroutineScope());
+    ServiceContainerUtil.registerServiceInstance(myProject, FileEditorManager.class, editorManager);
+    ((ComponentManagerImpl) myProject).replaceServiceInstance(FileEditorManager.class, editorManager, getTestRootDisposable());
   }
 
   @Override

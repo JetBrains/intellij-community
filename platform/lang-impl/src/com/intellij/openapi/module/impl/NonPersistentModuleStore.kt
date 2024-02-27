@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
+import com.intellij.configurationStore.DummyStreamProvider
 import com.intellij.configurationStore.SaveSessionProducer
 import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProvider
@@ -58,6 +59,11 @@ private object NonPersistentStateStorageManager : StateStorageManager {
   override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage? = null
 
   override fun expandMacro(collapsedPath: String): Path = Path.of(collapsedPath)
+
+  override fun collapseMacro(path: String): String = path
+
+  override val streamProvider: StreamProvider
+    get() = DummyStreamProvider
 }
 
 private object NonPersistentStateStorage : StateStorage {

@@ -16,9 +16,11 @@
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,6 +33,13 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
 
   @NotNull
   private static HierarchyNodeDescriptor buildHierarchyElement(@NotNull Project project, @NotNull PsiClass aClass) {
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-345476, EA-700938")) {
+      return buildHierarchyElementInner(project, aClass);
+    }
+  }
+
+  @NotNull
+  private static HierarchyNodeDescriptor buildHierarchyElementInner(@NotNull Project project, @NotNull PsiClass aClass) {
     HierarchyNodeDescriptor descriptor = null;
     PsiClass[] superClasses = createSuperClasses(aClass);
     for(int i = superClasses.length - 1; i >= 0; i--){

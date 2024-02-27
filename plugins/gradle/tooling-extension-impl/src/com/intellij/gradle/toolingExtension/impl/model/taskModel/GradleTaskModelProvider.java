@@ -14,15 +14,15 @@ public class GradleTaskModelProvider implements ProjectImportModelProvider {
 
   @Override
   public GradleModelFetchPhase getPhase() {
-    return GradleModelFetchPhase.TASK_WARM_UP_PHASE;
+    return GradleModelFetchPhase.WARM_UP_PHASE;
   }
 
   @Override
   public void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,
-    @NotNull BuildModelConsumer consumer
+    @NotNull GradleModelConsumer modelConsumer
   ) {
-    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskModel.class, BuildModelConsumer.NOOP);
+    GradleModelProviderUtil.buildModels(controller, buildModel, GradleTaskModel.class, GradleModelConsumer.NOOP);
   }
 }

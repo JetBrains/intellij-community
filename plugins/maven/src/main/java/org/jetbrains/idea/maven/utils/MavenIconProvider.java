@@ -16,7 +16,7 @@ import javax.swing.*;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
-public class MavenIconProvider implements DumbAware, FileIconProvider {
+public final class MavenIconProvider implements DumbAware, FileIconProvider {
   @Nullable
   @Override
   public Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {

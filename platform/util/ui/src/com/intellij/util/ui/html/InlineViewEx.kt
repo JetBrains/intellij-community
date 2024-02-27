@@ -1,39 +1,42 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.html
 
-import com.intellij.util.asSafely
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
 import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Shape
 import javax.swing.text.Element
 import javax.swing.text.TabExpander
 import javax.swing.text.View
-import javax.swing.text.html.CSS
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.InlineView
 import kotlin.math.max
 
-private val CAPTION_SIDE = CSS.Attribute::class.java
-  .getDeclaredField("CAPTION_SIDE")
-  .apply { isAccessible = true }
-  .get(null)
-
 /**
- * Supports paddings and margins for inline elements, like `<span>`. Due to limitations of [HTMLDocument],
- * paddings for nested inline elements are not supported and will cause incorrect rendering.
+ * Supports paddings, margins and rounded corners (through `caption-side` CSS property) for inline elements, like `<span>`.
+ *
+ * Due to limitations of [HTMLDocument], paddings for nested inline elements are not supported and will cause incorrect rendering.
  */
+@Suppress("UseDPIAwareInsets")
 internal class InlineViewEx(elem: Element) : InlineView(elem) {
 
-  private lateinit var padding: JBInsets
-  private lateinit var margin: JBInsets
-  private var insets: JBInsets = JBInsets.emptyInsets()
+  private lateinit var padding: Insets
+  private lateinit var margin: Insets
+  private var insets: Insets = Insets(0, 0, 0, 0)
 
   // With private fields Java clone doesn't work well
   @Suppress("ProtectedInFinal")
   @JvmField
-  protected var borderRadius: Int = -1
+  protected var borderRadius: Float = -1f
+
+  @Suppress("ProtectedInFinal")
+  @JvmField
+  protected var borderWidths: Insets? = null
+
+  @Suppress("ProtectedInFinal")
+  @JvmField
+  protected var borderColors: BorderColors? = null
 
   @Suppress("ProtectedInFinal")
   @JvmField
@@ -45,16 +48,9 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
 
   override fun setPropertiesFromAttributes() {
     super.setPropertiesFromAttributes()
-
-
-    // "caption-side" is used as "border-radius"
-    borderRadius = attributes.getAttribute(CAPTION_SIDE)
-                     ?.asSafely<String>()
-                     ?.takeIf { it.endsWith("px") }
-                     ?.removeSuffix("px")
-                     ?.toIntOrNull()
-                     ?.let { JBUI.scale(it) }
-                   ?: 0
+    borderRadius = cssBorderRadius
+    borderWidths = cssBorderWidths
+    borderColors = cssBorderColors
     updatePaddingsAndMargins(true)
   }
 
@@ -72,14 +68,14 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
   override fun getPreferredSpan(axis: Int): Float {
     updatePaddingsAndMargins(false)
     return super.getPreferredSpan(axis) + when (axis) {
-      View.X_AXIS -> insets.width()
-      View.Y_AXIS -> insets.height()
+      View.X_AXIS -> insets.width
+      View.Y_AXIS -> insets.height
       else -> throw IllegalArgumentException("Invalid axis: $axis")
     }
   }
 
   override fun getTabbedSpan(x: Float, e: TabExpander?): Float =
-    super.getTabbedSpan(x, e) + insets.width()
+    super.getTabbedSpan(x, e) + insets.width
 
   override fun getBreakWeight(axis: Int, pos: Float, len: Float): Int =
     super.getBreakWeight(axis, adjustedBreakPos(axis, pos), adjustedBreakLen(axis, len))
@@ -91,35 +87,25 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
     max(pos - if (axis == View.X_AXIS) insets.left else insets.top, 0f)
 
   private fun adjustedBreakLen(axis: Int, pos: Float): Float =
-    max(pos - if (axis == View.X_AXIS) insets.width() else insets.height(), 0f)
+    max(pos - if (axis == View.X_AXIS) insets.width else insets.height, 0f)
 
   override fun paint(g: Graphics, a: Shape) {
-    val alloc = if (a is Rectangle) a else a.bounds
-    // Shrink by margin
-    alloc.setBounds(alloc.x + margin.left, alloc.y + margin.top,
-                    alloc.width - margin.width(),
-                    alloc.height - margin.height())
     val bg = getBackground()
-    if (bg != null) {
-      g.color = bg
-      if (borderRadius > 0 && (startView || endView)) {
-        g.fillRoundRect(alloc.x, alloc.y, alloc.width, alloc.height, borderRadius, borderRadius)
-        if (!startView) {
-          g.fillRect(alloc.x, alloc.y, alloc.width - borderRadius, alloc.height)
-        }
-        else if (!endView) {
-          g.fillRect(alloc.x + borderRadius, alloc.y, alloc.width, alloc.height)
-        }
-      }
-      else {
-        g.fillRect(alloc.x, alloc.y, alloc.width, alloc.height)
-      }
-    }
-    // Shrink by padding
-    alloc.setBounds(alloc.x + padding.left, alloc.y + padding.top,
-                    alloc.width - padding.width(),
-                    alloc.height - padding.height())
-    super.paint(g, alloc)
+
+    paintControlBackgroundAndBorder(
+      g, a as Rectangle,
+      bg, borderRadius, margin, borderWidths, borderColors,
+      noBorderOnTheRight = !endView,
+      noBorderOnTheLeft = !startView,
+    )
+
+    // Shrink by padding and margin
+    a.setBounds(a.x + insets.left, a.y + insets.top,
+                a.width - insets.width,
+                a.height - insets.height)
+    background = null
+    super.paint(g, a)
+    background = bg
   }
 
   override fun getAlignment(axis: Int): Float {
@@ -136,7 +122,7 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
         sub -> if (h > 0) (h - (d + a / 2)) / h else 0f
         else -> if (h > 0) (h - d) / h else 0f
       }
-      return (insets.top + (contentsAlign * h)) / (insets.height() + h)
+      return (insets.top + (contentsAlign * h)) / (insets.height + h)
     }
     return super.getAlignment(axis)
   }
@@ -174,21 +160,21 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
     this.startView = startView
     this.endView = endView
 
-    padding = JBInsets(
+    padding = Insets(
       cssPadding.top,
       if (startView) cssPadding.left else 0,
       cssPadding.bottom,
       if (endView) cssPadding.right else 0,
     )
 
-    margin = JBInsets(
+    margin = Insets(
       cssMargin.top,
       if (startView) cssMargin.left else 0,
       cssMargin.bottom,
       if (endView) cssMargin.right else 0,
     )
 
-    insets = JBInsets(
+    insets = Insets(
       padding.top + margin.top,
       padding.left + margin.left,
       padding.bottom + margin.bottom,

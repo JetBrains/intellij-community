@@ -19,7 +19,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyNameSuggestionProvider implements NameSuggestionProvider {
+public final class GroovyNameSuggestionProvider implements NameSuggestionProvider {
   @Override
   public SuggestedNameInfo getSuggestedNames(@NotNull PsiElement element,
                                              @Nullable PsiElement nameSuggestionContext,

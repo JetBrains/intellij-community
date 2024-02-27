@@ -51,16 +51,16 @@ internal class GHPRViewModelContainer(
     }
   }
   val infoVm: GHPRInfoViewModel by lazyInfoVm
+  private val reviewVmHelper: GHPRReviewViewModelHelper by lazy { GHPRReviewViewModelHelper(cs, dataProvider) }
 
   private val branchStateVm by lazy {
     GHPRReviewBranchStateSharedViewModel(cs, dataContext, dataProvider)
   }
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
   val branchWidgetVm: GHPRBranchWidgetViewModel by lazy {
-    GHPRBranchWidgetViewModelImpl(cs, settings, dataProvider, projectVm, branchStateVm, pullRequestId)
+    GHPRBranchWidgetViewModelImpl(cs, settings, dataProvider, projectVm, branchStateVm, reviewVmHelper, pullRequestId)
   }
 
-  private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
   private val threadsVms = GHPRThreadsViewModels(project, cs, dataContext, dataProvider)
   val diffVm: GHPRDiffViewModel by lazy {
     GHPRDiffViewModelImpl(project, cs, dataContext, dataProvider, reviewVmHelper, threadsVms).apply {

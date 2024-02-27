@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -36,7 +37,6 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.EditorView;
@@ -856,6 +856,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void uninstallPopupHandler(@NotNull EditorPopupHandler popupHandler) {
     myPopupHandlers.remove(popupHandler);
+  }
+
+  @Override
+  public @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+      for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
+        EditorPopupHandler handler = myPopupHandlers.get(i);
+        ActionGroup group = handler instanceof ContextMenuPopupHandler o ? o.getActionGroup(event) : null;
+        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0 &&
+            group.getClass() == DefaultActionGroup.class) return group;
+        if (group != null) return new EditorMousePopupActionGroup(group, event);
+      }
+      return null;
+    }
+    else {
+      return myGutterComponent.getPopupActionGroup(event);
+    }
   }
 
   private @Nullable Cursor getCustomCursor() {
@@ -5320,9 +5337,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void invokePopupIfNeeded(@NotNull EditorMouseEvent event) {
+    if (myPopupHandlers.isEmpty()) return;
+
     if (event.getArea() == EditorMouseEventArea.EDITING_AREA && event.getMouseEvent().isPopupTrigger() && !event.isConsumed()) {
-      for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
-        if (myPopupHandlers.get(i).handlePopup(event)) break;
+      if (ContainerUtil.all(myPopupHandlers, o -> o instanceof ContextMenuPopupHandler)) {
+        ActionGroup group = getPopupActionGroup(event);
+        if (group == null) return;
+        if (group instanceof DefaultActionGroup o && o.getChildrenCount() == 0 &&
+            group.getClass() == DefaultActionGroup.class) return;
+        new ContextMenuPopupHandler.Simple(group).handlePopup(event);
+      }
+      else {
+        String message = "Non-ContextMenuPopupHandler popup handler detected: " +
+                         ContainerUtil.map(myPopupHandlers, o -> o.getClass().getName());
+        if (ClientId.isCurrentlyUnderLocalId()) {
+          LOG.warn(message);
+        }
+        else {
+          LOG.error(message);
+        }
+        for (int i = myPopupHandlers.size() - 1; i >= 0; i--) {
+          if (myPopupHandlers.get(i).handlePopup(event)) break;
+        }
       }
     }
   }
@@ -5369,7 +5405,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final class DefaultPopupHandler extends ContextMenuPopupHandler {
     @Override
-    public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
+    public @Nullable ActionGroup getActionGroup(@NotNull EditorMouseEvent event) { //TODO ! renderer, collapsed-host
       String contextMenuGroupId = myState.getContextMenuGroupId();
       Inlay<?> inlay = event.getInlay();
       if (inlay != null) {

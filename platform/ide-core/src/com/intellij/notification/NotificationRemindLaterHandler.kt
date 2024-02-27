@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification
 
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.xmlb.JdomAdapter
 import org.jdom.Element
 
 /**
- * For working Notification tool window action "Remind me tomorrow" we need save title/content and actions from notification object.
+ * For working Notification tool window action "Remind me tomorrow" we need save title/content and actions from a notification object.
  * Only for suggestion notifications.
  *
  * @see Notification.setRemindLaterHandlerId
@@ -36,7 +37,7 @@ interface NotificationRemindLaterHandler {
   fun setActions(notification: Notification, element: Element): Boolean
 }
 
-abstract class NotificationRemindLaterHandlerWithState<T : BaseState>(private val myType: Class<T>) : NotificationRemindLaterHandler {
+abstract class NotificationRemindLaterHandlerWithState<T : BaseState>(private val type: Class<T>) : NotificationRemindLaterHandler {
   abstract fun getState(notification: Notification): T
 
   abstract fun setState(notification: Notification, state: T): Boolean
@@ -46,6 +47,6 @@ abstract class NotificationRemindLaterHandlerWithState<T : BaseState>(private va
   }
 
   override fun setActions(notification: Notification, element: Element): Boolean {
-    return setState(notification, jdomSerializer.deserialize(element, myType))
+    return setState(notification, jdomSerializer.deserialize(element, type, JdomAdapter))
   }
 }

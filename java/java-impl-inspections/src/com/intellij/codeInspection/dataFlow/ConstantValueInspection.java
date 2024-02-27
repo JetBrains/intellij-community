@@ -58,7 +58,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     return pane(
       checkbox("DONT_REPORT_TRUE_ASSERT_STATEMENTS", message("inspection.data.flow.true.asserts.option")),
       checkbox("IGNORE_ASSERT_STATEMENTS", message("inspection.data.flow.ignore.assert.statements")),
-      checkbox("REPORT_CONSTANT_REFERENCE_VALUES", message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant")));
+      checkbox("REPORT_CONSTANT_REFERENCE_VALUES", JavaAnalysisBundle.message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant")));
   }
 
   @Override

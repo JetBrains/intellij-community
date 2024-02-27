@@ -2,27 +2,21 @@
 package org.jetbrains.plugins.github.pullrequest.ui.emoji
 
 import com.intellij.collaboration.ui.ComponentListPanelFactory
-import com.intellij.collaboration.ui.codereview.emoji.ReactionLabel
+import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionComponent
+import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionPillPresentation
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
-import com.intellij.collaboration.ui.util.*
-import com.intellij.ui.JBColor
-import com.intellij.ui.RoundedLineBorder
-import com.intellij.ui.hover.addHoverAndPressStateListener
-import com.intellij.util.ui.JBUI
-import icons.CollaborationToolsIcons
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.github.api.data.GHReactionContent
+import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.presentableName
+import javax.swing.Icon
 import javax.swing.JComponent
 
 internal object GHReactionsComponentFactory {
-  private val BORDER = RoundedLineBorder(CodeReviewColorUtil.Reaction.border, CodeReviewReactionsUIUtil.BUTTON_ROUNDNESS)
-  private val HOVERED_BORDER = RoundedLineBorder(CodeReviewColorUtil.Reaction.borderHovered, CodeReviewReactionsUIUtil.BUTTON_ROUNDNESS)
-  private val PRESSED_BORDER = RoundedLineBorder(CodeReviewColorUtil.Reaction.borderPressed, CodeReviewReactionsUIUtil.BUTTON_ROUNDNESS)
-
-  private const val REACTION_LABEL_PADDING = 10
-
   fun create(cs: CoroutineScope, reactionsVm: GHReactionsViewModel): JComponent {
     return ComponentListPanelFactory.createHorizontal(
       cs,
@@ -38,73 +32,44 @@ internal object GHReactionsComponentFactory {
   }
 
   private fun createReactionLabel(cs: CoroutineScope, reactionsVm: GHReactionsViewModel, reaction: GHReactionContent): JComponent {
-    val layout = SizeRestrictedSingleComponentLayout().apply {
-      val dimension = DimensionRestrictions.ScalingConstant(
-        height = CodeReviewReactionsUIUtil.BUTTON_HEIGHT
-      )
-      prefSize = dimension
-      maxSize = dimension
+    val state: Flow<CodeReviewReactionPillPresentation> = reactionsVm.reactionsWithInfo.mapNotNull { reactionsWithInfo ->
+      reactionsWithInfo[reaction]?.let { Presentation(reactionsVm, reaction, it) }
     }
-    return ReactionLabel(
-      layout,
-      icon = reactionsVm.reactionIconsProvider.getIcon(reaction, CodeReviewReactionsUIUtil.ICON_SIZE),
-      onClick = { reactionsVm.toggle(reaction) }
-    ) {
-      border = JBUI.Borders.empty(REACTION_LABEL_PADDING)
-      bindTextIn(cs, reactionsVm.reactionsWithInfo.map { reactionsWithInfo ->
-        val (count, _) = reactionsWithInfo[reaction] ?: return@map ""
-        if (count > 0) "$count" else ""
-      })
-    }.apply {
-      var currentBorder: RoundedLineBorder = BORDER
-      border = currentBorder
-      bindBorderIn(cs, reactionsVm.reactionsWithInfo.map { reactionsWithInfo ->
-        val (_, isReactedByCurrentUser) = reactionsWithInfo[reaction] ?: return@map BORDER
-        currentBorder = if (isReactedByCurrentUser) PRESSED_BORDER else BORDER
-        currentBorder
-      })
-      var currentBackground: JBColor = CodeReviewColorUtil.Reaction.background
-      background = currentBackground
-      bindBackgroundIn(cs, reactionsVm.reactionsWithInfo.map { reactionsWithInfo ->
-        val (_, isReactedByCurrentUser) = reactionsWithInfo[reaction] ?: return@map CodeReviewColorUtil.Reaction.background
-        currentBackground = if (isReactedByCurrentUser) CodeReviewColorUtil.Reaction.backgroundPressed
-        else CodeReviewColorUtil.Reaction.background
-        currentBackground
-      })
-      addHoverAndPressStateListener(this, hoveredStateCallback = { component, isHovered ->
-        component as JComponent
-        val isReacted = reactionsVm.reactionsWithInfo.value[reaction]?.isReactedByCurrentUser ?: false
-        component.border = if (isHovered) {
-          if (isReacted) PRESSED_BORDER else HOVERED_BORDER
-        }
-        else currentBorder
-        component.background = if (isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else currentBackground
-      })
+    return CodeReviewReactionComponent.createReactionButtonIn(cs, state) {
+      reactionsVm.toggle(reaction)
     }
   }
 
-  private fun createReactionPickerButton(reactionsVm: GHReactionsViewModel): JComponent {
-    val layout = SizeRestrictedSingleComponentLayout().apply {
-      val dimension = DimensionRestrictions.ScalingConstant(
-        CodeReviewReactionsUIUtil.Picker.BUTTON_WIDTH,
-        CodeReviewReactionsUIUtil.Picker.BUTTON_HEIGHT
-      )
-      prefSize = dimension
-      maxSize = dimension
+  private fun createReactionPickerButton(reactionsVm: GHReactionsViewModel): JComponent =
+    CodeReviewReactionComponent.createNewReactionButton {
+      GHReactionsPickerComponentFactory.showPopup(reactionsVm, it)
     }
-    return ReactionLabel(
-      layout,
-      icon = CollaborationToolsIcons.AddEmoji,
-      onClick = { component -> GHReactionsPickerComponentFactory.showPopup(reactionsVm, component) },
-      labelInitializer = { border = JBUI.Borders.empty(CodeReviewReactionsUIUtil.Picker.BUTTON_PADDING) }
-    ).apply {
-      border = BORDER
-      background = CodeReviewColorUtil.Reaction.background
-      addHoverAndPressStateListener(this, hoveredStateCallback = { component, isHovered ->
-        component as JComponent
-        component.background = if (isHovered) CodeReviewColorUtil.Reaction.backgroundHovered else CodeReviewColorUtil.Reaction.background
-        component.border = if (isHovered) HOVERED_BORDER else BORDER
-      })
+
+  private class Presentation(
+    private val reactionsVm: GHReactionsViewModel,
+    private val reaction: GHReactionContent,
+    private val reactionInfo: ReactionInfo
+  ) : CodeReviewReactionPillPresentation {
+    override val reactionName: String = reaction.presentableName
+    override val reactors: List<String> = reactionInfo.users.map(GHUser::getPresentableName)
+    override val isOwnReaction: Boolean = reactionInfo.isReactedByCurrentUser
+
+    override fun getIcon(size: Int): Icon = reactionsVm.reactionIconsProvider.getIcon(reaction, size)
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Presentation) return false
+
+      if (reaction != other.reaction) return false
+      if (reactionInfo != other.reactionInfo) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = reaction.hashCode()
+      result = 31 * result + reactionInfo.hashCode()
+      return result
     }
   }
 }

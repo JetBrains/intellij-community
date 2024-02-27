@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
-public class GroovyPointlessArithmeticInspection extends BaseInspection {
+public final class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   @NotNull
   @Override

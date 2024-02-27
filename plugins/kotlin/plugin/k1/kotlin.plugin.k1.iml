@@ -92,7 +92,7 @@
     <orderEntry type="module" module-name="kotlin.inspections" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.injection.k1" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.j2k.k1.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.j2k.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.old" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.k1.new.post-processing" scope="RUNTIME" />

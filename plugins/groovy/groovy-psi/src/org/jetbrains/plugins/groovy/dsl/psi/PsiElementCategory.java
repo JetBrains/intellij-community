@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-public class PsiElementCategory implements PsiEnhancerCategory {
+public final class PsiElementCategory implements PsiEnhancerCategory {
 
   @Nullable
   public static PsiElement bind(PsiElement element) {

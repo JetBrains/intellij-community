@@ -3,7 +3,7 @@ package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.generation.GenerateLoggerHandler
-import com.intellij.codeInsight.generation.GenerateLoggerUtil
+import com.intellij.lang.logging.JvmLogger
 import com.intellij.lang.logging.UnspecifiedLogger
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.JBPopup
@@ -56,10 +56,10 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
                                 }
                                 """.trimIndent())
 
-    val loggers = GenerateLoggerUtil.findSuitableLoggers(module)
+    val loggers = JvmLogger.findSuitableLoggers(module)
     TestCase.assertTrue(loggers.isNotEmpty())
     val element = file.findElementAt(editor.caretModel.offset)!!
-    val places = GenerateLoggerUtil.getPossiblePlacesForLogger(element, loggers)
+    val places = JvmLogger.getPossiblePlacesForLogger(element, loggers)
 
     TestCase.assertTrue(places.isEmpty())
   }
@@ -99,9 +99,22 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testSaveSettings() {
     JvmLoggerTestSetupUtil.setupLog4j(myFixture)
-    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME)
+    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerId, UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
     doTest()
-    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerName, "Log4j")
+    assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerId, "Log4j")
+  }
+
+  fun testRespectCustomLoggerName() {
+    val state = project.service<JvmLoggingSettingsStorage>().state
+    val oldName = state.loggerName
+    try {
+      JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+      state.loggerName = "CustomName"
+      doTest()
+    }
+    finally {
+      state.loggerName = oldName
+    }
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_21

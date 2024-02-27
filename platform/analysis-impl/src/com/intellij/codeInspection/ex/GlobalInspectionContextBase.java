@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -217,23 +218,51 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     String title = profile.getSingleTool() == null
                    ? AnalysisBundle.message("inspection.progress.profile.title", profile.getName())
                    : AnalysisBundle.message("inspection.progress.single.inspection.title", profile.getName());
-    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, true, createOption()) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        performInspectionsWithProgress(scope, false, false);
-      }
+    boolean modalProgress =
+      Registry.is("batch.inspections.modal.progress.when.building.global.reference.graph") && needsGlobalReferenceGraph();
+    if (modalProgress) {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), title, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          performInspectionsWithProgress(scope, false, false);
+        }
 
-      @Override
-      public void onSuccess() {
-        notifyInspectionsFinished(scope);
-      }
+        @Override
+        public void onSuccess() {
+          notifyInspectionsFinished(scope);
+        }
 
-      @Override
-      public void onCancel() {
-        // execute cleanup in EDT because of myTools
-        cleanup();
-      }
-    });
+        @Override
+        public void onCancel() {
+          // execute cleanup in EDT because of myTools
+          cleanup();
+        }
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, true, createOption()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          performInspectionsWithProgress(scope, false, false);
+        }
+
+        @Override
+        public void onSuccess() {
+          notifyInspectionsFinished(scope);
+        }
+
+        @Override
+        public void onCancel() {
+          // execute cleanup in EDT because of myTools
+          cleanup();
+        }
+      });
+    }
+  }
+
+  private boolean needsGlobalReferenceGraph() {
+    return ContainerUtil.exists(getUsedTools(), tool -> tool.getTool() instanceof GlobalInspectionToolWrapper globalWrapper &&
+                                                        globalWrapper.getTool().isGraphNeeded());
   }
 
   protected @NotNull PerformInBackgroundOption createOption() {

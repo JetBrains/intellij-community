@@ -17,4 +17,7 @@ open class PopupUiComponent(data: ComponentData) : UiComponent(data) {
       popupMenus().map { it.findAllText() }.flatten().first { it.text == i }.click()
     }
   }
+
+  val items
+    get() = findAllText().map { it.text }.filter { it.isNotEmpty() }
 }

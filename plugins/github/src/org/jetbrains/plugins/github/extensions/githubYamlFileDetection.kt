@@ -16,44 +16,61 @@ import org.jetbrains.yaml.YAMLLanguage
 
 const val PARSE_DELAY = 1000L
 
+val GITHUB_ACTION_SCHEMA_NAMES: Set<String> = setOf("github-action")
+val GITHUB_WORKFLOW_SCHEMA_NAMES: Set<String> = setOf("github-workflow")
 
 fun isGithubActionsFile(virtualFile: VirtualFile, project: Project?): Boolean {
   if (project == null) return false
   val isYamlFile = FileTypeRegistry.getInstance().isFileOfType(virtualFile, YAMLFileType.YML)
-  return isYamlFile && isGithubActionsFile(PsiManager.getInstance(project).findFile(virtualFile) ?: return false)
+  if (!isYamlFile) return false
+  return PsiManager.getInstance(project).findFile(virtualFile)?.let { isGithubActionsFile(it) } == true
 }
 
 fun isGithubActionsFile(psiFile: PsiFile?): Boolean {
   if (psiFile == null) return false
   return CachedValuesManager.getCachedValue(psiFile) {
     CachedValueProvider.Result.create(
-      isGithubActionFile(psiFile) || isGithubWorkflowFile(psiFile),
-      psiFile.manager.modificationTracker.forLanguage(YAMLLanguage.INSTANCE)
+      matchesDefaultFilePath(psiFile, githubActionsFilePattern, githubWorkflowsFilePattern)
+      || isGithubSchemaAssigned(psiFile, GITHUB_WORKFLOW_SCHEMA_NAMES + GITHUB_ACTION_SCHEMA_NAMES),
+      psiFile
     )
   }
 }
 
-fun isGithubActionFile(psiFile: PsiFile): Boolean {
-  return isProperActionFile(psiFile, githubActionsFilePattern, GITHUB_ACTION_SCHEMA_NAMES)
+fun isGithubActionFile(psiFile: PsiFile?): Boolean {
+  if (psiFile == null) return false
+  return CachedValuesManager.getCachedValue(psiFile) {
+    CachedValueProvider.Result.create(
+      matchesDefaultFilePath(psiFile, githubActionsFilePattern) || isGithubSchemaAssigned(psiFile, GITHUB_ACTION_SCHEMA_NAMES),
+      psiFile
+    )
+  }
 }
 
-fun isGithubWorkflowFile(psiFile: PsiFile): Boolean {
-  return isProperActionFile(psiFile, githubWorkflowsFilePattern, GITHUB_WORKFLOW_SCHEMA_NAMES)
+fun isGithubWorkflowFile(psiFile: PsiFile?): Boolean {
+  if (psiFile == null) return false
+  return CachedValuesManager.getCachedValue(psiFile) {
+    CachedValueProvider.Result.create(
+      matchesDefaultFilePath(psiFile, githubWorkflowsFilePattern) || isGithubSchemaAssigned(psiFile, GITHUB_WORKFLOW_SCHEMA_NAMES),
+      psiFile
+    )
+  }
 }
 
-private fun isGithubSchemaAssigned(project: Project?, virtualFile: VirtualFile, schemaNames: Set<String>): Boolean {
-  if (project == null) return false
+private fun isGithubSchemaAssigned(psiFile: PsiFile, schemaNames: Set<String>): Boolean {
+  val project = psiFile.project
+  val virtualFile = psiFile.originalFile.virtualFile
+  if (virtualFile == null) return false
   val schemaFiles = project.service<JsonSchemaService>().getSchemaFilesForFile(virtualFile)
   val schemaAssigned = schemaFiles.any { schemaNames.contains(it.nameWithoutExtension) }
   return schemaAssigned
 }
 
-private fun isProperActionFile(psiFile: PsiFile, pattern: Regex, fileNames: Set<String>): Boolean {
+private fun matchesDefaultFilePath(psiFile: PsiFile, vararg pattern: Regex): Boolean {
   val virtualFile = psiFile.originalFile.virtualFile
   if (virtualFile == null) return false
-  val schemaAssigned = isGithubSchemaAssigned(psiFile.project, virtualFile, fileNames)
-  return (psiFile.language.`is` (YAMLLanguage.INSTANCE)
-          && pattern.matches(StringUtil.newBombedCharSequence(virtualFile.path, PARSE_DELAY))) || schemaAssigned
+  return (psiFile.language.`is`(YAMLLanguage.INSTANCE)
+          && pattern.any { it.matches(StringUtil.newBombedCharSequence(virtualFile.path, PARSE_DELAY)) })
 }
 
 private val githubActionsFilePattern =

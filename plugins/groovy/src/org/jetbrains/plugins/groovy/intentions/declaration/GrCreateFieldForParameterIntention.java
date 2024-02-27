@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GrCreateFieldForParameterIntention extends CreateFieldFromParameterActionBase {
+public final class GrCreateFieldForParameterIntention extends CreateFieldFromParameterActionBase {
 
   @Override
   protected boolean isAvailable(@NotNull PsiParameter parameter) {

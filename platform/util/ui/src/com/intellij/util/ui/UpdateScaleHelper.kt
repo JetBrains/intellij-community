@@ -6,23 +6,27 @@ import javax.swing.JComponent
 import kotlin.math.abs
 
 @Internal
-open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentValue: (() -> Float) = { JBFont.labelFontSize2D() }) {
-  private var savedValue: Float = currentValue()
+open class UpdateScaleHelper(val forceInitialRun: Boolean = false, val currentValue: (() -> Float?) = { JBFont.labelFontSize2D() }) {
+  private var savedValue: Float? = currentValue()
   private var initialRunPerformed = false
 
   fun saveScaleAndRunIfChanged(runnable: Runnable): Boolean =
     saveScaleAndRunIfChanged { runnable.run() }
 
   fun saveScaleAndRunIfChanged(block: () -> Unit): Boolean {
+    val currentValue = currentValue()
+    val savedValue = savedValue
+
     if ((!forceInitialRun || initialRunPerformed)
-        && savedValue.equalsWithinEpsilonTo(currentValue())) return false
+        && currentValue != null &&  savedValue != null
+        && savedValue.equalsWithinEpsilonTo(currentValue)) return false
 
     try {
       block()
     }
     finally {
       initialRunPerformed = true
-      savedValue = currentValue()
+      this.savedValue = currentValue
     }
     return true
   }

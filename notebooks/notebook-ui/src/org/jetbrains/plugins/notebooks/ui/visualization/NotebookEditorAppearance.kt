@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.notebooks.ui.visualization
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -18,6 +19,8 @@ interface NotebookEditorAppearance: NotebookEditorAppearanceColors, NotebookEdit
     val NOTEBOOK_APPEARANCE_KEY = Key.create<NotebookEditorAppearance>(NotebookEditorAppearance::class.java.name)
     val CODE_CELL_BACKGROUND = ColorKey.createColorKey("JUPYTER.CODE_CELL_BACKGROUND")
     internal val CODE_CELL_BACKGROUND_NEW_UI = ColorKey.createColorKey("JUPYTER.CODE_CELL_BACKGROUND_NEW_UI")
+    internal val CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR = ColorKey.createColorKey("JUPYTER.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR")
+    internal val CELL_STRIPE_COLOR = ColorKey.createColorKey("JUPYTER.CELL_STRIPE_COLOR")
   }
 
   fun getCaretRowColor(scheme: EditorColorsScheme): Color?
@@ -85,6 +88,9 @@ interface NotebookEditorAppearanceColors {
    */
   fun getCellStripeColor(editor: EditorImpl, lines: IntRange): Color? = null
   fun getCellStripeHoverColor(editor: EditorImpl, lines: IntRange): Color? = null
+
+  fun getCellStripeColor(editor: Editor): Color
+  fun getCellStripeHoverColor(editor: Editor): Color
 }
 
 interface NotebookEditorAppearanceFlags {

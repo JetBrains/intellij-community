@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
-import okhttp3.internal.platform.Jdk9Platform.Companion.majorVersion
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.annotations.VisibleForTesting
@@ -19,7 +18,6 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import kotlin.io.path.bufferedReader
 
 private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 
@@ -28,8 +26,8 @@ internal val MAJOR_RELEASE_DATE_PATTERN: DateTimeFormatter = DateTimeFormatter.o
 
 @Suppress("KotlinRedundantDiagnosticSuppress", "UNNECESSARY_LATEINIT")
 internal class ApplicationInfoPropertiesImpl(
-  private val project: JpsProject,
-  private val productProperties: ProductProperties,
+  project: JpsProject,
+  productProperties: ProductProperties,
   buildOptions: BuildOptions,
 ) : ApplicationInfoProperties {
   override lateinit var majorVersion: String
@@ -54,20 +52,17 @@ internal class ApplicationInfoPropertiesImpl(
   override val patchesUrl: String?
   override val launcherName: String
 
-  private lateinit var context: BuildContext
-
   override val releaseVersionForLicensing: String
     get() = "${majorVersion}${minorVersionMainPart}00"
+
   override val fullVersion: String
     get() = MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
+
   override val productNameWithEdition: String
     get() = if (edition == null) fullProductName else "$fullProductName $edition"
 
   init {
-    val root = findApplicationInfoInSources(project = project, productProperties = productProperties)
-      .bufferedReader()
-      .use(::readXmlAsModel)
-
+    val root = readXmlAsModel(findApplicationInfoInSources(project = project, productProperties = productProperties))
     @Suppress("DEPRECATION")
     val applicationInfoOverrides = productProperties.applicationInfoOverride(project)
     val versionTag = root.getChild("version")!!
@@ -141,7 +136,7 @@ internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoPr
   val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
   val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
   check("${appInfo.majorVersion}${appInfo.minorVersion}".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
-    "'major=$majorVersion' and 'minor=${appInfo.minorVersion}' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
+    "'major=${appInfo.majorVersion}' and 'minor=${appInfo.minorVersion}' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
   }
 
   val artifactServer = context.proprietaryBuildTools.artifactsServer

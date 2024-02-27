@@ -27,7 +27,7 @@ class GHPRPersistentInteractionState : SerializablePersistentStateComponent<GHPR
 
   fun isSeen(pr: GHPullRequestShort): Boolean {
     val lastSeen = state.prStates.find { it.id == pr.prId }?.lastSeen
-    val isSeen = (lastSeen != null && Date(lastSeen) >= pr.updatedAt) || pr.isReadByViewer
+    val isSeen = (lastSeen != null && Date(lastSeen) >= pr.updatedAt)
 
     // TODO: Revise this check when adding a new-in-timeline line.
     // Cleanup state entries for PRs that have updates

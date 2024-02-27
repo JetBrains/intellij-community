@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -259,16 +260,77 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  protected record SearchArea(int[] startOffsets, int[] endOffsets) {
+  public record SearchArea(int[] startOffsets, int[] endOffsets) {
     public static SearchArea create(int[] startOffsets, int[] endOffsets) {
+      check(startOffsets, endOffsets);
       return new SearchArea(startOffsets, endOffsets);
+    }
+
+    private static void check(int[] startOffsets, int[] endOffsets) {
+      if (startOffsets.length != endOffsets.length) {
+        throw new IllegalArgumentException("startOffsets and endOffsets must have the same length");
+      }
+    }
+
+
+    /**
+     * Merges the given {@link SearchArea} with the current one.
+     * <p/>
+     * If the given areas intersect - union area will be returned.
+     * If the given areas have no intersection - area contains all the given areas will be returned.
+     *
+     * @param area the area to merge with the current
+     * @return a new merged area
+     */
+    public @NotNull SearchArea merge(@NotNull SearchArea area) {
+      int[] startOffsets1 = startOffsets;
+      int[] endOffsets1 = endOffsets;
+
+      int[] startOffsets2 = area.startOffsets;
+      int[] endOffsets2 = area.endOffsets;
+
+      List<TextRange> notIntersectedRanges = new ArrayList<>();
+
+      for (int i1 = 0; i1 < startOffsets1.length; i1++) {
+        int startOffset1 = startOffsets1[i1];
+        int endOffset1 = endOffsets1[i1];
+        TextRange range1 = new TextRange(startOffset1, endOffset1);
+
+        boolean intersects = false;
+        for (int i2 = 0; i2 < startOffsets2.length; i2++) {
+          int startOffset2 = startOffsets2[i2];
+          int endOffset2 = endOffsets2[i2];
+          TextRange range2 = new TextRange(startOffset2, endOffset2);
+
+          if (range1.intersects(range2)) {
+            TextRange union = range1.union(range2);
+            startOffsets2[i2] = union.getStartOffset();
+            endOffsets2[i2] = union.getEndOffset();
+            intersects = true;
+            break;
+          }
+        }
+
+        if (!intersects) {
+          notIntersectedRanges.add(range1);
+        }
+      }
+
+      int[] notIntersectedStartOffsets = new int[notIntersectedRanges.size()];
+      int[] notIntersectedEndOffsets = new int[notIntersectedRanges.size()];
+      for (int i = 0; i < notIntersectedRanges.size(); i++) {
+        notIntersectedStartOffsets[i] = notIntersectedRanges.get(i).getStartOffset();
+        notIntersectedEndOffsets[i] = notIntersectedRanges.get(i).getEndOffset();
+      }
+
+      int[] mergedStartOffsets = ArrayUtil.mergeArrays(notIntersectedStartOffsets, startOffsets2);
+      int[] mergedEndOffsets = ArrayUtil.mergeArrays(notIntersectedEndOffsets, endOffsets2);
+
+      return create(mergedStartOffsets, mergedEndOffsets);
     }
   }
 
   private @NotNull SearchArea getSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
-    if (findModel.isGlobal()) {
-      return globalSearchArea;
-    }
     SearchArea searchArea;
     if (ApplicationManager.getApplication().isDispatchThread()) {
       searchArea = getLocalSearchArea(editor, findModel);
@@ -293,11 +355,35 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  /** This method is called only when {@link FindModel#isGlobal()} is false */
   @RequiresEdt
-  protected @NotNull SearchArea getLocalSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
-    SelectionModel selection = editor.getSelectionModel();
-    return SearchArea.create(selection.getBlockSelectionStarts(), selection.getBlockSelectionEnds());
+  protected @Nullable SearchArea getLocalSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
+    SearchArea searchArea = null;
+    for (EditorSearchAreaProvider provider : EditorSearchAreaProvider.getEnabled(editor, findModel)) {
+      SearchArea searchAreaFromEP = provider.getSearchArea(editor, findModel);
+      if (searchAreaFromEP == null) continue;
+
+      if (searchArea == null) {
+        searchArea = searchAreaFromEP;
+      }
+      else {
+        searchArea = searchArea.merge(searchAreaFromEP);
+      }
+    }
+
+    return searchArea;
+  }
+
+  private static class EditorSelectionSearchAreaProvider implements EditorSearchAreaProvider {
+    @Override
+    public boolean isEnabled(@NotNull Editor editor, @NotNull FindModel findModel) {
+      return !findModel.isGlobal();
+    }
+
+    @Override
+    public @Nullable SearchArea getSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
+      SelectionModel selection = editor.getSelectionModel();
+      return SearchArea.create(selection.getBlockSelectionStarts(), selection.getBlockSelectionEnds());
+    }
   }
 
   private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<? super FindResult> results) {

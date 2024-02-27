@@ -63,7 +63,7 @@ internal class ImporterModifiableArtifact(private val project: Project,
 
   override fun setOutputPath(outputPath: String?) {
     val outputUrl = outputPath?.let {
-      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUri(VfsUtilCore.pathToUrl(it))
+      WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(it))
     }
     this.outputUrl = outputUrl!!
   }
@@ -134,7 +134,7 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
     val fileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(it)) }
+    val outputUrl = outputPath?.let { fileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(it)) }
 
     val artifact = ImporterModifiableArtifact(project, uniqueName, artifactType, outputUrl!!, rootElement, externalSource)
 

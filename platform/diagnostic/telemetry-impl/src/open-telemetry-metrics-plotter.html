@@ -516,6 +516,8 @@ as an example
       const maxNativeBytes = extractTimeSeries("JVM.maxNativeBytes")
       const totalDirectByteBuffersBytes = extractTimeSeries("JVM.totalDirectByteBuffersBytes")
       const threadsCount = extractTimeSeries("JVM.threadCount")
+      const maxThreadsCount = extractTimeSeries("JVM.maxThreadCount")
+      const newThreadsCount = extractTimeSeries("JVM.newThreadsCount")
 
       const gcCollections = extractTimeSeries("JVM.GC.collections")
       const gcTimesMs = extractTimeSeries("JVM.GC.collectionTimesMs")
@@ -596,9 +598,17 @@ as an example
         'Threads count',
         'jvmBasics_Threads_Chart',
         [{
-          name: 'threads count',
+          name: 'current threads count',
           color: 'blue',
           series: threadsCount
+        }, {
+          name: 'max threads count',
+          color: 'red',
+          series: maxThreadsCount
+        }, {
+          name: 'new threads started',
+          color: 'orange',
+          series: newThreadsCount
         }],
         /*yaxis:*/ {
           title: 'threads'

@@ -13,9 +13,7 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.jdi.GeneratedLocation;
-import com.intellij.debugger.jdi.JvmtiError;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.ui.CollectionHistoryView;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -1229,5 +1227,34 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
         return projectFileIndex.isInLibrary(file);
       }
     });
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull String className,
+                                              @NotNull String methodName,
+                                              int line) {
+    return findOrCreateLocation(debugProcess, debugProcess.getVirtualMachineProxy()::classesByName, className, methodName, line);
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull ClassesByNameProvider classesByName,
+                                              @NotNull String className,
+                                              @NotNull String methodName,
+                                              int line) {
+    ReferenceType classType = ContainerUtil.getFirstItem(classesByName.get(className));
+    if (classType == null) {
+      classType = new GeneratedReferenceType(debugProcess.getVirtualMachineProxy().getVirtualMachine(), className);
+    }
+    else if (line >= 0) {
+      for (Method method : declaredMethodsByName(classType, methodName)) {
+        List<Location> locations = locationsOfLine(method, line);
+        if (!locations.isEmpty()) {
+          return locations.get(0);
+        }
+      }
+    }
+    return new GeneratedLocation(classType, methodName, line);
   }
 }

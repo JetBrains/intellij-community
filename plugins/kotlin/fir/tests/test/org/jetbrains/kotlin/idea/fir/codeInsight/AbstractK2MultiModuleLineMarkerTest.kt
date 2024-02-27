@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.codeInsight
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractLineMarkerCodeMetaInfoTest
@@ -14,11 +15,14 @@ abstract class AbstractK2MultiModuleLineMarkerTest: AbstractLineMarkerCodeMetaIn
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiplatform")
 
     override fun getConfigurations() = listOf(
-        LineMarkerConfiguration()
+        LineMarkerConfiguration(
+            renderTargetIcons = true,
+        )
     )
 
     override fun setUp() {
         super.setUp()
+        Registry.get("kotlin.k2.kmp.enabled").setValue(true)
         KotlinMultiplatformAnalysisModeComponent.setMode(project, KotlinMultiplatformAnalysisModeComponent.Mode.COMPOSITE)
     }
 
@@ -26,6 +30,9 @@ abstract class AbstractK2MultiModuleLineMarkerTest: AbstractLineMarkerCodeMetaIn
         runAll(
             ThrowableRunnable {
                 KotlinMultiplatformAnalysisModeComponent.setMode(project, KotlinMultiplatformAnalysisModeComponent.Mode.SEPARATE)
+            },
+            ThrowableRunnable {
+                Registry.get("kotlin.k2.kmp.enabled").setValue(false)
             },
             ThrowableRunnable { super.tearDown() }
         )

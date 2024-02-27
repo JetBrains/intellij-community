@@ -1038,7 +1038,7 @@ public final class ConfigImportHelper {
     };
   }
 
-  private static void migratePlugins(Path newPluginsDir, List<IdeaPluginDescriptor> descriptors, Logger log) throws IOException {
+  public static void migratePlugins(Path newPluginsDir, List<IdeaPluginDescriptor> descriptors, Logger log) throws IOException {
     for (IdeaPluginDescriptor descriptor : descriptors) {
       Path pluginPath = descriptor.getPluginPath();
       PluginId pluginId = descriptor.getPluginId();

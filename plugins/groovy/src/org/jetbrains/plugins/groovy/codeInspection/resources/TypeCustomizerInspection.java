@@ -33,7 +33,7 @@ import static com.intellij.psi.util.PointersKt.createSmartPointer;
 /**
  * @author Max Medvedev
  */
-public class TypeCustomizerInspection extends BaseInspection {
+public final class TypeCustomizerInspection extends BaseInspection {
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {

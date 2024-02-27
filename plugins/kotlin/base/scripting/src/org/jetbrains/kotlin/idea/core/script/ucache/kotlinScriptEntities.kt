@@ -43,14 +43,14 @@ fun VirtualFile.findDependentScripts(project: Project): List<KotlinScriptEntity>
 
     var currentFile: VirtualFile? = this
     while (currentFile != null) {
-        val entities = index.findEntitiesByUrl(fileUrlManager.getOrCreateFromUri(currentFile.url))
+        val entities = index.findEntitiesByUrl(fileUrlManager.getOrCreateFromUrl(currentFile.url))
         if (entities.none()) {
             currentFile = currentFile.parent
             continue
         }
 
         return entities
-            .mapNotNull { it.first as? KotlinScriptLibraryEntity }
+            .filterIsInstance<KotlinScriptLibraryEntity>()
             .flatMap { it.usedInScripts }
             .map { storage.resolve(it) ?: error("Unresolvable script: ${it.path}") }
             .toList()

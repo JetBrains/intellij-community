@@ -122,7 +122,7 @@ public final class XDebuggerHistoryManager implements PersistentStateComponent<E
     }
   }
 
-  public static class XDebuggerHistoryPathMacroFilter extends PathMacroFilter {
+  public static final class XDebuggerHistoryPathMacroFilter extends PathMacroFilter {
     @Override
     public boolean skipPathMacros(@NotNull Element element) {
       return "expression-string".equals(element.getName()) &&

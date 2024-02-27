@@ -116,11 +116,12 @@ object KotlinPluginBuilder {
     "kotlin.copyright",
     "kotlin.spellchecker",
     "kotlin.jvm-decompiler",
-    "kotlin.j2k.k1.shared",
+    "kotlin.j2k.shared",
     "kotlin.j2k.k1.new.post-processing",
     "kotlin.j2k.k1.old",
     "kotlin.j2k.k1.old.post-processing",
     "kotlin.j2k.k1.new",
+    "kotlin.j2k.k2",
     "kotlin.onboarding",
     "kotlin.plugin-updater",
     "kotlin.preferences",
@@ -339,10 +340,9 @@ object KotlinPluginBuilder {
 
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
-          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|\\d+\\.SNAPSHOT.*)\$").matcher(ideBuildVersion)
+          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
           if (ijBuildNumber.matches()) {
             // IJ installer configurations.
-            // In this environment, ideBuildVersion matches ^(\d+)\.([\d.]+|\d+\.SNAPSHOT.*)\$
             return "$ideBuildVersion-$kind"
           }
 

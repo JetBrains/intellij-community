@@ -27,6 +27,13 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
       }
     }
 
+  val getCaretPosition
+    get() = editor.getCaretModel().getLogicalPosition()
+
+  fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
+    if (it.size < line) "" else it[line - 1]
+  }
+
   fun interact(block: Editor.() -> Unit) {
     driver.withContext(OnDispatcher.EDT) {
       block.invoke(editor)
@@ -42,13 +49,17 @@ interface EditorComponentImpl : Component {
 fun Finder.gutter(@Language("xpath") xpath: String = "//div[@class='EditorGutterComponentImpl']") = x(xpath, GutterUiComponent::class.java)
 
 class GutterUiComponent(data: ComponentData) : UiComponent(data) {
+
   private val gutter by lazy { driver.cast(component, EditorGutterComponentImpl::class) }
+
   val icons: List<GutterIcon>
     get() = driver.withContext(OnDispatcher.EDT) {
       return@withContext gutter.getLineGutterMarks()
         .map { GutterIcon(it) }
     }
 
+  val iconAreaOffset
+    get() = gutter.getIconAreaOffset()
 
   inner class GutterIcon(private val data: GutterIconWithLocation) {
     val line: Int
@@ -67,6 +78,8 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
 interface EditorGutterComponentImpl : Component {
   fun getLineGutterMarks(): List<GutterIconWithLocation>
+
+  fun getIconAreaOffset(): Int
 }
 
 @Remote("com.intellij.openapi.editor.impl.GutterIconWithLocation")

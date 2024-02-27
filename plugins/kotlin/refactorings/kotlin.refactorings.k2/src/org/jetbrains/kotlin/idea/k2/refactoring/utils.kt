@@ -8,6 +8,7 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.refactoring.isComplexCallWithLambdaArgument
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -38,11 +40,13 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
  * redundant imports.
  */
 fun <T> computeWithoutAddingRedundantImports(file: KtFile, block: () -> T): T {
-    fun unusedImports() = KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)?.unusedImports?.toSet().orEmpty()
+    fun unusedImports(): Set<KtImportDirective> =
+        KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)?.unusedImports?.toSet().orEmpty()
+
     val unusedImportsBefore = unusedImports()
     val result = block()
     val afterUnusedImports = unusedImports()
-    val importsToRemove =  afterUnusedImports - unusedImportsBefore
+    val importsToRemove = afterUnusedImports - unusedImportsBefore
     importsToRemove.forEach(PsiElement::delete)
     return result
 }
@@ -183,4 +187,15 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
         return lastParameter.returnType.isFunctionalType()
     }
     return false
+}
+
+fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
+    val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
+        KtPsiUtil.deparenthesize(it.getArgumentExpression()) == this
+    } ?: return
+    val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
+    val call = valueArgumentList.parent as? KtCallExpression ?: return
+    if (call.canMoveLambdaOutsideParentheses()) {
+        call.moveFunctionLiteralOutsideParentheses()
+    }
 }

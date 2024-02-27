@@ -64,6 +64,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -323,6 +324,7 @@ public final class PlatformTestUtil {
 
   private static boolean isBusy(@NotNull JTree tree, TreeModel model) {
     UIUtil.dispatchAllInvocationEvents();
+    if (ClientProperty.isTrue(tree, TreeUtil.TREE_IS_BUSY)) return true;
     if (model instanceof AsyncTreeModel async) {
       if (async.isProcessing()) return true;
       UIUtil.dispatchAllInvocationEvents();

@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
+public final class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
 
   @Override
   @Nullable

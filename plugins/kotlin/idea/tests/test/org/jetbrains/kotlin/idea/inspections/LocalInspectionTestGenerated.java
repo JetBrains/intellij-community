@@ -5166,9 +5166,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/explicitThis/nestedReceiversExtensionDifferentParameters.kt");
         }
 
+        @TestMetadata("overloadedIntFunction.kt")
+        public void testOverloadedIntFunction() throws Exception {
+            runTest("testData/inspectionsLocal/explicitThis/overloadedIntFunction.kt");
+        }
+
         @TestMetadata("property.kt")
         public void testProperty() throws Exception {
             runTest("testData/inspectionsLocal/explicitThis/property.kt");
+        }
+
+        @TestMetadata("propertyNamedCode.kt")
+        public void testPropertyNamedCode() throws Exception {
+            runTest("testData/inspectionsLocal/explicitThis/propertyNamedCode.kt");
         }
 
         @TestMetadata("propertyReference.kt")
@@ -10858,6 +10868,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("publicOverrideProtectedSetter6.kt")
         public void testPublicOverrideProtectedSetter6() throws Exception {
             runTest("testData/inspectionsLocal/redundantVisibilityModifier/publicOverrideProtectedSetter6.kt");
+        }
+
+        @TestMetadata("removeRedundantPrimaryConstructor.kt")
+        public void testRemoveRedundantPrimaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/redundantVisibilityModifier/removeRedundantPrimaryConstructor.kt");
         }
     }
 

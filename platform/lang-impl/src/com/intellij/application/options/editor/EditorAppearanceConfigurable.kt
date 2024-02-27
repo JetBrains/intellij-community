@@ -97,7 +97,8 @@ internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurab
           .columns(2)
           .gap(RightGap.SMALL)
           .enabledIf(cbShowSticky.selected)
-        text(ApplicationBundle.message("label.show.sticky.lines"))
+        @Suppress("DialogTitleCapitalization")
+        label(ApplicationBundle.message("label.show.sticky.lines"))
       }
       row {
         checkBox(myCbShowMethodSeparators)

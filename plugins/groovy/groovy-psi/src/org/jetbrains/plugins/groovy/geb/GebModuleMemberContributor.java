@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.geb;
 
-public class GebModuleMemberContributor extends GebPageMemberContributor {
+public final class GebModuleMemberContributor extends GebPageMemberContributor {
 
   @Override
   protected String getParentClassName() {

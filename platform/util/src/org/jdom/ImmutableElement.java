@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 final class ImmutableElement extends Element {
   private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtilRt.EMPTY_STRING_ARRAY, null,
@@ -83,13 +81,13 @@ final class ImmutableElement extends Element {
     }
 
     if (type == null) {
-      //noinspection SSBasedInspection
-      return Collections.unmodifiableList(originAttributes.stream().map(attribute -> {
-        return new ImmutableAttribute(interner.internString(attribute.getName()),
-                                      interner.internString(attribute.getValue()),
-                                      attribute.getAttributeType(), attribute.getNamespace());
-
-      }).collect(Collectors.toList()));
+      List<ImmutableAttribute> list = new ArrayList<>(originAttributes.size());
+      for (Attribute attribute : originAttributes) {
+        list.add(new ImmutableAttribute(interner.internString(attribute.getName()),
+                                        interner.internString(attribute.getValue()),
+                                        attribute.getAttributeType(), attribute.getNamespace()));
+      }
+      return Collections.unmodifiableList(list);
     }
     else {
       return new ImmutableSameTypeAttributeList(nameValues, type, namespace);
@@ -108,16 +106,14 @@ final class ImmutableElement extends Element {
 
   @Override
   public <T extends Content> List<T> getContent(@NotNull Filter<T> filter) {
-    //noinspection unchecked
-    return content()
-      .filter(filter::matches)
-      .map(it -> (T)it)
-      .collect(Collectors.toList());
-  }
-
-  @Override
-  public Stream<Content> content() {
-    return Arrays.stream(myContent);
+    List<T> result = new ArrayList<>();
+    for (Object it : myContent) {
+      if (filter.matches(it)) {
+        //noinspection unchecked
+        result.add((T)it);
+      }
+    }
+    return result;
   }
 
   @Override
@@ -132,18 +128,25 @@ final class ImmutableElement extends Element {
 
   @Override
   public @NotNull List<Element> getChildren() {
-    return Arrays.stream(myContent)
-      .filter(Element.class::isInstance)
-      .map(it -> (Element)it).collect(Collectors.toList());
+    List<Element> list = new ArrayList<>();
+    for (Content it : myContent) {
+      if (it instanceof Element) {
+        list.add((Element)it);
+      }
+    }
+    return list;
   }
 
   @Override
   public @NotNull List<Element> getChildren(String name, Namespace ns) {
     ElementFilter predicate = new ElementFilter(name, ns);
-    return Arrays.stream(myContent)
-      .filter(predicate::matches)
-      .map(it -> (Element)it)
-      .collect(Collectors.toList());
+    List<Element> list = new ArrayList<>();
+    for (Content it : myContent) {
+      if (predicate.matches(it)) {
+        list.add((Element)it);
+      }
+    }
+    return list;
   }
 
   @Override
@@ -310,7 +313,7 @@ final class ImmutableElement extends Element {
 
   //////////////////////////////////////////////////////////////////////
   @Override
-  public Element detach() {
+  public @NotNull Element detach() {
     throw immutableError(this);
   }
 

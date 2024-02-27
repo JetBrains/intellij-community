@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinNavBarModelExtension : AbstractNavBarModelExtensionCompatBase() {
     override fun getPresentableText(item: Any?): String? =
-        (item as? KtDeclaration)?.let { tryGetRepresentableText(it, renderArguments = false) }
+        (item as? KtDeclaration)?.let { tryGetRepresentableText(it, renderReceiverType = false, renderArguments = false, renderReturnType = false) }
 
     override fun adjustElementImpl(psiElement: PsiElement?): PsiElement? {
         if (psiElement is KtDeclaration) {

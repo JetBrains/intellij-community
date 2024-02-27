@@ -1,13 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
-import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element
@@ -15,26 +16,32 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 
 internal class AppStorageContentReader : JpsFileContentReader {
-  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? = loadComponentTimeMs.addMeasuredTime {
-    val filePath = JpsPathUtil.urlToPath(fileUrl)
-    val element: Element? = if (isApplicationLevelFile(filePath)) {
-      val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
-      @Suppress("UNCHECKED_CAST")
-      (ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>)
-        .getStorageData()
-        .getElement(componentName)
+  override fun loadComponent(
+    fileUrl: String,
+    componentName: String,
+    customModuleFilePath: String?,
+  ): Element? {
+    return loadComponentTimeMs.addMeasuredTime {
+      val filePath = JpsPathUtil.urlToPath(fileUrl)
+      val element: Element? = if (isApplicationLevelFile(filePath)) {
+        val storageSpec = FileStorageAnnotation(PathUtilRt.getFileName(filePath), false, StateSplitterEx::class.java)
+        @Suppress("UNCHECKED_CAST")
+        (ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>)
+          .getStorageData()
+          .getElement(componentName)
+      }
+      else {
+        null
+      }
+      return@addMeasuredTime element
     }
-    else {
-      null
-    }
-    return@addMeasuredTime element
   }
 
-  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap =
-    PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
+  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
+    return PathMacroManager.getInstance(ApplicationManager.getApplication()).expandMacroMap
+  }
 
-  private fun isApplicationLevelFile(filePath: String): Boolean =
-    Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
+  private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
 
   companion object {
     private val loadComponentTimeMs = MillisecondsMeasurer()
@@ -51,36 +58,45 @@ internal class AppStorageContentReader : JpsFileContentReader {
 }
 
 internal class AppStorageContentWriter(private val session: SaveSessionProducerManager) : JpsAppFileContentWriter {
-  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?): Unit = saveComponentTimeMs.addMeasuredTime {
-    val filePath = JpsPathUtil.urlToPath(fileUrl)
-    if (isApplicationLevelFile(filePath)) {
-      val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
-      @Suppress("UNCHECKED_CAST")
-      val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
-      session.getProducer(storage)?.setState(null, componentName, componentTag)
-    }
-  }
-
-  override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap =
-    PathMacroManager.getInstance(ApplicationManager.getApplication()).replacePathMap
-
-  override suspend fun saveSession() {
-    session.save(SaveResult())
-  }
-
-  private fun isApplicationLevelFile(filePath: String): Boolean =
-    Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
-
   companion object {
     private val saveComponentTimeMs = MillisecondsMeasurer()
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
       val saveComponentTimeCounter = meter.counterBuilder("jps.app.storage.content.writer.save.component.ms").buildObserver()
       meter.batchCallback({ saveComponentTimeCounter.record(saveComponentTimeMs.asMilliseconds()) }, saveComponentTimeCounter)
     }
+  }
 
-    init {
-      setupOpenTelemetryReporting(jpsMetrics.meter)
+  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
+    saveComponentTimeMs.addMeasuredTime {
+      val filePath = JpsPathUtil.urlToPath(fileUrl)
+      if (isApplicationLevelFile(filePath)) {
+        val storageSpec = FileStorageAnnotation(PathUtilRt.getFileName(filePath), false, StateSplitterEx::class.java)
+
+        @Suppress("UNCHECKED_CAST")
+        val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
+        session.getProducer(storage)?.setState(
+          component = null,
+          componentName = componentName,
+          // doesn't matter for now
+          pluginId = PluginManagerCore.CORE_ID,
+          state = componentTag,
+        )
+      }
     }
   }
+
+  override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
+    return PathMacroManager.getInstance(ApplicationManager.getApplication()).replacePathMap
+  }
+
+  override suspend fun saveSession() {
+    session.save(SaveResult())
+  }
+
+  private fun isApplicationLevelFile(filePath: String): Boolean = Path.of(filePath).startsWith(Path.of(PathManager.getOptionsPath()))
 }

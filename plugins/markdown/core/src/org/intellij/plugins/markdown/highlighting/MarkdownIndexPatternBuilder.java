@@ -24,7 +24,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownIndexPatternBuilder implements IndexPatternBuilder {
+public final class MarkdownIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet COMMENT_TOKEN_SET = TokenSet.create(MarkdownElementTypes.COMMENT_VALUE);
 
   @Nullable

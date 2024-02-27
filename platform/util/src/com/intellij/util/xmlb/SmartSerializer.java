@@ -51,10 +51,10 @@ public final class SmartSerializer {
 
     BeanBinding beanBinding = getBinding(bean);
     assert beanBinding.bindings != null;
-    BeanBindingKt.deserializeBeanInto(bean, element, beanBinding.bindings, 0, beanBinding.bindings.length, serializedAccessorNameTracker);
+    BeanBindingKt.deserializeBeanInto(bean, element, beanBinding.bindings, serializedAccessorNameTracker);
 
     if (serializedAccessorNameTracker != null) {
-      orderedBindings = beanBinding.computeBindingWeights(serializedAccessorNameTracker);
+      orderedBindings = beanBinding.computeBindingWeights$intellij_platform_util(serializedAccessorNameTracker);
     }
   }
 
@@ -69,13 +69,13 @@ public final class SmartSerializer {
     }
 
     if (preserveCompatibility || serializedAccessorNameTracker == null) {
-      binding.serializeInto(bean, element, mySerializationFilter);
+      binding.serializeProperties(bean, element, mySerializationFilter);
     }
     else {
       Set<String> oldTracker = serializedAccessorNameTracker;
       try {
         serializedAccessorNameTracker = null;
-        binding.serializeInto(bean, element, mySerializationFilter);
+        binding.serializeProperties(bean, element, mySerializationFilter);
       }
       finally {
         serializedAccessorNameTracker = oldTracker;

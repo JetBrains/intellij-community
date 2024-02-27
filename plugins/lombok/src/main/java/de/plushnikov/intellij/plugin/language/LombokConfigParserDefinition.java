@@ -15,7 +15,7 @@ import de.plushnikov.intellij.plugin.language.psi.LombokConfigFile;
 import de.plushnikov.intellij.plugin.language.psi.LombokConfigTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class LombokConfigParserDefinition implements ParserDefinition {
+public final class LombokConfigParserDefinition implements ParserDefinition {
 
   private static class LombokConfigParserTokenSets {
     private static final TokenSet COMMENTS = TokenSet.create(LombokConfigTypes.COMMENT);

@@ -526,6 +526,10 @@ fun <T : CommandChain> T.importMavenProject(): T = apply {
   addCommand("${CMD_PREFIX}importMavenProject")
 }
 
+fun <T : CommandChain> T.updateMavenFolders(isErrorExpected: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}updateMavenFolders $isErrorExpected")
+}
+
 enum class AssertModuleJdkVersionMode {
   CONTAINS,
   EQUALS
@@ -675,6 +679,11 @@ fun <T : CommandChain> T.cut(): T = apply {
   executeEditorAction("\$Cut")
 }
 
+@Suppress("unused")
+fun <T : CommandChain> T.undo(): T = apply {
+  executeEditorAction("\$Undo")
+}
+
 fun <T : CommandChain> T.selectAll(): T = apply {
   executeEditorAction("\$SelectAll")
 }
@@ -729,6 +738,10 @@ fun <T : CommandChain> T.goToDeclaration(expectedOpenedFile: String): T = apply 
 
 fun <T : CommandChain> T.collectAllFiles(extension: String, fromSources: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}collectAllFiles $extension $fromSources")
+}
+
+fun <T : CommandChain> T.storeHighlightingResults(fileName: String): T = apply {
+  addCommand("${CMD_PREFIX}storeHighlightingResults $fileName")
 }
 
 fun <T : CommandChain> T.recompileFiles(relativeFilePaths: List<String>): T = apply {
@@ -958,4 +971,9 @@ fun <T : CommandChain> T.repeatCommand(times: Int, commandChain: (CommandChain) 
   repeat(times) {
     commandChain.invoke(this)
   }
+}
+
+fun <T : CommandChain> T.createScratchFile(filename: String, content: String): T = apply {
+  val modifiedContent = content.replace("\n", "\\n").replace(" ", "_")
+  addCommand("${CMD_PREFIX}createScratchFile $filename $modifiedContent")
 }

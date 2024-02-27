@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION", "ReplaceGetOrSet", "LeakingThis")
 @file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 
@@ -64,10 +64,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFilePreCloseCheck
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -1035,7 +1032,9 @@ open class FileEditorManagerImpl(
     fun open(): FileEditorComposite {
       return runBulkTabChange(window.owner) {
         (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
-        LOG.assertTrue(file.isValid, "Invalid file: $file")
+        if (!file.isValid) {
+          LOG.error(InvalidVirtualFileAccessException(file))
+        }
         doOpenInEdtImpl(
           existingComposite = existingComposite,
           window = window,

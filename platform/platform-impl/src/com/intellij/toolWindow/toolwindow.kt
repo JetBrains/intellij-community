@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
@@ -16,6 +17,7 @@ import com.intellij.ui.icons.findIconByPath
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import java.lang.ref.WeakReference
 import java.util.*
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -41,7 +43,14 @@ enum class ToolWindowEventSource {
 
 fun getStripeTitleSupplier(id: String, project: Project, pluginDescriptor: PluginDescriptor): Supplier<@NlsContexts.TabTitle String>? {
   if (id == "Project") {
-    return Supplier { IdeUICustomization.getInstance().getProjectViewTitle(project) }
+    val weakProjectRef = WeakReference(project)
+    return Supplier {
+      val unwrappedProject = weakProjectRef.get()?.takeUnless { it.isDisposed } ?: run {
+        LOG.error("Project can not be used after it is disposed.")
+        return@Supplier ""
+      }
+      IdeUICustomization.getInstance().getProjectViewTitle(unwrappedProject)
+    }
   }
 
   val classLoader = pluginDescriptor.classLoader
@@ -114,3 +123,5 @@ data class ToolWindowDescriptor(
     TABBED, COMBO
   }
 }
+
+private val LOG by lazy { Logger.getInstance("#com.intellij.toolWindow.toolwindow") }

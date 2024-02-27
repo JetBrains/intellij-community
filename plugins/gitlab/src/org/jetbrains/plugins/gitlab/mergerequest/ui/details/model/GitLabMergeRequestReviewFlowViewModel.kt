@@ -139,7 +139,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     }
   }.modelFlow(scope, LOG)
 
-  override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove == true }
+  override val userCanApprove: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.canApprove ?: true }
     .modelFlow(scope, LOG)
   override val userCanManage: SharedFlow<Boolean> = mergeRequest.details.map { it.userPermissions.updateMergeRequest }
     .modelFlow(scope, LOG)

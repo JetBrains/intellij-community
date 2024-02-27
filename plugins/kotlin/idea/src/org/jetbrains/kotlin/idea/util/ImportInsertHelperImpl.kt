@@ -47,26 +47,37 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
         return importPath.isImported(analyzerServices.defaultLowPriorityImports, analyzerServices.excludedImports)
     }
 
-    override fun mayImportOnShortenReferences(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean {
+    override fun mayImportOnShortenReferences(
+        descriptor: DeclarationDescriptor,
+        contextFile: KtFile,
+        overrideAllowImportOfNestedDeclarations: Boolean,
+    ): Boolean {
         return when (val importableDescriptor = descriptor.getImportableDescriptor()) {
             is PackageViewDescriptor -> false // now package cannot be imported
 
-            is ClassDescriptor -> allowClassImport(importableDescriptor, contextFile)
+            is ClassDescriptor -> allowClassImport(importableDescriptor, contextFile, overrideAllowImportOfNestedDeclarations)
 
-            else -> descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor // do not import members (e.g. java static members)
+            else -> overrideAllowImportOfNestedDeclarations || descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor // do not import members (e.g. java static members)
         }
     }
 
-    private fun allowClassImport(classDescriptor: ClassDescriptor, contextFile: KtFile): Boolean {
+    private fun allowClassImport(
+        classDescriptor: ClassDescriptor,
+        contextFile: KtFile,
+        overrideAllowImportOfNestedDeclarations: Boolean,
+    ): Boolean {
         val nested = classDescriptor.containingDeclaration !is PackageFragmentDescriptor
         // If nested classes are blanket-prohibited from being imported, don't import any.
-        if (nested && !getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES) return false
+        if (nested) {
+            if (!overrideAllowImportOfNestedDeclarations && !getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES) return false
+        }
         val classInfo = ClassImportFilter.ClassInfo(
             classDescriptor.fqNameSafe,
             classDescriptor.kind,
             classDescriptor.modality,
             classDescriptor.visibility.delegate,
-            nested)
+            nested,
+        )
         return ClassImportFilter.allowClassImport(classInfo, contextFile)
     }
 

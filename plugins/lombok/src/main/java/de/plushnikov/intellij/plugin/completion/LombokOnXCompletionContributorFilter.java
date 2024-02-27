@@ -21,7 +21,7 @@ import java.util.Collection;
  * These default methods can/should be used only for old JDKs like 1.7 From 1.8 synthetic underscored methods should be used.
  * @see <a href="https://projectlombok.org/features/experimental/onX">Lombok onX-Documentation</a>
  */
-public class LombokOnXCompletionContributorFilter extends CompletionContributor {
+public final class LombokOnXCompletionContributorFilter extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {

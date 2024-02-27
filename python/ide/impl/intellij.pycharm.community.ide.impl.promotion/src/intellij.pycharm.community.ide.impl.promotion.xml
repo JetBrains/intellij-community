@@ -35,6 +35,10 @@
             id="PromoPlotsAction"
             icon="AllIcons.Ultimate.PycharmLock"/>
 
+    <action class="com.intellij.pycharm.community.ide.impl.promotion.PreviewJupyterNotebookFile"
+            id="PromoPreviewJupyterNotebook"
+            icon="AllIcons.Ultimate.PycharmLock"/>
+
     <action id="PromoNewJupyterNotebook" class="com.intellij.pycharm.community.ide.impl.promotion.NewJupyterNotebookFile"
             icon="AllIcons.Ultimate.PycharmLock">
       <add-to-group group-id="NewGroup" anchor="last"/>

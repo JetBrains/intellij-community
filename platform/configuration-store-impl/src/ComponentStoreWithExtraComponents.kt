@@ -96,16 +96,21 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
   }
 
   internal open fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
-    for (bean in ObsoleteStorageBean.EP_NAME.lazySequence()) {
+    val storageManager = storageManager as? StateStorageManagerImpl ?: return
+    for (item in ObsoleteStorageBean.EP_NAME.filterableLazySequence()) {
+      val bean = item.instance ?: continue
       if (bean.isProjectLevel != isProjectLevel) {
         continue
       }
 
-      val storage = (storageManager as? StateStorageManagerImpl)?.getOrCreateStorage(bean.file ?: continue, RoamingType.DISABLED)
-      if (storage != null) {
-        for (componentName in bean.components) {
-          session.getProducer(storage)?.setState(component = null, componentName = componentName, state = null)
-        }
+      val storage = storageManager.getOrCreateStorage(collapsedPath = bean.file ?: continue, roamingType = RoamingType.DISABLED)
+      for (componentName in bean.components) {
+        session.getProducer(storage)?.setState(
+          component = null,
+          componentName = componentName,
+          pluginId = item.pluginDescriptor.pluginId,
+          state = null,
+        )
       }
     }
   }

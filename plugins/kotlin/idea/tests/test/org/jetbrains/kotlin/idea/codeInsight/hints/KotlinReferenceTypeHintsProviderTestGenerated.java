@@ -113,6 +113,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/FlexibleType.kt");
     }
 
+    @TestMetadata("FunctionalType.kt")
+    public void testFunctionalType() throws Exception {
+        runTest("testData/codeInsight/hints/types/FunctionalType.kt");
+    }
+
     @TestMetadata("ImportedEnumEntry.kt")
     public void testImportedEnumEntry() throws Exception {
         runTest("testData/codeInsight/hints/types/ImportedEnumEntry.kt");

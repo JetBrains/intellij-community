@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 /**
  * @author Max Medvedev
  */
-public class GrabAnnotationChecker extends CustomAnnotationChecker {
+public final class GrabAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkArgumentList(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     return GrabAnnos.GRAB_ANNO.equals(annotation.getQualifiedName()) ||

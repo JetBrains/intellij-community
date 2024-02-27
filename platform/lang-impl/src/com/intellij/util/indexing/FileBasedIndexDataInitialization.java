@@ -204,7 +204,6 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.addStaleIds(myDirtyFileIds);
       myFileBasedIndex.setUpFlusher();
-      myFileBasedIndex.setUpHealthCheck();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
       saveRegisteredIndicesAndDropUnregisteredOnes(myState.getIndexIDs());

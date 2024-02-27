@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import java.util.HashSet;
 import java.util.Set;
 
-public class GroovyCompletionContributor extends CompletionContributor {
+public final class GroovyCompletionContributor extends CompletionContributor {
 
   static final ExtensionPointName<GroovyCompletionCustomizer> EP_NAME = ExtensionPointName.create("org.intellij.groovy.completionCustomizer");
 

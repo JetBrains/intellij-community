@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -18,8 +18,7 @@ public final class SemVer implements Comparable<SemVer> {
   private final int myMajor;
   private final int myMinor;
   private final int myPatch;
-  @Nullable
-  private final String myPreRelease;
+  private final @Nullable String myPreRelease;
 
   public SemVer(@NotNull String rawVersion, int major, int minor, int patch) {
     this(rawVersion, major, minor, patch, null);
@@ -170,8 +169,7 @@ public final class SemVer implements Comparable<SemVer> {
     return diff;
   }
 
-  @Nullable
-  public static SemVer parseFromText(@Nullable String text) {
+  public static @Nullable SemVer parseFromText(@Nullable String text) {
     if (text != null) {
       int majorEndIdx = text.indexOf('.');
       if (majorEndIdx >= 0) {

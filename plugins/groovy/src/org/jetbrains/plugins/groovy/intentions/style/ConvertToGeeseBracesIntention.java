@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class ConvertToGeeseBracesIntention extends GrPsiUpdateIntention {
+public final class ConvertToGeeseBracesIntention extends GrPsiUpdateIntention {
   private static final Logger LOG = Logger.getInstance(ConvertToGeeseBracesIntention.class);
 
   private static final PsiElementPredicate MY_PREDICATE = new PsiElementPredicate() {

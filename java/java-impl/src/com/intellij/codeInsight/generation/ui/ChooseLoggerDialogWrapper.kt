@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.generation.ui
 
 import com.intellij.java.JavaBundle
+import com.intellij.lang.logging.JvmLogger
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -11,19 +12,18 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.logging.JvmLoggingConfigurable
 import com.intellij.ui.logging.JvmLoggingSettingsStorage
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.JComponent
 
 class ChooseLoggerDialogWrapper(
   private val project: Project,
-  private val availableLoggers: List<String>,
-  selectedLogger: String,
+  private val availableLoggers: List<JvmLogger>,
+  selectedLogger: JvmLogger,
 ) : DialogWrapper(project, true) {
-  var selectedLogger: String = selectedLogger
+  var selectedLogger: JvmLogger = selectedLogger
     private set
 
-  private lateinit var comboBox: Cell<ComboBox<String>>
+  private lateinit var comboBox: Cell<ComboBox<JvmLogger>>
   private val settings = project.service<JvmLoggingSettingsStorage>().state
 
   init {
@@ -32,7 +32,7 @@ class ChooseLoggerDialogWrapper(
   }
 
   @TestOnly
-  fun setComboBoxItem(@Nls item: String) {
+  fun setComboBoxItem(item: JvmLogger) {
     comboBox.component.item = item
   }
 
@@ -41,14 +41,16 @@ class ChooseLoggerDialogWrapper(
       row {
         label(JavaBundle.message("label.configurable.logger.type"))
         comboBox = comboBox(availableLoggers)
-          .onChanged { selectedLogger = it.item }
-          .apply { this.component.item = settings.loggerName }
+          .onChanged {
+            selectedLogger = it.item
+          }
+          .apply { this.component.item = JvmLogger.getLoggerById(settings.loggerId) }
       }
       row {
         text(JavaBundle.message("link.configurable.logger.generator.display.name")) {
           ShowSettingsUtil.getInstance().showSettingsDialog(project, JvmLoggingConfigurable::class.java)
-          val savedLoggerName = settings.loggerName
-          comboBox.component.item = savedLoggerName
+          val savedLoggerName = settings.loggerId
+          comboBox.component.item = JvmLogger.getLoggerById(savedLoggerName)
         }
       }
     }

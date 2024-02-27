@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.Properties.RendererFactory
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.HierarchyEvent
@@ -21,6 +22,7 @@ fun EditorEx.addComponentInlay(
   showWhenFolded: Boolean = true,
   priority: Int,
   offset: Int,
+  rendererFactory: RendererFactory? = null
 ): Inlay<*> {
   // see DS-5614
   val fullWidthArg: Boolean = this.editorKind != EditorKind.DIFF
@@ -29,7 +31,7 @@ fun EditorEx.addComponentInlay(
     component,
     EditorEmbeddedComponentManager.Properties(
       EditorEmbeddedComponentManager.ResizePolicy.none(),
-      null,
+      rendererFactory,
       isRelatedToPrecedingText,
       showAbove,
       showWhenFolded,

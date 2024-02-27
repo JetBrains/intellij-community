@@ -85,7 +85,7 @@ private fun <VM : EditorMapped> CoroutineScope.controlInlay(
             val offset = editor.document.getLineEndOffset(line)
             if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
               currentInlay?.let(Disposer::dispose)
-              insertComponent(vm, rendererFactory, editor, offset)
+              inlay = insertComponent(vm, rendererFactory, editor, offset)
             }
           }.getOrLogException(LOG)
         }
@@ -108,7 +108,7 @@ private fun <VM : EditorMapped> CoroutineScope.insertComponent(
   rendererFactory: CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer,
   editor: EditorEx,
   offset: Int
-) {
+): Inlay<*>? {
   val inlayScope = childScope(CoroutineName("Scope for code review component editor inlay at $offset"))
   var newInlay: Inlay<*>? = null
   try {
@@ -121,6 +121,7 @@ private fun <VM : EditorMapped> CoroutineScope.insertComponent(
       inlayScope.cancel()
     }
   }
+  return newInlay
 }
 
 // TODO: rework diff mode with aligned changes.

@@ -15,11 +15,12 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 class RowBuilderWithButtonGroupProperty<T : Any>
+
 @PublishedApi
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder
 
 

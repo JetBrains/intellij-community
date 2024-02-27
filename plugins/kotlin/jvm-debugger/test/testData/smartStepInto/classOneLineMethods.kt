@@ -6,4 +6,3 @@ class Clazz {
 }
 
 // EXISTS: a()
-// IGNORE_K2

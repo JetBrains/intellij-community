@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.CacheSwitcher.switchIndexAndVfs
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.openapi.vfs.newvfs.impl.VfsData
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
@@ -51,7 +50,7 @@ class IndexingFlagTest {
 
     // should not throw exceptions, should be marked as indexed
     val indexed = IndexingFlag.isFileIndexed(vFile, fileIndexingStamp)
-    assertEquals("Should be indexed because explicitly marked as indexed earlier", !VfsData.isIndexedFlagDisabled(), indexed)
+    assertEquals("Should be indexed because explicitly marked as indexed earlier", !IndexingFlag.isIndexedFlagDisabled(), indexed)
     IndexingFlag.cleanProcessingFlag(vFile)
   }
 
@@ -76,7 +75,7 @@ class IndexingFlagTest {
     // should not throw exceptions, should be marked as indexed
     val indexed = IndexingFlag.isFileIndexed(vFileAfter, fileIndexingStamp)
     assertEquals("Should be indexed because explicitly marked as indexed earlier",
-                 !VfsData.isIndexedFlagDisabled(), indexed)
+                 !IndexingFlag.isIndexedFlagDisabled(), indexed)
     IndexingFlag.cleanProcessingFlag(vFileAfter)
 
     // should not throw exceptions

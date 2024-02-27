@@ -1,3 +1,4 @@
+// IGNORE_K2
 val a = 1 == 2
 val b = 1.equals(2)
 val c = 1 === 2

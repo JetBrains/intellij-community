@@ -10,4 +10,3 @@ fun main() {
 }
 
 // EXISTS: convert((String) -> String), convert: function.invoke(), convert2((String) -> String), convert2: function.invoke()
-// IGNORE_K2

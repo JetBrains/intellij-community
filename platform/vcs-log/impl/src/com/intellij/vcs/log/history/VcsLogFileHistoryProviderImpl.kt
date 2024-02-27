@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.google.common.util.concurrent.SettableFuture
@@ -113,10 +113,8 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     val correctedPath = getCorrectedPath(project, paths.single(), revisionNumber != null)
     if (correctedPath.isDirectory) return false
 
-    val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
-    val logProvider = dataManager.logProviders[root]
-    if (logProvider?.diffHandler == null || logProvider.getFileHistoryHandler(project) == null) return false
-    return dataManager.index.isIndexingEnabled(root) || Registry.`is`("vcs.force.new.history")
+    val logProvider = VcsProjectLog.getInstance(project).dataManager?.logProviders?.get(root)
+    return logProvider?.diffHandler != null && logProvider.getFileHistoryHandler(project) != null
   }
 
   override fun showFileHistory(paths: Collection<FilePath>, revisionNumber: String?) {

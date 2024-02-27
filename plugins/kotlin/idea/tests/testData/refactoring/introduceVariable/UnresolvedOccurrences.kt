@@ -1,4 +1,3 @@
-// IGNORE_K2
 fun a() {
     val x = <selection>Foo()</selection>
     println(Foo())

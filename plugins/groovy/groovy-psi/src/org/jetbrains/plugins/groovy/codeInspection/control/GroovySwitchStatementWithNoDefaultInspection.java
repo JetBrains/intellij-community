@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 
-public class GroovySwitchStatementWithNoDefaultInspection extends BaseInspection {
+public final class GroovySwitchStatementWithNoDefaultInspection extends BaseInspection {
 
   @Override
   @Nullable

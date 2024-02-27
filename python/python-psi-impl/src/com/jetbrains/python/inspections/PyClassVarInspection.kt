@@ -11,7 +11,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyGenericType
+import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyClassVarInspection : PyInspection() {
@@ -134,7 +134,7 @@ class PyClassVarInspection : PyInspection() {
         }
         is PyReferenceExpression -> {
           val type = PyTypingTypeProvider.getType(element, myTypeEvalContext)?.get()
-          if (type is PyGenericType) {
+          if (type is PyTypeVarType) {
             registerProblem(typeComment ?: element,
                             PyPsiBundle.message("INSP.class.var.can.not.include.type.variables"))
             return true

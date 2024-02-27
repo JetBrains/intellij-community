@@ -215,7 +215,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           val linked = expandLinkedResourcesPath(storageRootPath, expandMacroMap, path)
           val outputUrl: VirtualFileUrl
           if (linked != null) {
-            outputUrl = virtualUrlManager.getOrCreateFromUri(pathToUrl(linked))
+            outputUrl = virtualUrlManager.getOrCreateFromUrl(pathToUrl(linked))
             editEclipseProperties {
               it.setVariable(EclipseModuleManagerImpl.LINK_PREFIX, path, outputUrl.url)
             }
@@ -329,7 +329,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
           else if (path.startsWith(EclipseXml.JUNIT_CONTAINER)) {
             val junitName = IdeaXml.JUNIT + AbstractEclipseClasspathReader.getPresentableName(path)
             val url = EclipseClasspathReader.getJunitClsUrl(junitName.contains("4"))
-            val roots = listOf(LibraryRoot(virtualUrlManager.getOrCreateFromUri(url),
+            val roots = listOf(LibraryRoot(virtualUrlManager.getOrCreateFromUrl(url),
                                            LibraryRootTypeId.COMPILED))
             val libraryEntity = LibraryEntity(junitName,
                                               LibraryTableId.ModuleLibraryTableId(moduleEntity.symbolicId),

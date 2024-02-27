@@ -7,11 +7,10 @@ import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.*
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
-import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
-import org.jetbrains.plugins.gradle.model.ModelsHolder
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
-import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels
+import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -38,7 +37,7 @@ import java.util.function.Consumer
  */
 class BuildActionRunner(
   private val resolverCtx: ProjectResolverContext,
-  private val buildAction: ProjectImportAction,
+  private val buildAction: GradleModelFetchAction,
   private val settings: GradleExecutionSettings,
   private val helper: GradleExecutionHelper
 ) {
@@ -56,7 +55,7 @@ class BuildActionRunner(
   }
 
   /**
-   * Fetches the [AllModels] that have been populated as a result of running the [ProjectImportAction] against the Gradle tooling API.
+   * Fetches the [AllModels] that have been populated as a result of running the [GradleModelFetchAction] against the Gradle tooling API.
    *
    * This method returns as soon as the all models have been obtained.
    *
@@ -100,9 +99,8 @@ class BuildActionRunner(
 
     // Old gradle distribution version used (before ver. 1.8)
     // fallback to use ModelBuilder gradle tooling API
-    val aClass = if (resolverCtx.isPreviewMode) BasicIdeaProject::class.java else IdeaProject::class.java
     val modelBuilder = helper.getModelBuilder(
-      aClass,
+      IdeaProject::class.java,
       resolverCtx.connection,
       resolverCtx.externalSystemTaskId,
       settings,
@@ -133,7 +131,7 @@ class BuildActionRunner(
   }
 
   /**
-   * Creates the [BuildActionExecuter] to be used to run the [ProjectImportAction].
+   * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun createPhasedExecuter(projectsLoadedCallBack: Consumer<ModelsHolder<BuildModel, ProjectModel>>): BuildActionExecuter<Void> {
     buildAction.prepareForPhasedExecuter()

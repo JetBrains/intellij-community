@@ -9,3 +9,5 @@ class ExtContext {
         val v = extended.extend()
     }
 }
+
+// IGNORE_K2

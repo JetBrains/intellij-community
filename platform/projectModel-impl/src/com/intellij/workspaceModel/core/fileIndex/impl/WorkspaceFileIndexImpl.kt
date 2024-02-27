@@ -85,7 +85,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
       if (file != null) {
         return ThreeState.fromBoolean(isInContent(file))
       }
-      val virtualFileUrl = urlManager.findByUri(currentUrl)
+      val virtualFileUrl = urlManager.findByUrl(currentUrl)
       if (virtualFileUrl != null) {
         val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl)
         if (NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds) {
@@ -171,7 +171,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     /* there may be other file sets under this directory; their URLs must be registered in VirtualFileUrlManager,
        so it's enough to process VirtualFileUrls only. */
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager() as VirtualFileUrlManagerImpl
-    val virtualFileUrl = virtualFileUrlManager.findByUri(dir.url) ?: return VirtualFileVisitor.SKIP_CHILDREN
+    val virtualFileUrl = virtualFileUrlManager.findByUrl(dir.url) ?: return VirtualFileVisitor.SKIP_CHILDREN
     val processed = virtualFileUrlManager.processChildrenRecursively(virtualFileUrl) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
       return@processChildrenRecursively if (runReadAction { isInContent (childFile) }) {

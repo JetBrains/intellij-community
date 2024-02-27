@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 /**
  * @author Max Medvedev
  */
-public class GrConvertStringToCharIntention extends GrPsiUpdateIntention {
+public final class GrConvertStringToCharIntention extends GrPsiUpdateIntention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     final GrExpression cast = GroovyPsiElementFactory.getInstance(context.project()).createExpressionFromText("a as char");

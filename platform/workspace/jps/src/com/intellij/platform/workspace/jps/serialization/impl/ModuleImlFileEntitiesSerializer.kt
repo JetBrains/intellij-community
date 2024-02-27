@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.*
@@ -483,7 +483,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val isDumb = contentElement.getAttributeValue(DUMB_ATTRIBUTE).toBoolean()
       val contentRoot = alreadyLoadedContentRoots[contentRootUrlString]
       if (contentRoot == null) {
-        val contentRootUrl = contentRootUrlString.let { virtualFileManager.getOrCreateFromUri(it) }
+        val contentRootUrl = contentRootUrlString.let { virtualFileManager.getOrCreateFromUrl(it) }
         val excludePatterns = contentElement.getChildren(EXCLUDE_PATTERN_TAG).map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
         val source = if (isDumb) OrphanageWorkerEntitySource else contentRootEntitySource
         ContentRootEntity(contentRootUrl, excludePatterns, source) {
@@ -532,7 +532,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   ): List<ExcludeUrlEntity> {
     return contentElement
       .getChildren(EXCLUDE_FOLDER_TAG)
-      .map { virtualFileManager.getOrCreateFromUri(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
+      .map { virtualFileManager.getOrCreateFromUrl(it.getAttributeValueStrict(URL_ATTRIBUTE)) }
       .map { exclude ->
         ExcludeUrlEntity(exclude, entitySource)
       }
@@ -550,7 +550,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                  ?: (if (isTestSource) JAVA_TEST_ROOT_TYPE_ID else JAVA_SOURCE_ROOT_TYPE_ID)
 
       val sourceRoot = SourceRootEntity(
-        url = virtualFileManager.getOrCreateFromUri(sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)),
+        url = virtualFileManager.getOrCreateFromUrl(sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)),
         rootType = type,
         entitySource = sourceRootSource
       )
@@ -1027,11 +1027,11 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
     return ModulePath.getPathsToModuleFiles(moduleManagerTag).map {
-      virtualFileManager.getOrCreateFromUri("file://${it.path}") to it.group
+      virtualFileManager.getOrCreateFromUrl("file://${it.path}") to it.group
     }
   }
 
-  override fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter) {
+  override fun saveEntityList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter) {
     val entitiesToSave = entities
       .filter { moduleEntity ->
         entitySourceFilter(moduleEntity.entitySource)

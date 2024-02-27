@@ -54,7 +54,7 @@ internal class GitLabCreateSnippetViewModel(
    * By default, this will be the first account found by [GitLabAccountManager].
    */
   val glAccount: MutableStateFlow<GitLabAccount?> = run {
-    val server = project.service<GitLabProjectsManager>().knownRepositoriesState.value.first().repository.serverPath
+    val server = project.service<GitLabProjectsManager>().knownRepositoriesState.value.firstOrNull()?.repository?.serverPath
     val account = project.service<GitLabProjectDefaultAccountHolder>().account
                   ?: glAccounts.value.find { it.server == server }
                   ?: glAccounts.value.firstOrNull()

@@ -46,8 +46,11 @@ interface StartupActivity {
 
 /**
  * Runs an activity after project open.
- * [execute] gets called inside a coroutine scope spanning from project opening to project closing (or plugin unloading).
+ * In production mode [execute] gets called inside a coroutine scope spanning from project opening to project closing (or plugin unloading).
  * Flow and any other long-running activities are allowed and natural.
+ *
+ * Note: in test mode ([com.intellij.openapi.application.Application.isUnitTestMode]) [execute] can be called from an outer coroutine scope.
+ * In this case flow collectors and long-running activities can block project opening and cause timeout.
  *
  * @see StartupManager
  * @see com.intellij.ide.util.RunOnceUtil

@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Deferred
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.CancellationException
@@ -39,8 +40,9 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
 
   internal constructor(project: Project,
                        file: VirtualFile,
-                       asyncLoader: AsyncEditorLoader,
-                       editor: EditorImpl) : super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
+                       provider: TextEditorProvider,
+                       editor: EditorImpl,
+                       task: Deferred<Unit>) : super(project = project, file = file, editor = editor, provider = provider, asyncLoader = createAsyncEditorLoader(provider, project, editor, file, task))
 
   override fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
     val component = PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)

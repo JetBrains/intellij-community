@@ -6,9 +6,10 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 
 object HuggingFaceDocumentationPlaceholdersUtil {
   fun generateGatedEntityMarkdownString(entityId: String, entityKind: HuggingFaceEntityKind): String {
-    val msg = "<font color='gray'>Sorry, this ${entityKind.printName} is gated. Please visit the [HuggingFace website](" +
+    val msg = "<font color='gray'>Sorry, this ${entityKind.printName} is gated.<br>" +
+              "Please visit the [HuggingFace website](" +
               "${HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind)}" +
-              ") for more details about the ${entityKind.printName} card.</font>"
+              ")<br>for more details about the ${entityKind.printName} card.</font>"
     return msg
   }
 

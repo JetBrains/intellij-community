@@ -58,7 +58,7 @@ import java.util.ArrayList;
 /**
  * @author Max Medvedev
  */
-public class GrSetStrongTypeIntention extends Intention {
+public final class GrSetStrongTypeIntention extends Intention {
 
   private static final Logger LOG = Logger.getInstance(GrSetStrongTypeIntention.class);
 

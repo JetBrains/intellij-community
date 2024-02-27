@@ -12,14 +12,17 @@ import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader
+import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FileStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitCommitShaWithPatches
 import git4idea.fetch.GitFetchSupport
@@ -27,9 +30,12 @@ import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.Commits
+import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.PullRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHCommitHash
+import org.jetbrains.plugins.github.api.data.commit.GHCommitFile
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
@@ -58,7 +64,8 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       }
       else {
         loadDiff(ProgressWrapper.wrap(patchesLoadingIndicator), ref1, ref2)
-      }.thenApplyAsync({ readAllPatches(it) }, executor)
+          .thenApplyAsync({ readAllPatches(it) }, executor)
+      }
     })
 
   override fun fetch(progressIndicator: ProgressIndicator, refspec: String) =
@@ -77,35 +84,33 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       }).loadAll(indicator).map { it.commit }.let(::buildCommitsTree)
     }.logError(LOG, "Error occurred while loading commits for PR ${pullRequestId.number}")
 
-  private fun loadCommitDiff(progressIndicator: ProgressIndicator, oid: String) =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(it,
-                              GithubApiRequests.Repos.Commits.getDiff(ghRepository, oid))
+  private fun loadCommitDiff(progressIndicator: ProgressIndicator, oid: String): CompletableFuture<List<FilePatch>> =
+    progressManager.submitIOTask(progressIndicator) { indicator ->
+      val request = GithubApiPagesLoader.Request(Commits.getDiffFiles(ghRepository, oid), Commits::getDiffFiles)
+      GithubApiPagesLoader.loadAll(requestExecutor, indicator, request).mapNotNull(::toPatch)
     }.logError(LOG, "Error occurred while loading diffs for commit $oid")
 
   private fun loadDiff(progressIndicator: ProgressIndicator, ref1: String, ref2: String): CompletableFuture<String> =
     progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(it, GithubApiRequests.Repos.Commits.getDiff(ghRepository, ref1, ref2))
+      requestExecutor.execute(it, Commits.getDiff(ghRepository, ref1, ref2))
     }.logError(LOG, "Error occurred while loading diffs between $ref1 and $ref2")
 
   override fun loadMergeBaseOid(progressIndicator: ProgressIndicator, baseRefOid: String, headRefOid: String) =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(it,
-                              GithubApiRequests.Repos.Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
+                              Commits.compare(ghRepository, baseRefOid, headRefOid)).mergeBaseCommit.sha
     }.logError(LOG, "Error occurred while calculating merge base for $baseRefOid and $headRefOid")
 
   override fun loadPatch(ref1: String, ref2: String): CompletableFuture<List<FilePatch>> =
     patchesCache.get(ref1 to ref2)
 
   override fun createChangesProvider(progressIndicator: ProgressIndicator,
+                                     id: GHPRIdentifier,
                                      baseRef: String,
                                      mergeBaseRef: String,
                                      headRef: String,
-                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitBranchComparisonResult> {
-
-    return progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
-      val prPatchesRequest = patchesCache.get(baseRef to headRef)
-
+                                     commits: Pair<GHCommit, Graph<GHCommit>>): CompletableFuture<GitBranchComparisonResult> =
+    progressManager.submitIOTask(ProgressWrapper.wrap(progressIndicator)) {
       val (lastCommit, graph) = commits
       val commitsPatchesRequests = LinkedHashMap<GHCommit, CompletableFuture<List<FilePatch>>>()
       for (commit in Traverser.forGraph(graph).depthFirstPostOrder(lastCommit)) {
@@ -116,12 +121,12 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
         val patches = request.joinCancellable()
         GitCommitShaWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
       }
-      val prPatches = prPatchesRequest.joinCancellable()
+      val request = GithubApiPagesLoader.Request(PullRequests.getDiffFiles(ghRepository, id), PullRequests::getDiffFiles)
+      val prPatches = GithubApiPagesLoader.loadAll(requestExecutor, it, request).mapNotNull(::toPatch)
       it.checkCanceled()
 
       GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsList, prPatches)
     }.logError(LOG, "Error occurred while building changes from commits")
-  }
 
   companion object {
     private val LOG = logger<GHPRChangesService>()
@@ -144,6 +149,36 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
       val reader = PatchReader(diffFile, true)
       reader.parseAllPatches()
       return reader.allPatches
+    }
+
+    private fun toPatch(file: GHCommitFile): FilePatch? {
+      val beforeFilePath = (file.previousFilename ?: file.filename).takeIf { file.status != GHCommitFile.Status.added }
+      val afterFilePath = file.filename.takeIf { file.status != GHCommitFile.Status.removed }
+      val filePatch: FilePatch? = if (file.patch == null) {
+        val emptyContent = ByteArray(0)
+        BinaryFilePatch(
+          emptyContent.takeIf { file.status != GHCommitFile.Status.added },
+          emptyContent.takeIf { file.status != GHCommitFile.Status.removed }
+        )
+      }
+      else {
+        val headerFileBefore = beforeFilePath?.let { "a/$it" } ?: "/dev/null"
+        val headerFileAfter = afterFilePath?.let { "b/$it" } ?: "/dev/null"
+        val header = "--- $headerFileBefore\n+++ $headerFileAfter\n"
+        val patch = header + file.patch
+        readAllPatches(patch).filterIsInstance<TextFilePatch>().firstOrNull()?.apply {
+          val fileStatus = when (file.status) {
+            GHCommitFile.Status.added -> FileStatus.ADDED
+            GHCommitFile.Status.removed -> FileStatus.DELETED
+            else -> FileStatus.MODIFIED
+          }
+          setFileStatus(fileStatus)
+        }
+      }?.apply {
+        beforeName = beforeFilePath
+        afterName = afterFilePath
+      }
+      return filePatch
     }
 
     private fun buildCommitsTree(commits: List<GHCommit>): Pair<GHCommit, Graph<GHCommit>> {

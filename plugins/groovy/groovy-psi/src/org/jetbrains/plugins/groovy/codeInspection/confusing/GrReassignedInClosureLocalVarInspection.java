@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class GrReassignedInClosureLocalVarInspection extends BaseInspection {
+public final class GrReassignedInClosureLocalVarInspection extends BaseInspection {
 
   @NotNull
   @Override

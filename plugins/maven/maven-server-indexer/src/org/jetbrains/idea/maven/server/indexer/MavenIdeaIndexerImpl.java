@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
@@ -47,6 +48,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   private final Scanner myScanner;
   private final PlexusContainer myContainer;
   private final ArtifactContextProducer myArtifactContextProducer;
+  private final ExecutorService myRemoteExecutorService = Executors.newSingleThreadExecutor(r -> new Thread(r, "indexing-remote"));
 
   public MavenIdeaIndexerImpl(PlexusContainer container) throws ComponentLookupException {
     myContainer = container;
@@ -153,22 +155,44 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       MavenProcessCanceledRuntimeException e) {
       throw new MavenServerProcessCanceledException();
     }
-    catch (
-      Exception e) {
+    catch (Throwable e) {
       throw new MavenServerIndexerException(wrapException(e));
     }
   }
 
   protected void downloadRemoteIndex(MavenServerProgressIndicator indicator, IndexingContext context)
-    throws ComponentLookupException, IOException {
-    Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
-    ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, new WagonTransferListenerAdapter(indicator),
-                                                                   null, null);
-    Date currentTimestamp = context.getTimestamp();
-    IndexUpdateRequest request = new IndexUpdateRequest(context, resourceFetcher);
-    indicator.setText("Updating index for " + context.getRepositoryUrl());
-    IndexUpdateResult updateResult = myUpdater.fetchAndUpdateIndex(request);
-    updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
+    throws Throwable {
+
+    Future<?> future = myRemoteExecutorService.submit(() -> {
+      try {
+        Wagon httpWagon = myContainer.lookup(Wagon.class, "http");
+        ResourceFetcher resourceFetcher = new WagonHelper.WagonFetcher(httpWagon, new WagonTransferListenerAdapter(indicator),
+                                                                       null, null);
+        Date currentTimestamp = context.getTimestamp();
+        IndexUpdateRequest request = new IndexUpdateRequest(context, resourceFetcher);
+        indicator.setText("Updating index for " + context.getRepositoryUrl());
+        IndexUpdateResult updateResult = myUpdater.fetchAndUpdateIndex(request);
+        updateIndicatorStatus(indicator, context, updateResult, currentTimestamp);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    while (!indicator.isCanceled()) {
+      try {
+        future.get(100, TimeUnit.MILLISECONDS);
+      }
+      catch (TimeoutException ignore) {
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Maven indexing was terminated");
+      }
+      catch (ExecutionException e) {
+        throw e.getCause();
+      }
+    }
   }
 
   protected void scanAndUpdateLocalRepositoryIndex(MavenServerProgressIndicator indicator, IndexingContext context, boolean multithreaded)

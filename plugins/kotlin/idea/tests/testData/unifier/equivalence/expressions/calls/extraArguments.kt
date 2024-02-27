@@ -5,5 +5,6 @@ fun foo() {
     <selection>bar(1, 2)</selection>
     bar(1)
     bar(1, 2)
+    bar(1, 3)
     bar(2, 1)
 }

@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Key
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
@@ -25,4 +26,9 @@ interface CodeReviewEditorGutterActionableChangesModel : CodeReviewEditorGutterC
 
   @RequiresEdt
   fun addDiffHighlightListener(disposable: Disposable, listener: () -> Unit)
+
+  companion object {
+    val KEY: Key<CodeReviewEditorGutterActionableChangesModel> =
+      Key.create(CodeReviewEditorGutterActionableChangesModel::class.java.canonicalName)
+  }
 }

@@ -91,7 +91,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(getFile().getProject());
-    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile());
+    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile(), this, true, false);
     try {
       List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
       List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
@@ -419,7 +419,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   }
 
   @NotNull
-  List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
+  private List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionProfile().getInspectionTools(getFile());
 
     if (LOG.isDebugEnabled()) {

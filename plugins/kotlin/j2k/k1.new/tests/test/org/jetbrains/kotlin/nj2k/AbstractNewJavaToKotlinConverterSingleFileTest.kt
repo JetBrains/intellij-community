@@ -5,17 +5,19 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.j2k.ConverterSettings
+import org.jetbrains.kotlin.j2k.descriptorByFileDirective
+import org.jetbrains.kotlin.types.FlexibleTypeImpl
 import java.io.File
 
-
 abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterSingleFileTest() {
-
     override fun doTest(javaPath: String) {
         val javaFile = File(javaPath)
         withCustomCompilerOptions(javaFile.readText(), project, module) {
@@ -27,6 +29,10 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
             for (expectedFile in expectedFiles) {
                 addFile(expectedFile, dirName = null)
             }
+
+            // TODO KTIJ-5630 (K1 only)
+            FlexibleTypeImpl.RUN_SLOW_ASSERTIONS = !javaPath.endsWith("typeParameters/rawTypeCast.java")
+
             super.doTest(javaPath)
         }
     }
@@ -60,5 +66,6 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
     private fun getLanguageLevel() =
         if (testDataDirectory.toString().contains("newJavaFeatures")) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_8
 
-    override fun getProjectDescriptor() = descriptorByFileDirective(File(testDataDirectory, fileName()), languageLevel = getLanguageLevel())
+    override fun getProjectDescriptor(): LightProjectDescriptor =
+        descriptorByFileDirective(File(testDataDirectory, fileName()), languageLevel = getLanguageLevel())
 }

@@ -3,11 +3,12 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.events.DeletedVirtualFileStub;
+import com.intellij.util.indexing.events.FileIndexingRequest;
+import org.jetbrains.annotations.ApiStatus;
 
-final class ProjectFilesCondition implements Condition<VirtualFile> {
+@ApiStatus.Internal
+final class ProjectFilesCondition implements Condition<FileIndexingRequest> {
   private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
   private final VirtualFile myRestrictedTo;
   private final GlobalSearchScope myFilter;
@@ -27,17 +28,19 @@ final class ProjectFilesCondition implements Condition<VirtualFile> {
   }
 
   @Override
-  public boolean value(VirtualFile file) {
-    int fileId = ((VirtualFileWithId)file).getId();
-    if (myIndexableFilesFilter != null && !(file instanceof DeletedVirtualFileStub) && !myIndexableFilesFilter.containsFileId(fileId)) {
+  public boolean value(FileIndexingRequest request) {
+    if (request.isDeleteRequest()) {
+      return true;
+    }
+
+    VirtualFile file = request.getFile();
+    int fileId = request.getFileId();
+    if (myIndexableFilesFilter != null && !myIndexableFilesFilter.containsFileId(fileId)) {
       if (myFilesFromOtherProjects >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) return false;
       ++myFilesFromOtherProjects;
       return true;
     }
 
-    if (file instanceof DeletedVirtualFileStub) {
-      return true;
-    }
     if (FileBasedIndexEx.belongsToScope(file, myRestrictedTo, myFilter)) return true;
 
     if (myFilesFromOtherProjects < MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) {

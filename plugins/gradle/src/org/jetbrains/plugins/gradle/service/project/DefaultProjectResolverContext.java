@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
-import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
@@ -33,11 +33,10 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final String myProjectPath;
   @Nullable private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
-  private final boolean myIsPreviewMode;
   @NotNull private final CancellationTokenSource myCancellationTokenSource;
   private ProjectConnection myConnection;
   @NotNull
-  private ProjectImportAction.AllModels myModels;
+  private AllModels myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
   @Nullable private String myBuildSrcGroup;
@@ -50,9 +49,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
                                        @NotNull final String projectPath,
                                        @Nullable final GradleExecutionSettings settings,
                                        @NotNull final ExternalSystemTaskNotificationListener listener,
-                                       @Nullable GradlePartialResolverPolicy resolverPolicy,
-                                       final boolean isPreviewMode) {
-    this(externalSystemTaskId, projectPath, settings, null, listener, resolverPolicy, isPreviewMode);
+                                       @Nullable GradlePartialResolverPolicy resolverPolicy) {
+    this(externalSystemTaskId, projectPath, settings, null, listener, resolverPolicy);
   }
 
 
@@ -61,15 +59,13 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
                                        @Nullable final GradleExecutionSettings settings,
                                        final ProjectConnection connection,
                                        @NotNull final ExternalSystemTaskNotificationListener listener,
-                                       @Nullable GradlePartialResolverPolicy resolverPolicy,
-                                       final boolean isPreviewMode) {
+                                       @Nullable GradlePartialResolverPolicy resolverPolicy) {
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
     mySettings = settings;
     myConnection = connection;
     myListener = listener;
     myPolicy = resolverPolicy;
-    myIsPreviewMode = isPreviewMode;
     myCancellationTokenSource = GradleConnector.newCancellationTokenSource();
   }
 
@@ -120,11 +116,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @Override
-  public boolean isPreviewMode() {
-    return myIsPreviewMode;
-  }
-
-  @Override
   public boolean isResolveModulePerSourceSet() {
     return mySettings == null || mySettings.isResolveModulePerSourceSet();
   }
@@ -149,12 +140,12 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @NotNull
   @Override
-  public ProjectImportAction.AllModels getModels() {
+  public AllModels getModels() {
     return myModels;
   }
 
   @Override
-  public void setModels(@NotNull ProjectImportAction.AllModels models) {
+  public void setModels(@NotNull AllModels models) {
     myModels = models;
   }
 

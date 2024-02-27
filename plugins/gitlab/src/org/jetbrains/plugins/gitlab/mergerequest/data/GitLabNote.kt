@@ -50,6 +50,7 @@ interface MutableGitLabNote : GitLabNote {
 }
 
 interface GitLabMergeRequestNote : GitLabNote {
+  val canReact: Boolean
   val position: StateFlow<GitLabNotePosition?>
   val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?>
 
@@ -62,6 +63,7 @@ interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNot
   val discussionId: GitLabId?
   override val createdAt: Date? get() = null
   override val canAdmin: Boolean get() = true
+  override val canReact: Boolean get() = false
   override val resolved: StateFlow<Boolean> get() = MutableStateFlow(false)
 }
 
@@ -84,6 +86,7 @@ class MutableGitLabMergeRequestNote(
   override val author: GitLabUserDTO = noteData.author
   override val createdAt: Date = noteData.createdAt
   override val canAdmin: Boolean = noteData.userPermissions.adminNote
+  override val canReact: Boolean = !noteData.system
 
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabNoteDTO::body)

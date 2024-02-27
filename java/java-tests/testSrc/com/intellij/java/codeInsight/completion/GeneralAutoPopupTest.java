@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -7,13 +8,13 @@ import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
-import groovy.lang.Reference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -51,7 +52,7 @@ public class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
   }
 
   public void testInjectorsAreNotRunInEdt() {
-    final Reference<Boolean> injectorCalled = new Reference<>(false);
+    final Ref<Boolean> injectorCalled = new Ref<>(false);
     LanguageInjector injector = (host, injectionPlacesRegistrar) -> {
       injectorCalled.set(true);
       ApplicationManager.getApplication().assertIsNonDispatchThread();

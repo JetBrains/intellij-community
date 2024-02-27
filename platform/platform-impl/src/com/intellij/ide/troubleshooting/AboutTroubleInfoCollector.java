@@ -42,9 +42,11 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += ' ' + buildInfo + ' ' + buildDate;
     output += '\n';
 
-    output += "Theme: ";
-    output += LafManager.getInstance().getCurrentUIThemeLookAndFeel().getName();
-    output += '\n';
+    if (LafManager.getInstance().getCurrentUIThemeLookAndFeel() != null) {
+      output += "Theme: ";
+      output += LafManager.getInstance().getCurrentUIThemeLookAndFeel().getName();
+      output += '\n';
+    }
 
     output += "JRE: ";
     output += System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));

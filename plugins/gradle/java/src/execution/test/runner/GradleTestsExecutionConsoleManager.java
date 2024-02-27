@@ -61,7 +61,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleTestsExecutionConsoleManager
+public final class GradleTestsExecutionConsoleManager
   implements ExternalSystemExecutionConsoleManager<GradleTestsExecutionConsole, ProcessHandler> {
 
   @NotNull

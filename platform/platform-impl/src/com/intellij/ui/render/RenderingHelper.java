@@ -45,8 +45,12 @@ public final class RenderingHelper {
       JScrollPane pane = ComponentUtil.getScrollPane(viewport);
       if (pane != null) {
         JScrollBar hsb = pane.getHorizontalScrollBar();
-        if ((hsb != null && hsb.isVisible()) || pane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+        if (hsb != null && hsb.isVisible()) {
           myShrinkingDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_RENDERER);
+          myShrinkingSelectionDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_SELECTION);
+        }
+        if (pane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+          myShrinkingDisabled = ClientProperty.isFalse(component, SHRINK_LONG_RENDERER);
           myShrinkingSelectionDisabled = !ClientProperty.isTrue(component, SHRINK_LONG_SELECTION);
         }
         JScrollBar vsb = pane.getVerticalScrollBar();

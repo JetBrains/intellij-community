@@ -34,9 +34,9 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
     val currentElement = file.findElementAt(editor.caretModel.offset) ?: return
 
     val module = ModuleUtil.findModuleForFile(file)
-    val availableLoggers = GenerateLoggerUtil.findSuitableLoggers(module)
+    val availableLoggers = JvmLogger.findSuitableLoggers(module)
 
-    val places = GenerateLoggerUtil.getPossiblePlacesForLogger(currentElement, availableLoggers)
+    val places = JvmLogger.getPossiblePlacesForLogger(currentElement, availableLoggers)
     val chosenLogger = getSelectedLogger(project, availableLoggers) ?: return
 
     when (places.size) {
@@ -100,22 +100,19 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
       0 -> null
       1 -> availableLoggers.first()
       else -> {
-        val preferredLogger = JvmLogger.getLoggerByName(project.service<JvmLoggingSettingsStorage>().state.loggerName)
+        val preferredLogger = JvmLogger.getLoggerById(project.service<JvmLoggingSettingsStorage>().state.loggerId)
+
+        val selectedLogger = (if (preferredLogger in availableLoggers) preferredLogger else availableLoggers.first()) ?: return null
 
         val chooseLoggerDialog = ChooseLoggerDialogWrapper(
           project,
-          availableLoggers.map { it.toString() },
-          (if (preferredLogger in availableLoggers) {
-            preferredLogger
-          }
-          else {
-            availableLoggers.first()
-          }).toString(),
+          availableLoggers,
+          selectedLogger,
         )
         chooseLoggerDialog.show()
         if (chooseLoggerDialog.exitCode != DialogWrapper.OK_EXIT_CODE) return null
 
-        JvmLogger.getLoggerByName(chooseLoggerDialog.selectedLogger)
+        chooseLoggerDialog.selectedLogger
       }
     }
     saveLoggerAfterFirstTime(project, selectedLogger)
@@ -126,8 +123,8 @@ class GenerateLoggerHandler : CodeInsightActionHandler {
   private fun saveLoggerAfterFirstTime(project: Project, logger: JvmLogger?) {
     if (logger == null) return
     val settings = project.service<JvmLoggingSettingsStorage>().state
-    if (settings.loggerName == UnspecifiedLogger.UNSPECIFIED_LOGGER_NAME) {
-      settings.loggerName = logger.toString()
+    if (settings.loggerId == UnspecifiedLogger.UNSPECIFIED_LOGGER_ID) {
+      settings.loggerId = logger.id
     }
   }
 

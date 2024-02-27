@@ -52,7 +52,7 @@ internal suspend fun importConfigIfNeeded(isHeadless: Boolean,
   if (ConfigImportHelper.isNewUser()) {
     enableNewUi(logDeferred)
 
-    if (isIdeStartupWizardEnabled) {
+    if (isIdeStartupDialogEnabled) {
       log.info("Will enter initial app wizard flow.")
       val result = CompletableDeferred<Boolean>()
       isInitialStart = result

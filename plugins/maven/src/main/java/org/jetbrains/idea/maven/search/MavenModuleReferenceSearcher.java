@@ -36,7 +36,7 @@ import java.util.List;
  *   }
  * </pre>
  */
-class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+final class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   private static final String DELIMITER = "/";
 
   // split with lookaheads and lookbehinds to keep the delimiters

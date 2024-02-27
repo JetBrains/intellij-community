@@ -108,7 +108,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
         }
       }
       val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
-      val reactionIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, GHReactionImageLoader(cs, requestExecutor)))
+      val reactionImagesLoader = GHReactionImageLoader(cs, account.server, requestExecutor)
+      val reactionIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, reactionImagesLoader))
 
       // repository might have been renamed/moved
       val apiRepositoryPath = repositoryInfo.path

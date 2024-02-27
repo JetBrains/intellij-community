@@ -2,7 +2,7 @@
 package com.intellij.platform.settings.local
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SafeStAXStreamBuilder
+import com.intellij.openapi.util.buildNsUnawareJdomAndClose
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
@@ -81,7 +81,7 @@ class CborXmlTest {
     // non-coalescing - test CDATA
     val xmlStreamReader = createNonCoalescingXmlStreamReader(xml.encodeToByteArray(), null)
     val jdom = try {
-      SafeStAXStreamBuilder.buildNsUnawareAndClose(xmlStreamReader)
+      buildNsUnawareJdomAndClose(xmlStreamReader)
     }
     finally {
       xmlStreamReader.close()

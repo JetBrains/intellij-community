@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.StorageScheme;
@@ -43,7 +43,7 @@ public interface IProjectStore extends IComponentStore {
   boolean isProjectFile(@NotNull VirtualFile file);
 
   /**
-   * The directory of project configuration files for directory-based project or null for file-based.
+   * The directory of project configuration files for a directory-based project or null for file-based.
    */
   @Nullable Path getDirectoryStorePath();
 

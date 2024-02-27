@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class JUnit5ExternalLibraryResolver extends ExternalLibraryResolver {
+public final class JUnit5ExternalLibraryResolver extends ExternalLibraryResolver {
   private static final Set<String> JUNIT5_ANNOTATIONS = Set.of(
     "Test", "Disabled", "TestFactory", "BeforeEach", "BeforeAll", "AfterEach", "AfterAll", "DisplayName", "Nested"
   );

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+public final class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public boolean execute(final @NotNull ReferencesSearch.SearchParameters p, final @NotNull Processor<? super PsiReference> consumer) {
     SearchScope userScope = p.getScopeDeterminedByUser();

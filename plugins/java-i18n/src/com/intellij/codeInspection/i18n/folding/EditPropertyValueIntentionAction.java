@@ -10,7 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
-public class EditPropertyValueIntentionAction implements IntentionAction {
+public final class EditPropertyValueIntentionAction implements IntentionAction {
   @Override
   @NotNull
   public String getText() {

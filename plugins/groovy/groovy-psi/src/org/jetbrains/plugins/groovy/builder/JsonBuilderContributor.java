@@ -17,7 +17,7 @@ import static org.jetbrains.plugins.groovy.builder.JsonDelegateContributor.DELEG
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_TYPE_KEY;
 
-public class JsonBuilderContributor extends BuilderMethodsContributor {
+public final class JsonBuilderContributor extends BuilderMethodsContributor {
 
   private static final String FQN = "groovy.json.JsonBuilder";
   @NonNls

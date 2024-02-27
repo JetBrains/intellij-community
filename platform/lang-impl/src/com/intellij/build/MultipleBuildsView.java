@@ -85,7 +85,7 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     myThreeComponentsSplitter = new OnePixelSplitter(SPLITTER_PROPERTY, 0.25f);
     myBuildsList = new JBList<>();
     myBuildsList.setModel(new DefaultListModel<>());
-    myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
+    updateBuildsListRowHeight();
     AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
     myBuildsList.installCellRenderer(obj -> {
       JPanel panel = new JPanel(new BorderLayout());
@@ -107,6 +107,10 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     myViewMap = new ConcurrentHashMap<>();
     myBuildsMap = new ConcurrentHashMap<>();
     myProgressWatcher = new ProgressWatcher();
+  }
+
+  private void updateBuildsListRowHeight() {
+    myBuildsList.setFixedCellHeight(JBUI.scale(UIUtil.LIST_FIXED_CELL_HEIGHT * 2));
   }
 
   @Override
@@ -458,6 +462,12 @@ public final class MultipleBuildsView implements BuildProgressListener, Disposab
     @Override
     public @NotNull String getPreviousOccurenceActionName() {
       return IdeBundle.message("action.previous.problem");
+    }
+
+    @Override
+    public void updateUI() {
+      super.updateUI();
+      updateBuildsListRowHeight();
     }
   }
 

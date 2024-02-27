@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseInspection {
+public final class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {

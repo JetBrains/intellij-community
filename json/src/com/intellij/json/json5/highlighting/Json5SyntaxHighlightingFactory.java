@@ -6,7 +6,7 @@ import com.intellij.json.json5.Json5Lexer;
 import com.intellij.lexer.Lexer;
 import org.jetbrains.annotations.NotNull;
 
-public class Json5SyntaxHighlightingFactory extends JsonSyntaxHighlighterFactory {
+public final class Json5SyntaxHighlightingFactory extends JsonSyntaxHighlighterFactory {
   @Override
   protected @NotNull Lexer getLexer() {
     return new Json5Lexer();

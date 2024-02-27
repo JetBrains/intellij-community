@@ -12,8 +12,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.OutputStream
 import java.io.Writer
 import java.nio.file.Path
-import kotlin.io.bufferedWriter
-import kotlin.io.use
 
 interface DataWriter {
   fun writeTo(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter? = null)
@@ -50,7 +48,7 @@ interface DataWriterFilter {
 internal abstract class StringDataWriter : DataWriter {
   final override fun writeTo(output: OutputStream, lineSeparator: LineSeparator, filter: DataWriterFilter?) {
     output.bufferedWriter().use { writer ->
-      writeTo(writer, lineSeparator.separatorString, filter)
+      writeTo(writer = writer, lineSeparator = lineSeparator.separatorString, filter = filter)
     }
   }
 

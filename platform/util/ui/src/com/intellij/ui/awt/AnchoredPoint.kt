@@ -49,7 +49,7 @@ class AnchoredPoint @JvmOverloads constructor(val anchor: Anchor,
         Point(x + width, y + height)
     };
 
-    protected abstract fun Rectangle.getPointOnRectangle(): Point
+    abstract fun Rectangle.getPointOnRectangle(): Point
 
     internal fun getPointOnComponent(component: Component, offset: Point = Point(0, 0)): Point {
       val bounds = if (component is JComponent && !component.visibleRect.isEmpty) {

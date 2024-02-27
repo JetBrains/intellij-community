@@ -236,7 +236,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       throw new IllegalStateException("Working directory must not be null, startup options: " + options);
     }
 
-    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command);
+    var shellIntegration = options.getShellIntegration();
+    boolean isBlockTerminal = isBlockTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null;
+    TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
+
     try {
       long startNano = System.nanoTime();
       PtyProcessBuilder builder = new PtyProcessBuilder(command)
@@ -275,14 +278,18 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   public static @NotNull List<String> convertShellPathToCommand(@NotNull String shellPath) {
+    List<String> shellCommand;
     if (isAbsoluteFilePathAndExists(shellPath)) {
-      return List.of(shellPath);
+      shellCommand = List.of(shellPath);
     }
-    List<String> shellCommand = ParametersListUtil.parse(shellPath, false, !SystemInfo.isWindows);
+    else {
+      shellCommand = ParametersListUtil.parse(shellPath, false, !SystemInfo.isWindows);
+    }
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellExe == null) return shellCommand;
     String shellName = PathUtil.getFileName(shellExe);
     if (!containsLoginOrInteractiveOption(shellCommand)) {
+      shellCommand = new ArrayList<>(shellCommand);
       if (isLoginOptionAvailable(shellName) && SystemInfo.isMac) {
         shellCommand.add(LOGIN_CLI_OPTION);
       }
@@ -290,7 +297,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         shellCommand.add(INTERACTIVE_CLI_OPTION);
       }
     }
-    return shellCommand;
+    return List.copyOf(shellCommand);
   }
 
   private static boolean isAbsoluteFilePathAndExists(@NotNull String path) {

@@ -9,11 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
+import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableDiagnosticInspectionWithContext
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KtDiagnosticWithPsi<KtModifierListOwner>>(
@@ -40,5 +42,8 @@ abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KtDiagnosticWithPsi<
 
     override fun apply(element: KtModifierListOwner, context: ModifierContext, project: Project, updater: ModPsiUpdater) {
         element.removeModifier(context.modifier)
+        if (element is KtPrimaryConstructor && element.isRedundant()) {
+            element.delete()
+        }
     }
 }

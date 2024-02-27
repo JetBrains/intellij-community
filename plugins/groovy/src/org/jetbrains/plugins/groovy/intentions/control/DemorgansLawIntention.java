@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
-public class DemorgansLawIntention extends GrPsiUpdateIntention {
+public final class DemorgansLawIntention extends GrPsiUpdateIntention {
 
   @Override
   public @NotNull String getText(@NotNull PsiElement element) {

@@ -26,6 +26,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
@@ -53,7 +56,19 @@ class BuildContextImpl(
   override val systemSelector: String
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-  override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDirRoot)
+  override val buildNumber: String by lazy {
+    val suppliedBuildNumber = options.buildNumber
+    val snapshotBuildNumber = readSnapshotBuildNumber(paths.communityHomeDirRoot)
+    val baseBuildNumber = snapshotBuildNumber.removeSuffix(".SNAPSHOT")
+    if (suppliedBuildNumber != null) {
+      suppliedBuildNumber
+    }
+    else {
+      val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(options.buildDateInSeconds), ZoneOffset.UTC)
+      // .SNAPSHOT suffix is required for a remote dev + IDE built from sources scenario, IJI-1603
+      "$baseBuildNumber.${pluginDateFormat.format(buildDate)}.SNAPSHOT"
+    }
+  }
 
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
@@ -86,7 +101,7 @@ class BuildContextImpl(
     check(!systemSelector.contains(' ')) {
       "System selector must not contain spaces: $systemSelector"
     }
-    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
+    options.buildStepsToSkip += productProperties.incompatibleBuildSteps
     if (!options.buildStepsToSkip.isEmpty()) {
       Span.current().addEvent("build steps to be skipped", Attributes.of(
         AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
@@ -229,7 +244,6 @@ class BuildContextImpl(
       options.pathToCompiledClassesArchivesMetadata = null
       options.pathToCompiledClassesArchive = null
     }
-    options.buildStepsToSkip = sourceOptions.buildStepsToSkip
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs
 
@@ -394,6 +408,14 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
     }
 }
 
+private val BuildDependenciesCommunityRoot.snapshotBuildNumberFile: Path
+  get() = communityRoot.resolve("build.txt")
+
 internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
-  return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim()
+  val snapshotBuildNumber = Files.readString(communityHome.snapshotBuildNumberFile).trim()
+  val snapshotSuffix = ".SNAPSHOT"
+  check(snapshotBuildNumber.endsWith(snapshotSuffix)) {
+    "$snapshotBuildNumber is expected to have a '$snapshotSuffix' suffix"
+  }
+  return snapshotBuildNumber
 }

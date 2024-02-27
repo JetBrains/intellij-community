@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
@@ -63,7 +64,7 @@ class ModuleStoreRenameTest {
         }
 
         projectRule.project.messageBus.connect(module).subscribe(ModuleListener.TOPIC, object : ModuleListener {
-          override fun modulesRenamed(project: Project, modules: List<Module>, oldNameProvider: Function<in Module, String>) {
+          override fun modulesRenamed(project: Project, modules: List<Module>, @Suppress("UsagesOfObsoleteApi") oldNameProvider: Function<in Module, String>) {
             assertThat(modules).containsOnly(module)
             oldModuleNames.add(oldNameProvider.`fun`(module))
           }
@@ -72,7 +73,12 @@ class ModuleStoreRenameTest {
 
       // should be invoked after project tearDown
       override fun after() {
-        checkStorageIsNotTracked(module)
+        service<StorageVirtualFileTracker>().remove {
+          if (it.storageManager.componentManager === module) {
+            throw AssertionError("Storage manager is not disposed, module $module, storage $it")
+          }
+          false
+        }
       }
     },
     DisposeModulesRule(projectRule)
@@ -124,20 +130,17 @@ class ModuleStoreRenameTest {
   // (in case of external change we don't get move event, but get "delete old" and "create new")
   private suspend fun assertModuleFileRenamed(newName: String, oldFile: Path) {
     val newFile = module.storage.file
-    assertThat(newFile.fileName.toString()).isEqualTo("$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-    assertThat(oldFile)
-      .doesNotExist()
-      .isNotEqualTo(newFile)
-    assertThat(newFile).isRegularFile
+    assertThat(newFile).isRegularFile.hasFileName("${newName}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+    assertThat(oldFile).doesNotExist().isNotEqualTo(newFile)
 
-    // ensure that macro value updated
+    // ensure that macro value is updated
     assertThat(module.stateStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile)
     assertThat(module.moduleNioFile).isEqualTo(newFile)
 
     saveProjectState()
-    assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="$newName" />""")
-    assertThat(projectRule.project.stateStore.projectFilePath.readText()).contains(
-      """<module fileurl="file://${'$'}PROJECT_DIR${'$'}/${module.storage.file.parent.fileName}/$newName${ModuleFileType.DOT_DEFAULT_EXTENSION}"""")
+    assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="${newName}" />""")
+    assertThat(projectRule.project.stateStore.projectFilePath.readText())
+      .contains("""<module fileurl="file://${'$'}PROJECT_DIR${'$'}/${newFile.parent.fileName}/${newFile.fileName}"""")
   }
 
   @Test

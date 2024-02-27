@@ -16,6 +16,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
 
+@Deprecated("Remove after the `workspace.model.custom.library.bridge` registry key removal")
 @Service(Service.Level.PROJECT)
 class LibrarySynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
   private val synchronizationRequests = Channel<Request>(capacity = Channel.UNLIMITED).apply {

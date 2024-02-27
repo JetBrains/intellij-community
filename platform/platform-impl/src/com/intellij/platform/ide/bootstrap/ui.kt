@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
@@ -53,11 +53,16 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
 
   initAwtToolkitJob.join()
 
-  val preloadFontJob = asyncScope.launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
-    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
-    Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-    // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
-    GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+  val preloadFontJob = if (isHeadless) {
+    null
+  }
+  else {
+    asyncScope.launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
+      // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+      Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
+      // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
+      GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+    }
   }
 
   // SwingDispatcher must be used after Toolkit init
@@ -78,7 +83,7 @@ internal suspend fun configureCssUiDefaults() {
   }
 }
 
-private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job) {
+private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
   if (!isHeadless) {
     span("graphics environment checking") {
       if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance) {
@@ -87,12 +92,11 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job) {
         exitProcess(AppExitCodes.NO_GRAPHICS)
       }
     }
-  }
 
-  // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-
-  if (SystemInfoRt.isLinux) {
-    preloadFontJob.join()
+    // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
+    if (SystemInfoRt.isLinux) {
+      preloadFontJob?.join()
+    }
   }
 
   val baseLaF = span("base LaF creation") { createBaseLaF() }

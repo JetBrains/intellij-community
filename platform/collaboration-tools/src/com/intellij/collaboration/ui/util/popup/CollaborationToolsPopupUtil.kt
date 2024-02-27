@@ -2,6 +2,8 @@
 package com.intellij.collaboration.ui.util.popup
 
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
+import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
+import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.items
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener

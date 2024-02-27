@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 
-public class GroovyCommenter implements CodeDocumentationAwareCommenter {
+public final class GroovyCommenter implements CodeDocumentationAwareCommenter {
   @Override
   public String getLineCommentPrefix() {
     return "//";

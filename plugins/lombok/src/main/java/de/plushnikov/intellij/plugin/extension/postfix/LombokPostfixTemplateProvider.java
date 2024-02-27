@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
+public final class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
 
   private final Set<PostfixTemplate> lombokTemplates = new HashSet<>();
 

@@ -66,8 +66,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");
 
-  private static final String IS_SELECTED_BUTTON = "IS_SELECTED_BUTTON";
-
   private JBDimension myMinimumButtonSize;
   private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private PropertyChangeListener myPresentationListener;
@@ -178,12 +176,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public final boolean isSelected() {
-    return Toggleable.isSelected(myPresentation) || Boolean.TRUE.equals(getClientProperty(IS_SELECTED_BUTTON));
-  }
-
-  public void setSelected(boolean value) {
-    putClientProperty(IS_SELECTED_BUTTON, value);
-    repaint();
+    Boolean isSelectedComponent = Toggleable.isSelected(this);
+    if (isSelectedComponent != null) return isSelectedComponent;
+    return Toggleable.isSelected(myPresentation);
   }
 
   @Override

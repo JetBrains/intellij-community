@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
 
-public class FromStringHintProcessor extends SignatureHintProcessor {
+public final class FromStringHintProcessor extends SignatureHintProcessor {
 
   @Override
   public String getHintName() {

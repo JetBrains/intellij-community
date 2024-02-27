@@ -2,59 +2,21 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
-import com.intellij.refactoring.suggested.startOffset
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
-import com.intellij.util.ThrowableRunnable
 import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_PARAMETER_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_FUNCTION_RETURN_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_LOCAL_VARIABLE_TYPES
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_PROPERTY_TYPES
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
-abstract class AbstractKotlinReferenceTypeHintsProviderTest :
-    DeclarativeInlayHintsProviderTestCase() { // Abstract- prefix is just a convention for GenerateTests
+abstract class AbstractKotlinReferenceTypeHintsProviderTest : AbstractKotlinInlayHintsProviderTest() {
 
-    override fun setUp() {
-        super.setUp()
-        PresentationFactory.customToStringProvider = { element ->
-            val virtualFile = element.containingFile.virtualFile
-            val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
-            val path = jarFileSystem?.let {
-                val root = VfsUtilCore.getRootFile(virtualFile)
-                "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
-            } ?: virtualFile.toString()
-            "$path:${if (jarFileSystem != null) "*" else element.startOffset.toString()}"
-        }
-    }
+    override fun inlayHintsProvider(): InlayHintsProvider =
+        org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider()
 
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { PresentationFactory.customToStringProvider = null },
-            ThrowableRunnable { super.tearDown() },
-        )
-    }
-
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-    }
-
-    fun doTest(testPath: String) { // named according to the convention imposed by GenerateTests
-        assertThatActualHintsMatch(testPath)
-    }
-
-    private fun assertThatActualHintsMatch(fileName: String) {
-        with(org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinReferencesTypeHintsProvider()) {
-            val fileContents = FileUtil.loadFile(File(fileName), true)
+    override fun assertThatActualHintsMatch(file: File) {
+        with(inlayHintsProvider()) {
+            val fileContents = FileUtil.loadFile(file, true)
             val options = buildMap<String, Boolean> {
                 put(SHOW_PROPERTY_TYPES.name, false)
                 put(SHOW_LOCAL_VARIABLE_TYPES.name, false)
@@ -66,18 +28,21 @@ abstract class AbstractKotlinReferenceTypeHintsProviderTest :
                         put(SHOW_FUNCTION_RETURN_TYPES.name, true)
                         put(SHOW_LOCAL_VARIABLE_TYPES.name, true)
                     }
+
                     "local_variable" -> put(SHOW_LOCAL_VARIABLE_TYPES.name, true)
                     "parameter" -> put(SHOW_FUNCTION_PARAMETER_TYPES.name, true)
                     "property" -> {
                         put(SHOW_PROPERTY_TYPES.name, true)
                         put(SHOW_FUNCTION_RETURN_TYPES.name, true)
                     }
+
                     "all" -> {
                         put(SHOW_PROPERTY_TYPES.name, true)
                         put(SHOW_LOCAL_VARIABLE_TYPES.name, true)
                         put(SHOW_FUNCTION_RETURN_TYPES.name, true)
                         put(SHOW_FUNCTION_PARAMETER_TYPES.name, true)
                     }
+
                     else -> {}
                 }
             }
@@ -87,7 +52,7 @@ abstract class AbstractKotlinReferenceTypeHintsProviderTest :
             } catch (e: ComparisonFailure) {
                 throw FileComparisonFailedError(
                     e.message,
-                    e.expected, e.actual, File(fileName).absolutePath, null
+                    e.expected, e.actual, file.absolutePath, null
                 )
             }
         }

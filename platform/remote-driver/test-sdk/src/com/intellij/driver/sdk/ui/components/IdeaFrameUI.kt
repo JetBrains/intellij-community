@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.ui
 
@@ -23,6 +24,12 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   val isFullScreen: Boolean
     get() = driver.cast(component, IdeFrameImpl::class).isInFullScreen()
+
+  val leftToolWindowToolbar: ToolWindowLeftToolbarUi
+    get() = x(Locators.byClass("ToolWindowLeftToolbar"), ToolWindowLeftToolbarUi::class.java)
+
+  val rightToolWindowToolbar: ToolWindowRightToolbarUi
+    get() = x(Locators.byClass("ToolWindowRightToolbar"), ToolWindowRightToolbarUi::class.java)
 }
 
 @Remote("com.intellij.openapi.wm.impl.ProjectFrameHelper")

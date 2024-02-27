@@ -744,4 +744,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullWarningAfterInstanceofAndNullCheck() { doTest(); }
   public void testInitializedViaSuperCall() { doTest(); }
   public void testBoxedBooleanMethodWithCast() { doTest(); }
+  public void testAssignAndReturnVolatile() { doTest(); }
 }

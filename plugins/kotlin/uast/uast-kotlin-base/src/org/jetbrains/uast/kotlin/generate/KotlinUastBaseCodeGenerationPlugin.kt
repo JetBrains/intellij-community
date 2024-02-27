@@ -105,7 +105,9 @@ abstract class KotlinUastBaseCodeGenerationPlugin : UastCodeGenerationPlugin {
                     if (nextSibling is PsiWhiteSpace) {
                         nextSibling.delete()
                     }
-                    psiField.delete()
+                    if (psiField != psiElement) {
+                        psiField.delete()
+                    }
                 }
                 psiElement.replace(ktParameter)
                 return ktParameter.toUElementOfType()

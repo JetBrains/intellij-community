@@ -364,6 +364,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     if (configuration is UnknownRunConfiguration) {
       configuration.isDoNotStore = true
     }
+    factory.configureDefaultSettings(template)
     configuration.beforeRunTasks = getHardcodedBeforeRunTasks(configuration, factory)
     return template
   }

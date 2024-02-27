@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
+import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
-import com.intellij.collaboration.ui.util.popup.PopupConfig
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope

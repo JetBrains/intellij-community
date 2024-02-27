@@ -24,7 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
-import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
+import com.intellij.remoteDev.connection.JetBrainsClientDownloadInfo
 import com.intellij.remoteDev.util.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
@@ -149,7 +149,7 @@ object CodeWithMeClientDownloader {
     else -> "JetBrainsClient"
   }
 
-  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetbrainsClientDownloadInfo {
+  fun createSessionInfo(clientBuildVersion: String, jreBuild: String?, unattendedMode: Boolean): JetBrainsClientDownloadInfo {
     val isSnapshot = "SNAPSHOT" in clientBuildVersion
     if (isSnapshot) {
       LOG.warn("Thin client download from sources may result in failure due to different sources on host and client, " +
@@ -224,7 +224,7 @@ object CodeWithMeClientDownloader {
       RemoteDevSystemSettings.getPgpPublicKeyUrl().value
     } else null
 
-    val sessionInfo = JetbrainsClientDownloadInfo(
+    val sessionInfo = JetBrainsClientDownloadInfo(
       hostBuildNumber = hostBuildNumber,
       compatibleClientUrl = clientDownloadUrl,
       compatibleJreUrl = jreDownloadUrl,
@@ -334,7 +334,7 @@ object CodeWithMeClientDownloader {
   }
 
 
-  suspend fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo): ExtractedJetBrainsClientData {
+  suspend fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo): ExtractedJetBrainsClientData {
     return withProgressText(RemoteDevUtilBundle.message("launcher.get.client.info")) {
       coroutineToIndicator {
         downloadClientAndJdk(sessionInfoResponse, ProgressManager.getInstance().progressIndicator)
@@ -342,7 +342,7 @@ object CodeWithMeClientDownloader {
     }
   }
 
-  fun downloadClientAndJdk(sessionInfoResponse: JetbrainsClientDownloadInfo,
+  fun downloadClientAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
                            progressIndicator: ProgressIndicator): ExtractedJetBrainsClientData {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 

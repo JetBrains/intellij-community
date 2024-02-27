@@ -38,8 +38,7 @@ final class ValueSerializationChecker<Value, Input> {
   }
 
   private @Nullable Exception getValueSerializationProblem(@NotNull Map<?, Value> data, @NotNull Input input) {
-    for (Map.Entry<?, Value> e : data.entrySet()) {
-      final Value value = e.getValue();
+    for (final Value value : data.values()) {
       if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {
         return new Exception("Index " + myIndexId + " violates equals / hashCode contract for Value parameter");
       }

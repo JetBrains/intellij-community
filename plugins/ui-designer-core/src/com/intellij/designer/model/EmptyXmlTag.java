@@ -456,12 +456,12 @@ public class EmptyXmlTag implements XmlTag {
   }
 
   @Override
-  public <T> T getCopyableUserData(Key<T> key) {
+  public <T> T getCopyableUserData(@NotNull Key<T> key) {
     return null;
   }
 
   @Override
-  public <T> void putCopyableUserData(Key<T> key, @Nullable T value) {
+  public <T> void putCopyableUserData(@NotNull Key<T> key, @Nullable T value) {
 
   }
 

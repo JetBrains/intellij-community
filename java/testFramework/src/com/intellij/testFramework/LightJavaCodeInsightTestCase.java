@@ -86,7 +86,11 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
     LanguageLevel prev = extension.getLanguageLevel();
     extension.setLanguageLevel(level);
-    Disposer.register(myBeforeParentDisposeDisposable, () -> extension.setLanguageLevel(prev));
+    Disposer.register(myBeforeParentDisposeDisposable, () -> {
+      extension.setLanguageLevel(prev);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    });
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   @Override

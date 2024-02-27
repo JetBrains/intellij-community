@@ -6,8 +6,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +20,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.psi.util.InheritanceUtil.isInheritor;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER;
 
 public final class GradleGroovyRunnerUtil {
   @NotNull
@@ -31,13 +35,10 @@ public final class GradleGroovyRunnerUtil {
       parent = parent.getParent();
     }
 
-    if (isCreateTaskMethod(parent)) {
-      final GrExpression[] arguments = ((GrMethodCallExpression)parent).getExpressionArguments();
-      if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
-        return Collections.singletonList((String)((GrLiteral)arguments[0]).getValue());
-      }
-    }
-    else if (parent instanceof GrApplicationStatement) {
+    if (parent instanceof GrMethodCallExpression methodCall) {
+      String taskName = getTaskNameIfMethodDeclaresIt(methodCall);
+      if (taskName != null) return Collections.singletonList(taskName);
+    } else if (parent instanceof GrApplicationStatement) {
       PsiElement shiftExpression = parent.getChildren()[1].getChildren()[0];
       if (GradleResolverUtil.isLShiftElement(shiftExpression)) {
         PsiElement shiftiesChild = shiftExpression.getChildren()[0];
@@ -72,6 +73,46 @@ public final class GradleGroovyRunnerUtil {
   }
 
   @Nullable
+  private static String getTaskNameIfMethodDeclaresIt(GrMethodCallExpression methodCall) {
+    String taskNameCandidate = getStringValueFromFirstArg(methodCall);
+    if (taskNameCandidate == null) return null;
+    PsiMethod resolvedMethod = methodCall.resolveMethod();
+    if (resolvedMethod == null) return null;
+    PsiClass containingClass = resolvedMethod.getContainingClass();
+    if (containingClass == null) return null;
+
+    String methodName = resolvedMethod.getName();
+    if (declaresTaskFromTaskContainer(methodName, containingClass)
+      || declaresTaskFromProject(methodName, containingClass)
+    ) {
+      return taskNameCandidate;
+    } else {
+      return null;
+    }
+  }
+
+  private static boolean declaresTaskFromTaskContainer(String methodName, PsiClass containingClass) {
+    return isInheritor(containingClass, GRADLE_API_TASK_CONTAINER)
+           && ("create".equals(methodName) || "register".equals(methodName));
+  }
+
+  private static boolean declaresTaskFromProject(String methodName, PsiClass containingClass) {
+    return isInheritor(containingClass, GRADLE_API_PROJECT)
+           && "task".equals(methodName);
+  }
+
+  private static String getStringValueFromFirstArg(GrMethodCallExpression methodCall) {
+    final GrExpression[] arguments = methodCall.getExpressionArguments();
+    if (arguments.length > 0 && arguments[0] instanceof GrLiteral literalArg
+        && literalArg.getValue() instanceof String stringArg
+    ) {
+      return stringArg;
+    } else {
+      return null;
+    }
+  }
+
+  @Nullable
   private static Module getModule(@NotNull PsiElement element, @NotNull Project project) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile != null) {
@@ -81,10 +122,6 @@ public final class GradleGroovyRunnerUtil {
       }
     }
     return null;
-  }
-
-  private static boolean isCreateTaskMethod(PsiElement parent) {
-    return parent instanceof GrMethodCallExpression && PsiUtil.isMethodCall((GrMethodCallExpression)parent, "createTask");
   }
 
   @NotNull

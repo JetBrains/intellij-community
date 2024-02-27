@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -151,6 +151,10 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected void onInit() {
     super.onInit();
     myModifierProvider.init();
+
+    for (EditorEx editor : getEditors()) {
+      editor.putUserData(DiffUserDataKeys.DIFF_VIEWER, this);
+    }
   }
 
   @Override

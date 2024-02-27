@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * @author Max Medvedev
  */
-public class GrRedundantElseIntention extends GrPsiUpdateIntention {
+public final class GrRedundantElseIntention extends GrPsiUpdateIntention {
   public static final String HINT = "Remove redundant 'else' keyword";
 
   @Override

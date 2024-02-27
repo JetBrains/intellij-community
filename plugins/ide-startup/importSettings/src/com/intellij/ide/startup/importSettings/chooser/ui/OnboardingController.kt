@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.WizardProvider
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.bootstrap.StartupWizardStage
 
 class OnboardingController private constructor(){
   companion object {
@@ -20,8 +21,8 @@ class OnboardingController private constructor(){
 
   private var dialog: OnboardingDialog? = null
 
-  private fun createDialog(): OnboardingDialog {
-    return OnboardingDialog { doCancelAction() }.apply {
+  private fun createDialog(titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String?): OnboardingDialog {
+    return OnboardingDialog(titleGetter) { doCancelAction() }.apply {
       this.isResizable = false
     }
   }
@@ -34,15 +35,15 @@ class OnboardingController private constructor(){
   private var cancelImportCallback: (() -> Unit)? = null
 
   fun startImport(cancelCallback: (() -> Unit)? = null,
-                  @NlsContexts.DialogTitle title: String? = null,
+                  titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String? = { null },
                   isModal: Boolean = true,
                   skipImportAction: (() -> Unit)? = null) {
 
-    val dl = getDialog()
+    val dl = getDialog(titleGetter)
 
     val skipAction: () -> Unit = skipImportAction ?:
       WizardProvider.getInstance().getWizardService()?.let {
-      { startWizard(cancelCallback, title, isModal) }
+      { startWizard(cancelCallback, titleGetter, isModal) }
     } ?: run {
       { dialogClose() }
     }
@@ -58,7 +59,6 @@ class OnboardingController private constructor(){
       dl.show()
     }
 
-    dl.title = title
     state = State.IMPORT
   }
 
@@ -66,24 +66,27 @@ class OnboardingController private constructor(){
     dialog?.dialogClose()
   }
 
-  private fun getDialog(): OnboardingDialog {
+  private fun getDialog(titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String?): OnboardingDialog {
     val dl = dialog?.let {
        if(!it.isShowing || !it.isVisible) {
-          createDialog()
-       } else it
+          createDialog(titleGetter)
+       } else {
+         it.titleGetter = titleGetter
+         it
+       }
     } ?: run {
-      createDialog()
+      createDialog(titleGetter)
     }
     dialog = dl
     return dl
   }
 
   fun startWizard(cancelCallback: (() -> Unit)? = null,
-                  @NlsContexts.DialogTitle title: String? = null,
+                  titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String? = { null },
                   isModal: Boolean = true,
-                  goBackAction: (() -> Unit)? = {startImport (cancelCallback, title, isModal)}) {
+                  goBackAction: (() -> Unit)? = {startImport (cancelCallback, titleGetter, isModal)}) {
 
-    val dl = getDialog()
+    val dl = getDialog(titleGetter)
 
     val service = WizardProvider.getInstance().getWizardService() ?: return
 
@@ -97,7 +100,6 @@ class OnboardingController private constructor(){
       dl.show()
     }
 
-    dl.title = title
     state = State.WIZARD
   }
 

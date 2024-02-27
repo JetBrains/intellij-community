@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.*
@@ -31,6 +32,8 @@ class DefaultTreeLayoutCache(
   private val nodeByPath = hashMapOf<TreePath, Node>()
   private val boundsBuffer = Rectangle()
   private var variableHeight: VariableHeightSupport? = VariableHeightSupport()
+
+  internal var isCachedSizeValid = false
 
   override fun setModel(newModel: TreeModel?) {
     super.setModel(newModel)
@@ -829,6 +832,9 @@ class DefaultTreeLayoutCache(
         return
       }
       val change = newHeightDelta - oldHeightDelta
+      if (change != 0) {
+        isCachedSizeValid = false
+      }
       var i = row + 1
       while (i <= rows.size) {
         rows[i - 1].fenwickTreeNodeForY += change

@@ -905,6 +905,7 @@ public final class JBUI {
     public interface Notification {
       Color FOREGROUND = JBColor.namedColor("Notification.foreground", Label.foreground());
       Color BACKGROUND = JBColor.namedColor("Notification.background", 0xFFF8D1, 0x1D3857);
+      Color ICON_HOVER_BACKGROUND = JBColor.namedColor("Notification.iconHoverBackground", ActionButton.hoverBorder());
 
       interface Error {
         Color FOREGROUND = JBColor.namedColor("Notification.errorForeground", Notification.FOREGROUND);

@@ -58,17 +58,14 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   public void testSwaggerHighlighting() {
-    doPerformanceTest(35_000, "swagger");
+    doPerformanceTest("swagger");
   }
 
   public void testTsLintSchema() {
-    doPerformanceTest(20_000, "tslint-schema");
+    doPerformanceTest("tslint-schema");
   }
 
-  private void doPerformanceTest(int expectedMs, String jsonFileNameWithoutExtension) {
-    myFixture.configureByFiles("/" + jsonFileNameWithoutExtension + ".json");
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // process VFS events before perf test
-
+  private void doPerformanceTest(String jsonFileNameWithoutExtension) {
     final ThrowableRunnable<Exception> test = () -> skeleton(new Callback() {
       @Override
       public void registerSchemes() {
@@ -81,7 +78,10 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void configureFiles() {
-        // files have been configured before the performance test started to not influence the results
+        myFixture.enableInspections(JsonSchemaComplianceInspection.class);
+        myFixture.enableInspections(JsonSchemaRefReferenceInspection.class);
+        myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
+        myFixture.configureByFiles("/" + jsonFileNameWithoutExtension + ".json");
       }
 
       @Override
@@ -89,14 +89,13 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         myFixture.doHighlighting();
       }
     });
-    PlatformTestUtil.newPerformanceTest(getTestName(false), test).start();
+    PlatformTestUtil.newPerformanceTest(getTestName(false), test).attempts(5).start();
   }
 
-
   public void testEslintHighlightingPerformance() {
-    myFixture.configureByFile(getTestName(true) + "/.eslintrc.json");
-    PsiFile psiFile = myFixture.getFile();
     PlatformTestUtil.newPerformanceTest(getTestName(true), () -> {
+      PsiFile psiFile = myFixture.configureByFile(getTestName(true) + "/.eslintrc.json");
+
       for (int i = 0; i < 10; i++) {
         myFixture.doHighlighting();
 

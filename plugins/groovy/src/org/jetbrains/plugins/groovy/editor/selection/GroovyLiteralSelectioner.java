@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 
-public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     PsiElement parent = e.getParent();

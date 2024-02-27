@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.*;
@@ -338,16 +338,16 @@ public class VcsNotifier {
     return notify(SILENT_NOTIFICATION, displayId, title, message, NotificationType.INFORMATION);
   }
 
-  public void showNotificationAndHideExisting(@NotNull Notification notificationToShow,
-                                              @NotNull Class<? extends Notification> klass) {
-    hideAllNotificationsByType(klass);
+  public void showNotificationAndHideExisting(@NotNull Notification notificationToShow) {
+    String displayId = notificationToShow.getDisplayId();
+    if (displayId != null ) hideAllNotificationsById(displayId);
     notificationToShow.notify(myProject);
   }
 
-  public void hideAllNotificationsByType(@NotNull Class<? extends Notification> klass) {
+  public void hideAllNotificationsById(@NotNull String displayId) {
     NotificationsManager notificationsManager = NotificationsManager.getNotificationsManager();
-    for (Notification notification : notificationsManager.getNotificationsOfType(klass, myProject)) {
-      notification.expire();
+    for (Notification notification : notificationsManager.getNotificationsOfType(Notification.class, myProject)) {
+      if (displayId.equals(notification.getDisplayId())) notification.expire();
     }
   }
 

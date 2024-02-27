@@ -695,13 +695,14 @@ internal class ActionUpdater @JvmOverloads constructor(
         if (pair.first == OP_expandActionGroup) visitor(pair.second as ActionGroup, pair.first, deferred.getCompleted()!!) }
     }
 
-    override fun dropCaches(predicate: (AnAction) -> Boolean) {
+    override fun dropCaches(predicate: (Any) -> Boolean) {
       // if reused, clear temporary deferred caches from previous `expandActionGroup` calls
       // some are in completed-with-exception state (SkipOperation), so re-calling will fail
       // 1. valid presentation and children are already cached in other maps
       // 2. expanded children must not be cached in remote scenarios anyway
-      updater.sessionData.keys.removeIf { (op, _) ->
-        op == OP_actionPresentation || op == OP_groupChildren || op == OP_expandActionGroup
+      updater.sessionData.keys.removeIf { (op, key) ->
+        op == OP_actionPresentation || op == OP_groupChildren || op == OP_expandActionGroup ||
+        key is Key<*> && predicate(key)
       }
       // clear caches for selected actions
       updater.updatedPresentations.keys.removeIf(predicate)
@@ -850,6 +851,6 @@ private class RecursionElement(val level: Int)
 
 private class OperationName(val name: String)
   : AbstractCoroutineContextElement(OperationName) {
-  override fun toString(): String = name
+  override fun toString(): String = "OperationName($name)"
   companion object : CoroutineContext.Key<OperationName>
 }

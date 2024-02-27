@@ -45,13 +45,16 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
 
   override fun actionPerformed(e: AnActionEvent) {
     //TODO: show under branch widget component - requires fixing action popup context propagation
-    val vm = e.getData(GitLabMergeRequestReviewViewModel.DATA_KEY) ?: e.project?.let(::findGlobalVm) ?: return
+    val project = e.project
+    val vm = e.getData(GitLabMergeRequestReviewViewModel.DATA_KEY) ?: project?.let(::findGlobalVm) ?: return
     val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
     // looks fishy but spares us the need to pass component to VM
     vm.submitReviewInputHandler = {
       withContext(Dispatchers.Main) {
-        if (component != null) GitLabMergeRequestSubmitReviewPopup.show(it, component)
-        else GitLabMergeRequestSubmitReviewPopup.show(it, e.project!!)
+        when {
+          component != null -> GitLabMergeRequestSubmitReviewPopup.show(it, component)
+          project != null -> GitLabMergeRequestSubmitReviewPopup.show(it, project)
+        }
       }
     }
     vm.submitReview()

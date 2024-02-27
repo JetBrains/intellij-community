@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("j2k/k1.new/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/copyPastePlainText")
+@TestMetadata("../../shared/tests/testData/copyPastePlainText")
 public class TextNewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractTextNewJavaToKotlinCopyPasteConversionTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,121 +25,121 @@ public class TextNewJavaToKotlinCopyPasteConversionTestGenerated extends Abstrac
 
     @TestMetadata("AsExpression.txt")
     public void testAsExpression() throws Exception {
-        runTest("testData/copyPastePlainText/AsExpression.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/AsExpression.txt");
     }
 
     @TestMetadata("AsExpressionBody.txt")
     public void testAsExpressionBody() throws Exception {
-        runTest("testData/copyPastePlainText/AsExpressionBody.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/AsExpressionBody.txt");
     }
 
     @TestMetadata("Comments.txt")
     public void testComments() throws Exception {
-        runTest("testData/copyPastePlainText/Comments.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/Comments.txt");
     }
 
     @TestMetadata("ImportFromTarget.txt")
     public void testImportFromTarget() throws Exception {
-        runTest("testData/copyPastePlainText/ImportFromTarget.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/ImportFromTarget.txt");
     }
 
     @TestMetadata("ImportResolve.txt")
     public void testImportResolve() throws Exception {
-        runTest("testData/copyPastePlainText/ImportResolve.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/ImportResolve.txt");
     }
 
     @TestMetadata("InClassContextProperty.txt")
     public void testInClassContextProperty() throws Exception {
-        runTest("testData/copyPastePlainText/InClassContextProperty.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/InClassContextProperty.txt");
     }
 
     @TestMetadata("InsideIdentifier.txt")
     public void testInsideIdentifier() throws Exception {
-        runTest("testData/copyPastePlainText/InsideIdentifier.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/InsideIdentifier.txt");
     }
 
     @TestMetadata("IntoComment.txt")
     public void testIntoComment() throws Exception {
-        runTest("testData/copyPastePlainText/IntoComment.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/IntoComment.txt");
     }
 
     @TestMetadata("IntoRawStringLiteral.txt")
     public void testIntoRawStringLiteral() throws Exception {
-        runTest("testData/copyPastePlainText/IntoRawStringLiteral.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/IntoRawStringLiteral.txt");
     }
 
     @TestMetadata("IntoStringLiteral.txt")
     public void testIntoStringLiteral() throws Exception {
-        runTest("testData/copyPastePlainText/IntoStringLiteral.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/IntoStringLiteral.txt");
     }
 
     @TestMetadata("KT13529.txt")
     public void testKT13529() throws Exception {
-        runTest("testData/copyPastePlainText/KT13529.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/KT13529.txt");
     }
 
     @TestMetadata("KT13529_1.txt")
     public void testKT13529_1() throws Exception {
-        runTest("testData/copyPastePlainText/KT13529_1.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/KT13529_1.txt");
     }
 
     @TestMetadata("KT32603.txt")
     public void testKT32603() throws Exception {
-        runTest("testData/copyPastePlainText/KT32603.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/KT32603.txt");
     }
 
     @TestMetadata("KT32604.txt")
     public void testKT32604() throws Exception {
-        runTest("testData/copyPastePlainText/KT32604.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/KT32604.txt");
     }
 
     @TestMetadata("LocalAndMemberConflict.txt")
     public void testLocalAndMemberConflict() throws Exception {
-        runTest("testData/copyPastePlainText/LocalAndMemberConflict.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/LocalAndMemberConflict.txt");
     }
 
     @TestMetadata("LocalContextProperty.txt")
     public void testLocalContextProperty() throws Exception {
-        runTest("testData/copyPastePlainText/LocalContextProperty.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/LocalContextProperty.txt");
     }
 
     @TestMetadata("MembersIntoClass.txt")
     public void testMembersIntoClass() throws Exception {
-        runTest("testData/copyPastePlainText/MembersIntoClass.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/MembersIntoClass.txt");
     }
 
     @TestMetadata("MembersToTopLevel.txt")
     public void testMembersToTopLevel() throws Exception {
-        runTest("testData/copyPastePlainText/MembersToTopLevel.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/MembersToTopLevel.txt");
     }
 
     @TestMetadata("Override.txt")
     public void testOverride() throws Exception {
-        runTest("testData/copyPastePlainText/Override.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/Override.txt");
     }
 
     @TestMetadata("OverrideInterface.txt")
     public void testOverrideInterface() throws Exception {
-        runTest("testData/copyPastePlainText/OverrideInterface.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/OverrideInterface.txt");
     }
 
     @TestMetadata("PostProcessing.txt")
     public void testPostProcessing() throws Exception {
-        runTest("testData/copyPastePlainText/PostProcessing.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/PostProcessing.txt");
     }
 
     @TestMetadata("StatementsIntoFunction.txt")
     public void testStatementsIntoFunction() throws Exception {
-        runTest("testData/copyPastePlainText/StatementsIntoFunction.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/StatementsIntoFunction.txt");
     }
 
     @TestMetadata("TopLevelContextProperty.txt")
     public void testTopLevelContextProperty() throws Exception {
-        runTest("testData/copyPastePlainText/TopLevelContextProperty.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/TopLevelContextProperty.txt");
     }
 
     @TestMetadata("WholeFile.txt")
     public void testWholeFile() throws Exception {
-        runTest("testData/copyPastePlainText/WholeFile.txt");
+        runTest("../../shared/tests/testData/copyPastePlainText/WholeFile.txt");
     }
 }

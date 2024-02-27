@@ -24,20 +24,22 @@ final class AnnotationTextCollector extends AnnotationVisitor {
 
     if (desc != null) {
       hasPrefix = true;
-      myBuilder.append('@').append(StubBuildingVisitor.toJavaType(Type.getType(desc), myMapping));
+      myBuilder.append('@');
+      StubBuildingVisitor.toJavaType(myBuilder, Type.getType(desc), myMapping);
     }
   }
 
   @Override
   public void visit(String name, Object value) {
     valuePairPrefix(name);
-    myBuilder.append(StubBuildingVisitor.constToString(value, TypeInfo.SimpleTypeInfo.NULL, true, myMapping));
+    StubBuildingVisitor.constToString(myBuilder, value, TypeInfo.SimpleTypeInfo.NULL, true, myMapping);
   }
 
   @Override
   public void visitEnum(String name, String desc, String value) {
     valuePairPrefix(name);
-    myBuilder.append(StubBuildingVisitor.toJavaType(Type.getType(desc), myMapping)).append('.').append(value);
+    StubBuildingVisitor.toJavaType(myBuilder, Type.getType(desc), myMapping);
+    myBuilder.append('.').append(value);
   }
 
   private void valuePairPrefix(String name) {

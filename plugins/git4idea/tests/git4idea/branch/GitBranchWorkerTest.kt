@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -17,6 +17,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
 import git4idea.GitCommit
+import git4idea.GitLocalBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision
 import git4idea.branch.GitBranchUtil.getTrackInfoForBranch
@@ -727,6 +728,25 @@ class GitBranchWorkerTest : GitPlatformTest() {
     assertFile(first, "branch_file.txt", "branch content")
   }
 
+  fun `test merge branch with the same name as tag`() {
+    prepareLocalAndRemoteBranch("master2", track = false)
+
+    first.git("tag master2")
+
+    checkoutBranch("master2", TestUiHandler(project))
+    cd(first)
+    touch("file.txt", "content")
+    first.add("file.txt")
+    first.commit("master2 commit")
+
+    checkoutBranch("master", TestUiHandler(project))
+
+    mergeBranch("master2", TestUiHandler(project))
+
+    assertNotNull("Success message wasn't shown", vcsNotifier.lastNotification)
+    assertSuccessfulNotification("Merged ${code("master2")} to ${code("master")}", actions = listOf("Delete master2"))
+  }
+
   fun `test merge with unmerged files in first repo should show notification`() {
     branchWithCommit(myRepositories, "feature")
     unmergedFiles(first)
@@ -829,6 +849,19 @@ class GitBranchWorkerTest : GitPlatformTest() {
     myRepositories.forEach { assertBranchExists(it, "feature") }
   }
 
+  fun `test delete remote branch with the same name as remote tag`() {
+    prepareLocalAndRemoteBranch("feature", track = false)
+
+    git("tag feature")
+    git("push origin refs/tags/feature")
+
+    deleteRemoteBranch("origin/feature", DeleteRemoteBranchDecision.DELETE)
+
+    assertSuccessfulNotification("Deleted remote branch origin/feature")
+    myRepositories.forEach { `assert remote branch deleted`(it, "origin/feature") }
+    myRepositories.forEach { assertBranchExists(it, "feature") }
+  }
+
   fun `test delete remote branch should optionally delete the tracking branch as well`() {
     prepareLocalAndRemoteBranch("feature", track = true)
 
@@ -912,7 +945,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun mergeBranch(name: String, uiHandler: GitBranchUiHandler) {
     val brancher = GitBranchWorker(project, git, uiHandler)
-    brancher.merge(name, GitBrancher.DeleteOnMergeOption.PROPOSE, myRepositories)
+    brancher.merge(GitLocalBranch(name), GitBrancher.DeleteOnMergeOption.PROPOSE, myRepositories)
   }
 
   private fun deleteBranch(name: String, uiHandler: GitBranchUiHandler) {

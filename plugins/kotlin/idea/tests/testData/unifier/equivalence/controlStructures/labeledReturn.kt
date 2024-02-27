@@ -7,5 +7,8 @@ fun foo(a: Int) {
             if (a < 0) return
             return@foo
         }
+        return
+        (return)
+        return@run
     }
 }

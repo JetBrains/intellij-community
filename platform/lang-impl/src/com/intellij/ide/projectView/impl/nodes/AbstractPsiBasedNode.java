@@ -33,13 +33,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredText;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.icons.IconWithOverlay;
-import com.intellij.ui.scale.DerivedScaleType;
+import com.intellij.ui.icons.PredefinedIconOverlayService;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -47,8 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -248,18 +242,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     Icon icon = original;
 
     if (file.is(VFileProperty.SYMLINK)) {
-      if (ExperimentalUI.isNewUI()) {
-        icon = new IconWithOverlay(icon, PlatformIcons.SYMLINK_ICON) {
-          @Override
-          public @NotNull Shape getOverlayShape(int x, int y) {
-            var scale = (float) getScale(DerivedScaleType.EFF_USR_SCALE);
-            return new Rectangle2D.Float(x + scale * (16 - 7), y, 7 * scale, 7 * scale);
-          }
-        };
-      }
-      else {
-        icon = LayeredIcon.create(icon, PlatformIcons.SYMLINK_ICON);
-      }
+      icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon);
     }
 
     Icon bookmarkIcon = getBookmarkIcon(project, file);

@@ -104,7 +104,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             ConvertToBlockBodyIntention.Holder.convert(declaration)
     }
 
-    fun KtExpression.findOccurrences(occurrenceContainer: PsiElement): List<KtExpression> =
+    override fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression> =
         toRange().match(occurrenceContainer, KotlinPsiUnifier.DEFAULT).mapNotNull {
             val candidate = it.range.elements.first()
 

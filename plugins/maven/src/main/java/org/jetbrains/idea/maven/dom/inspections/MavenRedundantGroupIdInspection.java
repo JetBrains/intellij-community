@@ -15,7 +15,7 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTool {
+public final class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTool {
 
   @Override
   @NotNull

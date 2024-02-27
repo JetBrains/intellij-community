@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
  *
  * @author Max Medvedev
  */
-public class GrWithWeigher extends CompletionWeigher {
+public final class GrWithWeigher extends CompletionWeigher {
 
   @Override
   public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {

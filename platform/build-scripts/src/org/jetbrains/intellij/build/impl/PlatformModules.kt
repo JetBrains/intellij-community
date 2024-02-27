@@ -200,6 +200,9 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.diagnostic",
     "intellij.platform.util",
     "intellij.platform.core",
+    // it has package `kotlin.coroutines.jvm.internal` - should be packed into the same JAR as coroutine lib,
+    // to ensure that package index will not report one more JAR in a search path
+    "intellij.platform.bootstrap.coroutine",
   ), productLayout = productLayout, layout = layout)
   // used by jdom - pack to the same JAR
   layout.withProjectLibrary(libraryName = "aalto-xml", jarName = UTIL_8_JAR)
@@ -320,7 +323,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   return layout
 }
 
-internal fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp"
+fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp"
 
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()

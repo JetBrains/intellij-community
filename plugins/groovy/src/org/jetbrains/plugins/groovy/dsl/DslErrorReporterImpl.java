@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.event.HyperlinkEvent;
 
-public class DslErrorReporterImpl extends DslErrorReporter {
+public final class DslErrorReporterImpl extends DslErrorReporter {
   private static final Logger LOG = Logger.getInstance(GroovyDslFileIndex.class);
 
   public DslErrorReporterImpl() {

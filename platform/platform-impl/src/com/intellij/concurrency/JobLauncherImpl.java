@@ -538,10 +538,10 @@ public final class JobLauncherImpl extends JobLauncher {
         futureResult.set(false);
       }
     }
-    catch (Exception e) {
-      // in case of exception in normal flow, terminate background tasks
+    catch (Throwable t) {
+      // in case of any exception or error in normal flow, terminate background tasks
       addToQueue.dropEverythingAndPanic();
-      throw e;
+      throw t;
     }
     finally {
       // do not call future.get() to avoid overcompensation

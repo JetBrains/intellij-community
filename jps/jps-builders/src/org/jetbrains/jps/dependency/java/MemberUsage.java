@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.FactoredExternalizableGraphElement;
 import org.jetbrains.jps.dependency.GraphDataInput;
 import org.jetbrains.jps.dependency.GraphDataOutput;
 
 import java.io.IOException;
 
-public abstract class MemberUsage extends JvmElementUsage {
+public abstract class MemberUsage extends JvmElementUsage implements FactoredExternalizableGraphElement<JvmNodeReferenceID> {
 
   private final String myName;
 
@@ -19,14 +21,18 @@ public abstract class MemberUsage extends JvmElementUsage {
     myName = name;
   }
 
-  MemberUsage(GraphDataInput in) throws IOException {
-    super(in);
+  MemberUsage(@NotNull JvmNodeReferenceID owner, GraphDataInput in) throws IOException {
+    super(owner);
     myName = in.readUTF();
   }
 
   @Override
+  public JvmNodeReferenceID getFactorData() {
+    return getElementOwner();
+  }
+
+  @Override
   public void write(GraphDataOutput out) throws IOException {
-    super.write(out);
     out.writeUTF(myName);
   }
 

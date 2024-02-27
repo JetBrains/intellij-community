@@ -4,6 +4,7 @@
 
 package com.intellij.platform.settings.local
 
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.IntellijInternalApi
@@ -44,15 +45,22 @@ class SettingsControllerMediator(
   }
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
+    doSetItem(key, value)
+  }
+
+  @IntellijInternalApi
+  override fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult {
+    var totalResult = SetResult.INAPPLICABLE
     for (controller in controllers) {
       val result = controller.setItem(key = key, value = value)
-      if (result == SetResult.STOP) {
-        return
+      if (result == SetResult.FORBID) {
+        return result
       }
-      else if (result == SetResult.FORBID) {
-        throw ReadOnlySettingException(key)
+      else if (result == SetResult.DONE) {
+        totalResult = result
       }
     }
+    return totalResult
   }
 
   override fun createStateStorage(collapsedPath: String, file: Path): Any? {
@@ -73,4 +81,21 @@ class SettingsControllerMediator(
 
   @IntellijInternalApi
   override fun isPersistenceStateComponentProxy(): Boolean = isPersistenceStateComponentProxy
+
+  @IntellijInternalApi
+  override fun createChild(container: ComponentManager): SettingsController? {
+    val result = ArrayList<DelegatedSettingsController>()
+    for (controller in controllers) {
+      controller.createChild(container)?.let {
+        result.add(it)
+      }
+    }
+
+    if (result.isEmpty()) {
+      return null
+    }
+    else {
+      return SettingsControllerMediator(controllers = java.util.List.copyOf(result), isPersistenceStateComponentProxy = true)
+    }
+  }
 }

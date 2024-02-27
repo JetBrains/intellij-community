@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import com.intellij.psi.util.*
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
@@ -56,7 +56,8 @@ private fun getDefaultArgumentSymbol(argument: KtFunction): Pair<KtFunctionLikeS
 }
 
 context(KtAnalysisSession)
-private fun getCallExpressionSymbol(argument: KtFunction): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
+@ApiStatus.Internal
+fun getCallExpressionSymbol(argument: KtFunction): Pair<KtFunctionLikeSymbol, KtValueParameterSymbol>? {
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
     val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
     val symbol = parentCall.partiallyAppliedSymbol.symbol

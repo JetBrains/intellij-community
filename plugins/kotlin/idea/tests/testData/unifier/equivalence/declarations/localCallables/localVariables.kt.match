@@ -1,3 +1,4 @@
+(16,65)
 {
     val a = 1
     var b = 2
@@ -5,6 +6,7 @@
     return a - b
 }
 
+(83,132)
 {
     val x = 1
     var y = 2

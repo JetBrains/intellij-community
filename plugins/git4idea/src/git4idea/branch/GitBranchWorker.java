@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.repo.Repository;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
+import git4idea.GitReference;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
@@ -127,10 +128,24 @@ public final class GitBranchWorker {
     new GitDeleteRemoteBranchOperation(myProject, myGit, myUiHandler, repositories, branchNames).execute();
   }
 
-  public void merge(final @NotNull String branchName, final @NotNull GitBrancher.DeleteOnMergeOption deleteOnMerge,
-                    final @NotNull List<? extends GitRepository> repositories) {
+  /**
+   * @deprecated use {@link #merge(GitReference, GitBrancher.DeleteOnMergeOption, List)}
+   */
+  @Deprecated
+  public void merge(@NotNull String branchName, @NotNull GitBrancher.DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends GitRepository> repositories) {
+    GitReference branch = ContainerUtil.find(GitBranchUtil.getCommonLocalBranches(repositories), b -> b.getName().equals(branchName));
+    if (branch == null) {
+      branch = ContainerUtil.find(GitBranchUtil.getCommonRemoteBranches(repositories), b -> b.getName().equals(branchName));
+    }
+
+    merge(branch != null ? branch : new GitLocalBranch(branchName), deleteOnMerge, repositories);
+  }
+
+  public void merge(@NotNull GitReference reference, @NotNull GitBrancher.DeleteOnMergeOption deleteOnMerge,
+                    @NotNull List<? extends GitRepository> repositories) {
     updateInfo(repositories);
-    new GitMergeOperation(myProject, myGit, myUiHandler, repositories, branchName, deleteOnMerge).execute();
+    new GitMergeOperation(myProject, myGit, myUiHandler, repositories, reference, deleteOnMerge).execute();
   }
 
   public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {

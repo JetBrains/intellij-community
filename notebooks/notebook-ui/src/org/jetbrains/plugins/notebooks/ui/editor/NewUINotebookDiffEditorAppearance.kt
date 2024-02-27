@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.notebooks.ui.editor
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.ui.JBColor
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearanceSizes
 import java.awt.Color
@@ -18,6 +20,12 @@ object NewUINotebookDiffEditorAppearance: NotebookEditorAppearance,
   override fun shouldShowCellLineNumbers(): Boolean = false
   override fun shouldShowExecutionCounts(): Boolean = false  // not needed for DIFF -> execution does not reach it
   override fun shouldShowOutExecutionCounts(): Boolean = false
+  override fun getCellStripeHoverColor(editor: Editor): Color {
+    return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_UNDER_CURSOR_STRIPE_HOVER_COLOR) ?: JBColor.BLUE
+  }
+  override fun getCellStripeColor(editor: Editor): Color {
+    return editor.colorsScheme.getColor(NotebookEditorAppearance.CELL_STRIPE_COLOR) ?: JBColor.GRAY
+  }
 }
 
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.JavaModuleTestCase
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenc
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
@@ -1852,7 +1854,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val allJdks = runReadAction { ProjectJdkTable.getInstance() }.allJdks
         val firstJdk = allJdks.firstOrNull() ?: error("no jdks are present")
 
-        with(createFileInProject("script.kts").moduleInfo) {
+        with(createKtsFileInProject().moduleInfo) {
             UIUtil.dispatchAllInvocationEvents()
             NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
@@ -1873,7 +1875,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             ProjectRootManager.getInstance(project).projectSdk = mockJdk9
         }
 
-        with(createFileInProject("script.kts").moduleInfo) {
+        with(createKtsFileInProject().moduleInfo) {
             dependencies().filterIsInstance<SdkInfo>().single { it.sdk == mockJdk9 }
         }
     }
@@ -1895,7 +1897,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             }
         }
 
-        with(createFileInModule(a, "script.kts").moduleInfo) {
+        with(createKtsFileInModule(a).moduleInfo) {
             dependencies().filterIsInstance<SdkInfo>().first { it.sdk == mockJdk9 }
         }
     }
@@ -2168,6 +2170,13 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             2, moduleInfosForThePlatform.filterIsInstance<PlatformModuleInfo>().size
         )
     }
+
+    private fun createKtsFileInProject() = createFileInProject("script.kts").also { it.openAsScriptInEditor() }
+
+    private fun createKtsFileInModule(module: Module) = createFileInModule(module, "script.kts").also { it.openAsScriptInEditor() }
+
+    private fun VirtualFile.openAsScriptInEditor() = // fun name stresses that in the production code we really need to have a file opened
+        updateScriptDependenciesSynchronously(findPsiFile(project) ?: error("PSI file is missing for $this"))
 
     private fun assertPlatformModules(platform: TargetPlatform, leafSourceModule: Module) {
         val moduleInfos = getIdeaModelInfosCache(project)

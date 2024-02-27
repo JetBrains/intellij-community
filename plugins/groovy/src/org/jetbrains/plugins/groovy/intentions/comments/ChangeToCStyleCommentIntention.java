@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ChangeToCStyleCommentIntention extends GrPsiUpdateIntention {
+public final class ChangeToCStyleCommentIntention extends GrPsiUpdateIntention {
 
 
   @Override

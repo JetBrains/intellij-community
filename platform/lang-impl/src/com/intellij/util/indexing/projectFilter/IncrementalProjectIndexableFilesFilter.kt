@@ -3,13 +3,14 @@ package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.project.Project
 
-internal class IncrementalProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory {
+internal class IncrementalProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory() {
   override fun create(project: Project): ProjectIndexableFilesFilter {
-    return IncrementalProjectIndexableFilesFilter()
+    return IncrementalProjectIndexableFilesFilter(project)
   }
 }
 
-internal open class IncrementalProjectIndexableFilesFilter(protected val fileIds: ConcurrentFileIds = ConcurrentFileIds()) : ProjectIndexableFilesFilter(true) {
+internal open class IncrementalProjectIndexableFilesFilter(project: Project, protected val fileIds: ConcurrentFileIds = ConcurrentFileIds())
+  : ProjectIndexableFilesFilter(project, true) {
 
   override fun containsFileId(fileId: Int): Boolean = fileIds[fileId]
 

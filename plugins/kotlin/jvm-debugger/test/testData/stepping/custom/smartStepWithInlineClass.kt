@@ -98,5 +98,3 @@ fun main() {
 
 fun stopHere() {
 }
-
-// IGNORE_K2

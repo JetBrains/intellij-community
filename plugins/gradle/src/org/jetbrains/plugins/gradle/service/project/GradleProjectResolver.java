@@ -3,6 +3,9 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchActionWithCustomSerializer;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -140,7 +143,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     DefaultProjectResolverContext resolverContext =
-      new DefaultProjectResolverContext(syncTaskId, projectPath, settings, listener, gradleResolverPolicy, false);
+      new DefaultProjectResolverContext(syncTaskId, projectPath, settings, listener, gradleResolverPolicy);
     final CancellationTokenSource cancellationTokenSource = resolverContext.getCancellationTokenSource();
     myCancellationMap.putValue(resolverContext.getExternalSystemTaskId(), cancellationTokenSource);
 
@@ -213,10 +216,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     );
 
     boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
-    final ProjectImportAction projectImportAction =
-      useCustomSerialization
-      ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode())
-      : new ProjectImportAction(resolverCtx.isPreviewMode());
+    var buildAction = useCustomSerialization
+                      ? new GradleModelFetchActionWithCustomSerializer()
+                      : new GradleModelFetchAction();
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -233,11 +235,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       // pre-import checks
       resolverExtension.preImportCheck();
 
-      projectImportAction.addTargetTypes(resolverExtension.getTargetTypes());
+      buildAction.addTargetTypes(resolverExtension.getTargetTypes());
 
       // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
       try {
-        projectImportAction.addProjectImportModelProviders(resolverExtension.getModelProviders());
+        buildAction.addProjectImportModelProviders(resolverExtension.getModelProviders());
       }
       catch (Throwable t) {
         LOG.warn(t);
@@ -260,7 +262,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       GradleExecutionHelper.attachIdeaPluginConfigurator(executionSettings);
     }
 
-    BuildActionRunner buildActionRunner = new BuildActionRunner(resolverCtx, projectImportAction, executionSettings, myHelper);
+    BuildActionRunner buildActionRunner = new BuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper);
     resolverCtx.checkCancelled();
 
     final long startTime = System.currentTimeMillis();
@@ -269,7 +271,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
 
-    ProjectImportAction.AllModels allModels;
+    AllModels allModels;
     int errorsCount = 0;
     CountDownLatch buildFinishWaiter = new CountDownLatch(1);
 
@@ -278,7 +280,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .startSpan();
     if (GradleDaemonOpenTelemetryUtil.isDaemonTracingEnabled()) {
       GradleTracingContext gradleDaemonObservabilityContext = getActionTelemetryContext(gradleCallSpan);
-      projectImportAction.setTracingContext(gradleDaemonObservabilityContext);
+      buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       allModels = buildActionRunner.fetchModels(
@@ -356,7 +358,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   @NotNull
-  private DataNode<ProjectData> convertData(@NotNull ProjectImportAction.AllModels allModels,
+  private DataNode<ProjectData> convertData(@NotNull AllModels allModels,
                                             @NotNull GradleExecutionSettings executionSettings,
                                             @NotNull DefaultProjectResolverContext resolverCtx,
                                             @Nullable GradleVersion gradleVersion,
@@ -612,7 +614,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   @NotNull
-  private static Collection<IdeaModule> exposeCompositeBuild(ProjectImportAction.AllModels allModels,
+  private static Collection<IdeaModule> exposeCompositeBuild(AllModels allModels,
                                                              DefaultProjectResolverContext resolverCtx,
                                                              DataNode<ProjectData> projectDataNode) {
     if (resolverCtx.getSettings() != null && !resolverCtx.getSettings().getExecutionWorkspace().getBuildParticipants().isEmpty()) {
@@ -678,12 +680,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static void extractExternalProjectModels(@NotNull ProjectImportAction.AllModels models,
+  private static void extractExternalProjectModels(@NotNull AllModels models,
                                                    @NotNull ProjectResolverContext resolverCtx,
                                                    boolean useCustomSerialization) {
     resolverCtx.setModels(models);
-    final Class<? extends ExternalProject> modelClazz = resolverCtx.isPreviewMode() ? ExternalProjectPreview.class : ExternalProject.class;
-    final ExternalProject externalRootProject = models.getModel(modelClazz);
+    final ExternalProject externalRootProject = models.getModel(ExternalProject.class);
     if (externalRootProject == null) return;
 
     final DefaultExternalProject wrappedExternalRootProject =
@@ -700,7 +701,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     for (Build includedBuild : models.getIncludedBuilds()) {
-      final ExternalProject externalIncludedRootProject = models.getModel(includedBuild, modelClazz);
+      final ExternalProject externalIncludedRootProject = models.getModel(includedBuild, ExternalProject.class);
       if (externalIncludedRootProject == null) continue;
       final DefaultExternalProject wrappedExternalIncludedRootProject = useCustomSerialization
                                                                         ? (DefaultExternalProject)externalIncludedRootProject
@@ -978,7 +979,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return context;
   }
 
-  private static void exportRecordedTraces(@NotNull ProjectImportAction.AllModels allModels) {
+  private static void exportRecordedTraces(@NotNull AllModels allModels) {
     byte[] traces = allModels.getOpenTelemetryTrace();
     if (traces.length == 0) {
       return;

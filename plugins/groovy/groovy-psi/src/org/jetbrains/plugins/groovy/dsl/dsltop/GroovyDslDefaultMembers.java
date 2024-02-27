@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.CompletionProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 @SuppressWarnings({"UnusedDeclaration"})
-public class GroovyDslDefaultMembers implements GdslMembersProvider {
+public final class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**
    * Find a class by its full-qualified name

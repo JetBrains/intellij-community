@@ -13,4 +13,3 @@ fun main() {
 }
 
 // EXISTS: next(String), next(String), next(String), next(String)
-// IGNORE_K2

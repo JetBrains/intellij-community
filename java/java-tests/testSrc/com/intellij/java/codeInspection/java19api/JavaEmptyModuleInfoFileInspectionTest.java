@@ -75,7 +75,7 @@ public class JavaEmptyModuleInfoFileInspectionTest extends LightMultiFileTestCas
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, false, file);
 
-    IntentionAction intention = myFixture.getAvailableIntention("Auto-add module requirements");
+    IntentionAction intention = myFixture.getAvailableIntention("Fill in module dependencies");
     if (intention != null) {
       myFixture.launchAction(intention);
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();

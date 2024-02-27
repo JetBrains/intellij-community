@@ -398,10 +398,10 @@ class ModuleRootsInProjectFileIndexTest {
     runWriteActionAndWait {
       workspaceModel.updateProjectModel {
         val module = it.resolve(ModuleId(module.name))!!
-        it addEntity ContentRootEntity(urlManager.getOrCreateFromUri(rootUrl),
+        it addEntity ContentRootEntity(urlManager.getOrCreateFromUrl(rootUrl),
                                        emptyList<@NlsSafe String>(),
                                        module.entitySource) {
-          excludedUrls = listOf(urlManager.getOrCreateFromUri(excludedUrl)).map {
+          excludedUrls = listOf(urlManager.getOrCreateFromUrl(excludedUrl)).map {
             ExcludeUrlEntity(it, module.entitySource)
           }
           this.module = module

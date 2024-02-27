@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Contract;
@@ -104,21 +104,18 @@ public class TextRange implements Segment, Serializable {
     return myStartOffset <= offset && offset < myEndOffset;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public String substring(@NotNull String str) {
+  public @NotNull String substring(@NotNull String str) {
     return str.substring(myStartOffset, myEndOffset);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public CharSequence subSequence(@NotNull CharSequence str) {
+  public @NotNull CharSequence subSequence(@NotNull CharSequence str) {
     return str.subSequence(myStartOffset, myEndOffset);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public TextRange cutOut(@NotNull TextRange subRange) {
+  public @NotNull TextRange cutOut(@NotNull TextRange subRange) {
     if (subRange.getStartOffset() > getLength()) {
       throw new IllegalArgumentException("SubRange: " + subRange + "; this=" + this);
     }
@@ -131,22 +128,19 @@ public class TextRange implements Segment, Serializable {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public TextRange shiftRight(int delta) {
+  public @NotNull TextRange shiftRight(int delta) {
     if (delta == 0) return this;
     return new TextRange(myStartOffset + delta, myEndOffset + delta);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public TextRange shiftLeft(int delta) {
+  public @NotNull TextRange shiftLeft(int delta) {
     if (delta == 0) return this;
     return new TextRange(myStartOffset - delta, myEndOffset - delta);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public TextRange grown(int lengthDelta) {
+  public @NotNull TextRange grown(int lengthDelta) {
     if (lengthDelta == 0) {
       return this;
     }
@@ -154,20 +148,17 @@ public class TextRange implements Segment, Serializable {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static TextRange from(int offset, int length) {
+  public static @NotNull TextRange from(int offset, int length) {
     return create(offset, offset + length);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static TextRange create(int startOffset, int endOffset) {
+  public static @NotNull TextRange create(int startOffset, int endOffset) {
     return new TextRange(startOffset, endOffset);
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static TextRange create(@NotNull Segment segment) {
+  public static @NotNull TextRange create(@NotNull Segment segment) {
     return create(segment.getStartOffset(), segment.getEndOffset());
   }
 
@@ -178,8 +169,7 @@ public class TextRange implements Segment, Serializable {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public String replace(@NotNull String original, @NotNull String replacement) {
+  public @NotNull String replace(@NotNull String original, @NotNull String replacement) {
     String beginning = original.substring(0, getStartOffset());
     String ending = original.substring(getEndOffset());
     return beginning + replacement + ending;
@@ -226,8 +216,7 @@ public class TextRange implements Segment, Serializable {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public TextRange union(@NotNull TextRange textRange) {
+  public @NotNull TextRange union(@NotNull TextRange textRange) {
     if (equals(textRange)) {
       return this;
     }
@@ -240,8 +229,7 @@ public class TextRange implements Segment, Serializable {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static TextRange allOf(@NotNull String s) {
+  public static @NotNull TextRange allOf(@NotNull String s) {
     return new TextRange(0, s.length());
   }
 

@@ -127,9 +127,18 @@ class UnindexedFilesScannerExecutor(project: Project)
     @JvmStatic
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
 
+    // TODO IJPL-578 - behavior should be the same in tests and prod. Temporary flag to ease tests migration.
+    private val IS_UNDER_TEAMCITY: Boolean = System.getenv("TEAMCITY_VERSION") != null
+
     @JvmStatic
-    fun shouldScanInSmartMode(): Boolean = SystemProperties.getBooleanProperty("scanning.in.smart.mode",
-                                                                               !DumbServiceImpl.isSynchronousTaskExecution) &&
-                                           Registry.`is`("scanning.in.smart.mode", true)
+    fun shouldScanInSmartMode(): Boolean {
+      val registryValue = Registry.get("scanning.in.smart.mode")
+      return if (registryValue.isChangedFromDefault) {
+        registryValue.asBoolean()
+      }
+      else {
+        SystemProperties.getBooleanProperty("scanning.in.smart.mode", !(IS_UNDER_TEAMCITY && DumbServiceImpl.isSynchronousTaskExecution))
+      }
+    }
   }
 }

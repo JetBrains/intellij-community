@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
+public final class GroovyDoubleCheckedLockingInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField,WeakerAccess

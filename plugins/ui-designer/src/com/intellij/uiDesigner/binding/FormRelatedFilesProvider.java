@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class FormRelatedFilesProvider extends GotoRelatedProvider {
+public final class FormRelatedFilesProvider extends GotoRelatedProvider {
 
   @Override
   public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {

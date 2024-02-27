@@ -17,7 +17,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
+import java.io.StringReader
+import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionStage
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -59,6 +62,8 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
       override fun introspect(subject: Introspectable): CompletableFuture<JavaLanguageRuntimeConfiguration> {
         val javaHomePromise = if (config.homePath.isBlank()) {
           subject.promiseEnvironmentVariable("JAVA_HOME")
+            .thenCompose { it.completeOrElse { subject.promiseExecuteScript(listOf("java", "-XshowSettings:properties", "-version"))
+              .handle { output, _ -> tryParseJavaHome(output.stdout) }}}
             .thenApply { acceptJavaHome(it) }
         }
         else {
@@ -93,6 +98,14 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
           ?.let { config.javaVersionString = it.toString() }
       }
     }
+  }
+
+  private fun <T> T?.completeOrElse(orElse: () -> CompletionStage<T>): CompletionStage<T> = this?.let { CompletableFuture.completedFuture(this) } ?: orElse()
+
+  private fun tryParseJavaHome(output: String): String? {
+    val properties = Properties()
+    properties.load(StringReader(output))
+    return properties.getProperty("java.home")
   }
 
   private fun tryParseJavaVersionFromOutput(output: String?): JavaVersion? =

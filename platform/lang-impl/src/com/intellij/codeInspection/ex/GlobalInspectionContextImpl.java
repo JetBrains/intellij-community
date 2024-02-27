@@ -244,7 +244,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ThreadingAssertions.assertEventDispatchThread();
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
-    LOG.info("Code inspection finished. Took " + elapsed + " ms");
+    LOG.info("Code inspection finished. Took " + elapsed + " ms; Files in scope: " + scope.getFileCount());
     if (getProject().isDisposed()) return;
 
     InspectionResultsView oldView = myView;

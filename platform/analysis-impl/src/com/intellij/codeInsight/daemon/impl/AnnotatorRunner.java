@@ -67,21 +67,30 @@ final class AnnotatorRunner {
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
     Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
-    PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
-      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages));
-    boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
-      for (Annotator annotator : supportedLanguages.keySet()) {
-        addToQueue.enqueue(annotator);
-      }
-      addToQueue.finish();
-      return runnable.getAsBoolean();
-    });
-    myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myHighlightInfoHolder.getAnnotationSession(), myPsiFile);
-    return result;
+    HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(myProject);
+    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(myPsiFile, "AnnotationRunner", false, true);
+    try {
+      PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
+        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages,
+                                                                                    highlightInfoUpdater));
+      boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
+        for (Annotator annotator : supportedLanguages.keySet()) {
+          addToQueue.enqueue(annotator);
+        }
+        addToQueue.finish();
+        return runnable.getAsBoolean();
+      });
+      myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myHighlightInfoHolder.getAnnotationSession(), myPsiFile);
+      return result;
+    }
+    finally {
+      UpdateHighlightersUtil.incinerateObsoleteHighlighters(invalidElementsRecycler, myHighlightingSession);
+      invalidElementsRecycler.releaseHighlighters();
+    }
   }
 
   @NotNull
-  private Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<PsiElement> elements) {
+  private Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements) {
     Map<Annotator, Set<Language>> map = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
       public int hashCode(Annotator object) {
@@ -120,7 +129,7 @@ final class AnnotatorRunner {
 
   private void runAnnotator(@NotNull Annotator annotator,
                             @NotNull List<? extends PsiElement> insideThenOutside,
-                            @NotNull Map<Annotator, Set<Language>> supportedLanguages) {
+                            @NotNull Map<Annotator, Set<Language>> supportedLanguages, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     Set<Language> supported = supportedLanguages.get(annotator);
     if (supported.isEmpty()) {
       return;
@@ -173,8 +182,8 @@ final class AnnotatorRunner {
       }
       Document hostDocument = myPsiFile.getFileDocument();
       if (hostDocument instanceof DocumentWindow w) hostDocument = w.getDelegate();
-      HighlightInfoUpdater.getInstance(myProject).psiElementVisited(annotator.getClass(), element, newInfos, hostDocument, myPsiFile, myProject,
-                                                                    emptyElementRecycler, myHighlightingSession);
+      highlightInfoUpdater.psiElementVisited(annotator.getClass(), element, newInfos, hostDocument, myPsiFile, myProject,
+                                             emptyElementRecycler, myHighlightingSession);
     }
   }
 
@@ -224,10 +233,17 @@ final class AnnotatorRunner {
   private void addConvertedToHostInfo(@NotNull HighlightInfo info, @NotNull List<? super HighlightInfo> newInfos) {
     Document document = myPsiFile.getFileDocument();
     if (document instanceof DocumentWindow window) {
-      addPatchedInfos(info, myPsiFile, window, InjectedLanguageManager.getInstance(myProject), patched -> newInfos.add(patched));
+      PsiFile hostPsiFile = InjectedLanguageManager.getInstance(myProject).getTopLevelFile(myPsiFile);
+      addPatchedInfos(info, myPsiFile, window, InjectedLanguageManager.getInstance(myProject), patched -> {
+        if (HighlightInfoB.isAcceptedByFilters(patched, hostPsiFile)) {
+          newInfos.add(patched);
+        }
+      });
     }
     else {
-      newInfos.add(info);
+      if (HighlightInfoB.isAcceptedByFilters(info, myPsiFile)) {
+        newInfos.add(info);
+      }
     }
   }
 

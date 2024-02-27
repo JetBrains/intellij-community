@@ -39,7 +39,7 @@ class GHPullRequest(id: String,
                     val headRefOid: String,
                     val headRepository: GHRepository?,
                     override val reactions: GHReactable.ReactionConnection)
-  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt, isReadByViewer,
+  : GHPullRequestShort(id, url, number, title, state, isDraft, author, createdAt, updatedAt,
                        assignees, labels, reviewRequests, reviewThreads,
                        reviews, mergeable, viewerCanUpdate, viewerCanReact, viewerDidAuthor, reactions) {
 

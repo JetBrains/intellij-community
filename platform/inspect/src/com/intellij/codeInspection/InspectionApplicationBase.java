@@ -62,7 +62,6 @@ import one.util.streamex.StreamEx;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.xml.stream.XMLStreamException;
@@ -79,8 +78,8 @@ import java.util.function.Predicate;
 
 import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod;
 
-public class InspectionApplicationBase implements CommandLineInspectionProgressReporter {
-  private static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
+public class InspectionApplicationBase implements CommandLineInspectionProgressReporter, InspectionApplicationStart.Synchronous {
+  public static final Logger LOG = Logger.getInstance(InspectionApplicationBase.class);
 
   public static final String PROJECT_STRUCTURE_DIR = "projectStructure";
 
@@ -272,8 +271,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return project;
   }
 
-  @VisibleForTesting
-  public @Nullable AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  private @Nullable AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);

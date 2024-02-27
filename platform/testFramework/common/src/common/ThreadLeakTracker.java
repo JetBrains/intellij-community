@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -29,7 +29,6 @@ import java.util.prefs.Preferences;
 @TestOnly
 @Internal
 public final class ThreadLeakTracker {
-
   private ThreadLeakTracker() { }
 
   private static final MethodHandle getThreads = getThreadsMethodHandle();
@@ -59,7 +58,7 @@ public final class ThreadLeakTracker {
   private static final Set<String> wellKnownOffenders;
 
   static {
-    List<String> offenders = List.of(
+    @SuppressWarnings({"deprecation", "SpellCheckingInspection"}) List<String> offenders = List.of(
       "ApplicationImpl pooled thread ", // com.intellij.util.concurrency.AppScheduledExecutorService.POOLED_THREAD_PREFIX
       "AWT-EventQueue-",
       "AWT-Shutdown",
@@ -76,8 +75,8 @@ public final class ThreadLeakTracker {
       FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
-      "HttpClient-",
-      // Any usage of HttpClient (from JDK) may leave a thread pool. It's OK since it's not supposed to be disposed to reuse connections
+      "grpc-default-worker-",  // grpc_netty_shaded
+      "HttpClient-",  // JRE's HttpClient thread pool is not supposed to be disposed - to reuse connections
       ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
       "Image Fetcher ",
@@ -149,10 +148,7 @@ public final class ThreadLeakTracker {
     }
   }
 
-  private static void waitForThread(@NotNull Thread thread,
-                                    @NotNull Map<Thread, StackTraceElement[]> stackTraces,
-                                    @NotNull Map<String, Thread> all,
-                                    @NotNull Map<String, Thread> after) {
+  private static void waitForThread(Thread thread, Map<Thread, StackTraceElement[]> stackTraces, Map<String, Thread> all, Map<String, Thread> after) {
     if (!shouldWaitForThread(thread)) {
       return;
     }
@@ -165,7 +161,7 @@ public final class ThreadLeakTracker {
     long deadlineMs = start + TimeUnit.SECONDS.toMillis(WAIT_SEC);
     StackTraceElement[] stackTrace = traceBeforeWait;
     while (System.currentTimeMillis() < deadlineMs) {
-      // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
+      // give a blocked thread an opportunity to die if it's stuck doing invokeAndWait()
       if (EDT.isCurrentThreadEdt()) {
         UIUtil.dispatchAllInvocationEvents();
       }
@@ -199,7 +195,7 @@ public final class ThreadLeakTracker {
     );
   }
 
-  private static boolean shouldWaitForThread(@NotNull Thread thread) {
+  private static boolean shouldWaitForThread(Thread thread) {
     if (thread == Thread.currentThread()) {
       return false;
     }
@@ -210,7 +206,7 @@ public final class ThreadLeakTracker {
     return true;
   }
 
-  private static boolean shouldIgnore(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
+  private static boolean shouldIgnore(Thread thread, StackTraceElement[] stackTrace) {
     if (!thread.isAlive()) return true;
     if (stackTrace.length == 0) return true;
     if (isWellKnownOffender(thread.getName())) return true;
@@ -225,7 +221,7 @@ public final class ThreadLeakTracker {
            || isJMXRemoteCall(stackTrace);
   }
 
-  private static boolean isWellKnownOffender(@NotNull String threadName) {
+  private static boolean isWellKnownOffender(String threadName) {
     for (String t : wellKnownOffenders) {
       if (threadName.contains(t)) {
         return true;
@@ -234,18 +230,18 @@ public final class ThreadLeakTracker {
     return false;
   }
 
-  // true, if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for the next task
-  private static boolean isIdleApplicationPoolThread(StackTraceElement @NotNull [] stackTrace) {
+  // true, if somebody started a new thread via "executeInPooledThread()" and then the thread is waiting for the next task
+  private static boolean isIdleApplicationPoolThread(StackTraceElement[] stackTrace) {
     return ContainerUtil.exists(stackTrace, element -> element.getMethodName().equals("getTask")
                                                      && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
   }
 
-  private static boolean isKotlinCIOSelector(StackTraceElement @NotNull [] stackTrace) {
+  private static boolean isKotlinCIOSelector(StackTraceElement[] stackTrace) {
     return ContainerUtil.exists(stackTrace, element -> element.getMethodName().equals("select")
                                                      && element.getClassName().equals("io.ktor.network.selector.ActorSelectorManager"));
   }
 
-  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
+  private static boolean isIdleCommonPoolThread(Thread thread, StackTraceElement[] stackTrace) {
     if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
       return false;
     }
@@ -284,7 +280,7 @@ public final class ThreadLeakTracker {
   //	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
   //	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
   //	at java.lang.Thread.run(Thread.java:748)
-  private static boolean isFutureTaskAboutToFinish(StackTraceElement @NotNull [] stackTrace) {
+  private static boolean isFutureTaskAboutToFinish(StackTraceElement[] stackTrace) {
     if (stackTrace.length < 5) {
       return false;
     }
@@ -301,7 +297,7 @@ public final class ThreadLeakTracker {
    * at kotlinx.coroutines.DefaultExecutor.run(DefaultExecutor.kt:83)
    * at java.lang.Thread.run(Thread.java:748)
    */
-  private static boolean isIdleDefaultCoroutineExecutorThread(@NotNull Thread thread, @NotNull StackTraceElement @NotNull [] stackTrace) {
+  private static boolean isIdleDefaultCoroutineExecutorThread(Thread thread, StackTraceElement[] stackTrace) {
     if (stackTrace.length != 4) {
       return false;
     }
@@ -312,7 +308,7 @@ public final class ThreadLeakTracker {
            && stackTrace[2].getMethodName().equals("run");
   }
 
-  private static boolean isCoroutineSchedulerPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
+  private static boolean isCoroutineSchedulerPoolThread(Thread thread, StackTraceElement[] stackTrace) {
     if (!"kotlinx.coroutines.scheduling.CoroutineScheduler$Worker".equals(thread.getClass().getName())) {
       return false;
     }
@@ -326,11 +322,11 @@ public final class ThreadLeakTracker {
   }
 
   /**
-   * Starter framework [intellij.ide.starter] / [intellij.ide.starter.extended] register its own JUnit listeners.
-   * Order of execution of listeners isn't defined, so when thread leak detector detects a leak the listener from starter
-   * might not have a chance to clean up after tests.
+   * Starter framework [intellij.ide.starter] / [intellij.ide.starter.extended] registers its own JUnit listeners.
+   * A listener's order of execution isn't defined, so when the thread leak detector detects a leak,
+   * the listener from starter might not have a chance to clean up after tests.
    */
-  private static boolean isStarterTestFramework(StackTraceElement @NotNull [] stackTrace) {
+  private static boolean isStarterTestFramework(StackTraceElement[] stackTrace) {
     // java.lang.AssertionError: Thread leaked: Thread[Redirect stderr,5,main] (alive) RUNNABLE
     //--- its stacktrace:
     // ...
@@ -344,9 +340,9 @@ public final class ThreadLeakTracker {
   }
 
   /**
-   * com.intellij.driver.client.* is using JMX. That might lead to long-living tasks.
+   * {@code com.intellij.driver.client.*} is using JMX. That might lead to long-living tasks.
    */
-  private static boolean isJMXRemoteCall(StackTraceElement @NotNull [] stackTrace) {
+  private static boolean isJMXRemoteCall(StackTraceElement[] stackTrace) {
     // Thread leaked: Thread[JMX client heartbeat 3,5,main] (alive) TIMED_WAITING
     // --- its stacktrace:
     // at java.base@17.0.9/java.lang.Thread.sleep(Native Method)
@@ -356,23 +352,20 @@ public final class ThreadLeakTracker {
     return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("com.sun.jmx.remote"));
   }
 
-  private static @NotNull CharSequence dumpThreadsToString(
-    @NotNull Map<String, Thread> after,
-    @NotNull Map<Thread, StackTraceElement[]> stackTraces
-  ) {
+  private static CharSequence dumpThreadsToString(Map<String, Thread> after, Map<Thread, StackTraceElement[]> stackTraces) {
     StringBuilder f = new StringBuilder();
-    after.forEach((name, thread) -> {
-      f.append("\"").append(name).append("\" (").append(thread.isAlive() ? "alive" : "dead").append(") ").append(thread.getState());
-      f.append("\n");
-      for (StackTraceElement element : stackTraces.get(thread)) {
-        f.append("\tat ").append(element).append("\n");
+    for (Map.Entry<String, Thread> entry : after.entrySet()) {
+      Thread t = entry.getValue();
+      f.append('"').append(entry.getKey()).append("\" (").append(t.isAlive() ? "alive" : "dead").append(") ").append(t.getState()).append('\n');
+      for (StackTraceElement element : stackTraces.get(t)) {
+        f.append("\tat ").append(element).append('\n');
       }
-      f.append("\n");
-    });
+      f.append('\n');
+    }
     return f;
   }
 
-  private static @NotNull String internalDiagnostic(StackTraceElement @NotNull [] stackTrace) {
+  private static String internalDiagnostic(StackTraceElement[] stackTrace) {
     return stackTrace.length < 5
            ? "stackTrace.length: " + stackTrace.length
            : "(diagnostic: " +
@@ -387,7 +380,7 @@ public final class ThreadLeakTracker {
              ")";
   }
 
-  private static @NotNull MethodHandle getThreadsMethodHandle() {
+  private static MethodHandle getThreadsMethodHandle() {
     try {
       return MethodHandles.privateLookupIn(Thread.class, MethodHandles.lookup())
         .findStatic(Thread.class, "getThreads", MethodType.methodType(Thread[].class));
@@ -397,13 +390,13 @@ public final class ThreadLeakTracker {
     }
   }
 
-  private static void validateWhitelistedThreads(@NotNull List<String> offenders) {
+  private static void validateWhitelistedThreads(List<String> offenders) {
     List<String> sorted = new ArrayList<>(offenders);
     sorted.sort(String::compareToIgnoreCase);
     if (offenders.equals(sorted)) {
       return;
     }
-    String proper = String
+    @SuppressWarnings("deprecation") String proper = String
       .join(",\n", ContainerUtil.map(sorted, s -> '"' + s + '"'))
       .replaceAll('"' + FlushingDaemon.NAME + '"', "FlushingDaemon.NAME")
       .replaceAll('"' + ProcessIOExecutorService.POOLED_THREAD_PREFIX + '"', "ProcessIOExecutorService.POOLED_THREAD_PREFIX");

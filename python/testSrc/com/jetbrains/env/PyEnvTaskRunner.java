@@ -171,7 +171,7 @@ public class PyEnvTaskRunner {
    * <p>
    *  Instances of this class are ordered by the number of tags they provide. Typically, fewer tags
    *  mean fewer packages installed inside the environment. If two environments have the same Python version
-   *  and both are suitable for a test, we prefer the one with less number of packages
+   *  and both are suitable for a test, we prefer the one with fewer numbers of packages
    *  since it can improve performance when code inside is involved.
    */
   private static class EnvInfo implements Comparable<EnvInfo> {

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.Annotation.QuickFixInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Couple;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Verifier;
@@ -27,9 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class ProblemDescriptorUtil {
   public static final int NONE = 0x00000000;
@@ -243,7 +243,6 @@ public final class ProblemDescriptorUtil {
     }
 
     List<ProblemDescriptor> problems = new ArrayList<>(annotations.size());
-    IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = new IdentityHashMap<>();
     for (Annotation annotation : annotations) {
       HighlightSeverity severity = annotation.getSeverity();
       int startOffset = annotation.getStartOffset();
@@ -251,7 +250,7 @@ public final class ProblemDescriptorUtil {
 
       String message = StringUtil.notNullize(annotation.getMessage());
       boolean isAfterEndOfLine = annotation.isAfterEndOfLine();
-      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
+      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes());
 
       ProblemDescriptor descriptor = convertToDescriptor(file, severity, startOffset, endOffset, message, isAfterEndOfLine, quickFixes);
       if (descriptor != null) {
@@ -310,27 +309,11 @@ public final class ProblemDescriptorUtil {
     return new TextRange(startOffset - elementTextRange.getStartOffset(), endOffset - elementTextRange.getStartOffset());
   }
 
-  private static @NotNull LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
-                                                             @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+  private static @NotNull LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<QuickFixInfo> fixInfos) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }
-    LocalQuickFix[] result = new LocalQuickFix[fixInfos.size()];
-    int i = 0;
-    for (Annotation.QuickFixInfo fixInfo : fixInfos) {
-      LocalQuickFix fix = fixInfo.localQuickFix;
-      if (fix == null) {
-        IntentionAction intentionAction = fixInfo.quickFix;
-        LocalQuickFix lqf = quickFixMappingCache.get(intentionAction);
-        if (lqf == null) {
-          lqf = new ExternalAnnotatorInspectionVisitor.LocalQuickFixBackedByIntentionAction(intentionAction);
-          quickFixMappingCache.put(intentionAction, lqf);
-        }
-        fix = lqf;
-      }
-      result[i++] = fix;
-    }
-    return result;
+    return ContainerUtil.map2Array(fixInfos, LocalQuickFix.class, QuickFixInfo::getLocalQuickFix);
   }
 
   public static ProblemDescriptor toProblemDescriptor(@NotNull PsiFile file, @NotNull HighlightInfo info) {

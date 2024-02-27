@@ -16,7 +16,7 @@ import java.util.EnumSet;
 /**
  * Provides implicit usages of lombok fields
  */
-public class LombokImplicitUsageProvider implements ImplicitUsageProvider {
+public final class LombokImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {

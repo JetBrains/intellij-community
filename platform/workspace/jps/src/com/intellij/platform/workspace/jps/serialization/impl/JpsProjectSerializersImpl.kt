@@ -112,7 +112,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     return files.map {
       val fileName = it.fileName.toString()
-      val directoryUrl = virtualFileManager.getOrCreateFromUri(factory.directoryUrl)
+      val directoryUrl = virtualFileManager.getOrCreateFromUrl(factory.directoryUrl)
       val entitySource =
         bindExistingSource(fileInDirectorySourceNames, factory.entityClass, fileName, directoryUrl) ?: createFileInDirectorySource(
           directoryUrl, fileName)
@@ -155,7 +155,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
         val factory = directorySerializerFactoriesByUrl[PathUtilRt.getParentPath(addedFileUrl)]
         val newFileSerializer = factory?.createSerializer(addedFileUrl, createFileInDirectorySource(
-          virtualFileManager.getOrCreateFromUri(factory.directoryUrl), PathUtilRt.getFileName(addedFileUrl)), virtualFileManager)
+          virtualFileManager.getOrCreateFromUrl(factory.directoryUrl), PathUtilRt.getFileName(addedFileUrl)), virtualFileManager)
         if (newFileSerializer != null) {
           newFileSerializers.add(newFileSerializer)
           serializerToDirectoryFactory[newFileSerializer] = factory
@@ -755,7 +755,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                   }
                 }
               }
-              val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.getOrCreateFromUri(url), moduleGroup)
+              val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.getOrCreateFromUrl(url), moduleGroup)
               fileSerializersByUrl.put(url, newSerializer)
               moduleSerializers[newSerializer] = moduleListSerializer
               affectedModuleListSerializers.add(moduleListSerializer)
@@ -900,7 +900,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
         val source =
           if (currentSource != null && fileIdToFileName.get(currentSource.fileNameId) == fileName) currentSource
-          else createFileInDirectorySource(virtualFileManager.getOrCreateFromUri(factory.directoryUrl), fileName)
+          else createFileInDirectorySource(virtualFileManager.getOrCreateFromUrl(factory.directoryUrl), fileName)
         factory.createSerializer("${factory.directoryUrl}/$fileName", source, virtualFileManager) to entityMap
       }
   }
@@ -910,7 +910,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                               unloadedEntityStorage: EntityStorage,
                               writer: JpsFileContentWriter) {
     LOG.trace("saving modules list")
-    it.saveEntitiesList(storage.entities(ModuleEntity::class.java) + unloadedEntityStorage.entities(ModuleEntity::class.java), writer)
+    it.saveEntityList(storage.entities(ModuleEntity::class.java) + unloadedEntityStorage.entities(ModuleEntity::class.java), writer)
   }
 
   companion object {

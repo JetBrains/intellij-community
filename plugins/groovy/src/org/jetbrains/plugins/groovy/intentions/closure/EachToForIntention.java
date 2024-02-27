@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author Maxim.Medvedev
  */
-public class EachToForIntention extends GrPsiUpdateIntention {
+public final class EachToForIntention extends GrPsiUpdateIntention {
 
   @NonNls public static final String OUTER = "Outer";
   @NonNls public static final String HINT = "Replace with for-in";

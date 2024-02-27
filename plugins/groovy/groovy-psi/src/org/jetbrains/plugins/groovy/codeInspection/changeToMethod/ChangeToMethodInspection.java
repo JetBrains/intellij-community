@@ -25,7 +25,7 @@ import static org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transfo
  * Replaces operator call with explicit method call.
  * GetAt and PutAt already covered by IndexedExpressionConversionIntention
  */
-public class ChangeToMethodInspection extends BaseInspection {
+public final class ChangeToMethodInspection extends BaseInspection {
 
   @NotNull
   @Override

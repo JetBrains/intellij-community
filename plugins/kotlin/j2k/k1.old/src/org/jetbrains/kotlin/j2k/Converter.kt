@@ -855,6 +855,7 @@ class Converter private constructor(
         else this
     }
 
+    @Suppress("DuplicatedCode")
     private fun allowProtected(element: PsiElement, member: PsiMember, originalClass: PsiClass): Boolean {
         if (element.parent is PsiNewExpression && member is PsiMethod && member.isConstructor) {
             // calls to for protected constructors are allowed only within same class or as super calls

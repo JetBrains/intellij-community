@@ -1,3 +1,4 @@
+(39,299)
 {
             val a = object: Function0<Int> {
                 override fun invoke(): Int = 1
@@ -8,6 +9,7 @@
             println(a() - b())
         }
 
+(317,577)
 {
             val b = object: Function0<Int> {
                 override fun invoke(): Int = 1

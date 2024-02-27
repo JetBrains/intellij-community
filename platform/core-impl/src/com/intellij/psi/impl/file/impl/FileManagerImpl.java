@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -368,7 +368,7 @@ public final class FileManagerImpl implements FileManager {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
-      LOG.error("Invalid file: " + vFile);
+      LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 
@@ -403,7 +403,7 @@ public final class FileManagerImpl implements FileManager {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
-      LOG.error("File is not valid:" + vFile);
+      LOG.error(new InvalidVirtualFileAccessException(vFile));
       return null;
     }
 

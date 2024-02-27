@@ -1,15 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.Build
 import org.jetbrains.plugins.gradle.model.Project
-import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @ApiStatus.Internal
-class ToolingModelsProviderImpl(private val models: ProjectImportAction.AllModels) : ToolingModelsProvider {
+class ToolingModelsProviderImpl(private val models: AllModels) : ToolingModelsProvider {
   private val projectsMap: Map<Project, Build> by lazy {
     builds()
       .flatMap { build -> build.projects.stream().map { it to build } }

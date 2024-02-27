@@ -3,6 +3,7 @@ package com.intellij.java.library;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -22,8 +23,11 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.Interner;
 import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +52,28 @@ public final class JavaLibraryUtil {
   }
 
   private static final Key<CachedValue<Map<String, Boolean>>> LIBRARY_CLASSES_PRESENCE_KEY = Key.create("LIBRARY_CLASSES_PRESENCE");
-  private static final Key<CachedValue<Libraries>> MAVEN_LIBRARY_PRESENCE_KEY = Key.create("MAVEN_LIBRARY_PRESENCE");
+
+  private static final Key<ParameterizedCachedValue<Libraries, Project>> MAVEN_LIBRARIES_PROJECT_KEY = Key.create("MAVEN_LIBRARY_PRESENCE");
+  private static final Key<ParameterizedCachedValue<Libraries, Module>> MAVEN_LIBRARIES_MODULE_KEY = Key.create("MAVEN_LIBRARY_PRESENCE");
+
+  private static final ParameterizedCachedValueProvider<Libraries, Project> MAVEN_LIBRARIES_PROJECT_PROVIDER = project -> {
+    return Result.create(fillLibraries(OrderEnumerator.orderEntries(project), true),
+                         ProjectRootManager.getInstance(project));
+  };
+
+  private static final ParameterizedCachedValueProvider<Libraries, Module> MAVEN_LIBRARIES_MODULE_PROVIDER = module -> {
+    String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
+    Libraries libraries = fillLibraries(OrderEnumerator.orderEntries(module),
+                                        isUnsupportedBuildSystem(externalSystemId));
+    return Result.create(libraries, ProjectRootManager.getInstance(module.getProject()));
+  };
+
+  private static final Interner<String> INTERNER = Interner.createStringInterner();
+
+  private static synchronized @NotNull String intern(@NotNull String str) {
+    // interner is not thread-safe
+    return INTERNER.intern(str);
+  }
 
   public static @Nullable MavenCoordinates getMavenCoordinates(@NotNull Library library) {
     if (library instanceof LibraryEx) {
@@ -57,6 +82,8 @@ public final class JavaLibraryUtil {
         return ((LibraryWithMavenCoordinatesProperties)libraryProperties).getMavenCoordinates();
       }
     }
+
+    ProgressManager.checkCanceled();
 
     var name = library.getName();
     if (name == null) return null;
@@ -67,12 +94,14 @@ public final class JavaLibraryUtil {
     var parts = StringUtil.split(coordinatesString, ":");
     if (parts.size() < 3) return null;
 
-    return new MavenCoordinates(parts.get(0), parts.get(1), parts.get(parts.size() - 1));
+    return new MavenCoordinates(intern(parts.get(0)),
+                                intern(parts.get(1)),
+                                intern(parts.get(parts.size() - 1)));
   }
 
   /**
    * Checks if the passed library class is available in the project. Should be used only with constant class names from a known library.
-   * Returns false from dumb mode or if the project is already disposed.
+   * Returns false from dumb mode or if the project is disposed.
    */
   @RequiresReadLock
   public static boolean hasLibraryClass(@Nullable Project project, @NotNull String classFqn) {
@@ -227,19 +256,13 @@ public final class JavaLibraryUtil {
   }
 
   private static @NotNull Libraries getProjectLibraries(@NotNull Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, MAVEN_LIBRARY_PRESENCE_KEY, () -> {
-      return Result.create(fillLibraries(OrderEnumerator.orderEntries(project), true),
-                           ProjectRootManager.getInstance(project));
-    }, false);
+    return CachedValuesManager.getManager(project)
+      .getParameterizedCachedValue(project, MAVEN_LIBRARIES_PROJECT_KEY, MAVEN_LIBRARIES_PROJECT_PROVIDER, false, project);
   }
 
   private static @NotNull Libraries getModuleLibraries(@NotNull Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, MAVEN_LIBRARY_PRESENCE_KEY, () -> {
-      String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
-      Libraries libraries = fillLibraries(OrderEnumerator.orderEntries(module),
-                                          isUnsupportedBuildSystem(externalSystemId));
-      return Result.create(libraries, ProjectRootManager.getInstance(module.getProject()));
-    }, false);
+    return CachedValuesManager.getManager(module.getProject())
+      .getParameterizedCachedValue(module, MAVEN_LIBRARIES_MODULE_KEY, MAVEN_LIBRARIES_MODULE_PROVIDER, false, module);
   }
 
   private static boolean isUnsupportedBuildSystem(@Nullable String externalSystemId) {
@@ -253,8 +276,9 @@ public final class JavaLibraryUtil {
     orderEnumerator.recursively()
       .forEachLibrary(library -> {
         MavenCoordinates coordinates = getMavenCoordinates(library);
-        if (coordinates != null) {
-          allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
+        if (coordinates != null
+            && allMavenCoords.add(intern(coordinates.getGroupId() + ":" + coordinates.getArtifactId()))) {
+          ProgressManager.checkCanceled();
         }
 
         if (collectFiles && library instanceof LibraryEx) {
@@ -273,6 +297,8 @@ public final class JavaLibraryUtil {
   private static void collectFiles(@NotNull Library library,
                                    @Nullable MavenCoordinates coordinates,
                                    @NotNull Map<String, String> jarLibrariesIndex) {
+    ProgressManager.checkCanceled();
+
     VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
     if (coordinates == null || libraryFiles.length > 1) {
       JarFileSystem jarFileSystem = JarFileSystem.getInstance();
@@ -280,10 +306,12 @@ public final class JavaLibraryUtil {
       for (VirtualFile libraryFile : libraryFiles) {
         if (libraryFile.getFileSystem() != jarFileSystem) continue;
 
+        ProgressManager.checkCanceled();
+
         String nameWithoutExtension = libraryFile.getNameWithoutExtension();
 
         // Drop prefix of Bazel processed libraries IDEA-324807
-        nameWithoutExtension = sanitizeLibraryName(nameWithoutExtension);
+        nameWithoutExtension = intern(sanitizeLibraryName(nameWithoutExtension));
 
         jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
@@ -304,7 +332,7 @@ public final class JavaLibraryUtil {
 
         String indexNamePart = nameBuilder.toString();
         if (!indexNamePart.equals(nameWithoutExtension)) {
-          jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
+          jarLibrariesIndex.put(indexNamePart, intern(nameWithoutExtension));
         }
       }
     }

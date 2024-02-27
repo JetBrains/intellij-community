@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 /**
  * @author Max Medvedev
  */
-public class GrImportFilteringRule extends ImportFilteringRule {
+public final class GrImportFilteringRule extends ImportFilteringRule {
   @Override
   public boolean isVisible(@NotNull Usage usage, @NotNull UsageTarget @NotNull [] targets) {
     if (usage instanceof PsiElementUsage) {

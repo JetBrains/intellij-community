@@ -62,7 +62,7 @@ public final class JsonCachedValues {
   public static @Nullable String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
                                                                 @NotNull Project project) {
     if (Registry.is("json.schema.object.v2")) {
-      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(file);
+      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(project).getComputedSchemaRootOrNull(file);
       if (schemaRootOrNull != null) {
         return schemaRootOrNull.getSchema();
       }

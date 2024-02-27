@@ -10,13 +10,14 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.types.Variance
 
 context(KtAnalysisSession)
-fun getRenderedTypeArguments(element: KtCallExpression): String? {
+fun getRenderedTypeArguments(element: KtCallElement): String? {
     val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull() ?: return null
     val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters
     if (typeParameterSymbols.isEmpty()) return null
@@ -35,7 +36,7 @@ fun getRenderedTypeArguments(element: KtCallExpression): String? {
     return renderedTypeParameters.joinToString(separator = ", ", prefix = "<", postfix = ">")
 }
 
-fun addTypeArguments(element: KtCallExpression, context: String, project: Project) {
+fun addTypeArguments(element: KtCallElement, context: String, project: Project) {
     val callee = element.calleeExpression ?: return
     val argumentList = KtPsiFactory(project).createTypeArguments(context)
     val newArgumentList = element.addAfter(argumentList, callee) as KtTypeArgumentList

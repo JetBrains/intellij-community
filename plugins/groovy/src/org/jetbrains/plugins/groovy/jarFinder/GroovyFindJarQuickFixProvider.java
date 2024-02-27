@@ -20,7 +20,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
-public class GroovyFindJarQuickFixProvider extends UnresolvedReferenceQuickFixProvider<GrReferenceElement<?>> {
+public final class GroovyFindJarQuickFixProvider extends UnresolvedReferenceQuickFixProvider<GrReferenceElement<?>> {
   @Override
   public void registerFixes(@NotNull GrReferenceElement<?> ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new GroovyFindJarFix(ref));

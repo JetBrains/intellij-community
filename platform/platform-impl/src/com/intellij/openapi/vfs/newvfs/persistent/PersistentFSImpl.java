@@ -78,6 +78,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
+import static com.intellij.configurationStore.StorageUtilKt.RELOADING_STORAGE_WRITE_REQUESTOR;
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getLongProperty;
@@ -1689,7 +1690,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       try {
         String pathBeforeSlash = UriUtil.trimTrailingSlashes(rootPath);
-        newRoot = new FsRoot(rootId, rootNameId, myVfsData, fs, pathBeforeSlash, attributes, path, this);
+        newRoot = new FsRoot(rootId, myVfsData, fs, pathBeforeSlash, attributes, path, this);
       }
       catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
@@ -2117,7 +2118,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           timestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
         }
 
-        executeTouch(file, contentUpdateEvent.isFromRefresh(), contentUpdateEvent.getModificationStamp(), length, timestamp);
+        var reloadContent = contentUpdateEvent.isFromRefresh() || contentUpdateEvent.getRequestor() == RELOADING_STORAGE_WRITE_REQUESTOR;
+        executeTouch(file, reloadContent, contentUpdateEvent.getModificationStamp(), length, timestamp);
       }
       else if (event instanceof VFileCopyEvent ce) {
         executeCreateChild(ce.getNewParent(), ce.getNewChildName(), null, null, ce.getFile().getChildren().length == 0);
@@ -2315,8 +2317,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void executeRename(@NotNull VirtualFile file, @NotNull String newName) {
-    int id = getFileId(file);
-    vfsPeer.setName(id, newName);
     ((VirtualFileSystemEntry)file).setNewName(newName);
   }
 
@@ -2374,8 +2374,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                             long newTimestamp) {
     if (reloadContentFromFS) {
       setFlag(file, Flags.MUST_RELOAD_CONTENT, true);
-      //TODO RC: but this flag is immediately reset back to false in .setLength() below -- so reloadContentFromFS
-      //         has no effect at all!
     }
 
     int fileId = getFileId(file);

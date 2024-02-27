@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 /**
  * @author Maxim.Medvedev
  */
-public class GrLightElementRenamer extends RenamePsiElementProcessor {
+public final class GrLightElementRenamer extends RenamePsiElementProcessor {
 
   @Override
   public PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {

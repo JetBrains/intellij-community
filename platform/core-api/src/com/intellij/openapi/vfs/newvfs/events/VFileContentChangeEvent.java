@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,14 +33,16 @@ public final class VFileContentChangeEvent extends VFileEvent {
   }
 
   @ApiStatus.Internal
-  public VFileContentChangeEvent(Object requestor,
-                                 @NotNull VirtualFile file,
-                                 long oldModificationStamp,
-                                 long newModificationStamp,
-                                 long oldTimestamp,
-                                 long newTimestamp,
-                                 long oldLength,
-                                 long newLength) {
+  public VFileContentChangeEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    long oldModificationStamp,
+    long newModificationStamp,
+    long oldTimestamp,
+    long newTimestamp,
+    long oldLength,
+    long newLength
+  ) {
     super(requestor);
     myFile = file;
     myOldModificationStamp = oldModificationStamp;

@@ -33,7 +33,7 @@ import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
+public final class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
   private static final Map<@NlsSafe String, @NlsSafe String> simpleTypes = new HashMap<>();
   private static final Set<@NlsSafe String> iterations = new HashSet<>();
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.embeddings.search.services
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
@@ -12,7 +13,7 @@ import com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
  */
 @Service(Service.Level.APP)
 class EmbeddingIndexMemoryManager {
-  private val trackedIndices = mutableListOf<EmbeddingSearchIndex>()
+  private val trackedIndices = ConcurrentCollectionFactory.createConcurrentIdentitySet<EmbeddingSearchIndex>()
 
   private val applicationEmbeddingsMemoryLimit: Int?
     get() {
@@ -21,11 +22,7 @@ class EmbeddingIndexMemoryManager {
       } else null
     }
 
-  fun registerIndex(index: EmbeddingSearchIndex) {
-    if (trackedIndices.none { it === index }) {
-      trackedIndices.add(index)
-    }
-  }
+  fun registerIndex(index: EmbeddingSearchIndex) = trackedIndices.add(index)
 
   fun checkCanAddEntry(): Boolean {
     val limit = applicationEmbeddingsMemoryLimit

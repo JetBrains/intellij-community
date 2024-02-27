@@ -34,6 +34,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +45,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -1772,7 +1775,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return PaintUtil.alignToInt(sw, ctx, PaintUtil.devValue(1, ctx) > 2 ? RoundingMode.FLOOR : RoundingMode.ROUND, null);
   }
 
-  private int getFoldingAreaOffset() {
+  @Override
+  public int getFoldingAreaOffset() {
     return myLayout.getFoldingAreaOffset();
   }
 
@@ -2283,7 +2287,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private boolean isPopupAction(MouseEvent e) {
     GutterIconRenderer renderer = getGutterRenderer(e);
-    return renderer != null && renderer.getClickAction() == null && renderer.getPopupMenuActions() != null;
+    return renderer != null && renderer.getClickAction() == null && getPopupMenuActions(renderer, e) != null;
   }
 
   @Override
@@ -2457,9 +2461,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     updateSize();
   }
 
-  private final class CloseAnnotationsAction extends DumbAwareAction {
+  private final class CloseAnnotationsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification {
     CloseAnnotationsAction() {
       super(EditorBundle.messagePointer("close.editor.annotations.action.name"));
+    }
+
+    @NotNull
+    @Override
+    public ActionRemoteBehavior getBehavior() {
+      return ActionRemoteBehavior.BackendOnly;
     }
 
     @Override
@@ -2571,74 +2581,79 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (info != null) {
       logGutterIconClick(info.renderer);
     }
-    myLastActionableClick = new ClickInfo(logicalLineAtCursor, info == null ? point : info.iconCenterPosition);
-    final ActionManager actionManager = ActionManager.getInstance();
-    if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
-      final List<AnAction> addActions = getTextAnnotationPopupActions(logicalLineAtCursor);
-      if (!addActions.isEmpty()) {
-        e.consume();
-        DefaultActionGroup actionGroup = DefaultActionGroup.createPopupGroup(
-          EditorBundle.messagePointer("editor.annotations.action.group.name"));
-        for (AnAction addAction : addActions) {
-          actionGroup.add(addAction);
-        }
-        JPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_ANNOTATIONS_AREA_POPUP, actionGroup).getComponent();
-        menu.show(this, e.getX(), e.getY());
-      }
+    ClickInfo clickInfo = new ClickInfo(logicalLineAtCursor, info == null ? point : info.iconCenterPosition);
+    EditorMouseEventArea editorArea = myEditor.getMouseEventArea(e);
+    myLastActionableClick = clickInfo;
+
+    AnAction rightButtonAction = info == null ? null : info.renderer.getRightButtonClickAction();
+    if (rightButtonAction != null) {
+      e.consume();
+      performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext(), info);
+      return;
+    }
+    EditorMouseEvent editorMouseEvent = new EditorMouseEvent(
+      myEditor, e, editorArea, 0, new LogicalPosition(logicalLineAtCursor, 0),
+      new VisualPosition(0, 0), true, null, null, null);
+    ActionGroup group;
+    if (info != null) {
+      group = getPopupMenuActions(info.renderer, e);
     }
     else {
-      if (info != null) {
-        AnAction rightButtonAction = info.renderer.getRightButtonClickAction();
-        if (rightButtonAction != null) {
-          e.consume();
-          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext(), info);
-        }
-        else {
-          ActionGroup actionGroup = info.renderer.getPopupMenuActions();
-          if (actionGroup != null) {
-            e.consume();
-            if (checkDumbAware(actionGroup)) {
-              addLoadingIconForGutterMark(info);
-              actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup)
-                .getComponent()
-                .show(this, e.getX(), e.getY());
-            }
-            else {
-              notifyNotDumbAware();
-            }
-          }
-        }
+      group = getPopupActionGroup(editorMouseEvent);
+    }
+    if (group == null) {
+      // nothing
+    }
+    else if (!checkDumbAware(group)) {
+      notifyNotDumbAware();
+    }
+    else {
+      if (info != null) addLoadingIconForGutterMark(info);
+      String place = editorArea == EditorMouseEventArea.ANNOTATIONS_AREA ?
+                     ActionPlaces.EDITOR_ANNOTATIONS_AREA_POPUP : ActionPlaces.EDITOR_GUTTER_POPUP;
+      showGutterContextMenu(group, e, place);
+    }
+  }
+
+  private static @Nullable ActionGroup getPopupMenuActions(@NotNull GutterIconRenderer renderer, @NotNull MouseEvent e) {
+    return renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer
+            ? ((LineMarkerInfo.LineMarkerGutterIconRenderer<?>)renderer).getPopupMenuActions(e)
+            : renderer.getPopupMenuActions();
+  }
+
+  @Nullable ActionGroup getPopupActionGroup(@NotNull EditorMouseEvent event) {
+    List<AnAction> actions;
+    if (event.getArea() == EditorMouseEventArea.ANNOTATIONS_AREA) {
+      actions = getTextAnnotationPopupActions(event.getLogicalPosition().line);
+    }
+    else {
+      actions = new ArrayList<>();
+      if (ExperimentalUI.isNewUI() &&
+          event.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA &&
+          getClientProperty("line.number.hover.icon.context.menu") instanceof ActionGroup g) {
+        actions.add(g);
       }
-      else {
-        List<AnAction> actions = new ArrayList<>();
-        if (ExperimentalUI.isNewUI() &&
-            myEditor.getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA &&
-            getClientProperty("line.number.hover.icon.context.menu") instanceof ActionGroup g) {
-          actions.add(g);
-        }
-        if (myCustomGutterPopupGroup != null) {
+      if (myCustomGutterPopupGroup != null) {
+        actions.add(Separator.getInstance());
+        actions.add(myCustomGutterPopupGroup);
+      }
+      else if (myShowDefaultGutterPopup) {
+        ActionGroup g = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+        if (g != null) {
           actions.add(Separator.getInstance());
-          actions.add(myCustomGutterPopupGroup);
-        }
-        else if (myShowDefaultGutterPopup) {
-          ActionGroup g = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
-          if (g != null) {
-            actions.add(Separator.getInstance());
-            actions.add(g);
-          }
-        }
-        if (!actions.isEmpty()) {
-          showGutterContextMenu(new DefaultActionGroup(actions), e);
+          actions.add(g);
         }
       }
     }
+    if (actions.isEmpty()) return null;
+    return new EditorMousePopupActionGroup(actions, event);
   }
 
   private static final String EDITOR_GUTTER_CONTEXT_MENU_KEY = "editor.gutter.context.menu";
 
-  private void showGutterContextMenu(@NotNull ActionGroup group, MouseEvent e) {
+  private void showGutterContextMenu(@NotNull ActionGroup group, MouseEvent e, String place) {
     e.consume();
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, group);
+    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(place, group);
     putClientProperty(EDITOR_GUTTER_CONTEXT_MENU_KEY, popupMenu);
     popupMenu.getComponent().addPopupMenuListener(new PopupMenuListenerAdapter() {
       @Override

@@ -7,9 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
-val GITHUB_ACTION_SCHEMA_NAMES: Set<String> = setOf("github-action")
-val GITHUB_WORKFLOW_SCHEMA_NAMES: Set<String> = setOf("github-workflow")
-
 internal class GithubYamlIconProvider : FileIconProvider {
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {

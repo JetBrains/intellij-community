@@ -20,13 +20,14 @@ import static com.intellij.util.indexing.events.ChangedFilesCollector.CLEAR_NON_
 public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
   private final NotNullLazyValue<FileBasedIndexImpl> myFileBasedIndex = NotNullLazyValue.createValue(() -> (FileBasedIndexImpl)FileBasedIndex.getInstance());
-  private final IntObjectMap<VirtualFile> myFilesToUpdate = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final IntObjectMap<FileIndexingRequest> myFilesToUpdate = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
-  public void scheduleForUpdate(@NotNull VirtualFile file, @NotNull Collection<Project> dirtyQueueProjects) {
-    int fileId = FileBasedIndex.getFileId(file);
-    if (!(file instanceof DeletedVirtualFileStub)) {
+  public void scheduleForUpdate(@NotNull FileIndexingRequest request, @NotNull Collection<Project> dirtyQueueProjects) {
+    int fileId = request.getFileId();
+    VirtualFile file = request.getFile();
+    if (!request.isDeleteRequest()) {
       Set<Project> projects = myFileBasedIndex.get().getContainingProjects(file);
       if (projects.isEmpty()) {
         removeNonIndexableFileData(file, fileId);
@@ -37,7 +38,7 @@ public class FilesToUpdateCollector {
 
     VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
     myDirtyFiles.addFile(dirtyQueueProjects, fileId);
-    myFilesToUpdate.put(fileId, file);
+    myFilesToUpdate.put(fileId, request);
   }
 
   @NotNull
@@ -86,8 +87,8 @@ public class FilesToUpdateCollector {
 
   public void removeScheduledFileFromUpdate(VirtualFile file) {
     int fileId = FileBasedIndex.getFileId(file);
-    VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
-    if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
+    FileIndexingRequest alreadyScheduledFile = myFilesToUpdate.get(fileId);
+    if (alreadyScheduledFile != null && !alreadyScheduledFile.isDeleteRequest()) {
       VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", fileId);
       myFilesToUpdate.remove(fileId);
       myDirtyFiles.removeFile(fileId);
@@ -108,11 +109,11 @@ public class FilesToUpdateCollector {
     return myFilesToUpdate.containsKey(fileId);
   }
 
-  public Iterator<@NotNull VirtualFile> getFilesToUpdateAsIterator() {
+  public Iterator<@NotNull FileIndexingRequest> getFilesToUpdateAsIterator() {
     return myFilesToUpdate.values().iterator();
   }
 
-  public Collection<VirtualFile> getFilesToUpdate() {
+  public Collection<FileIndexingRequest> getFilesToUpdate() {
     return myFilesToUpdate.isEmpty()
            ? Collections.emptyList()
            : Collections.unmodifiableCollection(myFilesToUpdate.values());

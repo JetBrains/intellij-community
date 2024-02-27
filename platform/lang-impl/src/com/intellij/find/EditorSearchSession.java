@@ -204,6 +204,9 @@ public class EditorSearchSession implements SearchSession,
       };
     }
     else {
+      ShowFilterPopupGroup filterPopupGroup = new ShowFilterPopupGroup();
+      filterPopupGroup.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
+      filterPopupGroup.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
       return new AnAction[]{
         new StatusTextAction(),
         new PrevOccurrenceAction(),
@@ -214,22 +217,18 @@ public class EditorSearchSession implements SearchSession,
         new RemoveOccurrenceAction(),
         new SelectAllAction(),
         new Separator(),
-        new ToggleSelectionOnlyAction(),
-        new ShowFilterPopupGroup()
+        new ToggleFindInSelectionAction(),
+        filterPopupGroup
       };
     }
   }
 
   private static AnAction createFilterGroup() {
-    DefaultActionGroup group = new ShowFilterPopupGroup() {
-      @Override
-      protected boolean enableLiveIndicator(@NotNull FindModel model) {
-        return super.enableLiveIndicator(model) || !model.isGlobal();
-      }
-    };
+    DefaultActionGroup group = new ShowFilterPopupGroup();
 
     group.add(new Separator(ApplicationBundle.message("editorsearch.filter.search.scope")), Constraints.FIRST);
-    group.add(new ToggleSelectionOnlyAction(), Constraints.FIRST);
+    group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_EDITOR_SEARCH_FILTER_RESULTS), Constraints.FIRST);
+    group.add(new ToggleFindInSelectionAction(), Constraints.FIRST);
     return group;
   }
 

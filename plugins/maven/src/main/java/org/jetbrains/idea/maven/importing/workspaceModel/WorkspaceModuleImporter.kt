@@ -130,7 +130,7 @@ internal class WorkspaceModuleImporter(
                                   null,
                                   {
                                     dependency.rootPaths.map { (url, type) ->
-                                      LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(pathToUrl(url)), type)
+                                      LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(pathToUrl(url)), type)
                                     }
                                   },
                                   { reuseOrCreateProjectLibrarySource(dependency.artifact) })
@@ -169,7 +169,7 @@ internal class WorkspaceModuleImporter(
                      artifact,
                      {
                        val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
-                       listOf(LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(classes), LibraryRootTypeId.COMPILED))
+                       listOf(LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(classes), LibraryRootTypeId.COMPILED))
                      },
                      sourceProvider)
     return EntitiesLibraryDependency(libraryId, false, artifact.dependencyScope)
@@ -183,9 +183,9 @@ internal class WorkspaceModuleImporter(
       val sources = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")
       val javadoc = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")
       listOf(
-        LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(classes), LibraryRootTypeId.COMPILED),
-        LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(sources), LibraryRootTypeId.SOURCES),
-        LibraryRoot(virtualFileUrlManager.getOrCreateFromUri(javadoc), JAVADOC_TYPE),
+        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(classes), LibraryRootTypeId.COMPILED),
+        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(sources), LibraryRootTypeId.SOURCES),
+        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(javadoc), JAVADOC_TYPE),
       )
     }
     return createLibraryDependency(artifact.libraryName,
@@ -269,10 +269,10 @@ internal class WorkspaceModuleImporter(
 
     if (!inheritCompilerOutput) {
       if (moduleType.containsMain) {
-        compilerOutputUrl = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(importFolderHolder.outputPath))
+        compilerOutputUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(importFolderHolder.outputPath))
       }
       if (moduleType.containsTest) {
-        compilerOutputUrlForTests = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(importFolderHolder.testOutputPath))
+        compilerOutputUrlForTests = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(importFolderHolder.testOutputPath))
       }
     }
 

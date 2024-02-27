@@ -8,4 +8,3 @@ fun main() {
 }
 
 // EXISTS: constructor Any(), let: block.invoke()
-// IGNORE_K2

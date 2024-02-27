@@ -8,8 +8,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
@@ -18,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -34,6 +31,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.InvalidVirtualFileAccessException.getInvalidationReason;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
@@ -149,15 +148,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull CharSequence getNameSequence() {
-    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (fs == null) {
+    PersistentFSImpl pfs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    if (pfs == null) {
       return "<FS-is-disposed>";//shutdown-safe
     }
-    return fs.getNameByNameId(getNameId());
+    return pfs.getName(myId);
   }
 
   public final int getNameId() {
-    return getSegment().getNameId(myId);
+    return owningPersistentFS().peer().getNameIdByFileId(myId);
   }
 
   @Override
@@ -408,7 +407,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       return getUrl();
     }
 
-    String reason = getInvalidationInfo();
+    String reason = getInvalidationReason(this);
     return getUrl() + " (invalid" + (reason == null ? "" : ", reason: " + reason) + ")";
   }
 
@@ -417,16 +416,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IllegalArgumentException(CoreBundle.message("file.invalid.name.error", newName));
     }
 
-    PersistentFSImpl pFS = owningPersistentFS();
+    PersistentFSImpl pfs = owningPersistentFS();
 
     VirtualDirectoryImpl parent = getParent();
+    //children are sorted by name: child position must change after its name has changed
     parent.removeChild(this);
-
-    int newNameId = pFS.peer().getNameId(newName);
-    getSegment().setNameId(myId, newNameId);
+    pfs.peer().setName(myId, newName);
     parent.addChild(this);
 
-    pFS.incStructuralModificationCount();
+    pfs.incStructuralModificationCount();
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
@@ -452,8 +450,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static final class DebugInvalidation {
     private static final Logger LOG = Logger.getInstance(VirtualFileSystemEntry.class);
     private static final boolean DEBUG = LOG.isDebugEnabled();
-    private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");
-    private static final Key<Throwable> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
   }
 
   @ApiStatus.Internal
@@ -465,21 +461,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @ApiStatus.Internal
   public void appendInvalidationReason(@NotNull Object source, @NotNull Object reason) {
     if (DebugInvalidation.DEBUG && !ApplicationManagerEx.isInStressTest()) {
-      String oldReason = getUserData(DebugInvalidation.INVALIDATION_REASON);
-      String newReason = source + ": " + reason;
-      if (oldReason == null) {
-        putUserData(DebugInvalidation.INVALIDATION_TRACE, ThrowableInterner.intern(new Throwable()));
-      }
-      putUserData(DebugInvalidation.INVALIDATION_REASON, oldReason == null ? newReason : oldReason + "; " + newReason);
+      InvalidVirtualFileAccessException.appendInvalidationReason(this, source + ": " + reason);
     }
-  }
-
-  private String getInvalidationInfo() {
-    String reason = getUserData(DebugInvalidation.INVALIDATION_REASON);
-    if (reason == null) return null;
-    Throwable trace = getUserData(DebugInvalidation.INVALIDATION_TRACE);
-    if (trace == null) return reason;
-    return reason + "; stacktrace:\n" + ExceptionUtil.getThrowableText(trace);
   }
 
   @Override

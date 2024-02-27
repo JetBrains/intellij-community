@@ -34,5 +34,3 @@ fun main() {
         it + 2
     }
 }
-
-// IGNORE_K2

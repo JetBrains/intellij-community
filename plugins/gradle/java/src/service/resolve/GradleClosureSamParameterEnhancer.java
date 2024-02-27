@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureSamParameterEn
 /**
  * @author Vladislav.Soroka
  */
-public class GradleClosureSamParameterEnhancer extends ClosureSamParameterEnhancer {
+public final class GradleClosureSamParameterEnhancer extends ClosureSamParameterEnhancer {
   @Nullable
   @Override
   protected PsiType getClosureParameterType(@NotNull GrFunctionalExpression expression, int index) {

@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -32,9 +30,8 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
   override val storageManager: StateStorageManagerImpl =
     ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
 
-  override fun createSaveSessionProducerManager(): SaveSessionProducerManager {
-    return SaveSessionProducerManager(storageManager.isUseVfsForWrite)
-  }
+  override fun createSaveSessionProducerManager(): SaveSessionProducerManager =
+    SaveSessionProducerManager(storageManager.isUseVfsForWrite, collectVfsEvents = true)
 
   final override fun isReportStatisticAllowed(stateSpec: State, storageSpec: Storage): Boolean = false
 
@@ -107,11 +104,11 @@ internal open class ModuleStoreImpl(module: Module) : ComponentStoreImpl(), Modu
 }
 
 private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module)
-  : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor = macroSubstitutor, componentManager = module),
-    RenameableStateStorageManager {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String {
-    return StoragePathMacros.MODULE_FILE
-  }
+  : StateStorageManagerImpl(rootTagName = "module", macroSubstitutor, componentManager = module, controller = null),
+    RenameableStateStorageManager
+{
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
+    StoragePathMacros.MODULE_FILE
 
   // the only macro is supported by ModuleStateStorageManager
   override fun expandMacro(collapsedPath: String): Path {
@@ -132,8 +129,8 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
         else if (storage.file.fileName.toString() != newName) {
           // old file didn't exist or renaming failed
           val newFile = storage.file.parent.resolve(newName)
-          storage.setFile(null, newFile)
-          pathRenamed(newFile, null)
+          storage.setFile(virtualFile = null, ioFileIfChanged = newFile)
+          pathRenamed(newPath = newFile, event = null)
         }
       }
       catch (e: IOException) {
@@ -148,7 +145,7 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
 
   override fun pathRenamed(newPath: Path, event: VFileEvent?) {
     try {
-      setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, newPath)))
+      setMacros(java.util.List.of(Macro(StoragePathMacros.MODULE_FILE, newPath)))
     }
     finally {
       val requestor = event?.requestor
@@ -196,22 +193,13 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
 
   override fun createFileBasedStorage(
     file: Path,
-    collapsedPath: String,
+    fileSpec: String,
     roamingType: RoamingType,
     usePathMacroManager: Boolean,
     rootTagName: String?
   ): StateStorage {
-    val provider = if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider
-    return TrackedFileStorage(
-      storageManager = this,
-      file,
-      collapsedPath,
-      rootTagName,
-      roamingType,
-      macroSubstitutor,
-      provider,
-      controller = null,
-    )
+    val provider = if (roamingType == RoamingType.DISABLED) null else streamProvider
+    return TrackedFileStorage(storageManager = this, file, fileSpec, rootTagName, roamingType, macroSubstitutor, provider, controller = null)
   }
 }
 

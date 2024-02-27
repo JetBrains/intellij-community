@@ -160,7 +160,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     return new ConverterStrategy();
   }
 
-  public static class MyUpdateIndicesIntention implements IntentionAction {
+  public static final class MyUpdateIndicesIntention implements IntentionAction {
     @Override
     @NotNull
     public String getFamilyName() {

@@ -43,6 +43,7 @@ object GitActivity {
   @JvmField
   val Reset = createId("Reset")
 
+  @JvmField
   val Stash = createId("Stash")
 
   val Unstash = createId("Unstash")

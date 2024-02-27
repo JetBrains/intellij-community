@@ -5,8 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.remoteDev.connection.JetbrainsClientDownloadInfo
-import com.intellij.remoteDev.connection.StunTurnServerInfo
+import com.intellij.remoteDev.connection.JetBrainsClientDownloadInfo
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeUnavailableException
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
@@ -32,7 +31,7 @@ object ThinClientSessionInfoFetcher {
     return stream.use { it.readAllBytes() }
   }
 
-  fun getSessionUrl(joinLinkUrl: URI): JetbrainsClientDownloadInfo {
+  fun getSessionUrl(joinLinkUrl: URI): JetBrainsClientDownloadInfo {
     val url = createUrl(joinLinkUrl)
     val requestString = objectMapper.value.createObjectNode().apply {
       put("clientBuildNumber", currentBuildNumber())
@@ -75,7 +74,7 @@ object ThinClientSessionInfoFetcher {
 
         val sessionInfo = objectMapper.value.reader().readTree(jsonResponseString)
         val jreUrlNode = sessionInfo["compatibleJreUrl"]
-        return@connect JetbrainsClientDownloadInfo(
+        return@connect JetBrainsClientDownloadInfo(
           hostBuildNumber = sessionInfo["hostBuildNumber"].asText(),
           compatibleClientUrl = sessionInfo["compatibleClientUrl"].asText(),
           compatibleJreUrl = if (jreUrlNode.isNull) null else jreUrlNode.asText(),

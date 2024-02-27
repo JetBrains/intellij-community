@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 
-public class GroovyNegatedIfInspection extends BaseInspection {
+public final class GroovyNegatedIfInspection extends BaseInspection {
 
   @Override
   @Nullable

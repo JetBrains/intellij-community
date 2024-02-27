@@ -24,6 +24,9 @@ class GradleDocumentationDownloader : DocumentationDownloader {
     if (GradleSettings.getInstance(project).linkedProjectsSettings.isEmpty()) {
       return false
     }
+    if (readAction { findLibraryEntriesForFile(file, project).isEmpty() }) {
+      return false
+    }
     return readAction { JavaEditorFileSwapper.findSourceFile(project, file) == null }
   }
 

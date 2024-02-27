@@ -1,6 +1,6 @@
-# It is <warning descr="EN_A_VS_AN">an</warning> friend of human
+# It is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend of human
 one = 1
 
 # It
-# <warning descr="IT_VBZ">are</warning> bad price
+# <GRAMMAR_ERROR descr="IT_VBZ">are</GRAMMAR_ERROR> bad price
 two = 2

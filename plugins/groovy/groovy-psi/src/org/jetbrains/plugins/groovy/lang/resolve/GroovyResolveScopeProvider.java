@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Max Medvedev
  */
-public class GroovyResolveScopeProvider extends ResolveScopeProvider {
+public final class GroovyResolveScopeProvider extends ResolveScopeProvider {
 
   @Override
   public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, @NotNull Project project) {

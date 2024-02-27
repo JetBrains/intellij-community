@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
+public final class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
 
   @Override
   @Nullable

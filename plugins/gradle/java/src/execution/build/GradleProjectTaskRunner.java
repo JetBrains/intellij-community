@@ -53,7 +53,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
  * @author Vladislav.Soroka
  */
 @SuppressWarnings({"GrUnresolvedAccess", "GroovyAssignabilityCheck"}) // suppress warnings for injected Gradle/Groovy code
-public class GradleProjectTaskRunner extends ProjectTaskRunner {
+public final class GradleProjectTaskRunner extends ProjectTaskRunner {
   private static final Logger LOG = Logger.getInstance(GradleProjectTaskRunner.class);
 
   @Language("Groovy")

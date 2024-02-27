@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.diagnostic.VMOptions;
@@ -182,7 +182,7 @@ public class MavenServerCMDState extends CommandLineState {
   public static @NotNull List<File> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
     if (!distribution.isValid()) {
       MavenLog.LOG.warn("Maven Distribution " + distribution + " is not valid");
-      throw new IllegalArgumentException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not valid");
+      throw new IllegalArgumentException("Maven distribution at " + distribution.getMavenHome().toAbsolutePath() + " is not valid");
     }
 
     MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(distribution);

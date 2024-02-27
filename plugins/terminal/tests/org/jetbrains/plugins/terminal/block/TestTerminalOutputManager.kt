@@ -31,7 +31,7 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
     val lastBlockEndOffset = outputModel.getLastBlock()?.endOffset ?: 0
     Assert.assertEquals(lastBlockEndOffset, document.textLength)
     val updatedHighlightings = output.highlightings.map {
-      HighlightingInfo(it.startOffset + lastBlockEndOffset, it.endOffset + lastBlockEndOffset, it.textAttributes)
+      HighlightingInfo(it.startOffset + lastBlockEndOffset, it.endOffset + lastBlockEndOffset, it.textAttributesProvider)
     }
     val block = outputModel.createBlock(command, null)
     outputModel.putHighlightings(block, updatedHighlightings)

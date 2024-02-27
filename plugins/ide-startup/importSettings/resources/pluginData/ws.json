@@ -10,13 +10,8 @@
     "builtIn": true
   },
   {
-    "vsCodeId": "akamud.vscode-theme-onedark",
-    "ideaName": "Atom OneDark Theme",
-    "ideaId": "github.cweijan.test-theme"
-  },
-  {
     "vsCodeId": "Angular.ng-template",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -40,11 +35,6 @@
     "ideaId": "Dart"
   },
   {
-    "vsCodeId": "Dart-Code.flutter",
-    "ideaName": "Flutter",
-    "ideaId": "io.flutter"
-  },
-  {
     "vsCodeId": "dbaeumer.vscode-eslint",
     "ideaName": "ESLint",
     "builtIn": true
@@ -53,11 +43,6 @@
     "vsCodeId": "donjayamanne.githistory",
     "ideaName": "Git History",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "dracula-theme.theme-dracula",
-    "ideaName": "Dracula Theme",
-    "ideaId": "com.vermouthx.idea"
   },
   {
     "vsCodeId": "eamodio.gitlens",
@@ -73,6 +58,11 @@
     "vsCodeId": "eg2.vscode-npm-script",
     "ideaName": "npm",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "emilast.LogFileHighlighter",
+    "ideaName": "Ideolog",
+    "ideaId": "com.intellij.ideolog"
   },
   {
     "vsCodeId": "esbenp.prettier-vscode",
@@ -136,7 +126,7 @@
   },
   {
     "vsCodeId": "johnpapa.Angular2",
-    "ideaName": "Angular and AngularJS",
+    "ideaName": "Angular",
     "ideaId": "AngularJS"
   },
   {
@@ -153,6 +143,11 @@
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
+    "ideaName": "Japanese Language Pack / 日本語言語パック",
+    "ideaId": "com.intellij.ja"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
@@ -210,16 +205,6 @@
     "ideaId": "org.jetbrains.plugins.vue"
   },
   {
-    "vsCodeId": "oderwat.indent-rainbow",
-    "ideaName": "Indent Rainbow",
-    "ideaId": "indent-rainbow.indent-rainbow"
-  },
-  {
-    "vsCodeId": "PKief.material-icon-theme",
-    "ideaName": "Atom Material Icons",
-    "ideaId": "com.mallowigi"
-  },
-  {
     "vsCodeId": "pranaygp.vscode-css-peek",
     "ideaName": "CSS Peek",
     "builtIn": true
@@ -255,6 +240,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "streetsidesoftware.code-spell-checker",
+    "ideaName": "Grazie Lite",
+    "ideaId": "tanvd.grazi"
+  },
+  {
     "vsCodeId": "svelte.svelte-vscode",
     "ideaName": "Svelte",
     "ideaId": "dev.blachut.svelte.lang"
@@ -266,13 +256,8 @@
   },
   {
     "vsCodeId": "techer.open-in-browser",
-    "ideaName": "open in browser",
+    "ideaName": "Open in browser",
     "builtIn": true
-  },
-  {
-    "vsCodeId": "Tyriar.sort-lines",
-    "ideaName": "Lines Sorter",
-    "ideaId": "org.sylfra.idea.plugins.linessorter"
   },
   {
     "vsCodeId": "vscodevim.vim",
@@ -283,6 +268,11 @@
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "yzhang.markdown-all-in-one",
+    "ideaName": "Markdown",
+    "ideaId": "org.intellij.plugins.markdown"
   },
   {
     "vsCodeId": "Zignd.html-css-class-completion",

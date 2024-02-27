@@ -13,6 +13,6 @@ fun hello(): String = "Hello from ${Platform.name}"
 
 expect fun <!LINE_MARKER("descr='Has actuals in js, jvm modules'; targets=[(text=jvm; icon=nodes/Module.svg); (text=js; icon=nodes/Module.svg)]")!>foo<!>()
 
-expect annotation class <!LINE_MARKER("descr='Has actuals in js, jvm modules'; targets=[(text=jvm; icon=nodes/Module.svg); (text=js; icon=nodes/Module.svg)]")!>Preview<!>()
+expect annotation class <!LINE_MARKER("descr='Has actuals in js, jvm modules'; targets=[(text=js; icon=nodes/Module.svg); (text=jvm; icon=nodes/Module.svg)]")!>Preview<!>()
 
-expect object <!LINE_MARKER("descr='Has actuals in js, jvm modules'; targets=[(text=jvm; icon=nodes/Module.svg); (text=js; icon=nodes/Module.svg)]")!>SomeObject<!>()
+expect object <!LINE_MARKER("descr='Has actuals in js, jvm modules'; targets=[(text=js; icon=nodes/Module.svg); (text=jvm; icon=nodes/Module.svg)]")!>SomeObject<!>()

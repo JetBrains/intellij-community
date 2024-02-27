@@ -12,15 +12,14 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBu
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import javax.swing.KeyStroke
 
 class TerminalInterruptCommandAction : DumbAwareAction(TerminalBundle.message("action.Terminal.InterruptCommand.text")),
                                        ActionRemoteBehaviorSpecification.Disabled {
   init {
-    val keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK)
-    shortcutSet = CustomShortcutSet(keyStroke)
+    shortcutSet = TerminalUiUtils.createSingleShortcutSet(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

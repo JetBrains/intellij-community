@@ -17,7 +17,7 @@ import org.junit.runner.RunWith;
 @TestRoot("fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/quickDoc")
+@TestMetadata("../../idea/tests/testData/editor/quickDoc")
 public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,321 +25,326 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
 
     @TestMetadata("AnonymousObjectLocalVariable.kt")
     public void testAnonymousObjectLocalVariable() throws Exception {
-        runTest("testData/quickDoc/AnonymousObjectLocalVariable.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AnonymousObjectLocalVariable.kt");
     }
 
     @TestMetadata("AtConstantWithUnderscore.kt")
     public void testAtConstantWithUnderscore() throws Exception {
-        runTest("testData/quickDoc/AtConstantWithUnderscore.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AtConstantWithUnderscore.kt");
     }
 
     @TestMetadata("AtFunctionParameter.kt")
     public void testAtFunctionParameter() throws Exception {
-        runTest("testData/quickDoc/AtFunctionParameter.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AtFunctionParameter.kt");
     }
 
     @TestMetadata("AtImplicitLambdaParametEnd.kt")
     public void testAtImplicitLambdaParametEnd() throws Exception {
-        runTest("testData/quickDoc/AtImplicitLambdaParametEnd.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AtImplicitLambdaParametEnd.kt");
     }
 
     @TestMetadata("AtImplicitLambdaParameter.kt")
     public void testAtImplicitLambdaParameter() throws Exception {
-        runTest("testData/quickDoc/AtImplicitLambdaParameter.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AtImplicitLambdaParameter.kt");
     }
 
     @TestMetadata("AtLocalFunction.kt")
     public void testAtLocalFunction() throws Exception {
-        runTest("testData/quickDoc/AtLocalFunction.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AtLocalFunction.kt");
     }
 
     @TestMetadata("AtTypeParameter.kt")
     public void testAtTypeParameter() throws Exception {
-        runTest("testData/quickDoc/AtTypeParameter.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AtTypeParameter.kt");
     }
 
     @TestMetadata("AtVariableDeclaration.kt")
     public void testAtVariableDeclaration() throws Exception {
-        runTest("testData/quickDoc/AtVariableDeclaration.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/AtVariableDeclaration.kt");
     }
 
     @TestMetadata("ConstructorVarParameter.kt")
     public void testConstructorVarParameter() throws Exception {
-        runTest("testData/quickDoc/ConstructorVarParameter.kt");
-    }
-
-    @TestMetadata("DecompiledSuper.kt")
-    public void testDecompiledSuper() throws Exception {
-        runTest("testData/quickDoc/DecompiledSuper.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/ConstructorVarParameter.kt");
     }
 
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
-        runTest("testData/quickDoc/DefinitelyNonNullType.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/DefinitelyNonNullType.kt");
     }
 
     @TestMetadata("DeprecationWithReplaceInfo.kt")
     public void testDeprecationWithReplaceInfo() throws Exception {
-        runTest("testData/quickDoc/DeprecationWithReplaceInfo.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/DeprecationWithReplaceInfo.kt");
     }
 
     @TestMetadata("EscapeHtmlInsideCodeBlocks.kt")
     public void testEscapeHtmlInsideCodeBlocks() throws Exception {
-        runTest("testData/quickDoc/EscapeHtmlInsideCodeBlocks.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/EscapeHtmlInsideCodeBlocks.kt");
     }
 
     @TestMetadata("ExtensionReceiver.kt")
     public void testExtensionReceiver() throws Exception {
-        runTest("testData/quickDoc/ExtensionReceiver.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/ExtensionReceiver.kt");
     }
 
     @TestMetadata("ExtensionReceiverEnd.kt")
     public void testExtensionReceiverEnd() throws Exception {
-        runTest("testData/quickDoc/ExtensionReceiverEnd.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/ExtensionReceiverEnd.kt");
     }
 
     @TestMetadata("Formatting.kt")
     public void testFormatting() throws Exception {
-        runTest("testData/quickDoc/Formatting.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/Formatting.kt");
     }
 
     @TestMetadata("FunctionTypeParameter.kt")
     public void testFunctionTypeParameter() throws Exception {
-        runTest("testData/quickDoc/FunctionTypeParameter.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/FunctionTypeParameter.kt");
     }
 
     @TestMetadata("IndentedCodeBlock.kt")
     public void testIndentedCodeBlock() throws Exception {
-        runTest("testData/quickDoc/IndentedCodeBlock.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/IndentedCodeBlock.kt");
     }
 
     @TestMetadata("JavaClassConstructorUsedInKotlin.kt")
     public void testJavaClassConstructorUsedInKotlin() throws Exception {
-        runTest("testData/quickDoc/JavaClassConstructorUsedInKotlin.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/JavaClassConstructorUsedInKotlin.kt");
+    }
+
+    @TestMetadata("JavaClassUsedInKotlin.kt")
+    public void testJavaClassUsedInKotlin() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/JavaClassUsedInKotlin.kt");
     }
 
     @TestMetadata("JavaDocFromOverridenClass.kt")
     public void testJavaDocFromOverridenClass() throws Exception {
-        runTest("testData/quickDoc/JavaDocFromOverridenClass.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/JavaDocFromOverridenClass.kt");
     }
 
     @TestMetadata("JavaDocFromOverridenInterface.kt")
     public void testJavaDocFromOverridenInterface() throws Exception {
-        runTest("testData/quickDoc/JavaDocFromOverridenInterface.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/JavaDocFromOverridenInterface.kt");
     }
 
     @TestMetadata("JavaMethodUsedInKotlin.kt")
     public void testJavaMethodUsedInKotlin() throws Exception {
-        runTest("testData/quickDoc/JavaMethodUsedInKotlin.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/JavaMethodUsedInKotlin.kt");
     }
 
     @TestMetadata("JavaMethodUsedInKotlinInParen.kt")
     public void testJavaMethodUsedInKotlinInParen() throws Exception {
-        runTest("testData/quickDoc/JavaMethodUsedInKotlinInParen.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/JavaMethodUsedInKotlinInParen.kt");
     }
 
     @TestMetadata("KotlinClassUsedFromJava.java")
     public void testKotlinClassUsedFromJava() throws Exception {
-        runTest("testData/quickDoc/KotlinClassUsedFromJava.java");
+        runTest("../../idea/tests/testData/editor/quickDoc/KotlinClassUsedFromJava.java");
+    }
+
+    @TestMetadata("KotlinPackageClassUsedFromJava.java")
+    public void testKotlinPackageClassUsedFromJava() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/KotlinPackageClassUsedFromJava.java");
     }
 
     @TestMetadata("Lateinit.kt")
     public void testLateinit() throws Exception {
-        runTest("testData/quickDoc/Lateinit.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/Lateinit.kt");
     }
 
     @TestMetadata("LateinitName.kt")
     public void testLateinitName() throws Exception {
-        runTest("testData/quickDoc/LateinitName.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/LateinitName.kt");
     }
 
     @TestMetadata("MethodFromStdLib.kt")
     public void testMethodFromStdLib() throws Exception {
-        runTest("testData/quickDoc/MethodFromStdLib.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/MethodFromStdLib.kt");
     }
 
     @TestMetadata("OnActualDeclaration.kt")
     public void testOnActualDeclaration() throws Exception {
-        runTest("testData/quickDoc/OnActualDeclaration.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnActualDeclaration.kt");
     }
 
     @TestMetadata("OnActualDeclarationWithInheritedDoc.kt")
     public void testOnActualDeclarationWithInheritedDoc() throws Exception {
-        runTest("testData/quickDoc/OnActualDeclarationWithInheritedDoc.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnActualDeclarationWithInheritedDoc.kt");
     }
 
     @TestMetadata("OnActualValueParameterDeclaration.kt")
     public void testOnActualValueParameterDeclaration() throws Exception {
-        runTest("testData/quickDoc/OnActualValueParameterDeclaration.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnActualValueParameterDeclaration.kt");
     }
 
     @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")
     public void testOnClassDeclarationWithComplexKDoc() throws Exception {
-        runTest("testData/quickDoc/OnClassDeclarationWithComplexKDoc.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnClassDeclarationWithComplexKDoc.kt");
     }
 
     @TestMetadata("OnClassDeclarationWithNoPackage.kt")
     public void testOnClassDeclarationWithNoPackage() throws Exception {
-        runTest("testData/quickDoc/OnClassDeclarationWithNoPackage.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnClassDeclarationWithNoPackage.kt");
     }
 
     @TestMetadata("OnEmptySecondaryConstructor.kt")
     public void testOnEmptySecondaryConstructor() throws Exception {
-        runTest("testData/quickDoc/OnEmptySecondaryConstructor.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEmptySecondaryConstructor.kt");
     }
 
     @TestMetadata("OnEnumClassReference.kt")
     public void testOnEnumClassReference() throws Exception {
-        runTest("testData/quickDoc/OnEnumClassReference.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumClassReference.kt");
     }
 
     @TestMetadata("OnEnumDeclaration.kt")
     public void testOnEnumDeclaration() throws Exception {
-        runTest("testData/quickDoc/OnEnumDeclaration.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumDeclaration.kt");
     }
 
     @TestMetadata("OnEnumEntry.kt")
     public void testOnEnumEntry() throws Exception {
-        runTest("testData/quickDoc/OnEnumEntry.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumEntry.kt");
     }
 
     @TestMetadata("OnEnumEntryUsage.kt")
     public void testOnEnumEntryUsage() throws Exception {
-        runTest("testData/quickDoc/OnEnumEntryUsage.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumEntryUsage.kt");
     }
 
     @TestMetadata("OnEnumUsage.kt")
     public void testOnEnumUsage() throws Exception {
-        runTest("testData/quickDoc/OnEnumUsage.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumUsage.kt");
     }
 
     @TestMetadata("OnEnumValueOfFunction.kt")
     public void testOnEnumValueOfFunction() throws Exception {
-        runTest("testData/quickDoc/OnEnumValueOfFunction.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumValueOfFunction.kt");
     }
 
     @TestMetadata("OnEnumValuesFunction.kt")
     public void testOnEnumValuesFunction() throws Exception {
-        runTest("testData/quickDoc/OnEnumValuesFunction.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnEnumValuesFunction.kt");
     }
 
     @TestMetadata("OnFunctionDeclarationWithGFMTable.kt")
     public void testOnFunctionDeclarationWithGFMTable() throws Exception {
-        runTest("testData/quickDoc/OnFunctionDeclarationWithGFMTable.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnFunctionDeclarationWithGFMTable.kt");
     }
 
     @TestMetadata("OnFunctionDeclarationWithPackage.kt")
     public void testOnFunctionDeclarationWithPackage() throws Exception {
-        runTest("testData/quickDoc/OnFunctionDeclarationWithPackage.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnFunctionDeclarationWithPackage.kt");
     }
 
     @TestMetadata("OnInheritedMethodUsage.kt")
     public void testOnInheritedMethodUsage() throws Exception {
-        runTest("testData/quickDoc/OnInheritedMethodUsage.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnInheritedMethodUsage.kt");
     }
 
     @TestMetadata("OnInheritedPropertyUsage.kt")
     public void testOnInheritedPropertyUsage() throws Exception {
-        runTest("testData/quickDoc/OnInheritedPropertyUsage.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnInheritedPropertyUsage.kt");
     }
 
     @TestMetadata("OnMethodUsage.kt")
     public void testOnMethodUsage() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsage.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsage.kt");
     }
 
     @TestMetadata("OnMethodUsageInParen.kt")
     public void testOnMethodUsageInParen() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageInParen.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageInParen.kt");
     }
 
     @TestMetadata("OnMethodUsageMultiline.kt")
     public void testOnMethodUsageMultiline() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageMultiline.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageMultiline.kt");
     }
 
     @TestMetadata("OnMethodUsageWithBracketsInParam.kt")
     public void testOnMethodUsageWithBracketsInParam() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithBracketsInParam.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithBracketsInParam.kt");
     }
 
     @TestMetadata("OnMethodUsageWithCodeBlock.kt")
     public void testOnMethodUsageWithCodeBlock() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithCodeBlock.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithCodeBlock.kt");
     }
 
     @TestMetadata("OnMethodUsageWithMarkdown.kt")
     public void testOnMethodUsageWithMarkdown() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithMarkdown.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithMarkdown.kt");
     }
 
     @TestMetadata("OnMethodUsageWithMultilineParam.kt")
     public void testOnMethodUsageWithMultilineParam() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithMultilineParam.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithMultilineParam.kt");
     }
 
     @TestMetadata("OnMethodUsageWithReceiver.kt")
     public void testOnMethodUsageWithReceiver() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithReceiver.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithReceiver.kt");
     }
 
     @TestMetadata("OnMethodUsageWithReturnAndLink.kt")
     public void testOnMethodUsageWithReturnAndLink() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithReturnAndLink.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithReturnAndLink.kt");
     }
 
     @TestMetadata("OnMethodUsageWithReturnAndThrows.kt")
     public void testOnMethodUsageWithReturnAndThrows() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithReturnAndThrows.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithReturnAndThrows.kt");
     }
 
     @TestMetadata("OnMethodUsageWithSee.kt")
     public void testOnMethodUsageWithSee() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithSee.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithSee.kt");
     }
 
     @TestMetadata("OnMethodUsageWithTypeParameter.kt")
     public void testOnMethodUsageWithTypeParameter() throws Exception {
-        runTest("testData/quickDoc/OnMethodUsageWithTypeParameter.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnMethodUsageWithTypeParameter.kt");
     }
 
     @TestMetadata("OnPrimaryConstructorAnnotatedWithConstructorTag.kt")
     public void testOnPrimaryConstructorAnnotatedWithConstructorTag() throws Exception {
-        runTest("testData/quickDoc/OnPrimaryConstructorAnnotatedWithConstructorTag.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnPrimaryConstructorAnnotatedWithConstructorTag.kt");
     }
 
     @TestMetadata("OnPropertyUsageDocumentedWithPropertyTag.kt")
     public void testOnPropertyUsageDocumentedWithPropertyTag() throws Exception {
-        runTest("testData/quickDoc/OnPropertyUsageDocumentedWithPropertyTag.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/OnPropertyUsageDocumentedWithPropertyTag.kt");
     }
 
     @TestMetadata("renderAnnotatedExtensionFunctionType.kt")
     public void testRenderAnnotatedExtensionFunctionType() throws Exception {
-        runTest("testData/quickDoc/renderAnnotatedExtensionFunctionType.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/renderAnnotatedExtensionFunctionType.kt");
     }
 
     @TestMetadata("Samples.kt")
     public void testSamples() throws Exception {
-        runTest("testData/quickDoc/Samples.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/Samples.kt");
     }
 
     @TestMetadata("Tailrec.kt")
     public void testTailrec() throws Exception {
-        runTest("testData/quickDoc/Tailrec.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/Tailrec.kt");
     }
 
     @TestMetadata("TailrecName.kt")
     public void testTailrecName() throws Exception {
-        runTest("testData/quickDoc/TailrecName.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/TailrecName.kt");
     }
 
     @TestMetadata("TopLevelMethodFromJava.java")
     public void testTopLevelMethodFromJava() throws Exception {
-        runTest("testData/quickDoc/TopLevelMethodFromJava.java");
+        runTest("../../idea/tests/testData/editor/quickDoc/TopLevelMethodFromJava.java");
     }
 
     @TestMetadata("TypeNamesFromStdLibNavigation.kt")
     public void testTypeNamesFromStdLibNavigation() throws Exception {
-        runTest("testData/quickDoc/TypeNamesFromStdLibNavigation.kt");
+        runTest("../../idea/tests/testData/editor/quickDoc/TypeNamesFromStdLibNavigation.kt");
     }
 }

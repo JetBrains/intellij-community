@@ -20,6 +20,7 @@ import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,19 @@ public class GitPreservingProcess {
                               @NotNull GitSaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
+    this(project, git, rootsToSave, operationTitle, destinationName, saveMethod, indicator, true, operation);
+  }
+
+  @ApiStatus.Internal
+  public GitPreservingProcess(@NotNull Project project,
+                              @NotNull Git git,
+                              @NotNull Collection<? extends VirtualFile> rootsToSave,
+                              @Nls @NotNull String operationTitle,
+                              @Nls @NotNull String destinationName,
+                              @NotNull GitSaveChangesPolicy saveMethod,
+                              @NotNull ProgressIndicator indicator,
+                              boolean reportLocalHistoryActivity,
+                              @NotNull Runnable operation) {
     myProject = project;
     myGit = git;
     myRootsToSave = rootsToSave;
@@ -72,7 +86,7 @@ public class GitPreservingProcess {
       StringUtil.capitalize(myOperationTitle),
       DateFormatUtil.formatDateTime(Clock.getTime())
     );
-    mySaver = configureSaver(saveMethod);
+    mySaver = configureSaver(saveMethod, reportLocalHistoryActivity);
   }
 
   public void execute() {
@@ -108,8 +122,8 @@ public class GitPreservingProcess {
   /**
    * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
-  private @NotNull GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod) {
-    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
+  private @NotNull GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod, boolean reportLocalHistoryActivity) {
+    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod, reportLocalHistoryActivity);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @Override
       public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {

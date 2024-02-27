@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.InputStream
 
-@ApiStatus.Internal
+@Internal
 interface StreamProvider {
   /**
    * Whether it is enabled.
@@ -55,4 +55,28 @@ interface StreamProvider {
    */
   fun deleteIfObsolete(fileSpec: String, roamingType: RoamingType) {
   }
+
+  fun getInstanceOf(aClass: Class<out StreamProvider>): StreamProvider = throw UnsupportedOperationException()
+}
+
+@Internal
+object DummyStreamProvider : StreamProvider {
+  override val isExclusive: Boolean
+    get() = true
+
+  override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+  }
+
+  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+    return false
+  }
+
+  override fun processChildren(
+    path: String,
+    roamingType: RoamingType,
+    filter: (name: String) -> Boolean,
+    processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean,
+  ): Boolean = true
+
+  override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = true
 }

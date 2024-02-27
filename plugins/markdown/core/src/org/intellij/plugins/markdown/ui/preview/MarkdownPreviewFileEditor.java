@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
@@ -76,7 +76,7 @@ public final class MarkdownPreviewFileEditor extends UserDataHolderBase implemen
     myHtmlPanelWrapper = new JPanel(new BorderLayout());
     myHtmlPanelWrapper.addComponentListener(new AttachPanelOnVisibilityChangeListener());
 
-    //    attachHtmlPanel();
+    attachHtmlPanel();
 
     final var messageBusConnection = myProject.getMessageBus().connect(this);
     final var settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();

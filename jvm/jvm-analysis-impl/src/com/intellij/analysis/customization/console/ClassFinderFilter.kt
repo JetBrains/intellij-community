@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.customization.console
 
+import com.intellij.analysis.customization.console.ClassFinderConsoleColorsPage.TERMINAL_CLASS_NAME_LOG_REFERENCE
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
@@ -27,14 +29,14 @@ private val HARDCODED_NOT_CLASS = setOf(
 
 internal class ClassFinderFilter(private val myProject: Project, myScope: GlobalSearchScope) : Filter {
   private val cache = ClassInfoResolver(myProject, myScope)
+  private val hyperLinkAttributes: TextAttributes = EditorColorsManager.getInstance()?.globalScheme?.getAttributes(TERMINAL_CLASS_NAME_LOG_REFERENCE)?: hardCodedHyperLinkAttributes()
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val textStartOffset = entireLength - line.length
-
     val expectedClasses = findProbableClasses(line)
     val results: MutableList<Filter.Result> = ArrayList()
+    val attributes = hyperLinkAttributes
     for (probableClass in expectedClasses) {
-      val attributes = hyperLinkAttributes()
 
       results.add(
         Filter.Result(textStartOffset + probableClass.from,
@@ -49,7 +51,7 @@ internal class ClassFinderFilter(private val myProject: Project, myScope: Global
     return Filter.Result(results)
   }
 
-  private fun hyperLinkAttributes(): TextAttributes {
+  private fun hardCodedHyperLinkAttributes(): TextAttributes {
     val attributes = TextAttributes()
     attributes.effectType = EffectType.BOLD_DOTTED_LINE
     attributes.effectColor = NamedColorUtil.getInactiveTextColor()

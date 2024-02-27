@@ -591,7 +591,7 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  private static class BuildLayoutParametersCacheCleanupListener extends ExternalSystemTaskNotificationListenerAdapter
+  private static final class BuildLayoutParametersCacheCleanupListener extends ExternalSystemTaskNotificationListenerAdapter
     implements ProjectManagerListener, DynamicPluginListener {
     @Override
     public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {

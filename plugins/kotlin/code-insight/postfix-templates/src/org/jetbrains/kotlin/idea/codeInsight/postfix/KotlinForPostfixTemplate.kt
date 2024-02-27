@@ -18,6 +18,27 @@ internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider)
 @Suppress("SpellCheckingInspection")
 internal class KotlinIterPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("iter", provider)
 
+@Suppress("SpellCheckingInspection")
+internal class KotlinItorPostfixTemplate(
+    provider: KotlinPostfixTemplateProvider
+) : StringBasedPostfixTemplate(
+    "itor",
+    /* example = */ "val iterator = expr.iterator(); while (iterator.hasNext()) { val next = iterator.next() }",
+    /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { canBeIterated(it) }),
+    /* provider = */ provider
+) {
+    override fun setVariables(template: Template, element: PsiElement) {
+        val iteratorName = MacroCallNode(SymbolBasedSuggestVariableNameMacro("iterator"))
+        template.addVariable("iterator", iteratorName, ConstantNode("iterator"), false)
+        val nextName = MacroCallNode(SymbolBasedSuggestVariableNameMacro())
+        template.addVariable("next", nextName, ConstantNode("next"), true)
+    }
+
+    override fun getTemplateString(element: PsiElement): String = "val \$iterator$ = \$expr$.iterator()\nwhile (\$iterator$.hasNext()) {\n val \$next$ = \$iterator$.next()\n\$END$\n}"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 internal class KotlinForWithIndexPostfixTemplate(
     provider: PostfixTemplateProvider
 ) : StringBasedPostfixTemplate(
@@ -33,9 +54,9 @@ internal class KotlinForWithIndexPostfixTemplate(
         template.addVariable("name", itemName, ConstantNode("item"), true)
     }
 
-    override fun getTemplateString(element: PsiElement) = "for ((\$index$, \$name$) in \$expr$.withIndex()) {\n    \$END$\n}"
+    override fun getTemplateString(element: PsiElement): String = "for ((\$index$, \$name$) in \$expr$.withIndex()) {\n    \$END$\n}"
 
-    override fun getElementToRemove(expr: PsiElement?) = expr
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 internal class KotlinForReversedPostfixTemplate(
@@ -66,15 +87,14 @@ internal abstract class AbstractKotlinForPostfixTemplate(
         provider
     )
 
-    override fun getTemplateString(element: PsiElement) = template
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = template
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 
     override fun setVariables(template: Template, element: PsiElement) {
         val name = MacroCallNode(SymbolBasedSuggestVariableNameMacro())
         template.addVariable("name", name, ConstantNode("item"), true)
     }
 }
-
 
 internal abstract class AbstractKotlinForLoopNumbersPostfixTemplate(
     name: String,
@@ -95,9 +115,9 @@ internal abstract class AbstractKotlinForLoopNumbersPostfixTemplate(
         val indexName = MacroCallNode(SymbolBasedSuggestVariableNameMacro())
         template.addVariable("index", indexName, ConstantNode("index"), false)
     }
-    override fun getTemplateString(element: PsiElement) = template
+    override fun getTemplateString(element: PsiElement): String = template
 
-    override fun getElementToRemove(expr: PsiElement?) = expr
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 internal class KotlinForLoopNumbersPostfixTemplate(

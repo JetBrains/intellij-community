@@ -3,4 +3,3 @@ fun foo() {
         it
     }
 }
-// IGNORE_K2

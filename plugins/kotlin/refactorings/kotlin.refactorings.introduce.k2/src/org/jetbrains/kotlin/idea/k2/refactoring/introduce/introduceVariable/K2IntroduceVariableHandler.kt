@@ -13,9 +13,13 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
@@ -35,6 +39,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableContext
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHandler
@@ -208,7 +213,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
         val isInplaceAvailable = editor != null
 
-        val allOccurrences = listOf(expression) // TODO: KTIJ-27861
+        val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(containers.occurrenceContainer)
+
         val callback = Pass.create { replaceChoice: OccurrencesChooser.ReplaceChoice ->
             val allReplaces = when (replaceChoice) {
                 OccurrencesChooser.ReplaceChoice.ALL -> allOccurrences
@@ -345,6 +351,19 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         }
     }
 
+    override fun KtExpression.findOccurrences(occurrenceContainer: KtElement): List<KtExpression> =
+        analyzeInModalWindow(contextElement = this, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            K2SemanticMatcher.findMatches(patternElement = this@findOccurrences, scopeElement = occurrenceContainer)
+                .filterNot { it.isAssignmentLHS() }
+                .mapNotNull { match ->
+                    when (match) {
+                        is KtExpression -> match
+                        is KtStringTemplateEntryWithExpression -> match.expression
+                        else -> errorWithAttachment("Unexpected candidate element ${match::class.java}") { withPsiEntry("match", match) }
+                    }
+                }
+        }.ifEmpty { listOf(this) }
+
     private fun areTypeArgumentsNeededForCorrectTypeInference(expression: KtExpression): Boolean {
         val call = expression.getPossiblyQualifiedCallExpression() ?: return false
         if (call.typeArgumentList != null) return false
@@ -361,18 +380,26 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         referencesFromExpressionToExtract: List<KtReferenceExpression>,
     ): Sequence<ContainerWithContained> {
         return analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            val psiToCheck = referencesFromExpressionToExtract.mapNotNull { reference ->
+            val psiToCheck = referencesFromExpressionToExtract.flatMap { reference ->
                 // in case of an unresolved reference consider all containers applicable
-                val symbol = reference.mainReference.resolveToSymbol() ?: return@mapNotNull null
+                val symbol = reference.mainReference.resolveToSymbol() ?: return@flatMap emptyList()
+                val implicitReceivers = reference.resolveCall()
+                    ?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                    ?.let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
+                    ?.filterIsInstance<KtImplicitReceiverValue>()
 
-                if (symbol.origin == KtSymbolOrigin.SOURCE) {
-                    symbol.psi
-                } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
-                    (symbol.getContainingSymbol() as? KtAnonymousFunctionSymbol)?.psi as? KtFunctionLiteral
-                } else null
+                buildList {
+                    implicitReceivers?.forEach { addIfNotNull(it.symbol.psi) }
+
+                    if (symbol.origin == KtSymbolOrigin.SOURCE) {
+                        addIfNotNull(symbol.psi)
+                    } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                        addIfNotNull((symbol.getContainingSymbol() as? KtAnonymousFunctionSymbol)?.psi as? KtFunctionLiteral)
+                    }
+                }
             }
 
-            containersWithContainedLambdas.takeWhile { (container, contained) ->
+            containersWithContainedLambdas.takeWhile { (_, contained) ->
                 // `contained` is among parents of expression to extract;
                 // if reference is resolved and its psi is not inside `contained` then it will be accessible next to `contained`
                 psiToCheck.all { psi -> !psi.isInsideOf(listOf(contained)) }

@@ -15,7 +15,7 @@ import java.util.Collection;
 /**
  * @author Egor
  */
-public class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointCustomGroup> {
+public final class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointCustomGroup> {
   public XBreakpointCustomGroupingRule() {
     super("by-group", XDebuggerBundle.message("breakpoints.show.user.groups"));
   }

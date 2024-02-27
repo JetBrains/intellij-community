@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-public class GantScriptTypeDetector extends GroovyScriptTypeDetector {
+public final class GantScriptTypeDetector extends GroovyScriptTypeDetector {
 
   public GantScriptTypeDetector() {
     super(GantScriptType.INSTANCE);

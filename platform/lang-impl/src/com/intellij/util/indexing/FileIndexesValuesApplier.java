@@ -1,16 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.util.indexing.contentQueue.IndexUpdateWriter;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexesEvaluated;
-import com.intellij.util.indexing.events.DeletedVirtualFileStub;
 import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +64,7 @@ public final class FileIndexesValuesApplier {
     this.removers = removers;
     this.removeDataFromIndicesForFile = removeDataFromIndicesForFile;
     this.shouldMarkFileAsIndexed = shouldMarkFileAsIndexed;
-    fileStatusLockObject = shouldMarkFileAsIndexed && !VfsData.isIndexedFlagDisabled()
+    fileStatusLockObject = shouldMarkFileAsIndexed && !IndexingFlag.isIndexedFlagDisabled()
                            ? IndexingFlag.getOrCreateHash(file)
                            : IndexingFlag.getNonExistentHash();
     this._initialApplicationMode = applicationMode;
@@ -137,8 +135,7 @@ public final class FileIndexesValuesApplier {
     long startTime = System.nanoTime();
     if (removeDataFromIndicesForFile) {
       myIndex.removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file");
-      boolean isValid = file instanceof DeletedVirtualFileStub ? ((DeletedVirtualFileStub)file).isOriginalValid() : file.isValid();
-      if (!isValid) {
+      if (!file.isValid()) {
         myIndex.getIndexableFilesFilterHolder().removeFile(fileId);
       }
     }

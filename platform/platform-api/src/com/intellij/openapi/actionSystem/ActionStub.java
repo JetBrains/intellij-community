@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -105,13 +104,10 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     }
   }
 
-  public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {
-    targetPresentation.copyIconIfUnset(sourcePresentation);
-    if (Strings.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
-      targetPresentation.setTextWithMnemonic(sourcePresentation.getTextWithPossibleMnemonic());
-    }
-    if (targetPresentation.getDescription() == null && sourcePresentation.getDescription() != null) {
-      targetPresentation.setDescription(sourcePresentation.getDescription());
-    }
+  public static void copyTemplatePresentation(@NotNull Presentation sourcePresentation,
+                                              @NotNull Presentation targetPresentation) {
+    // Note: actions can update templatePresentation in constructor.
+    // We apply stub properties only after that. It could be confusing.
+    targetPresentation.copyUnsetTemplateProperties(sourcePresentation);
   }
 }

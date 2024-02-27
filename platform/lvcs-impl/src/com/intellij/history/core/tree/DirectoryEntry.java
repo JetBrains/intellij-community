@@ -8,6 +8,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DataInputOutputUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -31,7 +32,8 @@ public class DirectoryEntry extends Entry {
     myChildren = new ArrayList<>(3);
   }
 
-  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/) throws IOException {
+  public DirectoryEntry(DataInput in, @SuppressWarnings("unused") boolean dummy /* to distinguish from general constructor*/)
+    throws IOException {
     super(in);
     int count = DataInputOutputUtil.readINT(in);
     myChildren = new ArrayList<>(count);
@@ -135,13 +137,14 @@ public class DirectoryEntry extends Entry {
     final int rightChildrenSize = e.myChildren.size();
     final int minChildrenSize = Math.min(myChildrenSize, rightChildrenSize);
 
-    while(commonIndex < minChildrenSize) {
+    while (commonIndex < minChildrenSize) {
       Entry childEntry = myChildren.get(commonIndex);
       Entry rightChildEntry = e.myChildren.get(commonIndex);
 
       if (childEntry.getNameId() == rightChildEntry.getNameId() && childEntry.isDirectory() == rightChildEntry.isDirectory()) {
         childEntry.collectDifferencesWith(rightChildEntry, consumer);
-      } else {
+      }
+      else {
         break;
       }
       ++commonIndex;
@@ -158,7 +161,7 @@ public class DirectoryEntry extends Entry {
     Int2ObjectMap<Entry> uniqueNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
     Int2ObjectMap<Entry> myNameIdToRightChildEntries = new Int2ObjectOpenHashMap<>(rightChildrenSize - commonIndex);
 
-    for(int i = commonIndex; i < rightChildrenSize; ++i) {
+    for (int i = commonIndex; i < rightChildrenSize; ++i) {
       Entry rightChildEntry = e.myChildren.get(i);
       int rightChildEntryNameId = rightChildEntry.getNameId();
       Entry myChildEntry = uniqueNameIdToMyChildEntries.get(rightChildEntryNameId);
@@ -166,23 +169,26 @@ public class DirectoryEntry extends Entry {
       if (myChildEntry != null && myChildEntry.isDirectory() == rightChildEntry.isDirectory()) {
         uniqueNameIdToMyChildEntries.remove(rightChildEntryNameId);
         myNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
-      } else {
+      }
+      else {
         uniqueNameIdToRightChildEntries.put(rightChildEntryNameId, rightChildEntry);
       }
     }
 
-    if (!Paths.isCaseSensitive()  && uniqueNameIdToMyChildEntries.size() > 0 && uniqueNameIdToRightChildEntries.size() > 0) {
+    if (!Paths.isCaseSensitive() && !uniqueNameIdToMyChildEntries.isEmpty() && !uniqueNameIdToRightChildEntries.isEmpty()) {
       Map<String, Entry> nameToEntryMap = CollectionFactory.createCaseInsensitiveStringMap(uniqueNameIdToMyChildEntries.size());
       for (Entry entry : uniqueNameIdToMyChildEntries.values()) {
         nameToEntryMap.put(entry.getName(), entry);
       }
 
-      for (Entry rightChildEntry : uniqueNameIdToRightChildEntries.values()) {
+      for (ObjectIterator<Entry> rightChildEntryIterator = uniqueNameIdToRightChildEntries.values().iterator();
+           rightChildEntryIterator.hasNext(); ) {
+        Entry rightChildEntry = rightChildEntryIterator.next();
         Entry myChildEntry = nameToEntryMap.get(rightChildEntry.getName());
         if (myChildEntry != null && rightChildEntry.isDirectory() == myChildEntry.isDirectory()) {
           myNameIdToRightChildEntries.put(myChildEntry.getNameId(), rightChildEntry);
           uniqueNameIdToMyChildEntries.remove(myChildEntry.getNameId());
-          uniqueNameIdToRightChildEntries.remove(rightChildEntry.getNameId());
+          rightChildEntryIterator.remove();
         }
       }
     }
@@ -196,7 +202,8 @@ public class DirectoryEntry extends Entry {
     for (Entry child : myChildren) {
       if (uniqueNameIdToMyChildEntries.containsKey(child.getNameId())) {
         child.collectDeletedDifferences(consumer);
-      } else {
+      }
+      else {
         Entry itsChild = myNameIdToRightChildEntries.get(child.getNameId());
         if (itsChild != null) child.collectDifferencesWith(itsChild, consumer);
       }

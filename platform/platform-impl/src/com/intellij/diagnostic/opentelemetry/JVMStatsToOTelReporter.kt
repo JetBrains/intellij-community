@@ -41,6 +41,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
       val threadCountGauge = otelMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
       val threadCountMaxGauge = otelMeter.gaugeBuilder("JVM.maxThreadCount").ofLongs().buildObserver()
+      val newThreadsCounter = otelMeter.counterBuilder("JVM.newThreadsCount").buildObserver()
 
       val osLoadAverageGauge = otelMeter.gaugeBuilder("OS.loadAverage").buildObserver()
 
@@ -73,6 +74,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
           threadCountGauge.record(threadMXBean.threadCount.toLong())
           threadCountMaxGauge.record(threadMXBean.peakThreadCount.toLong())
+          newThreadsCounter.record(threadMXBean.totalStartedThreadCount)
 
           osLoadAverageGauge.record(osMXBean.systemLoadAverage)
 
@@ -97,8 +99,7 @@ private class JVMStatsToOTelReporter : ProjectActivity {
 
         usedHeapMemoryGauge, maxHeapMemoryGauge,
         usedNativeMemoryGauge, totalDirectByteBuffersGauge,
-        threadCountGauge,
-        threadCountMaxGauge,
+        threadCountGauge, threadCountMaxGauge, newThreadsCounter,
         osLoadAverageGauge,
         gcCollectionsCounter, gcCollectionTimesCounterMs,
         totalBytesAllocatedCounter,

@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
 import org.jetbrains.kotlin.idea.codeInsight.hints.PsiInlayInfoDetail
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.idea.codeInsight.hints.TextInlayInfoDetail
-import org.jetbrains.kotlin.idea.codeInsight.hints.declarative.SHOW_RETURN_EXPRESSIONS
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType

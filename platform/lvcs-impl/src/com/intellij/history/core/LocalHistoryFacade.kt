@@ -226,7 +226,8 @@ fun LocalHistoryFacade.collectChanges(projectId: String?, startPath: String, pat
     val singleLabel = changeSetChanges.singleOrNull() as? PutLabelChange
     if (singleLabel != null) {
       if (pathExists) processChangeSet(changeSet, singleLabel, path)
-    } else {
+    }
+    else {
       for (change in changeSetChanges.reversed()) {
         if (change is PutLabelChange) continue
         if (!pathExists) {

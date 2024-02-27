@@ -4,11 +4,13 @@ package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.LightweightFrame
 import sun.awt.SunToolkit
 import java.awt.*
 import java.awt.List
 import java.awt.datatransfer.Clipboard
+import java.awt.event.InputEvent
 import java.awt.font.TextAttribute
 import java.awt.im.InputMethodHighlight
 import java.awt.im.spi.InputMethodDescriptor
@@ -16,6 +18,7 @@ import java.awt.image.ImageObserver
 import java.awt.peer.*
 import java.util.*
 
+@Internal
 class IdeToolkit : SunToolkit() {
   companion object {
     @JvmStatic
@@ -23,6 +26,8 @@ class IdeToolkit : SunToolkit() {
 
     private val clipboard = IdeClipboard()
   }
+
+  var macClient = false
 
   fun clientInstance() = ClientToolkit.getInstance()
 
@@ -155,4 +160,9 @@ class IdeToolkit : SunToolkit() {
   override fun initializeDesktopProperties() {
     desktopProperties["jb.swing.avoid.text.layout"] = true // enables special mode of IME composed text painting in JBR (JBR-5946)
   }
+
+  @Suppress("DEPRECATION")
+  @Deprecated("Deprecated in Java", ReplaceWith("getMenuShortcutKeyMaskEx()"))
+  override fun getMenuShortcutKeyMask() = if (macClient) Event.META_MASK else Event.CTRL_MASK
+  override fun getMenuShortcutKeyMaskEx() = if (macClient) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
 }

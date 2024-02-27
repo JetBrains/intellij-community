@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.google.common.collect.Lists;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.history.ActivityId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -663,6 +664,22 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                              @NlsContexts.Label String leftConflictTitle,
                                              @NlsContexts.Label String rightConflictTitle,
                                              boolean removeFilesFromShelf) {
+    return unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, systemOperation, reverse,
+                              leftConflictTitle, rightConflictTitle, removeFilesFromShelf, true);
+  }
+
+  @CalledInAny
+  public ApplyPatchStatus unshelveChangeList(final ShelvedChangeList changeList,
+                                             final @Nullable List<ShelvedChange> changes,
+                                             final @Nullable List<ShelvedBinaryFile> binaryFiles,
+                                             final @Nullable LocalChangeList targetChangeList,
+                                             final boolean showSuccessNotification,
+                                             final boolean systemOperation,
+                                             final boolean reverse,
+                                             @NlsContexts.Label String leftConflictTitle,
+                                             @NlsContexts.Label String rightConflictTitle,
+                                             boolean removeFilesFromShelf,
+                                             boolean reportLocalHistoryActivity) {
     List<FilePatch> remainingPatches = new ArrayList<>();
 
     CommitContext commitContext = new CommitContext();
@@ -688,9 +705,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
 
     VirtualFile baseDir = LocalFileSystem.getInstance().findFileByNioFile(ProjectKt.getStateStore(myProject).getProjectBasePath());
+    ActivityId activityId = reportLocalHistoryActivity ? VcsActivity.Unshelve : null;
     PatchApplier patchApplier = new PatchApplier(myProject, baseDir,
                                                  patches, targetChangeList, commitContext, reverse, leftConflictTitle,
-                                                 rightConflictTitle, VcsBundle.message("activity.name.unshelve"), VcsActivity.Unshelve);
+                                                 rightConflictTitle, VcsBundle.message("activity.name.unshelve"), activityId);
     ApplyPatchStatus status = patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());

@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.engine.LightOrRealThreadInfo
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
@@ -23,8 +22,7 @@ data class CoroutineJobInfo(private val continuationFilter: ContinuationFilter) 
     companion object {
         @JvmStatic
         private fun getContinuationObject(suspendContext: SuspendContextImpl): ContinuationFilter? {
-            val stackFrameInterceptor: StackFrameInterceptor = suspendContext.debugProcess.project.serviceOrNull() ?: return null
-            return stackFrameInterceptor.extractContinuationFilter(suspendContext)
+            return StackFrameInterceptor.instance?.extractContinuationFilter(suspendContext)
         }
 
         @JvmStatic

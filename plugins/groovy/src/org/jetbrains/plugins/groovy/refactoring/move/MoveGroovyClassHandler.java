@@ -57,7 +57,7 @@ import java.util.Iterator;
 /**
  * @author Maxim.Medvedev
  */
-public class MoveGroovyClassHandler implements MoveClassHandler {
+public final class MoveGroovyClassHandler implements MoveClassHandler {
   Logger LOG = Logger.getInstance(MoveGroovyClassHandler.class);
 
   @Override

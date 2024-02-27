@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.MultiRootBranches;
@@ -19,7 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.EmptyIcon;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitReference;
+import git4idea.GitTag;
 import git4idea.GitProtectedBranchesKt;
 import git4idea.GitRemoteBranch;
 import git4idea.actions.branch.GitBranchActionsUtil;
@@ -214,17 +217,19 @@ public final class GitBranchPopupActions {
     protected final Project myProject;
     protected final List<GitRepository> myRepositories;
     protected final @NlsSafe String myBranchName;
+    protected final GitLocalBranch myBranch;
     private final @NotNull GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
     private final @NotNull GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
     public LocalBranchActions(@NotNull Project project,
                               @NotNull List<? extends GitRepository> repositories,
-                              @NotNull @NlsSafe String branchName,
+                              @NotNull GitLocalBranch branch,
                               @NotNull GitRepository selectedRepository) {
       myProject = project;
       myRepositories = Collections.unmodifiableList(repositories);
-      myBranchName = branchName;
+      myBranch = branch;
+      myBranchName = branch.getName();
       mySelectedRepository = selectedRepository;
       myGitBranchManager = project.getService(GitBranchManager.class);
       myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
@@ -253,8 +258,8 @@ public final class GitBranchPopupActions {
         new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new RebaseAction(myProject, myRepositories, myBranchName),
-        new MergeAction(myProject, myRepositories, myBranchName, true),
+        new RebaseAction(myProject, myRepositories, myBranch),
+        new MergeAction(myProject, myRepositories, myBranch),
         new Separator(),
         new UpdateSelectedBranchAction(myProject, myRepositories, myBranchName, hasIncomingCommits()),
         new PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits()),
@@ -444,9 +449,9 @@ public final class GitBranchPopupActions {
   public static class CurrentBranchActions extends LocalBranchActions {
     public CurrentBranchActions(@NotNull Project project,
                                 @NotNull List<? extends GitRepository> repositories,
-                                @NotNull String branchName,
+                                @NotNull GitLocalBranch branch,
                                 @NotNull GitRepository selectedRepository) {
-      super(project, repositories, branchName, selectedRepository);
+      super(project, repositories, branch, selectedRepository);
       setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
     }
@@ -474,17 +479,19 @@ public final class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final @NlsSafe String myBranchName;
+    private final @NlsSafe GitRemoteBranch myBranch;
     private final @NotNull GitRepository mySelectedRepository;
     private final @NotNull GitBranchManager myGitBranchManager;
 
     public RemoteBranchActions(@NotNull Project project,
                                @NotNull List<? extends GitRepository> repositories,
-                               @NotNull @NlsSafe String branchName,
+                               @NotNull GitRemoteBranch branch,
                                @NotNull GitRepository selectedRepository) {
 
       myProject = project;
       myRepositories = repositories;
-      myBranchName = branchName;
+      myBranch = branch;
+      myBranchName = branch.getName();
       mySelectedRepository = selectedRepository;
       myGitBranchManager = project.getService(GitBranchManager.class);
       getTemplatePresentation().setText(myBranchName, false); // no mnemonics
@@ -507,8 +514,8 @@ public final class GitBranchPopupActions {
         new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new RebaseAction(myProject, myRepositories, myBranchName),
-        new MergeAction(myProject, myRepositories, myBranchName, false),
+        new RebaseAction(myProject, myRepositories, myBranch),
+        new MergeAction(myProject, myRepositories, myBranch),
         new Separator(),
         new PullWithRebaseAction(myProject, myRepositories, myBranchName),
         new PullWithMergeAction(myProject, myRepositories, myBranchName),
@@ -886,13 +893,17 @@ public final class GitBranchPopupActions {
     private final String myBranchName;
     private final boolean myLocalBranch;
 
-    MergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName,
-                boolean localBranch) {
+    private final @NotNull GitReference myBranch;
+
+    MergeAction(@NotNull Project project,
+                @NotNull List<? extends GitRepository> repositories,
+                @NotNull GitReference reference) {
       super(GitBundle.messagePointer("branches.merge.into.current"));
       myProject = project;
       myRepositories = repositories;
-      myBranchName = branchName;
-      myLocalBranch = localBranch;
+      myBranch = reference;
+      myBranchName = reference.getName();
+      myLocalBranch = (reference instanceof GitBranch branch) && !branch.isRemote();
     }
 
     @Override
@@ -918,7 +929,8 @@ public final class GitBranchPopupActions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
-      brancher.merge(myBranchName, deleteOnMerge(myProject), myRepositories);
+      brancher.merge(myBranch, deleteOnMerge(myProject),
+                     myRepositories);
     }
 
     private GitBrancher.DeleteOnMergeOption deleteOnMerge(Project project) {
@@ -933,12 +945,14 @@ public final class GitBranchPopupActions {
     private final Project myProject;
     private final List<? extends GitRepository> myRepositories;
     private final String myBranchName;
+    private final @NotNull GitReference myReference;
 
-    RebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+    RebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull GitReference reference) {
       super(GitBundle.messagePointer("branches.rebase.current.onto.selected"));
       myProject = project;
       myRepositories = repositories;
-      myBranchName = branchName;
+      myBranchName = reference.getName();
+      myReference = reference;
     }
 
     @Override
@@ -969,8 +983,8 @@ public final class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      GitBrancher brancher = GitBrancher.getInstance(myProject);
-      brancher.rebase(myRepositories, myBranchName);
+      String fullBranchName = (myReference instanceof GitBranch branch) ? branch.getFullName() : myBranchName;
+      GitBrancher.getInstance(myProject).rebase(myRepositories, fullBranchName);
     }
   }
 
@@ -1051,7 +1065,7 @@ public final class GitBranchPopupActions {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{
-        new MergeAction(myProject, myRepositories, myTagName, false),
+        new MergeAction(myProject, myRepositories, new GitTag(myTagName)),
         new DeleteTagAction(myProject, myRepositories, myTagName)
       };
     }

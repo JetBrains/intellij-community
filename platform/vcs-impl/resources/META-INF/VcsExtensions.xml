@@ -359,6 +359,7 @@
     <vcs.vcsSymlinkResolver implementation="com.intellij.vcs.DefaultVcsSymlinkResolver" order="last"/>
 
     <history.activityPresentationProvider implementation="com.intellij.vcs.VcsActivityPresentationProvider"/>
+    <editorSearchAreaProvider implementation="com.intellij.openapi.diff.impl.SearchInDiffChangesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

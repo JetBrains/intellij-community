@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
@@ -499,7 +499,7 @@ class DecompressorTest {
     Decompressor.Tar(tar).escapingSymlinkPolicy(
       Decompressor.EscapingSymlinkPolicy.RELATIVIZE_ABSOLUTE).extract(dir)
 
-    val symlink = dir.resolve("symlink");
+    val symlink = dir.resolve("symlink")
     assertThat(symlink).isSymbolicLink()
     assertThat(Files.readSymbolicLink(symlink)).isEqualTo(dir.resolve("root"))
   }

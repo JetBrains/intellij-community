@@ -54,9 +54,7 @@ internal class RemoteDevInvoker(private val localInvoker: InvokerMBean, remoteJm
     remoteInvoker.cleanup(sessionId)
   }
 
-  override fun takeScreenshot(outFolder: String?) {
-    return localInvoker.takeScreenshot(outFolder)
-  }
+  override fun takeScreenshot(outFolder: String?) {}
 
   override fun putAdhocReference(item: Any): Ref {
     return localInvoker.putAdhocReference(item)

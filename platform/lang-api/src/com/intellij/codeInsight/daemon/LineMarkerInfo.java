@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,12 +21,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -248,6 +251,11 @@ public class LineMarkerInfo<T extends PsiElement> {
     @Override
     public boolean isNavigateAction() {
       return myInfo.myNavigationHandler != null;
+    }
+
+    @ApiStatus.Internal
+    public @Nullable ActionGroup getPopupMenuActions(@NotNull MouseEvent mouseEvent) {
+      return getPopupMenuActions();
     }
 
     @Override

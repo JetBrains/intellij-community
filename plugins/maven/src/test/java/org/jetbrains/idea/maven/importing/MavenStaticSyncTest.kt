@@ -623,6 +623,57 @@ class MavenStaticSyncTest : MavenMultiVersionImportingTestCase() {
 
   }
 
+  @Test
+  fun `test import cyclic dependencies in modules`() = runBlocking {
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        <dependencies>
+          <dependency>
+              <groupId>test</groupId>
+              <artifactId>m2</artifactId>
+              <version>1</version>
+          </dependency>
+        </dependencies>
+        """)
+
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        <dependencies>
+          <dependency>
+              <groupId>test</groupId>
+              <artifactId>m1</artifactId>
+              <version>1</version>
+          </dependency>
+        </dependencies>
+        """)
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <modules>
+                        <module>m1</module>
+                        <module>m2</module>
+                    </modules>
+                    """)
+
+    assertModules("project", "m1", "m2")
+    assertModuleModuleDeps("m1", "m2")
+    assertModuleModuleDeps("m2", "m1")
+
+  }
+
   override suspend fun importProjectsAsync(files: List<VirtualFile>) {
     val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
     try {

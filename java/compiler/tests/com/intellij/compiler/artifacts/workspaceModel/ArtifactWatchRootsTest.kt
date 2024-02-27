@@ -14,7 +14,6 @@ import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -31,8 +30,8 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
 
     val workspaceModel = WorkspaceModel.getInstance(project)
     val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
-    val outputVirtualUrl = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(outputDir.path))
-    val fileVirtualUrl = virtualFileUrlManager.getOrCreateFromUri(VfsUtilCore.pathToUrl(file.path))
+    val outputVirtualUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(outputDir.path))
+    val fileVirtualUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(file.path))
     runWriteAction {
       workspaceModel.updateProjectModel {
         val fileCopy = it addEntity FileCopyPackagingElementEntity(fileVirtualUrl, MySource)
