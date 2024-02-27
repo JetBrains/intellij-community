@@ -4,22 +4,23 @@ package com.intellij.application.options.codeStyle.cache;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.SlowOperations;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.function.Supplier;
 
 public final class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
   public static final int MAX_CACHE_SIZE = 100;
@@ -72,14 +73,23 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
       SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
       CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
       if (provider == null || provider.isExpired()) {
-        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333522, EA-910708")) {
-          FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(virtualFile);
-          provider = new CodeStyleCachedValueProvider(Objects.requireNonNull(viewProvider), myProject);
+        Supplier<VirtualFile> fileSupplier;
+        if (virtualFile instanceof LightVirtualFile) {
+          LightVirtualFile copy = getCopy((LightVirtualFile)virtualFile);
+          fileSupplier = () -> getCopy(copy); // create new copy each time it requested to make sure the attached PSI is collected
         }
+        else {
+          fileSupplier = () -> virtualFile;
+        }
+        provider = new CodeStyleCachedValueProvider(fileSupplier, myProject, fileData);
         fileData.putUserData(PROVIDER_KEY, new SoftReference<>(provider));
       }
       return provider;
     }
+  }
+
+  private static @NotNull LightVirtualFile getCopy(@NotNull LightVirtualFile lightVirtualFile) {
+    return new LightVirtualFile(lightVirtualFile, lightVirtualFile.getContent(), lightVirtualFile.getModificationStamp());
   }
 
   private void clearCache() {
