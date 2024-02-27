@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -41,6 +41,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Ignore
 import org.junit.Test
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicInteger
 
 class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
@@ -700,20 +701,24 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     fun testListNonConfiguredModules() {
         importProjectFromTestData()
 
-        runReadAction {
-            val configurator = findGradleModuleConfigurator()
+        val configurator = findGradleModuleConfigurator()
 
-            val (modules, ableToRunConfigurators) = getConfigurationPossibilitiesForConfigureNotification(myProject)
-            assertTrue(ableToRunConfigurators.any { it is KotlinGradleModuleConfigurator })
-            val moduleNames = modules.map { it.baseModule.name }
-            assertSameElements(moduleNames, "project.app")
+        val (modules, ableToRunConfigurators) = ReadAction
+            .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject) })
+            .executeSynchronously()
+        assertTrue(ableToRunConfigurators.any { it is KotlinGradleModuleConfigurator })
+        val moduleNames = modules.map { it.baseModule.name }
+        assertSameElements(moduleNames, "project.app")
 
-            val moduleNamesFromConfigurator = getCanBeConfiguredModules(myProject, configurator).map { it.name }
-            assertSameElements(moduleNamesFromConfigurator, "project.app")
+        val moduleNamesFromConfigurator = ReadAction
+            .nonBlocking(Callable { getCanBeConfiguredModules(myProject, configurator).map { it.name } })
+            .executeSynchronously()
+        assertSameElements(moduleNamesFromConfigurator, "project.app")
 
-            val moduleNamesWithKotlinFiles = getCanBeConfiguredModulesWithKotlinFiles(myProject, configurator).map { it.name }
-            assertSameElements(moduleNamesWithKotlinFiles, "project.app")
-        }
+        val moduleNamesWithKotlinFiles = ReadAction
+            .nonBlocking(Callable { getCanBeConfiguredModulesWithKotlinFiles(myProject, configurator).map { it.name } })
+            .executeSynchronously()
+        assertSameElements(moduleNamesWithKotlinFiles, "project.app")
     }
 
     @Test
@@ -721,18 +726,20 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     fun testListNonConfiguredModulesConfigured() {
         importProjectFromTestData()
 
-        runReadAction {
-            assertEmpty(getConfigurationPossibilitiesForConfigureNotification(myProject).first)
-        }
+        val modules = ReadAction
+            .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
+            .executeSynchronously()
+        assertEmpty(modules)
     }
 
     @Test
     fun testListNonConfiguredModulesConfiguredWithImplementation() {
         importProjectFromTestData()
 
-        runReadAction {
-            assertEmpty(getConfigurationPossibilitiesForConfigureNotification(myProject).first)
-        }
+        val modules = ReadAction
+            .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
+            .executeSynchronously()
+        assertEmpty(modules)
     }
 
     @Test
@@ -740,9 +747,10 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     fun testListNonConfiguredModulesConfiguredOnlyTest() {
         importProjectFromTestData()
 
-        runReadAction {
-            assertEmpty(getConfigurationPossibilitiesForConfigureNotification(myProject).first)
-        }
+        val modules = ReadAction
+            .nonBlocking(Callable { getConfigurationPossibilitiesForConfigureNotification(myProject).first })
+            .executeSynchronously()
+        assertEmpty(modules)
     }
 
     @Ignore
