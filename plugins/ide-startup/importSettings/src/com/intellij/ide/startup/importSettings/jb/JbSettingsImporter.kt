@@ -444,7 +444,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.plugins.compatibility")
     val updates = MarketplaceRequests.getNearestUpdate(updateablePluginsMap.keys)
     for (update in updates) {
-      if (update.isCompatible)
+      if (update.compatible)
         continue
 
       if (!update.products.contains(myIdeData.marketplaceCode)) {
