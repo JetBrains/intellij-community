@@ -6,7 +6,9 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.JvmLoggerLookupElement
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.java.codeInsight.JvmLoggerTestSetupUtil
+import com.intellij.openapi.components.service
 import com.intellij.testFramework.NeedsIndex
+import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import junit.framework.TestCase
 
 class LoggerCompletionTest : LightFixtureCompletionTestCase() {
@@ -95,13 +97,27 @@ class LoggerCompletionTest : LightFixtureCompletionTestCase() {
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "Logger completion is not supported in the dumb mode")
+  fun testRespectCustomLoggerName() {
+    val state = project.service<JvmLoggingSettingsStorage>().state
+    val oldLoggerName = state.loggerName
+    try {
+      JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+      val newName = "NameLogger"
+      state.loggerName = newName
+      doTest(0, newName, "NavigableMap", "NegativeArraySizeException", "NoSuchAlgorithmException", "Runnable")
+    }
+    finally {
+      state.loggerName = oldLoggerName
+    }
+  }
+
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/logger"
 
   override fun doAntiTest() {
     val name = getTestName(true)
     configureByFile("$name.java")
     assertStringItems("log", "long", "clone")
-
     TestCase.assertFalse(
       lookup.items.any {
         it is JvmLoggerLookupElement

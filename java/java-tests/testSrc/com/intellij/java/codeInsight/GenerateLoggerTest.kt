@@ -104,6 +104,19 @@ class GenerateLoggerTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(project.service<JvmLoggingSettingsStorage>().state.loggerId, "Log4j")
   }
 
+  fun testRespectCustomLoggerName() {
+    val state = project.service<JvmLoggingSettingsStorage>().state
+    val oldName = state.loggerName
+    try {
+      JvmLoggerTestSetupUtil.setupSlf4j(myFixture)
+      state.loggerName = "CustomName"
+      doTest()
+    }
+    finally {
+      state.loggerName = oldName
+    }
+  }
+
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_21
 
   private fun doTestWithMultiplePlaces(expectedClassNameList: List<String>, selectedClass: String) {
