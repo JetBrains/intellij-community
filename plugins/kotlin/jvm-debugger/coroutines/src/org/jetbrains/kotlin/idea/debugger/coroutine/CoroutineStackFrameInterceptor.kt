@@ -31,10 +31,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.continuationVariableValue
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.getSuspendExitMode
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.thisVariableValue
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutineStackFrameInterceptor(val project: Project) : StackFrameInterceptor {
