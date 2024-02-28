@@ -876,23 +876,66 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     Page lastPage = storage.pageByOffset(unallocatedRegionStartingOffsetInFile);
     ByteBuffer lastPageBuffer = lastPage.rawPageBuffer();
 
+    int maxBytesRemainsOnPage = lastPageBuffer.limit() - unallocatedRegionStartingOffsetOnPage;
     int bytesToCheck = Math.min(
       recordsToCheck * RecordLayout.RECORD_SIZE_IN_BYTES,
-      lastPageBuffer.limit() - unallocatedRegionStartingOffsetOnPage
+      maxBytesRemainsOnPage
     );
 
-    for (int i = 0; i < bytesToCheck; i++) {
-      byte b = lastPageBuffer.get(unallocatedRegionStartingOffsetOnPage + i);
+    int firstNonZeroOffsetInPage = firstNonZeroByteOffset(lastPageBuffer, unallocatedRegionStartingOffsetOnPage, bytesToCheck);
+    if (firstNonZeroOffsetInPage >= 0) {
+      //if we already found non-0 record, no reason for economy:
+      // => better to collect AMAP diagnostic info
+      // => lets check more bytes (but not too many: i.e. scanning 64Mb byte-by-byte could be quite offensive for UX,
+      // and for our TeamCity tests as well!)
+      int bytesToCheckAdditionally = Math.min(maxBytesRemainsOnPage, 1 << 16);
+      int lastNonZeroOffsetInPage = lastNonZeroByteOffset(lastPageBuffer, unallocatedRegionStartingOffsetOnPage, bytesToCheckAdditionally);
+      int nonZeroBytesBeyondEOF = lastNonZeroOffsetInPage - unallocatedRegionStartingOffsetOnPage + 1;
+      int nonZeroedRecordsCount = (nonZeroBytesBeyondEOF / RecordLayout.RECORD_SIZE_IN_BYTES) + 1;
+
+      throw new CorruptedException(
+        "Non-empty records detected beyond current EOF => storage is corrupted.\n" +
+        "\tmax allocated id(=" + maxAllocatedID + ")\n" +
+        "\tfirst un-allocated offset: " + unallocatedRegionStartingOffsetInFile + "\n" +
+        "\tcontent beyond allocated region(" + recordsToCheck + " records max): \n" +
+        dumpRecordsAsHex(firstUnAllocatedId, firstUnAllocatedId + recordsToCheck) + "\n" +
+        "=" + nonZeroedRecordsCount + " total non-zero records on the page, in range " +
+        "[" + unallocatedRegionStartingOffsetInFile + ".." + (unallocatedRegionStartingOffsetInFile + nonZeroBytesBeyondEOF) + ")"
+      );
+    }
+  }
+
+  /**
+   * @return offset of the first non-zero byte in a range [startingOffset..startingOffset+maxBytesToCheck),
+   * or -1 if all bytes in the range are 0
+   */
+  private static int firstNonZeroByteOffset(@NotNull ByteBuffer buffer,
+                                            int startingOffset,
+                                            int maxBytesToCheck) {
+    for (int i = 0; i < maxBytesToCheck; i++) {
+      byte b = buffer.get(startingOffset + i);
       if (b != 0) {
-        throw new CorruptedException(
-          "Non-empty records detected beyond current EOF => storage is corrupted.\n" +
-          "\tmax allocated id(=" + maxAllocatedID + ")\n" +
-          "\tfirst un-allocated offset: " + unallocatedRegionStartingOffsetInFile + "\n" +
-          "\tcontent beyond allocated region(" + recordsToCheck + " records max): \n" +
-          dumpRecordsAsHex(firstUnAllocatedId, firstUnAllocatedId + recordsToCheck)
-        );
+        return startingOffset + i;
       }
     }
+    return -1;
+  }
+
+  /**
+   * @return offset of the last non-zero byte in a range [startingOffset..startingOffset+maxBytesToCheck),
+   * or -1 if all bytes in the range are 0
+   */
+  private static int lastNonZeroByteOffset(@NotNull ByteBuffer buffer,
+                                           int startingOffset,
+                                           int maxBytesToCheck) {
+    int lastNonZeroOffset = -1;
+    for (int i = 0; i < maxBytesToCheck; i++) {
+      byte b = buffer.get(startingOffset + i);
+      if (b != 0) {
+        lastNonZeroOffset = startingOffset + i;
+      }
+    }
+    return lastNonZeroOffset;
   }
 
   /**
