@@ -4,13 +4,15 @@ package com.intellij.openapi.application.migrations
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.tryReadPluginIdsFromFile
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 
-class AIAssistant241 : PluginMigration() {
+internal class AIAssistant241 : PluginMigration() {
   private val PLUGIN_ID = "com.intellij.ml.llm"
-  private val PRODUCT_IDS = setOf("IU", "PY", "WS", "RM", "PS", "GO", "CL", "RD", "RR")
+  private val PRODUCT_IDS = setOf("IU", "PY", "WS", "DG", "RM", "PS", "GO", "CL", "RD", "RR", "QA")
 
   override fun migratePlugins(descriptor: PluginMigrationDescriptor) {
     if (descriptor.options.previousVersion != "2023.3") return
@@ -31,5 +33,19 @@ class AIAssistant241 : PluginMigration() {
     if (!disabledIds.contains(PluginId.getId(PLUGIN_ID))) {
       descriptor.addPluginIfNeeded(PLUGIN_ID)
     }
+    else {
+      try {
+        Files.createFile(descriptor.options.newConfigDir.resolve(NO_AI_FILENAME))
+      }
+      catch (_: Throwable) {
+      }
+    }
   }
+}
+
+private const val NO_AI_FILENAME = ".noai"
+
+@ApiStatus.Internal
+fun isAIDisabledBeforeMigrated(): Boolean {
+  return Files.exists(PathManager.getConfigDir().resolve(NO_AI_FILENAME))
 }
