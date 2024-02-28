@@ -14,7 +14,6 @@ import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
-import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindTextHtmlIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -169,12 +168,10 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
       bindTextIn(cs, loadedDetailsState.mapState { it.descriptionHtml ?: noDescriptionHtmlText })
     }
 
-    val reactionsVm = timelineVm.detailsVm.reactionsVm.filterNotNull()
+    val reactionsVm = timelineVm.detailsVm.reactionsVm
     val contentPane = VerticalListPanel(CodeReviewTimelineUIUtil.VERTICAL_GAP).apply {
       add(EditableComponentFactory.wrapTextComponent(cs, textPane, timelineVm.detailsVm.descriptionEditVm))
-      bindChildIn(cs, reactionsVm, index = -1) { vm ->
-        GHReactionsComponentFactory.create(this, vm)
-      }
+      add(GHReactionsComponentFactory.create(cs, reactionsVm))
     }
     val actionsPanel = HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       if (canEdit) {
@@ -183,12 +180,10 @@ internal class GHPRFileEditorComponentFactory(private val timelineVm: GHPRTimeli
         })
       }
       if (canReact) {
-        bindChildIn(cs, reactionsVm, index = -1) { vm ->
-          CodeReviewCommentUIUtil.createAddReactionButton {
-            val parentComponent = it.source as JComponent
-            GHReactionsPickerComponentFactory.showPopup(vm, parentComponent)
-          }
-        }
+        add(CodeReviewCommentUIUtil.createAddReactionButton {
+          val parentComponent = it.source as JComponent
+          GHReactionsPickerComponentFactory.showPopup(reactionsVm, parentComponent)
+        })
       }
     }
 
