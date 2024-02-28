@@ -888,5 +888,8 @@
     <listener class="git4idea.ui.branch.GitBranchWidget$SettingsListener"
               activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.ui.UISettingsListener"/>
+    <listener class="git4idea.branch.RecentProjectBranchUpdater"
+              activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.openapi.vcs.BranchChangeListener"/>
   </projectListeners>
 </idea-plugin>
