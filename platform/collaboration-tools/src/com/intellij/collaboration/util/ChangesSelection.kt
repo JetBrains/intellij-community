@@ -17,7 +17,7 @@ sealed interface ChangesSelection {
                      val location: DiffLineLocation? = null)
     : ChangesSelection {
     constructor(changes: List<RefComparisonChange>, change: RefComparisonChange, location: DiffLineLocation? = null)
-      : this(changes, changes.indexOfFirst { it === change }, location)
+      : this(changes, changes.indexOfFirst { it == change }, location)
   }
 
   /**
