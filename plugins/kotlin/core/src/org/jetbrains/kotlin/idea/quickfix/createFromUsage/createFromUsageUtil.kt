@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -181,23 +182,32 @@ object CreateFromUsageUtil {
         }
     }
 
-    fun computeDefaultVisibility(
+    fun computeDefaultVisibilityAsString(
         containingElement: PsiElement,
         isAbstract: Boolean,
         isExtension: Boolean,
         isConstructor: Boolean,
         originalElement: PsiElement
     ): String {
-        return if (isAbstract) ""
+        val modifier = if (isAbstract) null
         else if (containingElement is KtClassOrObject
             && !(containingElement is KtClass && containingElement.isInterface())
             && containingElement.isAncestor(originalElement)
             && !isConstructor
-        ) "private "
+        ) JvmModifier.PRIVATE
         else if (isExtension) {
-            if (containingElement is KtFile && containingElement.isScript()) "" else "private "
-        } else ""
+            if (containingElement is KtFile && containingElement.isScript()) null else JvmModifier.PRIVATE
+        } else null
+        return modifierToString(modifier)
     }
 
-
+    private val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
+        JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
+        JvmModifier.PACKAGE_LOCAL to KtTokens.INTERNAL_KEYWORD,
+        JvmModifier.PROTECTED to KtTokens.PROTECTED_KEYWORD,
+        JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD
+    )
+    fun modifierToString(modifier: JvmModifier?):String {
+        return modifierToKotlinToken[modifier]?.let { if (it == KtTokens.PUBLIC_KEYWORD) "" else it.value } ?:""
+    }
 }

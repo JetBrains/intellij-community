@@ -56,7 +56,6 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -495,7 +494,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     val visibilityKeyword = modifierList.visibilityModifierType()
                     if (visibilityKeyword == null) {
                         val defaultVisibility =
-                            CreateFromUsageUtil.computeDefaultVisibility(
+                            CreateFromUsageUtil.computeDefaultVisibilityAsString(
                                 containingElement,
                                 callableInfo.isAbstract,
                                 isExtension,
@@ -503,6 +502,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                                 originalElement
                             )
                         append(defaultVisibility)
+                        if (isNotEmpty()) append(" ")
                     }
 
                     // TODO: Get rid of isAbstract

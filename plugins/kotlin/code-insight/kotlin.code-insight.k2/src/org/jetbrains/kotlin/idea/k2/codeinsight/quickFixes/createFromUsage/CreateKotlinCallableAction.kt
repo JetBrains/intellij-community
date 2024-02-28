@@ -137,7 +137,12 @@ internal class CreateKotlinCallableAction(
         if (call == null) return null
         val container = getContainer() ?: return null
         val modifierListAsString = if (request.modifiers.isEmpty())
-            CreateFromUsageUtil.computeDefaultVisibility(container, isAbstract == true, false, false, call)
+            CreateFromUsageUtil.computeDefaultVisibilityAsString(container,
+                                                                 isAbstract == true,
+                                                                 isExtension = false,
+                                                                 isConstructor = false,
+                                                                 originalElement = call
+            )
         else
             request.modifiers.joinToString(
                 separator = " ",
@@ -161,9 +166,6 @@ internal class CreateKotlinCallableAction(
             }
         }
     }
-
-    private fun KtElement.getModifierListAsString(): String =
-        KotlinModifierBuilder(this).apply { addJvmModifiers(request.modifiers.filterNot { it == JvmModifier.PUBLIC }) }.modifierList.text
 
     private fun renderParameterList(): String {
         assert(candidatesOfParameterNames.size == candidatesOfRenderedParameterTypes.size)
