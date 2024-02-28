@@ -15,7 +15,7 @@ fun markAsInvalid(file: Path) {
   }
 }
 
-fun <K, V> openOrResetMap(
+internal fun <K, V> openOrResetMap(
   store: MVStore,
   name: String,
   mapBuilder: MVMap.Builder<K, V>,
@@ -36,7 +36,7 @@ fun <K, V> openOrResetMap(
   return store.openMap(name, mapBuilder)
 }
 
-fun createOrResetMvStore(file: Path, logSupplier: () -> Logger): MVStore {
+internal fun createOrResetMvStore(file: Path, logSupplier: () -> Logger): MVStore {
   val markerFile = getInvalidateMarkerFile(file)
   if (Files.exists(markerFile)) {
     Files.deleteIfExists(file)
