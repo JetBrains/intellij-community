@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
@@ -68,9 +67,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
     override fun extractContinuationFilter(suspendContext: SuspendContextImpl): ContinuationFilter? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
-        val evaluationContext = EvaluationContextImpl(suspendContext, frameProxy)
-        val defaultExecutionContext = DefaultExecutionContext(evaluationContext)
-
+        val defaultExecutionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
         if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
             // first try the helper, it is the fastest way
@@ -135,7 +132,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun callerLocation(suspendContext: SuspendContextImpl): Location? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
         val continuationObject = extractContinuation(frameProxy) ?: return null
-        val executionContext = DefaultExecutionContext(EvaluationContextImpl(suspendContext, frameProxy))
+        val executionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
         val completionObject = debugMetadata.baseContinuationImpl.getNextContinuation(continuationObject, executionContext) ?: return null
         val stackTraceElement = debugMetadata.getStackTraceElement(completionObject, executionContext)?.stackTraceElement() ?: return null

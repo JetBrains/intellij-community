@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
@@ -95,8 +94,7 @@ fun Location.findPosition(debugProcess: DebugProcessImpl) = runReadAction {
     DebuggerUtilsEx.toXSourcePosition(debugProcess.positionManager.getSourcePosition(this))
 }
 
-fun SuspendContextImpl.executionContext() =
-    invokeInManagerThread { DefaultExecutionContext(EvaluationContextImpl(this, this.frameProxy)) }
+fun SuspendContextImpl.executionContext() = invokeInManagerThread { DefaultExecutionContext(this, this.frameProxy) }
 
 fun <T : Any> SuspendContextImpl.invokeInManagerThread(f: () -> T?): T? =
     debugProcess.invokeInManagerThread { f() }
