@@ -16,7 +16,6 @@ import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
@@ -140,12 +139,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
         val completionObject = debugMetadata.baseContinuationImpl.getNextContinuation(continuationObject, executionContext) ?: return null
         val stackTraceElement = debugMetadata.getStackTraceElement(completionObject, executionContext)?.stackTraceElement() ?: return null
-        return DebuggerUtilsEx.findOrCreateLocation(
-            suspendContext.debugProcess,
-            stackTraceElement.className,
-            stackTraceElement.methodName,
-            stackTraceElement.lineNumber
-        )
+        return DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, stackTraceElement)
     }
 
     private fun extractBaseContinuation(
