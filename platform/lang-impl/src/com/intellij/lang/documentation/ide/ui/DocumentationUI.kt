@@ -80,7 +80,7 @@ internal class DocumentationUI(
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
     switcher = createSwitcher()
     switcherToolbarComponent = switcher.createToolbar().component.apply {
-      border = JBUI.Borders.emptyTop(5)
+      border = JBUI.Borders.empty(5, DocumentationHtmlUtil.contentOuterPadding - 4, 0, 0)
     }
     val textTrimmer = SwingTextTrimmer.createCenterTrimmer(0.8f)
     locationLabel = object : JLabel() {
@@ -190,8 +190,10 @@ internal class DocumentationUI(
     }
   }
 
-  public fun updateSwitcherVisibility() {
-    switcherToolbarComponent.isVisible = switcher.elements.count() > 1
+  fun updateSwitcherVisibility() {
+    val visible = switcher.elements.count() > 1
+    switcherToolbarComponent.isVisible = visible
+    scrollPane.border = JBUI.Borders.emptyTop(if (visible) 5 else 10)
   }
 
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent?) {

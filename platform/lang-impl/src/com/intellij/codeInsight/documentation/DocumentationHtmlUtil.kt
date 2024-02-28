@@ -86,7 +86,7 @@ object DocumentationHtmlUtil {
     @Language("CSS")
     val result = ContainerUtil.newLinkedList(
       """
-        html { padding: ${contentOuterPadding}px ${contentOuterPadding}px 0 ${contentOuterPadding}px; margin: 0 }
+        html { padding: 0 ${contentOuterPadding}px 0 ${contentOuterPadding}px; margin: 0 }
         body { padding: 0; margin: 0; overflow-wrap: anywhere;}
         pre  { white-space: pre-wrap; }
         a { color: $linkColor; text-decoration: none;}
