@@ -61,8 +61,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -290,7 +288,6 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     if (intentionsButton == null) return;
     showPopup(defaultPosition, popup -> {
       toolbar.attachPopupToButton(intentionsButton, popup);
-      return null;
     });
   }
 
@@ -303,7 +300,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     myPopup.show(this, positionHint, null);
   }
 
-  private void showPopup(@Nullable RelativePoint positionHint, @Nullable Function1<? super ListPopup, Unit> listPopupCustomization) {
+  private void showPopup(@Nullable RelativePoint positionHint, @Nullable Consumer<? super ListPopup> listPopupCustomization) {
     myPopup.show(this, positionHint, listPopupCustomization);
   }
 
@@ -625,7 +622,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
     @Override
     public void show(@NotNull IntentionHintComponent component, @Nullable RelativePoint positionHint,
-                     @Nullable Function1<? super ListPopup, Unit> listPopupCustomization) {
+                     @Nullable Consumer<? super ListPopup> listPopupCustomization) {
       if (myDisposed || myEditor.isDisposed() || (myListPopup != null && myListPopup.isDisposed()) || myPopupShown) return;
 
       if (myListPopup == null) {
@@ -633,7 +630,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         myHint = component;
         recreateMyPopup(this, new IntentionListStep(this, myEditor, myFile, myProject, myCachedIntentions));
         if(listPopupCustomization != null) {
-          listPopupCustomization.invoke(myListPopup);
+          listPopupCustomization.accept(myListPopup);
         }
       }
       else {
