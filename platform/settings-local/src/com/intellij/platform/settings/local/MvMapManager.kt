@@ -5,6 +5,7 @@ package com.intellij.platform.settings.local
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.Dispatchers
@@ -124,7 +125,7 @@ internal class MvMapManager(private val map: MVMap<String, ByteArray>) {
   }
 }
 
-private fun getDatabaseFile(): Path = PathManager.getConfigDir().resolve("app-internal-state.db")
+private fun getDatabaseFile(): Path = PathManager.getConfigDir().resolve(StoragePathMacros.APP_INTERNAL_STATE_DB)
 
 private fun openMap(store: MVStore, name: String): MVMap<String, ByteArray> {
   val mapBuilder = MVMap.Builder<String, ByteArray>()
