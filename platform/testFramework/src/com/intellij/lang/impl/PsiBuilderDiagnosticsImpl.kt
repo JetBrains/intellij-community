@@ -138,11 +138,23 @@ $rollbackSources
 
   companion object {
     @JvmStatic
-    fun <T> runWithDiagnostics(diagnostics: PsiBuilderDiagnostics?, computable: Supplier<T>): T {
+    fun <T> computeWithDiagnostics(diagnostics: PsiBuilderDiagnostics?, computable: Supplier<T>): T {
       val oldValue = PsiBuilderImpl.DIAGNOSTICS
       try {
         PsiBuilderImpl.DIAGNOSTICS = diagnostics
         return computable.get()
+      }
+      finally {
+        PsiBuilderImpl.DIAGNOSTICS = oldValue
+      }
+    }
+
+    @JvmStatic
+    fun runWithDiagnostics(diagnostics: PsiBuilderDiagnostics?, runnable: Runnable) {
+      val oldValue = PsiBuilderImpl.DIAGNOSTICS
+      try {
+        PsiBuilderImpl.DIAGNOSTICS = diagnostics
+        runnable.run()
       }
       finally {
         PsiBuilderImpl.DIAGNOSTICS = oldValue
