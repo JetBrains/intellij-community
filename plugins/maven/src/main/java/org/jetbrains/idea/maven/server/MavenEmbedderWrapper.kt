@@ -251,10 +251,17 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
         while (isActive) {
           delay(500)
           blockingContext {
-            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-            progressReporter?.fraction(status.fraction())
-            eventHandler.handleConsoleEvents(status.consoleEvents())
-            eventHandler.handleDownloadEvents(status.downloadEvents())
+            try {
+              val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+              progressReporter?.fraction(status.fraction())
+              eventHandler.handleConsoleEvents(status.consoleEvents())
+              eventHandler.handleDownloadEvents(status.downloadEvents())
+            }
+            catch (e: Throwable) {
+              if (isActive) {
+                throw e;
+              }
+            }
           }
         }
       }
