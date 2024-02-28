@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil
-import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
@@ -62,11 +61,9 @@ class GHPRDetailsTimelineViewModel internal constructor(private val project: Pro
   private val _descriptionEditVm = MutableStateFlow<GHPREditDescriptionViewModel?>(null)
   val descriptionEditVm: StateFlow<GHPREditDescriptionViewModel?> = _descriptionEditVm.asStateFlow()
 
-  val reactionsVm: Flow<GHReactionsViewModel?> = details.mapScoped {
-    val details = details.value.getOrNull() ?: return@mapScoped null
-    val prId = details.id.id
-    GHReactionViewModelImpl(this, prId, MutableStateFlow(details.reactions), currentUser, reactionsService, reactionIconsProvider)
-  }.stateInNow(cs, null)
+  private val loadedReactionsState = details.map { it.getOrNull() }.filterNotNull().map { it.reactions }.stateInNow(cs, emptyList())
+  val reactionsVm: GHReactionsViewModel =
+    GHReactionViewModelImpl(cs, dataProvider.id.id, loadedReactionsState, currentUser, reactionsService, reactionIconsProvider)
 
   private fun createDetails(data: GHPullRequest): GHPRDetailsFull = GHPRDetailsFull(
     dataProvider.id,
