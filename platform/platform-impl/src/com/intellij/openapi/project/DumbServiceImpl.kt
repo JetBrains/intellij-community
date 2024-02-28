@@ -233,9 +233,17 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       if (enteredDumb) {
         LOG.info("enter dumb mode [${project.name}]")
         dumbModeStartTrace = trace
-        publishDumbModeChangedEvent()
+        try {
+          publishDumbModeChangedEvent()
+        } catch (t: Throwable) {
+          // in unit tests we may get here because of exception thrown from Log.error from catch block inside runCatchingIgnorePCE
+          decrementDumbCounter()
+          throw t
+        }
       }
     }
+
+    LOG.assertTrue(myState.value.isDumb, "Should be dumb")
   }
 
   // this method is not suspend for the sake of symmetry: incrementDumbCounter is not suspend as of now
@@ -324,9 +332,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   private fun queueTaskOnEdt(task: DumbModeTask, modality: ModalityState, trace: Throwable) {
+    // first, increment dumb mode, then add the task. If increment failed, task execution will not be scheduled, and we will stuck in
+    // dumb mode. In unit tests, much safer behavior is to ignore the task. In prod both behaviors are bad.
+    incrementDumbCounter(trace)
+
     ThreadingAssertions.assertEventDispatchThread()
     myLatestReceipt = myTaskQueue.addTask(task)
-    incrementDumbCounter(trace)
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
