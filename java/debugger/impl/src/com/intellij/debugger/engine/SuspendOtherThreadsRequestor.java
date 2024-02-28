@@ -15,19 +15,33 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-class SuspendOtherThreadsRequestor implements FilteredRequestor {
+public class SuspendOtherThreadsRequestor implements FilteredRequestor {
   private final @NotNull DebugProcessImpl myProcess;
   private final @NotNull ParametersForSuspendAllReplacing myParameters;
 
-  SuspendOtherThreadsRequestor(@NotNull DebugProcessImpl process, @NotNull ParametersForSuspendAllReplacing parameters) {
+  private SuspendOtherThreadsRequestor(@NotNull DebugProcessImpl process, @NotNull ParametersForSuspendAllReplacing parameters) {
     myProcess = process;
     myParameters = parameters;
   }
 
-  static void initiateTransferToSuspendAll(@NotNull DebugProcessImpl process,
-                                           @NotNull SuspendContextImpl suspendContext,
-                                           @NotNull Function<SuspendContextImpl, Boolean> performOnSuspendAll) {
+  /**
+   * Schedule switch-request to move from suspend-thread mode to suspend-all mode.
+   *
+   * @param performOnSuspendAll The callback is applying on suspend-all context after replacing suspend-thread context.
+   * So the callback can schedule additional requests and specify whether the suspend-all event should hold suspension
+   * (true) or resume (false) it.
+   *
+   * @return true iff no need to perform standard resume procedure after the scheduling switch-request was done
+   */
+  public static boolean initiateTransferToSuspendAll(@NotNull SuspendContextImpl suspendContext,
+                                                     @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
+    if (suspendContext.getSuspendPolicy() != EventRequest.SUSPEND_EVENT_THREAD) {
+      Logger.getInstance(SuspendOtherThreadsRequestor.class)
+        .error("Replacing for all-thread mode can be done only from the suspend-thread mode");
+      return false;
+    }
     if (Registry.is("debugger.transfer.context.to.suspend.all.with.method.breakpoint")) {
+      @NotNull DebugProcessImpl process = suspendContext.getDebugProcess();
       process.myPreparingToSuspendAll = true;
       process.myParametersForSuspendAllReplacing = new ParametersForSuspendAllReplacing(suspendContext, performOnSuspendAll);
       EvaluationListener listener = addFinishEvaluationListener(process);
@@ -39,6 +53,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
     else {
       suspendWhenNoEvaluation(suspendContext, performOnSuspendAll);
     }
+    return true;
   }
 
   /**
@@ -47,7 +62,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
    * if getNumberOfEvaluations is not 0, we resume, see {@link #switchContextWithSuspend}
    */
   private static void suspendWhenNoEvaluation(@NotNull SuspendContextImpl suspendContext,
-                                              @NotNull Function<SuspendContextImpl, Boolean> performOnSuspendAll) {
+                                              @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     DebugProcessImpl process = suspendContext.getDebugProcess();
     if (!switchContextWithSuspend(process, suspendContext, performOnSuspendAll)) {
       process.myPreparingToSuspendAll = true;
@@ -73,7 +88,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
   private static boolean switchContextWithSuspend(@NotNull DebugProcessImpl process,
                                                   @NotNull SuspendContextImpl suspendContext,
-                                                  @NotNull Function<SuspendContextImpl, Boolean> performOnSuspendAll) {
+                                                  @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     process.getVirtualMachineProxy().getVirtualMachine().suspend();
     if (getNumberOfEvaluations(process) == 0) {
       SuspendManager suspendManager = process.getSuspendManager();
@@ -170,7 +185,7 @@ class SuspendOtherThreadsRequestor implements FilteredRequestor {
 
   private static boolean processSuspendAll(@NotNull SuspendContextImpl suspendContext,
                                            @NotNull SuspendContextImpl originalContext,
-                                           @NotNull Function<SuspendContextImpl, Boolean> performOnSuspendAll) {
+                                           @NotNull Function<@NotNull SuspendContextImpl, Boolean> performOnSuspendAll) {
     // Need to 'replace' the myThreadSuspendContext (single-thread suspend context passed filtering) with this one.
     suspendContext.setAnotherThreadToFocus(originalContext.getThread());
 
