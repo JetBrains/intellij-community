@@ -39,6 +39,8 @@ public final class StoragePathMacros {
    */
   public static final String NON_ROAMABLE_FILE = "other.xml";
 
+  public static final String APP_INTERNAL_STATE_DB = "app-internal-state.db";
+
   private StoragePathMacros() {
   }
 }

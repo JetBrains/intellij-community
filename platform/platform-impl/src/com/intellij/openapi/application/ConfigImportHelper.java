@@ -1388,6 +1388,7 @@ public final class ConfigImportHelper {
     String fileName = path.getFileName().toString();
     return SESSION_FILES.contains(fileName) ||
            fileName.equals(BUNDLED_PLUGINS_FILENAME) ||
+           fileName.equals(StoragePathMacros.APP_INTERNAL_STATE_DB) ||
            fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
            fileName.startsWith(CHROME_USER_DATA) ||
            fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName())) ||
