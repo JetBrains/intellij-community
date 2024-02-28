@@ -72,7 +72,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     Iterable<JvmField> addedNonPrivateFields = filter(diff.fields().added(), f -> !f.isPrivate());
     Iterable<JvmField> exposedFields = filter(map(diff.fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
 
-    if (diff.superClassChanged() || !diff.interfaces().unchanged()) {
+    if (isKotlinNode(changedClass) && (diff.superClassChanged() || !diff.interfaces().unchanged())) {
       Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
         map(filter(present.allDirectSupertypes(change.getPast()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID),
         map(filter(future.allDirectSupertypes(change.getNow()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID)
@@ -246,12 +246,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         getters.put(methodName.substring(methodName.startsWith("is")? 2 : 3), method);
       }
       else if (isSetter(method)) {
-        String propName = methodName.substring(3);
-        List<JvmMethod> candidates = setters.get(propName);
-        if (candidates == null) {
-          setters.put(propName, candidates = new SmartList<>());
-        }
-        candidates.add(method);
+        setters.computeIfAbsent(methodName.substring(3), k -> new SmartList<>()).add(method);
       }
     }
     return map(getters.entrySet(), e -> {
