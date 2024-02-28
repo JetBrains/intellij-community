@@ -39,7 +39,7 @@ Use the provided `IDEA` build configuration to run an IntelliJ IDEA instance wit
 ## 2. Commits Requirements
 
 We strive for transparency of changes. Therefore, all meaningful commits should reference a
-[KTIJ](https://youtrack.jetbrains.com/issues/KTIJ) issue in their message.
+[KTIJ](https://youtrack.jetbrains.com/issues/KTIJ) or [IDEA](https://youtrack.jetbrains.com/issues/IDEA) issue in their message.
 It is permissible not to follow this rule if a change relates to tests, it is a minor refactoring or code formatting. 
 
 ## 3. Frequently Asked Questions
