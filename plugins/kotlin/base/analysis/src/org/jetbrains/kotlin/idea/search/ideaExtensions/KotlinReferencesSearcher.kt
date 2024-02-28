@@ -306,8 +306,22 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                     processKtClassOrObject(element)
                 }
 
-                is KtNamedFunction, is KtSecondaryConstructor -> {
-                    (element as KtFunction).name?.let { getLightClassMethods(element).forEach(::searchNamedElement) }
+                is KtConstructor<*> -> {
+                    val psiMethods = if (element.isExpectDeclaration()) {
+                        val declarations = ExpectActualSupport.getInstance(element.project)
+                            .actualsForExpected(element)
+                        declarations
+                            .filterIsInstance<KtConstructor<*>>()
+                            .flatMap { getLightClassMethods(it) }
+                    } else getLightClassMethods(element)
+
+                    psiMethods.forEach { psiMethod ->
+                        MethodReferencesSearch.search(psiMethod, queryParameters.effectiveSearchScope, true).forEach(consumer)
+                    }
+                }
+
+                is KtNamedFunction -> {
+                    element.name?.let { getLightClassMethods(element).forEach(::searchNamedElement) }
 
                     processStaticsFromCompanionObject(element)
                 }

@@ -1293,6 +1293,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructor.0.kt");
             }
 
+            @TestMetadata("secondaryConstructorInMethodReference.0.kt")
+            public void testSecondaryConstructorInMethodReference() throws Exception {
+                runTest("testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructorInMethodReference.0.kt");
+            }
+
             @TestMetadata("secondaryConstructorWithOverloadedOption.0.kt")
             public void testSecondaryConstructorWithOverloadedOption() throws Exception {
                 runTest("testData/findUsages/kotlin/findSecondaryConstructorUsages/secondaryConstructorWithOverloadedOption.0.kt");
