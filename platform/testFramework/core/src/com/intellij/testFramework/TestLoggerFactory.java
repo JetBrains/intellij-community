@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
@@ -59,6 +60,8 @@ public final class TestLoggerFactory implements Logger.Factory {
   /** When enabled, log records with at least "FINE" level are echoed to the stdout with a timestamp relative to the test start time. */
   private static final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
 
+  private static final AtomicInteger myRethrowErrorsNumber = new AtomicInteger(0);
+
   private TestLoggerFactory() { }
 
   private static @Nullable TestLoggerFactory getTestLoggerFactory() {
@@ -88,6 +91,10 @@ public final class TestLoggerFactory implements Logger.Factory {
         ContainerUtil.findInstance(julLogger.getHandlers(), LogToStdoutJulHandler.class) == null) {
       julLogger.addHandler(new LogToStdoutJulHandler());
     }
+  }
+
+  public static @NotNull int getRethrowErrorNumber() {
+    return myRethrowErrorsNumber.get();
   }
 
   public static boolean reconfigure() {
@@ -249,6 +256,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestStarted() {
+    myRethrowErrorsNumber.set(0);
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       factory.clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
@@ -401,6 +409,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       }
 
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW)) {
+        myRethrowErrorsNumber.incrementAndGet();
         throw new TestLoggerAssertionError(message, t);
       }
     }

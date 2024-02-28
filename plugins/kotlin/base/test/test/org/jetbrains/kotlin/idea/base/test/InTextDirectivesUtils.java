@@ -26,6 +26,7 @@ public final class InTextDirectivesUtils {
     public static final String IGNORE_BACKEND_DIRECTIVE_PREFIX = "// IGNORE_BACKEND: ";
     public static final String MUTED_DIRECTIVE_PREFIX = "// MUTED: ";
     public static final String IGNORE_FOR_K2_CODE = "// IGNORE_FOR_K2_CODE";
+    public static final String IGNORE_LOG_ERRORS = "// IGNORE_LOG_ERRORS";
 
     private InTextDirectivesUtils() {
     }
@@ -260,6 +261,10 @@ public final class InTextDirectivesUtils {
     private static boolean isCompatibleTargetExceptAny(TargetBackend targetBackend, List<String> backends) {
         if (targetBackend == TargetBackend.ANY) return false;
         return backends.isEmpty() || backends.contains(targetBackend.name()) || isCompatibleTargetExceptAny(targetBackend.getCompatibleWith(), backends);
+    }
+
+    public static boolean areLogErrorsIgnored(File file) {
+        return textWithDirectives(file).contains(IGNORE_LOG_ERRORS);
     }
 
     public static boolean isIgnoredTarget(TargetBackend targetBackend, File file, String ignoreBackendDirectivePrefix) {

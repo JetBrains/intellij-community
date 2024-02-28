@@ -34,6 +34,7 @@ import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.areLogErrorsIgnored
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
@@ -240,9 +241,13 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         return outputStream.toString(StandardCharsets.UTF_8)
     }
 
-    protected fun isTestIgnored(): Boolean {
+    fun isTestIgnored(): Boolean {
         val outputFile = getExpectedOutputFile()
         return outputFile.exists() && isIgnoredTarget(targetBackend(), outputFile)
+    }
+
+    override fun areLogErrorsIgnored(): Boolean {
+        return isTestIgnored() || areLogErrorsIgnored(dataFile())
     }
 
     private fun SuspendContextImpl.printContext() {
