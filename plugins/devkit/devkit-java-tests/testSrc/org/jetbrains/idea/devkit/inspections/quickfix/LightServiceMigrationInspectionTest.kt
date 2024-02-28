@@ -49,6 +49,10 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
     doTest(MY_SERVICE_JAVA, getXmlFilePath())
   }
 
+  fun testConfigurationSchemaKey() {
+    doTest(MY_SERVICE_JAVA, getXmlFilePath())
+  }
+
   fun testLightService() {
     myFixture.copyFileToProject(getCodeFilePath())
     doTest("Remove <applicationService> element", xmlExtension, getTestName(true))

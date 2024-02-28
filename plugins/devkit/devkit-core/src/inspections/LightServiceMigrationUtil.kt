@@ -75,7 +75,7 @@ internal fun containsUnitTestOrHeadlessModeCheck(aClass: UClass): Boolean {
   return result
 }
 
-private val disallowedAttributes = setOf("serviceInterface", "os", "client", "overrides", "id", "preload")
+private val disallowedAttributes = setOf("serviceInterface", "os", "client", "overrides", "id", "preload", "configurationSchemaKey")
 
 private val IS_UNIT_TEST_OR_HEADLESS_MODE = CallMatcher.anyOf(
   CallMatcher.instanceCall(Application::class.java.canonicalName, "isUnitTestMode", "isHeadlessEnvironment"),

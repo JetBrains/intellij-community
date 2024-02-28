@@ -50,6 +50,10 @@ internal class KtLightServiceMigrationInspectionTest : LightServiceMigrationInsp
     doTest(MY_SERVICE_KT, getXmlFilePath())
   }
 
+  fun testConfigurationSchemaKey() {
+    doTest(MY_SERVICE_KT, getXmlFilePath())
+  }
+
   fun testLightService() {
     doTest(getCodeFilePath(), getXmlFilePath())
   }
