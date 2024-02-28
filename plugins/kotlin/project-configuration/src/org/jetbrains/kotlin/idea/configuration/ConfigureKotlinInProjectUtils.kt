@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.externalSystem.JavaModuleData
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
@@ -149,7 +150,15 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
 
     val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
-    val anyKotlinFileInProject = readAction {
+
+    // TODO (IDEA-347619): workaround for the fact that smartReadAction doesn't wait for scanning
+    if (application.isUnitTestMode) {
+        Class.forName("com.intellij.testFramework.IndexingTestUtil")
+            .getMethod("waitUntilIndexesAreReady", Project::class.java)
+            .invoke(null, project)
+    }
+
+    val anyKotlinFileInProject = smartReadAction(project) {
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
@@ -160,7 +169,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            readAction {
+            smartReadAction(project) {
                 val kotlinFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
                 kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
                     if (projectFileIndex.isInSourceContent(ktFile)) {
@@ -171,7 +180,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
 
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
-            readAction {
+            smartReadAction(project) {
                 modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
                     if (module.isDisposed) return@filterTo false
 
