@@ -45,6 +45,10 @@ open class FindUsagesMultiModuleTest : AbstractFindUsagesMultiModuleTest() {
         doTest()
     }
 
+    fun testFindExpectPropertyInJvm() {
+        doTest()
+    }
+
     private fun doTest() {
         setupMppProjectFromDirStructure(getTestdataFile())
         doFindUsagesTest()

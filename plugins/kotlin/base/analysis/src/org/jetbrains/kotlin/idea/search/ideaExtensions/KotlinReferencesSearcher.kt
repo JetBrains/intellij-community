@@ -327,6 +327,14 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 }
 
                 is KtProperty -> {
+                    if (element.isExpectDeclaration()) {
+                        val declaration = ExpectActualSupport.getInstance(element.project).actualsForExpected(element)
+                            .firstOrNull { it is KtProperty && getLightClassPropertyMethods(it).allDeclarations.isNotEmpty() }
+                        if (declaration != null) {
+                            searchLightElements(declaration)
+                        }
+                        return
+                    }
                     val propertyDeclarations = getLightClassPropertyMethods(element).allDeclarations
                     propertyDeclarations.forEach(::searchNamedElement)
                     processStaticsFromCompanionObject(element)
