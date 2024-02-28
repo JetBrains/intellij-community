@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.SimpleColoredComponent
@@ -76,7 +77,7 @@ class TerminalPromptView(
     }
     component.border = JBUI.Borders.compound(outerBorder, innerBorder)
 
-    component.background = TerminalUi.terminalBackground
+    component.bindBackgroundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this, editor)
     component.layout = ListLayout.vertical(TerminalUi.promptToCommandInset)
     component.add(promptComponent)
     component.add(editorTextField)
@@ -166,7 +167,9 @@ class TerminalPromptView(
     val editor = textField.getEditor(true) as EditorImpl
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.gutterComponentEx.isPaintBackground = false
-    editor.backgroundColor = TerminalUi.terminalBackground
+    bindColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this, editor) {
+      editor.setBackgroundColor(it)
+    }
     editor.colorsScheme.apply {
       editorFontName = settings.terminalFont.fontName
       editorFontSize = settings.terminalFont.size
@@ -192,7 +195,7 @@ class TerminalPromptView(
         font = EditorUtil.getEditorFont()
       }
     }
-    component.background = TerminalUi.terminalBackground
+    component.bindBackgroundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this, editor)
     component.myBorder = JBUI.Borders.emptyBottom(2)
     component.ipad = JBInsets.emptyInsets()
     return component

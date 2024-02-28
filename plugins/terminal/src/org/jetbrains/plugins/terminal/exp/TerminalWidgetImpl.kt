@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
@@ -15,7 +16,6 @@ import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
-import java.awt.Color
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
@@ -117,8 +117,8 @@ class TerminalWidgetImpl(private val project: Project,
     private val postponedShellCommands: MutableList<String> = CopyOnWriteArrayList()
 
     override val component: JComponent = object : JPanel() {
-      override fun getBackground(): Color {
-        return TerminalUi.terminalBackground
+      init {
+        bindBackgroundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this@TerminalPlaceholder)
       }
     }
 
