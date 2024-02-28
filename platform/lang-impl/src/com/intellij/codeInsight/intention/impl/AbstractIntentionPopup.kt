@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.ui.awt.RelativePoint
+import java.util.function.Consumer
 
 /**
  * Represents an abstract popup interface that provides functionality to override
@@ -27,7 +28,7 @@ interface AbstractIntentionPopup : Disposable {
    *                               to the {@link ListPopup} just before it is shown.
    *                               It can be {@code null} if no customization is needed.
    */
-  fun show(hintComponent: IntentionHintComponent, relativePoint: RelativePoint?, listPopupCustomization: ((ListPopup) -> Unit)?)
+  fun show(hintComponent: IntentionHintComponent, relativePoint: RelativePoint?, listPopupCustomization: Consumer<in ListPopup>?)
   /**
    * Closes the popup if it is currently visible.
    */
