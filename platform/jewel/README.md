@@ -22,42 +22,6 @@ Jewel provides an implementation of the IntelliJ Platform themes that can be use
 application. Additionally, it has a Swing LaF Bridge that only works in the IntelliJ Platform (i.e., used to create IDE
 plugins), but automatically mirrors the current Swing LaF into Compose for a native-looking, consistent UI.
 
-## Getting started
-
-To use Jewel in your app, you only need to add the relevant dependency. There are two scenarios: standalone Compose for
-Desktop app, and IntelliJ Platform plugin.
-
-For now, Jewel artifacts aren't available on Maven Central. You need to add a custom Maven repository to your build:
-
-```kotlin
-repositories {
-    maven("https://packages.jetbrains.team/maven/p/kpm/public/")
-    // Any other repositories you need (e.g., mavenCentral())
-}
-```
-
-If you're writing a **standalone app**, then you should depend on the `int-ui-standalone` artifact:
-
-```kotlin
-dependencies {
-    implementation("org.jetbrains.jewel:jewel-int-ui-standalone:[jewel version]")
-
-    // Optional, for custom decorated windows:
-    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:[jewel version]")
-}
-```
-
-For an **IntelliJ Platform plugin**, then you should depend on the appropriate `ide-laf-bridge` artifact:
-
-```kotlin
-dependencies {
-    // The platform version is a supported major IJP version (e.g., 232 or 233 for 2023.2 and 2023.3 respectively)
-    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-[platform version]:[jewel version]")
-}
-```
-
-<br/>
-
 > [!TIP]
 > <a href="https://www.droidcon.com/2023/11/15/meet-jewelcreate-ide-plugins-in-compose/">
 > <img src="https://i.vimeocdn.com/video/1749849437-f275e0337faca5cedab742ea157abbafe5a0207d3a59db891a72b6180ce13a6c-d?mh=120" align="left" />
@@ -72,6 +36,103 @@ dependencies {
 > some real-life use cases.<br clear="left" />
 
 <br/>
+
+## Getting started
+
+The first thing to add is the necessary Gradle plugins, including the Compose Multiplatform plugin. You need to add a
+custom repository for it in `settings.gradle.kts`:
+
+```kotlin
+pluginManagement {
+  repositories {
+    google()
+    gradlePluginPortal()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    mavenCentral()
+  }
+}
+```
+
+Then, in your app's `build.gradle.kts`:
+
+```kotlin
+plugins {
+  // Should align with the Kotlin and Compose dependencies in Jewel
+  kotlin("jvm") version "1.9.21"
+  id("org.jetbrains.compose") version "1.6.0-dev1440"
+}
+
+repositories {
+    maven("https://packages.jetbrains.team/maven/p/kpm/public/")
+    // Any other repositories you need (e.g., mavenCentral())
+}
+```
+
+> [!WARNING]
+> If you use convention plugins to configure your project you might run into issues such as
+> [this](https://github.com/JetBrains/compose-multiplatform/issues/3748). To solve it, make sure the
+> plugins are only initialized once — for example, by declaring them in the root `build.gradle.kts`
+> with `apply false`, and then applying them in all the submodules that need them.
+
+To use Jewel in your app, you only need to add the relevant dependency. There are two scenarios: standalone Compose for
+Desktop app, and IntelliJ Platform plugin.
+
+If you're writing a **standalone app**, then you should depend on the `int-ui-standalone` artifact:
+
+```kotlin
+dependencies {
+    // See https://github.com/JetBrains/Jewel/releases for the release notes
+    implementation("org.jetbrains.jewel:jewel-int-ui-standalone:[jewel version]")
+
+    // Optional, for custom decorated windows:
+    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:[jewel version]")
+
+    // Do not bring in Material (we use Jewel)
+    implementation(compose.desktop.currentOs) {
+      exclude(group = "org.jetbrains.compose.material")
+    }
+}
+```
+
+For an **IntelliJ Platform plugin**, then you should depend on the appropriate `ide-laf-bridge-*` artifact:
+
+```kotlin
+dependencies {
+    // See https://github.com/JetBrains/Jewel/releases for the release notes
+    // The platform version is a supported major IJP version (e.g., 232 or 233 for 2023.2 and 2023.3 respectively)
+    implementation("org.jetbrains.jewel:jewel-ide-laf-bridge-[platform version]:[jewel version]")
+
+    // Do not bring in Material (we use Jewel) and Coroutines (the IDE has its own)
+    api(compose.desktop.currentOs) {
+      exclude(group = "org.jetbrains.compose.material")
+      exclude(group = "org.jetbrains.kotlinx")
+    }
+}
+```
+
+<br/>
+
+> [!TIP]
+> It's easier to use version catalogs — you can use the Jewel [version catalog](gradle/libs.versions.toml) as reference.
+
+<br/>
+
+## Dependencies matrix
+
+For each version of Jewel, these are the minimum supported Kotlin and Compose Multiplatform versions:
+
+ Jewel version | Kotlin version | Compose version
+ --- | --- | ---
+ 0.15.0 –> * | 1.8.21 | 1.6.0-dev1440
+ 0.13.1 -> 0.14.1 | 1.8.21 | 1.6.0-dev1369
+
+For older versions please refer to the Jewel tags and release notes.
+
+The Compose Compiler version used is the latest compatible with the given Kotlin version. See
+[here](https://developer.android.com/jetpack/androidx/releases/compose-compiler) for the Compose
+Compiler release notes, which indicate the compatibility.
+
+The minimum supported Kotlin version is dictated by the minimum supported IntelliJ IDEA platform.
 
 ## Project structure
 
