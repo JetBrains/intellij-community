@@ -7,10 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.FilesScanningTask
-import com.intellij.openapi.project.MergeableQueueTask
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor
+import com.intellij.openapi.project.*
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -64,7 +61,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
     progressTitle: @ProgressTitle String,
     pauseReason: Flow<@ProgressText String?>,
   ) {
-    progressReportingScope.launch {
+    progressReportingScope.launch(DumbServiceGuiExecutor.IndexingType.SCANNING) {
       while (true) {
         shouldShowProgress.first { it }
 

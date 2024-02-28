@@ -33,6 +33,7 @@ class UnindexedFilesScannerExecutor(project: Project)
                                                IndexingBundle.message("progress.indexing.scanning"),
                                                IndexingBundle.message("progress.indexing.scanning.paused")) {
   private val runningDumbTask = AtomicReference<ProgressIndicator>()
+  override val taskId = DumbServiceGuiExecutor.IndexingType.SCANNING
 
   // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
   private val pauseReason = MutableStateFlow<PersistentList<String>>(persistentListOf())
