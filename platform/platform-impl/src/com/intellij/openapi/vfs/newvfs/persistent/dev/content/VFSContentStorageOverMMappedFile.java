@@ -475,7 +475,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         recordsDeduplicatedCounter.record(storage.recordsDeduplicated.get());
 
         recordsUncompressedSizeCounter.record(storage.recordsUncompressedSize.get());
-        recordsStoredCounter.record(storage.recordsStoredSize.get());
+        recordsStoredSizeCounter.record(storage.recordsStoredSize.get());
 
         recordsReadCounter.record(storage.recordsRead.get());
         recordsReadDecompressedCounter.record(storage.recordsReadDecompressed.get());
