@@ -54,7 +54,7 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = false
     val uiSettings = UISettings.getInstance()
-    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed)) return
+    if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader)) return
     val project = e.project ?: return
     val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
     val window = e.getData(EditorWindow.DATA_KEY)
@@ -136,7 +136,6 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
     }
 
     fun update(presentation: Presentation) {
-      @Suppress("HardCodedStringLiteral")
       val path = presentation.getClientProperty(FILE_FULL_PATH)
       isOpaque = false
       leftIcons = listOf(presentation.icon)
@@ -148,10 +147,8 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
         // as the action system goes out of its way to make the action visible until the first update.
         isVisible = false
       }
-      if (path != null && isIDEA331002Fixed) {
-        val htmlColor = ColorUtil.toHtmlColor(JBColor.namedColor("Component.infoForeground", foreground))
-        @Suppress("HardCodedStringLiteral")
-        text = "<html><body>$text <font color='$htmlColor'>[$path]</font></body></html>"
+      if (path != null) {
+        text = "$text [$path]"
       }
     }
 
@@ -199,5 +196,4 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware, ActionRem
 
 private val FILE_COLOR: Key<Color> = Key.create("FILENAME_WIDGET_FILE_COLOR")
 private val FILE_FULL_PATH: Key<String?> = Key.create("FILENAME_WIDGET_FILE_PATH")
-private const val isIDEA331002Fixed = false //todo[mikhail.sokolov]
 private val LOG = logger<FilenameToolbarWidgetAction>()
