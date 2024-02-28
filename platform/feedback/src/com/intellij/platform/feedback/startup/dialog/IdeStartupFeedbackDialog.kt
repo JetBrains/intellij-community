@@ -12,6 +12,7 @@ import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.platform.feedback.startup.bundle.IdeStartupFeedbackMessagesBundle
+import com.intellij.ui.dsl.builder.BottomGap
 
 class IdeStartupFeedbackDialog(
   project: Project?,
@@ -21,7 +22,7 @@ class IdeStartupFeedbackDialog(
   /** Increase the additional number when feedback format is changed */
   override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
 
-  override val zendeskTicketTitle: String = "${ApplicationNamesInfo.getInstance().productName} Startup Feedback"
+  override val zendeskTicketTitle: String = "${ApplicationNamesInfo.getInstance().fullProductName} Startup Feedback"
   override val zendeskFeedbackType: String = "Startup Feedback"
 
   override val myFeedbackReportId: String = "startup_feedback"
@@ -35,7 +36,9 @@ class IdeStartupFeedbackDialog(
   )
 
   override val myBlocks: List<FeedbackBlock> = listOf(
-    TopLabelBlock(IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.title", ApplicationNamesInfo.getInstance().productName)),
+    TopLabelBlock(
+      IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.title", ApplicationNamesInfo.getInstance().fullProductName)
+    ).setBottomGap(BottomGap.MEDIUM),
     ComboBoxBlock(IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.1.label"),
                   List(5) { IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.1.option.${it + 1}") },
                   "feelings_while_waiting_ide_to_load").randomizeOptionOrder(),
@@ -44,7 +47,7 @@ class IdeStartupFeedbackDialog(
                   "rate_waiting_time"),
     ComboBoxBlock(IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.3.label"),
                   List(4) { IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.3.option.${it + 1}") },
-                  "describes_you_the_best").useFillAlign(),
+                  "describes_you_the_best").setColumnSize(52),
     CustomCheckBoxGroupBlock(
       IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.4.label"),
       List(myOptionCountInColumn) {
