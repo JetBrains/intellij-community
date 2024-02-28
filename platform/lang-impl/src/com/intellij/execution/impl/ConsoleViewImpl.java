@@ -1417,7 +1417,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     AnAction switchSoftWrapsAction = new ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       @Override
       protected Editor getEditor(@NotNull AnActionEvent e) {
-        return ConsoleViewImpl.this.getEditor();
+        var editor = ConsoleViewImpl.this.getEditor();
+        return ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
       }
     };
     AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(getEditor());
