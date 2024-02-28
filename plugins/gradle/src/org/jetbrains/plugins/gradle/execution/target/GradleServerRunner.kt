@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
+import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -20,8 +21,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
-import org.gradle.internal.remote.internal.ConnectCompletion
-import org.gradle.internal.remote.internal.ConnectException
 import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
@@ -221,41 +220,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       finally {
         connection.sendResultAck()
       }
-    }
-
-    /**
-     * Connects to a remote server with retrying mechanism.
-     *
-     * @param timeoutMillis The maximum timeout in milliseconds to wait for a successful connection.
-     * @param step The interval in milliseconds between retries. Default value is 100 milliseconds.
-     * @param action The function to execute for connecting to the remote server.
-     * @return The result of the connection.
-     * @throws ConnectException if unable to connect to the server within the specified timeout.
-     * @throws java.lang.RuntimeException if an unexpected failure occurs while connecting to the remote server.
-     */
-    private fun connectRetrying(timeoutMillis: Long, step: Long = 100, action: () -> ConnectCompletion): ConnectCompletion {
-      val start = System.currentTimeMillis()
-      var result: ConnectCompletion?
-      var lastException: Exception? = null
-      do {
-        result = try {
-          action()
-        }
-        catch (e: ConnectException) {
-          lastException = e
-          Thread.sleep(step)
-          null
-        }
-      } while (result == null && (System.currentTimeMillis() - start < timeoutMillis))
-
-      if (result == null) {
-        if (lastException != null) {
-          throw lastException
-        } else {
-          throw RuntimeException("Unexpected failure while connecting to remote server")
-        }
-      }
-      return result
     }
 
     private fun deserializeIfNeeded(value: Any?): Any? {
