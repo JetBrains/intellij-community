@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.dev.kotlin
+package org.jetbrains.idea.dev.kotlin.internal
 
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
 import com.intellij.dev.psiViewer.properties.tree.nodes.computePsiViewerApiClassesNodes
-import com.intellij.dev.psiViewer.properties.tree.nodes.psiViewerApiClassesExtending
 import org.jetbrains.kotlin.types.KotlinType
 
-class PsiViewerKotlinTypeNode(
+internal class PsiViewerKotlinTypeNode(
   private val kotlinType: KotlinType,
   private val nodeContext: PsiViewerPropertyNode.Context
 ) : PsiViewerPropertyNode {
