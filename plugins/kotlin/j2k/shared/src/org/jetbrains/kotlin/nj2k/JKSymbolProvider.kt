@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration

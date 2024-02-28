@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.utils.SmartList
 import kotlin.random.Random
 

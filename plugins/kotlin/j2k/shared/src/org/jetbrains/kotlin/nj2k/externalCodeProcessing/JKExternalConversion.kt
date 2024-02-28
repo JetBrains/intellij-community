@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.AccessorKind
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
