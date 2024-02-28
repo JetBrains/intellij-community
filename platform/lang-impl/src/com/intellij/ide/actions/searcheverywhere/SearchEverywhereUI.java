@@ -180,7 +180,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       scheduleRebuildList(SearchRestartReason.SCOPE_CHANGED);
     };
 
-    if (project != null && isPreviewEnabled() && !PropertiesComponent.getInstance().isValueSet(PREVIEW_PROPERTY_KEY)) {
+    if (project != null && isPreviewEnabled() && isShowPreview() && !PropertiesComponent.getInstance().isValueSet(PREVIEW_PROPERTY_KEY)) {
       PropertiesComponent.getInstance().setValue(PREVIEW_PROPERTY_KEY, true);
     }
 
@@ -1067,6 +1067,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   static boolean isPreviewEnabled() {
     return PreviewExperiment.INSTANCE.isExperimentEnabled() || Registry.is("search.everywhere.preview");
+  }
+
+  static boolean isShowPreview() {
+    return Registry.is("search.everywhere.preview.default");
   }
 
   private static boolean isPreviewActive() {
