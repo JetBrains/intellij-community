@@ -156,6 +156,12 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option name="DOC_TIPS_SHORTCUT">
+      <value>
+        <option name="FOREGROUND" value="000000"/>
+        <option name="BACKGROUND" value="ebecf0"/>
+      </value>
+    </option>
     <option name="DEFAULT_ENTITY">
       <value>
         <option name="FOREGROUND" value="174be6" deuteranopia="3777E6" protanopia="3777E6"/>

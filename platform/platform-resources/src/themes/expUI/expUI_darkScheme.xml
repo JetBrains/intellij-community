@@ -260,6 +260,12 @@
         <option name="FOREGROUND" value="abadb3" />
       </value>
     </option>
+    <option name="DOC_TIPS_SHORTCUT">
+      <value>
+        <option name="FOREGROUND" value="ced0d6"/>
+        <option name="BACKGROUND" value="393b40"/>
+      </value>
+    </option>
     <option name="DEFAULT_DOC_MARKUP">
       <value>
         <option name="FOREGROUND" value="68a67e" />

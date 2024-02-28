@@ -278,6 +278,12 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
+      <option name="DOC_TIPS_SHORTCUT">
+        <value>
+          <option name="FOREGROUND" value="6e6e6e"/>
+          <option name="BACKGROUND" value="f2f2f2"/>
+        </value>
+      </option>
       <option name="DEFAULT_DOC_COMMENT_TAG_VALUE">
         <value>
           <option name="FOREGROUND" value="3d3d3d"/>
@@ -1976,6 +1982,12 @@
           <option name="FONT_TYPE" value="3" />
           <option name="EFFECT_COLOR" value="629755" deuteranopia="7a7a7a" protanopia="7a7a7a"/>
           <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="DOC_TIPS_SHORTCUT">
+        <value>
+          <option name="FOREGROUND" value="afb1b3"/>
+          <option name="BACKGROUND" value="3c3f41"/>
         </value>
       </option>
       <option name="DEFAULT_DOC_MARKUP">
