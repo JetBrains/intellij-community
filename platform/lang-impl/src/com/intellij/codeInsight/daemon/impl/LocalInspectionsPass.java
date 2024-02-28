@@ -91,7 +91,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(getFile().getProject());
-    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile(), this, true, false);
+    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile(), this, true, false, myHighlightingSession);
     try {
       List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
       List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
