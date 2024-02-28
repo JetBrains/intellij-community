@@ -45,6 +45,10 @@ open class FindUsagesMultiModuleTest : AbstractFindUsagesMultiModuleTest() {
         doTest()
     }
 
+    fun testFindExpectAnnotationValue() {
+        doTest()
+    }
+
     fun testFindExpectPropertyInJvm() {
         doTest()
     }

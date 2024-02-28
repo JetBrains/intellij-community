@@ -374,7 +374,26 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
         @RequiresReadLock
         private fun searchPropertyAccessorMethods(origin: KtParameter) {
-            origin.toLightElements().filterDataClassComponentsIfDisabled(kotlinOptions).forEach(::searchNamedElement)
+            val lightMethods = if (origin.isExpectDeclaration()) {
+                ExpectActualSupport.getInstance(origin.project)
+                    .actualsForExpected(origin)
+                    .filterIsInstance<KtParameter>()
+                    .flatMap { it.toLightElements() }
+                    .toList()
+            } else origin.toLightElements()
+            val namedElements = lightMethods.filterDataClassComponentsIfDisabled(kotlinOptions)
+            for (element in namedElements) {
+                searchMethodAware(element)
+            }
+        }
+
+        @RequiresReadLock
+        private fun searchMethodAware(element: PsiNamedElement) {
+            if (element is PsiMethod) {
+                MethodReferencesSearch.search(element, queryParameters.effectiveSearchScope, true).forEach(consumer)
+            } else {
+                searchNamedElement(element)
+            }
         }
 
         @RequiresReadLock
