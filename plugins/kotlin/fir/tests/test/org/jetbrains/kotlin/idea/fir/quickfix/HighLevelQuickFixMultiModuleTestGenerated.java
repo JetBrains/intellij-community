@@ -262,6 +262,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../idea/tests/testData/multiModuleQuickFix/addDependency/class/");
         }
 
+        @TestMetadata("import")
+        public void testImport() throws Exception {
+            runTest("../../idea/tests/testData/multiModuleQuickFix/addDependency/import/");
+        }
+
         @TestMetadata("topLevelFunction")
         public void testTopLevelFunction() throws Exception {
             runTest("../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction/");
