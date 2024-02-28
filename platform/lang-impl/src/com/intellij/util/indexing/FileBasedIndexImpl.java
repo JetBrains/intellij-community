@@ -1958,34 +1958,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myFilesToUpdateCollector.getDirtyFiles().addProject(project);
   }
 
-  public void onProjectClosing(@NotNull IndexableFileSet set) {
-    Pair<IndexableFileSet, Project> p = ContainerUtil.find(myIndexableSets, pair -> pair.first == set);
-    if (p == null) return;
-    myIndexableSets.remove(p);
-
-    for (FileIndexingRequest request : getAllFilesToUpdate()) {
-      final int fileId = request.getFileId();
-      final VirtualFile file = request.getFile();
-      if (request.isDeleteRequest() || !file.isValid()) {
-        removeDataFromIndicesForFile(fileId, file, request.isDeleteRequest() ? "delete_request" : "invalid_file");
-        getIndexableFilesFilterHolder().removeFile(fileId);
-        myFilesToUpdateCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
-      }
-      else if (!belongsToIndexableFiles(file)) {
-        if (ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA) {
-          removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
-        }
-        getIndexableFilesFilterHolder().removeFile(fileId);
-        myFilesToUpdateCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
-      }
-    }
-    persistDirtyFiles(p.second);
-    getChangedFilesCollector().getDirtyFiles().removeProject(p.second);
-    myFilesToUpdateCollector.getDirtyFiles().removeProject(p.second);
-
-    IndexingStamp.flushCaches();
-  }
-
   @Override
   public VirtualFile findFileById(Project project, int id) {
     return ManagingFS.getInstance().findFileById(id);
