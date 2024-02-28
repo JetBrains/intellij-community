@@ -5,8 +5,8 @@ val x = run hello@{
 
     run { // Two hints here
         when (true) {
-            true -> 1/*<# ^|[file.kt:67]run #>*/
-            false -> 0/*<# ^|[file.kt:67]run #>*/
+            true -> 1/*<# ^|[Nested.kt:67]run #>*/
+            false -> 0/*<# ^|[Nested.kt:67]run #>*/
         }
-    }/*<# ^|[file.kt:34]hello #>*/
+    }/*<# ^|[Nested.kt:34]hello #>*/
 }

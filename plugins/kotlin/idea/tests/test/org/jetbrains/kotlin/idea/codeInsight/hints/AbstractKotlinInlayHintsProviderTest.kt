@@ -86,7 +86,7 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         val options: Map<String, Boolean> = calculateOptions(fileContents)
 
         try {
-            doTestProvider("file.kt", fileContents, inlayHintsProvider, options)
+            doTestProvider("${file.name.substringBefore(".")}.kt", fileContents, inlayHintsProvider, options)
         } catch (e: ComparisonFailure) {
             throw FileComparisonFailedError(
                 e.message,
