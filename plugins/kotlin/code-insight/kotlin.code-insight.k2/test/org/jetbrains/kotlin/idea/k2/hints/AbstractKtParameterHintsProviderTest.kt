@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinInlayHintsProviderTest
-import org.jetbrains.kotlin.idea.codeInsight.hints.KtParameterHintsProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsProvider
 
 abstract class AbstractKtParameterHintsProviderTest: AbstractKotlinInlayHintsProviderTest() {
     override fun isK2Plugin(): Boolean = true

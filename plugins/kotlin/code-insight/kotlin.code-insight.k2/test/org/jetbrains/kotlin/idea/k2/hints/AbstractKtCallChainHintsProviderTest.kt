@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinCallChainHintsProviderTest
-import org.jetbrains.kotlin.idea.codeInsight.hints.KtCallChainHintsProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtCallChainHintsProvider
 
 abstract class AbstractKtCallChainHintsProviderTest: AbstractKotlinCallChainHintsProviderTest() {
     override fun isK2Plugin(): Boolean = true

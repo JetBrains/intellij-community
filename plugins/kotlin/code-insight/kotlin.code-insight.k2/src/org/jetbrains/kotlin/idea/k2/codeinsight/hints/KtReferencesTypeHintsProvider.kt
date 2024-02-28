@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.hints
+package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
@@ -23,6 +23,10 @@ import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_FUNCTION_PARAMETER_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_FUNCTION_RETURN_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_LOCAL_VARIABLE_TYPES
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_PROPERTY_TYPES
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.calculateAllTypes
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings

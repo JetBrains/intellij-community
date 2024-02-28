@@ -1,19 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.hints
+package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
-import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.TokenType
 import com.intellij.psi.util.createSmartPointer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_IMPLICIT_RECEIVERS_AND_PARAMS
+import org.jetbrains.kotlin.idea.codeInsight.hints.SHOW_RETURN_EXPRESSIONS
+import org.jetbrains.kotlin.idea.codeInsight.hints.isFollowedByNewLine
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
     override fun collectFromElement(
@@ -115,17 +113,4 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
             }
         }
     }
-
-}
-@ApiStatus.Internal
-fun ASTNode.isFollowedByNewLine(): Boolean {
-    for (sibling in siblings()) {
-        if (sibling.elementType != TokenType.WHITE_SPACE && sibling.psi !is PsiComment) {
-            continue
-        }
-        if (sibling.elementType == TokenType.WHITE_SPACE && sibling.textContains('\n')) {
-            return true
-        }
-    }
-    return false
 }
