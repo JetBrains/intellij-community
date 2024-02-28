@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
-    <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
