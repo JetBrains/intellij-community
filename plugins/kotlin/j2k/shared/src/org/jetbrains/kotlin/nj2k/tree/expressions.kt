@@ -62,7 +62,7 @@ class JKPostfixExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitPostfixExpression(this)
 }
 
-class JKQualifiedExpression(
+open class JKQualifiedExpression(
     receiver: JKExpression,
     selector: JKExpression,
     override val expressionType: JKType? = null,
@@ -71,6 +71,17 @@ class JKQualifiedExpression(
     var selector: JKExpression by child(selector)
     override fun accept(visitor: JKVisitor) = visitor.visitQualifiedExpression(this)
 }
+
+class JKArrayAccessExpression(
+    receiver: JKExpression,
+    indexExpression: JKExpression,
+    override val expressionType: JKType? = null,
+) : JKExpression() {
+    var receiver: JKExpression by child(receiver)
+    var indexExpression: JKExpression by child(indexExpression)
+    override fun accept(visitor: JKVisitor) = visitor.visitArrayAccessExpression(this)
+}
+
 
 /**
  * @param shouldBePreserved - parentheses came from original Java code and should be preserved

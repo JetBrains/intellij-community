@@ -471,6 +471,14 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
 
     open fun visitQualifiedExpressionRaw(qualifiedExpression: JKQualifiedExpression) = visitExpressionRaw(qualifiedExpression)
 
+    override fun visitArrayAccessExpression(arrayAccessExpression: JKArrayAccessExpression) {
+        printLeftNonCodeElements(arrayAccessExpression)
+        visitArrayAccessExpressionRaw(arrayAccessExpression)
+        printRightNonCodeElements(arrayAccessExpression)
+    }
+
+    open fun visitArrayAccessExpressionRaw(arrayAccessExpression: JKArrayAccessExpression) = visitExpressionRaw(arrayAccessExpression)
+
     override fun visitParenthesizedExpression(parenthesizedExpression: JKParenthesizedExpression) {
         printLeftNonCodeElements(parenthesizedExpression)
         visitParenthesizedExpressionRaw(parenthesizedExpression)

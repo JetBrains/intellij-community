@@ -110,7 +110,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     inspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression) {
         it.canBeSimplifiedWithoutChangingSemantics()
     },
-    inspectionBasedProcessing(ReplaceGetOrSetInspection()),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
     intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {
         // skip parentheses that were originally present in Java code

@@ -22,7 +22,6 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.JavaPsiRecordUtil.getFieldForComponent
 import com.intellij.psi.util.TypeConversionUtil.calcTypeForBinaryExpression
 import com.intellij.psi.util.childrenOfType
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
@@ -403,9 +402,16 @@ class JavaToJKTreeBuilder(
                         .qualified(qualifier ?: JKThisExpression(JKLabelEmpty()))
                 }
 
-                symbol is JKMethodSymbol ->
-                    JKCallExpressionImpl(symbol, arguments.toJK(), typeArguments)
-                        .qualified(qualifier)
+                symbol is JKMethodSymbol -> {
+                    val fqName = target?.kotlinFqName.toString()
+                    if ((fqName.endsWith("charAt") || fqName.endsWith("get")) && arguments.expressionCount == 1) {
+                        return JKArrayAccessExpression(
+                            this.methodExpression.qualifierExpression.toJK(),
+                            arguments.expressions[0].toJK()
+                        )
+                    }
+                    return JKCallExpressionImpl(symbol, arguments.toJK(), typeArguments).qualified(qualifier)
+                }
 
                 symbol is JKFieldSymbol ->
                     JKFieldAccessExpression(symbol).qualified(qualifier)
@@ -548,12 +554,11 @@ class JavaToJKTreeBuilder(
                 it.withFormattingFrom(this)
             }
 
-        private fun PsiArrayAccessExpression.toJK(): JKExpression =
-            arrayExpression.toJK()
-                .callOn(
-                    symbolProvider.provideMethodSymbol("kotlin.Array.get"),
-                    arguments = listOf(indexExpression?.toJK() ?: JKStubExpression())
-                )
+        private fun PsiArrayAccessExpression.toJK(): JKArrayAccessExpression =
+            JKArrayAccessExpression(
+                arrayExpression.toJK(),
+                indexExpression.toJK()
+            )
 
         private fun PsiTypeCastExpression.toJK(): JKExpression {
             val expression = operand?.toJK() ?: createErrorExpression()
