@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
 import java.lang.ref.SoftReference
@@ -210,10 +211,11 @@ fun VirtualFile.resolveFromRootOrRelative(absoluteOrRelativeFilePath: String): V
  * @param useSoftCache   Whether to use [SoftReference] for storing the cached value
  * @param canCache       Whether the value can be cached in particular circumstance
  */
+@Experimental
 fun <T : Any> VirtualFile.getCachedValue(key: Key<VirtualFileCachedValue<T>>,
-                                         provider: (VirtualFile, CharSequence?) -> T,
                                          useSoftCache: Boolean = false,
-                                         canCache: ((VirtualFile) -> Boolean)? = null): T {
+                                         canCache: ((VirtualFile) -> Boolean)? = null,
+                                         provider: (VirtualFile, CharSequence?) -> T,): T {
   if (!isValid()) {
     thisLogger().error(InvalidVirtualFileAccessException(this))
     return provider(this, null)
@@ -249,6 +251,7 @@ private fun loadText(packageJsonFile: VirtualFile, packageJsonDocument: Document
   }
 }
 
+@Experimental
 class VirtualFileCachedValue<T> private constructor(
   private val strongData: T?,
   private val weakData: SoftReference<T?>?,
