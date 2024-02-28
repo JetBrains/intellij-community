@@ -39,18 +39,18 @@ abstract class XmlElementStorage protected constructor(
   @JvmField val fileSpec: String,
   @JvmField protected val rootElementName: String?,
   private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
-  @JvmField val storageRoamingType: RoamingType,
+  storageRoamingType: RoamingType,
   private val provider: StreamProvider? = null
 ) : StateStorageBase<StateMap>() {
-  override val saveStorageDataOnReload: Boolean
+  final override val saveStorageDataOnReload: Boolean
     get() = provider == null || provider.saveStorageDataOnReload
 
-  private val effectiveRoamingType = getEffectiveRoamingType(roamingType = storageRoamingType, collapsedPath = fileSpec)
+  final override val roamingType: RoamingType = getEffectiveRoamingType(roamingType = storageRoamingType, collapsedPath = fileSpec)
 
   protected abstract fun loadLocalData(): Element?
 
   final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
-    return storageData.getState(key = componentName, archive)
+    return storageData.getState(key = componentName, archive = archive)
   }
 
   internal fun <S : Any> createGetSession(
@@ -73,7 +73,7 @@ abstract class XmlElementStorage protected constructor(
         isLoadLocalData = true
       }
       else {
-        isLoadLocalData = !provider.read(fileSpec, effectiveRoamingType) { inputStream ->
+        isLoadLocalData = !provider.read(fileSpec, roamingType) { inputStream ->
           inputStream?.let {
             element = loadFromStreamProvider(inputStream)
             val writer = object : StringDataWriter() {
@@ -135,7 +135,7 @@ abstract class XmlElementStorage protected constructor(
 
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  final override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     LOG.debug("Running analyzeExternalChangesAndUpdateIfNeeded")
     val oldData = storageDataRef.get()
     val newData = getStorageData(reload = true)
@@ -170,7 +170,7 @@ abstract class XmlElementStorage protected constructor(
       get() = storage.controller
 
     override val roamingType: RoamingType?
-      get() = storage.effectiveRoamingType
+      get() = storage.roamingType
 
     protected open fun isSaveAllowed(): Boolean = !storage.checkIsSavingDisabled()
 
@@ -263,17 +263,17 @@ abstract class XmlElementStorage protected constructor(
         val provider = storage.provider
 
         if (elements == null) {
-          if (provider == null || !provider.delete(storage.fileSpec, storage.effectiveRoamingType)) {
+          if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
             isSavedLocally = true
             saveLocally(writer, useVfs, events)
           }
         }
-        else if (provider != null && provider.isApplicable(storage.fileSpec, storage.effectiveRoamingType)) {
+        else if (provider != null && provider.isApplicable(storage.fileSpec, storage.roamingType)) {
           // we should use standard line-separator (\n) - stream provider can share file content on any OS
           provider.write(
             fileSpec = storage.fileSpec,
             content = writer!!.toBufferExposingByteArray(LineSeparator.LF).toByteArray(),
-            roamingType = storage.effectiveRoamingType,
+            roamingType = storage.roamingType,
           )
         }
         else {
@@ -433,6 +433,7 @@ private class StateGetterImpl<S : Any>(
       controller = storage.controller,
       componentName = componentName,
       pluginId = pluginId,
+      roamingType = storage.roamingType,
     )
   }
 

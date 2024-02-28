@@ -232,6 +232,51 @@ class XmlSerializerListTest {
           </option>
         </Bean>
       """,
+      expectedJson = """
+        {
+          "handlers": [
+            {
+              "_class": "A",
+              "selectors": [
+                {
+                  "name": "-12rsomb",
+                  "path": "6vt2nn"
+                },
+                {
+                  "name": "-18hgh0v",
+                  "path": "64bg18"
+                }
+              ]
+            },
+            {
+              "_class": "B",
+              "selectors": [
+                {
+                  "name": "17ggf74",
+                  "path": "-7d8h5l"
+                },
+                {
+                  "name": "13et7c3",
+                  "path": "-15d6ukj"
+                }
+              ]
+            },
+            {
+              "_class": "C",
+              "selectors": [
+                {
+                  "name": "-1apt5a2",
+                  "path": "bm234q"
+                },
+                {
+                  "name": "-cbp623",
+                  "path": "1pob5us"
+                }
+              ]
+            }
+          ]
+        }
+      """,
       bean = bean,
     )
   }
@@ -257,14 +302,27 @@ class XmlSerializerListTest {
     bean.values.clear()
     bean.values.addAll(listOf("1", "2", "3"))
 
-    testSerializer("""
-    <bean>
-      <option name="values">
-        <option value="1" />
-        <option value="2" />
-        <option value="3" />
-      </option>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <option value="1" />
+            <option value="2" />
+            <option value="3" />
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
   private fun <T : Any> check(bean: T, setter: (values: ArrayList<String>) -> Unit) {
@@ -280,15 +338,28 @@ class XmlSerializerListTest {
       </bean>""", bean)
     setter(arrayListOf("1", "2", "3"))
 
-    testSerializer("""
-      <bean>
-        <option name="values">
-          <list>
-            <option value="1" />
-            <option value="2" />
-            <option value="3" />
-          </list>
-        </option>
-      </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <list>
+              <option value="1" />
+              <option value="2" />
+              <option value="3" />
+            </list>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 }

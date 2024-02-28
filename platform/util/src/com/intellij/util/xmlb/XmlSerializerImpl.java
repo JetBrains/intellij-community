@@ -67,8 +67,10 @@ public final class XmlSerializerImpl {
         newAnnotation = accessor.getAnnotation(XMap.class);
         oldAnnotation = newAnnotation == null ? accessor.getAnnotation(MapAnnotation.class) : null;
       }
+
+      boolean isSurroundWithTag = newAnnotation == null && (oldAnnotation == null || oldAnnotation.surroundWithTag());
       //noinspection unchecked
-      return new MapBinding(oldAnnotation, newAnnotation, (Class<? extends Map<?, ?>>)aClass);
+      return new MapBinding(oldAnnotation, newAnnotation, (Class<? extends Map<?, ?>>)aClass, isSurroundWithTag);
     }
     else if (accessor != null) {
       if (Element.class.isAssignableFrom(aClass)) {

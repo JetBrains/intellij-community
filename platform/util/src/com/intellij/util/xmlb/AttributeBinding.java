@@ -11,8 +11,10 @@ import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.xmlb.JsonHelperKt.valueToJson;
+
 final class AttributeBinding implements NestedBinding {
-  private final Class<?> valueClass;
+  final Class<?> valueClass;
 
   private final MutableAccessor accessor;
   final String name;
@@ -31,9 +33,13 @@ final class AttributeBinding implements NestedBinding {
     valueClass = ClassUtil.typeToClass(accessor.getGenericType());
   }
 
-  @Nullable
   @Override
-  public JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+  public @Nullable JsonElement deserializeToJson(@NotNull Element element) {
+    return valueToJson(element.getAttributeValue(name), valueClass);
+  }
+
+  @Override
+  public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
     return JsonHelperKt.toJson(bean, accessor, converter);
   }
 

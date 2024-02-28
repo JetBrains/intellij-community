@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.AState
@@ -21,10 +21,19 @@ class KotlinXmlSerializerTest {
 
     val data = Foo()
     data.PLACES_MAP = "new"
-    testSerializer("""
-    <bean>
-      <option name="PLACES_MAP" value="new" />
-    </bean>""", data)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="PLACES_MAP" value="new" />
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "places_map": "new"
+        }
+      """,
+      bean = data,
+    )
   }
 
   @Tag("profile-state")

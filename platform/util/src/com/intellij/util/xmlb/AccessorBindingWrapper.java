@@ -82,6 +82,11 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     }
   }
 
+  @Override
+  public @Nullable JsonElement deserializeToJson(@NotNull Element element) {
+    return ((RootBinding)binding).deserializeToJson(element);
+  }
+
   @SuppressWarnings("DuplicatedCode")
   Object deserializeUnsafe(Object context, @NotNull Element element) {
     Object currentValue = accessor.read(context);
@@ -157,8 +162,8 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   @SuppressWarnings("unchecked")
   @Override
   public @Nullable <T> Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    assert currentValue != null;
     if (adapter == JdomAdapter.INSTANCE) {
-      assert currentValue != null;
       //noinspection unchecked
       deserializeJdomList(currentValue, (List<? extends Element>)elements);
     }
@@ -168,7 +173,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     return null;
   }
 
-  private @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
+  private void deserializeJdomList(@NotNull Object context, @NotNull List<? extends Element> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
@@ -179,10 +184,9 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
         accessor.set(context, deserializedValue);
       }
     }
-    return context;
   }
 
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
+  private void deserializeList(@NotNull Object context, @NotNull List<XmlElement> elements) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
@@ -193,7 +197,16 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
         accessor.set(context, deserializedValue);
       }
     }
-    return context;
+  }
+
+  @Override
+  public boolean isSurroundWithTag() {
+    return false;
+  }
+
+  @Override
+  public @NotNull JsonElement doDeserializeListToJson(@NotNull List<? extends Element> elements) {
+    return ((MultiNodeBinding)binding).deserializeListToJson(elements);
   }
 
   @Override

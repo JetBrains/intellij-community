@@ -36,6 +36,9 @@ open class DirectoryBasedStorage(
   override val controller: SettingsController?
     get() = null
 
+  override val roamingType: RoamingType?
+    get() = null
+
   public override fun loadData(): StateMap {
     val (elementMap, separatorMap) = loadComponentsAndDetectLineSeparator()
     nameToLineSeparatorMap = separatorMap

@@ -13,12 +13,14 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.util.*
 
 @OptIn(ExperimentalSerializationApi::class)
 private val json = Json {
@@ -72,6 +74,15 @@ class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
 
   override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean {
     throw UnsupportedOperationException("Only root object is supported")
+  }
+
+  override fun deserializeToJson(element: Element): JsonElement {
+    val cdata = (element.content.firstOrNull() as? Text)?.value
+    if (cdata == null) {
+      LOG.debug { "incorrect data (old format?) for $serializer" }
+      return JsonObject(Collections.emptyMap())
+    }
+    return json.parseToJsonElement(cdata)
   }
 
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {

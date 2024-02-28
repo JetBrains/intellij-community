@@ -21,6 +21,24 @@ internal fun toJson(bean: Any, accessor: Accessor, converter: Converter<Any>?): 
   }
 }
 
+internal fun valueToJson(value: String?, valueClass: Class<*>): JsonElement? {
+  try {
+    return when {
+      value == null -> JsonNull
+      valueClass == Int::class.javaPrimitiveType || valueClass == Int::class.java -> JsonPrimitive(value.toInt())
+      valueClass == Boolean::class.javaPrimitiveType || valueClass == Boolean::class.java -> JsonPrimitive(value.toBoolean())
+      valueClass == Double::class.javaPrimitiveType || valueClass == Double::class.java -> JsonPrimitive(value.toDouble())
+      valueClass == Float::class.javaPrimitiveType || valueClass == Float::class.java -> JsonPrimitive(value.toFloat())
+      valueClass == Long::class.javaPrimitiveType || valueClass == Long::class.java || Date::class.java.isAssignableFrom(valueClass) -> JsonPrimitive(value.toLong())
+      valueClass == Short::class.javaPrimitiveType || valueClass == Short::class.java -> JsonPrimitive(value.toShort())
+      else -> JsonPrimitive(value)
+    }
+  }
+  catch (ignore: NumberFormatException) {
+    return null
+  }
+}
+
 internal fun primitiveToJsonElement(value: Any): JsonElement {
   return when (value) {
     is Date -> JsonPrimitive(value.time)
