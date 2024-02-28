@@ -271,7 +271,6 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
                   LOG.debug { "pre-transitioning event not received for: $frame" }
                   continuation.resume(isInFullScreen)
                 }
-                frame.rootPane?.putClientProperty(FULL_SCREEN_PROGRESS, null)
               })
           })
         }
