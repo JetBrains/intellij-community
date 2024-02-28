@@ -15,7 +15,10 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.ui.breakpoints.*;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
@@ -648,7 +651,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
         // Don't try to check breakpoint's condition or evaluate its log expression,
         // because these evaluations may lead to skipping of more important stepping events,
         // see IDEA-336282.
-        boolean filterWasUsed = false;
         boolean shouldIgnoreThreadFiltering = requestor == null || !requestor.shouldIgnoreThreadFiltering();
         if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine() && shouldIgnoreThreadFiltering) {
           LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
@@ -658,7 +660,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
               suspendManager.voteResume(suspendContext);
               return;
             }
-            filterWasUsed = true;
           }
         }
 
@@ -749,7 +750,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           //}
           Function<SuspendContextImpl, Boolean> performOnSuspendAll = requestor.callbackAfterReplacementForAllThreadSuspendContext();
-          if (filterWasUsed && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && performOnSuspendAll != null) {
+          if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && performOnSuspendAll != null) {
             // Do not vote to resume.
             // Instead, create an auxiliary request to correctly stop all threads as soon as possible.
             // [SuspendOtherThreadsRequestor] will resume this suspendContext when the request hits.
