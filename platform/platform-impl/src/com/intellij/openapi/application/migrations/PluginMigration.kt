@@ -3,9 +3,11 @@ package com.intellij.openapi.application.migrations
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginMigrationOptions
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.file.Files
 
 @Internal
 abstract class PluginMigration {
@@ -14,7 +16,6 @@ abstract class PluginMigration {
   }
 
   abstract fun migratePlugins(descriptor: PluginMigrationDescriptor)
-
 
   class PluginMigrationDescriptor(val options: PluginMigrationOptions) {
     val currentPluginsToDownload by lazy { getPluginIDs(options.pluginsToDownload) }
@@ -36,4 +37,17 @@ abstract class PluginMigration {
       options.pluginsToDownload.removeIf { it.pluginId.idString == pluginIdString }
     }
   }
+}
+
+internal const val MIGRATION_INSTALLED_PLUGINS_TXT = "migration_installed_plugins.txt"
+
+internal fun getMigrationInstalledPluginIds(): Collection<PluginId> {
+  val migratedPluginsPath = PathManager.getConfigDir().resolve(MIGRATION_INSTALLED_PLUGINS_TXT)
+  if (Files.exists(migratedPluginsPath)) {
+    val lines = Files.readAllLines(migratedPluginsPath)
+    return lines
+      .distinct()
+      .map { PluginId.getId(it) }
+  }
+  return emptyList()
 }

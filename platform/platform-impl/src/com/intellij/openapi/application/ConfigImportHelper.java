@@ -71,11 +71,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
 
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
+import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
 @ApiStatus.Internal
@@ -922,11 +924,11 @@ public final class ConfigImportHelper {
   }
 
   public static void migratePlugins(Path oldPluginsDir,
-                                     Path oldConfigDir,
-                                     Path newPluginsDir,
-                                     Path newConfigDir,
-                                     ConfigImportOptions options,
-                                     Predicate<IdeaPluginDescriptor> hasPendingUpdate) throws IOException {
+                                    Path oldConfigDir,
+                                    Path newPluginsDir,
+                                    Path newConfigDir,
+                                    ConfigImportOptions options,
+                                    Predicate<IdeaPluginDescriptor> hasPendingUpdate) throws IOException {
     Logger log = options.log;
 
     List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
@@ -964,7 +966,7 @@ public final class ConfigImportHelper {
       options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
     }
 
-    migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
+    migrateGlobalPlugins(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload, options.log);
 
     pluginsToMigrate.removeIf(hasPendingUpdate);
     if (!pluginsToMigrate.isEmpty()) {
@@ -980,11 +982,42 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static void migrateGlobalPlugins(Path newConfigDir, Path oldConfigDir, List<IdeaPluginDescriptor> toMigrate, List<IdeaPluginDescriptor> toDownload) {
-    var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
-    var options = new PluginMigrationOptions(currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload);
+  private static void performMigrations(PluginMigrationOptions options) {
+    // WRITE IN MIGRATIONS HERE
+
     new RustUltimate241().migratePlugins(options);
     new AIAssistant241().migratePlugins(options);
+  }
+
+  private static void migrateGlobalPlugins(Path newConfigDir,
+                                           Path oldConfigDir,
+                                           List<IdeaPluginDescriptor> toMigrate,
+                                           List<IdeaPluginDescriptor> toDownload,
+                                           Logger log) {
+    var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+
+    String nameWithVersion = getNameWithVersion(oldConfigDir);
+    Matcher m = matchNameWithVersion(nameWithVersion);
+    String previousVersion = null;
+    if (m.matches()) {
+      previousVersion = m.group(1);
+    }
+
+    var options = new PluginMigrationOptions(previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, log);
+
+    performMigrations(options);
+
+    var resultFile = newConfigDir.resolve(MIGRATION_INSTALLED_PLUGINS_TXT);
+    var downloadIds = toDownload.stream()
+      .map(descriptor -> descriptor.getPluginId().getIdString())
+      .collect(Collectors.joining("\n"));
+
+    try {
+      Files.writeString(resultFile, downloadIds);
+    }
+    catch (IOException e) {
+      options.getLog().error("Unable to write auto install result", e);
+    }
   }
 
   private static void partitionNonBundled(Collection<? extends IdeaPluginDescriptor> descriptors,
@@ -1146,7 +1179,7 @@ public final class ConfigImportHelper {
 
   static void setKeymapIfNeeded(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @NotNull Logger log) {
     String nameWithVersion = getNameWithVersion(oldConfigDir);
-    Matcher m = Pattern.compile("\\.?\\D+(\\d+\\.\\d+)?").matcher(nameWithVersion);
+    Matcher m = matchNameWithVersion(nameWithVersion);
     if (m.matches() && VersionComparatorUtil.compare("2019.1", m.group(1)) >= 0) {
       String keymapFileSpec = StoreUtilKt.getDefaultStoragePathSpec(KeymapManagerImpl.class);
       if (keymapFileSpec != null) {
@@ -1167,6 +1200,10 @@ public final class ConfigImportHelper {
         }
       }
     }
+  }
+
+  private static @NotNull Matcher matchNameWithVersion(String nameWithVersion) {
+    return Pattern.compile("\\.?\\D+(\\d+\\.\\d+)?").matcher(nameWithVersion);
   }
 
   /*
