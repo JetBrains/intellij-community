@@ -6,6 +6,7 @@ import com.intellij.platform.ml.Environment
 import com.intellij.platform.ml.Session
 import com.intellij.platform.ml.impl.MLTaskApproach
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
+import com.intellij.platform.ml.impl.apiPlatform.MLApiStartupListenerProvider
 import com.intellij.platform.ml.impl.monitoring.*
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy
 import com.intellij.platform.ml.impl.session.AnalysedRootContainer
@@ -69,7 +70,7 @@ class MLSessionFinishedLogger<R, P : Any>(
 open class FinishedSessionLoggerRegister<M, P : Any>(
   private val targetApproachClass: Class<out MLTaskApproach<P>>,
   private val fusScheme: FusSessionEventBuilder.FusScheme<P>,
-) : MLApiStartupListener {
+) : MLApiStartupListener, MLApiStartupListenerProvider.ThisProvider {
   override fun onBeforeStarted(apiPlatform: MLApiPlatform): MLApiStartupProcessListener {
     return object : MLApiStartupProcessListener {
       override fun onStartedInitializingFus(initializedApproaches: Collection<InitializerAndApproach<*>>) {

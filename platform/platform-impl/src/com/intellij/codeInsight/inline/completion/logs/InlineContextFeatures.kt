@@ -14,6 +14,14 @@ import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
+@Deprecated(
+  """
+    Old format for ML model and analytical features.
+    Please make sure the feature you have added is also present in
+    org.jetbrains.completion.full.line.mlApi.description.InlineContextFeatures
+    """,
+  replaceWith = ReplaceWith("org.jetbrains.completion.full.line.mlApi.description.InlineContextFeatures")
+)
 object InlineContextFeatures {
 
   fun capture(psiFile: PsiFile, editor: Editor, offset: Int): List<EventPair<*>> {

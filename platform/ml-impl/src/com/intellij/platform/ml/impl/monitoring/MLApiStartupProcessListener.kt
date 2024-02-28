@@ -26,4 +26,6 @@ interface MLApiStartupProcessListener {
   fun onFinished() {}
 
   fun onFailed(exception: Throwable?) {}
+
+  fun onCanceled() {}
 }

@@ -20,7 +20,7 @@ interface DescriptionComputer {
    * @param usefulFeaturesFilter Accepts features, that are meaningful to compute. If the filter does not
    * accept a feature, its computation will not make any difference later.
    */
-  fun computeDescription(
+  suspend fun computeDescription(
     tier: Tier<*>,
     descriptors: List<TierDescriptor>,
     environment: Environment,
@@ -32,8 +32,8 @@ interface DescriptionComputer {
  * Does not cache descriptors, primitively computes all descriptors all over again each time.
  */
 @ApiStatus.Internal
-class StateFreeDescriptionComputer : DescriptionComputer {
-  override fun computeDescription(tier: Tier<*>,
+object StateFreeDescriptionComputer : DescriptionComputer {
+  override suspend fun computeDescription(tier: Tier<*>,
                                   descriptors: List<TierDescriptor>,
                                   environment: Environment,
                                   usefulFeaturesFilter: FeatureFilter): Map<TierDescriptor, Set<Feature>> {

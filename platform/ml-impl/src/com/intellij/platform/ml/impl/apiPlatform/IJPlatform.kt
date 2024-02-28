@@ -51,6 +51,10 @@ fun interface MLApiStartupListenerProvider : MessagingProvider<MLApiStartupListe
   companion object {
     val TOPIC = MessagingProvider.createTopic<MLApiStartupListener, MLApiStartupListenerProvider>("ml.startup")
   }
+
+  interface ThisProvider : MLApiStartupListenerProvider, MLApiStartupListener {
+    override fun provide(collector: (MLApiStartupListener) -> Unit) = collector(this)
+  }
 }
 
 /**

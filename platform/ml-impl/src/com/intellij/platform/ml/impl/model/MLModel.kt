@@ -7,6 +7,7 @@ import com.intellij.platform.ml.PerTier
 import com.intellij.platform.ml.TierRequester
 import com.intellij.platform.ml.impl.FeatureSelector
 import com.intellij.platform.ml.impl.LevelTiers
+import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -22,21 +23,18 @@ interface MLModel<P : Any> {
    * It extends [TierRequester] interface which implies, that you can request
    * additional tiers that will help you acquire the right model.
    */
-  interface Provider<M : MLModel<P>, P : Any> : TierRequester {
+  interface Provider<M : MLModel<P>, P : Any> {
     /**
-     * Provides an ML model from the task's environment, and the additional tiers
-     * declared via [requiredTiers].
-     * If [requiredTiers] could not be fulfilled, then the session will not be started
-     * and [com.intellij.platform.ml.impl.approach.InsufficientEnvironmentForModelProviderOutcome]
-     * will be returned as the start's outcome.
+     * Provides an ML model from the task's environment
      *
-     * @param sessionTiers Contains the main as well as additional tiers that will be used during the session.
+     * @param callParameters Contains any additional parameters that you passed in [com.intellij.platform.ml.impl.MLTaskApproach.startMLSession]
+     * The tier set is equal to the one that was declared in [com.intellij.platform.ml.impl.MLTask.callParameters]'s first level.
      * @param environment Contains the all-embracing "permanent" tiers of an ML session - the ones that sit on the first position
      * of an [com.intellij.platform.ml.impl.MLTask]'s declaration.
-     * Plus additional tiers that were requested in [requiredTiers].
+     * @param sessionTiers Contains the main as well as additional tiers that will be used during the session.
      * extendedPermanentSessionEnvironment
      */
-    fun provideModel(sessionTiers: List<LevelTiers>, environment: Environment): M?
+    fun provideModel(callParameters: Environment, environment: Environment, sessionTiers: List<LevelTiers>): M?
   }
 
   /**
@@ -53,9 +51,10 @@ interface MLModel<P : Any> {
   /**
    * Performs the prediction.
    *
+   * @param callParameters TODO
    * @param features Features computed for this model to take into account.
    * It is guaranteed that for each tier, this set of features is a 'complete'
    * selection of features.
    */
-  fun predict(features: PerTier<Set<Feature>>): P
+  fun predict(callParameters: List<Environment>, features: PerTier<Set<Feature>>): P
 }

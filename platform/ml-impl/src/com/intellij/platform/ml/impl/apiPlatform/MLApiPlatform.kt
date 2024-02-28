@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.apiPlatform
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.impl.MLTask
 import com.intellij.platform.ml.impl.MLTaskApproach
@@ -99,8 +100,8 @@ abstract class MLApiPlatform {
    */
   fun addMLEventBeforeFusInitialized(event: MLEvent): ExtensionController {
     when (val stage = initializationStage) {
-      is InitializationStage.Failed ->
-        throw Exception("Initialization of ML Api Platform has failed, events could not be added.", stage.asException)
+      is InitializationStage.Failed -> throw Exception("Initialization of ML Api Platform has failed, events could not be added.", stage.asException)
+      is InitializationStage.Cancelled -> throw Exception("Initialization of ML Api Platform has been cancelled")
       is InitializationStage.PotentiallySuccessful -> {
         require(stage.order <= InitializationStage.InitializingApproaches.order) {
           "FUS group initialization has already been started, not allowed to register more ML Events"
@@ -147,20 +148,25 @@ abstract class MLApiPlatform {
     val taskApproaches: List<MLTaskApproachInitializer<*>>,
   )
 
-  private sealed class InitializationStage(val callListener: (MLApiStartupProcessListener) -> Unit) {
-    sealed class PotentiallySuccessful(val order: Int, callListener: (MLApiStartupProcessListener) -> Unit) : InitializationStage(callListener)
+  private sealed class InitializationStage(
+    val callListener: (MLApiStartupProcessListener) -> Unit,
+    val allowStartup: Boolean
+  ) {
+    sealed class PotentiallySuccessful(val order: Int, callListener: (MLApiStartupProcessListener) -> Unit, allowStartup: Boolean) : InitializationStage(callListener, allowStartup)
 
-    class Failed(lastStage: InitializationStage, nextStage: InitializationStage, exception: Throwable, callListener: (MLApiStartupProcessListener) -> Unit) : InitializationStage(callListener) {
+    data object Cancelled : InitializationStage({ it.onCanceled() }, allowStartup = true)
+
+    class Failed(lastStage: InitializationStage, nextStage: InitializationStage, exception: Throwable, callListener: (MLApiStartupProcessListener) -> Unit) : InitializationStage(callListener, allowStartup = false) {
       val asException = Exception("Failed to proceed from the initialization stage $lastStage to $nextStage", exception)
     }
 
-    data object NotStarted : PotentiallySuccessful(0, {})
-    data object InitializingApproaches : PotentiallySuccessful(1, { it.onStartedInitializingApproaches() })
+    data object NotStarted : PotentiallySuccessful(0, {}, allowStartup = true)
+    data object InitializingApproaches : PotentiallySuccessful(1, { it.onStartedInitializingApproaches() }, allowStartup = true)
     data class InitializingFUS(val initializedApproaches: Collection<InitializerAndApproach<*>>) : PotentiallySuccessful(2, {
       it.onStartedInitializingFus(initializedApproaches)
-    })
+    }, allowStartup = false)
 
-    data object Finished : PotentiallySuccessful(3, { it.onFinished() })
+    data object Finished : PotentiallySuccessful(3, { it.onFinished() }, allowStartup = false)
   }
 
   private inner class MLApiPlatformInitializationProcess {
@@ -168,7 +174,11 @@ abstract class MLApiPlatform {
     private val completeInitializersList: List<MLTaskApproachInitializer<*>> = taskApproaches.toMutableList()
 
     init {
-      require(initializationStage == InitializationStage.NotStarted) { "ML API Platform's initialization should not be run twice" }
+      require(initializationStage.allowStartup) {
+        """
+        ML API Platform's initialization should not be run twice. Current state is $initializationStage
+        """.trimIndent()
+      }
 
       fun currentStartupListeners(): List<MLApiStartupProcessListener> = startupListeners.map { it.onBeforeStarted(this@MLApiPlatform) }
 
@@ -178,6 +188,10 @@ abstract class MLApiPlatform {
             currentStartupListeners().forEach { nextStage.callListener(it) }
             initializationStage = nextStage
           }
+        }
+        catch (ex: ProcessCanceledException) {
+          initializationStage = InitializationStage.Cancelled
+          throw ex
         }
         catch (ex: Throwable) {
           val failure = InitializationStage.Failed(initializationStage, nextStage, ex) { it.onFailed(ex) }
@@ -246,6 +260,7 @@ abstract class MLApiPlatform {
       when (val stage = initializationStage) {
         is InitializationStage.Failed -> throw Exception("Unable to ensure that approaches are initialized", stage.asException)
         InitializationStage.NotStarted -> finishedInitialization.value
+        InitializationStage.Cancelled -> finishedInitialization.value
         InitializationStage.InitializingApproaches -> throw Exception("Recursion detected while initializing approaches")
         is InitializationStage.InitializingFUS -> return
         InitializationStage.Finished -> return
