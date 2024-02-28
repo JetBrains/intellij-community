@@ -4,4 +4,4 @@ fun foo() {
     }
 }
 
-// EXISTS: listOf(T), stream(), forEach(Consumer<? super T>)
+// EXISTS: forEach: p0.invoke(), listOf(T), stream(), forEach(Consumer<? super T>)
