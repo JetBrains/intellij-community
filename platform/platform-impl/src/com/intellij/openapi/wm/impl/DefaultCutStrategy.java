@@ -24,7 +24,8 @@ public final class DefaultCutStrategy implements TextCutStrategy {
 
   @Override
   public int calcMinTextWidth(@NotNull String text, @NotNull FontMetrics metrics) {
-    text = text.substring(0,Math.min(MIN_TEXT_LENGTH, text.length()) - 1);
+    if (text.length() < MIN_TEXT_LENGTH) return metrics.stringWidth(text);
+    text = text.substring(0, MIN_TEXT_LENGTH - 1);
     return metrics.stringWidth(text + "...");
   }
 }
