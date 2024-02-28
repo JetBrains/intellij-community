@@ -5,7 +5,6 @@ import com.intellij.ide.startup.importSettings.data.ChildSetting
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
-import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
@@ -15,11 +14,43 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JPanel
+import javax.swing.ListCellRenderer
 
 class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, changeHandler: () -> Unit) : JBList<ChildItem>(createDefaultListModel(settings)) {
+
+  var enterHandler: (() -> Unit)? = null
+
   init {
     cellRenderer = CBRenderer(configurable)
+
+    addKeyListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent?) {
+        when (e?.keyCode) {
+          KeyEvent.VK_ENTER,
+          KeyEvent.VK_SPACE -> {
+            if (configurable) {
+              for (index in selectedIndices) {
+                if (index >= 0 && settings.size > index) {
+                  val settingItem = settings[index]
+                  settingItem.selected = !settingItem.selected
+
+                  repaint()
+                  changeHandler()
+                }
+              }
+              e.consume()
+            } else {
+              enterHandler?.invoke()
+            }
+
+          }
+        }
+      }
+    })
+
 
     if (configurable) {
       addMouseListener(object : MouseAdapter() {
@@ -30,26 +61,6 @@ class ChildSettingsList(val settings: List<ChildItem>, configurable: Boolean, ch
             settingItem.selected = !settingItem.selected
             repaint()
             changeHandler()
-          }
-        }
-      })
-
-      addKeyListener(object : KeyAdapter() {
-        override fun keyTyped(e: KeyEvent) {
-          val supply = SpeedSearchSupply.getSupply(this@ChildSettingsList)
-          if (supply != null && supply.isPopupActive) {
-            return
-          }
-          if (e.keyChar == ' ') {
-            for (index in selectedIndices) {
-              if (index >= 0 && settings.size > index) {
-                val settingItem = settings[index]
-                settingItem.selected = !settingItem.selected
-
-                repaint()
-                changeHandler()
-              }
-            }
           }
         }
       })
@@ -136,7 +147,7 @@ private class CBRenderer(val configurable: Boolean) : ListCellRenderer<ChildItem
     separator.isVisible = value.separatorNeeded
     val child = value.child
 
-    if(configurable) {
+    if (configurable) {
       line.background = if (isSelected) list.selectionBackground else list.background
       val color = if (isSelected) list.selectionForeground else list.foreground
 
