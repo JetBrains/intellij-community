@@ -288,6 +288,7 @@
       <action id="GenerateEquals" class="com.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
       <action id="Actions.ActionsPlugin.GenerateToString" class="org.jetbrains.java.generate.GenerateToStringAction"/>
       <action id="GenerateCreateUI" class="com.intellij.codeInsight.generation.actions.GenerateCreateUIAction"/>
+      <action id="GenerateProviderMethod" class="com.intellij.codeInsight.generation.actions.GenerateProviderMethodAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
 
