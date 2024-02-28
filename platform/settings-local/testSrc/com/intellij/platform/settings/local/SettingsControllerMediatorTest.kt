@@ -59,7 +59,7 @@ private fun withControllers(list: List<DelegatedSettingsController>, task: () ->
   }
 }
 
-private fun createGet(resultSupplier: () -> GetResult<String>): DelegatedSettingsController {
+private fun createGet(resultSupplier: () -> GetResult<String?>): DelegatedSettingsController {
   return object : DelegatedSettingsController {
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {

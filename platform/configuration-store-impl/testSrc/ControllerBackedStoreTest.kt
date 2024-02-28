@@ -171,9 +171,9 @@ class ControllerBackedStoreTest {
   @Test
   fun `NonShareableTag is set if RoamingType DISABLED`() = runBlocking<Unit>(Dispatchers.Default) {
     var checked = false
-    val store = createStore {
-      assertThat(it.key == "TestState")
-      assertThat(it.tags.any { it == NonShareableTag })
+    val store = createStore { descriptor ->
+      assertThat(descriptor.key == "TestState")
+      assertThat(descriptor.tags.any { it == NonShareableTag })
       checked = true
       GetResult.inapplicable()
     }
@@ -252,7 +252,7 @@ class ControllerBackedStoreTest {
     )
   }
 
-  private fun createStore(supplier: (SettingDescriptor<Any>) -> GetResult<Any>): ControllerBackedTestComponentStore {
+  private fun createStore(supplier: (SettingDescriptor<Any>) -> GetResult<Any?>): ControllerBackedTestComponentStore {
     return createStore(object : DelegatedSettingsController {
       override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
         @Suppress("UNCHECKED_CAST")

@@ -51,7 +51,7 @@ interface SettingsController {
 value class GetResult<out T : Any?> @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
   companion object {
     @Suppress("INAPPLICABLE_JVM_NAME")
-    fun <T> resolved(value: T?): GetResult<T> = GetResult(value)
+    fun <T : Any> resolved(value: T?): GetResult<T?> = GetResult(value)
 
     fun <T> inapplicable(): GetResult<T> = GetResult(Inapplicable)
   }

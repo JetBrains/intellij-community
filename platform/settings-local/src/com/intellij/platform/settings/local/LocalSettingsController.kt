@@ -25,7 +25,7 @@ internal fun compactCacheStore() {
 private class LocalSettingsController : DelegatedSettingsController {
   private val storageManager = SynchronizedClearableLazy { service<InternalAndCacheStorageManager>() }
 
-  override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T> {
+  override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
     for (tag in key.tags) {
       if (tag is PropertyManagerAdapterTag) {
         val propertyManager = PropertiesComponent.getInstance()
