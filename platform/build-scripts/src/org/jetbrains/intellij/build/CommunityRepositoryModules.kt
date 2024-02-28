@@ -181,7 +181,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.dev.psiViewer")
       spec.withModule("intellij.dev.codeInsight")
       spec.withModule("intellij.java.dev")
-      spec.withModule("intellij.js.dev")
       spec.withModule("intellij.groovy.dev")
       spec.withModule("intellij.kotlin.dev")
       spec.withModule("intellij.platform.statistics.devkit")
