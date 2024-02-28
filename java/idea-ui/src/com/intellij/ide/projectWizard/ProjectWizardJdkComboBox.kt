@@ -241,7 +241,7 @@ class ProjectWizardJdkComboBox(
                                                 isSelected: Boolean,
                                                 cellHasFocus: Boolean): Component {
         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        if (index == -1 && (isLoadingExistingJdks || isLoadingDownloadItem)) {
+        if (index == -1 && (isLoadingExistingJdks || isLoadingDownloadItem) && selectedItem !is DownloadJdk) {
           val panel = object : CellRendererPanel(BorderLayout()) {
             override fun getAccessibleContext(): AccessibleContext = component.accessibleContext
           }
