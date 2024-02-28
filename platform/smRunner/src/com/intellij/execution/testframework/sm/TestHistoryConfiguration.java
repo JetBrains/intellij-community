@@ -21,7 +21,7 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
 
   public static class State {
 
-    private final Map<String, ConfigurationBean> myHistoryElements = new LinkedHashMap<>();
+    private final Map<String, ConfigurationBean> myHistoryElements = Collections.synchronizedMap(new LinkedHashMap<>());
 
     @Property(surroundWithTag = false)
     @XMap(entryTagName = "history-entry", keyAttributeName = "file")
