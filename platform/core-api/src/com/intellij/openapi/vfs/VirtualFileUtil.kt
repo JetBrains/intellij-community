@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("VirtualFileUtil")
 
 package com.intellij.openapi.vfs
@@ -16,6 +16,7 @@ import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
 import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.pathString
 
 fun VirtualFile.validOrNull() = if (isValid) this else null
@@ -58,7 +59,7 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
 private fun VirtualFile.relativizeToClosestAncestor(
   relativePath: String
 ): Pair<VirtualFile, Path> {
-  val basePath = Path.of(path)
+  val basePath = Paths.get(path)
   val (normalizedBasePath, normalizedRelativePath) = basePath.relativizeToClosestAncestor(relativePath)
   var baseVirtualFile = this
   repeat(basePath.nameCount - normalizedBasePath.nameCount) {
