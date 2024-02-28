@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -115,6 +115,9 @@ class TerminalOutputView(
     init {
       isOpaque = false
       add(editor.component, JLayeredPane.DEFAULT_LAYER as Any)  // cast to Any needed to call right method overload
+      bindColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this@TerminalOutputView, editor) {
+        editor.setBackgroundColor(it)
+      }
     }
 
     override fun getData(dataId: String): Any? {

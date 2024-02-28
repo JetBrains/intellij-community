@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalUi
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toFloatAndScale
@@ -115,7 +116,7 @@ class TerminalBlockCornersRenderer private constructor(
     val g2d = g.create() as Graphics2D
     try {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.color = TerminalUi.terminalBackground
+      g2d.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
       // override the selection with the default terminal background
       g2d.fill(topRect)
       g2d.fill(bottomRect)
