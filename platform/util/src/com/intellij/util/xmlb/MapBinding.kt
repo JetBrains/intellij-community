@@ -1,446 +1,398 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.xmlb;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "LoggingSimilarMessage")
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.serialization.ClassUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.dom.XmlElement;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.XMap;
-import kotlinx.serialization.json.JsonElement;
-import kotlinx.serialization.json.JsonNull;
-import kotlinx.serialization.json.JsonObject;
-import kotlinx.serialization.json.JsonPrimitive;
-import org.jdom.Attribute;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.util.xmlb
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.serialization.ClassUtil
+import com.intellij.util.ArrayUtil
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.serialization.json.*
+import org.jdom.Element
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
+import java.util.*
 
-import static com.intellij.util.xmlb.Constants.*;
-import static com.intellij.util.xmlb.JsonHelperKt.fromJsonPrimitive;
-import static com.intellij.util.xmlb.JsonHelperKt.primitiveToJsonElement;
+internal class MapBinding(
+  private val oldAnnotation: MapAnnotation?,
+  private val annotation: XMap?,
+  private val mapClass: Class<out Map<*, *>>,
+  override val isSurroundWithTag: Boolean,
+) : MultiNodeBinding, RootBinding {
+  private var keyClass: Class<*>? = null
+  private var valueClass: Class<*>? = null
 
-@SuppressWarnings("LoggingSimilarMessage")
-final class MapBinding implements MultiNodeBinding, RootBinding {
-  private static final Logger LOG = Logger.getInstance(MapBinding.class);
+  private var keyBinding: Binding? = null
+  private var valueBinding: Binding? = null
 
-  @SuppressWarnings("rawtypes")
-  private static final Comparator<Object> KEY_COMPARATOR = (o1, o2) -> {
-    if (o1 instanceof Comparable && o2 instanceof Comparable) {
-      Comparable c1 = (Comparable)o1;
-      Comparable c2 = (Comparable)o2;
-      //noinspection unchecked
-      return c1.compareTo(c2);
-    }
-    return 0;
-  };
+  override fun init(originalType: Type, serializer: Serializer) {
+    val type = originalType as ParameterizedType
+    val typeArguments = type.actualTypeArguments
 
-  private final MapAnnotation oldAnnotation;
-  private final XMap annotation;
-
-  @SuppressWarnings("rawtypes")
-  private final @NotNull Class<? extends Map> mapClass;
-
-  private Class<?> keyClass;
-  private Class<?> valueClass;
-
-  private Binding keyBinding;
-  private Binding valueBinding;
-
-  MapBinding(@Nullable MapAnnotation oldAnnotation, @Nullable XMap newAnnotation, @NotNull Class<? extends Map<?, ?>> mapClass) {
-    this.oldAnnotation = oldAnnotation;
-    annotation = newAnnotation;
-    this.mapClass = mapClass;
-  }
-
-  @Override
-  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
-    ParameterizedType type = (ParameterizedType)originalType;
-    Type[] typeArguments = type.getActualTypeArguments();
-
-    keyClass = ClassUtil.typeToClass(typeArguments[0]);
-    Type valueType;
-    if (typeArguments.length == 1) {
-      String typeName = type.getRawType().getTypeName();
-      if (typeName.equals("it.unimi.dsi.fastutil.objects.Object2IntMap") || typeName.equals("it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap")) {
-        valueClass = Integer.class;
+    keyClass = ClassUtil.typeToClass(typeArguments[0])
+    val valueType: Type
+    if (typeArguments.size == 1) {
+      val typeName = type.rawType.typeName
+      if (typeName == "it.unimi.dsi.fastutil.objects.Object2IntMap" || typeName == "it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap") {
+        valueClass = Int::class.java
       }
       else {
-        throw new UnsupportedOperationException("Value class is unknown for " + type.getTypeName());
+        throw UnsupportedOperationException("Value class is unknown for " + type.typeName)
       }
 
-      valueType = Integer.class;
+      valueType = Int::class.java
     }
     else {
-      valueType = typeArguments[1];
-      valueClass = ClassUtil.typeToClass(valueType);
+      valueType = typeArguments[1]
+      valueClass = ClassUtil.typeToClass(valueType)
     }
 
-    keyBinding = serializer.getBinding(keyClass, typeArguments[0]);
-    valueBinding = serializer.getBinding(valueClass, valueType);
+    keyBinding = serializer.getBinding(aClass = keyClass!!, type = typeArguments[0])
+    valueBinding = serializer.getBinding(aClass = valueClass!!, type = valueType)
   }
 
-  @Override
-  public boolean isMulti() {
-    return true;
-  }
+  override val isMulti: Boolean
+    get() = true
 
-  private boolean isSortMap(Map<?, ?> map) {
+  private fun isSortMap(map: Map<*, *>): Boolean {
     // for new XMap we do not sort LinkedHashMap
-    if (map instanceof TreeMap || (annotation != null && map instanceof LinkedHashMap)) {
-      return false;
+    if (map is TreeMap<*, *> || (annotation != null && map is LinkedHashMap<*, *>)) {
+      return false
     }
-    return oldAnnotation == null || oldAnnotation.sortBeforeSave();
+    return oldAnnotation == null || oldAnnotation.sortBeforeSave
   }
 
-  @Override
-  public @NotNull JsonObject toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
-    @SuppressWarnings("rawtypes")
-    Map map = (Map)bean;
+  override fun toJson(bean: Any, filter: SerializationFilter?): JsonObject {
+    val map = bean as Map<*, *>
 
     if (map.isEmpty()) {
-      return new JsonObject(Collections.emptyMap());
+      return JsonObject(emptyMap())
     }
 
-    Object[] keys = ArrayUtil.toObjectArray(map.keySet());
+    val keys = ArrayUtil.toObjectArray(map.keys)
     if (isSortMap(map)) {
-      Arrays.sort(keys, KEY_COMPARATOR);
+      Arrays.sort(keys, KEY_COMPARATOR)
     }
 
-    Map<String, JsonElement> content = new LinkedHashMap<>();
-    for (Object k : keys) {
-      JsonElement kJ = keyOrValueToJson(k, keyBinding, filter);
-      JsonElement vJ = keyOrValueToJson(map.get(k), valueBinding, filter);
+    val content = LinkedHashMap<String, JsonElement>()
+    for (k in keys) {
+      val kJ = keyOrValueToJson(value = k, binding = keyBinding, filter = filter)
+      val vJ = keyOrValueToJson(value = map.get(k), binding = valueBinding, filter = filter)
       // todo non-primitive keys
-      content.put(kJ == null ? null : ((JsonPrimitive)kJ).getContent(), vJ);
+      content.put((kJ as JsonPrimitive).content, vJ ?: JsonNull)
     }
-    return new JsonObject(content);
+    return JsonObject(content)
   }
 
-  @SuppressWarnings({"rawtypes", "DuplicatedCode"})
-  @Override
-  public @Nullable Object fromJson(@Nullable Object currentValue, @NotNull JsonElement element) {
-    if (element == JsonNull.INSTANCE) {
-      return null;
+  override fun fromJson(currentValue: Any?, element: JsonElement): Any? {
+    if (element === JsonNull) {
+      return null
+    }
+
+    if (element !is JsonObject) {
+      LOG.warn("Expected JsonObject but got $element")
+      return currentValue
     }
 
     // if accessor is null, it is a sub-map, and we must not use context
-    Map map = (Map<?, ?>)currentValue;
-
-    if (!(element instanceof JsonObject)) {
-      LOG.warn("Expected JsonObject but got " + element);
-      return map;
-    }
-
-    JsonObject jsonObject = (JsonObject)element;
-
-    if (map != null) {
-      if (jsonObject.isEmpty()) {
-        return map;
+    var mutableMap: MutableMap<String, Any?>? = null
+    if (currentValue != null) {
+      if (element.isEmpty()) {
+        return currentValue
       }
-      else if (ClassUtil.isMutableMap(map)) {
-        map.clear();
-      }
-      else {
-        map = null;
+      else if (ClassUtil.isMutableMap(currentValue as Map<*, *>)) {
+        @Suppress("UNCHECKED_CAST")
+        mutableMap = currentValue as MutableMap<String, Any?>
+        mutableMap.clear()
       }
     }
 
-    for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-      if (map == null) {
-        if (mapClass == Map.class) {
-          map = new HashMap();
+    for ((key, value) in element) {
+      if (mutableMap == null) {
+        if (mapClass === MutableMap::class.java) {
+          mutableMap = HashMap<String, Any?>()
         }
         else {
           try {
-            map = ReflectionUtil.newInstance(mapClass);
+            @Suppress("UNCHECKED_CAST")
+            mutableMap = ReflectionUtil.newInstance(mapClass) as MutableMap<String, Any?>?
           }
-          catch (Exception e) {
-            LOG.warn(e);
-            map = new HashMap();
+          catch (e: Exception) {
+            LOG.warn(e)
+            mutableMap = HashMap<String, Any?>()
           }
         }
       }
 
-      //noinspection unchecked
-      map.put(entry.getKey(), keyOrValueFromJson(entry.getValue(), valueBinding));
+      mutableMap!!.put(key, keyOrValueFromJson(value, valueBinding))
     }
-    return map;
+    return mutableMap
   }
 
-  @Override
-  public @Nullable Element serialize(@NotNull Object bean, @Nullable SerializationFilter filter) {
-    throw new IllegalStateException("Do not use MapBinding as a root bean");
+  override fun serialize(bean: Any, filter: SerializationFilter?): Element? {
+    throw IllegalStateException("Do not use MapBinding as a root bean")
   }
 
-  @Override
-  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
-    Element serialized;
-    if (isSurroundWithTag()) {
-      serialized = new Element(MAP);
-      parent.addContent(serialized);
+  override fun serialize(bean: Any, parent: Element, filter: SerializationFilter?) {
+    val serialized: Element
+    if (isSurroundWithTag) {
+      serialized = Element(Constants.MAP)
+      parent.addContent(serialized)
     }
     else {
-      serialized = parent;
+      serialized = parent
     }
-    assert serialized != null;
 
-    @SuppressWarnings("rawtypes")
-    Map map = (Map)bean;
-    Object[] keys = ArrayUtil.toObjectArray(map.keySet());
+    val map = bean as Map<*, *>
+    val keys = ArrayUtil.toObjectArray(map.keys)
     if (isSortMap(map)) {
-      Arrays.sort(keys, KEY_COMPARATOR);
+      Arrays.sort(keys, KEY_COMPARATOR)
     }
 
-    for (Object k : keys) {
-      Element entry = new Element(getEntryElementName());
-      serialized.addContent(entry);
+    for (k in keys) {
+      val entry = Element(entryElementName)
+      serialized.addContent(entry)
 
-      serializeKeyOrValue(entry, getKeyAttributeName(), k, keyBinding, filter);
-      serializeKeyOrValue(entry, getValueAttributeName(), map.get(k), valueBinding, filter);
+      serializeKeyOrValue(entry, keyAttributeName, k, keyBinding, filter)
+      serializeKeyOrValue(entry, valueAttributeName, map.get(k), valueBinding, filter)
     }
   }
 
-  private boolean isSurroundWithTag() {
-    return annotation == null && (oldAnnotation == null || oldAnnotation.surroundWithTag());
-  }
-
-  @NotNull
-  String getEntryElementName() {
-    if (annotation != null) {
-      return annotation.entryTagName();
+  private val entryElementName: String
+    get() {
+      if (annotation != null) {
+        return annotation.entryTagName
+      }
+      return oldAnnotation?.entryTagName ?: Constants.ENTRY
     }
-    return oldAnnotation == null ? ENTRY : oldAnnotation.entryTagName();
-  }
 
-  private String getKeyAttributeName() {
-    if (annotation != null) {
-      return annotation.keyAttributeName();
+  private val keyAttributeName: String
+    get() {
+      if (annotation != null) {
+        return annotation.keyAttributeName
+      }
+      return oldAnnotation?.keyAttributeName ?: Constants.KEY
     }
-    return oldAnnotation == null ? KEY : oldAnnotation.keyAttributeName();
-  }
 
-  private String getValueAttributeName() {
-    if (annotation != null) {
-      return annotation.valueAttributeName();
+  private val valueAttributeName: String
+    get() {
+      if (annotation != null) {
+        return annotation.valueAttributeName
+      }
+      return oldAnnotation?.valueAttributeName ?: Constants.VALUE
     }
-    return oldAnnotation == null ? VALUE : oldAnnotation.valueAttributeName();
+
+  override fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>): Any? {
+    return deserializeMap(currentValue = currentValue, childNodes = if (isSurroundWithTag) adapter.getChildren(elements.single()) else elements, adapter = adapter)
   }
 
-  @Override
-  public @Nullable <T> Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
-    List<T> childNodes;
-    if (isSurroundWithTag()) {
-      assert elements.size() == 1;
-      childNodes = adapter.getChildren(elements.get(0));
+  override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any? = null
+
+  fun deserialize(context: Any?, element: Element): Any? {
+    if (isSurroundWithTag) {
+      return deserializeMap(currentValue = context, childNodes = element.children, adapter = JdomAdapter)
     }
     else {
-      //noinspection unchecked
-      childNodes = (List<T>)elements;
-    }
-
-    return deserializeMap(currentValue, childNodes, adapter);
-  }
-
-  @Override
-  public @Nullable <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
-    return null;
-  }
-
-  public @Nullable Object deserialize(@Nullable Object context, @NotNull Element element) {
-    if (isSurroundWithTag()) {
-      return deserializeMap(context, element.getChildren(), JdomAdapter.INSTANCE);
-    }
-    else {
-      return deserializeMap(context, Collections.singletonList(element), JdomAdapter.INSTANCE);
+      return deserializeMap(currentValue = context, childNodes = listOf(element), adapter = JdomAdapter)
     }
   }
 
-  private <T> @Nullable Map<?, ?> deserializeMap(@Nullable Object currentValue, @NotNull List<T> childNodes, @NotNull DomAdapter<T> adapter) {
-    @SuppressWarnings("rawtypes") Map map = (Map<?, ?>)currentValue;
-    if (map != null) {
+  private fun <T : Any> deserializeMap(currentValue: Any?, childNodes: List<T>, adapter: DomAdapter<T>): Any? {
+    var mutableMap: MutableMap<Any?, Any?>? = null
+    if (currentValue != null) {
+      @Suppress("UNCHECKED_CAST")
       if (childNodes.isEmpty()) {
-        return map;
+        return currentValue
       }
-      else if (ClassUtil.isMutableMap(map)) {
-        map.clear();
-      }
-      else {
-        map = null;
+      else if (ClassUtil.isMutableMap(currentValue as Map<Any?, Any?>)) {
+        mutableMap = currentValue as MutableMap<Any?, Any?>
+        mutableMap.clear()
       }
     }
 
-    for (T childNode : childNodes) {
-      if (!adapter.getName(childNode).equals(getEntryElementName())) {
-        LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
-        continue;
+    for (childNode in childNodes) {
+      if (adapter.getName(childNode) != entryElementName) {
+        LOG.warn("unexpected entry for serialized Map will be skipped: $childNode")
+        continue
       }
 
-      if (map == null) {
-        if (mapClass == Map.class) {
-          map = new HashMap();
+      if (mutableMap == null) {
+        if (mapClass == MutableMap::class.java) {
+          mutableMap = HashMap<Any?, Any?>()
         }
         else {
           try {
-            map = ReflectionUtil.newInstance(mapClass);
+            @Suppress("UNCHECKED_CAST")
+            mutableMap = ReflectionUtil.newInstance(mapClass) as MutableMap<Any?, Any?>
           }
-          catch (Exception e) {
-            LOG.warn(e);
-            map = new HashMap();
+          catch (e: Exception) {
+            LOG.warn(e)
+            mutableMap = HashMap<Any?, Any?>()
           }
         }
       }
 
-      if (adapter == JdomAdapter.INSTANCE) {
-        //noinspection unchecked
-        map.put(deserializeKeyOrValue((Element)childNode, getKeyAttributeName(), currentValue, keyBinding, keyClass),
-                deserializeKeyOrValue((Element)childNode, getValueAttributeName(), currentValue, valueBinding, valueClass));
-      }
-      else {
-        //noinspection unchecked
-        map.put(deserializeKeyOrValue((XmlElement)childNode, getKeyAttributeName(), currentValue, keyBinding, keyClass),
-                deserializeKeyOrValue((XmlElement)childNode, getValueAttributeName(), currentValue, valueBinding, valueClass));
-      }
+      mutableMap!!.put(
+        deserializeKeyOrValue(entry = childNode, attributeName = keyAttributeName, context = currentValue, binding = keyBinding, valueClass = keyClass!!, adapter = adapter),
+        deserializeKeyOrValue(entry = childNode, attributeName = valueAttributeName, context = currentValue, binding = valueBinding, valueClass = valueClass!!, adapter = adapter),
+      )
     }
-    return map;
+    return mutableMap
   }
 
-  private void serializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, @Nullable Object value, @Nullable Binding binding, @Nullable SerializationFilter filter) {
-    if (value == null) {
-      return;
-    }
+  override fun deserializeToJson(element: Element): JsonElement {
+    return doDeserializeListToJson(elements = if (isSurroundWithTag) element.children else listOf(element))
+  }
 
-    if (binding == null) {
-      entry.setAttribute(attributeName, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)));
-    }
-    else {
-      Element container;
-      if (isSurroundKey()) {
-        container = new Element(attributeName);
-        entry.addContent(container);
+  override fun doDeserializeListToJson(elements: List<Element>): JsonElement {
+    val adapter: DomAdapter<Element> = JdomAdapter
+    val map = LinkedHashMap<String, JsonElement>()
+    for (childNode in elements) {
+      if (adapter.getName(childNode) != entryElementName) {
+        LOG.warn("unexpected entry for serialized Map will be skipped: $childNode")
+        continue
       }
-      else {
-        container = entry;
-      }
-      binding.serialize(value, container, filter);
+
+      val key = deserializeKeyOrValueToJson(entry = childNode, attributeName = keyAttributeName, binding = keyBinding, valueClass = keyClass!!)!!
+      map.put(
+        key.jsonPrimitive.content,
+        deserializeKeyOrValueToJson(entry = childNode, attributeName = valueAttributeName, binding = valueBinding, valueClass = valueClass!!) ?: JsonNull,
+      )
     }
+    return JsonObject(map)
   }
 
-  private static @Nullable JsonElement keyOrValueToJson(@Nullable Object value, @Nullable Binding binding, @Nullable SerializationFilter filter) {
-    if (value == null) {
-      return null;
-    }
-
-    if (binding == null) {
-      return primitiveToJsonElement(value);
-    }
-    else {
-      return binding.toJson(value, filter);
-    }
-  }
-
-  private static @Nullable Object keyOrValueFromJson(@NotNull JsonElement element, @Nullable Binding binding) {
-    if (binding == null) {
-      return fromJsonPrimitive(element);
-    }
-    else {
-      return ((RootBinding)binding).fromJson(null, element);
-    }
-  }
-
-  private Object deserializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, Object context, @Nullable Binding binding, @NotNull Class<?> valueClass) {
-    Attribute attribute = entry.getAttribute(attributeName);
+  private fun deserializeKeyOrValueToJson(entry: Element, attributeName: String, binding: Binding?, valueClass: Class<*>): JsonElement? {
+    val attribute = entry.getAttributeValue(attributeName)
     if (attribute != null) {
-      return XmlSerializerImpl.convert(attribute.getValue(), valueClass);
+      return valueToJson(attribute, valueClass)
     }
-    else if (!isSurroundKey()) {
-      assert binding != null;
-      for (Element element : entry.getChildren()) {
-        if (binding.isBoundTo(element, JdomAdapter.INSTANCE)) {
-          return binding.deserialize(context, element, JdomAdapter.INSTANCE);
+    else if (!isSurroundKey) {
+      checkNotNull(binding)
+      for (element in entry.children) {
+        if (binding.isBoundTo(element, JdomAdapter)) {
+          return (binding as RootBinding).deserializeToJson(element)
         }
       }
     }
     else {
-      Element entryChild = entry.getChild(attributeName);
-      List<Element> children = entryChild == null ? Collections.emptyList() : entryChild.getChildren();
+      val entryChild = entry.getChild(attributeName)
+      val children = if (entryChild == null) emptyList() else entryChild.children
       if (children.isEmpty()) {
-        return null;
+        return JsonNull
+      }
+      else if (binding is MultiNodeBinding) {
+        (binding as RootBinding).deserializeToJson(entryChild!!)
+      }
+      else if (children.size == 1) {
+        checkNotNull(binding)
+        (binding as RootBinding).deserializeToJson(children[0])
       }
       else {
-        assert binding != null;
-        return TagBindingKt.deserializeList(binding, null, children, JdomAdapter.INSTANCE);
+        throw UnsupportedOperationException("Unsupported binding: $binding")
       }
     }
-    return null;
+    return null
   }
 
-  private Object deserializeKeyOrValue(@NotNull XmlElement entry,
-                                       @NotNull String attributeName,
-                                       Object context,
-                                       @Nullable Binding binding,
-                                       @NotNull Class<?> valueClass) {
-    String attribute = entry.attributes.get(attributeName);
-    if (attribute != null) {
-      return XmlSerializerImpl.convert(attribute, valueClass);
+  private fun serializeKeyOrValue(entry: Element, attributeName: String, value: Any?, binding: Binding?, filter: SerializationFilter?) {
+    if (value == null) {
+      return
     }
-    else if (!isSurroundKey()) {
-      assert binding != null;
-      for (XmlElement element : entry.children) {
-        if (binding.isBoundTo(element, XmlDomAdapter.INSTANCE)) {
-          return binding.deserialize(context, element, XmlDomAdapter.INSTANCE);
+
+    if (binding == null) {
+      entry.setAttribute(attributeName, JDOMUtil.removeControlChars(XmlSerializerImpl.convertToString(value)))
+    }
+    else {
+      val container: Element
+      if (isSurroundKey) {
+        container = Element(attributeName)
+        entry.addContent(container)
+      }
+      else {
+        container = entry
+      }
+      binding.serialize(bean = value, parent = container, filter = filter)
+    }
+  }
+
+  private fun <T : Any> deserializeKeyOrValue(entry: T, attributeName: String, context: Any?, binding: Binding?, valueClass: Class<*>, adapter: DomAdapter<T>): Any? {
+    val attribute = adapter.getAttributeValue(entry, attributeName)
+    if (attribute != null) {
+      return XmlSerializerImpl.convert(attribute, valueClass)
+    }
+    else if (!isSurroundKey) {
+      checkNotNull(binding)
+      for (element in adapter.getChildren(entry)) {
+        if (binding.isBoundTo(element, adapter)) {
+          return binding.deserialize(context, element, adapter)
         }
       }
     }
     else {
-      XmlElement entryChild = entry.getChild(attributeName);
-      List<XmlElement> children = entryChild == null ? Collections.emptyList() : entryChild.children;
+      val entryChild = adapter.getChild(entry, attributeName)
+      val children = if (entryChild == null) emptyList() else adapter.getChildren(entryChild)
       if (children.isEmpty()) {
-        return null;
+        return null
       }
       else {
-        assert binding != null;
-        return TagBindingKt.deserializeList(binding, null, children, XmlDomAdapter.INSTANCE);
+        checkNotNull(binding)
+        return deserializeList(binding = binding, currentValue = null, nodes = children, adapter = adapter)
       }
     }
-    return null;
+    return null
   }
 
-  private boolean isSurroundKey() {
-    if (annotation != null) {
-      return false;
-    }
-    return oldAnnotation == null || oldAnnotation.surroundKeyWithTag();
-  }
+  private val isSurroundKey: Boolean
+    get() = if (annotation != null) false else oldAnnotation == null || oldAnnotation.surroundKeyWithTag
 
-  boolean isBoundToWithoutProperty(@NotNull String elementName) {
-    if (annotation != null) {
-      return elementName.equals(annotation.entryTagName());
-    }
-    else if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
-      return elementName.equals(oldAnnotation.entryTagName());
-    }
-    else {
-      return elementName.equals(MAP);
+  fun isBoundToWithoutProperty(elementName: String): Boolean {
+    return when {
+      annotation != null -> elementName == annotation.entryTagName
+      oldAnnotation != null && !oldAnnotation.surroundWithTag -> elementName == oldAnnotation.entryTagName
+      else -> elementName == Constants.MAP
     }
   }
 
-  @Override
-  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
-    if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
-      return oldAnnotation.entryTagName().equals(adapter.getName(element));
+  override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean {
+    return when {
+      oldAnnotation != null && !oldAnnotation.surroundWithTag -> oldAnnotation.entryTagName == adapter.getName(element)
+      annotation != null -> annotation.propertyElementName == adapter.getName(element)
+      else -> adapter.getName(element) == Constants.MAP
     }
-    else if (annotation != null) {
-      return annotation.propertyElementName().equals(adapter.getName(element));
-    }
-    else {
-      return adapter.getName(element).equals(MAP);
-    }
+  }
+}
+
+private val KEY_COMPARATOR = Comparator { o1: Any?, o2: Any? ->
+  if (o1 is Comparable<*> && o2 is Comparable<*>) {
+    @Suppress("UNCHECKED_CAST")
+    (o1 as Comparable<Any?>).compareTo(o2 as Comparable<Any?>)
+  }
+  else {
+    0
+  }
+}
+
+private fun keyOrValueToJson(value: Any?, binding: Binding?, filter: SerializationFilter?): JsonElement? {
+  if (value == null) {
+    return null
+  }
+
+  return if (binding == null) {
+    primitiveToJsonElement(value)
+  }
+  else {
+    binding.toJson(value, filter)
+  }
+}
+
+private fun keyOrValueFromJson(element: JsonElement, binding: Binding?): Any? {
+  return if (binding == null) {
+    fromJsonPrimitive(element)
+  }
+  else {
+    (binding as RootBinding).fromJson(null, element)
   }
 }

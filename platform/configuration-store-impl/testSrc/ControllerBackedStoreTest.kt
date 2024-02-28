@@ -21,8 +21,11 @@ import com.intellij.util.io.write
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Text
 import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.util.xmlb.jdomToJson
+import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
@@ -64,7 +67,7 @@ class ControllerBackedStoreTest {
       GetResult.inapplicable()
     }
 
-    val component = TestComponent()
+    val component = ControllerTestComponent()
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.foo).isEmpty()
@@ -192,14 +195,14 @@ class ControllerBackedStoreTest {
   fun `set primitive to null`() = runBlocking(Dispatchers.Default) {
     val store = createStore { key ->
       if (data.containsKey(key.key)) {
-        GetResult.resolved(this@ControllerBackedStoreTest.data.get(key.key))
+        GetResult.resolved(data.get(key.key))
       }
       else {
         GetResult.inapplicable()
       }
     }
 
-    val component = TestComponent()
+    val component = ControllerTestComponent()
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEmpty()
 
@@ -219,10 +222,10 @@ class ControllerBackedStoreTest {
       <application>
         <component name="TestState" foo="old"/>
       </application>
-      """.trimMargin()
+      """
     writeConfig(TEST_COMPONENT_FILE_NAME, oldContent)
 
-    val component = TestComponent()
+    val component = ControllerTestComponent()
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
 
     assertThat(component.state.foo).isEqualTo("old")
@@ -233,6 +236,85 @@ class ControllerBackedStoreTest {
 
     store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
     assertThat(component.state.bar).isEqualTo("42")
+  }
+
+  @Test
+  fun `use one property from local data, another one from SC`() = runBlocking<Unit>(Dispatchers.Default) {
+    val store = createStore { key ->
+      when (key.key) {
+        "TestState.bar" -> GetResult.resolved(JsonPrimitive("sc"))
+        "TestState.foo" -> {
+          assertThat((key.tags.first { it is OldLocalValueSupplierTag } as OldLocalValueSupplierTag).value!!.jsonPrimitive.content).isEqualTo("old")
+          GetResult.inapplicable()
+        }
+        else -> GetResult.inapplicable()
+      }
+    }
+
+    val oldContent = """
+      <application>
+        <component name="TestState" foo="old"/>
+      </application>
+      """.trimIndent()
+    writeConfig(TEST_COMPONENT_FILE_NAME, oldContent)
+
+    val component = ControllerTestComponent()
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    assertThat(component.state.foo).isEqualTo("old")
+    assertThat(component.state.bar).isEqualTo("sc")
+  }
+
+  @Test
+  fun old_value_for_bean() = runBlocking<Unit>(Dispatchers.Default) {
+    val store = createStore { key ->
+      when (key.key) {
+        "TestState.bean" -> {
+          assertThat(Json.encodeToString((key.tags.first { it is OldLocalValueSupplierTag } as OldLocalValueSupplierTag).value!!)).isEqualTo("""{"foo":"test"}""")
+          GetResult.inapplicable()
+        }
+        "TestState.list" -> {
+          assertThat(Json.encodeToString((key.tags.first { it is OldLocalValueSupplierTag } as OldLocalValueSupplierTag).value!!)).isEqualTo("""["a","b","c"]""")
+          GetResult.inapplicable()
+        }
+        else -> GetResult.inapplicable()
+      }
+    }
+
+    data class SubState(@JvmField @Attribute val foo: String = "")
+
+    data class TestState(
+      @JvmField var bean: SubState = SubState(),
+      @JvmField @XCollection val list: List<String> = emptyList(),
+    )
+
+    @State(name = "TestState", storages = [Storage(value = TEST_COMPONENT_FILE_NAME)], allowLoadInTests = true)
+    class TestComponent : SerializablePersistentStateComponent<TestState>(TestState()) {
+      override fun noStateLoaded() {
+        loadState(TestState())
+      }
+    }
+
+    val oldContent = """
+      <application>
+        <component name="TestState">
+          <option name="bean">
+            <SubState foo="test" />
+          </option>
+          <option name="list">
+            <option value="a" />
+            <option value="b" />
+            <option value="c" />
+          </option>
+        </component>
+      </application>
+      """.trimIndent()
+    writeConfig(TEST_COMPONENT_FILE_NAME, oldContent)
+
+    val component = TestComponent()
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    assertThat(component.state.bean.foo).isEqualTo("test")
   }
 
   @Suppress("SameParameterValue")
@@ -252,11 +334,11 @@ class ControllerBackedStoreTest {
     )
   }
 
-  private fun createStore(supplier: (SettingDescriptor<Any>) -> GetResult<Any?>): ControllerBackedTestComponentStore {
+  private fun createStore(supplier: (SettingDescriptor<JsonElement>) -> GetResult<JsonElement?>): ControllerBackedTestComponentStore {
     return createStore(object : DelegatedSettingsController {
       override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
         @Suppress("UNCHECKED_CAST")
-        return supplier(key as SettingDescriptor<Any>) as GetResult<T>
+        return supplier(key as SettingDescriptor<JsonElement>) as GetResult<T>
       }
 
       override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.INAPPLICABLE
@@ -286,7 +368,7 @@ private class ControllerBackedTestComponentStore(
 private const val TEST_COMPONENT_FILE_NAME = "controllerBackedTest.xml"
 
 @State(name = "TestState", storages = [Storage(value = TEST_COMPONENT_FILE_NAME)], allowLoadInTests = true)
-private class TestComponent : SerializablePersistentStateComponent<ControllerTestState>(ControllerTestState()) {
+private class ControllerTestComponent : SerializablePersistentStateComponent<ControllerTestState>(ControllerTestState()) {
   override fun noStateLoaded() {
     loadState(ControllerTestState())
   }

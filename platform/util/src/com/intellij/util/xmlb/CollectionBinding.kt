@@ -59,7 +59,7 @@ internal fun createCollectionBinding(serializer: Serializer, itemType: Class<*>,
 internal class CollectionBinding(
   private val elementName: String,
   private val valueAttributeName: String,
-  @JvmField internal val isSurroundWithTag: Boolean,
+  override val isSurroundWithTag: Boolean,
   @JvmField internal val isSortOrderedSet: Boolean,
   @JvmField internal val itemType: Class<*>,
   @JvmField internal val elementTypes: Array<Class<*>>,
@@ -111,7 +111,8 @@ internal class CollectionBinding(
       return JsonArray(emptyList())
     }
 
-    val content = ArrayList<JsonElement>()
+    val content = ArrayList<JsonElement>(collection.size)
+    val includeClassDiscriminator = itemBindings!!.size > 1
     for (value in collection) {
       if (value == null) {
         content.add(JsonNull)
@@ -120,7 +121,7 @@ internal class CollectionBinding(
 
       when (val binding = getItemBinding(value.javaClass, serializer)) {
         null -> content.add(primitiveToJsonElement(value))
-        is BeanBinding -> content.add(binding.toJson(bean = value, filter = filter, includeClassDiscriminator = itemBindings!!.size > 1))
+        is BeanBinding -> content.add(binding.toJson(bean = value, filter = filter, includeClassDiscriminator = includeClassDiscriminator))
         else -> content.add(binding.toJson(value, filter) ?: JsonNull)
       }
     }
@@ -209,9 +210,35 @@ internal class CollectionBinding(
     val collection = strategy.getCollection(bean, this)
     if (!collection.isEmpty()) {
       for (item in collection) {
-        serializeItem(item, listElement, filter)
+        serializeItem(value = item, parent = listElement, filter = filter)
       }
     }
+  }
+
+  override fun deserializeToJson(element: Element): JsonElement {
+    return doDeserializeListToJson(if (isSurroundWithTag) element.children.single().children else element.children)
+  }
+
+  override fun doDeserializeListToJson(elements: List<Element>): JsonElement {
+    val jsonElements = ArrayList<JsonElement>(elements.size)
+    for (child in elements) {
+      val adapter = JdomAdapter
+      val binding = itemBindings!!.firstOrNull { it.isBoundTo(child, adapter) }
+      when (binding) {
+        null -> {
+          val attributeName = valueAttributeName
+          val value = if (attributeName.isEmpty()) JdomAdapter.getTextValue(child, "") else JdomAdapter.getAttributeValue(child, attributeName)
+          jsonElements.add(valueToJson(value, itemType) ?: JsonNull)
+        }
+        is BeanBinding -> {
+          jsonElements.add(binding.deserializeToJson(child, includeClassDiscriminator = itemBindings!!.size > 1))
+        }
+        else -> {
+          jsonElements.add((binding as RootBinding).deserializeToJson(child) ?: JsonNull)
+        }
+      }
+    }
+    return JsonArray(jsonElements)
   }
 
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {

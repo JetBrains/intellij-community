@@ -70,7 +70,11 @@ internal class XmlSerializerTest {
     @Property(assertIfNoBindings = false)
     class EmptyBean
 
-    testSerializer("<EmptyBean />", EmptyBean())
+    testSerializer(
+      expectedXml = "<EmptyBean />",
+      expectedJson = """{}""",
+      bean = EmptyBean(),
+    )
   }
 
   @Test fun publicFieldSerialization() {
@@ -600,7 +604,7 @@ internal class XmlSerializerTest {
     @Tag("actions") var actions: Element? = null
   }
 
-  @Test fun serializeJDOMElementField() {
+  @Test fun JDOMElement() {
     val element = BeanWithJDOMElement()
     element.STRING_V = "a"
     element.actions = Element("x").addContent(Element("a")).addContent(Element("b"))
@@ -634,7 +638,19 @@ internal class XmlSerializerTest {
   }
 
   @Test fun jdomElementArrayField() {
-    val text = "<BeanWithJDOMElementArray>\n" + "  <option name=\"STRING_V\" value=\"bye\" />\n" + "  <actions>\n" + "    <action />\n" + "    <action />\n" + "  </actions>\n" + "  <actions>\n" + "    <action />\n" + "  </actions>\n" + "</BeanWithJDOMElementArray>"
+    @Language("XML")
+    val text = """
+      <BeanWithJDOMElementArray>
+        <option name="STRING_V" value="bye" />
+        <actions>
+          <action />
+          <action />
+        </actions>
+        <actions>
+          <action />
+        </actions>
+      </BeanWithJDOMElementArray>
+    """
     val bean = deserialize<BeanWithJDOMElementArray>(JDOMUtil.load(text))
 
     assertThat(bean.STRING_V).isEqualTo("bye")
@@ -642,11 +658,52 @@ internal class XmlSerializerTest {
     assertThat(bean.actions!![0].children).hasSize(2)
     assertThat(bean.actions!![1].children).hasSize(1)
 
-    assertSerializer(bean, text, null)
+    testSerializer(
+      bean = bean,
+      expectedXml = text,
+      expectedJson = """
+        {
+          "string_v": "bye",
+          "actions": [
+            {
+              "name": "actions",
+              "children": [
+                {
+                  "name": "action"
+                },
+                {
+                  "name": "action"
+                }
+              ]
+            },
+            {
+              "name": "actions",
+              "children": [
+                {
+                  "name": "action"
+                }
+              ]
+            }
+          ]
+        }
+      """,
+    )
 
     bean.actions = null
-    val newText = "<BeanWithJDOMElementArray>\n" + "  <option name=\"STRING_V\" value=\"bye\" />\n" + "</BeanWithJDOMElementArray>"
-    testSerializer(newText, bean)
+    val newText = """
+      <BeanWithJDOMElementArray>
+        <option name="STRING_V" value="bye" />
+      </BeanWithJDOMElementArray>
+    """
+    testSerializer(
+      expectedXml = newText,
+      bean = bean,
+      expectedJson = """
+        {
+          "string_v": "bye"
+        }
+      """
+    )
 
     bean.actions = emptyArray()
     testSerializer(newText, bean)
@@ -882,6 +939,8 @@ fun <T : Any> testSerializer(
 
     val deserializedBean = binding.fromJson(currentValue = null, element = expectedTree)!!
     assertThat(PrettyJson.encodeToString(binding.toJson(deserializedBean, filter))).isEqualTo(expectedNormalizedJson)
+
+    assertThat(PrettyJson.encodeToString(binding.deserializeToJson(element))).isEqualTo(expectedNormalizedJson)
   }
   return o
 }

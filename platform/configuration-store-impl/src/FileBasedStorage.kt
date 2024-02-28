@@ -44,7 +44,7 @@ abstract class FileBasedStorage(
   pathMacroManager: PathMacroSubstitutor? = null,
   roamingType: RoamingType,
   provider: StreamProvider? = null,
-) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
+) : XmlElementStorage(fileSpec = fileSpec, rootElementName = rootElementName, pathMacroSubstitutor = pathMacroManager, storageRoamingType = roamingType, provider = provider) {
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   private var lineSeparator: LineSeparator? = null
