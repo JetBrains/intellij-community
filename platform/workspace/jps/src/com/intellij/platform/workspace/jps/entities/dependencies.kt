@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import java.io.Serializable
 
+data class LibraryTypeId(val name: @NonNls String)
 /**
  * Describes a [Library][com.intellij.openapi.roots.libraries.Library].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
@@ -21,6 +22,7 @@ import java.io.Serializable
 interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     val name: @NlsSafe String
     val tableId: LibraryTableId
+    val typeId: LibraryTypeId?
     val roots: List<LibraryRoot>
 
     val excludedRoots: List<@Child ExcludeUrlEntity>
@@ -34,6 +36,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     override var entitySource: EntitySource
     override var name: String
     override var tableId: LibraryTableId
+    override var typeId: LibraryTypeId?
     override var roots: MutableList<LibraryRoot>
     override var excludedRoots: List<ExcludeUrlEntity>
   }

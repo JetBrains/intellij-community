@@ -56,6 +56,12 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
       return dataSource.tableId
     }
 
+  override val typeId: LibraryTypeId?
+    get() {
+      readField("typeId")
+      return dataSource.typeId
+    }
+
   override val roots: List<LibraryRoot>
     get() {
       readField("roots")
@@ -149,6 +155,7 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.tableId != dataSource.tableId) this.tableId = dataSource.tableId
+      if (this.typeId != dataSource?.typeId) this.typeId = dataSource.typeId
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       updateChildToParentReferences(parents)
     }
@@ -189,6 +196,15 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
         checkModificationAllowed()
         getEntityData(true).tableId = value
         changedProperty.add("tableId")
+
+      }
+
+    override var typeId: LibraryTypeId?
+      get() = getEntityData().typeId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).typeId = value
+        changedProperty.add("typeId")
 
       }
 
@@ -271,6 +287,7 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
 class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var tableId: LibraryTableId
+  var typeId: LibraryTypeId? = null
   lateinit var roots: MutableList<LibraryRoot>
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
@@ -409,6 +426,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return LibraryEntity(name, tableId, roots, entitySource) {
+      this.typeId = this@LibraryEntityData.typeId
     }
   }
 
@@ -426,6 +444,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
+    if (this.typeId != other.typeId) return false
     if (this.roots != other.roots) return false
     return true
   }
@@ -438,6 +457,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
 
     if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
+    if (this.typeId != other.typeId) return false
     if (this.roots != other.roots) return false
     return true
   }
@@ -446,6 +466,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     var result = entitySource.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + tableId.hashCode()
+    result = 31 * result + typeId.hashCode()
     result = 31 * result + roots.hashCode()
     return result
   }
@@ -454,6 +475,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     var result = javaClass.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + tableId.hashCode()
+    result = 31 * result + typeId.hashCode()
     result = 31 * result + roots.hashCode()
     return result
   }

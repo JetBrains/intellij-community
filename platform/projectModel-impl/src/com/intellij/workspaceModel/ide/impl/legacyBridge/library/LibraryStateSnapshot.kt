@@ -40,8 +40,8 @@ class LibraryStateSnapshot(
 
   private val kindProperties by lazy {
     val customProperties = libraryEntity.libraryProperties
-    val k = customProperties?.libraryType?.let {
-      LibraryKindRegistry.getInstance().findKindById(it) ?: UnknownLibraryKind.getOrCreate(it)
+    val k = libraryEntity.typeId?.let {
+      LibraryKindRegistry.getInstance().findKindById(it.name) ?: UnknownLibraryKind.getOrCreate(it.name)
     } as? PersistentLibraryKind<*>
     val p = loadProperties(k, customProperties)
     k to p

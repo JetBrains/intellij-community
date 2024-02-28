@@ -70,11 +70,12 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     val libraryEntity = modifiableModel.diff addEntity LibraryEntity(name = libraryEntityName,
                                                                      tableId = tableId,
                                                                      roots = emptyList(),
-                                                                     entitySource = modifiableModel.moduleEntity.entitySource)
+                                                                     entitySource = modifiableModel.moduleEntity.entitySource) {
+      this.typeId = type?.kindId?.let { LibraryTypeId(it) }
+    }
 
     if (type != null) {
-      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
-                                                             entitySource = libraryEntity.entitySource) {
+      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryEntity.entitySource) {
         library = libraryEntity
         propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
                                                                                  type.createDefaultProperties())
@@ -116,13 +117,13 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
                                                                      roots = originalEntity.roots,
                                                                      entitySource = modifiableModel.moduleEntity.entitySource
     ) {
+      typeId = originalEntity.typeId
       excludedRoots = originalEntity.excludedRoots
     }
 
     val originalProperties = originalEntity.libraryProperties
     if (originalProperties != null) {
-      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryType = originalProperties.libraryType,
-                                                             entitySource = libraryEntity.entitySource) {
+      modifiableModel.diff addEntity LibraryPropertiesEntity(entitySource = libraryEntity.entitySource) {
         library = libraryEntity
         propertiesXmlTag = originalProperties.propertiesXmlTag
       }

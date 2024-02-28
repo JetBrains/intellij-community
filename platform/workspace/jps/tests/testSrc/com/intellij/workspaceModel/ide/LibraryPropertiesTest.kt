@@ -67,7 +67,7 @@ class LibraryPropertiesTest {
       }
 
       WorkspaceModel.getInstance(project).currentSnapshot.entities(LibraryPropertiesEntity::class.java).forEach {
-        assertEquals(kindId, it.libraryType)
+        assertEquals(kindId, it.library.typeId?.name)
         assertEquals(elementAsString, it.propertiesXmlTag)
       }
 
@@ -100,7 +100,7 @@ class LibraryPropertiesTest {
 
     WorkspaceModel.getInstance(project).currentSnapshot.entities(LibraryPropertiesEntity::class.java).forEach {
       assertEquals(antLibraryName, it.library.name)
-      assertEquals(kindId, it.libraryType)
+      assertEquals(kindId, it.library.typeId?.name)
       assertEquals(elementAsString, it.propertiesXmlTag)
     }
 

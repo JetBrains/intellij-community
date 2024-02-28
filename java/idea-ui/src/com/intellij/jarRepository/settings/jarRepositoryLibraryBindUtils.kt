@@ -72,7 +72,7 @@ internal fun updateLibrariesRepositoryId(builder: MutableEntityStorage,
 private fun getUsagesInLibraryProperties(storage: EntityStorage, jarRepositoryIds: Set<String>): List<LibraryPropertiesEntity> =
   storage.entities(LibraryEntity::class.java).mapNotNull { libraryEntity ->
     val propertiesEntity = libraryEntity.libraryProperties ?: return@mapNotNull null
-    if (REPOSITORY_LIBRARY_KIND.kindId != propertiesEntity.libraryType) {
+    if (REPOSITORY_LIBRARY_KIND.kindId != libraryEntity.typeId?.name) {
       return@mapNotNull null
     }
 

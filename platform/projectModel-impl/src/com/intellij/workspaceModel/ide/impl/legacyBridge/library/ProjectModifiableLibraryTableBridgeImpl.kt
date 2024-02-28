@@ -9,10 +9,7 @@ import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -68,11 +65,12 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       LOG.error("Project library with name '$name' already exists.")
     }
 
-    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource))
+    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)) {
+      this.typeId = type?.kindId?.let { LibraryTypeId(it) }
+    }
 
     if (type != null) {
-      diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
-                                             entitySource = libraryEntity.entitySource) {
+      diff addEntity LibraryPropertiesEntity( libraryEntity.entitySource) {
         library = libraryEntity
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
       }

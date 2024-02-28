@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ContainerUtil
@@ -146,16 +147,19 @@ internal class LibraryModifiableModelBridgeImpl(
       }
     }
     else if (properties == null) {
-      diff.addEntity(LibraryPropertiesEntity(libraryType, entity.entitySource) {
+      diff.addEntity(LibraryPropertiesEntity(entity.entitySource) {
         library = entity
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       })
     }
     else {
       diff.modifyEntity(properties) {
-        this.libraryType = libraryType
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       }
+    }
+
+    diff.modifyEntity(entity) {
+      this.typeId = libraryType?.let { LibraryTypeId(libraryType) }
     }
   }
 
@@ -168,6 +172,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
   private fun LibraryEntity.hasEqualProperties(another: LibraryEntity): Boolean {
     if (this.tableId != another.tableId) return false
+    if (this.typeId != another.typeId) return false
     if (this.name != another.name) return false
     if (this.roots != another.roots) return false
     if (this.excludedRoots != another.excludedRoots) return false
@@ -175,9 +180,7 @@ internal class LibraryModifiableModelBridgeImpl(
   }
 
   private fun LibraryPropertiesEntity.hasEqualProperties(another: LibraryPropertiesEntity): Boolean {
-    if (this.libraryType != another.libraryType) return false
-    if (this.propertiesXmlTag != another.propertiesXmlTag) return false
-    return true
+    return this.propertiesXmlTag == another.propertiesXmlTag
   }
 
   override fun addJarDirectory(url: String, recursive: Boolean) =
