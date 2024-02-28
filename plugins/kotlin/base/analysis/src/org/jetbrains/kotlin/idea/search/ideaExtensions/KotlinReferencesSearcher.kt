@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ExpectActualSupport
 import org.jetbrains.kotlin.idea.search.KOTLIN_NAMED_ARGUMENT_SEARCH_CONTEXT
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
@@ -357,7 +358,12 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
         @RequiresReadLock
         private fun processKtClassOrObject(element: KtClassOrObject) {
             val className = element.name ?: return
-            val lightClass = element.toLightClass() ?: return
+            val lightClass = element.toLightClass() ?: if (element.isExpectDeclaration()) {
+                ExpectActualSupport.getInstance(element.project)
+                    .actualsForExpected(element)
+                    .mapNotNull { (it as? KtClassOrObject)?.toLightClass() }.firstOrNull()
+            } else null ?: return
+
             searchNamedElement(lightClass, className)
 
             if (element is KtObjectDeclaration && element.isCompanion()) {
