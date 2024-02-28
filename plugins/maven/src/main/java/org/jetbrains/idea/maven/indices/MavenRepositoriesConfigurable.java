@@ -86,10 +86,8 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    MavenRepositoryInfo repositoryInfo = getSelectedIndices().stream().findFirst().orElse(null);
-    if (repositoryInfo != null) {
-      MavenSystemIndicesManager.getInstance().updateIndexContent(repositoryInfo, myProject);
-    }
+    getSelectedIndices().stream().findFirst()
+      .ifPresent(repositoryInfo -> MavenSystemIndicesManager.getInstance().updateIndexContent(repositoryInfo, myProject));
   }
 
   private List<MavenRepositoryInfo> getSelectedIndices() {
