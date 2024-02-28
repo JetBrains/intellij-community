@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.j2k.ConverterSettings
@@ -16,8 +17,7 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
         super.doTest(javaPath)
     }
 
-    override fun fileToKotlin(text: String, settings: ConverterSettings): String {
-        val file = createJavaFile(text)
+    override fun fileToKotlin(file: PsiJavaFile, settings: ConverterSettings): String {
         return NewJavaToKotlinConverter(project, module, settings)
             .filesToKotlin(listOf(file), NewJ2kPostProcessor()).results.single()
     }
