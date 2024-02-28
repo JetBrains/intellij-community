@@ -5,14 +5,22 @@ import io.opentelemetry.sdk.metrics.data.LongPointData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableLongPointData
 
 enum class MetricsSelectionStrategy {
+  /** Collecyt the first by date metric reported in OpenTelemetry */
   EARLIEST,
 
-  /** Usually used to collect gauges */
+  /** Collect the most recent metrics reported to OpenTelemetry. Useful used to collect gauges (that always report ever increasing value). */
   LATEST,
 
+  /** Collect the metric with the minimum value reported. */
   MINIMUM,
+
+  /** Collect the metric with the maximum value reported. */
   MAXIMUM,
+
+  /** Sum up metrics. Useful to get cumulative metric from counters (that reports diff in telemetry). */
   SUM,
+
+  /** Calculate average of the reported metrics. */
   AVERAGE;
 
   fun selectMetric(metrics: List<LongPointData>): LongPointData {
