@@ -303,8 +303,16 @@ object AndroidReleases : ContentSource<ContentItem.AndroidRelease>() {
             imagePath = "/android-releases/14.svg",
             versionName = "14",
             codename = "Upside Down Cake",
-            apiLevel = 33,
+            apiLevel = 34,
             releaseDate = LocalDate(2023, 10, 4),
+        ),
+        ContentItem.AndroidRelease(
+            displayText = "Android 15 (preview)",
+            imagePath = "/android-releases/15.svg",
+            versionName = "15",
+            codename = "Vanilla Ice Cream",
+            apiLevel = 35,
+            releaseDate = LocalDate(2024, 2, 17),
         ),
     )
 
