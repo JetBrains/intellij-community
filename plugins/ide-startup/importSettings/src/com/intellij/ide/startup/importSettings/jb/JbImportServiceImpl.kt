@@ -25,6 +25,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.*
 import org.jdom.Element
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDate
@@ -86,11 +87,18 @@ internal data class JbProductInfo(
     val descriptorDeferreds = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
     descriptors2ProcessCnt.set(descriptorDeferreds.size)
     JbImportServiceImpl.LOG.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
+    val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+    val disabledPlugins = if (Files.exists(disabledPluginsFile)) tryReadPluginIdsFromFile(disabledPluginsFile, JbImportServiceImpl.LOG) else setOf()
     for (def in descriptorDeferreds) {
       def.invokeOnCompletion {
         val descr = def.getCompleted()
         if (descr != null) {
-          descriptorsMap[descr.pluginId] = descr
+          if (disabledPlugins.contains(descr.pluginId)) {
+            JbImportServiceImpl.LOG.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
+          }
+          else {
+            descriptorsMap[descr.pluginId] = descr
+          }
         }
         if (descriptors2ProcessCnt.decrementAndGet() == 0) {
           // checking for plugins compatibility:
