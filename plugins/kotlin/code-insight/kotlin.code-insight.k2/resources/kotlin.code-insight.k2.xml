@@ -213,6 +213,9 @@
             bundle="messages.JavaBundle"
             nameKey="java.method.chains.inlay.provider.name"
             descriptionKey="inlay.MethodChainsInlayProvider.description" />
+
+    <vcs.codeVisionLanguageContext language="kotlin"
+                                   implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>
