@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -131,6 +131,7 @@ public class MavenUtil {
   public static final String BIN_DIR = "bin";
   public static final String CONF_DIR = "conf";
   public static final String M2_CONF_FILE = "m2.conf";
+  public static final String MVN_FILE = "mvn";
   public static final String REPOSITORY_DIR = "repository";
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
@@ -803,7 +804,13 @@ public class MavenUtil {
 
   public static boolean isValidMavenHome(@Nullable File home) {
     if (home == null) return false;
-    return getMavenConfFile(home).exists();
+    try {
+      String[] list = new File(home, BIN_DIR).list();
+      if (list == null) return false;
+      Set<String> set = Set.of(list);
+      return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE);
+    } catch (Exception ignored) {}
+    return false;
   }
 
   public static File getMavenConfFile(File mavenHome) {
