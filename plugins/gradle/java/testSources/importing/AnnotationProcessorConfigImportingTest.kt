@@ -6,9 +6,9 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.plugins.gradle.GradleManager
@@ -423,7 +423,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   fun `test annotation processor profiles of non gradle projects are not removed`() {
     val nonGradleModule = runInEdtAndGet {
       ApplicationManager.getApplication().runWriteAction(Computable {
-        ModuleManager.getInstance(myProject).newModule(myProject.basePath!! + "/java_module", ModuleTypeId.JAVA_MODULE)
+        ModuleManager.getInstance(myProject).newModule(myProject.basePath!! + "/java_module", JAVA_MODULE_ENTITY_TYPE_ID_NAME)
       })
     }
 

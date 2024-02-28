@@ -9,9 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleTypeUtils.WEB_MODULE_ENTITY_TYPE_ID_NAME;
+
 
 public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> implements ModuleTypeWithWebFeatures {
-  @NonNls public static final String WEB_MODULE = ModuleTypeId.WEB_MODULE;
+  @NonNls public static final String WEB_MODULE = WEB_MODULE_ENTITY_TYPE_ID_NAME;
 
   public WebModuleTypeBase() {
     super(WEB_MODULE);

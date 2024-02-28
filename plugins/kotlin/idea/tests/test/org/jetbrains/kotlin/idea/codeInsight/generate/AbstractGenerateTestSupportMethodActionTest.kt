@@ -2,14 +2,13 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.generate
 
-import com.intellij.openapi.module.ModuleTypeId
-import com.intellij.openapi.projectRoots.Sdk
+ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateTestSupportActionBase
-import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 
 abstract class AbstractGenerateTestSupportMethodActionTest : AbstractCodeInsightActionTest() {
@@ -21,7 +20,7 @@ abstract class AbstractGenerateTestSupportMethodActionTest : AbstractCodeInsight
 
     companion object {
         val TEST_ROOT_PROJECT_DESCRIPTOR = object : LightProjectDescriptor() {
-            override fun getModuleTypeId(): String = ModuleTypeId.JAVA_MODULE
+            override fun getModuleTypeId(): String = JAVA_MODULE_ENTITY_TYPE_ID_NAME
             override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
             override fun getSourceRootType(): JpsModuleSourceRootType<*> = JavaSourceRootType.TEST_SOURCE
         }

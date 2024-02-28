@@ -6,7 +6,6 @@ import com.intellij.externalSystem.ImportedLibraryProperties
 import com.intellij.externalSystem.ImportedLibraryType
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -18,9 +17,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
-import com.intellij.platform.workspace.jps.entities.ModuleDependency as EntitiesModuleDependency
-import com.intellij.platform.workspace.jps.entities.LibraryDependency as EntitiesLibraryDependency
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -29,6 +25,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
@@ -41,6 +38,9 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
+import com.intellij.platform.workspace.jps.entities.LibraryDependency as EntitiesLibraryDependency
+import com.intellij.platform.workspace.jps.entities.ModuleDependency as EntitiesModuleDependency
 
 internal class WorkspaceModuleImporter(
   private val project: Project,
@@ -81,7 +81,7 @@ internal class WorkspaceModuleImporter(
                                  dependencies: List<ModuleDependencyItem>,
                                  entitySource: EntitySource): ModuleEntity {
     val moduleEntity = builder addEntity ModuleEntity(moduleName, dependencies, entitySource) {
-      this.type = ModuleTypeId.JAVA_MODULE
+      this.type = JAVA_MODULE_ENTITY_TYPE_ID
     }
     builder addEntity ExternalSystemModuleOptionsEntity(entitySource) {
       ExternalSystemData(moduleEntity, mavenProject.file.path, mavenModuleType).write(this)

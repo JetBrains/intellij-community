@@ -9,7 +9,6 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
@@ -23,6 +22,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.Ksuid
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -187,7 +187,7 @@ class ModuleStoreTest {
       // creating a persistent module to make non-empty valid modules.xml
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
-          ModuleManager.getInstance(project).newModule(tempDirManager.newPath().resolve("persistent.iml"), ModuleTypeId.JAVA_MODULE)
+          ModuleManager.getInstance(project).newModule(tempDirManager.newPath().resolve("persistent.iml"), JAVA_MODULE_ENTITY_TYPE_ID_NAME)
         }
       }
       project.stateStore.save()
@@ -201,7 +201,7 @@ class ModuleStoreTest {
 
 
       val module = writeAction {
-        ModuleManager.getInstance(project).newNonPersistentModule(moduleName, ModuleTypeId.JAVA_MODULE)
+        ModuleManager.getInstance(project).newNonPersistentModule(moduleName, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
       }
       withContext(Dispatchers.EDT) {
         SoftAssertions.assertSoftly {
@@ -264,6 +264,6 @@ val Module.contentRootUrls: Array<String>
 internal suspend fun ProjectRule.createModule(path: Path): Module {
   val project = project
   return writeAction {
-    ModuleManager.getInstance(project).newModule(path, ModuleTypeId.JAVA_MODULE)
+    ModuleManager.getInstance(project).newModule(path, JAVA_MODULE_ENTITY_TYPE_ID_NAME)
   }
 }

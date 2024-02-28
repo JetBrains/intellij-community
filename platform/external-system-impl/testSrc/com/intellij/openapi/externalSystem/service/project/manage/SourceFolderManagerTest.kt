@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.project.manage
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -16,6 +15,7 @@ import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
@@ -108,7 +108,7 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     val modifiableModel = moduleManager.getModifiableModel()
     val newModule: Module =
       try {
-        modifiableModel.newModule(dir.toPath().resolve(moduleName).toAbsolutePath(), ModuleTypeId.JAVA_MODULE)
+        modifiableModel.newModule(dir.toPath().resolve(moduleName).toAbsolutePath(), JAVA_MODULE_ENTITY_TYPE_ID_NAME)
       }
       finally {
         runWriteAction {

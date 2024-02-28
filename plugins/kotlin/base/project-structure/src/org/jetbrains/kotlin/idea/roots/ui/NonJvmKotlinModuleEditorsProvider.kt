@@ -3,11 +3,11 @@
 package org.jetbrains.kotlin.idea.roots.ui
 
 import com.intellij.openapi.module.ModuleConfigurationEditor
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProviderEx
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.roots.ui.configuration.OutputEditor
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
@@ -18,7 +18,7 @@ class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
         val rootModel = state.rootModel
         val module = rootModel.module
 
-        if (module.moduleTypeName != ModuleTypeId.JAVA_MODULE || module.platform.isJvm()) {
+        if (module.moduleTypeName != JAVA_MODULE_ENTITY_TYPE_ID_NAME || module.platform.isJvm()) {
             return ModuleConfigurationEditor.EMPTY
         }
 

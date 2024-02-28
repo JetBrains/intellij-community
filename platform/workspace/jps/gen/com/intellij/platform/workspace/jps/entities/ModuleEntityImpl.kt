@@ -53,7 +53,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
       return dataSource.name
     }
 
-  override val type: String?
+  override val type: ModuleTypeId?
     get() {
       readField("type")
       return dataSource.type
@@ -183,12 +183,13 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
         changedProperty.add("name")
       }
 
-    override var type: String?
+    override var type: ModuleTypeId?
       get() = getEntityData().type
       set(value) {
         checkModificationAllowed()
         getEntityData(true).type = value
         changedProperty.add("type")
+
       }
 
     private val dependenciesUpdater: (value: List<ModuleDependencyItem>) -> Unit = { value ->
@@ -310,7 +311,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
 
 class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEntity>(), SoftLinkable {
   lateinit var name: String
-  var type: String? = null
+  var type: ModuleTypeId? = null
   lateinit var dependencies: MutableList<ModuleDependencyItem>
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized

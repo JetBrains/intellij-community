@@ -435,7 +435,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
 
     val dotProjectFile = entitySource.classpathFile.toPath().parent.resolve(EclipseXml.PROJECT_FILE)
     if (!dotProjectFile.exists()) {
-      val content = DotProjectFileHelper.generateProjectFileContent(ModuleTypeManager.getInstance().findByID(module.type), module.name)
+      val content = DotProjectFileHelper.generateProjectFileContent(ModuleTypeManager.getInstance().findByID(module.type?.name), module.name)
       saveXmlFile(dotProjectFile, content)
     }
 

@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -110,7 +111,7 @@ class JpsProjectSaveAfterChangesTest {
       val dependencies = listOf(InheritedSdkDependency, ModuleSourceDependency)
       val module = builder addEntity ModuleEntity("newModule", dependencies, source)
       builder.modifyEntity(module) {
-        type = "JAVA_MODULE"
+        type =  JAVA_MODULE_ENTITY_TYPE_ID
       }
       val contentRootEntity = builder addEntity ContentRootEntity(configLocation.baseDirectoryUrl.append("new"),
                                                                   emptyList<@NlsSafe String>(), module.entitySource) {

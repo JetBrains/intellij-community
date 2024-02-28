@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -16,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleTypeUtils.WEB_MODULE_ENTITY_TYPE_ID_NAME;
+import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
 
 public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   private Path myProjectDir;
@@ -29,7 +30,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   public void testOverwriteModulesList() {
     Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, new OpenProjectTaskBuilder().build());
     try {
-      createModule(project, "module", ModuleTypeId.JAVA_MODULE);
+      createModule(project, "module", JAVA_MODULE_ENTITY_TYPE_ID_NAME);
       PlatformTestUtil.saveProject(project);
     }
     finally {
@@ -49,7 +50,7 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
   public void testOverwriteModuleType() {
     Project project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, new OpenProjectTaskBuilder().build());
     try {
-      Path imlFile = createModule(project, "module", ModuleTypeId.JAVA_MODULE);
+      Path imlFile = createModule(project, "module", JAVA_MODULE_ENTITY_TYPE_ID_NAME);
       PlatformTestUtil.saveProject(project);
       assertThat(imlFile).isRegularFile();
     }
@@ -59,10 +60,10 @@ public class OverwriteProjectConfigurationTest extends HeavyPlatformTestCase {
 
     project = ProjectManagerEx.getInstanceEx().newProject(myProjectDir, new OpenProjectTaskBuilder().build());
     try {
-      createModule(project, "module", ModuleTypeId.WEB_MODULE);
+      createModule(project, "module", WEB_MODULE_ENTITY_TYPE_ID_NAME);
       PlatformTestUtil.saveProject(project);
       Module module = assertOneElement(ModuleManager.getInstance(project).getModules());
-      assertEquals(ModuleTypeId.WEB_MODULE, ModuleType.get(module).getId());
+      assertEquals(WEB_MODULE_ENTITY_TYPE_ID_NAME, ModuleType.get(module).getId());
     }
     finally {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project);

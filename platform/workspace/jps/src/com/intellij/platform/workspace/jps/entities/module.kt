@@ -14,6 +14,8 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.NonNls
 
+data class ModuleTypeId(val name: @NonNls String)
+
 /**
  * Describes configuration of a [Module][com.intellij.openapi.module.Module].
  * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.NonNls
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
 
-  val type: @NonNls String?
+  val type: ModuleTypeId?
   val dependencies: List<ModuleDependencyItem>
 
   val contentRoots: List<@Child ContentRootEntity>
@@ -35,7 +37,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   interface Builder : ModuleEntity, WorkspaceEntity.Builder<ModuleEntity> {
     override var entitySource: EntitySource
     override var name: String
-    override var type: String?
+    override var type: ModuleTypeId?
     override var dependencies: MutableList<ModuleDependencyItem>
     override var contentRoots: List<ContentRootEntity>
     override var facets: List<FacetEntity>

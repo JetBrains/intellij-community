@@ -39,10 +39,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.WEB_MODULE_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -413,7 +415,7 @@ class ModuleBridgesTest {
     val moduleFile = File(project.basePath, "test.iml")
 
     val moduleManager = ModuleManager.getInstance(project)
-    val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, ModuleTypeId.JAVA_MODULE) }
+    val module = runWriteActionAndWait { moduleManager.newModule(moduleFile.path, JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
 
     project.stateStore.save()
 
@@ -633,7 +635,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val moduleManager = ModuleManager.getInstance(project)
 
-      val module = moduleManager.newModule(moduleImlFile.path, ModuleTypeId.WEB_MODULE)
+      val module = moduleManager.newModule(moduleImlFile.path, WEB_MODULE_ENTITY_TYPE_ID.name)
       ModuleRootModificationUtil.updateModel(module) { model ->
         val url = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(tempDir.path))
         val contentEntry = model.addContentEntry(url)

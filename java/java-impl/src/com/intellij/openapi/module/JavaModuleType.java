@@ -17,17 +17,18 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 
+import static com.intellij.workspaceModel.ide.legacyBridge.impl.java.JavaModuleTypeUtils.JAVA_MODULE_ENTITY_TYPE_ID_NAME;
+
 public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   public static ModuleType<?> getModuleType() {
-    return ModuleTypeManager.getInstance().findByID(JAVA_MODULE);
+    return ModuleTypeManager.getInstance().findByID(JAVA_MODULE_ENTITY_TYPE_ID_NAME);
   }
 
   public static final String JAVA_GROUP = "Java";
   public static final String BUILD_TOOLS_GROUP = "Build Tools";
-  private static final String JAVA_MODULE = ModuleTypeId.JAVA_MODULE;
 
   public JavaModuleType() {
-    this(JAVA_MODULE);
+    this(JAVA_MODULE_ENTITY_TYPE_ID_NAME);
   }
 
   protected JavaModuleType(@NonNls String id) {

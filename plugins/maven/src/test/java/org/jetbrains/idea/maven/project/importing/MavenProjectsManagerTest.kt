@@ -12,7 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.FileContentUtil
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -589,7 +589,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
           <artifactId>child1</artifactId>
       </project>
       """.trimIndent())
-    writeAction { ModuleManager.getInstance(project).newModule("non-maven", ModuleTypeId.JAVA_MODULE) }
+    writeAction { ModuleManager.getInstance(project).newModule("non-maven", JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
     importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(project).modules.size)
     configConfirmationForYesAnswer()

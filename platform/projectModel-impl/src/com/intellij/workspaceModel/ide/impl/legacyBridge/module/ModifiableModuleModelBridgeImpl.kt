@@ -23,6 +23,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -43,6 +44,8 @@ internal class ModifiableModuleModelBridgeImpl(
   diff: MutableEntityStorage,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableModuleModelBridge {
+  private val moduleTypes = ConcurrentFactoryMap.createMap<String, ModuleTypeId> { ModuleTypeId(it) }
+
   override fun getProject(): Project = project
 
   private val modulesToAdd = BidirectionalMap<String, ModuleBridge>()
@@ -99,7 +102,7 @@ internal class ModifiableModuleModelBridgeImpl(
                                                    dependencies = listOf(ModuleSourceDependency),
                                                    entitySource = entitySource
     ) {
-      type = moduleTypeId
+      type = moduleTypes[moduleTypeId]
     }
 
     return@addMeasuredTime createModuleInstance(moduleEntity, true)
