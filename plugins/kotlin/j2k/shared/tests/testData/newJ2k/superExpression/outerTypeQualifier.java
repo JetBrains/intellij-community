@@ -1,4 +1,3 @@
-//file
 package a.b;
 
 class Base {

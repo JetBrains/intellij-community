@@ -1,4 +1,3 @@
-//file
 class C {
     int foo(boolean p) {
         int a;

@@ -1,4 +1,3 @@
-//file
 import kotlinApi.KotlinApiKt;
 
 class C {

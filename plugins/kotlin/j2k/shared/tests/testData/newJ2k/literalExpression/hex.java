@@ -1,4 +1,3 @@
-//file
 class Test {
     void test() {
         int i1 = 0x21;

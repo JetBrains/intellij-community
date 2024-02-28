@@ -1,4 +1,3 @@
-//file
 // !OPEN_BY_DEFAULT: true
 
 class A {

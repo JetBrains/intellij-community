@@ -1,4 +1,3 @@
-//file
 class Base<T> {
   Base(T name) { }
 }

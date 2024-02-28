@@ -1,4 +1,3 @@
-//file
 class Outer {
     public static Object o = new Object();
 

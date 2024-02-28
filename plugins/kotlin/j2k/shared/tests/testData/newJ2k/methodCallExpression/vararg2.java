@@ -1,4 +1,3 @@
-//file
 import javaApi.WithVarargConstructor;
 
 import java.lang.String;

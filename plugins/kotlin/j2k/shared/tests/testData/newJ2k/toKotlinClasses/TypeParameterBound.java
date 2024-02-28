@@ -1,4 +1,3 @@
-//file
 import java.util.*;
 
 interface I<T extends List<Iterator<String>>> {

@@ -1,4 +1,3 @@
-//file
 import org.jetbrains.annotations.Nullable;
 
 interface I {

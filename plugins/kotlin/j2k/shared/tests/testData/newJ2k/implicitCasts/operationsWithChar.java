@@ -1,4 +1,3 @@
-//file
 class Test {
     final char c = 1;
     final int i = 1;

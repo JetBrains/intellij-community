@@ -1,4 +1,3 @@
-//file
 import java.util.*;
 
 public class Lists {

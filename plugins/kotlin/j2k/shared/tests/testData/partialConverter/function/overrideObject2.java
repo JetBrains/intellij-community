@@ -1,4 +1,3 @@
-//file
 class Base {}
 
 class X extends Base {

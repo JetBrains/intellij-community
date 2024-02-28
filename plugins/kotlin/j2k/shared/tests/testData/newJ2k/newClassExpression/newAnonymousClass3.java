@@ -1,4 +1,3 @@
-//file
 import kotlinApi.KotlinInterface;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

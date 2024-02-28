@@ -1,4 +1,3 @@
-//file
 class Base {
   @Override
   public int hashCode() {

@@ -1,4 +1,3 @@
-//file
 abstract class A {}
 
 class C {

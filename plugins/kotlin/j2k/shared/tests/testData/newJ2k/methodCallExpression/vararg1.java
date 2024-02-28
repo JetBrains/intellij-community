@@ -1,4 +1,3 @@
-//file
 import java.lang.reflect.Constructor;
 
 class X {

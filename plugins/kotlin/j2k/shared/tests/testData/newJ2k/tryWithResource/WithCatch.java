@@ -1,4 +1,3 @@
-//file
 import java.io.*;
 
 public class C {

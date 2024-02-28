@@ -1,4 +1,3 @@
-//file
 class A {
     public static class Nested {
         void foo() {

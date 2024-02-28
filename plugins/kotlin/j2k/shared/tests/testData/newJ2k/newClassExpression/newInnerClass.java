@@ -1,4 +1,3 @@
-//file
 package org.test;
 
 class OuterClass {

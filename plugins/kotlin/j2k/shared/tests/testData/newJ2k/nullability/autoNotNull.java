@@ -1,4 +1,3 @@
-//file
 class A {
     int foo(String s) {
         if (s != null) {

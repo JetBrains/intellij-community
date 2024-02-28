@@ -1,4 +1,3 @@
-//file
     public class C {
         public static void main(String[] args) {
             switch (args.length) {
