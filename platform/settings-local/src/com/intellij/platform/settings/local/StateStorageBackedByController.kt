@@ -132,7 +132,7 @@ internal class StateStorageBackedByController(
     return result
   }
 
-  private fun getXmlData(key: SettingDescriptor<ByteArray>): GetResult<Element> {
+  private fun getXmlData(key: SettingDescriptor<ByteArray>): GetResult<Element?> {
     try {
       val item = controller.doGetItem(key)
       if (item.isResolved) {
