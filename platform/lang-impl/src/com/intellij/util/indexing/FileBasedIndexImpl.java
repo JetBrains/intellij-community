@@ -414,11 +414,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myRegisteredIndexes.waitUntilIndicesAreInitialized();
   }
 
-  static <K, V> void registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension,
-                                     @NotNull IndexConfiguration state,
-                                     @NotNull IndexVersionRegistrationSink versionRegistrationStatusSink,
-                                     @NotNull IntSet staleInputIdSink,
-                                     @NotNull IntSet dirtyFiles) throws Exception {
+  static <K, V> IntSet registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension,
+                                       @NotNull IndexConfiguration state,
+                                       @NotNull IndexVersionRegistrationSink versionRegistrationStatusSink,
+                                       @NotNull IntSet dirtyFiles) throws Exception {
     ID<K, V> name = extension.getName();
     int version = getIndexExtensionVersion(extension);
 
@@ -438,7 +437,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
 
-    initIndexStorage(extension, version, state, versionRegistrationStatusSink, staleInputIdSink, dirtyFiles);
+    return initIndexStorage(extension, version, state, versionRegistrationStatusSink, dirtyFiles);
   }
 
   private static <K, V> void deleteIndexFiles(@NotNull final FileBasedIndexExtension<K, V> extension) throws IOException {
@@ -457,13 +456,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
-                                              int version,
-                                              @NotNull IndexConfiguration state,
-                                              @NotNull IndexVersionRegistrationSink registrationStatusSink,
-                                              @NotNull IntSet staleInputIdSink,
-                                              @NotNull IntSet dirtyFiles)
-    throws Exception {
+  private static <K, V> IntSet initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
+                                                int version,
+                                                @NotNull IndexConfiguration state,
+                                                @NotNull IndexVersionRegistrationSink registrationStatusSink,
+                                                @NotNull IntSet dirtyFiles) throws Exception {
     ID<K, V> name = extension.getName();
     InputFilter inputFilter = extension.getInputFilter();
 
@@ -537,12 +534,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     try {
       if (shouldCheckStaleIndexesOnStartup() && StubUpdatingIndex.INDEX_ID.equals(extension.getName()) && index != null) {
-        staleInputIdSink.addAll(StaleIndexesChecker.checkIndexForStaleRecords(index, dirtyFiles, true));
+        return StaleIndexesChecker.checkIndexForStaleRecords(index, dirtyFiles, true);
       }
     }
     catch (Exception e) {
       LOG.error("Exception while checking for stale records", e);
     }
+    return new IntOpenHashSet();
   }
 
   @NotNull

@@ -78,11 +78,10 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
           IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
         }
         try {
-          FileBasedIndexImpl.registerIndexer(extension,
-                                             myState,
-                                             myRegistrationResultSink,
-                                             myStaleIds,
-                                             myDirtyFileIds);
+          myStaleIds.addAll(FileBasedIndexImpl.registerIndexer(extension,
+                                                               myState,
+                                                               myRegistrationResultSink,
+                                                               myDirtyFileIds));
 
           // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
           myRegisteredIndexes.registerIndexExtension(extension);
