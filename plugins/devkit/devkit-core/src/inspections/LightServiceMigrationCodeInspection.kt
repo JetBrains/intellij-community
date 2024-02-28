@@ -25,26 +25,19 @@ internal class LightServiceMigrationCodeInspection : DevKitUastInspectionBase(UC
         aClass.isAnonymousOrLocal()) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
-    if (isVersion193OrHigher(psiClass) ||
-        ApplicationManager.getApplication().isUnitTestMode) {
+    if (isVersion193OrHigher(psiClass) || ApplicationManager.getApplication().isUnitTestMode) {
       if (isLightService(aClass)) return ProblemDescriptor.EMPTY_ARRAY
-      val extensionsCandidates = locateExtensionsByPsiClass(psiClass)
-      for (candidate in extensionsCandidates) {
-        val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false) ?: continue
-        val (serviceImplementation, level) = getServiceImplementation(extension) ?: continue
-        if (level == Service.Level.APP &&
-            JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
-          continue
-        }
-        if (serviceImplementation == psiClass && !containsUnitTestOrHeadlessModeCheck(aClass)) {
-          val fixes = if (extensionsCandidates.size == 1) {
-            arrayOf<LocalQuickFix>(ConvertToLightServiceFix(psiClass, extension.xmlTag, level))
-          }
-          else {
-            LocalQuickFix.EMPTY_ARRAY
-          }
-          return registerProblem(aClass, manager, isOnTheFly, fixes)
-        }
+      val candidate = locateExtensionsByPsiClass(psiClass).singleOrNull() ?: return ProblemDescriptor.EMPTY_ARRAY
+      val extension = DomUtil.findDomElement(candidate.pointer.element, Extension::class.java, false)
+                      ?: return ProblemDescriptor.EMPTY_ARRAY
+      val (serviceImplementation, level) = getServiceImplementation(extension) ?: return ProblemDescriptor.EMPTY_ARRAY
+      if (level == Service.Level.APP &&
+          JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
+        return ProblemDescriptor.EMPTY_ARRAY
+      }
+      if (serviceImplementation == psiClass && !containsUnitTestOrHeadlessModeCheck(aClass)) {
+        val fixes = arrayOf<LocalQuickFix>(ConvertToLightServiceFix(psiClass, extension.xmlTag, level))
+        return registerProblem(aClass, manager, isOnTheFly, fixes)
       }
     }
     return ProblemDescriptor.EMPTY_ARRAY
