@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.util
 
 import git4idea.GitRemoteBranch
 import git4idea.remote.hosting.GitRemoteBranchesUtil
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestFullDetails
-import org.jetbrains.plugins.gitlab.mergerequest.data.getSpecialRemoteBranchForHead
-import org.jetbrains.plugins.gitlab.mergerequest.data.getSourceRemoteDescriptor
-import org.jetbrains.plugins.gitlab.mergerequest.data.getTargetRemoteDescriptor
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 object GitLabMergeRequestBranchUtil {
@@ -33,8 +30,7 @@ object GitLabMergeRequestBranchUtil {
   }
 
   suspend fun fetchAndCheckoutBranch(mapping: GitLabProjectMapping, details: GitLabMergeRequestFullDetails) {
-    val isFork = details.sourceProject?.fullPath != details.targetProject.fullPath
-    val localPrefix = if (isFork) FORK_BRANCH_PREFIX else null
+    val localPrefix = if (details.isFork()) FORK_BRANCH_PREFIX else null
 
     val remoteBranch = findSourceRemoteBranch(mapping, details) ?: return
     GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(mapping.gitRepository, remoteBranch, localPrefix)

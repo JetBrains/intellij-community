@@ -118,3 +118,6 @@ fun GitLabMergeRequestFullDetails.getTargetRemoteDescriptor(server: GitLabServer
  */
 fun GitLabMergeRequestFullDetails.getSpecialRemoteBranchForHead(remote: GitRemote): GitRemoteBranch =
   GitSpecialRefRemoteBranch("refs/merge-requests/${iid}/head", remote)
+
+fun GitLabMergeRequestFullDetails.isFork(): Boolean =
+  sourceProject?.fullPath != targetProject.fullPath
