@@ -20,7 +20,7 @@ class IdeStartupFeedbackDialog(
 ) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
-  override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
+  override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 2
 
   override val zendeskTicketTitle: String = "${ApplicationNamesInfo.getInstance().fullProductName} Startup Feedback"
   override val zendeskFeedbackType: String = "Startup Feedback"
