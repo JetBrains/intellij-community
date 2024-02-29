@@ -13,4 +13,4 @@ annotation class Ann(
 )
 
 class A
-annotation class Inner 
+annotation class Inner

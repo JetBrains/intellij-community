@@ -6,4 +6,4 @@
   yet He shall rise and His kingdom
   shall cover the Earth.'"""
 )
-class TestDeprecatedInJavadocWithMultilineMessage 
+class TestDeprecatedInJavadocWithMultilineMessage

@@ -11,4 +11,4 @@ internal annotation class I
 internal annotation class J
 
 @Target
-internal annotation class K 
+internal annotation class K

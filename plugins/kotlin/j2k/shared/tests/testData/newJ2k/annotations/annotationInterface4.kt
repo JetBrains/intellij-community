@@ -10,4 +10,4 @@ internal interface I2
 internal interface I3
 
 @Anon(value = ["c", "d"])
-internal interface I4 
+internal interface I4

@@ -6,4 +6,4 @@ internal annotation class Ann(vararg val value: KClass<*>)
 internal class C
 
 @Ann
-internal class D 
+internal class D
