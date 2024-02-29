@@ -296,8 +296,22 @@ fun DeclarationDescriptor.fuzzyTypesForSmartCompletion(
         } else {
             listOf(returnType)
         }
-    } else if (this is ClassDescriptor && kind.isSingleton) {
-        return listOf(defaultType.toFuzzyType(emptyList()))
+    } else if (this is ClassDescriptor) {
+        val classWithInstance = if (this.kind.isSingleton) {
+            // regular object or enum entry
+            this
+        } else {
+            val completionContext = smartCastCalculator.contextElement
+
+            // class with a companion object, if the companion instance
+            // is accessible from the code completion position
+            this.companionObjectDescriptor
+                ?.takeIf { it.isVisible(completionContext, receiverExpression = null, bindingContext, resolutionFacade) }
+        }
+
+        if (classWithInstance == null) return emptyList()
+
+        return listOf(classWithInstance.defaultType.toFuzzyType(emptyList()))
     } else {
         return emptyList()
     }

@@ -264,49 +264,96 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/expectedType")
-    public static class ExpectedType extends AbstractBasicCompletionWeigherTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class ExpectedType extends AbstractBasicCompletionWeigherTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/weighers/basic/expectedType/typesWithInstances")
+        public static class TypesWithInstances extends AbstractBasicCompletionWeigherTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("companionObjectWithInterface.kt")
+            public void testCompanionObjectWithInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithInterface.kt");
+            }
+
+            @TestMetadata("companionObjectWithInterface_inaccessible.kt")
+            public void testCompanionObjectWithInterface_inaccessible() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithInterface_inaccessible.kt");
+            }
+
+            @TestMetadata("companionObjectWithInterface_vs_CompanionObjectMember.kt")
+            public void testCompanionObjectWithInterface_vs_CompanionObjectMember() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithInterface_vs_CompanionObjectMember.kt");
+            }
+
+            @TestMetadata("companionObjectWithoutInterface.kt")
+            public void testCompanionObjectWithoutInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithoutInterface.kt");
+            }
+
+            @TestMetadata("enumEntry.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/enumEntry.kt");
+            }
+
+            @TestMetadata("objectWithInterface.kt")
+            public void testObjectWithInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/objectWithInterface.kt");
+            }
+
+            @TestMetadata("objectWithoutInterface.kt")
+            public void testObjectWithoutInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/objectWithoutInterface.kt");
+            }
         }
 
-        @TestMetadata("ifConditionQualified.kt")
-        public void testIfConditionQualified() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/ifConditionQualified.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/weighers/basic/expectedType")
+        public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("MatchingNullableType.kt")
-        public void testMatchingNullableType() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/MatchingNullableType.kt");
-        }
+            @TestMetadata("ifConditionQualified.kt")
+            public void testIfConditionQualified() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/ifConditionQualified.kt");
+            }
 
-        @TestMetadata("returnFromFunction.kt")
-        public void testReturnFromFunction() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/returnFromFunction.kt");
-        }
+            @TestMetadata("MatchingNullableType.kt")
+            public void testMatchingNullableType() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/MatchingNullableType.kt");
+            }
 
-        @TestMetadata("returnFromFunctionQualifiedSelector.kt")
-        public void testReturnFromFunctionQualifiedSelector() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/returnFromFunctionQualifiedSelector.kt");
-        }
+            @TestMetadata("returnFromFunction.kt")
+            public void testReturnFromFunction() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/returnFromFunction.kt");
+            }
 
-        @TestMetadata("returnFromLambda.kt")
-        public void testReturnFromLambda() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
-        }
+            @TestMetadata("returnFromFunctionQualifiedSelector.kt")
+            public void testReturnFromFunctionQualifiedSelector() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/returnFromFunctionQualifiedSelector.kt");
+            }
 
-        @TestMetadata("safeCallArgument.kt")
-        public void testSafeCallArgument() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/safeCallArgument.kt");
-        }
+            @TestMetadata("returnFromLambda.kt")
+            public void testReturnFromLambda() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
+            }
 
-        @TestMetadata("typeParameter.kt")
-        public void testTypeParameter() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/typeParameter.kt");
-        }
+            @TestMetadata("safeCallArgument.kt")
+            public void testSafeCallArgument() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/safeCallArgument.kt");
+            }
 
-        @TestMetadata("whileConditionQualified.kt")
-        public void testWhileConditionQualified() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/whileConditionQualified.kt");
+            @TestMetadata("typeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typeParameter.kt");
+            }
+
+            @TestMetadata("whileConditionQualified.kt")
+            public void testWhileConditionQualified() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/whileConditionQualified.kt");
+            }
         }
     }
 
