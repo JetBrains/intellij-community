@@ -434,8 +434,8 @@ public final class PersistentFSConnection {
 
   /** @throws IndexOutOfBoundsException if fileId is outside already allocated file ids */
   void ensureFileIdIsValid(int fileId) throws IndexOutOfBoundsException {
-    int maxAllocatedID = records.maxAllocatedID();
-    if (fileId <= FSRecords.NULL_FILE_ID || fileId > maxAllocatedID) {
+    if (!records.isValidFileId(fileId)) {
+      int maxAllocatedID = records.maxAllocatedID();
       throw new IndexOutOfBoundsException("fileId[" + fileId + "] is outside valid/allocated ids range [1.." + maxAllocatedID + "]");
     }
   }

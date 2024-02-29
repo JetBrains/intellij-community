@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.CleanableStorage;
@@ -109,6 +109,9 @@ public interface PersistentFSRecordsStorage extends CleanableStorage {
 
   /** @return max fileId already allocated by this storage */
   int maxAllocatedID();
+
+  /** @return true if fileId is valid for the storage -- points to valid record */
+  boolean isValidFileId(int fileId);
 
   boolean isDirty();
 

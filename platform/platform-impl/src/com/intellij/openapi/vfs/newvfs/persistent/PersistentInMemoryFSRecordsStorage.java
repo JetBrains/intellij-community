@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -328,6 +328,12 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
     return allocatedRecordsCount.get();
   }
 
+  @Override
+  public boolean isValidFileId(int recordId) {
+    final int allocatedSoFar = allocatedRecordsCount.get();
+    return FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar;
+  }
+
   public long actualDataLength() {
     final int recordsCount = recordsCount();
     return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;
@@ -420,8 +426,8 @@ public final class PersistentInMemoryFSRecordsStorage implements PersistentFSRec
   }
 
   private void checkRecordId(final int recordId) throws IndexOutOfBoundsException {
-    final int allocatedSoFar = allocatedRecordsCount.get();
-    if (!(FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar)) {
+    if (!isValidFileId(recordId)) {
+      final int allocatedSoFar = allocatedRecordsCount.get();
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + allocatedSoFar + "]");
     }

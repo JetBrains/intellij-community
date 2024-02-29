@@ -629,6 +629,23 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
+  public boolean isValidFileId(int fileId) {
+    if (fileId <= NULL_ID) {
+      return false;
+    }
+    int cachedMaxAllocatedID = this.cachedMaxAllocatedId;
+    if (fileId <= cachedMaxAllocatedID) {
+      return true;
+    }
+    int actualMaxAllocatedID = maxAllocatedID();
+    this.cachedMaxAllocatedId = Math.max(cachedMaxAllocatedId, actualMaxAllocatedID);
+    if (fileId <= actualMaxAllocatedID) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
   public boolean isDirty() {
     return dirty.get();
   }
@@ -696,23 +713,20 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
 
   private void checkRecordIdIsValid(int recordId) throws IndexOutOfBoundsException {
-    int cachedMaxAllocatedID = this.cachedMaxAllocatedId;
-    if (!(NULL_ID < recordId && recordId <= cachedMaxAllocatedID)) {
-      int actualMaxAllocatedID = maxAllocatedID();
-      this.cachedMaxAllocatedId = Math.max(cachedMaxAllocatedId, actualMaxAllocatedID);
-      if (!(NULL_ID < recordId && recordId <= actualMaxAllocatedID)) {
-        throw new IndexOutOfBoundsException(
-          "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + actualMaxAllocatedID + "]");
-      }
+    if (!isValidFileId(recordId)) {
+      throw new IndexOutOfBoundsException(
+        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + maxAllocatedID() + "]");
     }
   }
 
   private void checkParentIdIsValid(int parentId) throws IndexOutOfBoundsException {
-    //parentId could be NULL (for root records) -- this is the difference with checkRecordIdIsValid()
-    int maxAllocatedID = maxAllocatedID();
-    if (!(NULL_ID <= parentId && parentId <= maxAllocatedID)) {
+    if (parentId == NULL_ID) {
+      //parentId could be NULL (for root records) -- this is the difference with checkRecordIdIsValid()
+      return;
+    }
+    if (!isValidFileId(parentId)) {
       throw new IndexOutOfBoundsException(
-        "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + maxAllocatedID + "]");
+        "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + maxAllocatedID() + "]");
     }
   }
 
