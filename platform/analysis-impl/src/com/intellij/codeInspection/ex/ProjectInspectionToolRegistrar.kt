@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : InspectionToolsSupplier() {
+class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : InspectionToolsSupplier(), Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ProjectInspectionToolRegistrar = project.service()
@@ -54,7 +55,22 @@ class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : 
   }
 
   init {
-    InspectionToolRegistrar.getInstance()
+    // Propagate all events from app registrar
+    InspectionToolRegistrar.getInstance().addListener(
+      object : Listener {
+        override fun toolAdded(inspectionTool: InspectionToolWrapper<*, *>) {
+          listeners.forEach {
+            it.toolAdded(inspectionTool)
+          }
+        }
+
+        override fun toolRemoved(inspectionTool: InspectionToolWrapper<*, *>) {
+          listeners.forEach {
+            it.toolRemoved(inspectionTool)
+          }
+        }
+      }, this
+    )
   }
 
   suspend fun waitForDynamicInspectionsInitialization() {
