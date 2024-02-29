@@ -376,7 +376,9 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       if (data.id == SettingsCategory.PLUGINS.name) {
         // plugins category must be added as well, some PSC's use it, for instance KotlinNotebookApplicationOptionsProvider
         filteredCategories.add(SettingsCategory.PLUGINS)
-        plugins2import = productInfo.getPluginsDescriptors()
+        plugins2import = productInfo.getPluginsDescriptors().filter {
+          data.selectedChildIds?.contains(it.key.idString) ?: false
+        }
         unselectedPlugins = data.unselectedChildIds
         LOG.info("Will import ${data.selectedChildIds?.size} custom plugins: ${data.selectedChildIds?.joinToString()}\n" +
                  "${data.unselectedChildIds?.size} plugins will be skipped: ${data.unselectedChildIds?.joinToString()}")
