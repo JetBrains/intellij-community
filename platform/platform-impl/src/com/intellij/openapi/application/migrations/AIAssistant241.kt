@@ -35,7 +35,7 @@ internal class AIAssistant241 : PluginMigration() {
     }
     else {
       try {
-        Files.createFile(descriptor.options.newConfigDir.resolve(NO_AI_FILENAME))
+        Files.createFile(descriptor.options.newConfigDir.resolve(NOT_MIGRATED_FILENAME))
       }
       catch (_: Throwable) {
       }
@@ -43,9 +43,9 @@ internal class AIAssistant241 : PluginMigration() {
   }
 }
 
-private const val NO_AI_FILENAME = ".noai"
+private const val NOT_MIGRATED_FILENAME = ".ai-migration-disabled"
 
 @ApiStatus.Internal
 fun isAIDisabledBeforeMigrated(): Boolean {
-  return Files.exists(PathManager.getConfigDir().resolve(NO_AI_FILENAME))
+  return Files.exists(PathManager.getConfigDir().resolve(NOT_MIGRATED_FILENAME))
 }
