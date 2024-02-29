@@ -9,7 +9,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -22,10 +21,10 @@ object CreateFromUsageUtil {
     // TODO: Simplify and use formatter as much as possible
     @Suppress("UNCHECKED_CAST")
     fun <D : KtNamedDeclaration> placeDeclarationInContainer(
-        declaration: D,
-        container: PsiElement,
-        anchor: PsiElement,
-        fileToEdit: KtFile = container.containingFile as KtFile
+      declaration: D,
+      container: PsiElement,
+      anchor: PsiElement,
+      fileToEdit: KtFile = container.containingFile as KtFile
     ): D {
         val psiFactory = KtPsiFactory(container.project)
         val newLine = psiFactory.createNewLine()
@@ -47,8 +46,8 @@ object CreateFromUsageUtil {
 
             val neighborType = neighbor?.node?.elementType
             val lineBreaksNeeded = when {
-                neighborType == KtTokens.LBRACE || neighborType == KtTokens.RBRACE -> 1
-                neighbor is KtDeclaration && (neighbor !is KtProperty || decl !is KtProperty) -> 2
+              neighborType == KtTokens.LBRACE || neighborType == KtTokens.RBRACE -> 1
+              neighbor is KtDeclaration && (neighbor !is KtProperty || decl !is KtProperty) -> 2
                 else -> 1
             }
 
@@ -58,14 +57,14 @@ object CreateFromUsageUtil {
         val actualContainer = (container as? KtClassOrObject)?.getOrCreateBody() ?: container
 
         fun addDeclarationToClassOrObject(
-            classOrObject: KtClassOrObject,
-            declaration: KtNamedDeclaration
+          classOrObject: KtClassOrObject,
+          declaration: KtNamedDeclaration
         ): KtNamedDeclaration {
             val classBody = classOrObject.getOrCreateBody()
             return if (declaration is KtNamedFunction) {
                 val neighbor = PsiTreeUtil.skipSiblingsBackward(
-                    classBody.rBrace ?: classBody.lastChild!!,
-                    PsiWhiteSpace::class.java
+                  classBody.rBrace ?: classBody.lastChild!!,
+                  PsiWhiteSpace::class.java
                 )
                 classBody.addAfter(declaration, neighbor) as KtNamedDeclaration
             } else classBody.addAfter(declaration, classBody.lBrace!!) as KtNamedDeclaration
@@ -83,10 +82,10 @@ object CreateFromUsageUtil {
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
-                (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration)
+              (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration)
             }
 
-            declaration is KtProperty && container !is KtBlockExpression -> {
+          declaration is KtProperty && container !is KtBlockExpression -> {
                 val sibling = actualContainer.getChildOfType<KtProperty>() ?: when (actualContainer) {
                     is KtClassBody -> actualContainer.declarations.firstOrNull() ?: actualContainer.rBrace
                     is KtFile -> actualContainer.declarations.first()
@@ -127,7 +126,7 @@ object CreateFromUsageUtil {
                     sibling = container.body?.lBrace
                 }
 
-                insertMembersAfterAndReformat(null, container, declaration, sibling)
+              org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat(null, container, declaration, sibling)
             }
             else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
                 .withPsiAttachment("container", container)
@@ -148,7 +147,7 @@ object CreateFromUsageUtil {
                     }
                     val semicolon = prevEnumEntry.allChildren.firstOrNull { it.node?.elementType == KtTokens.SEMICOLON }
                     if (semicolon != null) {
-                        (semicolon.prevSibling as? PsiWhiteSpace)?.text?.let {
+                      (semicolon.prevSibling as? PsiWhiteSpace)?.text?.let {
                             declarationInPlace.add(psiFactory.createWhiteSpace(it))
                         }
                         declarationInPlace.add(psiFactory.createSemicolon())
@@ -183,11 +182,11 @@ object CreateFromUsageUtil {
     }
 
     fun computeDefaultVisibilityAsString(
-        containingElement: PsiElement,
-        isAbstract: Boolean,
-        isExtension: Boolean,
-        isConstructor: Boolean,
-        originalElement: PsiElement
+      containingElement: PsiElement,
+      isAbstract: Boolean,
+      isExtension: Boolean,
+      isConstructor: Boolean,
+      originalElement: PsiElement
     ): String {
         val modifier = if (isAbstract) null
         else if (containingElement is KtClassOrObject
@@ -202,12 +201,12 @@ object CreateFromUsageUtil {
     }
 
     private val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
-        JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
-        JvmModifier.PACKAGE_LOCAL to KtTokens.INTERNAL_KEYWORD,
-        JvmModifier.PROTECTED to KtTokens.PROTECTED_KEYWORD,
-        JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD
+      JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
+      JvmModifier.PACKAGE_LOCAL to KtTokens.INTERNAL_KEYWORD,
+      JvmModifier.PROTECTED to KtTokens.PROTECTED_KEYWORD,
+      JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD
     )
     fun modifierToString(modifier: JvmModifier?):String {
-        return modifierToKotlinToken[modifier]?.let { if (it == KtTokens.PUBLIC_KEYWORD) "" else it.value } ?:""
+        return modifierToKotlinToken[modifier]?.let { if (it == KtTokens.PUBLIC_KEYWORD) "" else it.value } ?: ""
     }
 }

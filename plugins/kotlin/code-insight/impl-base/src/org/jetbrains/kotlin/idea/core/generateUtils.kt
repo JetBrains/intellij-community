@@ -211,42 +211,42 @@ fun <T : KtDeclaration> insertMembersAfter(
         )
     }
 
-        if (otherMembers.isNotEmpty()) {
-            val psiFactory = KtPsiFactory(project)
-            val tailComments = classOrObject.allChildren.toList()
-                .takeLastWhile { it is PsiComment || it is PsiWhiteSpace }
-                .map { commentOrSpace ->
-                    if (commentOrSpace is PsiWhiteSpace) {
-                        psiFactory.createWhiteSpace(commentOrSpace.text)
-                    } else {
-                        commentOrSpace.copy().also { commentOrSpace.delete() }
-                    }
+    if (otherMembers.isNotEmpty()) {
+        val psiFactory = KtPsiFactory(project)
+        val tailComments = classOrObject.allChildren.toList()
+            .takeLastWhile { it is PsiComment || it is PsiWhiteSpace }
+            .map { commentOrSpace ->
+                if (commentOrSpace is PsiWhiteSpace) {
+                    psiFactory.createWhiteSpace(commentOrSpace.text)
+                } else {
+                    commentOrSpace.copy().also { commentOrSpace.delete() }
                 }
-            val body = classOrObject.getOrCreateBody()
-            val lBrace = body.lBrace
-            if (lBrace != null) {
-                tailComments.reversed().map { body.addAfter(it, lBrace) }
             }
+        val body = classOrObject.getOrCreateBody()
+        val lBrace = body.lBrace
+        if (lBrace != null) {
+            tailComments.reversed().map { body.addAfter(it, lBrace) }
+        }
 
-            var afterAnchor = anchor ?: findInsertAfterAnchor(editor, body) ?: return emptyList()
-            otherMembers.mapTo(insertedMembers) {
-                afterAnchor = getAnchor(it) ?: afterAnchor
+        var afterAnchor = anchor ?: findInsertAfterAnchor(editor, body) ?: return emptyList()
+        otherMembers.mapTo(insertedMembers) {
+            afterAnchor = getAnchor(it) ?: afterAnchor
 
-                if (classOrObject is KtClass && classOrObject.isEnum()) {
-                    val enumEntries = classOrObject.declarations.filterIsInstance<KtEnumEntry>()
-                    val bound = (enumEntries.lastOrNull() ?: classOrObject.allChildren.firstOrNull { element ->
-                        element.node.elementType == KtTokens.SEMICOLON
-                    })
-                    if (it !is KtEnumEntry) {
-                        if (bound != null && afterAnchor.startOffset <= bound.startOffset) {
-                            afterAnchor = bound
-                        }
-                    } else if (bound == null && body.declarations.isNotEmpty()) {
-                        afterAnchor = body.lBrace!!
-                    } else if (bound != null && afterAnchor.startOffset > bound.startOffset) {
-                        afterAnchor = bound.prevSibling!!
+            if (classOrObject is KtClass && classOrObject.isEnum()) {
+                val enumEntries = classOrObject.declarations.filterIsInstance<KtEnumEntry>()
+                val bound = (enumEntries.lastOrNull() ?: classOrObject.allChildren.firstOrNull { element ->
+                    element.node.elementType == KtTokens.SEMICOLON
+                })
+                if (it !is KtEnumEntry) {
+                    if (bound != null && afterAnchor.startOffset <= bound.startOffset) {
+                        afterAnchor = bound
                     }
+                } else if (bound == null && body.declarations.isNotEmpty()) {
+                    afterAnchor = body.lBrace!!
+                } else if (bound != null && afterAnchor.startOffset > bound.startOffset) {
+                    afterAnchor = bound.prevSibling!!
                 }
+            }
 
             it.removeModifier(KtTokens.EXTERNAL_KEYWORD)
 

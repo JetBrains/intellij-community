@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 
@@ -21,18 +22,18 @@ fun <T : KtDeclaration> insertMembersAfterAndReformat(
         val insertedMembersElementPointers = insertMembersAfter(editor, classOrObject, members, anchor, getAnchor)
         val firstElement = insertedMembersElementPointers.firstOrNull() ?: return@runWriteAction emptyList()
 
-        fun insertedMembersElements() = insertedMembersElementPointers.mapNotNull { it.element }
-
-        // TODO make shorten references work in both K1 and K2
-        if (!org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode()) {
-            ShortenReferences.DEFAULT.process(insertedMembersElements())
+        for (pointer in insertedMembersElementPointers) {
+            val element = pointer.element
+            if (element != null) {
+                ShortenReferencesFacility.getInstance().shorten(element)
+            }
         }
         if (editor != null) {
             firstElement.element?.let { moveCaretIntoGeneratedElement(editor, it) }
         }
 
         insertedMembersElementPointers.onEach { it.element?.let { element -> codeStyleManager.reformat(element) } }
-        insertedMembersElements()
+        insertedMembersElementPointers.mapNotNull { it.element }
     }
 }
 
