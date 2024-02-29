@@ -136,7 +136,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
     }
     popupScope.launch(Dispatchers.EDT) {
       docComponent.contentSizeUpdates.collectLatest {
-        boundsHandler.updatePopup(popup, false)
+        boundsHandler.updatePopup(popup, false, it)
       }
     }
     Disposer.register(parentDisposable) {
