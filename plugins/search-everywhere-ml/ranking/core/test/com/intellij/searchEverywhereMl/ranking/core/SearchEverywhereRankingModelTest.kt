@@ -6,13 +6,13 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
 import com.intellij.searchEverywhereMl.ranking.core.features.HeavyFeaturesProviderTestCase
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereModelProvider
+import com.intellij.testFramework.VfsTestUtil
 
 internal abstract class SearchEverywhereRankingModelTest
   : HeavyFeaturesProviderTestCase<SearchEverywhereFileFeaturesProvider>(SearchEverywhereFileFeaturesProvider::class.java) {
@@ -24,7 +24,7 @@ internal abstract class SearchEverywhereRankingModelTest
   protected abstract fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>>
 
   protected fun performSearchFor(searchQuery: String, featuresProviderCache: FeaturesProviderCache? = null): RankingAssertion {
-    VirtualFileManager.getInstance().syncRefresh()
+    VfsTestUtil.syncRefresh()
     val rankedElements: List<FoundItemDescriptor<*>> = filterElements(searchQuery)
       .associateWith { getMlWeight(it, searchQuery, featuresProviderCache) }
       .entries

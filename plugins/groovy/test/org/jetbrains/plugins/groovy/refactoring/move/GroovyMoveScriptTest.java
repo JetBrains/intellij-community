@@ -6,13 +6,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -93,7 +93,7 @@ public class GroovyMoveScriptTest extends LightJavaCodeInsightFixtureTestCase {
     //File expectedRoot = new File(getTestDataPath() + testName + "/after");
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
 
-    VirtualFileManager.getInstance().syncRefresh();
+    VfsTestUtil.syncRefresh();
     try {
       PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot);
     }

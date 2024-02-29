@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -35,6 +34,7 @@ import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
@@ -395,7 +395,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
   protected suspend fun checkHighlighting(f: VirtualFile) {
     withContext(Dispatchers.EDT) {
       MavenLog.LOG.warn("checkHighlighting started")
-      VirtualFileManager.getInstance().syncRefresh()
+      VfsTestUtil.syncRefresh()
       MavenLog.LOG.warn("checkHighlighting: VFS refreshed")
       FileDocumentManager.getInstance().saveAllDocuments()
       UIUtil.dispatchAllInvocationEvents()

@@ -3,11 +3,10 @@ package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskListener;
 import com.intellij.task.ProjectTaskManager;
-import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,7 +53,7 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
                   "project.impl", "project.impl.main", "project.impl.test");
 
 
-    EdtTestUtil.runInEdtAndWait(() -> VirtualFileManager.getInstance().syncRefresh());
+    VfsTestUtil.syncRefresh();
     PathsList pathsBeforeMake = new PathsList();
     OrderEnumerator.orderEntries(getModule("project.main")).withoutSdk().recursively().runtimeOnly().classes()
       .collectPaths(pathsBeforeMake);

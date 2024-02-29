@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilterDescendantVirtualFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -66,8 +65,6 @@ public class FilterDescendantFilesTest extends HeavyPlatformTestCase {
   }
 
   private static void syncRefresh() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFileManager.getInstance().syncRefresh();
-    });
+    VfsTestUtil.syncRefresh();
   }
 }

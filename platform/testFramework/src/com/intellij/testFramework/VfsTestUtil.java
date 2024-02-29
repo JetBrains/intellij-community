@@ -34,6 +34,26 @@ public final class VfsTestUtil {
 
   private VfsTestUtil() { }
 
+  /**
+   * Invokes VirtualFileManager.syncRefresh() and waits until indexes are ready after VFS refresh
+   */
+  public static void syncRefresh() {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      VirtualFileManager.getInstance().syncRefresh();
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    }
+    else if (ApplicationManager.getApplication().isDispatchThread()) {
+      WriteAction.compute(VirtualFileManager.getInstance()::syncRefresh);
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        WriteAction.compute(VirtualFileManager.getInstance()::syncRefresh);
+      });
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    }
+  }
+
   public static @NotNull VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath) {
     return createFile(root, relativePath, (byte[])null);
   }
