@@ -134,13 +134,13 @@ public class PluginManagerTest {
 
   @Test
   public void compatibilityPlatform() {
-    assertEquals(SystemInfo.isWindows, checkCompatibility("com.intellij.platform.windows"));
-    assertEquals(SystemInfo.isMac, checkCompatibility("com.intellij.platform.mac"));
-    assertEquals(SystemInfo.isLinux, checkCompatibility("com.intellij.platform.linux"));
-    assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.platform.freebsd"));
-    assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.platform.solaris"));
-    assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.platform.unix"));
-    assertEquals(SystemInfo.isUnix && !SystemInfo.isMac, checkCompatibility("com.intellij.platform.xwindow"));
+    assertEquals(SystemInfo.isWindows, checkCompatibility("com.intellij.modules.os.windows"));
+    assertEquals(SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.mac"));
+    assertEquals(SystemInfo.isLinux, checkCompatibility("com.intellij.modules.os.linux"));
+    assertEquals(SystemInfo.isFreeBSD, checkCompatibility("com.intellij.modules.os.freebsd"));
+    assertEquals(SystemInfo.isSolaris, checkCompatibility("com.intellij.modules.os.solaris"));
+    assertEquals(SystemInfo.isUnix, checkCompatibility("com.intellij.modules.os.unix"));
+    assertEquals(SystemInfo.isUnix && !SystemInfo.isMac, checkCompatibility("com.intellij.modules.os.xwindow"));
   }
 
   @Test

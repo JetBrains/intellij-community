@@ -9,7 +9,7 @@ import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.invalidate
-import com.intellij.ide.plugins.IdeaPluginPlatform.Companion.fromModuleId
+import com.intellij.ide.plugins.IdeaPluginOsRequirement.Companion.fromModuleId
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -82,7 +82,6 @@ object PluginManagerCore {
   const val VENDOR_JETBRAINS: String = "JetBrains"
   const val VENDOR_JETBRAINS_SRO: String = "JetBrains s.r.o."
   private const val MODULE_DEPENDENCY_PREFIX = "com.intellij.module"
-  private const val PLATFORM_DEPENDENCY_PREFIX = "com.intellij.platform"
 
   @JvmField
   val SPECIAL_IDEA_PLUGIN_ID: PluginId = PluginId.getId("IDEA CORE")
@@ -191,8 +190,7 @@ object PluginManagerCore {
   @JvmStatic
   fun isModuleDependency(dependentPluginId: PluginId): Boolean {
     val idString = dependentPluginId.idString
-    return (idString.startsWith(MODULE_DEPENDENCY_PREFIX)
-            || idString.startsWith(PLATFORM_DEPENDENCY_PREFIX) && "com.intellij.platform.images" != idString)
+    return idString.startsWith(MODULE_DEPENDENCY_PREFIX)
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -503,7 +501,7 @@ object PluginManagerCore {
   fun isIncompatible(descriptor: IdeaPluginDescriptor, buildNumber: BuildNumber?): Boolean =
     checkBuildNumberCompatibility(descriptor, buildNumber ?: PluginManagerCore.buildNumber) != null
 
-  fun getIncompatiblePlatform(descriptor: IdeaPluginDescriptor): IdeaPluginPlatform? =
+  fun getIncompatiblePlatform(descriptor: IdeaPluginDescriptor): IdeaPluginOsRequirement? =
     descriptor.getDependencies().asSequence()
       .map { fromModuleId(it.pluginId) }
       .firstOrNull { p -> p != null && !p.isHostPlatform() }
