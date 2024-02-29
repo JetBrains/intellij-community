@@ -5,45 +5,58 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Color
 import java.awt.Graphics2D
+import java.awt.Paint
 import java.awt.TexturePaint
 import kotlin.math.floor
 
 class GradientTextureCache(
   private val scheme: EditorColorsScheme,
   val colorStartKey: ColorKey,
-  val colorEndKey: ColorKey,
-  private val defaultColorStart: Color,
-  private val defaultColorEnd: Color
+  val colorEndKey: ColorKey
 ) : Disposable {
   private var texture: TexturePaint? = null
 
-  val colorStart: Color
-    get() = scheme.getColor(colorStartKey) ?: defaultColorStart
-  private val colorEnd: Color
-    get() = scheme.getColor(colorEndKey) ?: defaultColorEnd
+  private val colorStart: Color?
+    get() = scheme.getColor(colorStartKey)
+  private val colorEnd: Color?
+    get() = scheme.getColor(colorEndKey)
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       texture = null
     })
+    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      texture = null
+    })
   }
 
   @RequiresEdt
-  fun getTexture(graphics: Graphics2D, width: Int): TexturePaint {
+  fun getTexture(graphics: Graphics2D, width: Int): Paint? {
     val realWidth = floor(JBUIScale.sysScale(graphics) * width).toInt()
-    return if (realWidth != texture?.image?.width) {
-      AppUIUtil.createHorizontalGradientTexture(graphics, colorStart, colorEnd, width).also {
-        texture = it
+    if (realWidth != texture?.image?.width) {
+      texture = getGradientRange()?.let {
+        AppUIUtil.createHorizontalGradientTexture(graphics, it.first, it.second, width)
       }
     }
-    else texture!!
+    return texture
+  }
+
+  private fun getGradientRange(): Pair<Color, Color>? {
+    val resolvedColorStart: Color? = colorStart
+    val resolvedColorEnd: Color? = colorEnd
+    return if (resolvedColorStart != null || resolvedColorEnd != null) {
+      (resolvedColorStart ?: resolvedColorEnd!!) to (resolvedColorEnd ?: resolvedColorStart!!)
+    }
+    else null
   }
 
   override fun dispose() {

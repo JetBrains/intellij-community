@@ -121,10 +121,12 @@ class TerminalBlockCornersRenderer private constructor(
       g2d.fill(topRect)
       g2d.fill(bottomRect)
 
-      g2d.paint = gradientCache?.getTexture(g2d, width.toInt()) ?: editor.colorsScheme.getColor(backgroundKey!!)
-      // paint the top and bottom parts of the block with the rounded corner on the right
-      g2d.fill(topCornerPath)
-      g2d.fill(bottomCornerPath)
+      getBlockBackgroundPaint(editor, g2d, width.toInt(), gradientCache, backgroundKey)?.let {
+        g2d.paint = it
+        // paint the top and bottom parts of the block with the rounded corners
+        g2d.fill(topCornerPath)
+        g2d.fill(bottomCornerPath)
+      }
 
       if (strokePath != null) {
         g2d.paint = strokeBackground

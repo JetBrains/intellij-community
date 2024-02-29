@@ -36,9 +36,7 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
   private val gradientCache: GradientTextureCache = GradientTextureCache(
     scheme = editor.colorsScheme,
     colorStartKey = BlockTerminalColors.BLOCK_BACKGROUND_START,
-    colorEndKey = BlockTerminalColors.BLOCK_BACKGROUND_END,
-    defaultColorStart = TerminalUi.blockBackgroundStart,
-    defaultColorEnd = TerminalUi.blockBackgroundEnd
+    colorEndKey = BlockTerminalColors.BLOCK_BACKGROUND_END
   )
 
   init {

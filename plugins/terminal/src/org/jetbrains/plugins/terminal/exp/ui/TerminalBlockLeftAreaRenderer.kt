@@ -16,6 +16,7 @@ import java.awt.geom.Rectangle2D
  * Also, can paint the border if [strokeBackgroundKey] is specified and [strokeWidth] is greater than 0.
  */
 class TerminalBlockLeftAreaRenderer(private val backgroundKey: ColorKey,
+                                    private val failoverBackgroundKey: ColorKey? = null,
                                     private val strokeBackgroundKey: ColorKey? = null,
                                     private val strokeWidth: Int = 0) : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
@@ -75,7 +76,7 @@ class TerminalBlockLeftAreaRenderer(private val backgroundKey: ColorKey,
     val g2d = g.create() as Graphics2D
     try {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.color = editor.colorsScheme.getColor(backgroundKey)
+      g2d.color = editor.colorsScheme.getColor(backgroundKey) ?: editor.colorsScheme.getColor(failoverBackgroundKey)
       g2d.fill(path)
       if (strokePath != null) {
         g2d.color = strokeBackgroundColor
