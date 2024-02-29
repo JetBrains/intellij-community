@@ -39,7 +39,7 @@ public final class GradleModelProviderUtil {
     }
   }
 
-  private static <M> void buildModelsInParallel(
+  public static <M> void buildModelsInParallel(
     @NotNull BuildController controller,
     @NotNull Collection<? extends GradleBuild> buildModels,
     @NotNull Class<M> modelClass,
