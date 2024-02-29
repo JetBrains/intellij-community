@@ -1,3 +1,2 @@
 bar/I1
 bar/I2
-bar/IndirectInheritor1

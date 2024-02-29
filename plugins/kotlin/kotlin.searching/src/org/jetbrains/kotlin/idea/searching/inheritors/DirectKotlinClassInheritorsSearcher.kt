@@ -92,7 +92,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                         return false
                     }
 
-                    return ktSymbol.isSubClassOf(baseSymbol)
+                    return ktSymbol.isDirectSubClassOf(baseSymbol)
                 }
             }
         }
