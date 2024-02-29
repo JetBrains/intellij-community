@@ -22,3 +22,17 @@ Also, you should provide metrics selection strategy (SUM, LATEST, etc.), since O
 
 You may create/use metrics publisher similar to Starter - `com.intellij.tools.ide.metrics.collector.starter.publishing.MetricsPublisher`.  
  
+#### Adding dependency
+
+```
+repositories {
+  maven { url = "https://cache-redirector.jetbrains.com/maven-central" }
+  maven { url = "https://cache-redirector.jetbrains.com/intellij-dependencies" }
+
+  maven { url = "https://www.jetbrains.com/intellij-repository/releases" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/snapshots" }
+  maven { url = "https://www.jetbrains.com/intellij-repository/nightly" }
+}
+
+testImplementation("com.jetbrains.intellij.tools:ide-metrics-collector:LATEST-EAP-SNAPSHOT")
+```
