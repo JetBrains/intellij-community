@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.builtInHelp.search
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.search.HelpSearchResult.Details
-import org.apache.commons.compress.utils.IOUtils
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
 import org.apache.lucene.queryparser.simple.SimpleQueryParser
@@ -17,10 +17,8 @@ import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.FSDirectory
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
-import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 
 
@@ -31,7 +29,7 @@ class HelpSearch {
     @NonNls
     private const val NOT_FOUND = "[]"
 
-    private val analyzer: StandardAnalyzer = StandardAnalyzer()
+    private val analyzer = StandardAnalyzer()
 
     @NotNull
     fun search(query: String?, maxHits: Int): String {
@@ -40,19 +38,15 @@ class HelpSearch {
         val indexDir: Path? = Files.createTempDirectory("search-index")
         var indexDirectory: FSDirectory? = null
         var reader: DirectoryReader? = null
+
         if (indexDir != null)
           try {
 
-            for (resourceName in resources) {
-              val input = ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
-                                                           "search",
-                                                           resourceName)
-              val fos =
-                FileOutputStream(Paths.get(indexDir.toAbsolutePath().toString(), resourceName).toFile())
-              IOUtils.copy(input, fos)
-              fos.flush()
-              fos.close()
-              input?.close()
+            resources.forEach { resource ->
+              ResourceUtil.getResourceAsStream(HelpSearch::class.java.classLoader,
+                                               "search", resource).use {
+                Files.copy(it, indexDir.resolve(resource))
+              }
             }
 
             indexDirectory = FSDirectory.open(indexDir)
@@ -67,7 +61,7 @@ class HelpSearch {
             val scorer: Scorer = QueryScorer(q)
             val highlighter = Highlighter(scorer)
 
-            val results = ArrayList<HelpSearchResult>()
+            val results = mutableListOf<HelpSearchResult>()
             for (i in hits.indices) {
               val doc = searcher.storedFields().document(hits[i].doc)
               val contentValue = buildString {
@@ -107,9 +101,12 @@ class HelpSearch {
           finally {
             indexDirectory?.close()
             reader?.close()
-            val tempFiles = indexDir.toFile().listFiles()
-            tempFiles?.forEach { it.delete() }
-            Files.delete(indexDir)
+
+            Files.walk(indexDir)
+              .sorted(Comparator.reverseOrder())
+              .forEach {
+                Files.delete(it)
+              }
           }
       }
       return NOT_FOUND
@@ -123,8 +120,10 @@ data class HelpSearchResult(
   val breadcrumbs: String,
   val mainTitle: String,
   val objectID: String,
-  val _snippetResult: Snippet,
-  val _highlightResult: Highlights
+  @JsonProperty("_snippetResult")
+  val snippetResult: Snippet,
+  @JsonProperty("_highlightResult")
+  val highlightResult: Highlights
 ) {
   data class Snippet(val content: Content) {
     data class Content(
