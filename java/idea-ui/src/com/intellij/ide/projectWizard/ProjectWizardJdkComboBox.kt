@@ -82,7 +82,7 @@ fun Row.projectWizardJdkComboBox(
   cell(combo)
     .columns(COLUMNS_LARGE)
     .apply {
-      val commentCell = comment("")
+      val commentCell = comment(component.comment, 50)
       component.addItemListener {
         commentCell.comment?.let { it.text = component.comment }
       }
@@ -366,7 +366,10 @@ class ProjectWizardJdkComboBox(
   val comment: String?
     get() = when (selectedItem) {
       is DownloadJdk -> JavaUiBundle.message("jdk.download.comment")
-      is NoJdk -> JavaUiBundle.message("jdk.missing.item.comment")
+      is NoJdk -> when {
+        (0 until itemCount).any { getItemAt(it) is DownloadJdk } -> JavaUiBundle.message("jdk.missing.item.comment")
+        else -> JavaUiBundle.message("jdk.missing.item.no.internet.comment")
+      }
       else -> null
     }
 }
