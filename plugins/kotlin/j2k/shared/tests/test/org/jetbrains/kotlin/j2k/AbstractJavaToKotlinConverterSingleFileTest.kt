@@ -6,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.pom.java.LanguageLevel.JDK_1_8
 import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
@@ -46,7 +45,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             val (prefix, javaCode) = getPrefixAndJavaCode(fileContents)
             val directives = KotlinTestUtils.parseDirectives(javaCode)
             val settings = configureSettings(directives)
-            val convertedText = convertJavaToKotlin(prefix, javaFile, javaCode, settings)
+            val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
 
             val actualText = if (prefix == "file") {
                 createKotlinFile(convertedText).dumpTextWithErrors()
@@ -97,38 +96,27 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             }
         }
 
-    private fun convertJavaToKotlin(prefix: String, javaFile: File, javaCode: String, settings: ConverterSettings): String {
-        fun convertOriginalFile(): String {
-            // Don't create a new file from text, just convert the original file, since it is already a proper Java file
-            val psiManager = PsiManager.getInstance(project)
-            val virtualFile = addFile(javaFile)
-            val psiFile = psiManager.findFile(virtualFile) as PsiJavaFile
-            return fileToKotlin(psiFile, settings)
-        }
-
-        return when (prefix) {
+    private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings): String =
+        when (prefix) {
             "expression" -> expressionToKotlin(javaCode, settings)
             "statement" -> statementToKotlin(javaCode, settings)
             "method" -> methodToKotlin(javaCode, settings)
-            "class" -> convertOriginalFile().replace("//class\n", "")
-            "file" -> convertOriginalFile()
+            "class" -> fileToKotlin(javaCode, settings)
+            "file" -> fileToKotlin(javaCode, settings)
             else -> throw IllegalStateException(
-                "Specify what is it: class, method, statement or expression using the first line of test data file"
+                "Specify what is it: file, class, method, statement or expression using the first line of test data file"
             )
         }
-    }
 
     open fun provideExpectedFile(javaPath: String): File {
         val kotlinPath = javaPath.replace(".java", ".kt")
         return File(kotlinPath)
     }
 
-    abstract fun fileToKotlin(file: PsiJavaFile, settings: ConverterSettings): String
+    abstract fun fileToKotlin(text: String, settings: ConverterSettings): String
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
-        val fileText = "final class C {$text}"
-        val file = createJavaFile(fileText)
-        val result = fileToKotlin(file, settings)
+        val result = fileToKotlin("final class C {$text}", settings)
         return result
             .substringBeforeLast("}")
             .replace("internal class C {", "\n")
@@ -155,7 +143,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             .trim()
     }
 
-    private fun createJavaFile(text: String): PsiJavaFile =
+    protected fun createJavaFile(text: String): PsiJavaFile =
         myFixture.configureByText("converterTestFile.java", text) as PsiJavaFile
 
     private fun createKotlinFile(text: String): KtFile =

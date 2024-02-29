@@ -3,13 +3,12 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.j2k.ConverterSettings
 
 abstract class AbstractPartialConverterTest : AbstractNewJavaToKotlinConverterSingleFileTest() {
-    override fun fileToKotlin(file: PsiJavaFile, settings: ConverterSettings): String {
-        myFixture.configureFromExistingVirtualFile(file.virtualFile)
+    override fun fileToKotlin(text: String, settings: ConverterSettings): String {
+        val file = createJavaFile(text)
         val element = myFixture.elementAtCaret
         return NewJavaToKotlinConverter(project, module, settings).filesToKotlin(
             listOf(file),
