@@ -31,7 +31,6 @@ import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import junit.framework.AssertionFailedError
-import junit.framework.TestCase
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.areLogErrorsIgnored
@@ -301,9 +300,9 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         // due to de-prioritisation in JvmSmartStepIntoHandler.reorderWithSteppingFilters
         if (stepTargets.none { DebugProcessImpl.isClassFiltered(it.className)}) {
             try {
-                TestCase.assertEquals("Smart step targets are not sorted by position in tree",
-                                      stepTargets.sortedByPositionInTree().map { runReadAction { it.presentation } },
-                                      stepTargets.map { runReadAction { it.presentation } })
+                assertEquals("Smart step targets are not sorted by position in tree",
+                             stepTargets.sortedByPositionInTree().map { runReadAction { it.presentation } },
+                             stepTargets.map { runReadAction { it.presentation } })
             } catch (e: AssertionFailedError) {
                 thrownExceptions.add(e)
             }
