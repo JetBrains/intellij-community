@@ -23,6 +23,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,6 +51,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -562,7 +564,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       hideWithItemSelected(null, completionChar);
       return;
     }
-    CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookupInWritableFile(completionChar, item), null, null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346621, EA-1083788")) {
+        finishLookupInWritableFile(completionChar, item);
+      }
+    }, null, null);
   }
 
   void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {

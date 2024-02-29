@@ -13,6 +13,7 @@ import com.intellij.model.Pointer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +39,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -277,11 +279,12 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
   protected boolean navigateToElement(PsiElement target) {
     Navigatable descriptor = target instanceof Navigatable ? (Navigatable)target : EditSourceUtil.getDescriptor(target);
-    if (descriptor != null && descriptor.canNavigate()) {
-      navigateToElement(descriptor);
-      return true;
+    if (descriptor == null) return false;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-339117, EA-842843")) {
+      if (!descriptor.canNavigate()) return false;
     }
-    return false;
+    navigateToElement(descriptor);
+    return true;
   }
 
   protected void navigateToElement(@NotNull Navigatable descriptor) {
