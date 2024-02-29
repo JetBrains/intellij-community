@@ -42,6 +42,12 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
                       VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) > 0);
   }
 
+
+  protected void assumeMaven3() {
+    String version = getActualVersion(myMavenVersion);
+    Assume.assumeTrue(version.startsWith("3."));
+  }
+
   protected void assumeVersionAtLeast(String version) {
     Assume.assumeTrue("Version should be " + version + " or more",
                       VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) >= 0);

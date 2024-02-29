@@ -476,6 +476,55 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     runManager.removeConfiguration(configuration)
   }
 
+
+  @Test
+  fun testRepositoriesListForSimpleProject() = runBlocking {
+    assumeMaven3()
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       """.trimIndent())
+
+    readFiles(projectPom)
+    projectsManager.fireActivatedInTests()
+    assertEquals(1, rootNodes.size)
+    val repositoriesNodes = rootNodes[0].listOfRepositoryNodes
+    assertEquals(2, repositoriesNodes.size)
+    assertEquals("local", repositoriesNodes[0].name)
+    assertEquals("central", repositoriesNodes[1].name)
+  }
+
+  @Test
+  fun testRepositoriesListWithNewRepo() = runBlocking {
+    assumeMaven3()
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       
+                       <repositories>
+                        <repository>
+                          <id>repo-id</id>
+                          <name>repo-name</name>
+                          <url>https://example.com/repository</url>
+                          <snapshots>
+                            <enabled>true</enabled>
+                          </snapshots>
+                        </repository>
+                      </repositories>
+                       """.trimIndent())
+
+    readFiles(projectPom)
+    projectsManager.fireActivatedInTests()
+    assertEquals(1, rootNodes.size)
+    val repositoriesNodes = rootNodes[0].listOfRepositoryNodes
+    assertEquals(3, repositoriesNodes.size)
+    assertEquals("local", repositoriesNodes[0].name)
+    assertEquals("central", repositoriesNodes[1].name)
+    assertEquals("repo-id", repositoriesNodes[2].name)
+  }
+
   private suspend fun readFiles(vararg files: VirtualFile) {
     projectsManager.addManagedFilesWithProfiles(listOf(*files), MavenExplicitProfiles.NONE, null, null, true)
   }

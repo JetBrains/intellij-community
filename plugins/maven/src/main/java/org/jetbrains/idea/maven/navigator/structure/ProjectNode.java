@@ -98,7 +98,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     myPluginsNode.updatePlugins(myMavenProject);
 
     if (isRoot()) {
-      myRepositoriesNode.updateRepositories(myMavenProject);
+      myRepositoriesNode.updateRepositories(myProject);
     }
 
     if (myMavenProjectsStructure.getDisplayMode() == MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL) {
@@ -261,6 +261,12 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   @TestOnly
   public PluginsNode getPluginsNode() {
     return myPluginsNode;
+  }
+
+  @TestOnly
+  @SuppressWarnings("unchecked")
+  public List<RepositoryNode> getListOfRepositoryNodes() {
+    return (List<RepositoryNode>)(List<?>)myRepositoriesNode.doGetChildren();
   }
 
   @Override
