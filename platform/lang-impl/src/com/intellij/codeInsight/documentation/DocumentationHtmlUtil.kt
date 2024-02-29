@@ -114,8 +114,8 @@ object DocumentationHtmlUtil {
 
     // Styled code
     val globalScheme = EditorColorsManager.getInstance().globalScheme
-    result.addAll(getDefaultDocCodeStyles(globalScheme, background, contentSpacing))
-    result.addAll(getDefaultFormattingStyles(contentSpacing))
+    result.addAll(getDefaultDocCodeStyles(globalScheme, background, 0, contentSpacing))
+    result.addAll(getDefaultFormattingStyles(0, contentSpacing))
     return result
   }
 
