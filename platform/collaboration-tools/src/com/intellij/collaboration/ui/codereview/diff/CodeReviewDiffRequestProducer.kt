@@ -15,7 +15,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.openapi.vcs.history.VcsDiffUtil
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -42,11 +41,6 @@ class CodeReviewDiffRequestProducer(
     delegate.process(context, indicator).also { request ->
       request.putUserData(RefComparisonChange.KEY, change)
       request.putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, diffComputer)
-
-      val titleLeft = VcsDiffUtil.getRevisionTitle(change.revisionNumberBefore.toShortString(), change.filePathAfter, null)
-      request.putUserData(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE, titleLeft)
-      val titleRight = VcsDiffUtil.getRevisionTitle(change.revisionNumberAfter.toShortString(), change.filePathAfter, change.filePathBefore)
-      request.putUserData(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE, titleRight)
 
       val scrollLocation = requestedScrollLocation?.let { Pair(it.first, it.second) }
       if (scrollLocation != null) {
