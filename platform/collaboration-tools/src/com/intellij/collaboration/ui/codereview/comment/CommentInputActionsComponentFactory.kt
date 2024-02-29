@@ -4,10 +4,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
-import com.intellij.collaboration.ui.util.bindChildIn
-import com.intellij.collaboration.ui.util.name
-import com.intellij.collaboration.ui.util.performAction
+import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.keymap.KeymapUtil
@@ -126,7 +123,7 @@ object CommentInputActionsComponentFactory {
           validate()
           repaint()
 
-          installActionShortcut(this, cfg.primaryAction, SUBMIT_SHORTCUT)
+          installActionShortcut(this, cfg.primaryAction, SUBMIT_SHORTCUT, true)
           installActionShortcut(this, cfg.cancelAction, CANCEL_SHORTCUT)
 
           try {
@@ -147,16 +144,20 @@ object CommentInputActionsComponentFactory {
       add(component)
       add(create(cs, cfg))
 
-      installActionShortcut(cs, cfg.primaryAction, SUBMIT_SHORTCUT)
+      // override action bound to Ctrl+Enter because convenience wins
+      installActionShortcut(cs, cfg.primaryAction, SUBMIT_SHORTCUT, true)
       installActionShortcut(cs, cfg.cancelAction, CANCEL_SHORTCUT)
     }
 
-  private fun JComponent.installActionShortcut(cs: CoroutineScope, action: StateFlow<Action?>, shortcut: ShortcutSet) {
+  private fun JComponent.installActionShortcut(cs: CoroutineScope,
+                                               action: StateFlow<Action?>,
+                                               shortcut: ShortcutSet,
+                                               overrideEditorAction: Boolean = false) {
     val component = this
     cs.launch {
       action.filterNotNull().collectLatest { action ->
         // installed as AnAction, bc otherwise Esc is stolen by editor
-        val anAction = action.toAnActionWithEditorPromotion()
+        val anAction = if (overrideEditorAction) action.toAnAction() else action.toAnActionWithEditorPromotion()
         try {
           putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
           anAction.registerCustomShortcutSet(shortcut, component)
