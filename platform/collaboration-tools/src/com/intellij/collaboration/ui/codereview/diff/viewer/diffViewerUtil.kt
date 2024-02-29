@@ -4,16 +4,19 @@ package com.intellij.collaboration.ui.codereview.diff.viewer
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.*
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.openapi.vcs.history.VcsDiffUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -221,4 +224,15 @@ interface DiffMapped {
 private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation) -> Int?) : EditorMapped {
   override val line: Flow<Int?> = vm.location.map { it?.let(mapper) }
   override val isVisible: Flow<Boolean> = vm.isVisible
+}
+
+fun buildChangeContext(change: RefComparisonChange): Map<Key<*>, Any> {
+  val titleLeft = VcsDiffUtil.getRevisionTitle(change.revisionNumberBefore.toShortString(), change.filePathAfter, null)
+  val titleRight = VcsDiffUtil.getRevisionTitle(change.revisionNumberAfter.toShortString(), change.filePathAfter, change.filePathBefore)
+
+  val changeContext: MutableMap<Key<*>, Any> = mutableMapOf(
+    DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE to titleLeft,
+    DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE to titleRight
+  )
+  return changeContext
 }

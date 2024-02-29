@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewMod
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
+import com.intellij.collaboration.ui.codereview.diff.viewer.buildChangeContext
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -70,7 +71,8 @@ internal class GHPRDiffViewModelImpl(
   private val changesFetchFlow = dataProvider.changesData.fetchedChangesFlow().shareIn(cs, SharingStarted.Lazily, 1)
   private val helper =
     CodeReviewDiffViewModelComputer(changesFetchFlow) { changesBundle, change ->
-      val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project))
+      val changeContext: Map<Key<*>, Any> = buildChangeContext(change)
+      val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
                                ?: error("Could not create diff producer from $change")
       CodeReviewDiffRequestProducer(project, change, changeDiffProducer, changesBundle.patchesByChange[change]?.getDiffComputer())
     }
