@@ -36,6 +36,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.ContextKind
 import com.intellij.webSymbols.ContextName
@@ -60,6 +61,7 @@ private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("web.isContext.reloadMarker")
 private val reloadMonitor = Any()
 private val LOG = Logger.getInstance(WebSymbolsContext::class.java)
 
+@RequiresReadLock
 internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): ContextName? {
   ProgressManager.checkCanceled()
   if (!location.isValid) {
@@ -85,6 +87,7 @@ internal fun findWebSymbolsContext(kind: ContextKind, location: PsiElement): Con
     psiFile.project)
 }
 
+@RequiresReadLock
 internal fun findWebSymbolsContext(kind: ContextKind, location: VirtualFile, project: Project): ContextName? {
   if (project.isDisposed) return null
   val dirContext = location.isDirectory
@@ -100,6 +103,7 @@ internal fun findWebSymbolsContext(kind: ContextKind, location: VirtualFile, pro
                                 getContextFileConfigInDir(contextInfo, dir))
 }
 
+@RequiresReadLock
 internal fun buildWebSymbolsContext(location: PsiElement): WebSymbolsContext {
   if (!location.isValid) {
     return WebSymbolsContext.empty()
