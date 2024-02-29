@@ -7,11 +7,11 @@ import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.job
@@ -31,7 +31,7 @@ class TransferSettingsDataProvider(private val providers: List<TransferSettingsP
   suspend fun hasDataToImport(): Boolean =
     coroutineScope {
       val result: Boolean = providers.map { provider ->
-        async { provider.hasDataToImport() }::await.asFlow()
+        async { logger.runAndLogException { provider.hasDataToImport() } ?: false }::await.asFlow()
       }.merge().firstOrNull { it } ?: false
 
       coroutineContext.job.cancelChildren()
