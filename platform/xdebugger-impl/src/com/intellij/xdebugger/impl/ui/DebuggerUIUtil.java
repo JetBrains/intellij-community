@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -38,9 +40,9 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.CustomComponentEvaluator;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.impl.CustomComponentEvaluator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -598,6 +600,19 @@ public final class DebuggerUIUtil {
     }
     else {
       e.getPresentation().setVisible(enable);
+    }
+  }
+
+  public static boolean shouldUseAntiFlickeringPanel() {
+    return !ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0;
+  }
+
+  public static void freezePaintingToReduceFlickering(@Nullable Component component) {
+    if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
+      int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
+      if (delay > 0) {
+        antiFlickeringPanel.freezePainting(delay);
+      }
     }
   }
 }
