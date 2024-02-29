@@ -21,21 +21,21 @@ abstract class LanguageServiceWidgetItem {
    * The default label for the status bar widget is the generic one: "Language Services".
    *
    * But if
-   * - this [LanguageServiceWidgetItem] is the only one in the `For Current File` popup section
+   * - this [LanguageServiceWidgetItem] is the only one in the [LanguageServicePopupSection.ForCurrentFile] popup section
    *   (only for this item the [widgetActionLocation] value is [LanguageServicePopupSection.ForCurrentFile])
    * - and the [statusBarText] value is not `null`
    *
    * then the service-specific text will be shown in the status bar.
    *
-   * If this item is not the only one in the `For Current File` popup section,
-   * or it is not in the `For Current File` popup section at all,
+   * If this item is not the only one in the [LanguageServicePopupSection.ForCurrentFile] popup section,
+   * or it is not in the [LanguageServicePopupSection.ForCurrentFile] popup section at all,
    * then the [statusBarText] value is ignored.
    */
   open val statusBarText: @NlsContexts.StatusBarText String? = null
 
   /**
    * A tooltip for the status bar widget label.
-   * Used only if this item appears to be the only one in the `For Current File` popup section.
+   * Used only if this item appears to be the only one in the [LanguageServicePopupSection.ForCurrentFile] popup section.
    * Otherwise, it's ignored.
    * @see statusBarText
    */
