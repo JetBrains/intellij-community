@@ -5,7 +5,7 @@ package a
 
 public open class Outer {
     public open class Inner {
-        public open class <caret>A {
+        public open class <caret>A() {
             public var bar: String = "bar";
 
             public open fun foo() {

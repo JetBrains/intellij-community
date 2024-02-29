@@ -11,12 +11,10 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.PsiElementProcessorAdapter
-import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.FilteredQuery
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
@@ -82,13 +80,8 @@ class KotlinFindClassUsagesHandler(
             }
 
             if (kotlinOptions.searchConstructorUsages) {
-                classOrObject.toLightClass()?.constructors?.filterIsInstance<KtLightMethod>()?.forEach { constructor ->
-                    val scope = constructor.useScope.intersectWith(options.searchScope)
-                    var query = MethodReferencesSearch.search(constructor, scope, true)
-                    if (kotlinOptions.isSkipImportStatements) {
-                        query = FilteredQuery(query) { !it.isImportUsage() }
-                    }
-                    addTask { query.forEach(Processor { referenceProcessor.process(it) }) }
+                for (constructor in classOrObject.allConstructors) {
+                    addTask { ReferencesSearch.search(constructor, options.searchScope).forEach(referenceProcessor) }
                 }
             }
 
@@ -138,7 +131,7 @@ class KotlinFindClassUsagesHandler(
 
             if (!kotlinOptions.searchConstructorUsages) {
                 usagesQuery = FilteredQuery(usagesQuery) { !it.isConstructorUsage(classOrObject) }
-            } else if (!options.isUsages) {
+            } else if (!options.isUsages && classOrObject !is KtObjectDeclaration && !(classOrObject as KtClass).isEnum()) {
                 usagesQuery = FilteredQuery(usagesQuery) { it.isConstructorUsage(classOrObject) }
             }
             addTask { usagesQuery.forEach(referenceProcessor) }
