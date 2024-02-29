@@ -39,6 +39,10 @@ interface JetBrainsClientDownloaderConfigurationProvider {
     val thinClientDownloadLatestBuildFromCDNForSnapshotValue: Boolean?
       get() = System.getenv(THIN_CLIENT_DOWNLOAD_LATEST_BUILD_FROM_CDN_FOR_SNAPSHOT_KEY)?.toBoolean()
 
+    const val THIN_CLIENT_CLIENT_CACHES_DIR_KEY = "THIN_CLIENT_CLIENT_CACHES_DIR"
+    val thinClientClientCachesDirValue: String?
+      get() = System.getenv(THIN_CLIENT_CLIENT_CACHES_DIR_KEY)
+
     val customPropertiesAreSet
       get() = thinClientDownloadUrlValue != null && thinClientDownloadLatestBuildFromCDNForSnapshotValue != null && thinClientVerifySignatureValue != null
   }
@@ -74,14 +78,21 @@ class RealJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
   override val jreDownloadUrl: URI
     get() = RemoteDevSystemSettings.getJreDownloadUrl().value
 
-  override val clientCachesDir: Path get () {
-    val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
-    if (downloadDestination.value != null) {
-      return Path(downloadDestination.value)
-    }
+  override val clientCachesDir: Path
+    get() {
+      val envVar = JetBrainsClientDownloaderConfigurationProvider.thinClientClientCachesDirValue
+      if (envVar != null) {
+        return Path(envVar)
+      }
+      else {
+        val downloadDestination = IntellijClientDownloaderSystemSettings.getDownloadDestination()
+        if (downloadDestination.value != null) {
+          return Path(downloadDestination.value)
+        }
 
-    return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
-  }
+        return Path.of(PathManager.getDefaultSystemPathFor("JetBrainsClientDist"))
+      }
+    }
 
   override val clientVersionManagementEnabled: Boolean
     get() = IntellijClientDownloaderSystemSettings.isVersionManagementEnabled()
