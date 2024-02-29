@@ -22,6 +22,8 @@ final class MavenCommandProvider implements CommandProvider {
       put(UpdateMavenGoalCommand.PREFIX, UpdateMavenGoalCommand::new);
       put(ValidateMavenGoalCommand.PREFIX, ValidateMavenGoalCommand::new);
       put(UpdateMavenFoldersCommand.PREFIX, UpdateMavenFoldersCommand::new);
+      put(MavenIndexUpdateCommand.PREFIX, MavenIndexUpdateCommand::new);
+      put(CheckIfMavenIndexesHaveArtefactCommand.PREFIX, CheckIfMavenIndexesHaveArtefactCommand::new);
     }};
   }
 }

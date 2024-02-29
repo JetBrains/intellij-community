@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.tools.ide.performanceTesting.commands.dto.MavenArchetypeInfo
 import com.intellij.tools.ide.performanceTesting.commands.dto.MavenGoalConfigurationDto
 import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
 import java.io.File
@@ -528,6 +529,15 @@ fun <T : CommandChain> T.importMavenProject(): T = apply {
 
 fun <T : CommandChain> T.updateMavenFolders(isErrorExpected: Boolean = false): T = apply {
   addCommand("${CMD_PREFIX}updateMavenFolders $isErrorExpected")
+}
+
+fun <T : CommandChain> T.mavenIndexUpdate(repoUrl: String = ""): T = apply {
+  addCommand("${CMD_PREFIX}mavenIndexUpdate $repoUrl")
+}
+
+fun <T : CommandChain> T.checkIfMavenIndexesHaveArtefact(info: MavenArchetypeInfo): T = apply {
+  val options = objectMapper.writeValueAsString(info)
+  addCommand("${CMD_PREFIX}checkIfMavenIndexesHaveArtefact $options")
 }
 
 enum class AssertModuleJdkVersionMode {
