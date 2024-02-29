@@ -109,7 +109,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     }
 
     val result = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
-    result.setRequestFocus(false)
+
     return result
   }
 
