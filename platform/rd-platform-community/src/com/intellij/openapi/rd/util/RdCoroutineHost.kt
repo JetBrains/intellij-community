@@ -24,11 +24,13 @@ class RdCoroutineHost(coroutineScope: CoroutineScope) : RdCoroutineScope() {
       instance
     }
 
+    @Deprecated("Use Dispatchers.IO or another dispatcher appropriate for your purposes")
     val processIODispatcher: ExecutorCoroutineDispatcher = ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()
   }
 
   override val defaultContext: CoroutineContext = coroutineScope.coroutineContext
 
+  @Deprecated("Use Dispatchers.EDT", ReplaceWith("Dispatchers.EDT", "kotlinx.coroutines.Dispatchers", "com.intellij.openapi.application.EDT"))
   val uiDispatcher: CoroutineContext
     get() = Dispatchers.EDT
 
