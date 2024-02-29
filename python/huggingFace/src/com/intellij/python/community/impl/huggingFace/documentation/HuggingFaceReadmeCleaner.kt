@@ -27,6 +27,7 @@ class HuggingFaceReadmeCleaner(
     fixCodeFences()
     cleanupImages()
     processMarkdownTables()
+    removeMarkdownSeparators()
     // trimLongMd()
     return this
   }
@@ -120,6 +121,13 @@ class HuggingFaceReadmeCleaner(
     }
 
     return truncatedTable
+  }
+
+  private fun removeMarkdownSeparators() {
+    markdown = markdown
+      .replace(Regex("\\n[-]{3,}\\n"), "\n")
+      .replace(Regex("\\n[*]{3,}\\n"), "\n")
+      .replace(Regex("\\n[_]{3,}\\n"), "\n")
   }
 
   fun getMarkdown(): String {

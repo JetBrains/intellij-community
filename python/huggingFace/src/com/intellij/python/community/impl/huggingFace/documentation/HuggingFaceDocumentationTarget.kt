@@ -23,7 +23,7 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCac
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 import com.intellij.refactoring.suggested.createSmartPointer
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyTargetExpression
 import java.time.Instant
 
 internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement) : DocumentationTarget {
