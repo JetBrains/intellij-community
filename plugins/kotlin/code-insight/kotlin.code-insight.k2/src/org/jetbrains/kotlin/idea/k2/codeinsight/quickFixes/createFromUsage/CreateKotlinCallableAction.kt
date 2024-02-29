@@ -88,9 +88,10 @@ internal class CreateKotlinCallableAction(
                 containerClassFqName,
             )
 
+            require(call != null)
             CreateKotlinCallablePsiEditor(
                 project, pointerToContainer, callableInfo,
-            ).execute(call!!)
+            ).execute(call)
         }
     }
 
