@@ -25,7 +25,7 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     val task = resolverCtx.externalSystemTaskId
     val tasks = KotlinDslSyncListener.instance?.tasks ?: return
     synchronized(tasks) { tasks[task] }?.let { sync ->
-        val gradleHome = resolverCtx.getExtraProject(GradleBuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
+        val gradleHome = resolverCtx.getRootModel(GradleBuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
             ?: resolverCtx.settings?.gradleHome
 
         synchronized(sync) {

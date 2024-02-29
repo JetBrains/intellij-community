@@ -355,13 +355,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
-    extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
+    resolverCtx.setModels(allModels);
+    extractExternalProjectModels(allModels, useCustomSerialization);
 
-    String projectName = allModels.getMainBuild().getName();
+    String projectName = resolverCtx.getRootBuild().getName();
     ModifiableGradleProjectModelImpl modifiableGradleProjectModel =
       new ModifiableGradleProjectModelImpl(projectName, resolverCtx.getProjectPath());
 
-    applyProjectModelContributors(allModels, resolverCtx, modifiableGradleProjectModel);
+    applyProjectModelContributors(resolverCtx, modifiableGradleProjectModel);
 
     DataNode<ProjectData> projectDataNode = modifiableGradleProjectModel.buildDataNodeGraph();
     DataNode<ExternalSystemOperationDescriptor> descriptorDataNode = new DataNode<>(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY,
@@ -369,8 +370,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                                                     projectDataNode);
     projectDataNode.addChild(descriptorDataNode);
 
-    final Set<? extends IdeaModule> gradleModules = extractCollectedModules(allModels, projectDataNode, tracedResolverChain);
-    final Collection<IdeaModule> includedModules = exposeCompositeBuild(allModels, resolverCtx, projectDataNode);
+    final Set<? extends IdeaModule> gradleModules = extractCollectedModules(resolverCtx, projectDataNode, tracedResolverChain);
+    final Collection<IdeaModule> includedModules = exposeCompositeBuild(resolverCtx, projectDataNode);
 
     final Map<String /* module id */, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap = new HashMap<>();
     final Map<String /* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetsMap = new HashMap<>();
@@ -494,10 +495,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return projectDataNode;
   }
 
-  private static void applyProjectModelContributors(@NotNull AllModels allModels,
-                                                    @NotNull DefaultProjectResolverContext resolverCtx,
-                                                    @NotNull ModifiableGradleProjectModelImpl modifiableGradleProjectModel) {
-    ToolingModelsProvider modelsProvider = new ToolingModelsProviderImpl(allModels);
+  private static void applyProjectModelContributors(
+    @NotNull DefaultProjectResolverContext resolverCtx,
+    @NotNull ModifiableGradleProjectModelImpl modifiableGradleProjectModel
+  ) {
     ProjectModelContributor.EP_NAME.forEachExtensionSafe(extension -> {
       resolverCtx.checkCancelled();
       final long starResolveTime = System.currentTimeMillis();
@@ -505,7 +506,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor",
                                               (span) -> {
                                                 span.setAttribute("contributor.name", modelContributorName);
-                                                extension.accept(modifiableGradleProjectModel, modelsProvider, resolverCtx);
+                                                extension.accept(modifiableGradleProjectModel, resolverCtx);
                                               });
       final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
       LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
@@ -528,10 +529,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return resolverChain.createModule(gradleModule, projectDataNode);
   }
 
-  private static @NotNull Set<? extends IdeaModule> extractCollectedModules(@NotNull AllModels allModels,
-                                                                            @NotNull DataNode<ProjectData> projectDataNode,
-                                                                            @NotNull GradleProjectResolverExtension resolverChain) {
-    IdeaProject ideaProject = allModels.getModel(IdeaProject.class);
+  private static @NotNull Set<? extends IdeaModule> extractCollectedModules(
+    @NotNull DefaultProjectResolverContext resolverCtx,
+    @NotNull DataNode<ProjectData> projectDataNode,
+    @NotNull GradleProjectResolverExtension resolverChain
+  ) {
+    IdeaProject ideaProject = resolverCtx.getRootModel(IdeaProject.class);
     if (ideaProject == null) {
       return Collections.emptySet();
     }
@@ -620,22 +623,22 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     });
   }
 
-  @NotNull
-  private static Collection<IdeaModule> exposeCompositeBuild(AllModels allModels,
-                                                             DefaultProjectResolverContext resolverCtx,
-                                                             DataNode<ProjectData> projectDataNode) {
+  private static @NotNull Collection<IdeaModule> exposeCompositeBuild(
+    @NotNull DefaultProjectResolverContext resolverCtx,
+    @NotNull DataNode<ProjectData> projectDataNode
+  ) {
     if (resolverCtx.getSettings() != null && !resolverCtx.getSettings().getExecutionWorkspace().getBuildParticipants().isEmpty()) {
       return Collections.emptyList();
     }
     CompositeBuildData compositeBuildData;
     List<IdeaModule> gradleIncludedModules = new SmartList<>();
-    List<Build> includedBuilds = allModels.getIncludedBuilds();
+    var includedBuilds = resolverCtx.getNestedBuilds();
     if (!includedBuilds.isEmpty()) {
       ProjectData projectData = projectDataNode.getData();
       compositeBuildData = new CompositeBuildData(projectData.getLinkedExternalProjectPath());
       for (Build build : includedBuilds) {
         if (!build.getProjects().isEmpty()) {
-          IdeaProject ideaProject = allModels.getModel(build, IdeaProject.class);
+          IdeaProject ideaProject = resolverCtx.getBuildModel(build, IdeaProject.class);
           if (ideaProject != null) {
             gradleIncludedModules.addAll(ideaProject.getModules());
           }
@@ -687,10 +690,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static void extractExternalProjectModels(@NotNull AllModels models,
-                                                   @NotNull ProjectResolverContext resolverCtx,
-                                                   boolean useCustomSerialization) {
-    resolverCtx.setModels(models);
+  private static void extractExternalProjectModels(
+    @NotNull AllModels models,
+    boolean useCustomSerialization
+  ) {
     final ExternalProject externalRootProject = models.getModel(ExternalProject.class);
     if (externalRootProject == null) return;
 

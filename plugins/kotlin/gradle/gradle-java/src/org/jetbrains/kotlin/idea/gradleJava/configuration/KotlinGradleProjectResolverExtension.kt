@@ -434,7 +434,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
 
     private fun findModuleById(ideProject: DataNode<ProjectData>, gradleModule: IdeaModule, moduleId: String): DataNode<ModuleData>? {
-        val ideaProject = resolverCtx.models.getModel(IdeaProject::class.java)
+        val ideaProject = resolverCtx.getRootModel(IdeaProject::class.java)
         val isCompositeProject = ideaProject != gradleModule.project
         val compositePrefix =
             if (isCompositeProject && moduleId.startsWith(":")) gradleModule.project.name

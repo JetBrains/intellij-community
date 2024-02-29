@@ -15,10 +15,10 @@ public interface ProjectModelContributor {
 
   /**
    * @param modifiableGradleProjectModel provides write/read api to contribute to the Gradle IDE project model
-   * @param toolingModelsProvider        provides facade to work with tooling models obtained by Gradle model builders
    * @param resolverContext              Gradle project resolver context
    */
-  void accept(@NotNull ModifiableGradleProjectModel modifiableGradleProjectModel,
-              @NotNull ToolingModelsProvider toolingModelsProvider,
-              @NotNull ProjectResolverContext resolverContext);
+  void accept(
+    @NotNull ModifiableGradleProjectModel modifiableGradleProjectModel,
+    @NotNull ProjectResolverContext resolverContext
+  );
 }

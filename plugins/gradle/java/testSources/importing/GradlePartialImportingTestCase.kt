@@ -102,14 +102,17 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
   private class TestProjectModelContributor : ProjectModelContributor {
     override fun accept(
       modifiableGradleProjectModel: ModifiableGradleProjectModel,
-      toolingModelsProvider: ToolingModelsProvider,
       resolverContext: ProjectResolverContext
     ) {
       val project = resolverContext.externalSystemTaskId.findProject()!!
       val modelConsumer = project.getService(ModelConsumer::class.java)
-      toolingModelsProvider.projects().forEach {
-        modelConsumer.projectLoadedModels.add(it to toolingModelsProvider.getProjectModel(it, ProjectLoadedModel::class.java)!!)
-        modelConsumer.buildFinishedModels.add(it to toolingModelsProvider.getProjectModel(it, BuildFinishedModel::class.java)!!)
+      for (buildModel in resolverContext.allBuilds) {
+        for (projectModel in buildModel.projects) {
+          val projectLoadedModel = resolverContext.getProjectModel(projectModel, ProjectLoadedModel::class.java)!!
+          val buildFinishedModel = resolverContext.getProjectModel(projectModel, BuildFinishedModel::class.java)!!
+          modelConsumer.projectLoadedModels.add(projectModel to projectLoadedModel)
+          modelConsumer.buildFinishedModels.add(projectModel to buildFinishedModel)
+        }
       }
     }
   }

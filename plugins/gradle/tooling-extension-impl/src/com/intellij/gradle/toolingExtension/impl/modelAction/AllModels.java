@@ -7,6 +7,7 @@ import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
@@ -21,6 +22,7 @@ import java.util.function.Consumer;
  * Note: This class is NOT thread safe, and it is supposed to be used from a single thread.
  * Performance logging related methods are thread safe.
  */
+@ApiStatus.Internal
 public final class AllModels extends ModelsHolder<BuildModel, ProjectModel> {
   @NotNull private final List<Build> includedBuilds = new ArrayList<>();
   private transient Map<String, String> myBuildsKeyPrefixesMapping;

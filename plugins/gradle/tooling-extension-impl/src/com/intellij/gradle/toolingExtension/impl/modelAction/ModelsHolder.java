@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel> implements Serializable {
 
   @NotNull private final B myRootModel;

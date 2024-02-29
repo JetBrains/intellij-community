@@ -14,6 +14,8 @@ import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.BuildModel;
+import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,6 +26,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
@@ -35,7 +38,6 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   @NotNull private final CancellationTokenSource myCancellationTokenSource;
   private ProjectConnection myConnection;
-  @NotNull
   private AllModels myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
@@ -138,32 +140,43 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myGradleUserHome;
   }
 
-  @NotNull
-  @Override
-  public AllModels getModels() {
-    return myModels;
-  }
-
-  @Override
   public void setModels(@NotNull AllModels models) {
     myModels = models;
   }
 
-  @Nullable
   @Override
-  public <T> T getExtraProject(Class<T> modelClazz) {
-    return myModels.getModel(modelClazz);
-  }
-
-  @Nullable
-  @Override
-  public <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz) {
-    return module == null ? myModels.getModel(modelClazz) : myModels.getModel(module, modelClazz);
+  public @NotNull Build getRootBuild() {
+    return myModels.getMainBuild();
   }
 
   @Override
-  public boolean hasModulesWithModel(@NotNull Class modelClazz) {
-    return myModels.hasModulesWithModel(modelClazz);
+  public @NotNull Collection<? extends Build> getNestedBuilds() {
+    return myModels.getIncludedBuilds();
+  }
+
+  @Override
+  public @NotNull Collection<? extends Build> getAllBuilds() {
+    return myModels.getAllBuilds();
+  }
+
+  @Override
+  public <T> @Nullable T getRootModel(@NotNull Class<T> modelClass) {
+    return myModels.getModel(modelClass);
+  }
+
+  @Override
+  public <T> @Nullable T getBuildModel(@NotNull BuildModel buildModel, @NotNull Class<T> modelClass) {
+    return myModels.getModel(buildModel, modelClass);
+  }
+
+  @Override
+  public <T> @Nullable T getProjectModel(@NotNull ProjectModel projectModel, @NotNull Class<T> modelClass) {
+    return myModels.getModel(projectModel, modelClass);
+  }
+
+  @Override
+  public boolean hasModulesWithModel(@NotNull Class<?> modelClass) {
+    return myModels.hasModulesWithModel(modelClass);
   }
 
   @Override
@@ -176,11 +189,9 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Override
   public String getProjectGradleVersion() {
     if (myProjectGradleVersion == null) {
-      if (myBuildEnvironment == null) {
-        myBuildEnvironment = getModels().getBuildEnvironment();
-      }
-      if (myBuildEnvironment != null) {
-        myProjectGradleVersion = myBuildEnvironment.getGradle().getGradleVersion();
+      var buildEnvironment = getBuildEnvironment();
+      if (buildEnvironment != null) {
+        myProjectGradleVersion = buildEnvironment.getGradle().getGradleVersion();
       }
     }
     return myProjectGradleVersion;
@@ -203,7 +214,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       return myBuildSrcGroup;
     }
     String parentRootDir = module.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir().getParent();
-    return getModels().getAllBuilds().stream()
+    return getAllBuilds().stream()
       .filter(b -> b.getBuildIdentifier().getRootDir().toString().equals(parentRootDir))
       .findFirst()
       .map(Build::getName)
@@ -222,6 +233,9 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Nullable
   public BuildEnvironment getBuildEnvironment() {
+    if (myBuildEnvironment == null) {
+      myBuildEnvironment = myModels.getBuildEnvironment();
+    }
     return myBuildEnvironment;
   }
 

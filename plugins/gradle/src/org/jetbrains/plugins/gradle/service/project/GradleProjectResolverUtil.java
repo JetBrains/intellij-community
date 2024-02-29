@@ -124,9 +124,9 @@ public final class GradleProjectResolverUtil {
 
     File rootDir = gradleProject.getProjectIdentifier().getBuildIdentifier().getRootDir();
     String rootProjectPath = ExternalSystemApiUtil.toCanonicalPath(rootDir.getPath());
-    boolean isComposite = !resolverCtx.getModels().getIncludedBuilds().isEmpty();
+    boolean isComposite = !resolverCtx.getNestedBuilds().isEmpty();
     boolean isIncludedBuildTaskRunningSupported = isComposite && isIncludedBuildTaskRunningSupported(projectDataNode, resolverCtx);
-    File mainBuildRootDir = resolverCtx.getModels().getMainBuild().getBuildIdentifier().getRootDir();
+    File mainBuildRootDir = resolverCtx.getRootBuild().getBuildIdentifier().getRootDir();
     String mainBuildRootPath = ExternalSystemApiUtil.toCanonicalPath(mainBuildRootDir.getPath());
     boolean isFromIncludedBuild = !rootProjectPath.equals(mainBuildRootPath);
 
