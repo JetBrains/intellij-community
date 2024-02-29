@@ -4,6 +4,7 @@ package com.jetbrains.builtInHelp.search
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ResourceUtil
+import com.jetbrains.builtInHelp.search.HelpSearchResult.Details
 import org.apache.commons.compress.utils.IOUtils
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.DirectoryReader
@@ -82,17 +83,17 @@ class HelpSearch {
                   "",
                   doc.get("title"),
                   i.toString(),
-                  HelpSearchResult.SnippetResult(
-                    HelpSearchResult.SnippetResult.Content(
+                  HelpSearchResult.Snippet(
+                    HelpSearchResult.Snippet.Content(
                       contentValue, "full"
                     )
                   ),
-                  HelpSearchResult.HighlightedResult(
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("filename")),
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
-                    HelpSearchResult.HelpSearchResultDetails(contentValue),
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("title")),
-                    HelpSearchResult.HelpSearchResultDetails(doc.get("title"))
+                  HelpSearchResult.Highlights(
+                    Details(doc.get("filename")),
+                    Details(doc.get("title")),
+                    Details(contentValue),
+                    Details(doc.get("title")),
+                    Details(doc.get("title"))
                   )
                 )
               )
@@ -122,30 +123,29 @@ data class HelpSearchResult(
   val breadcrumbs: String,
   val mainTitle: String,
   val objectID: String,
-  val _snippetResult: SnippetResult,
-  val _highlightResult: HighlightedResult
+  val _snippetResult: Snippet,
+  val _highlightResult: Highlights
 ) {
-  data class SnippetResult(val content: Content) {
+  data class Snippet(val content: Content) {
     data class Content(
       val value: String,
       val matchLevel: String
     )
-
   }
 
-  data class HelpSearchResultDetails(
+  data class Details(
     val value: String,
     val matchLevel: String = "full",
     val fullyHighlighted: Boolean = true,
     val matchedWords: List<String> = Collections.emptyList()
   )
 
-  data class HighlightedResult(
-    val url: HelpSearchResultDetails,
-    val pageTitle: HelpSearchResultDetails,
-    val metaDescription: HelpSearchResultDetails,
-    val mainTitle: HelpSearchResultDetails,
-    val headings: HelpSearchResultDetails
+  data class Highlights(
+    val url: Details,
+    val pageTitle: Details,
+    val metaDescription: Details,
+    val mainTitle: Details,
+    val headings: Details
   )
 }
 
