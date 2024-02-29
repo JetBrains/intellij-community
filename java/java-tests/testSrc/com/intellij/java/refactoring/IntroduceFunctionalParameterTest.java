@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,6 +101,7 @@ public class IntroduceFunctionalParameterTest extends LightRefactoringTestCase  
       if (selectionModel.hasSelection()) {
         PsiElement[] elements = ExtractMethodHandler.getElements(getProject(), getEditor(), getFile());
         new IntroduceParameterHandler().introduceStrategy(getProject(), getEditor(), getFile(), elements);
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // let all the invokeLater to pass through
       }
       checkResultByFile("/refactoring/introduceFunctionalParameter/after" + getTestName(false) + ".java");
       if (conflict != null) {
