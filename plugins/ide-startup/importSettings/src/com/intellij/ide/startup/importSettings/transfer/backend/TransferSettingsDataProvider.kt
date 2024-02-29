@@ -12,6 +12,7 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.job
 import java.util.*
@@ -29,9 +30,9 @@ class TransferSettingsDataProvider(private val providers: List<TransferSettingsP
 
   suspend fun hasDataToImport(): Boolean =
     coroutineScope {
-      val result = providers.map { provider ->
+      val result: Boolean = providers.map { provider ->
         async { provider.hasDataToImport() }::await.asFlow()
-      }.merge().first { it }
+      }.merge().firstOrNull { it } ?: false
 
       coroutineContext.job.cancelChildren()
       result
