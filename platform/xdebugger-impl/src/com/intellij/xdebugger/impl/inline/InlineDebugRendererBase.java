@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.ui.DebuggerColors;
@@ -40,7 +42,10 @@ public abstract class InlineDebugRendererBase implements EditorCustomElementRend
   @Override
   public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
     EditorImpl editor = (EditorImpl)inlay.getEditor();
-    TextAttributes inlineAttributes = getAttributes(editor);
+    TextAttributes inlineAttributes;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346284, EA-1081382")) {
+      inlineAttributes = getAttributes(editor);
+    }
     if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;
 
     Font font = getFont(editor);

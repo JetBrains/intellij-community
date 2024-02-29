@@ -286,7 +286,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                                                     @Nls @NotNull String title) {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    FindUsagesHandlerBase handler = findUsagesManager.getFindUsagesHandler(element, USAGES_WITH_DEFAULT_OPTIONS);
+    FindUsagesHandlerBase handler;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346762, EA-1061165")) {
+      handler = findUsagesManager.getFindUsagesHandler(element, USAGES_WITH_DEFAULT_OPTIONS);
+    }
     if (handler == null) return null;
     //noinspection deprecation
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
