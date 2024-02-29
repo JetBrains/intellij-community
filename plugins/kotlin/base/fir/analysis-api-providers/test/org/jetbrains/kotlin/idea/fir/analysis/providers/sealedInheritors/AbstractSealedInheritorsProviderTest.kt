@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.sealedInheritors
 import com.google.gson.JsonObject
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.analysis.providers.KotlinSealedInheritorsProviderFactory
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
@@ -26,7 +26,7 @@ abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTe
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("fir-low-level-api-ide-impl").resolve("testData").resolve("sealedInheritors")
+        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sealedInheritors")
 
     override fun doTestWithProjectStructure(testDirectory: String) {
         testProjectStructure.targets.forEach { checkTargetFile(it, testDirectory) }
@@ -48,9 +48,13 @@ abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTe
     private fun resolveActualInheritors(targetClass: KtClass): List<ClassId> = runBlocking {
         readAction {
             assertTrue("Expected the target type `${targetClass.classIdIfNonLocal}` to be sealed.", targetClass.isSealed())
-            KotlinSealedInheritorsProviderFactory.getInstance(project)!!
-                .createSealedInheritorsProvider()
-                .getSealedInheritors(targetClass)
+
+            analyze(targetClass) {
+                val classSymbol = targetClass.getNamedClassOrObjectSymbol()
+                    ?: error("Expected the target class `${targetClass.classIdIfNonLocal}` to have a class or object symbol.")
+
+                classSymbol.getSealedClassInheritors().map { it.classIdIfNonLocal ?: error("Sealed class inheritors should not be local.") }
+            }
         }
     }
 }
