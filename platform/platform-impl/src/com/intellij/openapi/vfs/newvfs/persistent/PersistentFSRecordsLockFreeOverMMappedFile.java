@@ -105,6 +105,21 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   private final transient HeaderAccessor headerAccessor = new HeaderAccessor(this);
 
+  /**
+   * Cached value {@link #maxAllocatedID()}.
+   * Id check against {@link #maxAllocatedID()} is very frequent, so it is worth to optimize it.
+   * <p>
+   * {@link #maxAllocatedID()} is always increasing, so we can cache last returned value, check against it first,
+   * and only if id>lastMaxAllocatedId -- re-check against actual {@link #maxAllocatedID()} value. This way
+   * most of checks should terminate early, on first check against simple field.
+   * <p>
+   * Thread-safety: field don't need to be volatile, since we have an invariant "if an id was valid at some point,
+   * it is always valid since then" -- which means that if [id <= lastMaxAllocatedId] => id is valid, regardless
+   * of how much outdated lastMaxAllocatedId value is. And if [id > lastMaxAllocatedId] => we'll re-check against
+   * actual value later
+   */
+  private int cachedMaxAllocatedId;
+
   public PersistentFSRecordsLockFreeOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     final int pageSize = storage.pageSize();
     if (pageSize < HEADER_SIZE) {
@@ -125,6 +140,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       //          even during quick self-check?
       checkUnAllocatedRegionIsZeroed(UNALLOCATED_RECORDS_TO_CHECK_ZEROED);
     }
+
+    cachedMaxAllocatedId = maxAllocatedID();
   }
 
   @Override
@@ -678,17 +695,21 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
 
-  private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
-    final int maxAllocatedID = maxAllocatedID();
-    if (!(NULL_ID < recordId && recordId <= maxAllocatedID)) {
-      throw new IndexOutOfBoundsException(
-        "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + maxAllocatedID + "]");
+  private void checkRecordIdIsValid(int recordId) throws IndexOutOfBoundsException {
+    int cachedMaxAllocatedID = this.cachedMaxAllocatedId;
+    if (!(NULL_ID < recordId && recordId <= cachedMaxAllocatedID)) {
+      int actualMaxAllocatedID = maxAllocatedID();
+      this.cachedMaxAllocatedId = Math.max(cachedMaxAllocatedId, actualMaxAllocatedID);
+      if (!(NULL_ID < recordId && recordId <= actualMaxAllocatedID)) {
+        throw new IndexOutOfBoundsException(
+          "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + actualMaxAllocatedID + "]");
+      }
     }
   }
 
-  private void checkParentIdIsValid(final int parentId) throws IndexOutOfBoundsException {
+  private void checkParentIdIsValid(int parentId) throws IndexOutOfBoundsException {
     //parentId could be NULL (for root records) -- this is the difference with checkRecordIdIsValid()
-    final int maxAllocatedID = maxAllocatedID();
+    int maxAllocatedID = maxAllocatedID();
     if (!(NULL_ID <= parentId && parentId <= maxAllocatedID)) {
       throw new IndexOutOfBoundsException(
         "parentId(=" + parentId + ") is outside of allocated IDs range [0, " + maxAllocatedID + "]");
