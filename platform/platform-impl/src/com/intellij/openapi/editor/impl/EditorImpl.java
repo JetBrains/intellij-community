@@ -278,6 +278,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
   private boolean myDragStarted;
+  private boolean myDragSelectionStarted;
 
   private final @NotNull JPanel myHeaderPanel;
 
@@ -2622,9 +2623,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
         getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED &&
         //IDEA-295653 We should not select a line if we are dragging an object. For example, a breakpoint
-        !isDraggingGutterIcon) {
+        !isDraggingGutterIcon && !myDragSelectionStarted) {
       selectLineAtCaret(true); //IDEA-305975
       getGutterComponentEx().putClientProperty("active.line.number", null); //clear hovered breakpoint
+      myDragSelectionStarted = true;
     }
 
     boolean columnSelectionDragEvent = isColumnSelectionDragEvent(e);
@@ -2697,12 +2699,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myMousePressedEvent != null && getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.EDITING_AREA &&
           getMouseEventArea(myMousePressedEvent) != EditorMouseEventArea.LINE_NUMBERS_AREA) {
         selectionModel.setSelection(oldSelectionStart, newCaretOffset);
+        myDragSelectionStarted = true;
       }
       else {
         if (multiCaretSelection) {
           if (myLastMousePressedLocation != null && (myCurrentDragIsSubstantial || !newLogicalCaret.equals(myLastMousePressedLocation))) {
             createSelectionTill(newLogicalCaret);
             blockActionsIfNeeded(e, myLastMousePressedLocation, newLogicalCaret);
+            myDragSelectionStarted = true;
           }
         }
         else {
@@ -2746,6 +2750,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
             setSelectionAndBlockActions(e, oldVisLeadSelectionStart, oldSelectionStart, newVisualCaret, newCaretOffset);
             cancelAutoResetForMouseSelectionState();
+            myDragSelectionStarted = true;
           }
           else {
             if (caretShift != 0) {
@@ -4144,6 +4149,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
+      myDragSelectionStarted = false;
       myForcePushHappened = false;
       clearDnDContext();
 
