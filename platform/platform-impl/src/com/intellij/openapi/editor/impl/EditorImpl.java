@@ -2614,7 +2614,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragOnGutterSelectionStartLine = -1;
     }
 
-    boolean isDraggingGutterIcon = myGutterComponent.getGutterRenderer(e.getPoint()) != null;
+    var lastPressedPoint = myLastMousePressedPoint == null
+                           ? null
+                           : SwingUtilities.convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
+    boolean isDraggingGutterIcon = lastPressedPoint != null && myGutterComponent.getGutterRenderer(lastPressedPoint) != null;
     if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA &&
         NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
         getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED &&
