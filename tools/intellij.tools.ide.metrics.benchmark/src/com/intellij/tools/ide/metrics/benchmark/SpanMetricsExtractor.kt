@@ -44,7 +44,7 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
     val attemptCountMetric = PerformanceMetrics.newCounter("${metricsPrefix}attempt.count", attempts.size.toLong())
     val attemptStandardDeviationMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.standard.deviation",
                                                                         attempts.standardDeviationValue())
-    // "... the MAD is a robust statistic, being more resilient to outliers in a data set than the standard deviation."
+    // "... the MAD is a robust statistic, being more resilient to outliers in data set than the standard deviation."
     // See https://en.m.wikipedia.org/wiki/Median_absolute_deviation
     val attemptMadMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mad.ms", madValueOfAttempts)
 
@@ -63,8 +63,8 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
   }
 
   private fun extractOpenTelemetrySpanMetrics(spanName: String, forWarmup: Boolean): List<PerformanceMetrics.Metric> {
-    val originalMetrics = OpentelemetryJsonParser(SpanFilter { it.name == spanName && it.isWarmup == forWarmup })
-      .getSpanElements(telemetryJsonFile)
+    val originalMetrics = OpentelemetryJsonParser(SpanFilter.any())
+      .getSpanElements(telemetryJsonFile, spanElementFilter = { it.name == spanName && it.isWarmup == forWarmup })
       .map { PerformanceMetrics.newDuration(it.name, it.duration) }
       .toList()
 

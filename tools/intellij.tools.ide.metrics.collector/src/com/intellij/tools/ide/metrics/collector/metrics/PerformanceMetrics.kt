@@ -28,9 +28,9 @@ data class PerformanceMetrics(
     data class Counter internal constructor(override val name: String) : MetricId()
   }
 
-  data class Metric private constructor(val id: MetricId,
-                                        val value: Long,
-                                        val compareSetting: CompareSetting = CompareSetting.notComparing) {
+  data class Metric private constructor(@JvmField val id: MetricId,
+                                        @JvmField val value: Long,
+                                        @JvmField val compareSetting: CompareSetting = CompareSetting.notComparing) {
     companion object {
       /**
        * Creates instance of the Counter metric type.

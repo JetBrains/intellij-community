@@ -6,9 +6,9 @@ import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsBasedOnDiffB
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsForStartup
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
 import io.kotest.matchers.collections.shouldContain
-import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import kotlin.io.path.div
@@ -257,7 +257,7 @@ class OpenTelemetryTest {
   fun metricsWithAttributesMaxAndMeanValue() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_max_mean_attributes.json"),
                                                 SpanFilter.nameEquals("performance_test"))
-    metrics.shouldContainAll(listOf(
+    assertThat(metrics).containsAll(listOf(
       Metric.newDuration("typing#latency#max", 51),
       Metric.newDuration("typing#latency#mean_value", 3),
     ))
@@ -267,7 +267,7 @@ class OpenTelemetryTest {
   fun opentelemetryWithWarmupSpans() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_with_warmup_spans.json"),
                                                 SpanFilter.nameEquals("performance_test"))
-    metrics.shouldContainAll(listOf(
+    assertThat(metrics).containsAll(listOf(
       Metric.newDuration("localInspections#mean_value", 369),
       Metric.newDuration("localInspections_1", 375),
       Metric.newDuration("localInspections_2", 373),
@@ -290,7 +290,7 @@ class OpenTelemetryTest {
     val metrics = getMetricsBasedOnDiffBetweenSpans("semanticHighlighting",
                                                     (openTelemetryReports / "opentelemetry_with_warmup_spans.json"),
                                                     "localInspections", "GeneralHighlightingPass")
-    metrics.shouldContainAll(listOf(
+    assertThat(metrics).containsAll(listOf(
       Metric.newDuration("semanticHighlighting_1", 349),
       Metric.newDuration("semanticHighlighting_2", 339),
       Metric.newDuration("semanticHighlighting_3", 341),
@@ -309,7 +309,7 @@ class OpenTelemetryTest {
   fun findUsageWithWarmUp() {
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_findUsage_with_warmup.json"),
                                                 SpanFilter.nameEquals("performance_test"))
-    metrics.shouldContainAll(listOf(
+    assertThat(metrics).containsAll(listOf(
       Metric.newDuration("findUsagesParent_1", 362),
       Metric.newDuration("findUsagesParent_2", 337),
       Metric.newDuration("findUsagesParent_3", 336),
@@ -333,7 +333,7 @@ class OpenTelemetryTest {
     val aliases = mapOf(Pair("findUsagesParent", "alias"))
     val metrics = getMetricsFromSpanAndChildren((openTelemetryReports / "opentelemetry_findUsage_with_warmup.json"),
                                                 SpanFilter.nameEquals("performance_test"), aliases = aliases)
-    metrics.shouldContainAll(listOf(
+    assertThat(metrics).containsAll(listOf(
       Metric.newDuration("alias", 3342),
       Metric.newDuration("alias_1", 362),
       Metric.newDuration("alias_2", 337),

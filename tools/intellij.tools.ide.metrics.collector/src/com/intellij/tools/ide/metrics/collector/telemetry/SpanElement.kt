@@ -1,6 +1,8 @@
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.tools.ide.metrics.collector.telemetry
 
-import com.fasterxml.jackson.databind.JsonNode
+import kotlinx.serialization.Serializable
 import kotlin.math.roundToLong
 
 /**
@@ -14,52 +16,66 @@ import kotlin.math.roundToLong
  * @property parentSpanId The unique identifier of the parent span element, if any.
  * @property tags The list of key-value pairs representing the tags associated with the span element.
  */
-data class SpanElement(var isWarmup: Boolean,
-                       val name: String,
-                       val duration: Long,
-                       val startTimestamp: Long,
-                       val spanId: String,
-                       val parentSpanId: String?,
-                       val tags: List<Pair<String, String>>)
+data class SpanElement(
+  @JvmField var isWarmup: Boolean,
+  @JvmField val name: String,
+  @JvmField val duration: Long,
+  @JvmField val startTimestamp: Long,
+  @JvmField val spanId: String,
+  @JvmField val parentSpanId: String?,
+  @JvmField val tags: List<Pair<String, String>>,
+)
 
-fun JsonNode.toSpanElement(): SpanElement {
-  val spanName = this.spanName()
-  val duration = getDuration(this)
-  val startTimestamp = getStartTime(this)
-  val tags = getTags(this)
-  val isWarmup = isWarmup(tags)
-  val spanId = this.get("spanID").textValue()
-  val parentSpanId = this.getParentSpanId()
-  return SpanElement(isWarmup, spanName, duration, startTimestamp, spanId, parentSpanId, tags)
+internal fun toSpanElement(span: SpanData): SpanElement {
+  val tags = getTags(span)
+  return SpanElement(
+    isWarmup = isWarmup(tags),
+    name = span.operationName,
+    duration = (span.duration / 1000.0).roundToLong(),
+    startTimestamp = (span.startTime / 1000.0).roundToLong(),
+    spanId = span.spanID,
+    parentSpanId = span.getParentSpanId(),
+    tags = tags,
+  )
 }
 
-fun JsonNode.spanName(): String {
-  return this.get("operationName").textValue()
+@Serializable
+data class SpanData(
+  @JvmField val spanID: String,
+  @JvmField val operationName: String,
+  @JvmField val duration: Long,
+  @JvmField val startTime: Long,
+  @JvmField val references: List<SpanRef> = emptyList(),
+  @JvmField val tags: List<SpanTag> = emptyList(),
+)
+
+@Serializable
+data class SpanRef(
+  @JvmField val refType: String? = null,
+  @JvmField val traceID: String? = null,
+  @JvmField val spanID: String? = null,
+)
+
+@Serializable
+data class SpanTag(
+  @JvmField val key: String? = null,
+  @JvmField val type: String? = null,
+  @JvmField val value: String? = null,
+)
+
+internal fun SpanData.getParentSpanId(): String? {
+  return references.firstOrNull { it.refType == "CHILD_OF" }?.spanID
 }
 
-fun JsonNode.getParentSpanId(): String? {
-  this.get("references")?.forEach { reference ->
-    if (reference.get("refType")?.textValue() == "CHILD_OF") {
-      val spanId = reference.get("spanID").textValue()
-      return spanId
-    }
-  }
-  return null
-}
-
-private fun getTags(span: JsonNode): List<Pair<String, String>> {
-  val tags = mutableListOf<Pair<String, String>>()
-  span.get("tags")?.forEach { tag ->
-    val attributeName = tag.get("key").textValue()
-    val textValue = tag.get("value").textValue()
+private fun getTags(span: SpanData): List<Pair<String, String>> {
+  val tags = ArrayList<Pair<String, String>>(span.tags.size)
+  for (tag in span.tags) {
+    val attributeName = tag.key!!
+    val textValue = tag.value!!
     tags.add(Pair(attributeName, textValue))
   }
   return tags
 }
-
-private fun getDuration(span: JsonNode) = (span.get("duration").longValue() / 1000.0).roundToLong()
-
-private fun getStartTime(span: JsonNode) = (span.get("startTime").longValue() / 1000.0).roundToLong()
 
 private fun isWarmup(tags: List<Pair<String, String>>): Boolean {
   return tags.find { it.first == "warmup" && it.second == "true" } != null

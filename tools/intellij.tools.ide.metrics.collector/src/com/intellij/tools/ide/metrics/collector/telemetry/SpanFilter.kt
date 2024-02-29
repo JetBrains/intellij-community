@@ -1,11 +1,45 @@
 package com.intellij.tools.ide.metrics.collector.telemetry
 
-class SpanFilter(val filter: (SpanElement) -> Boolean) {
+import java.util.function.Predicate
+
+class SpanFilter internal constructor(
+  @JvmField internal val filter: (SpanElement) -> Boolean,
+  @JvmField internal val rawFilter: Predicate<SpanData>,
+) {
   companion object {
-    fun nameEquals(name: String) = SpanFilter { it.name == name }
-    fun containsNameIn(names: List<String>) = SpanFilter { it.name in names }
-    fun containsNameIn(vararg names: String) = SpanFilter { it.name in names }
-    fun nameContains(substring: String) = SpanFilter { it.name.contains(substring) }
-    fun hasTags(vararg tags: Pair<String, String>) = SpanFilter { tags.all { tag -> tag in it.tags }}
+    fun any(): SpanFilter {
+      return SpanFilter(filter = { true }, rawFilter = { true })
+    }
+
+    fun none(): SpanFilter {
+      return SpanFilter(filter = { false }, rawFilter = { false })
+    }
+
+    fun nameEquals(name: String): SpanFilter {
+      return SpanFilter(filter = { spanData -> spanData.name == name }, rawFilter = { it.operationName == name })
+    }
+
+    fun containsNameIn(names: List<String>): SpanFilter {
+      return SpanFilter(filter = { names.contains(it.name) }, rawFilter = { names.contains(it.operationName) })
+    }
+
+    fun containsNameIn(vararg names: String): SpanFilter {
+      return SpanFilter(filter = { names.contains(it.name) }, rawFilter = { names.contains(it.operationName) })
+    }
+
+    fun nameContains(substring: String): SpanFilter {
+      return SpanFilter(filter = { it.name.contains(substring) }, rawFilter = { it.operationName.contains(substring) })
+    }
+
+    fun hasTags(vararg tags: Pair<String, String>): SpanFilter {
+      return SpanFilter(
+        filter = {
+          tags.all { tag -> it.tags.contains(tag) }
+        },
+        rawFilter = {
+          tags.all { tag -> it.tags.any { it.key == tag.first && it.value == tag.second } }
+        },
+      )
+    }
   }
 }
