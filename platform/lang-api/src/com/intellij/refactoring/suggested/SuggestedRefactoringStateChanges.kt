@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiNamedElementWithCustomPresentation
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.suggested.SuggestedRefactoringState.ParameterMarker
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
@@ -152,7 +153,13 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
    */
   class RenameOnly(refactoringSupport: SuggestedRefactoringSupport) : SuggestedRefactoringStateChanges(refactoringSupport) {
     override fun signature(anchor: PsiElement, prevState: SuggestedRefactoringState?): Signature? {
-      val name = (anchor as? PsiNamedElement)?.name ?: return null
+      val name = when (anchor) {
+        is PsiNamedElementWithCustomPresentation -> anchor.presentationName ?: anchor.name
+        is PsiNamedElement -> anchor.name
+        else -> null
+      }
+      if (name == null) return null
+
       return Signature.create(name, null, emptyList(), null)!!
     }
 

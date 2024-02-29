@@ -229,7 +229,7 @@ internal fun SuggestedRefactoringAvailabilityIndicator.update(
       tooltip = RefactoringBundle.message(
         "suggested.refactoring.rename.gutter.icon.tooltip",
         refactoringData.oldName,
-        refactoringData.declaration.name,
+        refactoringData.newName,
         intentionActionShortcutHint()
       )
       markerRange = refactoringSupport.nameRange(refactoringData.declaration)!!

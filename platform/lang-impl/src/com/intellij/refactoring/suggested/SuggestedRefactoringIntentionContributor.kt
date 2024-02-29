@@ -104,7 +104,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
       is SuggestedRenameData -> RefactoringBundle.message(
         "suggested.refactoring.rename.intention.text",
         refactoringData.oldName,
-        refactoringData.declaration.name
+        refactoringData.newName
       )
 
       is SuggestedChangeSignatureData -> RefactoringBundle.message(
