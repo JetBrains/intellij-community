@@ -64,7 +64,7 @@ class SmartStepTargetVisitor(
             }
             if (symbol is KtFunctionSymbol) {
                 val declaration = symbol.psi ?: return false
-                if (symbol.origin == KtSymbolOrigin.JAVA && declaration is PsiMethod) {
+                if (declaration is PsiMethod) {
                     append(MethodSmartStepTarget(declaration, null, expression, true, lines))
                     return true
                 } else if (declaration is KtNamedFunction) {
@@ -308,10 +308,8 @@ class SmartStepTargetVisitor(
             }
 
             val declaration = getFunctionDeclaration(symbol)
-            if (symbol.origin == KtSymbolOrigin.JAVA) {
-                if (declaration is PsiMethod) {
-                    append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
-                }
+            if (declaration is PsiMethod) {
+                append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
                 return
             }
 
