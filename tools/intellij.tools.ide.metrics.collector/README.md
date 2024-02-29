@@ -3,8 +3,10 @@ This modules provides OpenTelemetry metrics collection.
 
 There are 2 types of OpenTelemetry metrics that can be collected: [spans](https://opentelemetry.io/docs/concepts/signals/traces/#spans) 
 and [meters](https://opentelemetry.io/docs/specs/otel/metrics/api/#meter).  
-Spans are dumped to `opentelemetry.json` file (usually located in log directory) by registered span exporters in `com.intellij.platform.diagnostic.telemetry.TelemetryManager`.  
-Meters will be dumped to `*.csv` files in log directory by meter exporters (also via `TelemetryManager`).
+Spans are exported to `opentelemetry.json` file (usually located in log directory) by registered span exporters in `com.intellij.platform.diagnostic.telemetry.TelemetryManager`.  
+To enable span exports provide system property `idea.diagnostic.opentelemetry.file` (basically it should be ide_log_directory/opentelemetry.json)
+
+Meters will be exported to `*.csv` files in log directory by meter exporters (also via `TelemetryManager`).
 
 - Spans:  
 To get reported spans use `com.intellij.tools.ide.metrics.collector.OpenTelemetrySpanCollector` and pass the span name you're interested in.  
