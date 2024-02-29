@@ -12,6 +12,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -19,6 +20,10 @@ import javax.swing.JTree
 
 @RunWith(JUnit4::class)
 class CoverageTreeTest : CoverageIntegrationBaseTest() {
+  @Before
+  fun init() {
+    registerCoverageToolWindow(myProject)
+  }
 
   @Test
   fun `test ij coverage tree contains elements`() = testCoverageSuiteTree(loadFullSuite(), false, """
