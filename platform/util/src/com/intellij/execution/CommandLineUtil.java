@@ -24,7 +24,7 @@ public final class CommandLineUtil {
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
-  private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
+  private static final String SHELL_WHITELIST_CHARACTERS = "$:-._/@=";
 
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
