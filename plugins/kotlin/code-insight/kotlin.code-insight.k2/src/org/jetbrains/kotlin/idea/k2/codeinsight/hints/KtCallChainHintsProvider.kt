@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtPostfixExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
-    private data class ExpressionWithType<ExpressionType>(val expression: PsiElement, val type: ExpressionType)
+    private data class ExpressionWithType(val expression: KtExpression, val type: KtType)
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
         val topmostDotQualifiedExpression = (element as? KtQualifiedExpression)
@@ -26,13 +27,13 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
         analyze(topmostDotQualifiedExpression) {
             var someTypeIsUnknown = false
             val reversedChain =
-                generateSequence<PsiElement>(topmostDotQualifiedExpression) {
+                generateSequence<KtExpression>(topmostDotQualifiedExpression) {
                     (it.skipParenthesesAndPostfixOperatorsDown() as? KtQualifiedExpression)?.receiverExpression
                 }
                     .drop(1) // Except last to avoid builder.build() which has obvious type
                     .filter { (it.nextSibling as? PsiWhiteSpace)?.textContains('\n') == true }
                     .map {
-                        val ktType = (it as? KtExpression)?.getKtType()
+                        val ktType = it.getKtType()
                         it to ktType
                     }
                     .takeWhile { (_, type) -> (type != null).also { if (!it) someTypeIsUnknown = true } }
@@ -57,7 +58,7 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
             for ((expression, type) in reversedChain) {
                 sink.addPresentation(
                     InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true),
-                    hasBackground = true
+                    hasBackground = true,
                 ) {
                     printKtType(type)
                 }
