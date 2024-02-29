@@ -268,14 +268,16 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     resolverCtx.checkCancelled();
 
-    final long startTime = System.currentTimeMillis();
+    AllModels allModels;
+
+    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
+
+    final long gradleCallStartTime = System.currentTimeMillis();
 
     syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
-    final long activityId = resolverCtx.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
 
-    AllModels allModels;
-    int errorsCount = 0;
+    int gradleCallErrorsCount = 0;
 
     Span gradleCallSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleCall")
@@ -292,54 +294,60 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
     catch (Throwable t) {
-      errorsCount += 1;
-      gradleCallSpan.setAttribute("error.count", errorsCount);
+      gradleCallErrorsCount += 1;
+      gradleCallSpan.setAttribute("error.count", gradleCallErrorsCount);
       gradleCallSpan.recordException(t);
       gradleCallSpan.setStatus(StatusCode.ERROR);
-      syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).setAttribute("error.count", errorsCount);
+      syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).setAttribute("error.count", gradleCallErrorsCount);
       throw t;
     }
     finally {
-      final long timeInMs = (System.currentTimeMillis() - startTime);
+      final long gradleCallTimeInMs = (System.currentTimeMillis() - gradleCallStartTime);
+      LOG.debug(String.format("Gradle data obtained in %d ms", gradleCallTimeInMs));
       syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).end();
-      ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.GRADLE_CALL, timeInMs, errorsCount);
-      LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
+      ExternalSystemSyncActionsCollector.logPhaseFinished(
+        null, activityId, Phase.GRADLE_CALL, gradleCallTimeInMs, gradleCallErrorsCount);
       gradleCallSpan.end();
     }
 
     GradleOpenTelemetryTraceService.exportOpenTelemetryTraces(allModels.getOpenTelemetryTraces());
 
     resolverCtx.checkCancelled();
+
     if (useCustomSerialization) {
       allModels.initToolingSerializer();
     }
-
     allModels.setBuildEnvironment(buildEnvironment);
-    final long startDataConversionTime = System.currentTimeMillis();
-    int resolversErrorsCount = 0;
 
-    Span projectDataProcessingSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
+    final long projectResolversStartTime = System.currentTimeMillis();
+
+    syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
+    ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
+
+    int projectResolversErrorsCount = 0;
+
+    Span projectResolversSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleProjectResolverDataProcessing")
       .startSpan();
     try (GradleTargetPathsConverter pathsConverter = new GradleTargetPathsConverter(executionSettings);
-         Scope ignore = projectDataProcessingSpan.makeCurrent()) {
+         Scope ignore = projectResolversSpan.makeCurrent()) {
       pathsConverter.mayBeApplyTo(allModels);
       return convertData(allModels, executionSettings, resolverCtx, gradleVersion, projectResolverChain, isBuildSrcProject,
                          useCustomSerialization);
     }
     catch (Throwable t) {
-      resolversErrorsCount += 1;
-      projectDataProcessingSpan.recordException(t);
-      projectDataProcessingSpan.setStatus(StatusCode.ERROR);
+      projectResolversErrorsCount += 1;
+      projectResolversSpan.recordException(t);
+      projectResolversSpan.setStatus(StatusCode.ERROR);
       throw t;
     }
     finally {
-      final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
-      LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));
-      projectDataProcessingSpan.end();
+      final long projectResolversTimeInMs = (System.currentTimeMillis() - projectResolversStartTime);
+      LOG.debug(String.format("Project data resolved in %d ms", projectResolversTimeInMs));
       syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name()).end();
-      ExternalSystemSyncActionsCollector.logPhaseFinished(null, activityId, Phase.PROJECT_RESOLVERS, timeConversionInMs,
-                                                          resolversErrorsCount);
+      ExternalSystemSyncActionsCollector.logPhaseFinished(
+        null, activityId, Phase.PROJECT_RESOLVERS, projectResolversTimeInMs, projectResolversErrorsCount);
+      projectResolversSpan.end();
     }
   }
 
@@ -353,8 +361,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             boolean useCustomSerialization) {
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
 
-    syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
-    ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
     resolverCtx.setModels(allModels);
     extractExternalProjectModels(allModels, useCustomSerialization);
 
@@ -503,11 +509,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverCtx.checkCancelled();
       final long starResolveTime = System.currentTimeMillis();
       String modelContributorName = extension.getClass().getSimpleName();
-      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor",
-                                              (span) -> {
-                                                span.setAttribute("contributor.name", modelContributorName);
-                                                extension.accept(modifiableGradleProjectModel, resolverCtx);
-                                              });
+      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor", (span) -> {
+        span.setAttribute("contributor.name", modelContributorName);
+        extension.accept(modifiableGradleProjectModel, resolverCtx);
+      });
       final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
       LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
     });
