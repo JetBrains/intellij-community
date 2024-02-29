@@ -43,6 +43,11 @@ public class SealedInheritorsProviderTestGenerated extends AbstractSealedInherit
         runTest("testData/sealedInheritors/ambiguousSealedInterface/");
     }
 
+    @TestMetadata("ambiguousSimpleNamesInHierarchy")
+    public void testAmbiguousSimpleNamesInHierarchy() throws Exception {
+        runTest("testData/sealedInheritors/ambiguousSimpleNamesInHierarchy/");
+    }
+
     @TestMetadata("illegalDistributedSealedClass")
     public void testIllegalDistributedSealedClass() throws Exception {
         runTest("testData/sealedInheritors/illegalDistributedSealedClass/");
