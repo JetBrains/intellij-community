@@ -30,6 +30,12 @@ interface WebSymbolsContext {
     @JvmField
     val KIND_FRAMEWORK = "framework"
 
+    @JvmField
+    val VALUE_NONE = "none"
+
+    @JvmField
+    val WEB_SYMBOLS_CONTEXT_FILE = ".ws-context"
+
     @JvmStatic
     fun get(kind: ContextKind, location: VirtualFile, project: Project): ContextName? =
       findWebSymbolsContext(kind, location, project)
