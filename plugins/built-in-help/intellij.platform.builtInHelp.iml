@@ -34,6 +34,6 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.maven.server.indexer" />
-    <orderEntry type="library" name="fasterxml.jackson.dataformat.xml" level="project" />
+    <orderEntry type="library" name="jackson-dataformat-xml" level="project" />
   </component>
 </module>
