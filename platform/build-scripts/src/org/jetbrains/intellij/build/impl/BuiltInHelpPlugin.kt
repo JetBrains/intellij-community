@@ -15,7 +15,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 private const val MODULE_NAME = "intellij.platform.builtInHelp"
-private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
+private val LUCENE_LIBRARIES = setOf(
+  "lucene-queryparser",
+  "lucene-highlighter",
+  "lucene-memory",
+  "lucene-sandbox",
+  "lucene-queries"
+)
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
   val productName = context.applicationInfo.fullProductName
@@ -41,13 +47,17 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
       )
     }
     spec.withPatch { patcher, buildContext ->
-      patcher.patchModuleOutput(moduleName = MODULE_NAME,
-                                path = "META-INF/services/org.apache.lucene.codecs.Codec",
-                                content = "org.apache.lucene.codecs.lucene50.Lucene50Codec")
-      patcher.patchModuleOutput(moduleName = MODULE_NAME,
-                                path = "META-INF/plugin.xml",
-                                content = pluginXml(buildContext, pluginVersion),
-                                overwrite = true)
+      patcher.patchModuleOutput(
+        moduleName = MODULE_NAME,
+        path = "META-INF/services/org.apache.lucene.codecs.Codec",
+        content = "org.apache.lucene.codecs.lucene50.Lucene50Codec"
+      )
+      patcher.patchModuleOutput(
+        moduleName = MODULE_NAME,
+        path = "META-INF/plugin.xml",
+        content = pluginXml(buildContext, pluginVersion),
+        overwrite = true
+      )
     }
     LUCENE_LIBRARIES.forEach { spec.withProjectLibrary(it) }
   }
@@ -90,11 +100,15 @@ private val helpIndexerMutex = Mutex()
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
-      runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-              args = listOf(resourceRoot.resolve("search").toString(),
-                            resourceRoot.resolve("topics").toString()),
-              jvmArgs = emptyList(),
-              classPath = classPath)
+      runIdea(
+        context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+        args = listOf(
+          resourceRoot.resolve("search").toString(),
+          resourceRoot.resolve("topics").toString()
+        ),
+        jvmArgs = emptyList(),
+        classPath = classPath
+      )
     }
     writeNewZip(assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
