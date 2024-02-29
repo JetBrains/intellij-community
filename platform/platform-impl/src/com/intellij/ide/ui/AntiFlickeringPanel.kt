@@ -19,6 +19,7 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
   private var savedSize: Dimension? = null
   private var savedPreferredSize: Dimension? = null
   private var needToScroll: Rectangle? = null
+  private var isChildOpaque = false
 
   private var childWasAdded = false
   
@@ -43,11 +44,15 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
     savedSize = size
     savedPreferredSize = preferredSize
 
+    isChildOpaque = content.isOpaque
+    content.isOpaque = false
+
     val alarm = SingleAlarm({
                               savedSelfieImage = null
                               savedSize = null
                               savedPreferredSize = null
                               isOpaque = false
+                              content.isOpaque = isChildOpaque
                               revalidate()
                               needToScroll?.let {
                                 needToScroll = null

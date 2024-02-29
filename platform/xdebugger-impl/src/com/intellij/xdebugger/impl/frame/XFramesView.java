@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.HighlightingPassesCache;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -44,6 +45,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList.ItemWithSeparatorAbove;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -154,7 +156,9 @@ public final class XFramesView extends XDebugView {
       }
     });
 
-    myMainPanel.add(ScrollPaneFactory.createScrollPane(myFramesList), BorderLayout.CENTER);
+    Component framesList = DebuggerUIUtil.shouldUseAntiFlickeringPanel() ?
+                           new AntiFlickeringPanel(myFramesList) : myFramesList;
+    myMainPanel.add(ScrollPaneFactory.createScrollPane(framesList), BorderLayout.CENTER);
 
     myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
     myThreadComboBox.setSwingPopup(false);
@@ -400,6 +404,7 @@ public final class XFramesView extends XDebugView {
     myRefresh = event == SessionEvent.SETTINGS_CHANGED;
 
     if (event == SessionEvent.BEFORE_RESUME) {
+      DebuggerUIUtil.freezePaintingToReduceFlickering(myFramesList.getParent());
       return;
     }
 
