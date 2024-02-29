@@ -84,13 +84,6 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   }
 
   @Override
-  public @NotNull HighlightInfo.Builder toolId(@Nullable Object toolId) {
-    assertNotCreated();
-    this.toolId = toolId;
-    return this;
-  }
-
-  @Override
   public @NotNull HighlightInfo.Builder description(@NotNull String description) {
     assertNotCreated();
     assert escapedDescription == null : "description already set";
