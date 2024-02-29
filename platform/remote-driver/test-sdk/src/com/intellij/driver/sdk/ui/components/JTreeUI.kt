@@ -17,7 +17,7 @@ fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.
                                                               JTreeUiComponent::class.java)
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
-  private val fixture by lazy { driver.new(JTreeFixtureRef::class, robotService.robot, component) }
+  protected val fixture by lazy { driver.new(JTreeFixtureRef::class, robotService.robot, component) }
 
   private fun clickRow(row: Int) = fixture.clickRow(row)
   private fun rightClickRow(row: Int) = fixture.rightClickRow(row)
