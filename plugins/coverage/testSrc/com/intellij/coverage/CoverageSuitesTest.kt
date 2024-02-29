@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage
 
+import com.intellij.coverage.view.registerCoverageToolWindow
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -124,6 +125,7 @@ class CoverageSuitesTest : CoverageIntegrationBaseTest() {
 
   @Test
   fun `test opening several suites`(): Unit = runBlocking {
+    registerCoverageToolWindow(myProject)
     assertNoSuites()
     val ijSuite = loadIJSuite()
     val xmlSuite = loadXMLSuite()

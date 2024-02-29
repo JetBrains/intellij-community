@@ -20,6 +20,13 @@
     <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.coverage.CoverageLogger"/>
+    <toolWindow id="Coverage"
+                anchor="right"
+                factoryClass="com.intellij.coverage.view.CoverageToolWindowFactory"
+                icon="AllIcons.Toolwindows.ToolWindowCoverage"
+                secondary="true"
+                canCloseContents="true"
+                doNotActivateOnStart="true" />
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectCloseListener"/>
