@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull
 /**
  * Created by Egor.Malyshev on 7/17/2017.
  */
-
 @JacksonXmlRootElement(localName = "map")
 class HelpMap {
 

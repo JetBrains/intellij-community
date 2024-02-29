@@ -10,16 +10,18 @@ import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.store.FSDirectory
 import org.jsoup.Jsoup
-import java.io.File
 import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.extension
+import kotlin.io.path.isDirectory
 
 class HelpIndexer
 @Throws(IOException::class)
 internal constructor(indexDir: String) {
 
   private val writer: IndexWriter
-  private val queue = ArrayList<File>()
+  private val allowedExtensions = setOf("htm", "html")
 
   init {
     val dir = FSDirectory.open(Paths.get(indexDir))
@@ -28,48 +30,33 @@ internal constructor(indexDir: String) {
   }
 
   @Throws(IOException::class)
-  fun indexFileOrDirectory(fileName: String) {
+  fun indexFilesFromDirectory(dirName: String) {
 
-    addFiles(File(fileName))
+    Files.walk(Paths.get(dirName))
+      .filter { !it.isDirectory() && allowedExtensions.contains(it.extension) }
+      .map { it.toFile() }
+      .forEach { f ->
+        try {
+          val doc = Document()
+          val parsedDocument = Jsoup.parse(f, "UTF-8")
 
-    for (f in queue) {
-      try {
-        val doc = Document()
-        val parsedDocument = Jsoup.parse(f, "UTF-8")
+          val content = StringBuilder()
+          val lineSeparator = System.lineSeparator()
+          parsedDocument.body().getElementsByClass("article")[0].children()
+            .filterNot { it.hasAttr("data-swiftype-index") }
+            .forEach { content.append(it.text()).append(lineSeparator) }
 
-        val content = StringBuilder()
-        val lineSeparator = System.lineSeparator()
-        parsedDocument.body().getElementsByClass("article")[0].children()
-          .filterNot { it.hasAttr("data-swiftype-index") }
-          .forEach { content.append(it.text()).append(lineSeparator) }
+          doc.add(TextField("contents", content.toString(), Field.Store.YES))
+          doc.add(StringField("filename", f.name, Field.Store.YES))
+          doc.add(StringField("title", parsedDocument.title(), Field.Store.YES))
 
-        doc.add(TextField("contents", content.toString(), Field.Store.YES))
-        doc.add(StringField("filename", f.name, Field.Store.YES))
-        doc.add(StringField("title", parsedDocument.title(), Field.Store.YES))
-
-        writer.addDocument(doc)
-        println("Added: $f")
+          writer.addDocument(doc)
+          println("Added: $f")
+        }
+        catch (e: Throwable) {
+          println("Could not add: $f because ${e.message}")
+        }
       }
-      catch (e: Throwable) {
-        println("Could not add: $f because ${e.message}")
-      }
-    }
-    queue.clear()
-  }
-
-  private fun addFiles(file: File) {
-    if (file.isDirectory) {
-      val files = file.listFiles() ?: emptyArray()
-      for (f in files) {
-        addFiles(f)
-      }
-    }
-    else {
-      val filename = file.name.lowercase()
-      if (filename.endsWith(".htm") || filename.endsWith(".html")) {
-        queue.add(file)
-      }
-    }
   }
 
   @Throws(IOException::class)
@@ -82,13 +69,17 @@ internal constructor(indexDir: String) {
 
     private fun doIndex(dirToStore: String, dirToIndex: String) {
       val indexer = HelpIndexer(dirToStore)
-      indexer.indexFileOrDirectory(dirToIndex)
+      indexer.indexFilesFromDirectory(dirToIndex)
       indexer.closeIndex()
     }
 
     @Throws(IOException::class)
     @JvmStatic
     fun main(args: Array<String>) {
+      if (args.size < 2) {
+        println("Usage: HelpIndexer <dirToStore> <dirToIndex>")
+        return
+      }
       doIndex(args[0], args[1])
     }
   }
