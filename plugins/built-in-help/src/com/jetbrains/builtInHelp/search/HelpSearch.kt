@@ -24,7 +24,6 @@ import java.util.*
 
 
 class HelpSearch {
-
   companion object {
     private val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
 

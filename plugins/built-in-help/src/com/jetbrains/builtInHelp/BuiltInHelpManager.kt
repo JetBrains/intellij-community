@@ -19,9 +19,11 @@ import java.net.URISyntaxException
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+private val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
+
 @Suppress("unused")
 class BuiltInHelpManager : HelpManager() {
-  private val LOG = Logger.getInstance(javaClass)
+
   override fun invokeHelp(helpId: String?) {
     logWillOpenHelpId(helpId)
 
@@ -31,7 +33,7 @@ class BuiltInHelpManager : HelpManager() {
           helpId, StandardCharsets.UTF_8)
         else "top"
       }"
-      val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
+      val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.loadSetting(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
 
       var online = false
@@ -61,8 +63,8 @@ class BuiltInHelpManager : HelpManager() {
         val info = ApplicationInfo.getInstance()
         val productVersion = info.majorVersion + "." + info.minorVersion.substringBefore(".")
 
-        var baseUrl = Utils.getStoredValue(SettingsPage.OPEN_HELP_BASE_URL,
-                                           Utils.BASE_HELP_URL)
+        var baseUrl = Utils.loadSetting(SettingsPage.OPEN_HELP_BASE_URL,
+                                        Utils.BASE_HELP_URL)
 
         if (!baseUrl.endsWith("/")) baseUrl += "/"
 
@@ -77,7 +79,7 @@ class BuiltInHelpManager : HelpManager() {
       }
 
       val browserName = java.lang.String.valueOf(
-        Utils.getStoredValue(SettingsPage.USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")))
+        Utils.loadSetting(SettingsPage.USE_BROWSER, BuiltInHelpBundle.message("use.default.browser")))
 
       val browser = WebBrowserManager.getInstance().findBrowserById(browserName)
 

@@ -20,7 +20,6 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
   override fun isAccessible(request: HttpRequest): Boolean {
     return super.isAccessible(request) && request.uri().contains(prefix)
   }
-
   protected fun sendResource(
     resourceName: String,
     resourceLocation: String,

@@ -25,7 +25,6 @@ public class SettingsPage implements Configurable {
   public static final SettingKey USE_BROWSER = SettingKey.simple("bundled.help.use.specific.web.browser");
   @NonNls
   public static final SettingKey OPEN_HELP_BASE_URL = SettingKey.simple("bundled.help.open.web.site.base.url");
-
   private final SettingsPageUI ui = new SettingsPageUI();
 
   @Override
@@ -126,14 +125,14 @@ public class SettingsPage implements Configurable {
     }
 
     void apply() {
-      Utils.setStoredValue(OPEN_HELP_FROM_WEB, String.valueOf(openWebSite.isSelected()));
-      Utils.setStoredValue(USE_BROWSER, String.valueOf(webBrowserList.getSelectedItem()));
-      Utils.setStoredValue(OPEN_HELP_BASE_URL, baseUrl.getText());
+      Utils.saveSetting(OPEN_HELP_FROM_WEB, String.valueOf(openWebSite.isSelected()));
+      Utils.saveSetting(USE_BROWSER, String.valueOf(webBrowserList.getSelectedItem()));
+      Utils.saveSetting(OPEN_HELP_BASE_URL, baseUrl.getText());
       modified = false;
     }
 
     void reset() {
-      final String storedSelection = Utils.getStoredValue(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser"));
+      final String storedSelection = Utils.loadSetting(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser"));
       int totalItems = webBrowserList.getItemCount();
 
       for (int i = 0; i < totalItems; i++) {
@@ -143,8 +142,8 @@ public class SettingsPage implements Configurable {
         }
       }
 
-      openWebSite.setSelected(Boolean.parseBoolean(Utils.getStoredValue(OPEN_HELP_FROM_WEB, "true")));
-      baseUrl.setText(Utils.getStoredValue(OPEN_HELP_BASE_URL, Utils.BASE_HELP_URL));
+      openWebSite.setSelected(Boolean.parseBoolean(Utils.loadSetting(OPEN_HELP_FROM_WEB, "true")));
+      baseUrl.setText(Utils.loadSetting(OPEN_HELP_BASE_URL, Utils.BASE_HELP_URL));
       modified = false;
     }
   }
