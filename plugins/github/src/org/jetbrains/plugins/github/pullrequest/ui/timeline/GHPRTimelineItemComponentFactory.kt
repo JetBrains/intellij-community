@@ -169,9 +169,9 @@ class GHPRTimelineItemComponentFactory(private val timelineVm: GHPRTimelineViewM
       add(createReviewStatus(review))
     }
     val actionsPanel = HorizontalListPanel(8).apply {
-      if (review.canEdit) add(CodeReviewCommentUIUtil.createEditButton {
+      if (review.canEdit && !review.bodyHtml.value.isEmpty()) {
         review.editBody()
-      })
+      }
     }
     val reviewItem = createTimelineItem(avatarIconsProvider, review.author, review.createdAt, contentPanel, actionsPanel)
 
