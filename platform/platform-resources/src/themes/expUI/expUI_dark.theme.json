@@ -221,16 +221,16 @@
 
     "Code": {
       "Inline": {
-        "backgroundColor": "Grey10",
+        "backgroundColor": "Gray10",
         "backgroundOpacity": 15
       },
       "Block": {
         "backgroundOpacity": 100,
-        "borderColor":"Grey3",
+        "borderColor":"Gray3",
         "EditorPane": {
-          "backgroundColor": "Grey5",
+          "backgroundColor": "Gray5",
           "backgroundOpacity": 20,
-          "borderColor": "Grey3"
+          "borderColor": "Gray3"
         }
       }
     },
