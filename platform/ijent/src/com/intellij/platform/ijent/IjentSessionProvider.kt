@@ -196,7 +196,8 @@ private suspend fun doBootstrapOverShellSession(
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true).joinToString(" ")
   val commandLineArgs =
     """cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))}""" +
-    """; exec "$(getent passwd "${'$'}(whoami)" | cut -d: -f7)" -c ${posixQuote(joinedCmd)}""" +
+    """; export SHELL="${'$'}(getent passwd "${'$'}(whoami)" | cut -d: -f7)" """ +
+    """; exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}""" +
     "\n"
   LOG.trace { "Executing IJent inside a shell: ${commandLineArgs.trimEnd()}" }
 
