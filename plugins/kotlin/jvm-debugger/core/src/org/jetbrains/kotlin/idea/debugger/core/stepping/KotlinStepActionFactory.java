@@ -79,6 +79,12 @@ public final class KotlinStepActionFactory {
             }
 
             @Override
+            public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
+                LightOrRealThreadInfo filter = getThreadFilterFromContextForStepping(suspendContext);
+                return filter != null ? filter : super.getThreadFilterFromContext(suspendContext);
+            }
+
+            @Override
             public Object createCommandToken() {
                 return StatisticsStorage.createSteppingToken(SteppingAction.STEP_INTO, Engine.KOTLIN);
             }
