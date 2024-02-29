@@ -23,7 +23,8 @@ internal class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
         Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION, Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION_DEFAULT)
 
       set(value) {
-        PropertiesComponent.getInstance().setValue(Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION, value, true)
+        PropertiesComponent.getInstance().setValue(Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION, value,
+                                                   Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION_DEFAULT)
         ApplicationManager.getApplication().messageBus.syncPublisher(TERMINAL_COMMAND_HANDLER_TOPIC).modeChanged()
       }
   }
