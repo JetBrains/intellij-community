@@ -304,7 +304,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     // appLoaded not only provides starter, but also loads app, that's why it is here
     launch {
       if (ConfigImportHelper.isFirstSession()) {
-        IdeStartupWizardCollector.logExperimentState()
+        IdeStartupWizardCollector.logWizardExperimentState()
       }
     }
 

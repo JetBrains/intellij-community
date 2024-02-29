@@ -2,7 +2,6 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -12,11 +11,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.util.MathUtil
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.Duration
@@ -32,7 +28,7 @@ val isIdeStartupDialogEnabled: Boolean
 val isIdeStartupWizardEnabled: Boolean
   get() = !ApplicationManagerEx.isInIntegrationTest() &&
           System.getProperty("intellij.startup.wizard", "true").toBoolean() &&
-          IdeStartupExperiment.isExperimentEnabled()
+          IdeStartupExperiment.isWizardExperimentEnabled()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
@@ -123,7 +119,7 @@ enum class StartupWizardStage {
 }
 
 object IdeStartupWizardCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("wizard.startup", 6)
+  val GROUP = EventLogGroup("wizard.startup", 7)
   override fun getGroup() = GROUP
 
   private val initialStartSucceeded = GROUP.registerEvent("initial_start_succeeded")
@@ -143,9 +139,9 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
     EventFields.Boolean("enabled")
   )
 
-  internal fun logExperimentState() {
+  internal fun logWizardExperimentState() {
     assert(ConfigImportHelper.isFirstSession())
-    val isEnabled = IdeStartupExperiment.isExperimentEnabled()
+    val isEnabled = IdeStartupExperiment.isWizardExperimentEnabled()
     LOG.info("IDE startup isEnabled = $isEnabled," +
              " IDEStartupKind = ${IdeStartupExperiment.experimentGroupKind}, " +
              "IDEStartup = ${IdeStartupExperiment.experimentGroup}")
@@ -164,66 +160,5 @@ object IdeStartupWizardCollector : CounterUsagesCollector() {
 
   fun logStartupStageTime(stage: StartupWizardStage, duration: Duration) {
     wizardStageEnded.log(stage, duration.toMillis())
-  }
-}
-
-private object IdeStartupExperiment {
-  enum class GroupKind {
-    Experimental,
-    Control,
-    Undefined
-  }
-
-  @Suppress("DEPRECATION")
-  private val numberOfGroups = when {
-    PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro() -> 10
-    else -> 3
-  }
-
-  @Suppress("DEPRECATION")
-  private fun getGroupKind(group: Int) = when {
-    PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro() -> when (group) {
-      in 0..7 -> GroupKind.Experimental
-      8, 9 -> GroupKind.Control
-      else -> GroupKind.Undefined
-    }
-    else -> when (group) {
-      0, 1 -> GroupKind.Experimental
-      2 -> GroupKind.Control
-      else -> GroupKind.Undefined
-    }
-  }
-
-  private fun asBucket(s: String) = MathUtil.nonNegativeAbs(s.hashCode()) % 256
-
-  private fun getBucket(): Int {
-    val deviceId = LOG.runAndLogException {
-      DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "FUS")
-    } ?: return 0
-    return asBucket(deviceId)
-  }
-
-  val experimentGroup by lazy {
-    val registryExperimentGroup = (System.getProperty("ide.transfer.wizard.experiment.group", "-1").toIntOrNull() ?: -1)
-      .coerceIn(-1, numberOfGroups - 1)
-    if (registryExperimentGroup >= 0) return@lazy registryExperimentGroup
-
-    val bucket = getBucket()
-    val experimentGroup = bucket % numberOfGroups
-    experimentGroup
-  }
-
-  val experimentGroupKind: GroupKind by lazy {
-    getGroupKind(experimentGroup)
-  }
-
-  fun isExperimentEnabled(): Boolean {
-    @Suppress("DEPRECATION")
-    if (PlatformUtils.isCLion()) return false
-    return when (experimentGroupKind) {
-      GroupKind.Experimental -> true
-      GroupKind.Control -> false
-      GroupKind.Undefined -> true
-    }
   }
 }
