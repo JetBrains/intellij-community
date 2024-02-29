@@ -42,6 +42,11 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     @Internal
     fun isOpenedInBulk(file: VirtualFile): Boolean = file.getUserData(OPENED_IN_BULK) != null
 
+    internal val FIRST_IN_BULK: Key<Boolean> = Key.create("EditorSplitters.first.in.bulk")
+
+    @Internal
+    fun isFirstInBulk(file: VirtualFile): Boolean = file.getUserData(FIRST_IN_BULK) != null
+
     @JvmStatic
     @RequiresEdt
     fun performWhenLoaded(editor: Editor, runnable: Runnable) {
