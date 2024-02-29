@@ -11,18 +11,19 @@ import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KotlinInlineAnonymousFunctionHandler : AbstractKotlinInlineFunctionHandler<KtFunction>() {
-    override fun canInlineKotlinFunction(function: KtFunction): Boolean = function is KtNamedFunction && function.nameIdentifier == null ||
-            function is KtFunctionLiteral
+    override fun canInlineKotlinFunction(function: KtFunction): Boolean =
+        function is KtNamedFunction && function.nameIdentifier == null || function is KtFunctionLiteral
 
     override fun inlineKotlinFunction(project: Project, editor: Editor?, function: KtFunction) {
         val call = KotlinInlineAnonymousFunctionProcessor.findCallExpression(function)
         if (call == null) {
-            val message = if (function is KtFunctionLiteral)
-                KotlinBundle.message("refactoring.cannot.be.applied.to.lambda.expression.without.invocation", refactoringName)
-            else
-                KotlinBundle.message("refactoring.cannot.be.applied.to.anonymous.function.without.invocation", refactoringName)
+            val key = if (function is KtFunctionLiteral) {
+                "refactoring.cannot.be.applied.to.lambda.expression.without.invocation"
+            } else {
+                "refactoring.cannot.be.applied.to.anonymous.function.without.invocation"
+            }
 
-            return showErrorHint(project, editor, message)
+            return showErrorHint(project, editor, KotlinBundle.message(key, refactoringName))
         }
 
         KotlinInlineAnonymousFunctionProcessor(function, call, editor, project).run()

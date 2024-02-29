@@ -157,28 +157,30 @@ class CodeInliner(
 
         val introduceValueForParameters = processValueParameterUsages(callableForParameters)
         introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType?.first, introduceValueForParameters)
-        processTypeParameterUsages(call as? KtCallElement, (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
-                                   { it.nameAsSafeName },
-                                   {
-                                       analyze(callableForParameters) {
-                                           call.resolveCall()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.getSymbol())
-                                       }
-                                   },
-                                   {
-                                       analyze(call) {
-                                           it.render(position = Variance.INVARIANT)
-                                       }
-                                   },
-                                   {
-                                       analyze(call) {
-                                           it.getArrayElementType() != null
-                                       }
-                                   },
-                                   {
-                                       analyze(call) {
-                                           (it as? KtNonErrorClassType)?.classId?.asSingleFqName()?.asString()
-                                       }
-                                   }
+        processTypeParameterUsages(
+            callElement = call as? KtCallElement,
+            typeParameters = (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
+            namer = { it.nameAsSafeName },
+            typeRetriever = {
+                analyze(callableForParameters) {
+                    call.resolveCall()?.singleFunctionCallOrNull()?.typeArgumentsMapping?.get(it.getSymbol())
+                }
+            },
+            renderType = {
+                analyze(call) {
+                    it.render(position = Variance.INVARIANT)
+                }
+            },
+            isArrayType = {
+                analyze(call) {
+                    it.getArrayElementType() != null
+                }
+            },
+            renderClassifier = {
+                analyze(call) {
+                    (it as? KtNonErrorClassType)?.classId?.asSingleFqName()?.asString()
+                }
+            }
         )
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
@@ -220,6 +222,7 @@ class CodeInliner(
         endOfScope: Int,
     ) {
         val context = declarations.first()
+        val declaration2Name = mutableMapOf<KtNamedDeclaration, String>()
         analyze(context) {
             val nameValidator = KotlinDeclarationNameValidator(
                 context,
@@ -231,16 +234,18 @@ class CodeInliner(
             for (declaration in declarations) {
                 val oldName = declaration.name
                 if (oldName != null && !names.add(oldName)) {
-                    val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
-                    for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
-                        if (reference.element.startOffset < endOfScope) {
-                            reference.handleElementRename(newName)
-                        }
-                    }
-
-                    declaration.nameIdentifier?.replace(psiFactory.createNameIdentifier(newName))
+                    declaration2Name[declaration] = KotlinNameSuggester.suggestNameByName(oldName, validator)
                 }
             }
+        }
+        declaration2Name.forEach { declaration, newName ->
+            for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
+                if (reference.element.startOffset < endOfScope) {
+                    reference.handleElementRename(newName)
+                }
+            }
+
+            declaration.nameIdentifier?.replace(psiFactory.createNameIdentifier(newName))
         }
     }
 

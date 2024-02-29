@@ -239,7 +239,8 @@ abstract class AbstractCodeInliner<TCallElement : KtElement, Parameter : Any, Ko
             codeToInline.mainExpression = psiFactory.buildExpression {
                 appendFixedText("if (")
                 appendExpression(receiver)
-                appendFixedText("!=null) {")
+                appendFixedText("!=null)")
+                appendFixedText(" {")
                 with(codeToInline) {
                     appendExpressionsFromCodeToInline(postfixForMainExpression = "\n")
                 }

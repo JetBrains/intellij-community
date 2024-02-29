@@ -116,20 +116,18 @@ class CodeInliner (
 
         val introduceValuesForParameters = processValueParameterUsages(callableForParameters)
 
-        processTypeParameterUsages(resolvedCall.call.callElement as? KtCallElement,
-                                   resolvedCall.resultingDescriptor.original.typeParameters,
-                                   { it.name },
-                                   { resolvedCall.typeArguments[it] },
-
-                                   { IdeDescriptorRenderers.SOURCE_CODE.renderType(it) },
-                                   { KotlinBuiltIns.isArray(it) },
-                                   {
-                                       it.constructor.declarationDescriptor?.let {
-                                           IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(
-                                               it
-                                           )
-                                       }
-                                   }
+        processTypeParameterUsages(
+            callElement = resolvedCall.call.callElement as? KtCallElement,
+            typeParameters = resolvedCall.resultingDescriptor.original.typeParameters,
+            namer = { it.name },
+            typeRetriever = { resolvedCall.typeArguments[it] },
+            renderType = { IdeDescriptorRenderers.SOURCE_CODE.renderType(it) },
+            isArrayType = { KotlinBuiltIns.isArray(it) },
+            renderClassifier = {
+                it.constructor.declarationDescriptor?.let {
+                    IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(it)
+                }
+            }
         )
 
         val lexicalScopeElement = callElement.parentsWithSelf
