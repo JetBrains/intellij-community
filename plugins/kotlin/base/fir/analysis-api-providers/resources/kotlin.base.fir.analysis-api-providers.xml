@@ -7,9 +7,13 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinGlobalModificationService"/>
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinSealedInheritorsProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinSealedInheritorsProviderFactory"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDirectInheritorsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinDirectInheritorsProvider"/>
 
     <projectService
             serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService"/>
