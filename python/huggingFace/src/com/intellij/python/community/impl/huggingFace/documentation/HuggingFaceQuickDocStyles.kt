@@ -1,8 +1,8 @@
 package com.intellij.python.community.impl.huggingFace.documentation
 
-import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.scale.JBUIScale
 import org.intellij.lang.annotations.Language
 
 /**
@@ -17,31 +17,36 @@ import org.intellij.lang.annotations.Language
  */
 @Suppress("SpellCheckingInspection")
 object HuggingFaceQuickDocStyles {  // see PY-70541
+  private fun scale(value: Int): Int = JBUIScale.scale(value)
+
   const val HF_PRE_TAG_CLASS = "word-break-pre-class"
   const val HF_P_TAG_CLASS = "increased-margin-p"
   const val CODE_DIV_CLASS = "code-fence-container"
   const val QUOTE_CLASS = "blockquote-inner"
-  const val HF_GRAYED_CLASS = "grayed-hf"
   const val HF_CONTENT_CLASS = "hf-content"
   const val NBHP = "&#8209;"
   const val HAIR_SPACE = "&ensp;"
-
-  private val spacing = DocumentationHtmlUtil.contentSpacing
+  val LINK_TOP_MARGIN = scale(6)
 
   @Language("CSS")
   @NlsSafe
   private val styleContent = listOf(
-    "$HF_P_TAG_CLASS { margin-top: 4px; margin-bottom: 6px; }",
-    ".$CODE_DIV_CLASS { padding-top: 4px; padding-bottom: 4px;  padding-left: 4px; " +
+    "$HF_P_TAG_CLASS { margin-top: ${scale(4)}px; margin-bottom: ${scale(6)}px; }",
+
+    ".$CODE_DIV_CLASS { padding-top: ${scale(4)}px; padding-bottom: ${scale(4)}px;  padding-left: ${scale(4)}px; " +
     "overflow-x: auto; background-color: rgba(0, 0, 0, 0.05); }",
+
     ".$CODE_DIV_CLASS code { padding-top: 0px; padding-bottom: 0px;  padding-left: 0px; " +
     "max-width: 100%; white-space: pre-wrap; word-wrap: break-word;  }",
+
     ".$HF_PRE_TAG_CLASS { white-space: pre-wrap; word-break: break-all; }",
-    ".$QUOTE_CLASS { padding-left: 10px; }",
-    ".$HF_GRAYED_CLASS { color: #909090; display: inline; white-space: nowrap; " +
-    "word-break: keep-all; padding-bottom: ${spacing}px; padding-top: -4px; }",
-    ".$HF_CONTENT_CLASS { padding: 5px 0px 8px; max-width: 100% }",
-    "blockquote { border-left: 4px solid #cccccc; }",
+
+    ".$QUOTE_CLASS { padding-left: ${scale(10)}px; }",
+
+    ".$HF_CONTENT_CLASS { padding: ${scale(5)}px 0px ${scale(8)}px; max-width: 100% }",
+
+    "blockquote { border-left: ${scale(4)}px solid #cccccc; }",
+
     "blockquote p { border-left: none; }",
     ).joinToString(separator = " ")
 
