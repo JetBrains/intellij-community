@@ -18,6 +18,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
@@ -26,7 +27,10 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
@@ -320,6 +324,7 @@ public class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
       """).getVirtualFile();
     IdeaTestUtil.compileFile(VfsUtilCore.virtualToIoFile(libSrc), VfsUtilCore.virtualToIoFile(classesDir));
     VfsUtil.markDirtyAndRefresh(false, true, true, classesDir);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject()); // wait for indexes after VFS refresh
 
     WriteAction.run(() -> libSrc.delete(null));
 
