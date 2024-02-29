@@ -8,7 +8,11 @@ import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -154,26 +158,34 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
         )
     }
 
+    @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
     private fun createPsiType(ktTypeText: String, originalFunction: KtCallableDeclaration): PsiType {
         val project = originalFunction.project
         val codeFragment = KtPsiFactory(project).createTypeCodeFragment(ktTypeText, originalFunction)
-        return analyze(codeFragment) {
-            val ktType = codeFragment.getContentElement()?.getKtType()!!
-            val type = ktType.asPsiType(originalFunction, true)!!
-            if (type is PsiPrimitiveType) return@analyze type
-            val anno = when (ktType.nullability) {
-                KtTypeNullability.NON_NULLABLE -> AnnotationUtil.NOT_NULL
-                KtTypeNullability.NULLABLE -> AnnotationUtil.NULLABLE
-                KtTypeNullability.UNKNOWN -> null
+        return allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(codeFragment) {
+                    val ktType = codeFragment.getContentElement()?.getKtType()!!
+                    val type = ktType.asPsiType(originalFunction, true)!!
+                    if (type is PsiPrimitiveType) return@analyze type
+                    val anno = when (ktType.nullability) {
+                        KtTypeNullability.NON_NULLABLE -> AnnotationUtil.NOT_NULL
+                        KtTypeNullability.NULLABLE -> AnnotationUtil.NULLABLE
+                        KtTypeNullability.UNKNOWN -> null
+                    }
+                    if (anno != null && !type.hasAnnotation(anno)) {
+                        val nullabilityAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$anno", originalFunction)
+                        val annotationType = nullabilityAnno.resolveAnnotationType()
+                        if (annotationType != null) {
+                            type.annotate(TypeAnnotationProvider.Static.create(arrayOf(nullabilityAnno, *type.annotations)))
+                        } else {
+                            type
+                        }
+                    } else {
+                        type
+                    }
+                }
             }
-            if (anno != null && !type.hasAnnotation(anno)) {
-                val nullabilityAnno = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$anno", originalFunction)
-                val annotationType = nullabilityAnno.resolveAnnotationType()
-                if (annotationType != null) {
-                    type.annotate(TypeAnnotationProvider.Static.create(arrayOf(nullabilityAnno, *type.annotations)))
-                } else type
-            }
-            else type
         }
     }
 
