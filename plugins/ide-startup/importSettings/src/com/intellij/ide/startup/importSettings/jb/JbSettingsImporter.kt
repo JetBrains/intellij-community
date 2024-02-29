@@ -35,6 +35,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.application
 import com.intellij.util.io.copy
 import kotlinx.coroutines.CoroutineScope
 import java.io.FileInputStream
@@ -215,12 +216,18 @@ class JbSettingsImporter(private val configDirPath: Path,
 
     withExternalStreamProvider(arrayOf(storageManager, defaultProjectStore.storageManager)) {
       progressIndicator.checkCanceled()
-      componentStore.reloadComponents(changedFileSpecs = componentFiles + schemeFiles,
-                                      deletedFileSpecs = emptyList(),
-                                      componentNames2reload = appComponentNames,
-                                      forceReloadNonReloadable = true)
-      defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
+      application.runReadAction {
+        componentStore.reloadComponents(changedFileSpecs = componentFiles + schemeFiles,
+                                        deletedFileSpecs = emptyList(),
+                                        componentNames2reload = appComponentNames,
+                                        forceReloadNonReloadable = true)
+      }
+      progressIndicator.checkCanceled()
+      application.runReadAction {
+        defaultProjectStore.reinitComponents(projectDefaultComponentNames, setOf(defaultProjectStorage), emptySet())
+      }
     }
+    progressIndicator.checkCanceled()
     JbImportSpecialHandler.postProcess(configDirPath)
     RegistryManager.getInstanceAsync().resetValueChangeListener()
 
@@ -243,7 +250,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     return retval
   }
 
-  private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: suspend () -> Unit) {
+  private suspend fun withExternalStreamProvider(storageManagers: Array<StateStorageManager>, action: () -> Unit) {
     val provider = ImportStreamProvider(configDirPath)
     for (storageManager in storageManagers) {
       storageManager.addStreamProvider(provider)
