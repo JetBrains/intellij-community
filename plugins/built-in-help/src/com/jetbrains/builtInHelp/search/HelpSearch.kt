@@ -68,7 +68,7 @@ class HelpSearch {
 
             val results = ArrayList<HelpSearchResult>()
             for (i in hits.indices) {
-              val doc = searcher.doc(hits[i].doc)
+              val doc = searcher.storedFields().document(hits[i].doc)
               val contentValue = buildString {
                 append(highlighter.getBestFragment(
                   analyzer, "contents", doc.get("contents")
