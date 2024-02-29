@@ -8,12 +8,13 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.formatting.service.AsyncDocumentFormattingService
 import com.intellij.formatting.service.AsyncFormattingRequest
 import com.intellij.formatting.service.FormattingService
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.EditorLastActionTracker
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
@@ -35,9 +36,10 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val NAME: String = PyBundle.message("black.formatting.service.name")
     val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
     const val NOTIFICATION_GROUP_ID = "Black Formatter Integration"
+    val FEATURES: Set<FormattingService.Feature> = setOf(FormattingService.Feature.FORMAT_FRAGMENTS)
   }
 
-  override fun getFeatures(): Set<FormattingService.Feature> = setOf()
+  override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
 
   override fun canFormat(source: PsiFile): Boolean {
     if (!Registry.`is`("black.formatter.support.enabled")) return false
@@ -64,6 +66,8 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val project = formattingContext.project
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
     val sdk = blackConfig.getSdk()
+    val editor = PsiEditorUtil.findEditor(file)
+    val isUserInitiatedReformat = EditorLastActionTracker.getInstance().lastActionId == IdeActions.ACTION_EDITOR_REFORMAT
 
     if (sdk == null) {
       val message = PyBundle.message("black.sdk.not.configured.error", project.name)
@@ -72,25 +76,30 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
       return null
     }
 
-    val document = ReadAction.compute<Document?, RuntimeException> {
-      PsiDocumentManager.getInstance(project).getDocument(file)
-    }
+    val document = PsiDocumentManager.getInstance(project).getDocument(file)
     if (document == null) {
       LOG.warn("Document for file ${file.name} is null")
       return null
     }
 
-    val text = document.text
+    val text = formattingRequest.documentText
 
-    // Expand the formatting range to the whole file until we find a reliable way to reformat fragment. See PY-62111
-    val formattingRange = TextRange(0, document.textLength)
+    val formattingRange = if (formattingRequest.formattingRanges.size > 1) {
+      TextRange(0, text.length)
+    }
+    else {
+      formattingRequest.formattingRanges[0]
+    }
 
-    val fragment = runCatching { document.getText(formattingRange) }.getOrNull()
+    val isFormatFragmentAction = isFormatFragmentAction(text, formattingRange)
+
+    // allow to reformat fragments only for user-initiated reformats to avoid problems with implicit reformats on various actions
+    if (isFormatFragmentAction && !isUserInitiatedReformat) return null
+
+    val fragment = runCatching { text.substring(formattingRange.startOffset, formattingRange.endOffset) }.getOrNull()
     if (fragment.isNullOrBlank()) return null
 
-    val editor = PsiEditorUtil.findEditor(file)
-
-    val blackFormattingRequest = if (isFormatFragmentAction(document, formattingRange))
+    val blackFormattingRequest = if (isFormatFragmentAction)
       BlackFormattingRequest.Fragment(fragment, vFile)
     else
       BlackFormattingRequest.File(fragment, vFile)
@@ -112,9 +121,13 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
                   formattedFragment
                 }
               }
-              formattingRequest.onTextReady(formattedDocumentText)
               val message = buildNotificationMessage(document, formattedDocumentText)
               showFormattedLinesInfo(editor, message, false)
+              if (formattedDocumentText == text) { // if text is unchanged, pass null, see .onTextReady(...) doc
+                formattingRequest.onTextReady(null)
+              } else {
+                formattingRequest.onTextReady(formattedDocumentText)
+              }
             }
             is BlackFormattingResponse.Failure -> {
               LOG.debug(response.getLoggingMessage())
@@ -180,8 +193,8 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     }
   }
 
-  private fun isFormatFragmentAction(document: Document, range: TextRange): Boolean =
-    range.length != document.textLength
+  private fun isFormatFragmentAction(text: CharSequence, range: TextRange): Boolean =
+    range.length != text.length
 
   override fun getNotificationGroupId(): String = NOTIFICATION_GROUP_ID
 
