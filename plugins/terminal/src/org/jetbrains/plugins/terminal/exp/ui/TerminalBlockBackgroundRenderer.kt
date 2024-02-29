@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalUi
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.Paint
 import java.awt.geom.Rectangle2D
 
 /**
@@ -37,12 +38,24 @@ class TerminalBlockBackgroundRenderer private constructor(
 
     val g2d = g.create() as Graphics2D
     try {
-      val paint = gradientCache?.getTexture(g2d, width) ?: editor.colorsScheme.getColor(backgroundKey!!)
-      g2d.paint = paint
-      g2d.fill(rect)
+      getBlockBackgroundPaint(editor, g2d, width, gradientCache, backgroundKey)?.let {
+        g2d.paint = it
+        g2d.fill(rect)
+      }
     }
     finally {
       g2d.dispose()
     }
   }
+}
+
+internal fun getBlockBackgroundPaint(editor: Editor,
+                                     g2d: Graphics2D,
+                                     blockWidth: Int,
+                                     gradientCache: GradientTextureCache?,
+                                     backgroundKey: ColorKey?): Paint? {
+  return if (gradientCache != null)
+    gradientCache.getTexture(g2d, blockWidth)
+  else
+    editor.colorsScheme.getColor(backgroundKey!!)
 }
