@@ -1542,6 +1542,11 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
             runTest("../testData/smart/ThisConstructorArgument.kt");
         }
 
+        @TestMetadata("TypesWithInstances.kt")
+        public void testTypesWithInstances() throws Exception {
+            runTest("../testData/smart/TypesWithInstances.kt");
+        }
+
         @TestMetadata("UnresolvedExpectedType.kt")
         public void testUnresolvedExpectedType() throws Exception {
             runTest("../testData/smart/UnresolvedExpectedType.kt");
