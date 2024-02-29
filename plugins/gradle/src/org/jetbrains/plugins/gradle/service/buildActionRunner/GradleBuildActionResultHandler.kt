@@ -1,75 +1,61 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.buildActionRunner
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.IntermediateResultHandler
 import org.gradle.tooling.ResultHandler
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import java.util.concurrent.ArrayBlockingQueue
+import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @ApiStatus.Internal
 class GradleBuildActionResultHandler(
-  private val resolverCtx: ProjectResolverContext,
+  private val resolverCtx: DefaultProjectResolverContext,
   private val listeners: List<GradleBuildActionListener>
 ) {
 
   private val buildFinishWaiter = CountDownLatch(1)
 
-  /**
-   * This queue is used to synchronize the result of the models from the result handler
-   * passed to the [org.gradle.tooling.BuildActionExecuter.Builder.projectsLoaded] method of the BuildActionExecutor.
-   * Either the result or an exception will be added to the queue in the handler.
-   * This will then be picked up and handled by the thread handling sync.
-   */
-  private val resultQueue = ArrayBlockingQueue<Any>(1)
+  private val isBuildActionInterrupted = AtomicBoolean(true)
+  private val buildFailure = AtomicReference<Throwable>(null)
 
-  /**
-   * Every second check to ensure the user didn't cancel the operation.
-   * If something goes really wrong with the Gradle connection threads,
-   * then at least the user should be able to cancel the refresh process.
-   */
-  private fun takeQueueResultBlocking(): Any {
-    var obtainedResult: Any? = null
-    while (obtainedResult == null) {
-      resolverCtx.checkCancelled()
-      obtainedResult = resultQueue.poll(1, TimeUnit.SECONDS)
-    }
-    return obtainedResult
-  }
-
-  fun getResultBlocking(): AllModels {
+  fun waitForBuildFinish() {
     // Wait for the last event during the Gradle build action execution
     ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter)
-    // Take a result of the Gradle build action execution
-    val obtainedResult = takeQueueResultBlocking()
-    // If we have an exception, pass the failure up to be dealt with by the ExternalSystem
-    if (obtainedResult is Throwable) {
-      throw obtainedResult
+
+    /**
+     * If we have an exception, pass the failure up to be dealt with by the ExternalSystem
+     *
+     * But ignore all failures that don't interrupt build action.
+     * These failures will be present in the Gradle build output.
+     */
+    val buildFailure = buildFailure.get()
+    if (buildFailure != null && isBuildActionInterrupted.get()) {
+      throw buildFailure
     }
-    // If we have a result, return it
-    return obtainedResult as AllModels
   }
 
-  fun createProjectLoadedHandler(): IntermediateResultHandler<AllModels> {
-    return IntermediateResultHandler { models ->
+  fun createProjectLoadedHandler(): IntermediateResultHandler<GradleModelHolderState> {
+    return IntermediateResultHandler { state ->
       try {
-        listeners.forEach { it.onProjectLoaded(models) }
+        resolverCtx.models.addState(state)
+        listeners.forEach { it.onProjectLoaded() }
       }
       catch (e: ProcessCanceledException) {
-        resolverCtx.cancellationTokenSource?.cancel()
+        resolverCtx.cancellationTokenSource.cancel()
       }
     }
   }
 
-  fun createBuildFinishedHandler(): IntermediateResultHandler<AllModels> {
-    return IntermediateResultHandler { models ->
-      resultQueue.add(models)
+  fun createBuildFinishedHandler(): IntermediateResultHandler<GradleModelHolderState> {
+    return IntermediateResultHandler { state ->
+      resolverCtx.models.addState(state)
+      isBuildActionInterrupted.set(false)
       listeners.forEach { it.onBuildCompleted() }
     }
   }
@@ -84,8 +70,9 @@ class GradleBuildActionResultHandler(
        */
       override fun onComplete(result: Any?) {
         try {
-          if (result != null) {
-            resultQueue.add(result)
+          if (result is GradleModelHolderState) {
+            resolverCtx.models.addState(result)
+            isBuildActionInterrupted.set(false)
             listeners.forEach { it.onBuildCompleted() }
           }
         }
@@ -96,7 +83,7 @@ class GradleBuildActionResultHandler(
 
       override fun onFailure(failure: GradleConnectionException) {
         try {
-          resultQueue.add(failure)
+          buildFailure.set(failure)
           listeners.forEach { it.onBuildFailed(failure) }
         }
         finally {

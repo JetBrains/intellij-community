@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.issue.BuildIssue;
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
@@ -31,6 +31,7 @@ import java.util.Collection;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
   @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
   @NotNull private final String myProjectPath;
@@ -38,7 +39,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   @NotNull private final CancellationTokenSource myCancellationTokenSource;
   private ProjectConnection myConnection;
-  private AllModels myModels;
+  private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
   @Nullable private String myBuildSrcGroup;
@@ -52,20 +53,10 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
                                        @Nullable final GradleExecutionSettings settings,
                                        @NotNull final ExternalSystemTaskNotificationListener listener,
                                        @Nullable GradlePartialResolverPolicy resolverPolicy) {
-    this(externalSystemTaskId, projectPath, settings, null, listener, resolverPolicy);
-  }
-
-
-  public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
-                                       @NotNull final String projectPath,
-                                       @Nullable final GradleExecutionSettings settings,
-                                       final ProjectConnection connection,
-                                       @NotNull final ExternalSystemTaskNotificationListener listener,
-                                       @Nullable GradlePartialResolverPolicy resolverPolicy) {
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
     mySettings = settings;
-    myConnection = connection;
+    myConnection = null;
     myListener = listener;
     myPolicy = resolverPolicy;
     myCancellationTokenSource = GradleConnector.newCancellationTokenSource();
@@ -140,18 +131,22 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myGradleUserHome;
   }
 
-  public void setModels(@NotNull AllModels models) {
+  public @NotNull GradleIdeaModelHolder getModels() {
+    return myModels;
+  }
+
+  public void setModels(@NotNull GradleIdeaModelHolder models) {
     myModels = models;
   }
 
   @Override
   public @NotNull Build getRootBuild() {
-    return myModels.getMainBuild();
+    return myModels.getRootBuild();
   }
 
   @Override
   public @NotNull Collection<? extends Build> getNestedBuilds() {
-    return myModels.getIncludedBuilds();
+    return myModels.getNestedBuilds();
   }
 
   @Override
@@ -161,17 +156,17 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public <T> @Nullable T getRootModel(@NotNull Class<T> modelClass) {
-    return myModels.getModel(modelClass);
+    return myModels.getRootModel(modelClass);
   }
 
   @Override
   public <T> @Nullable T getBuildModel(@NotNull BuildModel buildModel, @NotNull Class<T> modelClass) {
-    return myModels.getModel(buildModel, modelClass);
+    return myModels.getBuildModel(buildModel, modelClass);
   }
 
   @Override
   public <T> @Nullable T getProjectModel(@NotNull ProjectModel projectModel, @NotNull Class<T> modelClass) {
-    return myModels.getModel(projectModel, modelClass);
+    return myModels.getProjectModel(projectModel, modelClass);
   }
 
   @Override
@@ -231,8 +226,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myBuildEnvironment = buildEnvironment;
   }
 
-  @Nullable
-  public BuildEnvironment getBuildEnvironment() {
+  @Override
+  public @Nullable BuildEnvironment getBuildEnvironment() {
     if (myBuildEnvironment == null) {
       myBuildEnvironment = myModels.getBuildEnvironment();
     }

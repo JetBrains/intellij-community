@@ -51,7 +51,7 @@ public final class DefaultBuild implements Build, Serializable {
     myParentBuildIdentifier = parentBuildIdentifier;
   }
 
-  public static @NotNull Build convertGradleBuild(@NotNull GradleBuild gradleBuild) {
+  public static @NotNull DefaultBuild convertGradleBuild(@NotNull GradleBuild gradleBuild) {
     String name = gradleBuild.getRootProject().getName();
     File rootDir = gradleBuild.getBuildIdentifier().getRootDir();
     DefaultBuild build = new DefaultBuild(name, rootDir);

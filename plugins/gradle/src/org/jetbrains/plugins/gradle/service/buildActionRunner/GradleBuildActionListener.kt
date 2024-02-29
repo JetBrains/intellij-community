@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.buildActionRunner
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import org.gradle.tooling.GradleConnectionException
-import org.gradle.tooling.model.BuildModel
-import org.gradle.tooling.model.ProjectModel
 
 interface GradleBuildActionListener {
 
@@ -14,10 +11,8 @@ interface GradleBuildActionListener {
    *
    * Note: This method is called from a Gradle connection thread, within the {@link IntermediateResultHandler} passed to the
    * tooling api.
-   *
-   * @param models obtained after project loaded phase
    */
-  fun onProjectLoaded(models: ModelsHolder<BuildModel, ProjectModel>) {}
+  fun onProjectLoaded() {}
 
   /**
    * Called once Gradle has finished executing everything, including any tasks that might need to be run.

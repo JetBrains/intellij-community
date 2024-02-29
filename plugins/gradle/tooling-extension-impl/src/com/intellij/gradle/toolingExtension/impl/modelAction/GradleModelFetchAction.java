@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleModelFetchAction implements BuildAction<AllModels>, Serializable {
+public class GradleModelFetchAction implements BuildAction<GradleModelHolderState>, Serializable {
 
   private final Set<ProjectImportModelProvider> myModelProviders = new LinkedHashSet<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
@@ -46,10 +46,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   private boolean myUseProjectsLoadedPhase;
   private @Nullable GradleTracingContext myTracingContext = null;
 
-  private transient @Nullable AllModels myAllModels = null;
-  private transient @Nullable GradleBuild myMainGradleBuild = null;
-  private transient @Nullable Collection<? extends GradleBuild> myNestedGradleBuilds = null;
-  private transient @Nullable ModelConverter myModelConverter = null;
+  private transient @Nullable GradleDaemonModelHolder myModels = null;
 
   public GradleModelFetchAction addProjectImportModelProviders(
     @NotNull Collection<? extends ProjectImportModelProvider> providers
@@ -89,7 +86,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   }
 
   @Override
-  public @Nullable AllModels execute(@NotNull BuildController controller) {
+  public @NotNull GradleModelHolderState execute(@NotNull BuildController controller) {
     configureAdditionalTypes(controller);
     return withConverterExecutor(converterExecutor -> {
       return withOpenTelemetry(telemetry -> {
@@ -100,7 +97,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     });
   }
 
-  private static @Nullable AllModels withConverterExecutor(@NotNull Function<ExecutorService, AllModels> action) {
+  private static <T> T withConverterExecutor(@NotNull Function<ExecutorService, T> action) {
     ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new SimpleThreadFactory());
     try {
       return action.apply(converterExecutor);
@@ -116,37 +113,45 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     }
   }
 
-  private <T> T withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, T> action) {
-    if (myTracingContext == null) {
+  private GradleModelHolderState withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action) {
+    GradleTracingContext tracingContext = myTracingContext;
+    if (tracingContext == null) {
       GradleOpenTelemetry noopTelemetry = new GradleOpenTelemetry();
       return action.apply(noopTelemetry);
     }
 
     GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
-    telemetry.start(myTracingContext);
+    telemetry.start(tracingContext);
+    GradleModelHolderState state;
     try {
-      return action.apply(telemetry);
+      state = action.apply(telemetry);
     }
-    finally {
-      byte[] trace = telemetry.shutdown();
-      if (myAllModels != null) {
-        myAllModels.addOpenTelemetryTrace(trace);
-      }
+    catch (Throwable exception) {
+      telemetry.shutdown();
+      throw exception;
     }
+    byte[] traces = telemetry.shutdown();
+    return state.withOpenTelemetryTraces(traces);
   }
 
-  private @Nullable AllModels doExecute(
+  private @NotNull GradleModelHolderState doExecute(
     @NotNull BuildController controller,
     @NotNull ExecutorService converterExecutor,
     @NotNull GradleOpenTelemetry telemetry
   ) {
-    boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
+    boolean isProjectsLoadedAction = myModels == null && myUseProjectsLoadedPhase;
 
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
-      initAction(controller, telemetry);
+      myModels = initAction(controller, converterExecutor, telemetry);
     }
 
-    executeAction(controller, converterExecutor, telemetry, isProjectsLoadedAction);
+    assert myModels != null;
+
+    BuildController buildController = myModels.createBuildController(controller);
+    GradleModelConsumer modelConsumer = myModels.createModelConsumer(converterExecutor);
+    Collection<? extends GradleBuild> gradleBuilds = myModels.getGradleBuilds();
+
+    executeAction(buildController, telemetry, modelConsumer, gradleBuilds, isProjectsLoadedAction);
 
     if (isProjectsLoadedAction) {
       telemetry.runWithSpan("TurnOffDefaultTasks", __ ->
@@ -154,8 +159,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
       );
     }
 
-    assert myAllModels != null;
-    return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
+    return myModels.pollPendingState();
   }
 
   private void configureAdditionalTypes(BuildController controller) {
@@ -179,8 +183,9 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     }
   }
 
-  private void initAction(
+  private @NotNull GradleDaemonModelHolder initAction(
     @NotNull BuildController controller,
+    @NotNull ExecutorService converterExecutor,
     @NotNull GradleOpenTelemetry telemetry
   ) {
     GradleBuild mainGradleBuild = telemetry.callWithSpan("GetMainGradleBuild", __ ->
@@ -195,14 +200,9 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     ModelConverter modelConverter = telemetry.callWithSpan("GetToolingModelConverter", __ ->
       getToolingModelConverter(controller, telemetry)
     );
-    AllModels allModels = telemetry.callWithSpan("InitAllModels", __ ->
-      new AllModels(mainGradleBuild, nestedGradleBuilds, buildEnvironment)
+    return telemetry.callWithSpan("InitModelConsumer", __ ->
+      new GradleDaemonModelHolder(converterExecutor, modelConverter, mainGradleBuild, nestedGradleBuilds, buildEnvironment)
     );
-
-    myMainGradleBuild = mainGradleBuild;
-    myNestedGradleBuilds = nestedGradleBuilds;
-    myModelConverter = modelConverter;
-    myAllModels = allModels;
   }
 
   private static Collection<? extends GradleBuild> getNestedBuilds(@NotNull BuildEnvironment buildEnvironment, @NotNull GradleBuild build) {
@@ -244,18 +244,11 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
 
   private void executeAction(
     @NotNull BuildController controller,
-    @NotNull ExecutorService converterExecutor,
     @NotNull GradleOpenTelemetry telemetry,
+    @NotNull GradleModelConsumer modelConsumer,
+    @NotNull Collection<? extends GradleBuild> gradleBuilds,
     boolean isProjectsLoadedAction
   ) {
-    assert myAllModels != null;
-    assert myMainGradleBuild != null;
-    assert myNestedGradleBuilds != null;
-    assert myModelConverter != null;
-
-    Collection<GradleBuild> gradleBuilds = getGradleBuilds();
-    DefaultBuildController buildController = new DefaultBuildController(controller, myMainGradleBuild);
-    GradleModelConsumer modelConsumer = new GradleCustomModelConsumer(myAllModels, myModelConverter, converterExecutor);
     try {
       forEachModelFetchPhase(isProjectsLoadedAction, (phase, modelProviders) -> {
         telemetry.runWithSpan(phase.name(), __ -> {
@@ -266,7 +259,7 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
                   span.setAttribute("project-name", gradleProject.getName());
                   span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
                   span.setAttribute("model-type", "ProjectModel");
-                  modelProvider.populateProjectModels(buildController, gradleProject, modelConsumer);
+                  modelProvider.populateProjectModels(controller, gradleProject, modelConsumer);
                 });
               }
             }
@@ -274,14 +267,14 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
               telemetry.runWithSpan(modelProvider.getName(), span -> {
                 span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
                 span.setAttribute("model-type", "BuildModel");
-                modelProvider.populateBuildModels(buildController, gradleBuild, modelConsumer);
+                modelProvider.populateBuildModels(controller, gradleBuild, modelConsumer);
               });
             }
           }
           for (ProjectImportModelProvider modelProvider : modelProviders) {
             telemetry.runWithSpan(modelProvider.getName(), span -> {
               span.setAttribute("model-type", "GradleModel");
-              modelProvider.populateModels(buildController, gradleBuilds, modelConsumer);
+              modelProvider.populateModels(controller, gradleBuilds, modelConsumer);
             });
           }
         });
@@ -312,16 +305,6 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
     }
     return myModelProviders.stream()
       .filter(it -> !it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE));
-  }
-
-  private @NotNull Collection<GradleBuild> getGradleBuilds() {
-    assert myMainGradleBuild != null;
-    assert myNestedGradleBuilds != null;
-
-    List<GradleBuild> gradleBuilds = new ArrayList<>();
-    gradleBuilds.add(myMainGradleBuild);
-    gradleBuilds.addAll(myNestedGradleBuilds);
-    return gradleBuilds;
   }
 
   // Use this static class as a simple ThreadFactory to prevent a memory leak when passing an anonymous ThreadFactory object to

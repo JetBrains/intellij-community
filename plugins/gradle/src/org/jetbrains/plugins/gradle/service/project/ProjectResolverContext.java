@@ -11,6 +11,7 @@ import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectModel;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,9 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   boolean isUseQualifiedModuleNames();
 
   default boolean isDelegatedBuild() { return true; }
+
+  @Nullable
+  BuildEnvironment getBuildEnvironment();
 
   @NotNull
   Build getRootBuild();

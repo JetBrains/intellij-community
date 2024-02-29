@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.gradle.scripting.importing.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
-import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
@@ -31,8 +30,7 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
         synchronized(sync) {
             sync.gradleVersion = resolverCtx.projectGradleVersion
 
-            sync.javaHome = (resolverCtx as? DefaultProjectResolverContext)
-                ?.buildEnvironment
+            sync.javaHome = resolverCtx.buildEnvironment
                 ?.java?.javaHome?.path
                 ?.let { toSystemIndependentName(it) }
 

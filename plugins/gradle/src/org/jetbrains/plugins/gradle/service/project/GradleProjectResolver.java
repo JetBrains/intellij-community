@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchActionWithCustomSerializer;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
+import com.intellij.util.*;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,10 +31,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -70,7 +68,6 @@ import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.telemetry.GradleDaemonOpenTelemetryUtil;
-import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceService;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -266,9 +263,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       GradleExecutionHelper.attachIdeaPluginConfigurator(executionSettings);
     }
 
-    resolverCtx.checkCancelled();
+    var environmentConfigurationProvider = ExternalSystemExecutionAware.getEnvironmentConfigurationProvider(executionSettings);
+    var pathMapper = ObjectUtils.doIfNotNull(environmentConfigurationProvider, it -> it.getPathMapper());
+    var models = new GradleIdeaModelHolder(useCustomSerialization, pathMapper, buildEnvironment);
+    resolverCtx.setModels(models);
 
-    AllModels allModels;
+    resolverCtx.checkCancelled();
 
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
 
@@ -288,7 +288,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper, buildActionListeners);
-      allModels = buildActionRunner.runBuildAction();
+      buildActionRunner.runBuildAction();
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
       }
@@ -310,14 +310,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       gradleCallSpan.end();
     }
 
-    GradleOpenTelemetryTraceService.exportOpenTelemetryTraces(allModels.getOpenTelemetryTraces());
-
     resolverCtx.checkCancelled();
-
-    if (useCustomSerialization) {
-      allModels.initToolingSerializer();
-    }
-    allModels.setBuildEnvironment(buildEnvironment);
 
     final long projectResolversStartTime = System.currentTimeMillis();
 
@@ -329,11 +322,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Span projectResolversSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleProjectResolverDataProcessing")
       .startSpan();
-    try (GradleTargetPathsConverter pathsConverter = new GradleTargetPathsConverter(executionSettings);
-         Scope ignore = projectResolversSpan.makeCurrent()) {
-      pathsConverter.mayBeApplyTo(allModels);
-      return convertData(allModels, executionSettings, resolverCtx, gradleVersion, projectResolverChain, isBuildSrcProject,
-                         useCustomSerialization);
+    try (Scope ignore = projectResolversSpan.makeCurrent()) {
+      return convertData(executionSettings, resolverCtx, gradleVersion, projectResolverChain, isBuildSrcProject, useCustomSerialization);
     }
     catch (Throwable t) {
       projectResolversErrorsCount += 1;
@@ -351,18 +341,17 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  @NotNull
-  private DataNode<ProjectData> convertData(@NotNull AllModels allModels,
-                                            @NotNull GradleExecutionSettings executionSettings,
-                                            @NotNull DefaultProjectResolverContext resolverCtx,
-                                            @Nullable GradleVersion gradleVersion,
-                                            @NotNull GradleProjectResolverExtension tracedResolverChain,
-                                            boolean isBuildSrcProject,
-                                            boolean useCustomSerialization) {
+  private @NotNull DataNode<ProjectData> convertData(
+    @NotNull GradleExecutionSettings executionSettings,
+    @NotNull DefaultProjectResolverContext resolverCtx,
+    @Nullable GradleVersion gradleVersion,
+    @NotNull GradleProjectResolverExtension tracedResolverChain,
+    boolean isBuildSrcProject,
+    boolean useCustomSerialization
+  ) {
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
 
-    resolverCtx.setModels(allModels);
-    extractExternalProjectModels(allModels, useCustomSerialization);
+    extractExternalProjectModels(resolverCtx.getModels(), useCustomSerialization);
 
     String projectName = resolverCtx.getRootBuild().getName();
     ModifiableGradleProjectModelImpl modifiableGradleProjectModel =
@@ -696,37 +685,37 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void extractExternalProjectModels(
-    @NotNull AllModels models,
+    @NotNull GradleIdeaModelHolder models,
     boolean useCustomSerialization
   ) {
-    final ExternalProject externalRootProject = models.getModel(ExternalProject.class);
+    final ExternalProject externalRootProject = models.getRootModel(ExternalProject.class);
     if (externalRootProject == null) return;
 
     final DefaultExternalProject wrappedExternalRootProject =
       useCustomSerialization ? (DefaultExternalProject)externalRootProject : new DefaultExternalProject(externalRootProject);
-    models.addModel(wrappedExternalRootProject, ExternalProject.class);
+    models.addModel(ExternalProject.class, wrappedExternalRootProject);
     final Map<String, DefaultExternalProject> externalProjectsMap = createExternalProjectsMap(wrappedExternalRootProject);
 
-    Collection<Project> projects = models.getMainBuild().getProjects();
+    Collection<Project> projects = models.getRootBuild().getProjects();
     for (Project project : projects) {
       ExternalProject externalProject = externalProjectsMap.get(project.getProjectIdentifier().getProjectPath());
       if (externalProject != null) {
-        models.addModel(externalProject, ExternalProject.class, project);
+        models.addProjectModel(project, ExternalProject.class, externalProject);
       }
     }
 
-    for (Build includedBuild : models.getIncludedBuilds()) {
-      final ExternalProject externalIncludedRootProject = models.getModel(includedBuild, ExternalProject.class);
+    for (Build nestedBuild : models.getNestedBuilds()) {
+      final ExternalProject externalIncludedRootProject = models.getBuildModel(nestedBuild, ExternalProject.class);
       if (externalIncludedRootProject == null) continue;
       final DefaultExternalProject wrappedExternalIncludedRootProject = useCustomSerialization
                                                                         ? (DefaultExternalProject)externalIncludedRootProject
                                                                         : new DefaultExternalProject(externalIncludedRootProject);
       wrappedExternalRootProject.getChildProjects().put(wrappedExternalIncludedRootProject.getName(), wrappedExternalIncludedRootProject);
       final Map<String, DefaultExternalProject> externalIncludedProjectsMap = createExternalProjectsMap(wrappedExternalIncludedRootProject);
-      for (ProjectModel project : includedBuild.getProjects()) {
+      for (ProjectModel project : nestedBuild.getProjects()) {
         ExternalProject externalProject = externalIncludedProjectsMap.get(project.getProjectIdentifier().getProjectPath());
         if (externalProject != null) {
-          models.addModel(externalProject, ExternalProject.class, project);
+          models.addProjectModel(project, ExternalProject.class, externalProject);
         }
       }
     }

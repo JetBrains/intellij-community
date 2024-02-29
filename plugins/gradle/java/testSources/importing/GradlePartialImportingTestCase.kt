@@ -1,15 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
 import com.intellij.testFramework.registerServiceInstance
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
-import org.gradle.tooling.model.BuildModel
-import org.gradle.tooling.model.ProjectModel
-import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
 import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener
 import org.jetbrains.plugins.gradle.service.project.*
@@ -69,13 +65,13 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
     }
 
     override fun createBuildListener() = object : GradleBuildActionListener {
-      override fun onProjectLoaded(models: ModelsHolder<BuildModel, ProjectModel>) {
-        val buildFinishedModel = models.getModel(BuildFinishedModel::class.java)
+      override fun onProjectLoaded() {
+        val buildFinishedModel = resolverCtx.getRootModel(BuildFinishedModel::class.java)
         if (buildFinishedModel != null) {
           throw ProcessCanceledException(RuntimeException("buildFinishedModel should not be available for projectsLoaded callback"))
         }
 
-        val rootProjectLoadedModel = models.getModel(ProjectLoadedModel::class.java)
+        val rootProjectLoadedModel = resolverCtx.getRootModel(ProjectLoadedModel::class.java)
         if (rootProjectLoadedModel == null) {
           throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for projectsLoaded callback"))
         }
@@ -83,9 +79,8 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
         if (rootProjectLoadedModel.map.containsValue("error")) {
           val project = resolverCtx.externalSystemTaskId.findProject()!!
           val modelConsumer = project.getService(ModelConsumer::class.java)
-          val build = (models as AllModels).mainBuild
-          for (gradleProject in build.projects) {
-            val projectLoadedModel = models.getModel(gradleProject, ProjectLoadedModel::class.java)!!
+          for (gradleProject in resolverCtx.rootBuild.projects) {
+            val projectLoadedModel = resolverCtx.getProjectModel(gradleProject, ProjectLoadedModel::class.java)!!
             modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)
           }
           throw ProcessCanceledException(RuntimeException(rootProjectLoadedModel.map.toString()))

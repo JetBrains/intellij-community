@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.buildActionRunner
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -12,8 +11,8 @@ import org.gradle.tooling.GradleConnectionException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
+import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
 /**
@@ -32,7 +31,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
  */
 @ApiStatus.Internal
 class GradleBuildActionRunner(
-  private val resolverCtx: ProjectResolverContext,
+  private val resolverCtx: DefaultProjectResolverContext,
   private val buildAction: GradleModelFetchAction,
   private val settings: GradleExecutionSettings,
   private val helper: GradleExecutionHelper,
@@ -40,21 +39,21 @@ class GradleBuildActionRunner(
 ) {
 
   /**
-   * Fetches the [AllModels] that have been populated as a result of running the [GradleModelFetchAction] against the Gradle tooling API.
+   * Fetches the Gradle models that have been populated as a result of running the [GradleModelFetchAction] against the Gradle tooling API.
    *
    * This method returns as soon as all models have been obtained.
    *
    * The [GradleBuildActionListener.onProjectLoaded] will be run as soon as the models available when Gradle loaded projects before the build has finished.
    * The [GradleBuildActionListener.onBuildCompleted] will be run when the complete Gradle operation has finished (including any tasks that need to be run).
    */
-  fun runBuildAction(): AllModels {
+  fun runBuildAction() {
     // Optionally tell Gradle daemon there were recent file changes
     if (Registry.`is`("gradle.report.recently.saved.paths")) {
       notifyConnectionAboutChangedPaths()
     }
 
     val gradleVersion = resolverCtx.projectGradleVersion
-    return when {
+    when {
       // Fallback to default executor for Gradle projects with incorrect build environment or scripts
       gradleVersion == null -> runDefaultBuildAction()
 
@@ -77,7 +76,7 @@ class GradleBuildActionRunner(
   /**
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
-  private fun runPhasedBuildAction(): AllModels {
+  private fun runPhasedBuildAction() {
     buildAction.prepareForPhasedExecuter()
     val resultHandler = GradleBuildActionResultHandler(resolverCtx, listeners)
     resolverCtx.connection.action()
@@ -87,16 +86,16 @@ class GradleBuildActionRunner(
       .prepareBuildActionExecuter()
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.createResultHandler())
-    return resultHandler.getResultBlocking()
+    resultHandler.waitForBuildFinish()
   }
 
-  private fun runDefaultBuildAction(): AllModels {
+  private fun runDefaultBuildAction() {
     buildAction.prepareForNonPhasedExecuter()
     val resultHandler = GradleBuildActionResultHandler(resolverCtx, listeners)
     resolverCtx.connection.action(buildAction)
       .prepareBuildActionExecuter()
       .run(resultHandler.createResultHandler())
-    return resultHandler.getResultBlocking()
+    resultHandler.waitForBuildFinish()
   }
 
   private fun <T : BuildActionExecuter<*>> T.prepareBuildActionExecuter(): T {
@@ -110,9 +109,7 @@ class GradleBuildActionRunner(
     GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe {
       it.prepareForSync(this, resolverCtx)
     }
-    resolverCtx.cancellationTokenSource?.token()?.let { token ->
-      withCancellationToken(token)
-    }
+    withCancellationToken(resolverCtx.cancellationTokenSource.token())
     return this
   }
 }

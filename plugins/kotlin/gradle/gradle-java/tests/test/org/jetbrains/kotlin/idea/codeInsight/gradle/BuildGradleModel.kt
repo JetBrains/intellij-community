@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -17,6 +16,8 @@ import org.jetbrains.kotlin.tooling.core.Extras
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.settings.DistributionType
@@ -119,11 +120,10 @@ fun <T : Any> buildGradleModel(
         buildActionExecutor.setStandardError(System.out)
         buildActionExecutor.setJvmArguments(listOfNotNull("-Xmx512m", debuggerOptions?.toJvmArgumentString()))
 
-
-        val allModels = runBlocking {
+        val state = runBlocking {
             suspendCoroutine { continuation ->
-                val buildActionResultHandler = object : ResultHandler<AllModels> {
-                    override fun onComplete(result: AllModels) {
+                val buildActionResultHandler = object : ResultHandler<GradleModelHolderState> {
+                    override fun onComplete(result: GradleModelHolderState) {
                         continuation.resume(result)
                     }
 
@@ -135,9 +135,11 @@ fun <T : Any> buildGradleModel(
                 buildActionExecutor.run(buildActionResultHandler)
             }
         }
+        val models = GradleIdeaModelHolder()
+        models.addState(state)
 
-        val ideaProject = allModels.getModel(IdeaProject::class.java) ?: fail("Missing '${IdeaProject::class.simpleName}' model")
-        return BuiltGradleModel(ideaProject.modules.associateWith { module -> allModels.getModel(module, clazz.java) })
+        val ideaProject = models.getRootModel(IdeaProject::class.java) ?: fail("Missing '${IdeaProject::class.simpleName}' model")
+        return BuiltGradleModel(ideaProject.modules.associateWith { module -> models.getProjectModel(module, clazz.java) })
     }
 }
 
