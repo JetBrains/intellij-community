@@ -372,37 +372,18 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     String projectName = allModels.getMainBuild().getName();
     ModifiableGradleProjectModelImpl modifiableGradleProjectModel =
       new ModifiableGradleProjectModelImpl(projectName, resolverCtx.getProjectPath());
-    ToolingModelsProvider modelsProvider = new ToolingModelsProviderImpl(allModels);
-    ProjectModelContributor.EP_NAME.forEachExtensionSafe(extension -> {
-      resolverCtx.checkCancelled();
-      final long starResolveTime = System.currentTimeMillis();
-      String modelContributorName = extension.getClass().getSimpleName();
-      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor",
-                                              (span) -> {
-                                                span.setAttribute("contributor.name", modelContributorName);
-                                                extension.accept(modifiableGradleProjectModel, modelsProvider, resolverCtx);
-                                              });
-      final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
-      LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
-    });
+
+    applyProjectModelContributors(allModels, resolverCtx, modifiableGradleProjectModel);
 
     DataNode<ProjectData> projectDataNode = modifiableGradleProjectModel.buildDataNodeGraph();
-    ExternalSystemOperationDescriptor externalSystemOperationDescriptor = new ExternalSystemOperationDescriptor(activityId);
     DataNode<ExternalSystemOperationDescriptor> descriptorDataNode = new DataNode<>(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY,
-                                                                                    externalSystemOperationDescriptor, projectDataNode);
+                                                                                    new ExternalSystemOperationDescriptor(activityId),
+                                                                                    projectDataNode);
     projectDataNode.addChild(descriptorDataNode);
 
-    Set<? extends IdeaModule> gradleModules = Collections.emptySet();
-    IdeaProject ideaProject = allModels.getModel(IdeaProject.class);
-    if (ideaProject != null) {
-      tracedResolverChain.populateProjectExtraModels(ideaProject, projectDataNode);
-      gradleModules = ideaProject.getModules();
-      if (gradleModules == null || gradleModules.isEmpty()) {
-        throw new IllegalStateException("No modules found for the target project: " + ideaProject);
-      }
-    }
+    final Set<? extends IdeaModule> gradleModules = extractCollectedModules(allModels, projectDataNode, tracedResolverChain);
+    final Collection<IdeaModule> includedModules = exposeCompositeBuild(allModels, resolverCtx, projectDataNode);
 
-    Collection<IdeaModule> includedModules = exposeCompositeBuild(allModels, resolverCtx, projectDataNode);
     final Map<String /* module id */, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap = new HashMap<>();
     final Map<String /* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetsMap = new HashMap<>();
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
@@ -415,24 +396,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     // import modules data
     for (IdeaModule gradleModule : ContainerUtil.concat(gradleModules, includedModules)) {
-      if (gradleModule == null) {
+      resolverCtx.checkCancelled();
+      DataNode<ModuleData> moduleDataNode = createModuleData(gradleModule, tracedResolverChain, projectDataNode);
+      if (moduleDataNode == null) {
         continue;
       }
-
-      resolverCtx.checkCancelled();
-
-      if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
-        LOG.info(String.format("Importing module data: %s", gradleModule));
-      }
-      final String moduleName = gradleModule.getName();
-      if (moduleName == null) {
-        throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
-      }
-
-      DataNode<ModuleData> moduleDataNode = tracedResolverChain.createModule(gradleModule, projectDataNode);
-      if (moduleDataNode == null) continue;
       String mainModuleId = getModuleId(resolverCtx, gradleModule);
-
       if (moduleMap.containsKey(mainModuleId)) {
         // we should ensure deduplicated module names in the scope of single import
         throw new IllegalStateException("Attempt to add module with already existing id [" + mainModuleId + "]\n" +
@@ -532,6 +501,55 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myLibraryNamesMixer.mixNames(libraries);
 
     return projectDataNode;
+  }
+
+  private static void applyProjectModelContributors(@NotNull AllModels allModels,
+                                                    @NotNull DefaultProjectResolverContext resolverCtx,
+                                                    @NotNull ModifiableGradleProjectModelImpl modifiableGradleProjectModel) {
+    ToolingModelsProvider modelsProvider = new ToolingModelsProviderImpl(allModels);
+    ProjectModelContributor.EP_NAME.forEachExtensionSafe(extension -> {
+      resolverCtx.checkCancelled();
+      final long starResolveTime = System.currentTimeMillis();
+      String modelContributorName = extension.getClass().getSimpleName();
+      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor",
+                                              (span) -> {
+                                                span.setAttribute("contributor.name", modelContributorName);
+                                                extension.accept(modifiableGradleProjectModel, modelsProvider, resolverCtx);
+                                              });
+      final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
+      LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
+    });
+  }
+
+  private static @Nullable DataNode<ModuleData> createModuleData(@Nullable IdeaModule gradleModule,
+                                                                 @NotNull GradleProjectResolverExtension resolverChain,
+                                                                 @NotNull DataNode<ProjectData> projectDataNode) {
+    if (gradleModule == null) {
+      return null;
+    }
+    if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+      LOG.info(String.format("Importing module data: %s", gradleModule));
+    }
+    final String moduleName = gradleModule.getName();
+    if (moduleName == null) {
+      throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
+    }
+    return resolverChain.createModule(gradleModule, projectDataNode);
+  }
+
+  private static @NotNull Set<? extends IdeaModule> extractCollectedModules(@NotNull AllModels allModels,
+                                                                            @NotNull DataNode<ProjectData> projectDataNode,
+                                                                            @NotNull GradleProjectResolverExtension resolverChain) {
+    IdeaProject ideaProject = allModels.getModel(IdeaProject.class);
+    if (ideaProject == null) {
+      return Collections.emptySet();
+    }
+    resolverChain.populateProjectExtraModels(ideaProject, projectDataNode);
+    Set<? extends IdeaModule> modules = ideaProject.getModules();
+    if (modules == null || modules.isEmpty()) {
+      throw new IllegalStateException("No modules found for the target project: " + ideaProject);
+    }
+    return modules;
   }
 
   private static void processBuildSrcModules(DefaultProjectResolverContext ctx, DataNode<ProjectData> projectDataNode) {
