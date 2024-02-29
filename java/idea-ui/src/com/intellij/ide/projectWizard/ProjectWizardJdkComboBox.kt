@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
@@ -325,7 +326,7 @@ class ProjectWizardJdkComboBox(
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       detected
-        .filter { d -> registered.none { r -> d.home == r.jdk.homePath } }
+        .filter { d -> registered.none { r -> FileUtil.pathsEqual(d.home, r.jdk.homePath) } }
         .forEach {
           detectedJDKs.add(it)
           addItem(it)
@@ -384,7 +385,7 @@ private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
   runReadAction {
     SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())?.let {
       JdkComboBoxCollector.jdkRegistered(it)
-      combo.detectedJDKs.find { detected -> detected.home == path }?.let { item ->
+      combo.detectedJDKs.find { detected -> FileUtil.pathsEqual(detected.home, path) }?.let { item ->
         combo.removeItem(item)
         combo.detectedJDKs.remove(item)
       }
