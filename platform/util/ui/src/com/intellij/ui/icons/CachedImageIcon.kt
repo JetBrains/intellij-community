@@ -198,6 +198,9 @@ open class CachedImageIcon private constructor(
     }
   }
 
+  @Internal
+  fun getObjScale(): Double? = scaleContext?.getScale(ScaleType.OBJ_SCALE)
+
   fun scale(scaleContext: ScaleContext): Icon {
     return iconCache.getOrScaleIcon(host = this, scaleContext = scaleContext, attributes = getEffectiveAttributes())
   }
