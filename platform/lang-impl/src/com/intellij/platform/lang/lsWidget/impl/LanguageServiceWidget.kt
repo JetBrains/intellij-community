@@ -3,9 +3,8 @@ package com.intellij.platform.lang.lsWidget.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -75,19 +74,34 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     val allItems = cachedWidgetItems
     val fileSpecificItems = allItems.filter { it.widgetActionLocation == ForCurrentFile }
     val otherItems = allItems - fileSpecificItems.toSet()
-    // The '---Other---' separator doesn't look great if it's the only separator in the popup, so check only `fileSpecificStates.isNotEmpty()`
-    val needSeparators = fileSpecificItems.isNotEmpty()
 
     val group = DefaultActionGroup()
 
-    if (needSeparators) group.addSeparator(LangBundle.message("language.services.widget.for.current.file"))
-    fileSpecificItems.forEach { group.add(it.createWidgetAction()) }
+    group.addSeparator(LangBundle.message("language.services.widget.section.running.on.current.file"))
+    if (fileSpecificItems.isNotEmpty()) {
+      fileSpecificItems.forEach { group.add(it.createWidgetAction()) }
+    }
+    else {
+      group.add(NoServices)
+    }
 
-    if (needSeparators) group.addSeparator(LangBundle.message("language.services.widget.for.other.files"))
+    group.addSeparator(LangBundle.message("language.services.widget.section.running.on.other.files"))
     otherItems.forEach { group.add(it.createWidgetAction()) }
 
     return group
   }
+
+
+  private object NoServices : AnAction(LangBundle.messagePointer("language.services.widget.no.services")), DumbAware {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = false
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {}
+  }
+
 
   private companion object {
     private val normalIcon: Icon = AllIcons.Json.Object
