@@ -2,6 +2,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
@@ -52,8 +53,8 @@ private class SecondaryPopupBoundsHandler(
     popup.popupWindow.focusableWindowState = true
   }
 
-  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
-    original.updatePopup(popup, resized)
+  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean, popupUpdateEvent: PopupUpdateEvent) {
+    original.updatePopup(popup, resized, popupUpdateEvent)
   }
 }
 
@@ -78,8 +79,8 @@ abstract class BaseAdjustingPopupBoundsHandler(
     installPositionAdjuster(popup, referenceComponent) // move popup when reference component changes its width
   }
 
-  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
-    repositionPopup(popup, referenceComponent, popupSize(popup, resized))
+  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean, popupUpdateEvent: PopupUpdateEvent) {
+    repositionPopup(popup, referenceComponent, popupSize(popup, resized).adjustForEvent(popup, popupUpdateEvent))
   }
 
   protected abstract fun componentResized(anchor: Component, popup: AbstractPopup)

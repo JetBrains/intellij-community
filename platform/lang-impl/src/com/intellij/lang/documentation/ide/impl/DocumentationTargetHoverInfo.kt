@@ -108,7 +108,7 @@ private class DocumentationTargetHoverInfo(
     bridge.performWhenAvailable { popup: AbstractPopup ->
       popupUI.setPopup(popup)
       popupUI.updatePopup {
-        resizePopup(popup)
+        resizePopup(popup, it)
         bridge.updateLocation()
       }
       DocumentationUsageCollector.QUICK_DOC_SHOWN.log()

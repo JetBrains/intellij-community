@@ -54,7 +54,7 @@ internal class DocumentationPopupUI(
   val preferableFocusComponent: JComponent get() = ui.editorPane
 
   val coroutineScope: CoroutineScope = CoroutineScope(Job())
-  private val popupUpdateFlow = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val popupUpdateFlow = MutableSharedFlow<PopupUpdateEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var myPopup: AbstractPopup
 
@@ -100,7 +100,7 @@ internal class DocumentationPopupUI(
       corner.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent?) {
           updatePaddings(corner)
-          popupUpdateFlow.tryEmit("toolbar size change")
+          popupUpdateFlow.tryEmit(PopupUpdateEvent.ToolbarSizeChanged)
         }
       })
     }
@@ -145,10 +145,10 @@ internal class DocumentationPopupUI(
     editorPane.setHint(popup)
   }
 
-  fun updatePopup(updater: suspend () -> Unit) {
+  fun updatePopup(updater: suspend (PopupUpdateEvent) -> Unit) {
     coroutineScope.launch(Dispatchers.EDT) {
       popupUpdateFlow.collectLatest {
-        updater()
+        updater(it)
       }
     }
   }
@@ -216,7 +216,7 @@ internal class DocumentationPopupUI(
   private fun restoreSize() {
     manuallyResized = false
     DimensionService.getInstance().setSize(NEW_JAVADOC_LOCATION_AND_SIZE, null, project)
-    popupUpdateFlow.tryEmit("restore size")
+    popupUpdateFlow.tryEmit(PopupUpdateEvent.RestoreSize)
   }
 
   private inner class PopupResizeListener : Runnable {

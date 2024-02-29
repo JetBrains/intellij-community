@@ -6,16 +6,20 @@ import com.intellij.lang.documentation.ide.impl.DocumentationBrowser.Companion.w
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
+import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
+import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent.ContentUpdateKind
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.WidthBasedLayout
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
+import java.awt.Dimension
 import java.awt.Rectangle
 
 internal suspend fun showDocumentationPopup(
@@ -47,7 +51,7 @@ internal suspend fun showDocumentationPopup(
   val boundsHandler = popupContext.boundsHandler()
   val resized = popupUI.useStoredSize()
   popupUI.updatePopup {
-    boundsHandler.updatePopup(popup, resized.get())
+    boundsHandler.updatePopup(popup, resized.get(), it)
   }
   check(popup.canShow()) // sanity check
   boundsHandler.showPopup(popup)
@@ -74,10 +78,10 @@ private fun createDocumentationPopup(
   return popup
 }
 
-internal fun resizePopup(popup: AbstractPopup) {
+internal fun resizePopup(popup: AbstractPopup, popupUpdateEvent: PopupUpdateEvent) {
   val location = UIUtil.getLocationOnScreen(popup.component)
   if (location == null) {
-    resizePopupFallback(popup)
+    popup.size = popup.component.preferredSize.adjustForEvent(popup, popupUpdateEvent)
     return
   }
   // Ensure that the popup can fit the screen if placed in the top left corner.
@@ -85,10 +89,17 @@ internal fun resizePopup(popup: AbstractPopup) {
   ScreenUtil.cropRectangleToFitTheScreen(bounds)
   // Don't resize to an empty popup
   if (bounds.size.width > 50 && bounds.size.height > 20) {
-    popup.size = bounds.size
+    popup.size = bounds.size.adjustForEvent(popup, popupUpdateEvent)
   }
 }
 
-private fun resizePopupFallback(popup: AbstractPopup) {
-  popup.size = popup.component.preferredSize
+internal fun Dimension.adjustForEvent(popup: AbstractPopup, popupUpdateEvent: PopupUpdateEvent): Dimension {
+  if (popupUpdateEvent is PopupUpdateEvent.ContentChanged && popupUpdateEvent.updateKind == ContentUpdateKind.DocumentationPageNavigated) {
+    // when navigating, allow only for making the control wider
+    val curSize = popup.size
+    if (curSize.width > width) {
+      return Dimension(curSize.width, WidthBasedLayout.getPreferredHeight(popup.component, curSize.width))
+    }
+  }
+  return this
 }
