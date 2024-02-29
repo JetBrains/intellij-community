@@ -63,6 +63,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.im.InputMethodRequests;
@@ -2587,11 +2588,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       ((ListWithFilter<?>)comp).processInputMethodEvent(event);
     }
 
-    if (!event.isConsumed() && comp.getInputMethodRequests() != null) {
-      comp.dispatchEvent(event);
-    }
-
-    boolean isText = comp instanceof EditorTextField || comp instanceof JTextField || comp instanceof JTextArea;
+    // Don't try to attempt to pass IMEs to speed search if the popup is a text field
+    boolean isText = comp instanceof EditorTextField || comp instanceof JTextComponent;
     if (!event.isConsumed() && !isText && mySpeedSearchPatternField != null) {
       mySpeedSearchPatternField.getTextEditor().dispatchEvent(event);
       mySpeedSearch.updatePattern(mySpeedSearchPatternField.getText());
