@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -190,6 +190,8 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
             ZERO
         } catch (e: InternalException) {
             ZERO
+        } catch (e: VMDisconnectedException) {
+            throw e
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: RuntimeException) {
