@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
@@ -282,14 +281,12 @@ public class ExtractMethodTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
-    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), languageLevel);
     try {
-      projectExtension.setLanguageLevel(languageLevel);
       doTest();
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 

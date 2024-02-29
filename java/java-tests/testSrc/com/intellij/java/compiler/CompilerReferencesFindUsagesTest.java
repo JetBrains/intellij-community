@@ -10,7 +10,6 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -21,6 +20,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PointersKt;
 import com.intellij.testFramework.CompilerTester;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +37,7 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myCompilerTester = new CompilerTester(myModule);
-    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_1_8);
   }
 
   @Override

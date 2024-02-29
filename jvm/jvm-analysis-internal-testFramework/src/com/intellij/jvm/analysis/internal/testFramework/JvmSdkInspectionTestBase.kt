@@ -1,7 +1,6 @@
 package com.intellij.jvm.analysis.internal.testFramework
 
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
@@ -23,7 +22,7 @@ abstract class JvmSdkInspectionTestBase : JvmInspectionTestBase() {
    * Sets the current project and module language level to [languageLevel].
    */
   protected fun JavaCodeInsightTestFixture.setLanguageLevel(languageLevel: LanguageLevel) {
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
+    IdeaTestUtil.setProjectLanguageLevel(project, languageLevel)
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, languageLevel, testRootDisposable)
   }
 }

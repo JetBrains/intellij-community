@@ -3,10 +3,10 @@ package com.intellij.java.psi.formatter.java;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 
 public class AnnotationFormatterTest extends JavaFormatterTestCase {
   @Override
@@ -324,9 +324,8 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
 
   public void testEnumFormatting() {
     getSettings(JavaLanguage.INSTANCE).ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    final LanguageLevel effectiveLanguageLevel = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
+    final LanguageLevel effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_5);
     try {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
       doTextTest("""
                      enum Breed {
                         Dalmatian (  "spotted" ),Labrador ( "black" ),Dachshund( "brown" );
@@ -388,7 +387,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                    }""");
     }
     finally {
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(effectiveLanguageLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), effectiveLanguageLevel);
     }
   }
 

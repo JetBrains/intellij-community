@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -144,7 +143,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testBadUnicodeEscapeInComment() { doTest(false); }
   public void testUnclosedDecl() { doTest(false); }
   public void testSillyAssignment() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_7);
     doTest(true, true);
   }
   public void testTernary() { doTest(false); }
@@ -337,12 +336,12 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testNamesHighlighting() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_5);
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 
   public void testAnnotationHighlighting() {
-    LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(getJavaFacade().getProject(), LanguageLevel.JDK_1_5);
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
 

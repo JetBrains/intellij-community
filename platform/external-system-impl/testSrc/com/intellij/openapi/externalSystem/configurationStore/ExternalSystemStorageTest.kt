@@ -844,7 +844,7 @@ class ExternalSystemStorageTest {
             ApplicationManager.getApplication().runWriteAction {
               //we need to set language level explicitly because otherwise if some tests modifies language level in the default project, we'll
               // get different content in misc.xml
-              LanguageLevelProjectExtension.getInstance(project)!!.languageLevel = LanguageLevel.JDK_1_8
+              IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_8)
               setupProject(project, projectDir)
             }
           }

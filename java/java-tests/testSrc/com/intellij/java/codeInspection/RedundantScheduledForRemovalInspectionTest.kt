@@ -3,8 +3,8 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.deprecation.RedundantScheduledForRemovalAnnotationInspection
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -15,7 +15,7 @@ class RedundantScheduledForRemovalInspectionTest : LightJavaCodeInsightFixtureTe
 
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_9
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_9)
     myFixture.enableInspections(RedundantScheduledForRemovalAnnotationInspection())
     myFixture.addClass("""
       |package org.jetbrains.annotations; 

@@ -15,7 +15,6 @@
  */
 package com.intellij.java.psi;
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDirectoryService;
@@ -31,7 +30,7 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 
 public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCase {
   public void testCreatingEnumInLanguageLevel3Project() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
     IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
@@ -49,7 +48,7 @@ public class JavaDirectoryServiceHeavyTest extends JavaCodeInsightFixtureTestCas
       VirtualFile root = temp.findOrCreateDir("lib");
       PsiTestUtil.addLibrary(getModule(), "lib", root.getPath(), new String[]{}, new String[]{""});
 
-      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_3);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_3);
       IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_1_7);
       IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 

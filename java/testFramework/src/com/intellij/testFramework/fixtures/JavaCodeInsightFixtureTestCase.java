@@ -5,11 +5,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.UsefulTestCase;
@@ -48,7 +48,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_6);
   }
 
   protected boolean toAddSourceRoot() {

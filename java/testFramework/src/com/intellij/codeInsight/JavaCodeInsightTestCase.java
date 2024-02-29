@@ -20,7 +20,6 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -593,6 +592,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), level);
   }
 }

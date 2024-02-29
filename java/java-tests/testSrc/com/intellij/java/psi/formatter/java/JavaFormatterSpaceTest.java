@@ -2,8 +2,8 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 
 /**
  * Is intended to hold specific java formatting tests for 'spacing' settings.
@@ -12,7 +12,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(JavaTestUtil.getMaxRegisteredLanguageLevel());
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), JavaTestUtil.getMaxRegisteredLanguageLevel());
   }
 
   public void testSpacingBetweenTypeParameters() {

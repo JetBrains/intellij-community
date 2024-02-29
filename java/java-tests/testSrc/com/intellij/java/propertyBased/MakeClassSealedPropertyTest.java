@@ -10,7 +10,6 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -18,6 +17,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.propertyBased.InvokeIntention;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +34,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    WriteAction.run(() -> LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_17));
+    WriteAction.run(() -> IdeaTestUtil.setProjectLanguageLevel(myProject, LanguageLevel.JDK_17));
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
     MadTestingUtil.enableAllInspections(myProject, JavaLanguage.INSTANCE);
   }
