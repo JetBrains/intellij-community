@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
@@ -46,6 +48,7 @@ public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
   private static final boolean SKIP_VERSION_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_version_check");
   private static final boolean SKIP_MODULE_CHECK = Boolean.getBoolean("ide.browser.jcef.skip_module_check");
+  private static final boolean IS_REMOTE_ENABLED;
 
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 119;
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
@@ -71,6 +74,17 @@ public final class JBCefApp {
 
   //fixme use addCefCustomSchemeHandlerFactory method if possible
   private static final JBCefSourceSchemeHandlerFactory ourSourceSchemeHandlerFactory = new JBCefSourceSchemeHandlerFactory();
+
+  static {
+    Boolean result = null;
+    try {
+      // Temporary use reflection to avoid jcef-version increment
+      Method m = CefApp.class.getMethod("isRemoteEnabled");
+      result = (boolean)m.invoke(CefApp.class);
+    } catch (Throwable e) {}
+
+    IS_REMOTE_ENABLED = result == null ? false : result;
+  }
 
   private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {
     boolean started = false;
@@ -217,7 +231,7 @@ public final class JBCefApp {
         altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
       }
 
-      final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK;
+      final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK || IS_REMOTE_ENABLED;
       if (!skipModuleCheck) {
         URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
         if (url == null) {
@@ -410,5 +424,9 @@ public final class JBCefApp {
    */
   public static int normalizeScaledSize(int scaledSize) {
     return JreHiDpiUtil.isJreHiDPIEnabled() ? scaledSize : ROUND.round(scaledSize / getForceDeviceScaleFactor());
+  }
+
+  protected static boolean isRemoteEnabled() {
+    return IS_REMOTE_ENABLED;
   }
 }
