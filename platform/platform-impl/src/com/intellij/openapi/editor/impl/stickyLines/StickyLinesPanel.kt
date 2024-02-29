@@ -89,10 +89,9 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
       if (logicalLine == stickyLogicalLine) {
         return true
       }
-      if (logicalLine == stickyLogicalLine - 1) {
+      if (logicalLine == stickyLogicalLine - 1 || logicalLine == stickyLogicalLine + 1) {
         // case when lineOf(psiElement.startOffset) != lineOf(psiElement.textOffset)
         // e.g., when a method starts with @Override
-        // "stickyLogicalLine - 1" won't cover all the cases, but the fair approach looks difficult to implement
         return true
       }
     }
