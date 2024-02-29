@@ -207,7 +207,10 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
           <weak_warning descr="Similar log messages">logger.atError()
           .setMessage("aaaaa {}")
           .log()</weak_warning>;
-      
+        }        
+        void foo2() {
+          Logger logger = LoggerFactory.getLogger(X.class);
+                  
           <weak_warning descr="Similar log messages">logger.atError()
           .setMessage("aaaaa 2{}")
           .log()</weak_warning>;
@@ -571,6 +574,25 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
             String msg = "log messages: " + i + "something" + i +")";
             LOG.info(msg);
             LOG.error(msg);
+        }
+     }
+    """.trimIndent())
+  }
+
+
+  fun `test sequence`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+     import org.apache.logging.log4j.*;
+     class Logging {
+        private static final Logger LOG = LogManager.getLogger();
+        
+        private static void request1(String i) {
+            LOG.info("testtesttest");
+            LOG.info("testtesttest");
+            if(LOG.isInfoEnabled()){
+               LOG.info("testtesttest");
+            }
+            if(LOG.isInfoEnabled()) LOG.info("testtesttest");
         }
      }
     """.trimIndent())
