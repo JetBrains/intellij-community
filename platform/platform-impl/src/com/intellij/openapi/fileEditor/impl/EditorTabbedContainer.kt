@@ -298,7 +298,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     val group = DefaultActionGroup(editorActionGroup, closeTab)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
     tab.setTabPaneActions(composite.selectedEditor!!.tabActions)
-    if (AsyncEditorLoader.isOpenedInBulk(file)) {
+    if (AsyncEditorLoader.isOpenedInBulk(file) && !AsyncEditorLoader.isFirstInBulk(file)) {
       editorTabs.addTabWithoutUpdating(info = tab, index = indexToInsert, isDropTarget = false)
       editorTabs.updateListeners()
     }
