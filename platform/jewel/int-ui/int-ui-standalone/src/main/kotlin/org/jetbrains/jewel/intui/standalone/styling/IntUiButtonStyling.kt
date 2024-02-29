@@ -176,7 +176,7 @@ public object IntUiOutlinedButtonColorFactory {
     public fun dark(
         background: Brush = SolidColor(Color.Transparent),
         backgroundDisabled: Brush = SolidColor(IntUiDarkTheme.colors.grey(5)),
-        backgroundFocused: Brush = SolidColor(IntUiDarkTheme.colors.grey(6)),
+        backgroundFocused: Brush = background,
         backgroundPressed: Brush = SolidColor(IntUiDarkTheme.colors.grey(2)),
         backgroundHovered: Brush = SolidColor(Color.Unspecified),
         content: Color = IntUiDarkTheme.colors.grey(12),
