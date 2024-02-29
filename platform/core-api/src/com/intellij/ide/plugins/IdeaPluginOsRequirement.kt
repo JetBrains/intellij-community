@@ -8,10 +8,10 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 
-private const val moduleNamePrefix = "com.intellij.platform."
+private const val osModuleIdPrefix = "com.intellij.modules.os."
 
 @ApiStatus.Experimental
-enum class IdeaPluginPlatform {
+enum class IdeaPluginOsRequirement {
   Unknown {
     override fun isHostPlatform(): Boolean = false
   },
@@ -38,26 +38,24 @@ enum class IdeaPluginPlatform {
     override fun isHostPlatform(): Boolean = SystemInfoRt.isXWindow
   };
 
-  val moduleId: PluginId = PluginId.getId(moduleNamePrefix + name.lowercase())
+  val moduleId: PluginId = PluginId.getId(osModuleIdPrefix + name.lowercase())
 
   abstract fun isHostPlatform(): Boolean
 
   companion object {
-    private val directory = HashMap<PluginId, IdeaPluginPlatform>().let { map ->
+    private val directory = HashMap<PluginId, IdeaPluginOsRequirement>().let { map ->
       entries.associateByTo(map) { it.moduleId }
       Java11Shim.INSTANCE.copyOf(map)
     }
 
     fun getHostPlatformModuleIds(): List<PluginId> = entries.mapNotNull { it.takeIf { it.isHostPlatform() }?.moduleId }
 
-    fun fromModuleId(moduleId: PluginId): IdeaPluginPlatform? {
-      return directory.get(moduleId) ?: Unknown.takeIf { looksLikePlatformId(moduleId.idString) }
+    fun fromModuleId(moduleId: PluginId): IdeaPluginOsRequirement? {
+      return directory.get(moduleId) ?: Unknown.takeIf { looksLikeOsModuleId(moduleId.idString) }
     }
 
-    private fun looksLikePlatformId(idString: String): Boolean {
-      return idString.startsWith(moduleNamePrefix) &&
-             idString != "com.intellij.platform.images" &&
-             idString != "com.intellij.platform.ide.provisioner"
+    private fun looksLikeOsModuleId(idString: String): Boolean {
+      return idString.startsWith(osModuleIdPrefix)
     }
   }
 }

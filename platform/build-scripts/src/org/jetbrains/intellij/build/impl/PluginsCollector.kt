@@ -80,7 +80,7 @@ private fun isPluginCompatible(plugin: PluginDescriptor,
     nonCheckedModules.remove(declaredModule)
   }
   for (requiredDependency in plugin.requiredDependencies) {
-    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.platform.")) {
+    if (availableModulesAndPlugins.contains(requiredDependency) || requiredDependency.startsWith("com.intellij.modules.os.")) {
       continue
     }
 
