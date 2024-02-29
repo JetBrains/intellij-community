@@ -87,4 +87,14 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
     public void testThisInExtensionPropertyAccessor() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/thisInExtensionPropertyAccessor.test");
     }
+
+    @TestMetadata("valClass.test")
+    public void testValClass() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/valClass.test");
+    }
+
+    @TestMetadata("valGeneric.test")
+    public void testValGeneric() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/valGeneric.test");
+    }
 }

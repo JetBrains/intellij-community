@@ -5,10 +5,12 @@ package org.jetbrains.kotlin.idea.navigation
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
+import org.junit.ComparisonFailure
 
 abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected abstract val actionName: String
@@ -26,7 +28,14 @@ abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() 
             val text = myFixture.getDocument(myFixture.file).text
             val afterText = StringBuilder(text).insert(editor.caretModel.offset, "<caret>").toString()
 
-            Assert.assertEquals(parts[1], afterText)
+            try {
+                Assert.assertEquals(parts[1], afterText)
+            } catch (e: ComparisonFailure) {
+                throw FileComparisonFailedError(
+                    e.message,
+                    e.expected, e.actual, testPath, null
+                )
+            }
         } else {
             val fileOffset = currentEditor.caretModel.offset
             val lineNumber = currentEditor.document.getLineNumber(fileOffset)

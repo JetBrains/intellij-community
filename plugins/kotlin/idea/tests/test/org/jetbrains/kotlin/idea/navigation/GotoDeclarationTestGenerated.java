@@ -87,4 +87,14 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
     public void testThisInExtensionPropertyAccessor() throws Exception {
         runTest("testData/navigation/gotoDeclaration/thisInExtensionPropertyAccessor.test");
     }
+
+    @TestMetadata("valClass.test")
+    public void testValClass() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/valClass.test");
+    }
+
+    @TestMetadata("valGeneric.test")
+    public void testValGeneric() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/valGeneric.test");
+    }
 }
