@@ -3,27 +3,32 @@ package com.intellij.python.community.impl.huggingFace.documentation
 
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
+import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 
 object HuggingFaceDocumentationPlaceholdersUtil {
   fun generateGatedEntityMarkdownString(entityId: String, entityKind: HuggingFaceEntityKind): String {
-    val msg = "<font color='gray'>Sorry, this ${entityKind.printName} is gated.<br>" +
-              "Please visit the [HuggingFace website](" +
-              "${HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind)}" +
-              ")<br>for more details about the ${entityKind.printName} card.</font>"
+    val msg = PyHuggingFaceBundle.message(
+      "python.hugging.face.placeholder.gated.model",
+      entityKind.printName,
+      HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind),
+      entityKind.printName)
     return msg
   }
 
   fun noReadmePlaceholder(entityId: String, entityKind: HuggingFaceEntityKind): String {
     val cardUrl = HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind)
-    return "This model has no description available. For more details, please follow the [link]($cardUrl)"
+    val msg = PyHuggingFaceBundle.message("python.hugging.face.placeholder.no.readme", cardUrl)
+    return msg
   }
 
   fun trimmedMdPlaceholder(entityId: String, entityKind: HuggingFaceEntityKind): String {
     val cardUrl = HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind)
-    return "*Please find the rest of the ${entityKind.printName} card [here]($cardUrl)*"
+    val msg = PyHuggingFaceBundle.message("python.hugging.face.placeholder.trimmed", entityKind.printName, cardUrl)
+    return msg
   }
 
   fun noInternetConnectionPlaceholder(entityId: String): String {
-    return "Failed to fetch data for $entityId. Please check your internet connection."
+    val msg = PyHuggingFaceBundle.message("python.hugging.face.placeholder.no.internet", entityId)
+    return msg
   }
 }

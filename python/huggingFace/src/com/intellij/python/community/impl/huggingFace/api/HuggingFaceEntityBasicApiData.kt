@@ -6,6 +6,7 @@ import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import org.jetbrains.annotations.Nls
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 
 data class HuggingFaceEntityBasicApiData (
@@ -15,6 +16,7 @@ data class HuggingFaceEntityBasicApiData (
   val downloads: Int,
   val likes: Int,
   val lastModified: String,
+  val libraryName: String?,
   @NlsSafe val pipelineTag: String
 ) {
   @Nls
@@ -40,9 +42,8 @@ data class HuggingFaceEntityBasicApiData (
     return humanReadableNumber(downloads)
   }
 
-  @NlsSafe
   fun humanReadableLastUpdated(): String {
     val parsedDate = LocalDateTime.parse(lastModified, DateTimeFormatter.ISO_DATE_TIME)
-    return parsedDate.format(DateTimeFormatter.ofPattern("MMM dd"))
+    return parsedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
   }
 }

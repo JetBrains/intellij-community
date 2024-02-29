@@ -16,4 +16,5 @@ public final class PythonCommunityImplHuggingFaceIcons {
   }
   /** 14x14 */ public static final @NotNull Icon Download = load("icons/download.svg", -459821553, 0);
   /** 14x14 */ public static final @NotNull Icon Like = load("icons/like.svg", -1702501286, 0);
+  /** 16x16 */ public static final @NotNull Icon Logo = load("icons/logo.svg", 59143455, 0);
 }

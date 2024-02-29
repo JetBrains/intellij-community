@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.openapi.util.NlsSafe
-import java.net.URL
 import com.intellij.openapi.util.Key
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector

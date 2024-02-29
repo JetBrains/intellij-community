@@ -33,7 +33,8 @@ class HuggingFaceSafeExecutor(private val coroutineScope: CoroutineScope, privat
     private fun getInstance(
       name: String = SERVICE_NAME,
       defaultTimeout: Duration = Duration.INFINITE,
-      parallelism: Int = 10): HuggingFaceSafeExecutor {
+      parallelism: Int = 10
+    ): HuggingFaceSafeExecutor {
 
       val childScope = service<HuggingFaceExecutorService>().coroutineScope.childScope(
         Dispatchers.IO.limitedParallelism(parallelism) + CoroutineName(name))

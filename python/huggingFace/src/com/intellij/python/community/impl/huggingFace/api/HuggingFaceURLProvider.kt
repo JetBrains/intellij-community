@@ -32,6 +32,13 @@ object HuggingFaceURLProvider {
 
   fun getModelApiLink(modelId: String): URL = URL("$baseURL/api/models/$modelId")
 
+  fun getModelSearchQuery(query: String, tags: String? = null, sort: String = "downloads", limit: Int = 20): URL {
+    return URL("$baseURL/api/models?search=$query&sort=$sort&limit=$limit&direction=-1"
+    ).let { url ->
+      tags?.let { URL("${url}&filter=${tags}") } ?: url
+    }
+  }
+
   // Will be necessary to fetch detailed information for dataset
   // fun getDatasetApiLink(datasetId: String): URL = URL("$baseURL/api/models/$datasetId")
   // may be needed for dataset viewer button:
