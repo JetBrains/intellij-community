@@ -922,14 +922,10 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
 
       val virtualFileManager = VirtualFileManager.getInstance()
       var focusedFile: VirtualFile? = null
-      var isFirst = true
       for ((index, fileEntry) in sorted) {
         span("opening editor") {
           val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
-          if (!isFirst) { // IJPL-687 not bulk mode allows painting the first file as soon as possible
-            file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
-          }
-          isFirst = false
+          file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
           try {
             openFile(file = file,
                      fileEntry = fileEntry,
