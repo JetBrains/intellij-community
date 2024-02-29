@@ -101,9 +101,9 @@ public final class StartupImportIcons {
   }
 
   public static final class VisualStudio {
-    /** 20x20 */ public static final @NotNull Icon VisualStudio_20 = load("visualStudio/VisualStudio_20.svg", 1593492095, 0);
-    /** 24x24 */ public static final @NotNull Icon VisualStudio_24 = load("visualStudio/VisualStudio_24.svg", 49514135, 0);
-    /** 48x48 */ public static final @NotNull Icon VisualStudio_48 = load("visualStudio/VisualStudio_48.svg", 2016894825, 0);
+    /** 20x20 */ public static final @NotNull Icon VisualStudio_20 = load("visualStudio/VisualStudio_20.svg", 108800177, 0);
+    /** 24x24 */ public static final @NotNull Icon VisualStudio_24 = load("visualStudio/VisualStudio_24.svg", 436802794, 0);
+    /** 48x48 */ public static final @NotNull Icon VisualStudio_48 = load("visualStudio/VisualStudio_48.svg", -1898794185, 0);
   }
 
   public static final class Vscode {
