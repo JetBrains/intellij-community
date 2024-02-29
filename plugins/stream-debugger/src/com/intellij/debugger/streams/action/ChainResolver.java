@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.streams.lib.LibrarySupportProvider;
@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,7 @@ final class ChainResolver {
     return chains;
   }
 
+  @RequiresBackgroundThread
   private static void checkChainsExistenceInBackground(@NotNull PsiElement elementAtDebugger,
                                                        @NotNull ChainsSearchResult searchResult,
                                                        @NotNull ExecutorService executor) {
@@ -96,7 +98,7 @@ final class ChainResolver {
           searchResult.updateStatus(found);
         })
         .inSmartMode(elementAtDebugger.getProject())
-        .submit(executor);
+        .executeSynchronously();
     }
   }
 
