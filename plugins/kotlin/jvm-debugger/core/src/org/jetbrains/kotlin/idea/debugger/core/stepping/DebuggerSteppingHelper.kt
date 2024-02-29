@@ -1,156 +1,146 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.debugger.core.stepping
 
-package org.jetbrains.kotlin.idea.debugger.core.stepping;
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.*
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.debugger.statistics.Engine
+import com.intellij.debugger.statistics.StatisticsStorage.Companion.createSteppingToken
+import com.intellij.debugger.statistics.SteppingAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.xdebugger.XSourcePosition
+import com.sun.jdi.request.StepRequest
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.core.isOnSuspensionPoint
+import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineJobInfo.Companion.extractJobInfo
+import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinStepAction.KotlinStepInto
 
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.*;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.statistics.Engine;
-import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.statistics.SteppingAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.xdebugger.XSourcePosition;
-import com.sun.jdi.Location;
-import com.sun.jdi.request.StepRequest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.debugger.base.util.SafeUtilKt;
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil;
+object DebuggerSteppingHelper {
+  private val LOG = Logger.getInstance(DebuggerSteppingHelper::class.java)
 
-public final class DebuggerSteppingHelper {
-    private static final Logger LOG = Logger.getInstance(DebuggerSteppingHelper.class);
+  fun createStepOverCommand(
+    suspendContext: SuspendContextImpl,
+    ignoreBreakpoints: Boolean,
+    sourcePosition: SourcePosition?
+  ): DebugProcessImpl.ResumeCommand {
+    val debugProcess = suspendContext.debugProcess
 
-    public static DebugProcessImpl.ResumeCommand createStepOverCommand(
-            SuspendContextImpl suspendContext,
-            boolean ignoreBreakpoints,
-            SourcePosition sourcePosition
-    ) {
-        DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
+    return with(debugProcess) {
+      object : DebugProcessImpl.ResumeCommand(suspendContext) {
+        override fun contextAction(suspendContext: SuspendContextImpl) {
+          val frameProxy = suspendContext.frameProxy
+          val location = frameProxy?.safeLocation()
 
-        return debugProcess.new ResumeCommand(suspendContext) {
-            @Override
-            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-                StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
-                Location location = frameProxy == null ? null : SafeUtilKt.safeLocation(frameProxy);
+          if (location != null) {
+            try {
+              getStepOverAction(location, suspendContext, frameProxy)
+                .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
+                .contextAction(suspendContext)
+              return
+            }
+            catch (e: Exception) {
+              LOG.error(e)
+            }
+          }
 
-                if (location != null) {
-                    try {
-                        KotlinSteppingCommandProviderKt
-                                .getStepOverAction(location, suspendContext, frameProxy)
-                                .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
-                                .contextAction(suspendContext);
-                        return;
-                    } catch (Exception e) {
-                        LOG.error(e);
-                    }
+          debugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints).contextAction(suspendContext)
+        }
+      }
+    }
+  }
+
+  fun createStepOverCommandForSuspendSwitch(suspendContext: SuspendContextImpl): DebugProcessImpl.StepOverCommand {
+    return with(suspendContext.debugProcess) {
+      object : DebugProcessImpl.StepOverCommand(suspendContext, false, null, StepRequest.STEP_MIN) {
+        override fun getHint(suspendContext: SuspendContextImpl,
+                             stepThread: ThreadReferenceProxyImpl,
+                             parentHint: RequestHint?): RequestHint {
+          val hint: RequestHint =
+            object : RequestHint(stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OVER, myMethodFilter, parentHint) {
+              override fun getNextStepDepth(context: SuspendContextImpl): Int {
+                if (context.frameProxy?.isOnSuspensionPoint() == true) {
+                  return StepRequest.STEP_OVER
                 }
 
-                debugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints).contextAction(suspendContext);
+                return super.getNextStepDepth(context)
+              }
             }
-        };
+          hint.isIgnoreFilters = suspendContext.debugProcess.session.shouldIgnoreSteppingFilters()
+          return hint
+        }
+
+        override fun createCommandToken() = createSteppingToken(SteppingAction.STEP_OVER, Engine.KOTLIN)
+      }
     }
+  }
 
-    public static DebugProcessImpl.StepOverCommand createStepOverCommandForSuspendSwitch(SuspendContextImpl suspendContext) {
-        DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-        return debugProcess.new StepOverCommand(suspendContext, false, null, StepRequest.STEP_MIN) {
-            @NotNull
-            @Override
-            public RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
-                RequestHint hint =
-                        new RequestHint(stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OVER, myMethodFilter, parentHint) {
-                            @Override
-                            public int getNextStepDepth(SuspendContextImpl context) {
-                                StackFrameProxyImpl frameProxy = context.getFrameProxy();
-                                if (frameProxy != null && DebuggerUtil.isOnSuspensionPoint(frameProxy)) {
-                                    return StepRequest.STEP_OVER;
-                                }
+  fun createStepOutCommand(suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.ResumeCommand {
+    return with(suspendContext.debugProcess) {
+      object : DebugProcessImpl.ResumeCommand(suspendContext) {
+        override fun contextAction(suspendContext: SuspendContextImpl) {
+          val frameProxy = suspendContext.frameProxy
+          val location = frameProxy?.safeLocation()
 
-                                return super.getNextStepDepth(context);
-                            }
-                        };
-                hint.setIgnoreFilters(suspendContext.getDebugProcess().getSession().shouldIgnoreSteppingFilters());
-                return hint;
+          if (location != null) {
+            try {
+              getStepOutAction(location, frameProxy)
+                .createCommand(suspendContext.debugProcess, suspendContext, ignoreBreakpoints)
+                .contextAction(suspendContext)
+              return
             }
-
-            @Override
-            public Object createCommandToken() {
-                return StatisticsStorage.createSteppingToken(SteppingAction.STEP_OVER, Engine.KOTLIN);
+            catch (e: Exception) {
+              LOG.error(e)
             }
-        };
+          }
+
+          suspendContext.debugProcess.createStepOutCommand(suspendContext).contextAction(suspendContext)
+        }
+      }
     }
+  }
 
-    public static DebugProcessImpl.ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext, boolean ignoreBreakpoints) {
-        DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-        return debugProcess.new ResumeCommand(suspendContext) {
-            @Override
-            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-                StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
-                Location location = frameProxy == null ? null : SafeUtilKt.safeLocation(frameProxy);
-
-                if (location != null) {
-                    try {
-                        KotlinSteppingCommandProviderKt
-                                .getStepOutAction(location, frameProxy)
-                                .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
-                                .contextAction(suspendContext);
-                        return;
-                    } catch (Exception e) {
-                        LOG.error(e);
-                    }
-                }
-
-                debugProcess.createStepOutCommand(suspendContext).contextAction(suspendContext);
-            }
-        };
+  fun createStepIntoCommand(
+    suspendContext: SuspendContextImpl,
+    ignoreBreakpoints: Boolean,
+    methodFilter: MethodFilter?
+  ): DebugProcessImpl.ResumeCommand {
+    return with(suspendContext.debugProcess) {
+      object : DebugProcessImpl.ResumeCommand(suspendContext) {
+        override fun contextAction(suspendContext: SuspendContextImpl) {
+          try {
+            KotlinStepInto(methodFilter)
+              .createCommand(suspendContext.debugProcess, suspendContext, ignoreBreakpoints)
+              .contextAction(suspendContext)
+          }
+          catch (e: Exception) {
+            suspendContext.debugProcess.createStepIntoCommand(suspendContext, ignoreBreakpoints, methodFilter).contextAction(
+              suspendContext)
+          }
+        }
+      }
     }
+  }
 
-    public static DebugProcessImpl.ResumeCommand createStepIntoCommand(
-            @NotNull SuspendContextImpl suspendContext,
-            boolean ignoreBreakpoints,
-            @Nullable MethodFilter methodFilter
-    ) {
-        DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-        return debugProcess.new ResumeCommand(suspendContext) {
-            @Override
-            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-                try {
-                    new KotlinStepAction.KotlinStepInto(methodFilter)
-                            .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
-                            .contextAction(suspendContext);
-                } catch (Exception e) {
-                    debugProcess.createStepIntoCommand(suspendContext, ignoreBreakpoints, methodFilter).contextAction(suspendContext);
-                }
-            }
-        };
+  fun createRunToCursorCommand(
+    suspendContext: SuspendContextImpl,
+    position: XSourcePosition,
+    ignoreBreakpoints: Boolean
+  ): DebugProcessImpl.ResumeCommand {
+    val debugProcess = suspendContext.debugProcess
+    return with(debugProcess) {
+      object : DebugProcessImpl.RunToCursorCommand(suspendContext, position, ignoreBreakpoints) {
+        val myThreadFilter = lazy { extractJobInfo(suspendContext) ?: super.getThreadFilterFromContext(suspendContext) }
+
+        override fun contextAction(context: SuspendContextImpl) {
+          // clear stepping through to allow switching threads in case of suspend thread context
+          if (myThreadFilter.value !is RealThreadInfo) {
+            context.debugProcess.session.clearSteppingThrough()
+          }
+          super.contextAction(context)
+        }
+
+        override fun getThreadFilterFromContext(suspendContext: SuspendContextImpl): LightOrRealThreadInfo? = myThreadFilter.value
+      }
     }
-
-    public static DebugProcessImpl.ResumeCommand createRunToCursorCommand(
-            @NotNull SuspendContextImpl suspendContext,
-            @NotNull XSourcePosition position,
-            boolean ignoreBreakpoints
-    ) {
-        DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-        return debugProcess.new RunToCursorCommand(suspendContext, position, ignoreBreakpoints) {
-            final NullableLazyValue<LightOrRealThreadInfo> myThreadFilter = NullableLazyValue.lazyNullable(() -> {
-                LightOrRealThreadInfo result = CoroutineJobInfo.extractJobInfo(suspendContext);
-                return result != null ? result : super.getThreadFilterFromContext(suspendContext);
-            });
-
-            @Override
-            public void contextAction(@NotNull SuspendContextImpl context) {
-                // clear stepping through to allow switching threads in case of suspend thread context
-                if (!(myThreadFilter.getValue() instanceof RealThreadInfo)) {
-                    context.getDebugProcess().getSession().clearSteppingThrough();
-                }
-                super.contextAction(context);
-            }
-
-            @Override
-            public @Nullable LightOrRealThreadInfo getThreadFilterFromContext(@NotNull SuspendContextImpl suspendContext) {
-                return myThreadFilter.getValue();
-            }
-        };
-    }
+  }
 }
